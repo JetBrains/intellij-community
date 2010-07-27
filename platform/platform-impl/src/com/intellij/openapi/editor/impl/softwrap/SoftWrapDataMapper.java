@@ -16,11 +16,14 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
+import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.nio.CharBuffer;
 import java.util.List;
 
@@ -35,12 +38,31 @@ public class SoftWrapDataMapper {
 
   private final CharBuffer myCharBuffer = CharBuffer.allocate(1);
 
-  private final Editor           myEditor;
-  private final SoftWrapsStorage myStorage;
+  private final EditorTextRepresentationHelper myTextRepresentationHelper;
+  private final EditorEx                       myEditor;
+  private final SoftWrapsStorage               myStorage;
+  private final SoftWrapPainter                myPainter;
+  private final FontTypeProvider               myFontTypeProvider;
 
-  public SoftWrapDataMapper(Editor editor, SoftWrapsStorage storage) {
+  public SoftWrapDataMapper(EditorEx editor,
+                            SoftWrapsStorage storage,
+                            SoftWrapPainter painter,
+                            EditorTextRepresentationHelper textRepresentationHelper)
+  {
+    this(editor, storage, painter, textRepresentationHelper, new IterationStateFontTypeProvider(editor));
+  }
+
+  SoftWrapDataMapper(EditorEx editor,
+                            SoftWrapsStorage storage,
+                            SoftWrapPainter painter,
+                            EditorTextRepresentationHelper textRepresentationHelper,
+                            FontTypeProvider fontTypeProvider)
+  {
     myEditor = editor;
     myStorage = storage;
+    myPainter = painter;
+    myTextRepresentationHelper = textRepresentationHelper;
+    myFontTypeProvider = fontTypeProvider;
   }
 
   @NotNull
@@ -102,22 +124,29 @@ public class SoftWrapDataMapper {
       int startLineOffset = document.getLineStartOffset(softWrapLine);
       int endLineOffset = document.getLineEndOffset(softWrapLine);
       CharSequence documentText = document.getCharsSequence();
+
+      myFontTypeProvider.init(startLineOffset);
+      context.fontType = myFontTypeProvider.getFontType(startLineOffset);
+
       for (int j = startLineOffset; j < endLineOffset; j++) {
 
         // Process soft wrap at the current offset if any.
         TextChange softWrapToProcess = myStorage.getSoftWrap(j);
-        if (softWrapToProcess != null && j >= softWrap.getStart()) {
-          CharSequence softWrapText = softWrapToProcess.getText();
-          for (int k = 0; k < softWrapText.length(); k++) {
-            LogicalPosition result = context.onSoftWrapSymbol(softWrapText.charAt(k));
-            if (result != null) {
-              return result;
+        if (softWrapToProcess != null) {
+          context.beforeSoftWrap();
+          if (j >= softWrap.getStart()) {
+            CharSequence softWrapText = softWrapToProcess.getText();
+            for (int k = 0; k < softWrapText.length(); k++) {
+              LogicalPosition result = context.onSoftWrapSymbol(softWrapText.charAt(k));
+              if (result != null) {
+                return result;
+              }
             }
           }
-          // Emulate 'after soft wrap' sign
-          //int afterSoftWrapColumns = myEditor.getSoftWrapModel().get
-          context.onSoftWrapSymbol('a');
+          context.afterSoftWrap();
         }
+
+        context.fontType = myFontTypeProvider.getFontType(startLineOffset);
 
         // Process document symbol.
         LogicalPosition result = context.onNonSoftWrapSymbol(documentText.charAt(j));
@@ -125,6 +154,7 @@ public class SoftWrapDataMapper {
           return result;
         }
       }
+      myFontTypeProvider.cleanup();
 
       // If we are here that means that target visual position is located at virtual space after the line end.
       int logicalLine = defaultLogical.line - softWrapLinesBeforeCurrentLogicalLine
@@ -238,7 +268,7 @@ public class SoftWrapDataMapper {
 
     // Return eagerly if there are no soft wraps before the target offset on a line that contains it.
     if (max >= softWraps.size() || softWraps.get(max).getStart() > offset) {
-      int column = toVisualColumnSymbolsNumber(chars, targetLineStartOffset, offset, 0);
+      int column = myTextRepresentationHelper.toVisualColumnSymbolsNumber(chars, targetLineStartOffset, offset, 0);
       LogicalPosition foldingUnawarePosition = new LogicalPosition(
         rawLineStartLogicalPosition.line, column, softWrapIntroducedLinesBefore, 0, 0, 0, 0
       );
@@ -251,6 +281,9 @@ public class SoftWrapDataMapper {
     // We add '1' here in order to correctly process situation when there is soft wrap at target offset (it impacts resulting logical
     // position but document symbol at that offset should not be count).
     max = Math.min(chars.length(), offset + 1);
+    int x = 0;
+    myFontTypeProvider.init(targetLineStartOffset);
+    int fontType = myFontTypeProvider.getFontType(targetLineStartOffset);
 
     for (int i = targetLineStartOffset; i < max; i++) {
       FoldRegion region = foldingModel.getCollapsedRegionAtOffset(i);
@@ -268,12 +301,15 @@ public class SoftWrapDataMapper {
           if (softWrapText.charAt(j) == '\n') {
             softWrapsOnCurrentLogicalLine++;
             symbolsOnCurrentVisibleLine = 0;
+            x = 0;
           }
           else {
             symbolsOnCurrentVisibleLine++;
+            x += myTextRepresentationHelper.charWidth(softWrapText.charAt(j), x, fontType);
           }
         }
         symbolsOnCurrentVisibleLine++; // For 'after soft wrap' sign.
+        x += myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
       }
 
       // We don't want to count symbol at target offset.
@@ -281,11 +317,15 @@ public class SoftWrapDataMapper {
         break;
       }
 
+      fontType = myFontTypeProvider.getFontType(targetLineStartOffset);
+
       // Assuming that no line feed is contained before target offset on a line that holds it.
-      int columnsForSymbol = toVisualColumnSymbolsNumber(chars.charAt(i), symbolsOnCurrentVisibleLine);
+      int columnsForSymbol = toVisualColumnSymbolsNumber(chars.charAt(i), x);
       symbolsOnCurrentLogicalLine += columnsForSymbol;
       symbolsOnCurrentVisibleLine += columnsForSymbol;
+      x += myTextRepresentationHelper.charWidth(chars.charAt(i), x, fontType);
     }
+    myFontTypeProvider.cleanup();
 
     LogicalPosition foldingUnawarePosition = new LogicalPosition(
       rawLineStartLogicalPosition.line, symbolsOnCurrentLogicalLine, softWrapIntroducedLinesBefore, softWrapsOnCurrentLogicalLine,
@@ -394,8 +434,9 @@ public class SoftWrapDataMapper {
     }
 
     assert startOffsetOfVisualLineWithFoldingStart <= foldingStartOffset;
-    return EditorUtil.textWidthInColumns(
-      myEditor, document.getCharsSequence(), startOffsetOfVisualLineWithFoldingStart, foldingStartOffset, softWrapOffsetInColumns
+    int x = softWrapOffsetInColumns * myTextRepresentationHelper.charWidth(' ', 0, Font.PLAIN);
+    return myTextRepresentationHelper.toVisualColumnSymbolsNumber(
+      document.getCharsSequence(), startOffsetOfVisualLineWithFoldingStart, foldingStartOffset, x
     );
   }
 
@@ -412,24 +453,11 @@ public class SoftWrapDataMapper {
     return result;
   }
 
-  private int toVisualColumnSymbolsNumber(char c, int offsetInColumns) {
+  private int toVisualColumnSymbolsNumber(char c, int x) {
     myCharBuffer.clear();
     myCharBuffer.put(c);
     myCharBuffer.flip();
-    return toVisualColumnSymbolsNumber(myCharBuffer, 0, 1, offsetInColumns);
-  }
-
-  private int toVisualColumnSymbolsNumber(CharSequence text, int start, int end, int offsetInColumns) {
-    int result = 0;
-    for (int i = start; i < end; i++) {
-      if (text.charAt(i) == '\t') {
-        result += EditorUtil.tabWidthInColumns(myEditor, offsetInColumns + result);
-      }
-      else {
-        result++;
-      }
-    }
-    return result;
+    return myTextRepresentationHelper.toVisualColumnSymbolsNumber(myCharBuffer, 0, 1, x);
   }
 
   private class Context {
@@ -444,12 +472,8 @@ public class SoftWrapDataMapper {
     public int targetSoftWrapLines;
     public int symbolsOnCurrentLogicalLine;
     public int symbolsOnCurrentVisualLine;
-    /**
-     * There is a possible case that single tabulation symbols is shown in more than one visual column (IntelliJ editor is configured
-     * to show white spaces and tabulations and tab size is more than one). We keep track in number of such excessive visual
-     * columns used to show tabulations on a current visual line.
-     */
-    public int excessiveTabColumns;
+    public int x;
+    public int fontType;
 
     Context(LogicalPosition softWrapUnawareLogicalPosition, VisualPosition targetVisualPosition, int softWrapLinesBefore,
             int softWrapLinesOnCurrentLineBeforeTargetSoftWrap, int visualLineBeforeSoftWrapAppliance, FoldingModel foldingModel)
@@ -477,16 +501,17 @@ public class SoftWrapDataMapper {
           return build(targetVisualPosition.column - symbolsOnCurrentLogicalLine);
         }
         else {
+          x = 0;
           targetSoftWrapLines++;
           symbolsOnCurrentVisualLine = 0;
-          excessiveTabColumns = 0;
           return null;
         }
       }
 
       // Just update information about tracked symbols number if current visual line is too low.
       if (targetVisualPosition.line > visualLineBeforeSoftWrapAppliance + targetSoftWrapLines) {
-        symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c, symbolsOnCurrentVisualLine);
+        symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c, x);
+        x += myTextRepresentationHelper.charWidth(c, x, fontType);
         return null;
       }
 
@@ -499,12 +524,23 @@ public class SoftWrapDataMapper {
 
       // Process non-line feed inside soft wrap.
       symbolsOnCurrentVisualLine++; // Don't expect tabulation to be used inside soft wrap text.
+      x += myTextRepresentationHelper.charWidth(c, x, fontType);
+
       if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
         return build();
       }
       else {
         return null;
       }
+    }
+
+    public void beforeSoftWrap() {
+      x = 0;
+    }
+
+    public void afterSoftWrap() {
+      x += myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+      symbolsOnCurrentVisualLine++;
     }
 
     /**
@@ -518,15 +554,17 @@ public class SoftWrapDataMapper {
     public LogicalPosition onNonSoftWrapSymbol(char c) {
       // Don't expect line feed symbol to be delivered to this method in assumption that we process only one logical line here.
       if (c == '\n') {
+        x = 0;
         assert false;
         return null;
       }
 
       // Just update information about tracked symbols number if current visual line is too low.
       if (targetVisualPosition.line > visualLineBeforeSoftWrapAppliance + targetSoftWrapLines) {
-        int columnsForSymbol = toVisualColumnSymbolsNumber(c, symbolsOnCurrentVisualLine);
+        int columnsForSymbol = toVisualColumnSymbolsNumber(c, x);
         symbolsOnCurrentVisualLine += columnsForSymbol;
         symbolsOnCurrentLogicalLine += columnsForSymbol;
+        x += myTextRepresentationHelper.charWidth(c, x, fontType);
         return null;
       }
 
@@ -536,7 +574,7 @@ public class SoftWrapDataMapper {
         return build();
       }
 
-      int columnsForSymbol = toVisualColumnSymbolsNumber(c, symbolsOnCurrentVisualLine);
+      int columnsForSymbol = toVisualColumnSymbolsNumber(c, x);
       int diffInColumns = targetVisualPosition.column - symbolsOnCurrentVisualLine;
       int incrementToUse = columnsForSymbol;
       if (columnsForSymbol >= diffInColumns) {
@@ -544,6 +582,7 @@ public class SoftWrapDataMapper {
       }
       symbolsOnCurrentVisualLine += incrementToUse;
       symbolsOnCurrentLogicalLine += incrementToUse;
+      x += myTextRepresentationHelper.charWidth(c, x, fontType);
 
       if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
         return build();
@@ -570,6 +609,49 @@ public class SoftWrapDataMapper {
         0
       );
       return adjustFoldingData(foldingModel, foldingUnawareResult);
+    }
+  }
+
+  /**
+   * Strategy interface for providing font type to use during working with editor text.
+   * <p/>
+   * It's primary purpose is to relief unit testing.
+   */
+  interface FontTypeProvider {
+    void init(int start);
+    int getFontType(int offset);
+    void cleanup();
+  }
+
+  private static class IterationStateFontTypeProvider implements FontTypeProvider {
+
+    private final EditorEx myEditor;
+
+    private IterationState myState;
+    private int            myFontType;
+
+    private IterationStateFontTypeProvider(EditorEx editor) {
+      myEditor = editor;
+    }
+
+    @Override
+    public void init(int start) {
+      myState = new IterationState(myEditor, start, false);
+      myFontType = myState.getMergedAttributes().getFontType();
+    }
+
+    @Override
+    public int getFontType(int offset) {
+      if (offset >= myState.getEndOffset()) {
+        myState.advance();
+        myFontType = myState.getMergedAttributes().getFontType();
+      }
+      return myFontType;
+    }
+
+    @Override
+    public void cleanup() {
+      myState = null;
     }
   }
 }

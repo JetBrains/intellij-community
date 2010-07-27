@@ -890,7 +890,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (x >= px) {
               break outer;
             }
-            column += columnsNumber(c, x, prevX, spaceSize);
+            column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
           }
           activeSoftWrapProcessed = true;
 
@@ -916,7 +916,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (x >= px) {
           break;
         }
-        column += columnsNumber(c, x, prevX, spaceSize);
+        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
 
         offset++;
       }
@@ -932,7 +932,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if ((px - prevX) % spaceSize > spaceSize / 2) column++;
       }
       else if ((x - px) * 2 < x - prevX) {
-        column += columnsNumber(c, x, prevX, spaceSize);
+        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
       }
     }
     else {
@@ -965,26 +965,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return EditorUtil.nextTabStop(currentX, this) - currentX;
     }
     return EditorUtil.charWidth(c, fontType, this);
-  }
-
-  /**
-   * Allows to answer how many columns are necessary for representation of the given char on a screen.
-   *
-   * @param c           target char
-   * @param x           <code>'x'</code> coordinate of the line where given char is represented that indicates char end location
-   * @param prevX       <code>'x'</code> coordinate of the line where given char is represented that indicates char start location
-   * @param spaceSize   <code>'space'</code> symbol width
-   * @return            number of columns necessary for representation of the given char on a screen.
-   */
-  private static int columnsNumber(char c, int x, int prevX, int spaceSize) {
-    if (c != '\t') {
-      return 1;
-    }
-    int result = (x - prevX) / spaceSize;
-    if ((x - prevX) % spaceSize > 0) {
-      result++;
-    }
-    return result;
   }
 
   @NotNull
@@ -4867,7 +4847,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (c == '\t') {
         int prevX = x;
         x = EditorUtil.nextTabStop(x, this);
-        column += columnsNumber(c, x, prevX, spaceSize);
+        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
         //column += Math.max(1, (x - prevX) / spaceSize);
       }
       else {
