@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
@@ -1084,7 +1085,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     @Nullable
     private VcsKey findVcs(final String path) {
       // does not matter directory or not
-      final AbstractVcs vcs = myVcsManager.getVcsFor(FilePathImpl.create(new File(path), false));
+      final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+      if (vf == null) return null;
+      final AbstractVcs vcs = myVcsManager.getVcsFor(vf);
       return vcs == null ? null : vcs.getKeyInstanceMethod();
     }
   }
