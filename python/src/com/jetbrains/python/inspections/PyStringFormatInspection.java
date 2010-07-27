@@ -96,7 +96,7 @@ public class PyStringFormatInspection extends PyInspection {
         }
         else if (rightExpression instanceof PyCallExpression) {
           final PyCallExpression.PyMarkedCallee markedFunction = ((PyCallExpression)rightExpression).resolveCallee();
-          if (markedFunction != null) {
+          if (markedFunction != null && !markedFunction.isImplicitlyResolved()) {
             final Callable callable = markedFunction.getCallable();
             if (callable instanceof PyFunction) {
               PyStatementList statementList = ((PyFunction)callable).getStatementList();
