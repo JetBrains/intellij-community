@@ -84,7 +84,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
 
   public boolean shouldCreateStub(final ASTNode node) {
     final ASTNode functionNode = TreeUtil.findParent(node, PyElementTypes.FUNCTION_DECLARATION);
-    final ASTNode qualifierNode = node.findChildByType(PyElementTypes.TARGET_EXPRESSION);
+    final ASTNode qualifierNode = node.findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
     if (functionNode != null && qualifierNode != null) {
       final ASTNode parameterList = functionNode.findChildByType(PyElementTypes.PARAMETER_LIST);
       assert parameterList != null;
@@ -93,7 +93,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
         return true;
       }
     }
-    return qualifierNode == null;
+    return functionNode == null && qualifierNode == null;
  }
 
 }

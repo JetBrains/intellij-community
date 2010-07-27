@@ -4,12 +4,20 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DfaMapInstance;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author oleg
@@ -18,8 +26,34 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
   // Use this its own map, because check in PyReachingDefsDfaSemilattice is important
   public static final DFAMap<ScopeVariable> INITIAL_MAP = new DFAMap<ScopeVariable>();
 
-  public DFAMap<ScopeVariable> fun(DFAMap<ScopeVariable> map, Instruction instruction) {
+  public DFAMap<ScopeVariable> fun(final DFAMap<ScopeVariable> map, final Instruction instruction) {
     final PsiElement element = instruction.getElement();
+    if (element == null || !((PyFile) element.getContainingFile()).getLanguageLevel().isPy3K()){
+      return processReducedMap(map, instruction, element);
+    }
+    // Scope reduction
+    final DFAMap<ScopeVariable> reducedMap = new DFAMap<ScopeVariable>();
+    for (Map.Entry<String, ScopeVariable> entry : map.entrySet()) {
+      final ScopeVariable value = entry.getValue();
+      // Support PEP-3110. (PY-1408)
+      if (value.isParameter()){
+        final PsiElement declaration = value.getDeclarations().iterator().next();
+        final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(declaration);
+        if (exceptPart != null){
+          if (!PsiTreeUtil.isAncestor(exceptPart, element, false)){
+            continue;
+          }
+        }
+      } 
+      reducedMap.put(entry.getKey(), value);
+    }
+
+    return processReducedMap(reducedMap, instruction, element);
+  }
+
+  private DFAMap<ScopeVariable> processReducedMap(DFAMap<ScopeVariable> map,
+                                                  final Instruction instruction,
+                                                  final PsiElement element) {
     String name = null;
     // Process readwrite instruction
     if (instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess()) {

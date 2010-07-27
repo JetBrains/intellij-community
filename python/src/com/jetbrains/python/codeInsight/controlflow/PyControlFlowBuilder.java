@@ -4,12 +4,16 @@ import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +25,8 @@ import java.util.List;
  */
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
+  public static final TokenSet CALL_OR_REF_EXPR = TokenSet.create(PyElementTypes.CALL_EXPRESSION, PyElementTypes.REFERENCE_EXPRESSION);
+  public static final String SELF_ASSERT_RAISES = "self.assertRaises";
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,24 +57,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyCallExpression(final PyCallExpression node) {
-    if ("exit".equals(node.getCallee().getText())) {
+    // Flow abrupted
+    if (node.isCalleeText("exit")) {
       for (PyExpression expression : node.getArguments()) {
         expression.accept(this);
       }
-
-      // Here we process pending instructions!!!
-      myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
-        public void process(final PsiElement pendingScope, final Instruction instruction) {
-          if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
-            myBuilder.addPendingEdge(null, instruction);
-          }
-          else {
-            myBuilder.addPendingEdge(pendingScope, instruction);
-          }
-        }
-      });
-      myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
-      myBuilder.flowAbrupted();
+      abruptFlow(node);
     }
     else {
       super.visitPyCallExpression(node);
@@ -204,7 +198,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
     final PyIfPart ifPart = node.getIfPart();
     PyExpression condition = ifPart.getCondition();
-    PyAssertionEvaluator assertionEvaluator = new PyAssertionEvaluator();
+    PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
     if (condition != null) {
       condition.accept(this);
       condition.accept(assertionEvaluator);
@@ -412,19 +406,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (expression != null) {
       expression.accept(this);
     }
-// Here we process pending instructions!!!
-    myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
-      public void process(final PsiElement pendingScope, final Instruction instruction) {
-        if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
-          myBuilder.addPendingEdge(null, instruction);
-        }
-        else {
-          myBuilder.addPendingEdge(pendingScope, instruction);
-        }
-      }
-    });
-    myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
-    myBuilder.flowAbrupted();
+    abruptFlow(node);
   }
 
   @Override
@@ -558,7 +540,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   public void visitPyAssertStatement(final PyAssertStatement node) {
     super.visitPyAssertStatement(node);
-    PyAssertionEvaluator evaluator = new PyAssertionEvaluator();
+    final PyExpression[] args = node.getArguments();
+    // assert False
+    if (args.length == 1 && PyConstantExpressionEvaluator.evaluate(args[0]) == Boolean.FALSE) {
+      abruptFlow(node);
+      return;
+    }
+    PyTypeAssertionEvaluator evaluator = new PyTypeAssertionEvaluator();
     node.acceptChildren(evaluator);
     InstructionBuilder.addAssertInstructions(myBuilder, evaluator);
   }
@@ -586,4 +574,57 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       body.accept(this);
     }
   }
+
+  @Override
+  public void visitPyWithStatement(final PyWithStatement node) {
+    boolean withSelfAssertRaises = false;
+    final PyWithItem[] items = node.getWithItems();
+    if (items.length == 1){
+      final PyWithItem item = items[0];
+      final ASTNode callNode = item.getNode().findChildByType(CALL_OR_REF_EXPR);
+      if (callNode != null) {
+        final PsiElement element = callNode.getPsi();
+        if (element instanceof PyCallExpression) {
+          withSelfAssertRaises = ((PyCallExpression)element).isCalleeText(SELF_ASSERT_RAISES);
+        }
+        if (element instanceof PyReferenceExpression){
+          withSelfAssertRaises = SELF_ASSERT_RAISES.equals(element.getText());
+        }
+      }
+    }
+    super.visitPyWithStatement(node);
+    if (withSelfAssertRaises){
+      myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+        public void process(final PsiElement pendingScope, final Instruction instruction) {
+          final PsiElement element = instruction.getElement();
+          if (element == null){
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
+          else if (PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null){
+            myBuilder.addPendingEdge(node, instruction);
+          }
+          else {
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
+        }
+      });
+    }
+  }
+
+  private void abruptFlow(final PsiElement node) {
+    // Here we process pending instructions!!!
+    myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+      public void process(final PsiElement pendingScope, final Instruction instruction) {
+        if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
+          myBuilder.addPendingEdge(null, instruction);
+        }
+        else {
+          myBuilder.addPendingEdge(pendingScope, instruction);
+        }
+      }
+    });
+    myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+    myBuilder.flowAbrupted();
+  }
+
 }

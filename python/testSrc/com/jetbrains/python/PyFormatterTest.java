@@ -8,43 +8,47 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
  * @author yole
  */
 public class PyFormatterTest extends PyLightFixtureTestCase {
-  public void testBlankLineBetweenMethods() throws Exception {
+  public void testBlankLineBetweenMethods() {
     doTest();
   }
 
-  public void testBlankLineAroundClasses() throws Exception {
+  public void testBlankLineAroundClasses() {
     doTest();
   }
 
-  public void testSpaceAfterComma() throws Exception {
+  public void testSpaceAfterComma() {
     doTest();
   }
 
-  public void testPep8ExtraneousWhitespace() throws Exception {
+  public void testPep8ExtraneousWhitespace() {
     doTest();
   }
 
-  public void testPep8Operators() throws Exception {
+  public void testPep8Operators() {
     doTest();
   }
 
-  public void testPep8KeywordArguments() throws Exception {
+  public void testPep8KeywordArguments() {
     doTest();
   }
 
-  public void testUnaryMinus() throws Exception {
+  public void testUnaryMinus() {
     doTest();
   }
 
-  public void testBlankLineAfterImports() throws Exception {
+  public void testBlankLineAfterImports() {
     doTest();
   }
 
-  public void testBlankLineBeforeFunction() throws Exception {
+  public void testBlankLineBeforeFunction() {
+    doTest();
+  }
+  
+  public void testStarArgument() {  // PY-1395
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
