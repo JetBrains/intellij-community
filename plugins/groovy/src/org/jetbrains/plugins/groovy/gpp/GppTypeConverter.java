@@ -71,7 +71,7 @@ public class GppTypeConverter extends GrTypeConverter {
         return true;
       }
 
-      if (hasDefaultConstructor(lType)) {
+      if (!isMethodCallConversion(context) && hasDefaultConstructor(lType)) {
         return true;
       }
     }

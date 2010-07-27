@@ -20,9 +20,9 @@
  */
 package com.intellij.compiler.make;
 
+import com.intellij.compiler.DependencyProcessor;
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.*;
-import com.intellij.compiler.impl.javaCompiler.DependencyProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +37,6 @@ import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -390,15 +389,14 @@ public class DependencyCache {
   /**
    * @return qualified names of the classes that should be additionally recompiled
    */
-  public Pair<int[], Set<VirtualFile>> findDependentClasses(CompileContext context, Project project, Set<VirtualFile> successfullyCompiled, @Nullable final DependencyProcessor additionalProcessor)
-      throws CacheCorruptedException {
+  public Pair<int[], Set<VirtualFile>> findDependentClasses(CompileContext context, Project project, Set<VirtualFile> successfullyCompiled)
+    throws CacheCorruptedException {
 
-    markDependencies(context, project, successfullyCompiled, additionalProcessor);
+    markDependencies(context, project, successfullyCompiled);
     return new Pair<int[], Set<VirtualFile>>(myMarkedInfos.toArray(), Collections.unmodifiableSet(myMarkedFiles));
   }
 
-  private void markDependencies(CompileContext context, Project project, final Set<VirtualFile> successfullyCompiled,
-                                @Nullable final DependencyProcessor additionalProcessor) throws CacheCorruptedException {
+  private void markDependencies(CompileContext context, Project project, final Set<VirtualFile> successfullyCompiled) throws CacheCorruptedException {
     try {
       if (LOG.isDebugEnabled()) {
         LOG.debug("====================Marking dependent files=====================");
@@ -427,7 +425,7 @@ public class DependencyCache {
             ).run();
           }
           changedRetentionPolicyDependencyProcessor.checkAnnotationRetentionPolicyChanges(qName);
-          if (additionalProcessor != null) {
+          for (DependencyProcessor additionalProcessor : DependencyProcessor.EXTENSION_POINT_NAME.getExtensions()) {
             additionalProcessor.processDependencies(context, qName);
           }
         }

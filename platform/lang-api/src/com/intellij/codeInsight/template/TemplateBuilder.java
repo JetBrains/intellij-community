@@ -54,6 +54,13 @@ public interface TemplateBuilder {
   void replaceRange(TextRange rangeWithinElement, String replacementText);
 
   /**
+   * Creates a replacement box for the specified text range within the container element.
+   * @param rangeWithinElement range within the container element.
+   * @param expression the replacement expression.
+   */
+  public void replaceRange(TextRange rangeWithinElement, Expression expression);
+
+  /**
    * Shows the live template and initiates editing process.
    */
   void run();

@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -88,11 +89,19 @@ public class GroovyConstructorUsagesSearchHelper {
       @Override
       public boolean processInReadAction(PsiReference ref) {
         final PsiElement element = ref.getElement();
-        if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrNewExpression) {
-          final GrNewExpression newExpression = (GrNewExpression)element.getParent();
-          final PsiMethod resolvedConstructor = newExpression.resolveConstructor();
-          final PsiManager manager = constructor.getManager();
-          if (manager.areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) return false;
+        if (element instanceof GrCodeReferenceElement) {
+          GrNewExpression newExpression = null;
+          if (element.getParent() instanceof GrNewExpression) {
+            newExpression = (GrNewExpression)element.getParent();
+          }
+          else if (element.getParent() instanceof GrAnonymousClassDefinition) {
+            newExpression = (GrNewExpression)element.getParent().getParent();
+          }
+          if (newExpression != null) {
+            final PsiMethod resolvedConstructor = newExpression.resolveConstructor();
+            final PsiManager manager = constructor.getManager();
+            if (manager.areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) return false;
+          }
         }
         return true;
       }

@@ -81,6 +81,12 @@ public interface RefactoringSupportProvider {
   @Nullable RefactoringActionHandler getPushDownHandler();
 
   /**
+   * @return  handler for extracting members to an interface in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler
+   */
+  @Nullable RefactoringActionHandler getExtractInterfaceHandler();
+
+  /**
    * @return  handler for extracting members to some module in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */

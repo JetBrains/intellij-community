@@ -128,6 +128,12 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
                    new String[]{});
   }
 
+  public void testVarAddJavadoc() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/jars/test.jar!/"});
+  }
+
   public void testVarAddVarSource() throws Exception {
     doTestExisting(new String[]{"/variableidea/test.jar!/"},
                    new String[]{"/variableidea/test.jar!/", "/srcvariableidea/test.jar!/"},

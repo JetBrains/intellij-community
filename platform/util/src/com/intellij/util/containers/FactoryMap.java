@@ -21,11 +21,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.HashSet;
 
+import static com.intellij.util.ObjectUtils.NULL;
+
 /**
  * @author peter
  */
 public abstract class FactoryMap<K,V> implements Map<K, V> {
-  static final Object NULL = new Object();
   protected Map<K,V> myMap;
 
   protected Map<K, V> createMap() {

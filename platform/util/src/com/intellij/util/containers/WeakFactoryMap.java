@@ -18,6 +18,8 @@ package com.intellij.util.containers;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.util.ObjectUtils.NULL;
+
 /**
  * @author peter
  */
@@ -31,15 +33,15 @@ public abstract class WeakFactoryMap<T,V> {
     if (reference != null) {
       final V v = reference.get();
       if (v != null) {
-        return v == FactoryMap.NULL ? null : v;
+        return v == NULL ? null : v;
       }
     }
 
     final V value = create(key);
-    WeakReference<V> valueRef = new WeakReference<V>(value == null ? (V)FactoryMap.NULL : value);
+    WeakReference<V> valueRef = new WeakReference<V>(value == null ? (V)NULL : value);
     WeakReference<V> prevRef = myMap.putIfAbsent(key, valueRef);
     V prev = prevRef == null ? null : prevRef.get();
-    return prev == null || prev == FactoryMap.NULL? value : prev;
+    return prev == null || prev == NULL ? value : prev;
   }
 
   public final boolean containsKey(T key) {

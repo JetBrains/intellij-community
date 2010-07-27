@@ -25,6 +25,8 @@ public class ObjectUtils {
   private ObjectUtils() {
   }
 
+  public static final Object NULL = new Object();
+
   @NotNull
   public static <T> T assertNotNull(@Nullable final T t) {
     return _assertNotNull(t);
