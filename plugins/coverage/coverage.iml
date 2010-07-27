@@ -21,6 +21,8 @@
           <root url="jar://$MODULE_DIR$/lib/coverage-report.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/coverage-report-idea.jar!/" />
         </CLASSES>
+        <JAVADOC />
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="testng_rt" />
