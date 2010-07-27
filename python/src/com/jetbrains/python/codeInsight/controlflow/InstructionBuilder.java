@@ -10,19 +10,19 @@ import java.util.List;
  * @author traff
  */
 public class InstructionBuilder {
-  public static List<Instruction> buildInstructions(ControlFlowBuilder builder, List<PyAssertionEvaluator.Assertion> assertions) {
+  public static List<Instruction> buildInstructions(ControlFlowBuilder builder, List<PyTypeAssertionEvaluator.Assertion> assertions) {
     List<Instruction> result = CollectionFactory.arrayList();
-    for (PyAssertionEvaluator.Assertion def: assertions) {
+    for (PyTypeAssertionEvaluator.Assertion def: assertions) {
       processDef(builder, def, result);
     }
     return result;
   }
 
-  private static void processDef(ControlFlowBuilder builder, PyAssertionEvaluator.Assertion def, List<Instruction> result) {
+  private static void processDef(ControlFlowBuilder builder, PyTypeAssertionEvaluator.Assertion def, List<Instruction> result) {
     result.add(ReadWriteInstruction.writeType(builder, def.getElement(), def.getName()));            
   }
 
-  public static void addAssertInstructions(ControlFlowBuilder builder, PyAssertionEvaluator assertionEvaluator) {
+  public static void addAssertInstructions(ControlFlowBuilder builder, PyTypeAssertionEvaluator assertionEvaluator) {
     for (Instruction instr : buildInstructions(builder, assertionEvaluator.getDefinitions())) {
         builder.addNode(instr);
       }

@@ -10,11 +10,11 @@ import java.util.Stack;
 /**
  * @author traff
  */
-public class PyAssertionEvaluator extends PyRecursiveElementVisitor {
+public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   private Stack<Assertion> myStack = CollectionFactory.stack();
 
-  public PyAssertionEvaluator() {
+  public PyTypeAssertionEvaluator() {
   }
 
 

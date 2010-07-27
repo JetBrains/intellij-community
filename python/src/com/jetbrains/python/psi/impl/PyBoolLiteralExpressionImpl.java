@@ -17,4 +17,9 @@ public class PyBoolLiteralExpressionImpl extends PyElementImpl implements PyBool
   public PyType getType(@NotNull TypeEvalContext context) {
     return PyBuiltinCache.getInstance(this).getBoolType();
   }
+
+  @Override
+  public boolean getValue() {
+    return "True".equals(getText());
+  }
 }
