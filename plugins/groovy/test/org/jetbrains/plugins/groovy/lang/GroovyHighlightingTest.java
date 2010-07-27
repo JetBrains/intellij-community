@@ -68,7 +68,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
-  private void doTest(LocalInspectionTool... tools) throws Exception {
+  private void doTest(LocalInspectionTool... tools) {
     myFixture.enableInspections(tools);
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
   }
@@ -280,4 +280,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNumberDuplicatesInMaps() throws Exception {doTest();}
+
+  public void testMapNotAcceptedAsStringParameter()  {
+    doTest();
+  }
 }
