@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="IDEA" type="Application" factoryName="Application">
-    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+    <extension name="coverage" enabled="false" sample_coverage="true" runner="idea" merge="false" />
     <extension name="snapshooter" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
     <option name="VM_PARAMETERS" value=" -ea -Xbootclasspath/p:../out/classes/production/boot  -Xmx192m -Didea.is.internal=true -XX:MaxPermSize=150m " />

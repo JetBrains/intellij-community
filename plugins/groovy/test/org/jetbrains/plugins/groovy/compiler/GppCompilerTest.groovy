@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -56,6 +57,62 @@ class Foo implements SomeTrait {
   public Object concrete() { return null; }
 }""")
     assertEmpty(make());
+  }
+
+  public void testRecompileDependentGroovyClasses() throws Exception {
+    def a = myFixture.addFileToProject("A.gpp", """
+class A {
+  void foo() {
+    print "239"
+  }
+}
+""")
+    myFixture.addFileToProject("b.gpp", """
+new A().foo()
+""")
+    assertEmpty make()
+    assertOutput "b", "239"
+
+    VfsUtil.saveText a.virtualFile, """
+class A {
+  def foo() {
+    print "239"
+  }
+}
+"""
+
+    assertEmpty make()
+    assertOutput "b", "239"
+  }
+  
+  public void testRecompileDependentJavaClasses() throws Exception {
+    def a = myFixture.addFileToProject("A.gpp", """
+class A {
+  void foo() {
+    print "239"
+  }
+}
+""")
+    myFixture.addFileToProject("B.java", """
+public class B {
+  public static void main(String[] args) {
+    new A().foo();
+  }
+}
+""")
+    assertEmpty make()
+    assertOutput "B", "239"
+
+    VfsUtil.saveText a.virtualFile, """
+class A {
+  def foo() {
+    print "239"
+  }
+}
+"""
+
+    assertEmpty make()
+    assertOutput "B", "239"
   }
 
 }

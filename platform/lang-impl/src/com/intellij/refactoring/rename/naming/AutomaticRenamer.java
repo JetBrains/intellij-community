@@ -47,9 +47,16 @@ public abstract class AutomaticRenamer {
   }
 
   public void findUsages(List<UsageInfo> result, final boolean searchInStringsAndComments, final boolean searchInNonJavaFiles) {
+    findUsages(result, searchInStringsAndComments, searchInNonJavaFiles, null);
+  }
+
+  public void findUsages(List<UsageInfo> result,
+                         final boolean searchInStringsAndComments,
+                         final boolean searchInNonJavaFiles,
+                         List<UnresolvableCollisionUsageInfo> unresolvedUsages) {
     for (Iterator<PsiNamedElement> iterator = myElements.iterator(); iterator.hasNext();) {
       final PsiNamedElement variable = iterator.next();
-      final boolean success = findUsagesForElement(variable, result, searchInStringsAndComments, searchInNonJavaFiles);
+      final boolean success = findUsagesForElement(variable, result, searchInStringsAndComments, searchInNonJavaFiles, unresolvedUsages);
       if (!success) {
         iterator.remove();
       }
@@ -59,12 +66,17 @@ public abstract class AutomaticRenamer {
   private boolean findUsagesForElement(PsiNamedElement element,
                                        List<UsageInfo> result,
                                        final boolean searchInStringsAndComments,
-                                       final boolean searchInNonJavaFiles) {
+                                       final boolean searchInNonJavaFiles, List<UnresolvableCollisionUsageInfo> unresolvedUsages) {
     final String newName = getNewName(element);
     if (newName != null) {
       final UsageInfo[] usages = RenameUtil.findUsages(element, newName, searchInStringsAndComments, searchInNonJavaFiles, myRenames);
       for (final UsageInfo usage : usages) {
-        if (usage instanceof UnresolvableCollisionUsageInfo) return false;
+        if (usage instanceof UnresolvableCollisionUsageInfo) {
+          if (unresolvedUsages != null) {
+            unresolvedUsages.add((UnresolvableCollisionUsageInfo)usage);
+          }
+          return false;
+        }
       }
       ContainerUtil.addAll(result, usages);
     }

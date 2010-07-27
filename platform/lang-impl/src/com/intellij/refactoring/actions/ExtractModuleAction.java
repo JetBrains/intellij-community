@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.extractInterface;
 
-import com.intellij.refactoring.actions.BaseExtractModuleAction;
-import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
+package com.intellij.refactoring.actions;
+
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.refactoring.RefactoringActionHandler;
 
 /**
  * @author Dennis.Ushakov
  */
-public class ExtractInterfaceAction extends BaseExtractModuleAction {
+public class ExtractModuleAction extends ExtractSuperActionBase {
 
   @Override
-  protected boolean isEnabledOnLanguage(Language language) {
-    return language instanceof JavaLanguage;
+  protected RefactoringActionHandler getRefactoringHandler(RefactoringSupportProvider supportProvider) {
+    return supportProvider.getExtractModuleHandler();
   }
 }

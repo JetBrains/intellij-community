@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -158,17 +157,42 @@ public class EditorUtil {
   }
 
   public static int calcOffset(Editor editor, CharSequence text, int start, int end, int columnNumber, int tabSize) {
-    // If all tabs here goes before any other chars in the line we may use an optimization here.
-    boolean useOptimization = true;
+    final int maxScanIndex = Math.min(start + columnNumber + 1, end);
+    if (editor == null) {
+      return calcSoftWrapUnawareOffset(text, start, maxScanIndex, columnNumber, tabSize);
+    }
+
+    int column = 0;
+    int tabAnchor = 0;
+    SoftWrapModel softWrapModel = editor.getSoftWrapModel();
+    for (int i = start; i < maxScanIndex; i++) {
+      TextChange softWrap = softWrapModel.getSoftWrap(i);
+      if (softWrap != null) {
+        tabAnchor = softWrapModel.getSoftWrapIndentWidthInColumns(softWrap);
+      }
+      if (column >= columnNumber) {
+        return i;
+      }
+      int diff = textWidthInColumns(editor, text, i, i + 1, tabAnchor);
+      if (column + diff > columnNumber) {
+        // We want to return offset that points to the tabulation symbol if it's represented in multiple columns and target visual
+        // column points inside it.
+        return i;
+      }
+      column += diff;
+      tabAnchor += diff;
+    }
+    return end;
+  }
+
+  private static int calcSoftWrapUnawareOffset(CharSequence text, int start, int end, int columnNumber, int tabSize) {
     boolean hasNonTabs = false;
     boolean hasTabs = false;
-    final int maxScanIndex = Math.min(start + columnNumber + 1, end);
 
-    for (int i = start; i < maxScanIndex; i++) {
+    for (int i = start; i < end; i++) {
       if (text.charAt(i) == '\t') {
         hasTabs = true;
         if (hasNonTabs) {
-          useOptimization = false;
           break;
         }
       } else {
@@ -176,52 +200,18 @@ public class EditorUtil {
       }
     }
 
-    if (editor == null || useOptimization) {
-      if (!hasTabs) return Math.min(start + columnNumber, end);
+    if (!hasTabs) return Math.min(start + columnNumber, end);
 
-      int shift = 0;
-      int offset = start;
-      for (; offset < end && offset + shift < start + columnNumber; offset++) {
-        if (text.charAt(offset) == '\t') {
-          shift += getTabLength(offset + shift - start, tabSize) - 1;
-        }
-      }
-      if (offset + shift > start + columnNumber) {
-        offset--;
-      }
-
-      return offset;
-    }
-
-    EditorEx editorImpl = (EditorEx)editor;
+    int shift = 0;
     int offset = start;
-    IterationState state = new IterationState(editorImpl, offset, false);
-    int fontType = state.getMergedAttributes().getFontType();
-    int column = 0;
-    int x = 0;
-    int spaceSize = getSpaceWidth(fontType, editorImpl);
-    while (column < columnNumber) {
-      if (offset >= state.getEndOffset()) {
-        state.advance();
-
-        fontType = state.getMergedAttributes().getFontType();
-      }
-
-      char c = offset < end ? text.charAt(offset++) : ' ';
-      if (c == '\t') {
-        int prevX = x;
-        x = nextTabStop(x, editorImpl);
-        column += (x - prevX) / spaceSize;
-      }
-      else {
-        x += charWidth(c, fontType, editorImpl);
-        column++;
+    for (; offset < end && offset + shift < start + columnNumber; offset++) {
+      if (text.charAt(offset) == '\t') {
+        shift += getTabLength(offset + shift - start, tabSize) - 1;
       }
     }
-    if (column == columnNumber && offset < end && text.charAt(offset) == '\t' && (nextTabStop(x, editorImpl) - x) / spaceSize == 0) {
-      offset++;
+    if (offset + shift > start + columnNumber) {
+      offset--;
     }
-    if (column > columnNumber) offset--;
 
     return offset;
   }
@@ -239,15 +229,21 @@ public class EditorUtil {
 
   public static int calcColumnNumber(Editor editor, CharSequence text, int start, int offset, int tabSize) {
     boolean useOptimization = true;
+    if (editor != null) {
+      TextChange softWrap = editor.getSoftWrapModel().getSoftWrap(start);
+      useOptimization = softWrap == null;
+    }
     boolean hasNonTabs = false;
-    for (int i = start; i < offset; i++) {
-      if (text.charAt(i) == '\t') {
-        if (hasNonTabs) {
-          useOptimization = false;
-          break;
+    if (useOptimization) {
+      for (int i = start; i < offset; i++) {
+        if (text.charAt(i) == '\t') {
+          if (hasNonTabs) {
+            useOptimization = false;
+            break;
+          }
+        } else {
+          hasNonTabs = true;
         }
-      } else {
-        hasNonTabs = true;
       }
     }
 
@@ -315,9 +311,6 @@ public class EditorUtil {
    * @return                number of visual columns required to represent tabulation symbols that starts at the given column
    */
   public static int tabWidthInColumns(@NotNull Editor editor, int visualColumn) {
-    if (!editor.getSettings().isWhitespacesShown()) {
-      return 1;
-    }
     int tabSize = getTabSize(editor);
     int tabsNumber = visualColumn / tabSize;
     return (tabsNumber + 1) * tabSize - visualColumn;
@@ -365,12 +358,7 @@ public class EditorUtil {
         continue;
       }
 
-      if (editor.getSettings().isWhitespacesShown()) {
-        result += nextTabStop(x + result, editor) - result - x;
-      }
-      else {
-        result += getSpaceWidth(fontType, editor);
-      }
+      result += nextTabStop(x + result, editor) - result - x;
     }
     return result;
   }

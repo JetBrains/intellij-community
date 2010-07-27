@@ -21,41 +21,74 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
-public interface AbstractTestProxy {
-  DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");
-  @Deprecated @NonNls String DATA_CONSTANT = DATA_KEY.getName();
+public abstract class AbstractTestProxy extends CompositePrintable {
+  public static final DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");
+  protected Printer myPrinter = null;
 
-  boolean isInProgress();
+  public abstract boolean isInProgress();
 
-  boolean isDefect();
+  public abstract boolean isDefect();
 
   //todo?
-  boolean shouldRun();
+  public abstract boolean shouldRun();
 
-  int getMagnitude();
+  public abstract int getMagnitude();
 
-  boolean isLeaf();
+  public abstract boolean isLeaf();
 
-  boolean isInterrupted();
+  public abstract boolean isInterrupted();
 
-  boolean isPassed();
+  public abstract boolean isPassed();
 
-  String getName();
+  public abstract String getName();
 
-  Location getLocation(final Project project);
+  public abstract Location getLocation(final Project project);
 
-  Navigatable getDescriptor(final Location location);
+  public abstract Navigatable getDescriptor(final Location location);
 
-  AbstractTestProxy getParent();
+  public abstract AbstractTestProxy getParent();
 
-  List<? extends AbstractTestProxy> getChildren();
+  public abstract List<? extends AbstractTestProxy> getChildren();
 
-  List<? extends AbstractTestProxy> getAllTests();
+  public abstract List<? extends AbstractTestProxy> getAllTests();
+
+  public void fireOnNewPrintable(final Printable printable) {
+    if (myPrinter != null) {
+      myPrinter.onNewAvailable(printable);
+    }
+  }
+
+  public void setPrinter(final Printer printer) {
+    myPrinter = printer;
+    for (AbstractTestProxy testProxy : getChildren()) {
+      testProxy.setPrinter(printer);
+    }
+  }
+
+  /**
+   * Stores printable information in internal buffer and notifies
+   * proxy's printer about new text available
+   * @param printable Printable info
+   */
+  @Override
+  public void addLast(final Printable printable) {
+    super.addLast(printable);
+    fireOnNewPrintable(printable);
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    for (AbstractTestProxy proxy : getChildren()) {
+      Disposer.dispose(proxy);
+    }
+  }
 }

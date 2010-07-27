@@ -47,7 +47,7 @@ public abstract class CachedValueImpl<T> extends CachedValueBase<T> implements C
     try {
       value = getUpToDateOrNull();
       if (value != null) {
-        return value == NULL ? null : value;
+        return value == ObjectUtils.NULL ? null : value;
       }
     } finally {
       r.unlock();
@@ -58,7 +58,7 @@ public abstract class CachedValueImpl<T> extends CachedValueBase<T> implements C
     try {
       value = getUpToDateOrNull();
       if (value != null) {
-        return value == NULL ? null : value;
+        return value == ObjectUtils.NULL ? null : value;
       }
 
       CachedValueProvider.Result<T> result = myProvider.compute();

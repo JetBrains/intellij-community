@@ -18,10 +18,12 @@ package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.model.TreeCollapser;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 
@@ -35,12 +37,12 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
 
   public JUnitTreeConsoleView(final JUnitConsoleProperties properties,
                               final RunnerSettings runnerSettings,
-                              final ConfigurationPerRunnerSettings configurationSettings) {
-    super(properties);
+                              final ConfigurationPerRunnerSettings configurationSettings,
+                              final AbstractTestProxy unboundOutputRoot) {
+    super(properties, unboundOutputRoot);
     myProperties = properties;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
-    getPrinter().setCollectOutput(true);
   }
 
   protected TestResultsPanel createTestResultsPanel() {
@@ -64,7 +66,6 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
   }
 
   public void attachToModel(JUnitRunningModel model) {
-    getPrinter().setCollectOutput(false);
     myConsolePanel.getTreeView().attachToModel(model);
     model.attachToTree(myConsolePanel.getTreeView());
     myConsolePanel.setModel(model);

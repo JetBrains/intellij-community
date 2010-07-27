@@ -50,6 +50,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testExplicitMethodParameters1() throws Exception { doTest(false); }
   public void testInferenceWithBounds() throws Exception {doTest(false);}
   public void testInferenceWithSuperBounds() throws Exception {doTest(false);}
+  public void testInferenceWithUpperBoundPromotion() throws Exception {doTest(false);}
   public void testVariance() throws Exception {doTest(false);}
   public void testForeachTypes() throws Exception {doTest(false);}
   public void testRawOverridingMethods() throws Exception {doTest(false);}

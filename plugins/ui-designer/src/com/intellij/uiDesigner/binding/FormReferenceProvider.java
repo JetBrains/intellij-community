@@ -154,7 +154,12 @@ public class FormReferenceProvider extends PsiReferenceProvider {
       classReference = referencesByString[referencesByString.length - 1];
     }
 
-    processReferences(rootTag, classReference, file, processor);
+    final PsiReference finalClassReference = classReference;
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        processReferences(rootTag, finalClassReference, file, processor);
+      }
+    });
   }
 
   private static TextRange getValueRange(final XmlAttribute classToBind) {

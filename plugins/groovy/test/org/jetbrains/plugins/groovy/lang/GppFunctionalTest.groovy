@@ -375,6 +375,16 @@ s.do<caret>Smth()
     assertEquals "doSmth", ((PsiMethod) findReference().resolve()).name
   }
 
+  public void testBaseConstructorCallInMapLiteras() throws Exception {
+    configureScript """
+@Typed File foo() { ['super':['a']] }
+@Typed File goo() { <warning descr="Cannot assign 'Map' to 'File'">[:]</warning> }
+File bar() { <warning descr="Cannot assign 'Map' to 'File'">[:]</warning> }
+"""
+    myFixture.enableInspections new GroovyAssignabilityCheckInspection()
+    myFixture.checkHighlighting(true, false, false)
+  }
+
 }
 
 class GppProjectDescriptor extends DefaultLightProjectDescriptor {

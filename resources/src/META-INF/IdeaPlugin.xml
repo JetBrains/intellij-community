@@ -72,6 +72,9 @@
     <extensionPoint name="compiler.additionalCompileScopeProvider"
                     interface="com.intellij.compiler.impl.AdditionalCompileScopeProvider"/>
 
+    <extensionPoint name="compiler.makeDependencyProcessor"
+                    interface="com.intellij.compiler.DependencyProcessor"/>
+
     <extensionPoint name="debugger.codeFragmentFactory"
                     interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory"/>
 
@@ -82,7 +85,7 @@
                     interface="com.intellij.debugger.engine.JVMDebugProvider"/>
 
     <extensionPoint name="java.programPatcher"
-                    beanClass="com.intellij.execution.runners.JavaProgramPatcher"/>
+                    interface="com.intellij.execution.runners.JavaProgramPatcher"/>
 
     <extensionPoint name="OrderRootTypeUI"
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>

@@ -65,4 +65,8 @@ public abstract class XmlElementVisitor extends PsiElementVisitor {
   public void visitXmlDoctype(XmlDoctype xmlDoctype) {
     visitXmlElement(xmlDoctype);
   }
+
+  public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {
+    visitXmlElement(processingInstruction);
+  }
 }

@@ -13,58 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-
 package com.intellij.execution.testframework;
 
-
+import com.intellij.openapi.Disposable;
 
 import java.util.ArrayList;
 
 import java.util.List;
 
+public class CompositePrintable implements Printable, Disposable {
+  public static final String NEW_LINE = "\n";
 
-
-public class CompositePrintable implements Printable {
-
-  private final ArrayList<Printable> myNestedPrintables = new ArrayList<Printable>();
-
-
+  protected final ArrayList<Printable> myNestedPrintables = new ArrayList<Printable>();
 
   public void printOn(final Printer printer) {
-
     printAllOn(myNestedPrintables, printer);
-
   }
-
-
 
   public void addLast(final Printable printable) {
-
     myNestedPrintables.add(printable);
-
   }
-
-
 
   protected void clear() {
-
     myNestedPrintables.clear();
-
   }
 
-
+  public int getCurrentSize() {
+    return myNestedPrintables.size();
+  }
 
   public static <T extends Printable> void printAllOn(final List<T> printables, final Printer console) {
-
     for (final T printable : printables) {
-
       printable.printOn(console);
-
     }
-
   }
 
+  @Override
+  public void dispose() {
+    clear();
+  }
 }
 

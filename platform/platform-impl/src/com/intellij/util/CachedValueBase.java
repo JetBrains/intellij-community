@@ -35,11 +35,12 @@ import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.*;
+
 /**
  * @author Dmitry Avdeev
  */
 public abstract class CachedValueBase<T> {
-  protected static final Object NULL = new Object();
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
 
   private final MyTimedReference<T> myData = new MyTimedReference<T>();
@@ -66,7 +67,7 @@ public abstract class CachedValueBase<T> {
   }
 
   protected void setValue(final T value, final CachedValueProvider.Result<T> result) {
-    myData.setData(computeData(value == null ? (T) NULL : value, getDependencies(result)));
+    myData.setData(computeData(value == null ? (T)NULL : value, getDependencies(result)));
     if (result != null) {
       myData.setIsLocked(result.isLockValue());
     }

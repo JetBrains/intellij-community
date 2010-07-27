@@ -80,7 +80,7 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
   }
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
-    return true;
+    return contextType == CustomHighlighterTokenType.WHITESPACE;
   }
 
   public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {

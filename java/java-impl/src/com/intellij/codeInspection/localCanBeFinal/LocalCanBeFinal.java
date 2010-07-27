@@ -254,7 +254,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       if (!CodeInsightUtilBase.preparePsiElementForWrite(problem.getPsiElement())) return;
       PsiElement nameIdentifier = problem.getPsiElement();
       if (nameIdentifier == null) return;
-      PsiVariable psiVariable = (PsiVariable)nameIdentifier.getParent();
+      PsiVariable psiVariable = PsiTreeUtil.getParentOfType(nameIdentifier, PsiVariable.class, false);
       if (psiVariable == null) return;
       try {
         psiVariable.normalizeDeclaration();

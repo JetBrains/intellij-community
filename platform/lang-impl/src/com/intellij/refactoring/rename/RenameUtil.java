@@ -239,13 +239,17 @@ public class RenameUtil {
     ref.handleElementRename(newName);
   }
 
-  public static void removeConflictUsages(Set<UsageInfo> usages) {
+  @Nullable
+  public static List<UnresolvableCollisionUsageInfo> removeConflictUsages(Set<UsageInfo> usages) {
+    final List<UnresolvableCollisionUsageInfo> result = new ArrayList<UnresolvableCollisionUsageInfo>();
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
       if (usageInfo instanceof UnresolvableCollisionUsageInfo) {
+        result.add((UnresolvableCollisionUsageInfo)usageInfo);
         iterator.remove();
       }
     }
+    return result.isEmpty() ? null : result;
   }
 
   public static void addConflictDescriptions(UsageInfo[] usages, MultiMap<PsiElement, String> conflicts) {

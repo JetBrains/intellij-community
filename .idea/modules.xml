@@ -3,15 +3,14 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" filepath="$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-javaee.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-javaee.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" group="plugins/IntelliLang" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLangJava.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLangJava.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" filepath="$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/ant.iml" filepath="$PROJECT_DIR$/plugins/ant/ant.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/relaxng/relaxng.iml" filepath="$PROJECT_DIR$/plugins/relaxng/relaxng.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/boot/boot.iml" filepath="$PROJECT_DIR$/platform/boot/boot.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/bootstrap.iml" filepath="$PROJECT_DIR$/platform/bootstrap/bootstrap.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/build/build.iml" filepath="$PROJECT_DIR$/build/build.iml" />
@@ -68,6 +67,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources/platform-resources.iml" filepath="$PROJECT_DIR$/platform/platform-resources/platform-resources.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources-en/platform-resources-en.iml" filepath="$PROJECT_DIR$/platform/platform-resources-en/platform-resources-en.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties.iml" filepath="$PROJECT_DIR$/plugins/properties/properties.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/relaxng/relaxng.iml" filepath="$PROJECT_DIR$/plugins/relaxng/relaxng.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/resources/resources.iml" filepath="$PROJECT_DIR$/resources/resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/resources-en/resources-en.iml" filepath="$PROJECT_DIR$/resources-en/resources-en.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/smRunner.iml" group="platform" />

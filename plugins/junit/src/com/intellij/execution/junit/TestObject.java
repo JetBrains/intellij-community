@@ -27,6 +27,7 @@ import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
 import com.intellij.execution.junit2.ui.TestsPacketsReceiver;
 import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.junit2.ui.model.RootTestInfo;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -258,15 +259,18 @@ public abstract class TestObject implements JavaCommandLine {
     for(final RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.handleStartProcess(myConfiguration, handler);
     }
+    final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration);
-    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings());
+    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings(), unboundOutputRoot);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
+    unboundOutputRoot.setPrinter(consoleView.getPrinter());
 
     final TestsPacketsReceiver packetsReceiver = new TestsPacketsReceiver(consoleView) {
       @Override
       public void notifyStart(TestProxy root) {
         super.notifyStart(root);
+        unboundOutputRoot.addChild(root);
         final JUnitRunningModel model = getModel();
         if (model != null) {
           handler.getOut().setDispatchListener(model.getNotifier());
@@ -308,11 +312,17 @@ public abstract class TestObject implements JavaCommandLine {
         final String text = event.getText();
         final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
         final TestProxy currentTest = packetsReceiver.getCurrentTest();
+        final Printable printable = new Printable() {
+          public void printOn(final Printer printer) {
+            printer.print(text, consoleViewType);
+          }
+        };
+
         if (currentTest != null) {
-          currentTest.onOutput(text, consoleViewType);
+          currentTest.addLast(printable);
         }
         else {
-          consoleView.getPrinter().onNewAvailable(new ExternalOutput(text, consoleViewType));
+          unboundOutputRoot.addLast(printable);
         }
       }
     });

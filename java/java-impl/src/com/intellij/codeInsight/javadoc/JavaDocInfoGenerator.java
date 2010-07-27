@@ -46,9 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1290,32 +1288,26 @@ public class JavaDocInfoGenerator {
     LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags =
       new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
 
-    LinkedList<PsiClassType> holder = new LinkedList<PsiClassType>(Arrays.asList(method.getThrowsList().getReferencedTypes()));
+    final List<PsiClassType> declaredThrows = new ArrayList<PsiClassType>(Arrays.asList(method.getThrowsList().getReferencedTypes()));
 
     for (int i = localTags.length - 1; i > -1; i--) {
       PsiDocTagValue valueElement = localTags[i].getValueElement();
 
       if (valueElement != null) {
-        boolean contains = false;
-        for (PsiClassType classType : holder) {
+        for (Iterator<PsiClassType> iterator = declaredThrows.iterator(); iterator.hasNext();) {
+          PsiClassType classType = iterator.next();
           if (Comparing.strEqual(valueElement.getText(), classType.getClassName())) {
-            contains = true;
+            iterator.remove();
             break;
           }
         }
-        if (contains) continue;
-        try {
-          PsiClassType t = (PsiClassType)JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
-            .createTypeFromText(valueElement.getText(), method);
 
-          if (!holder.contains(t)) {
-            holder.addFirst(t);
-          }
-        } catch(IncorrectOperationException e) {} // nonvalid type
+        collectedTags.addFirst(new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(localTags[i], ourEmptyProvider));
       }
     }
 
-    PsiClassType[] trousers = holder.toArray(new PsiClassType[holder.size()]);
+
+    PsiClassType[] trousers = declaredThrows.toArray(new PsiClassType[declaredThrows.size()]);
 
     for (PsiClassType trouser : trousers) {
       if (trouser != null) {

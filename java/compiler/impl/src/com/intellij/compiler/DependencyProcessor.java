@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.testframework.ui;
+package com.intellij.compiler;
 
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.ChangingPrintable;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
- * @author Roman Chernyatchik
+ * @author Eugene Zhuravlev
+ *         Date: Aug 19, 2008
  */
-public interface PrintableTestProxy extends AbstractTestProxy, ChangingPrintable {
-  String NEW_LINE = "\n";
-
-  boolean isRoot();
+public interface DependencyProcessor {
+  ExtensionPointName<DependencyProcessor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.compiler.makeDependencyProcessor");
+  
+  void processDependencies(CompileContext context, int classQualifiedName);
 }

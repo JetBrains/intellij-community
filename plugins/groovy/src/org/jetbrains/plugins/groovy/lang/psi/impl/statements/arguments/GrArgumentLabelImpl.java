@@ -103,7 +103,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     }
 
     final IElementType elemType = element.getNode().getElementType();
-    if (GroovyTokenTypes.mIDENT == elemType) {
+    if (GroovyTokenTypes.mIDENT == elemType || GroovyTokenTypes.KEYWORDS.contains(elemType)) {
       return element.getText();
     }
 

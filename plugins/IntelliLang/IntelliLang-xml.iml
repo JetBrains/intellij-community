@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="xpath" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="Jaxen" level="project" />
-    <orderEntry type="module" module-name="IntelliLangJava" />
+    <orderEntry type="module" module-name="IntelliLang" />
   </component>
   <component name="copyright">
     <Base>

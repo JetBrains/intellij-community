@@ -356,7 +356,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   }
 
   private String getClassName() {
-    return ((LabeledComponent<TextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.CLASS).getComponent()).getText();
+    return ((LabeledComponent<TextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.CLASS)).getComponent().getText();
   }
 
   private void setPackage(final PsiPackage aPackage) {

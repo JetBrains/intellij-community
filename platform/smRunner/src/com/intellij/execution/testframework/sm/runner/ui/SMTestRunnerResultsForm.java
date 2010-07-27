@@ -26,7 +26,6 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeStructure;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.openapi.Disposable;
@@ -344,7 +343,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
         //e.g. it is focused. Otherwise it is side effect of selecting proxy in
         //try by other component
         //if (myTreeView.isFocusOwner()) {
-        @Nullable final PrintableTestProxy selectedProxy = (PrintableTestProxy)getTreeView().getSelectedTest();
+        @Nullable final SMTestProxy selectedProxy = (SMTestProxy)getTreeView().getSelectedTest();
         listener.onSelected(selectedProxy, SMTestRunnerResultsForm.this, SMTestRunnerResultsForm.this);
         //}
       }

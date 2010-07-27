@@ -16,11 +16,9 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.sm.runner.ProxyFilters;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
@@ -79,7 +77,7 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
     }
   }
 
-  public void onSelected(@Nullable final PrintableTestProxy selectedTestProxy,
+  public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
                          @NotNull final TestResultsViewer viewer,
                          @NotNull final TestFrameworkRunningModel model) {
     //TODO: tests o "onSelected"

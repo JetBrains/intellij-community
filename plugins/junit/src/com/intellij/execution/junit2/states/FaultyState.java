@@ -20,8 +20,9 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.execution.stacktrace.StackTraceLine;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.pom.Navigatable;
@@ -44,11 +45,11 @@ public class FaultyState extends ReadableState {
   }
 
   public void printOn(final Printer printer) {
-    printer.print(PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
     printer.mark();
     for (int i = 0; i < myMessages.size(); i++) {
       printExceptionHeader(printer, myMessages.get(i));
-      printer.print(myStackTraces.get(i) + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+      printer.print(myStackTraces.get(i) + CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
     }
   }
 

@@ -819,7 +819,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             if (!JavaPsiFacade.getInstance(element.getProject()).getResolveHelper()
               .isAccessible(method, modifierList, element, accessObjectClass, null)) {
               String message =
-                RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
+                RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                           RefactoringUIUtil.getDescription(method, true),
                                           myChangeInfo.getNewVisibility(),
                                           RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));

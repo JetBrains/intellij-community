@@ -20,6 +20,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,8 +45,21 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     super(project);
     myModules = modules;
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final Set<Sdk> processedSdk = new THashSet<Sdk>();
+    final Set<Library> processedLibraries = new THashSet<Library>();
+    final Set<Module> processedModules = new THashSet<Module>();
+    final Condition<OrderEntry> condition = new Condition<OrderEntry>() {
+      @Override
+      public boolean value(OrderEntry orderEntry) {
+        if (orderEntry instanceof ModuleOrderEntry) {
+          final Module module = ((ModuleOrderEntry)orderEntry).getModule();
+          return module != null && processedModules.add(module);
+        }
+        return true;
+      }
+    };
     for (Module module : modules) {
-      buildEntries(module);
+      buildEntries(module, processedModules, processedLibraries, processedSdk, condition);
     }
   }
 
@@ -60,13 +75,20 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return that.myModules.equals(myModules);
   }
 
-  private void buildEntries(@NotNull final Module module) {
-    final Set<Sdk> myJDKProcessed = new THashSet<Sdk>();
+  private void buildEntries(@NotNull final Module module,
+                            @NotNull final Set<Module> processedModules,
+                            @NotNull final Set<Library> processedLibraries,
+                            @NotNull final Set<Sdk> processedSdk,
+                            Condition<OrderEntry> condition) {
+    if (!processedModules.add(module)) return;
 
-    ModuleRootManager.getInstance(module).orderEntries().recursively().process(new RootPolicy<LinkedHashSet<VirtualFile>>() {
+    ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<LinkedHashSet<VirtualFile>>() {
       public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
                                                                final LinkedHashSet<VirtualFile> value) {
-        ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
+        final Library library = libraryOrderEntry.getLibrary();
+        if (library != null && processedLibraries.add(library)) {
+          ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
+        }
         return value;
       }
 
@@ -77,8 +99,10 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       }
 
       public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
-        if (!myJDKProcessed.add(jdkOrderEntry.getJdk())) return value;
-        ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
+        final Sdk jdk = jdkOrderEntry.getJdk();
+        if (jdk != null && processedSdk.add(jdk)) {
+          ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
+        }
         return value;
       }
     }, myEntries);

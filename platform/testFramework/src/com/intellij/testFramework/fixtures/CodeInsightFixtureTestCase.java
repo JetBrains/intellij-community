@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
@@ -82,5 +83,9 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
 
   protected Editor getEditor() {
     return myFixture.getEditor();
+  }
+
+  protected PsiFile getFile() {
+    return myFixture.getFile();
   }
 }

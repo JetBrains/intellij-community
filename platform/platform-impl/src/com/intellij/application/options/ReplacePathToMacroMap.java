@@ -37,16 +37,28 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
       if (idx1 != idx2) return idx1 - idx2;
 
-      return o2.getKey().length() - o1.getKey().length();
+      return stripPrefix(o2.getKey()).length() - stripPrefix(o1.getKey()).length();
     }
 
     private int getIndex(final Map.Entry<String, String> s) {
-      if (s.getValue().indexOf("..") >= 0) return 3;
+      final String replacement = s.getValue();
+      if (replacement.indexOf("..") >= 0) return 3;
+      if (replacement.indexOf("$" + PathMacrosImpl.USER_HOME_MACRO_NAME + "$") >= 0) return 3;
 
-      if (s.getValue().indexOf("$MODULE_DIR$") >= 0) return 1;
-      if (s.getValue().indexOf("$PROJECT_DIR$") >= 0) return 1;
+      if (replacement.indexOf("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$") >= 0) return 1;
+      if (replacement.indexOf("$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$") >= 0) return 1;
       return 2;
     }
+
+    private String stripPrefix(String key) {
+      key = StringUtil.trimStart(key, "jar:");
+      key = StringUtil.trimStart(key, "file:");
+      while (key.startsWith("/")) {
+        key = key.substring(1);
+      }
+      return key;
+    }
+
   };
 
   @NonNls private static final String[] PROTOCOLS = new String[]{"file", "jar"};

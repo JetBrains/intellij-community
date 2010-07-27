@@ -19,12 +19,9 @@ package com.intellij.execution.junit2;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.events.*;
 import com.intellij.execution.junit2.info.TestInfo;
-import com.intellij.execution.junit2.segments.InputConsumer;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -36,20 +33,18 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class TestProxy extends CompositePrintable implements PrintableTestProxy, InputConsumer, ChangingPrintable {
+public class TestProxy extends AbstractTestProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.TestProxy");
 
   private final TestInfo myInfo;
   private TestState myState = TestState.DEFAULT;
-  private Printer myPrinter = Printer.DEAF;
   private final TestProxyListenersNotifier myNotifier = new TestProxyListenersNotifier();
   private Statistics myStatistics = new Statistics();
   private TestEventsConsumer myEventsConsumer;
   private int myPreviousMagnitude = -1;
   private int myStateTimestamp = 0;
-  private boolean myMarked = false;
 
-//  private ArrayList myChildren = new ArrayList();
+  //  private ArrayList myChildren = new ArrayList();
   private final FilterCache myChildren = new FilterCache();
   private TestProxy myParent = null;
   public static final Filter NOT_LEAF = Filter.LEAF.not();
@@ -62,27 +57,8 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
     return getInfo().getComment() + "." + getInfo().getName();
   }
 
-  public void onOutput(final String text, final ConsoleViewContentType contentType) {
-    if (!myMarked && contentType == ConsoleViewContentType.ERROR_OUTPUT) {
-      myPrinter.mark();
-      myMarked = true;
-    }
-    final ExternalOutput printable = new ExternalOutput(text, contentType);
-    addLast(printable);
-  }
-
-  public void addLast(final Printable printable) {
-    super.addLast(printable);
-    fireOnNewPrintable(printable);
-  }
-
-  private void fireOnNewPrintable(final Printable printable) {
-    myPrinter.onNewAvailable(printable);
-  }
-
   public void printOn(final Printer printer) {
     super.printOn(printer);
-    CompositePrintable.printAllOn(myChildren.getList(), printer);
     myState.printOn(printer);
   }
 
@@ -112,10 +88,6 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
 
   public int getStateTimestamp() {
     return myStateTimestamp;
-  }
-
-  public TestProxy getChildAt(final int childIndex) {
-    return myChildren.getList().get(childIndex);
   }
 
   public int getChildCount() {
@@ -178,22 +150,13 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
       return;//todo throw new RuntimeException("Test: "+child + " already has parent: " + child.getParent());
     myChildren.add(child);
     child.myParent = this;
-    if (myPrinter != Printer.DEAF) {
-      child.setPrintLinstener(myPrinter);
-      child.fireOnNewPrintable(child);
-    }
+    addLast(child);
+    child.setPrinter(myPrinter);
     pullEvent(new NewChildEvent(this, child));
     getState().changeStateAfterAddingChildTo(this, child);
     myNotifier.onChildAdded(this, child);
   }
 
-  public void setPrintLinstener(final Printer printer) {
-    myPrinter = printer;
-    for (Iterator iterator = myChildren.iterator(); iterator.hasNext();) {
-      final TestProxy testProxy = (TestProxy) iterator.next();
-      testProxy.setPrintLinstener(printer);
-    }
-  }
 
   public TestInfo getInfo() {
     return myInfo;
@@ -294,10 +257,6 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
     } while ((test = test.getParent()) != null);
     Collections.reverse(parents);
     return parents.toArray(new TestProxy[parents.size()]);
-  }
-
-  public boolean isRoot() {
-    return getParent() == null;
   }
 
 }

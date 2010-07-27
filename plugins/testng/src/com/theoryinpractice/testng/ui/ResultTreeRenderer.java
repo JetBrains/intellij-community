@@ -103,6 +103,13 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                     return PoolOfTestIcons.TERMINATED_ICON;
             }
         } else {
+            if (node.getChildCount() == 0) {
+              final TestProxy nodeParent = node.getParent();
+              if (nodeParent.getResultMessage().getResult() == MessageHelper.PASSED_TEST && nodeParent.isTearDownFailure()) {
+                return PoolOfTestIcons.FAILED_ICON;
+              }
+              return PoolOfTestIcons.NOT_RAN;
+            }
             boolean hasFail = false;
             boolean hasSkipped = false;
             boolean hasTerminated = false;

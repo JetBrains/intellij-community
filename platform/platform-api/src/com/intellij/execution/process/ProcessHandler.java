@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,11 +46,13 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
   private final Semaphore    myWaitSemaphore;
   private final ProcessListener myEventMulticaster;
+  private final TasksRunner myAfterStartNotifiedRunner;
 
   protected ProcessHandler() {
     myEventMulticaster = createEventMulticaster();
     myWaitSemaphore = new Semaphore();
     myWaitSemaphore.down();
+    addProcessListener(myAfterStartNotifiedRunner = new TasksRunner());
   }
 
   public void startNotify() {
@@ -86,7 +89,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   public void destroyProcess() {
-    afterStartNotified(new Runnable() {
+    myAfterStartNotifiedRunner.execute(new Runnable() {
       public void run() {
         if (myState.compareAndSet(STATE_RUNNING, STATE_TERMINATING)) {
           fireProcessWillTerminate(true);
@@ -97,7 +100,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   public void detachProcess() {
-    afterStartNotified(new Runnable() {
+    myAfterStartNotifiedRunner.execute(new Runnable() {
       public void run() {
         if (myState.compareAndSet(STATE_RUNNING, STATE_TERMINATING)) {
           fireProcessWillTerminate(false);
@@ -132,7 +135,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   private void notifyTerminated(final int exitCode, final boolean willBeDestroyed) {
-    afterStartNotified(new Runnable() {
+    myAfterStartNotifiedRunner.execute(new Runnable() {
       public void run() {
         LOG.assertTrue(isStartNotified(), "Start notify is not called");
 
@@ -173,21 +176,6 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myEventMulticaster.processWillTerminate(new ProcessEvent(this), willBeDestroyed);
   }
 
-  private void afterStartNotified(final Runnable runnable) {
-    if (isStartNotified()) {
-      runnable.run();
-    }
-    else {
-      addProcessListener(new ProcessAdapter() {
-        public void startNotified(ProcessEvent event) {
-          removeProcessListener(this);
-          runnable.run();
-        }
-      });
-      assert !isStartNotified();
-    }
-  }
-
   public boolean isStartNotified() {
     return myState.get() > STATE_INITIAL;
   }
@@ -207,5 +195,41 @@ public abstract class ProcessHandler extends UserDataHolderBase {
         return null;
       }
     });
+  }
+  
+  private final class TasksRunner extends ProcessAdapter {
+    private final List<Runnable> myPendingTasks = new ArrayList<Runnable>();
+    
+    public void startNotified(ProcessEvent event) {
+      removeProcessListener(this);
+      // at this point it is guaranteed that nothing will be added to myPendingTasks
+      runPendingTasks();
+    }
+
+    public void execute(Runnable task) {
+      if (isStartNotified()) {
+        task.run();
+      }
+      else {
+        synchronized (myPendingTasks) {
+          myPendingTasks.add(task);
+        }
+        if (isStartNotified()) {
+          runPendingTasks();
+        }
+      }
+    }
+
+    private void runPendingTasks() {
+      final Runnable[] tasks;
+      synchronized (myPendingTasks) {
+        tasks = myPendingTasks.toArray(new Runnable[myPendingTasks.size()]);
+        myPendingTasks.clear();
+      }
+      for (Runnable task : tasks) {
+        task.run();
+      }
+    }
+    
   }
 }

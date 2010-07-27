@@ -47,6 +47,4 @@ public interface BackendCompiler {
 
   void compileFinished();
 
-  @Nullable
-  DependencyProcessor getDependencyProcessor();
 }

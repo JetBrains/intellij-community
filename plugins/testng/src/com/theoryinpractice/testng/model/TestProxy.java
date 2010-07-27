@@ -21,6 +21,7 @@ import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,19 +36,17 @@ import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 /**
  * @author Hani Suleiman Date: Jul 28, 2005 Time: 10:52:51 PM
  */
-public class TestProxy implements AbstractTestProxy {
+public class TestProxy extends AbstractTestProxy {
   private final List<TestProxy> results = new ArrayList<TestProxy>();
   private TestResultMessage resultMessage;
   private String name;
   private TestProxy parent;
-  private List<Printable> output;
   private SmartPsiElementPointer psiElement;
   private boolean inProgress;
   private int myExceptionMark;
@@ -61,10 +60,6 @@ public class TestProxy implements AbstractTestProxy {
 
   public String getName() {
     return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
   }
 
   @Nullable
@@ -88,19 +83,6 @@ public class TestProxy implements AbstractTestProxy {
 
   public List<AbstractTestProxy> getResults(Filter filter) {
     return filter.select(results);
-  }
-
-  public List<Printable> getOutput() {
-    if (output != null) return output;
-    List<Printable> total = new ArrayList<Printable>();
-    for (TestProxy child : results) {
-      final List<Printable> out = child.getOutput();
-      if (total.size() > 0 && out.size() > 0) {
-        total.add(new TestNGConsoleView.Chunk("\n===============================================\n\n", ConsoleViewContentType.NORMAL_OUTPUT));
-      }
-      total.addAll(out);
-    }
-    return total;
   }
 
   public List<TestProxy> getChildren() {
@@ -172,45 +154,10 @@ public class TestProxy implements AbstractTestProxy {
     return new PsiLocation<PsiElement>(project, element);
   }
 
+  @Nullable
   public Navigatable getDescriptor(final Location location) {
     if (location == null) return null;
-    if (isNotPassed() && output != null) {
-      final PsiLocation<?> psiLocation = location.toPsiLocation();
-      final PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
-      if (containingClass != null) {
-        String containingMethod = null;
-        for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
-          final PsiMethod psiMethod = iterator.next().getPsiElement();
-          if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod.getName();
-        }
-        if (containingMethod != null) {
-          final String qualifiedName = containingClass.getQualifiedName();
-          for (Printable aStackTrace : output) {
-            if (aStackTrace instanceof TestNGConsoleView.Chunk) {
-              final String[] stackTrace = new LineTokenizer(((TestNGConsoleView.Chunk)aStackTrace).text).execute();
-              for (String line : stackTrace) {
-                final StackTraceLine stackLine = new StackTraceLine(containingClass.getProject(), line);
-                if (containingMethod.equals(stackLine.getMethodName()) && Comparing.strEqual(qualifiedName, stackLine.getClassName())) {
-                  return stackLine.getOpenFileDescriptor(containingClass.getContainingFile().getVirtualFile());
-                }
-              }
-            }
-          }
-        }
-      }
-    }
     return EditSourceUtil.getDescriptor(location.getPsiElement());
-  }
-
-  public TestProxy[] getPathFromRoot() {
-    ArrayList<TestProxy> arraylist = new ArrayList<TestProxy>();
-    TestProxy testproxy = this;
-    do {
-      arraylist.add(testproxy);
-    }
-    while ((testproxy = testproxy.getParent()) != null);
-    Collections.reverse(arraylist);
-    return arraylist.toArray(new TestProxy[arraylist.size()]);
   }
 
   @Override
@@ -218,9 +165,11 @@ public class TestProxy implements AbstractTestProxy {
     return name + ' ' + results;
   }
 
-  public void addResult(TestProxy proxy) {
+  public void addChild(TestProxy proxy) {
     results.add(proxy);
     proxy.setParent(this);
+    proxy.setPrinter(myPrinter);
+    addLast(proxy);
   }
 
   public void setParent(TestProxy parent) {
@@ -229,10 +178,6 @@ public class TestProxy implements AbstractTestProxy {
 
   public TestProxy getParent() {
     return parent;
-  }
-
-  public void setOutput(List<Printable> output) {
-    this.output = output;
   }
 
   public boolean isNotPassed() {
@@ -275,24 +220,23 @@ public class TestProxy implements AbstractTestProxy {
     return null;
   }
 
-  public boolean childExists(String child) {
-    for (int count = 0; count < getChildCount(); count++) {
-      if (child.equals(getChildAt(count).getName())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public int getExceptionMark() {
+  public int getExceptionMark() {//todo
     if (myExceptionMark == 0 && getChildCount() > 0) {
-      return (output != null ? output.size() : 0) + getChildAt(0).getExceptionMark();
+      return getChildAt(0).getExceptionMark();
     }
     return myExceptionMark;
   }
 
   public void setExceptionMark(int exceptionMark) {
     myExceptionMark = exceptionMark;
+  }
+
+  @Override
+  public void printOn(Printer printer) {
+    for (int i = 0; i < myNestedPrintables.size(); i++) {
+      if (i == myExceptionMark && i > 0) printer.mark();
+      myNestedPrintables.get(i).printOn(printer);
+    }
   }
 
   public boolean isInterrupted() {

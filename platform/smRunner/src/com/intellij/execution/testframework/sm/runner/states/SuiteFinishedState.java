@@ -15,9 +15,10 @@
  */
 package com.intellij.execution.testframework.sm.runner.states;
 
+import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import org.jetbrains.annotations.NonNls;
 
@@ -105,7 +106,7 @@ public abstract class SuiteFinishedState extends AbstractState {
     public void printOn(final Printer printer) {
       super.printOn(printer);
 
-      final String msg = EMPTY_SUITE_TEXT + PrintableTestProxy.NEW_LINE;
+      final String msg = EMPTY_SUITE_TEXT + CompositePrintable.NEW_LINE;
       printer.print(msg, ConsoleViewContentType.SYSTEM_OUTPUT);
     }
 

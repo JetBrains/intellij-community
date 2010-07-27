@@ -17,12 +17,18 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.light.LightElement;
@@ -39,6 +45,7 @@ import com.intellij.refactoring.util.RelatedUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
@@ -46,6 +53,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.util.*;
 
 public class RenameProcessor extends BaseRefactoringProcessor {
@@ -65,6 +74,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private NonCodeUsageInfo[] myNonCodeUsages = new NonCodeUsageInfo[0];
   private final List<AutomaticRenamerFactory> myRenamerFactories = new ArrayList<AutomaticRenamerFactory>();
   private final List<AutomaticRenamer> myRenamers = new ArrayList<AutomaticRenamer>();
+  private final List<UnresolvableCollisionUsageInfo> mySkippedUsages = new ArrayList<UnresolvableCollisionUsageInfo>();
 
   public RenameProcessor(Project project,
                          PsiElement element,
@@ -139,8 +149,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         return false;
       }
     }
-    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
-    RenameUtil.removeConflictUsages(usagesSet);
 
     final List<UsageInfo> variableUsages = new ArrayList<UsageInfo>();
     if (!myRenamers.isEmpty()) {
@@ -174,10 +182,13 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (!variableUsages.isEmpty()) {
-      usagesSet.addAll(variableUsages);
-      refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
+    final Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
+    usagesSet.addAll(variableUsages);
+    final List<UnresolvableCollisionUsageInfo> conflictUsages = RenameUtil.removeConflictUsages(usagesSet);
+    if (conflictUsages != null) {
+      mySkippedUsages.addAll(conflictUsages);
     }
+    refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
 
     prepareSuccessful();
     return true;
@@ -192,7 +203,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     final Runnable runnable = new Runnable() {
       public void run() {
         for (final AutomaticRenamer renamer : myRenamers) {
-          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences);
+          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages);
         }
       }
     };
@@ -326,6 +337,32 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
     myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
+    if (!mySkippedUsages.isEmpty()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
+            if (ideFrame != null) {
+
+              StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
+              HyperlinkListener listener = new HyperlinkListener() {
+                public void hyperlinkUpdate(HyperlinkEvent e) {
+                  if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+                  Messages.showMessageDialog("<html>" +
+                                             StringUtil.join(mySkippedUsages, new Function<UnresolvableCollisionUsageInfo, String>() {
+                                               public String fun(UnresolvableCollisionUsageInfo unresolvableCollisionUsageInfo) {
+                                                 return unresolvableCollisionUsageInfo.getDescription();
+                                               }
+                                             }, "<br>") +
+                                             "</html>", "Don't panic! They are safe to skip", null);
+                }
+              };
+              statusBar.notifyProgressByBalloon(MessageType.WARNING, "<html><body>Unable to rename certain usages. <a href=\"\">Browse</a></body></html>", null, listener);
+            }
+          }
+        }, ModalityState.NON_MODAL);
+      }
+    }
   }
 
   protected void performPsiSpoilingRefactoring() {

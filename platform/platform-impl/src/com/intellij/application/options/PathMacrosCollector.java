@@ -22,7 +22,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -37,10 +36,6 @@ public class PathMacrosCollector extends PathMacroMap {
 
   private final Matcher myMatcher;
 
-  private static final Set<String> ourSystemMacroNames = new HashSet<String>(
-    Arrays.asList(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathMacrosImpl.MODULE_DIR_MACRO_NAME, PathMacrosImpl.PROJECT_DIR_MACRO_NAME
-      //, PathMacrosImpl.USER_HOME_MACRO_NAME
-    ));
   private static final String FILE_PROTOCOL = "file:";
   private static final String JAR_PROTOCOL = "jar:";
 
@@ -48,15 +43,12 @@ public class PathMacrosCollector extends PathMacroMap {
     myMatcher = MACRO_PATTERN.matcher("");
   }
 
-  public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter) {
-    return getMacroNames(root, filter, null);
-  }
-
   public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter, @Nullable final NotNullFunction<Object, Boolean> recursiveFilter, @NotNull final PathMacros pathMacros) {
     final PathMacrosCollector collector = new PathMacrosCollector();
     collector.substitute(root, true, false, filter, recursiveFilter);
     final HashSet<String> result = new HashSet<String>(collector.myMacroMap.keySet());
-    result.removeAll(ourSystemMacroNames);
+    result.removeAll(pathMacros.getSystemMacroNames());
+    result.removeAll(pathMacros.getLegacyMacroNames());
     result.removeAll(PathMacrosImpl.getToolMacroNames());
     result.removeAll(pathMacros.getIgnoredMacroNames());
     return result;

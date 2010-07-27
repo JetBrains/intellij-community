@@ -78,11 +78,11 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
 
   public void testIsRoot() {
     final SMTestProxy rootTest = createTestProxy("root");
-    assertTrue(rootTest.isRoot());
+    assertTrue(rootTest.getParent() == null);
 
     rootTest.addChild(mySimpleTest);
 
-    assertFalse(mySimpleTest.isRoot());
+    assertFalse(mySimpleTest.getParent() == null);
   }
 
   public void testTestStarted() {

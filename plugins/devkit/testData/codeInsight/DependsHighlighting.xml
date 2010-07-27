@@ -2,7 +2,7 @@
     <id>com.intellij.myPlugin</id>
 
   <depends>com.intellij</depends>
-  <depends>com.intellij.modules.vcs</depends> <!-- a hack -->
+  <depends>com.intellij.modules.vcs</depends>
   <depends>com.intellij.custom</depends>
   <depends><error descr="Cannot resolve plugin com.intellij.xxx">com.intellij.xxx</error></depends>
 

@@ -32,8 +32,12 @@ public interface BaseJspFile extends XmlFile {
   boolean isTagPage();
 
   XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind, final boolean searchInIncludes);
-  XmlTag createDirective(XmlTag context, JspDirectiveKind page);
+  XmlTag createDirective(XmlTag context, JspDirectiveKind directiveKind);
 
+  /**
+   * Method with a bad name. Returns file corresponding to getTemplateDataLanguage() method of ViewProvider
+   * @see com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider#getTemplateDataLanguage()
+   */
   PsiFile getBaseLanguageRoot();
   /**
    * @return file which the errorPage directive references,

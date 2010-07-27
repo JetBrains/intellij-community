@@ -230,7 +230,8 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     }
 
     public Icon getIcon(boolean open) {
-      return open ? myIconOpen.getIcon() : myIconClosed.getIcon();
+      final ComputableIcon computableIcon = open ? myIconOpen : myIconClosed;
+      return computableIcon == null? null : computableIcon.getIcon();
     }
   }
 }
