@@ -164,13 +164,13 @@ class ProjectBuilder {
   }
 
   def compile(ModuleChunk chunk, String dst, boolean tests) {
-    if (dst == null) {
-      project.error("${tests ? 'Test output' : 'Output'} path for module $chunk is not specified")
-    }
     List sources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
 
     if (sources.isEmpty()) return
 
+    if (dst == null) {
+      project.error("${tests ? 'Test output' : 'Output'} path for module $chunk is not specified")
+    }
     def ant = binding.ant
     ant.mkdir dir: dst
 
