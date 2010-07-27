@@ -178,12 +178,11 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPySimplifyBooleanCheckInspection() throws Throwable {
-    LocalInspectionTool inspection = new PySimplifyBooleanCheckInspection();
-    doTest(getTestName(false), inspection);
+  public void testPySimplifyBooleanCheckInspection() {
+    doHighlightingTest(PySimplifyBooleanCheckInspection.class);
   }
 
-  public void testPyFromFutureImportInspection() throws Throwable {
+  public void testPyFromFutureImportInspection() {
     myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
     myFixture.enableInspections(PyFromFutureImportInspection.class);
     myFixture.checkHighlighting(true, false, false);

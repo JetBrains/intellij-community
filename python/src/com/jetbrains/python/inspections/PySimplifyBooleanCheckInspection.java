@@ -1,13 +1,14 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.SimplifyBooleanCheckQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyConditionalStatementPart;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
           "False".equals(leftExpressionText) ||
           "True".equals(rightExpressionText) ||
           "False".equals(rightExpressionText)) {
-        if (TokenSet.create(PyTokenTypes.EQEQ, PyTokenTypes.IS_KEYWORD, PyTokenTypes.NE, PyTokenTypes.NE_OLD).contains(operator)) {
+        if (PyTokenTypes.EQUALITY_OPERATIONS.contains(operator)) {
           registerProblem(node);
         }
       }
