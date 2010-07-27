@@ -2,7 +2,9 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.*;
 
 /**
@@ -78,6 +80,23 @@ public class PyTypeTest extends PyLightFixtureTestCase {
                          "    def __init__(self): self.foo = None\n" +
                          "expr = C().foo");
     assertNull(type);
+  }
+
+  public void testUnicodeLiteral() {  // PY-1427
+    PyClassType type = (PyClassType) doTest("expr = u'foo'");
+    assertEquals("unicode", type.getName());
+  }
+
+  // TODO uncomment when we have a mock SDK for Python 3.x
+  public void _testBytesLiteral() {  // PY-1427
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
+    try {
+      PyClassType type = (PyClassType) doTest("expr = b'foo'");
+      assertEquals("bytes", type.getName());
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
 
   private PyType doTest(final String text) {
