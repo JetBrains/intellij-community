@@ -54,6 +54,21 @@ public class ReferenceParser {
   }
 
   @Nullable
+  public static PsiBuilder.Marker parseTypeWithEllipsis(final PsiBuilder builder, final boolean eatLastDot, final boolean wildcard) {
+    final TypeInfo typeInfo = parseTypeWithInfo(builder, eatLastDot, wildcard);
+    if (typeInfo == null) return null;
+
+    PsiBuilder.Marker type = typeInfo.marker;
+    if (builder.getTokenType() == JavaTokenType.ELLIPSIS) {
+      type = typeInfo.marker.precede();
+      builder.advanceLexer();
+      type.done(JavaElementType.TYPE);
+    }
+
+    return type;
+  }
+
+  @Nullable
   private static TypeInfo parseTypeWithInfo(final PsiBuilder builder, final boolean eatLastDot, final boolean wildcard) {
     if (builder.getTokenType() == null) return null;
 
