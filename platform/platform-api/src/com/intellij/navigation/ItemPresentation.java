@@ -33,6 +33,7 @@ public interface ItemPresentation {
    *
    * @return the object name.
    */
+  @Nullable
   String getPresentableText();
 
   /**
