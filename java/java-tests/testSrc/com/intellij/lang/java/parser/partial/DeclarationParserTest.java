@@ -44,6 +44,23 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testMissingInitializerExpression() { doParserTest("{ int field=; }", false, false); }
   //public void testMultiLineUnclosed() { doParserTest("{ int \n  Object o; }", false, false); }  // todo: implement
 
+  //public void testMethodNormal0() { doParserTest("{ void f() { } }", false, false); }  // todo: parse code block correctly
+  public void testMethodNormal1() { doParserTest("{ void f(); }", false, false); }
+  public void testUnclosed0() { doParserTest("{ void f() }", false, false); }
+  public void testUnclosed1() { doParserTest("{ void f( }", false, false); }
+  public void testUnclosed2() { doParserTest("{ void f()\n void g(); }", false, false); }
+  public void testUnclosed3() { doParserTest("{ void f(int a }", false, false); }
+  public void testUnclosed4() { doParserTest("{ void f(int a,, }", false, false); }
+  public void testUnclosed5() { doParserTest("{ void f(int a,); }", false, false); }
+  public void testGenericMethod() { doParserTest("{ public static <E> test();\n" +
+                                                 " <E> void test1();\n" +
+                                                 " <E1 extends Integer, E2 extends Runnable> String test2(); }", false, false); }
+  public void testGenericMethodErrors() { doParserTest("{ <Error sss /> test <error>(); }", false, false); }
+  public void testErrors() { doParserTest("{ public static <error descr=\"2\">protected int f1 = 0; }", false, false); }
+  public void testCompletionHack0() { doParserTest("{ <X IntelliJIdeaRulezz>\n String s = \"\"; }", false, false); }
+  public void testCompletionHack1() { doParserTest("{ <X\n String s = \"\"; }", false, false); }
+  public void testWildcardParsing() { doParserTest("{ List<? extends B> x(Collection<? super B> x); }", false, false); }
+
   private void doParserTest(final String text, final boolean isAnnotation, final boolean isEnum) {
     doParserTest(text, new Parser() {
       public void parse(final PsiBuilder builder) {

@@ -44,7 +44,7 @@ public class JavaParserUtil {
   @NotNull
   private static LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     final LanguageLevel level = builder.getUserData(LANG_LEVEL_KEY);
-    assert level != null;
+    assert level != null : builder;
     return level;
   }
 
@@ -75,7 +75,7 @@ public class JavaParserUtil {
   }
 
   public static void emptyElement(final PsiBuilder.Marker before, final IElementType type) {
-    before.precede().done(type);
+    before.precede().doneBefore(type, before);
   }
 
   public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {

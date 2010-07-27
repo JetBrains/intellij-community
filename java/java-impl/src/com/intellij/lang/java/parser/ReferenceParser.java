@@ -278,28 +278,26 @@ public class ReferenceParser {
       return null;
     }
 
-    if (expect(builder, JavaTokenType.EXTENDS_KEYWORD)) {
-      parseReferenceList(builder, JavaElementType.EXTENDS_BOUND_LIST, JavaTokenType.AND);
-    }
-    else {
-      emptyElement(builder, JavaElementType.EXTENDS_BOUND_LIST);
-    }
+    parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_BOUND_LIST, JavaTokenType.AND);
 
     param.done(JavaElementType.TYPE_PARAMETER);
     return param;
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseReferenceList(final PsiBuilder builder, final IElementType type, final IElementType delimiter) {
+  public static PsiBuilder.Marker parseReferenceList(final PsiBuilder builder, final IElementType start,
+                                                     final IElementType type, final IElementType delimiter) {
     final PsiBuilder.Marker element = builder.mark();
 
-    while (true) {
-      final PsiBuilder.Marker classReference = parseJavaCodeReference(builder, true, true, true);
-      if (classReference == null) {
-        error(builder, JavaErrorMessages.message("expected.identifier"));
-      }
-      if (!expect(builder, delimiter)) {
-        break;
+    if (expect(builder, start)) {
+      while (true) {
+        final PsiBuilder.Marker classReference = parseJavaCodeReference(builder, true, true, true);
+        if (classReference == null) {
+          error(builder, JavaErrorMessages.message("expected.identifier"));
+        }
+        if (!expect(builder, delimiter)) {
+          break;
+        }
       }
     }
 

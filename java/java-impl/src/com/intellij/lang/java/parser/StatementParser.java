@@ -16,6 +16,8 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -24,6 +26,18 @@ public class StatementParser {
 
   @Nullable
   public static PsiBuilder.Marker parseCodeBlock(final PsiBuilder builder) {
+    if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
+
+    final PsiBuilder.Marker codeBlock = builder.mark();
+    builder.advanceLexer();
+
+    // temp
+    if (builder.getTokenType() == JavaTokenType.RBRACE) {
+      builder.advanceLexer();
+      codeBlock.done(JavaElementType.CODE_BLOCK);
+      return codeBlock;
+    }
+
     // todo: implement
     throw new UnsupportedOperationException(builder.toString());
   }
