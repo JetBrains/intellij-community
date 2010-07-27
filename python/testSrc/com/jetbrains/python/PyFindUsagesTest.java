@@ -54,6 +54,11 @@ public class PyFindUsagesTest extends PyLightFixtureTestCase {
     assertUsages(usages, "<caret>parm+1");
   }
 
+  public void testUnresolvedClassInit() {   // PY-1450
+    final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/UnresolvedClassInit.py");
+    assertUsages(usages);
+  }
+
   private void assertUsages(Collection<UsageInfo> usages, String... usageTexts) {
     assertEquals(usageTexts.length, usages.size());
     List<UsageInfo> sortedUsages = new ArrayList<UsageInfo>(usages);
