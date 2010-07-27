@@ -152,7 +152,7 @@ public class FindUsagesTest extends LightGroovyTestCase {
     assertEquals(1, query.findAll().size());
   }
 
-  private void doTestImpl(String filePath, int expectedUsagesCount) throws Throwable {
+  private void doTestImpl(String filePath, int expectedUsagesCount) {
     myFixture.configureByFile(filePath);
     assertUsageCount(expectedUsagesCount);
   }
@@ -197,7 +197,11 @@ public class FindUsagesTest extends LightGroovyTestCase {
     assertEquals(2, ReferencesSearch.search(file.getTopStatements()[0]).findAll().size());
   }
 
-  private void doSuperMethodTest(String... firstParameterTypes) throws Exception {
+  public void testConstructorUsageInAnonymousClass() {
+    doTestImpl("A.groovy", 1);
+  }
+
+  private void doSuperMethodTest(String... firstParameterTypes) {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     final GroovyFile file = (GroovyFile)myFixture.getFile();
     final GrTypeDefinition psiClass = (GrTypeDefinition)file.getClasses()[0];
