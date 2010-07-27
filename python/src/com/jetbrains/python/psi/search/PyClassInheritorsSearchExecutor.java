@@ -50,15 +50,13 @@ public class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, P
                                                                        ProjectScope.getAllScope(project));
     for(PyClass candidate: candidates) {
       final PyClass[] classes = candidate.getSuperClasses();
-      if (classes != null) {
-        for(PyClass superClassCandidate: classes) {
-          if (superClassCandidate.isEquivalentTo(superClass)) {
-            if (!consumer.process(candidate)) {
-              return false;
-            }
-            if (checkDeep && !processDirectInheritors(candidate, consumer, checkDeep, processed)) return false;
-            break;
+      for(PyClass superClassCandidate: classes) {
+        if (superClassCandidate.isEquivalentTo(superClass)) {
+          if (!consumer.process(candidate)) {
+            return false;
           }
+          if (checkDeep && !processDirectInheritors(candidate, consumer, checkDeep, processed)) return false;
+          break;
         }
       }
     }
