@@ -3,6 +3,7 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/xerces.jar!/" />
     </CLASSES>
+    <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/src/Xerces-J-src.2.8.1.zip!/xerces-2_8_1/src" />
     </SOURCES>
