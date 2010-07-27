@@ -69,12 +69,6 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (callsLocals(owner)) return;
 
     // If method overrides others or is overridden, do not mark parameters as unused if they are
-    boolean parametersCanBeUnused = true;
-    if (owner instanceof PyFunction) {
-      parametersCanBeUnused = PySuperMethodsSearch.search(((PyFunction)owner)).findFirst() == null &&
-                              PyOverridingMethodsSearch.search((PyFunction) owner, true).findFirst() == null;
-    }
-
     final Scope scope = owner.getScope();
     final ControlFlow flow = owner.getControlFlow();
     final Instruction[] instructions = flow.getInstructions();
@@ -107,7 +101,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
         final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
         // WriteAccess
-        if (access.isWriteAccess() && (parametersCanBeUnused || !isParameter(element))) {
+        if (access.isWriteAccess()) {
           if (!myUsedElements.contains(element)){
             myUnusedElements.add(element);
           }
@@ -215,13 +209,12 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private static boolean isParameter(PsiElement element) {
-    return element != null && (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter);
-  }
-
   void registerProblems() {
     final UnusedLocalFilter[] filters = Extensions.getExtensions(UnusedLocalFilter.EP_NAME);
     // Register problems
+
+    Set<PyFunction> functionsWithInheritors = new  HashSet<PyFunction>();
+
     for (PsiElement element : myUnusedElements) {
       boolean ignoreUnused = false;
       for (UnusedLocalFilter filter : filters) {
@@ -230,7 +223,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
       if (ignoreUnused) continue;
-      
+
       // Local function
       if (element instanceof PyFunction){
         registerWarning(((PyFunction)element).getNameIdentifier(),
@@ -252,6 +245,13 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               continue;
             }
           }
+          PyParameterList paramList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
+          if (paramList != null && paramList.getParent() instanceof PyFunction) {
+            PyFunction func = (PyFunction) paramList.getParent();
+            if (canHaveUnusedParameters(func, functionsWithInheritors)) {
+              continue;
+            }
+          }
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name));
         }
         else {
@@ -268,6 +268,18 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
+  }
+
+  private static boolean canHaveUnusedParameters(PyFunction func, Set<PyFunction> functionsWithInheritors) {
+    if (functionsWithInheritors.contains(func)) {
+      return true;
+    }
+    if (PySuperMethodsSearch.search(func).findFirst() != null ||
+        PyOverridingMethodsSearch.search(func, true).findFirst() != null) {
+      functionsWithInheritors.add(func);
+      return true;
+    }
+    return false;
   }
 
   private boolean isTupleUnpacking(PsiElement element) {
