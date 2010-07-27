@@ -20,6 +20,11 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.refactoring.RefactoringActionHandler;
 
 public class ExtractSuperclassAction extends ExtractSuperActionBase {
+  
+  public ExtractSuperclassAction() {
+    setInjectedContext(true);
+  }
+
   @Override
   protected RefactoringActionHandler getRefactoringHandler(RefactoringSupportProvider supportProvider) {
     return supportProvider.getExtractSuperClassHandler();
