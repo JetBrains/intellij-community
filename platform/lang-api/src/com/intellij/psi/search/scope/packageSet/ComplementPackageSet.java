@@ -45,4 +45,8 @@ public class ComplementPackageSet implements PackageSet {
   public int getNodePriority() {
     return 1;
   }
+
+  public PackageSet getComplementarySet() {
+    return myComplementarySet;
+  }
 }

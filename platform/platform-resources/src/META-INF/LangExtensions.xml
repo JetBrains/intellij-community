@@ -296,6 +296,7 @@
 
   <patternDialectProvider implementation="com.intellij.packageDependencies.ui.ProjectPatternProvider" id="file"/>
   <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider"/>
+  <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
 
   <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor"/>
 

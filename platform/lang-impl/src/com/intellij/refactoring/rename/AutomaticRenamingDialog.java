@@ -24,11 +24,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.ui.EnableDisableAction;
 import com.intellij.refactoring.ui.StringTableCellEditor;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TableUtil;
@@ -248,15 +250,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         case CHECK_COLUMN:
           return Boolean.valueOf(myShouldRename[rowIndex]);
         case OLD_NAME_COLUMN:
-          final PsiNamedElement namedElement = myRenames[rowIndex];
-          String location = null;
-          if (namedElement instanceof NavigationItem) {
-            final ItemPresentation presentation = ((NavigationItem)namedElement).getPresentation();
-            if (presentation != null) {
-              location = presentation.getLocationString();
-            }
-          }
-          return namedElement.getName() + (location != null ? " " + location : "");
+          return "<html>" + RefactoringUIUtil.getDescription(myRenames[rowIndex], true) + "</html>";
         case NEW_NAME_COLUMN:
           return myNewNames[rowIndex];
         default:

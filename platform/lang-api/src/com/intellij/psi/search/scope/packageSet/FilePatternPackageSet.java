@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Pattern;
 
-public class FilePatternPackageSet implements PackageSet {
+public class FilePatternPackageSet implements PatternBasedPackageSet {
   public static final @NonNls String SCOPE_FILE = "file";
   private Pattern myModulePattern;
   private Pattern myModuleGroupPattern;
@@ -167,6 +168,21 @@ public class FilePatternPackageSet implements PackageSet {
 
     buf.append(myPathPattern);
     return buf.toString();
+  }
+
+  @Override
+  public String getPattern() {
+    return myPathPattern;
+  }
+
+  @Override
+  public String getModulePattern() {
+    return myModulePatternText;
+  }
+
+  @Override
+  public boolean isOn(String oldQName) {
+    return Comparing.strEqual(myPathPattern, oldQName);
   }
 
   public static String getRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index, final boolean useFQName) {

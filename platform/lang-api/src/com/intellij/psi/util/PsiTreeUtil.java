@@ -180,12 +180,22 @@ public class PsiTreeUtil {
   }
 
   @Nullable public static <T extends PsiElement> T findChildOfType(@NotNull final PsiElement element, @NotNull final Class<T> aClass, final boolean strict) {
+    return findChildOfAnyType(element, strict, aClass);
+  }
+
+  @Nullable public static <T extends PsiElement> T findChildOfAnyType(@NotNull final PsiElement element, @NotNull final Class<T>... classes) {
+    return findChildOfAnyType(element, true, classes);
+  }
+
+  @Nullable public static <T extends PsiElement> T findChildOfAnyType(@NotNull final PsiElement element, final boolean strict, @NotNull final Class<T>... classes) {
     PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
       @Override
       public boolean execute(PsiElement each) {
         if (strict && each == element) return true;
-        if (instanceOf(aClass, each)) {
-          return setFound(each);
+        for (Class<T> eachClass : classes) {
+          if (instanceOf(eachClass, each)) {
+            return setFound(each);
+          }
         }
         return true;
       }

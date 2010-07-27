@@ -15,25 +15,35 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
-import gnu.trove.*;
-import org.jetbrains.annotations.*;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntProcedure;
+import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -105,22 +115,27 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
 
     unusedDefs.forEach(new TIntProcedure() {
       public boolean execute(int num) {
-        final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction) flow[num];
+        final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction)flow[num];
         final PsiElement element = instruction.getElement();
+        if (element == null) return true;
+        PsiElement toHighlight = null;
         if (isLocalAssignment(element) && isUsedInToplevelFlowOnly(element)) {
           if (element instanceof GrReferenceExpression) {
             PsiElement parent = element.getParent();
-            PsiElement toHighlight = null;
             if (parent instanceof GrAssignmentExpression) {
-              toHighlight = ((GrAssignmentExpression) parent).getLValue();
-            } if (parent instanceof GrPostfixExpression) {
+              toHighlight = ((GrAssignmentExpression)parent).getRValue();
+            }
+            if (parent instanceof GrPostfixExpression) {
               toHighlight = parent;
             }
-            if (toHighlight == null) toHighlight = element;
-            problemsHolder.registerProblem(toHighlight, GroovyInspectionBundle.message("unused.assignment.tooltip"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-          } else if (element instanceof GrVariable) {
-            problemsHolder.registerProblem(((GrVariable) element).getNameIdentifierGroovy(), GroovyInspectionBundle.message("unused.assignment.tooltip"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           }
+          else if (element instanceof GrVariable) {
+            toHighlight = ((GrVariable)element).getInitializerGroovy();
+            if (toHighlight == null) toHighlight = ((GrVariable)element).getNameIdentifierGroovy();
+          }
+          if (toHighlight == null) toHighlight = element;
+          problemsHolder.registerProblem(toHighlight, GroovyInspectionBundle.message("unused.assignment.tooltip"),
+                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }
         return true;
       }

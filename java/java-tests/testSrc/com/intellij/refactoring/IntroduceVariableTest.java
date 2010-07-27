@@ -198,6 +198,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testAndAndSubexpression() throws Exception {
     doTest(new MockIntroduceVariableHandler("ab", true, true, false, "boolean"));
   }
+  
+  public void testSubexpressionWithSpacesInSelection() throws Exception {
+    doTest(new MockIntroduceVariableHandler("ab", true, true, false, "boolean"));
+  }
 
   public void testDuplicatesAnonymousClassCreationWithSimilarParameters () throws Exception {
     doTest(new MockIntroduceVariableHandler("foo1", true, true, false, "Foo"));
