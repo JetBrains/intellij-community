@@ -21,6 +21,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   @NotNull
   public ASTNode parse(final IElementType root, final PsiBuilder builder) {
     myBuilder = builder;
+    builder.setDebugMode(true);
     final PsiBuilder.Marker fileMarker = mark();
     parseFile();
     assert myBuilder.eof() : "Not all tokens were passed.";
@@ -45,6 +46,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       advanceLexer();
     }
     parseStatements(0);
+    dropEolMarker();
     marker.done(YAMLElementTypes.DOCUMENT);
   }
 
@@ -142,6 +144,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       }
       parseSingleStatement(0);
     }
+    dropEolMarker();
     marker.done(YAMLElementTypes.HASH);
   }
 
@@ -154,6 +157,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       }
       parseSingleStatement(0);
     }
+    dropEolMarker();
     marker.done(YAMLElementTypes.ARRAY);
   }
 

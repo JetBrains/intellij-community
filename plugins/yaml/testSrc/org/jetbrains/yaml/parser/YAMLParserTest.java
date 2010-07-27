@@ -87,6 +87,18 @@ public class YAMLParserTest extends LightPlatformTestCase {
            "  avg:  0.288");
   }
 
+  public void testBalance() throws Throwable {
+    doTest("runningTime: 150000\n" +
+           "scenarios:\n" +
+           "    voice_bundle_change: {\n" +
+           "        dataCycling: true\n" +
+           "    }\n" +
+           "    smart_overview: {\n" +
+           "        dataCycling: true\n" +
+           "    }");
+  }
+
+
   public void testValue_injection() throws Throwable {
     doTest("key:\n" + "    one: 1 text\n" + "    other: some {{count}} text");
   }
