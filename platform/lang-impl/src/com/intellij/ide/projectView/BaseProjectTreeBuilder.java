@@ -81,7 +81,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       batch(new Progressive() {
         public void run(@NotNull ProgressIndicator indicator) {
           final Ref<Object> target = new Ref<Object>();
-          _select(value, finalVFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), cb, indicator, target, focusRequestor);
+          _select(value, finalVFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), cb, indicator, target, focusRequestor, false);
           cb.doWhenDone(new Runnable() {
             public void run() {
               result.setDone(target.get());
@@ -178,7 +178,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       public void run() {
         batch(new Progressive() {
           public void run(@NotNull ProgressIndicator indicator) {
-            _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor);
+            _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
           }
         });
       }
@@ -190,13 +190,14 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   private void _select(Object element,
-                       VirtualFile file,
+                       final VirtualFile file,
                        final boolean requestFocus,
                        final Condition<AbstractTreeNode> nonStopCondition,
                        final ActionCallback result,
-                       ProgressIndicator indicator,
+                       final ProgressIndicator indicator,
                        @Nullable final Ref<Object> virtualSelectTarget,
-                       final FocusRequestor focusRequestor) {
+                       final FocusRequestor focusRequestor,
+                       final boolean isSecondAttempt) {
     AbstractTreeNode alreadySelected = alreadySelectedNode(element);
 
     final Runnable onDone = new Runnable() {
@@ -226,7 +227,16 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
               onDone.run();
             }
           }
-        }).notifyWhenRejected(result);
+        }).doWhenRejected(new Runnable() {
+        @Override
+        public void run() {
+          if (isSecondAttempt) {
+            result.setRejected();
+          } else {
+            _select(file, file, requestFocus, nonStopCondition, result, indicator, virtualSelectTarget, focusRequestor, true);
+          }
+        }
+      });
     }
     else {
       if (virtualSelectTarget == null) {
