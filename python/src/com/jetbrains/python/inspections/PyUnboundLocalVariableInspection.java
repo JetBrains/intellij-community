@@ -130,14 +130,22 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           if (readAccessSeen.get()){
             return;
           }
-          if (owner instanceof PyFunction){
+          if (resolve2Scope){
+            if (owner instanceof PyFile){
+              registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", node.getName()));
+            }
+            else {
+              registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
+                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                              null,
+                              new AddGlobalQuickFix());
+            }
+          } else
+          if (owner instanceof PyFunction && PsiTreeUtil.getParentOfType(owner, PyClass.class, PyFile.class) instanceof PyFile){
             registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                             null,
                             new AddGlobalQuickFix());
-          }
-          if (owner instanceof PyFile && resolve2Scope){
-            registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", node.getName()));
           }
         }
       }
