@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
@@ -50,7 +49,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
@@ -84,14 +82,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     if (project != null) {
       try {
         final FilePath[] filePaths = myScopeInfo.getRoots(context, myActionInfo);
-        final FilePath[] roots = DescindingFilesFilter.filterDescindingFiles(filterRoots(filePaths, context), project,
-                                                                             new Convertor<Pair<FilePath, AbstractVcs>, Boolean>() {
-                                                                               public Boolean convert(Pair<FilePath, AbstractVcs> pair) {
-                                                                                 final AbstractVcs vcs = pair.getSecond();
-                                                                                 final FilePath fp = pair.getFirst();
-                                                                                 return vcs.isVersionedDirectory(fp.getVirtualFile());
-                                                                               }
-                                                                             });
+        final FilePath[] roots = DescindingFilesFilter.filterDescindingFiles(filterRoots(filePaths, context), project);
         if (roots.length == 0) {
           return;
         }

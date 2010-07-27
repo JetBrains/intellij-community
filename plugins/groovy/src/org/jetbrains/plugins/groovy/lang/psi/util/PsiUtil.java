@@ -37,6 +37,7 @@ import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
@@ -607,20 +608,26 @@ public class PsiUtil {
     return null;
   }
 
-  public static boolean mightBeLVlaue(GrExpression expr) {
-    if (expr instanceof GrParenthesizedExpression) return mightBeLVlaue(((GrParenthesizedExpression)expr).getOperand());
+  public static boolean mightBeLValue(GrExpression expr) {
+    if (expr instanceof GrParenthesizedExpression) return mightBeLValue(((GrParenthesizedExpression)expr).getOperand());
 
     if (expr instanceof GrListOrMap) {
       GrListOrMap listOrMap = (GrListOrMap)expr;
       if (listOrMap.isMap()) return false;
       GrExpression[] initializers = listOrMap.getInitializers();
       for (GrExpression initializer : initializers) {
-        if (!mightBeLVlaue(initializer)) return false;
+        if (!mightBeLValue(initializer)) return false;
       }
       return true;
     }
     if (expr instanceof GrTupleExpression) return true;
-    return expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty || expr instanceof GrPropertySelection;
+    if (expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty || expr instanceof GrPropertySelection) return true;
+
+    if ((expr instanceof GrThisReferenceExpression || expr instanceof GrSuperReferenceExpression) &&
+        GroovyConfigUtils.getInstance().isVersionAtLeast(expr, GroovyConfigUtils.GROOVY1_8)) {
+      return true;
+    }
+    return false;
   }
 
   public static boolean isRawMethodCall(GrMethodCallExpression call) {

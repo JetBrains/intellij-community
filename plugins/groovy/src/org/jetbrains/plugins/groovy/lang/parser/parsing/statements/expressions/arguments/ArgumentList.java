@@ -122,7 +122,7 @@ public class ArgumentList implements GroovyElementTypes {
       return true;
     }
     else if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
-             TokenSets.KEYWORD_REFERENCE_NAMES.contains(builder.getTokenType()) ||
+             KEYWORDS.contains(builder.getTokenType()) ||
              mSTRING_LITERAL.equals(builder.getTokenType()) ||
              mGSTRING_LITERAL.equals(builder.getTokenType())) {
       builder.advanceLexer();

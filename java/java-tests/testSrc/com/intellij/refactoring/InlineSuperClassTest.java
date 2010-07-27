@@ -168,6 +168,10 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     doTestMultipleSubclasses();
   }
 
+  public void testMultipleSubclassesInheritsOneBaseBase() throws Exception {
+    doTestMultipleSubclasses();
+  }
+
   private void doTestMultipleSubclasses() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {

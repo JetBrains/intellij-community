@@ -68,7 +68,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
-  private void doTest(LocalInspectionTool... tools) throws Exception {
+  private void doTest(LocalInspectionTool... tools) {
     myFixture.enableInspections(tools);
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
   }
@@ -173,8 +173,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testThisInStaticContext() throws Throwable {doTest();}
   public void testNonStaticFieldInStaticContext() throws Exception {doTest();}
   public void testLocalVariableInStaticContext() throws Exception {doTest();}
-  public void testSuperWithNotEnclosingClass() throws Throwable {doTest();}
-  public void testThisWithWrongQualifier() throws Throwable {doTest();}
+  
 
   public void testModifiersInPackageAndImportStatements() throws Throwable {
     myFixture.copyFileToProject(getTestName(false) + ".groovy", "x/"+getTestName(false)+".groovy");
@@ -280,4 +279,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNumberDuplicatesInMaps() throws Exception {doTest();}
+
+  public void testMapNotAcceptedAsStringParameter()  {
+    doTest();
+  }
 }

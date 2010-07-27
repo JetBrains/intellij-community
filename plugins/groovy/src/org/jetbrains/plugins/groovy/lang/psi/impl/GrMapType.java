@@ -109,6 +109,8 @@ public class GrMapType extends GrLiteralClassType {
   }
 
   public String getInternalCanonicalText() {
+    if (myStringEntries.size() == 0) return "[:]";
+
     List<String> components = new ArrayList<String>();
     for (String s : myStringEntries.keySet()) {
       components.add("'" + s + "':" + getInternalCanonicalText(myStringEntries.get(s)));

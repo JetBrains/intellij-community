@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -109,8 +110,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myEditorDocument = editorFactory.createDocument("");
     setLanguage(language);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
+    myConsoleEditor.setBackgroundColor(myConsoleEditor.getColorsScheme().getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
     myCurrentEditor = myConsoleEditor;
     myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), myProject);
+    myHistoryViewer.setBackgroundColor(myHistoryViewer.getColorsScheme().getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
     myPanel.add(myHistoryViewer.getComponent(), BorderLayout.NORTH);
     myPanel.add(myConsoleEditor.getComponent(), BorderLayout.CENTER);
     setupComponents();

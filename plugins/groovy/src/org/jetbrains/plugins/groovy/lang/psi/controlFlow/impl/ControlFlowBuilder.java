@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
@@ -60,7 +61,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   }
 
-  private class ExceptionInfo {
+  private static class ExceptionInfo {
     GrCatchClause myClause;
     List<InstructionImpl> myThrowers = new ArrayList<InstructionImpl>();
 
@@ -181,7 +182,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myHead = instruction;
   }
 
-  void addEdge(InstructionImpl beg, InstructionImpl end) {
+  static void addEdge(InstructionImpl beg, InstructionImpl end) {
     if (!beg.mySucc.contains(end)) {
       beg.mySucc.add(end);
     }
@@ -281,7 +282,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Nullable
   private ExceptionInfo findCatch(PsiType thrownType) {
     for (int i = myCatchedExceptionInfos.size() - 1; i >= 0; i--) {
-      final ControlFlowBuilder.ExceptionInfo info = myCatchedExceptionInfos.get(i);
+      final ExceptionInfo info = myCatchedExceptionInfos.get(i);
       final GrCatchClause clause = info.myClause;
       final GrParameter parameter = clause.getParameter();
       if (parameter != null) {
@@ -363,7 +364,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  private boolean isIncOrDecOperand(GrReferenceExpression referenceExpression) {
+  private static boolean isIncOrDecOperand(GrReferenceExpression referenceExpression) {
     final PsiElement parent = referenceExpression.getParent();
     if (parent instanceof GrPostfixExpression) return true;
     if (parent instanceof GrUnaryExpression) {
@@ -667,6 +668,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+    if (typeDefinition instanceof GrAnonymousClassDefinition) {
+      super.visitTypeDefinition(typeDefinition);
+    }
   }
 
   public void visitVariable(GrVariable variable) {
@@ -678,6 +682,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
+  @Nullable
   private InstructionImpl findInstruction(PsiElement element) {
     for (int i = myProcessingStack.size() - 1; i >= 0; i--) {
       InstructionImpl instruction = myProcessingStack.get(i);
@@ -686,7 +691,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     return null;
   }
 
-  class CallInstructionImpl extends InstructionImpl implements CallInstruction {
+  static class CallInstructionImpl extends InstructionImpl implements CallInstruction {
     private final InstructionImpl myCallee;
 
     public String toString() {
@@ -712,7 +717,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  class PostCallInstructionImpl extends InstructionImpl implements AfterCallInstruction {
+  static class PostCallInstructionImpl extends InstructionImpl implements AfterCallInstruction {
     private final CallInstructionImpl myCall;
     private RetInstruction myReturnInsn;
 
@@ -743,7 +748,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  class RetInstruction extends InstructionImpl {
+  static class RetInstruction extends InstructionImpl {
     RetInstruction(int num) {
       super(null, num);
     }

@@ -239,7 +239,7 @@
     <inspection_tool class="ObjectEqualsNull" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ObjectNotify" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ObsoleteCollection" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="ignoreLibraryArguments" value="false" />
+      <option name="ignoreRequiredObsoleteCollectionTypes" value="false" />
     </inspection_tool>
     <inspection_tool class="PointlessArithmeticExpression" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="m_ignoreExpressionsContainingConstants" value="true" />
