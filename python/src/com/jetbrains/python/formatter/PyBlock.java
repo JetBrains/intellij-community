@@ -116,7 +116,7 @@ public class PyBlock implements ASTBlock {
     }
     if (ourListElementTypes.contains(parentType)) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
-      if (!PyTokenTypes.OPEN_BRACES.contains(childType)) {
+      if (!PyTokenTypes.OPEN_BRACES.contains(childType) && !PyTokenTypes.CLOSE_BRACES.contains(childType)) {
         childAlignment = _childListAlignment;
       }
     }
@@ -134,6 +134,14 @@ public class PyBlock implements ASTBlock {
       }
       else {
         childIndent = Indent.getContinuationIndent();
+      }
+    }
+    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION) {
+      if (childType == PyTokenTypes.RBRACE) {
+        childIndent = Indent.getNoneIndent();
+      }
+      else {
+        childIndent = Indent.getNormalIndent();
       }
     }
     try { // maybe enter was pressed and cut us from a previous (nested) statement list
