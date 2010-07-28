@@ -24,6 +24,7 @@ package com.intellij.compiler.impl;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
+import com.intellij.compiler.impl.newApi.NewCompiler;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.CacheUtils;
 import com.intellij.compiler.make.DependencyCache;
@@ -560,7 +561,7 @@ public class CompileDriver {
     return CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
   }
 
-  private static class ExitStatus {
+  static class ExitStatus {
     private final String myName;
 
     private ExitStatus(@NonNls String name) {
@@ -577,10 +578,10 @@ public class CompileDriver {
     public static final ExitStatus UP_TO_DATE = new ExitStatus("UP_TO_DATE");
   }
 
-  private static class ExitException extends Exception {
+  static class ExitException extends Exception {
     private final ExitStatus myStatus;
 
-    private ExitException(ExitStatus status) {
+    ExitException(ExitStatus status) {
       myStatus = status;
     }
 
@@ -724,7 +725,7 @@ public class CompileDriver {
       boolean didSomething = false;
 
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-
+      NewCompilerRunner runner = new NewCompilerRunner(context, compilerManager, forceCompile, onlyCheckStatus);
       try {
         didSomething |= generateSources(compilerManager, context, forceCompile, onlyCheckStatus);
 
@@ -746,19 +747,23 @@ public class CompileDriver {
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, isRebuild, false, onlyCheckStatus);
+        didSomething |= runner.invokeCompilers(NewCompiler.CompileOrderPlace.CLASS_INSTRUMENTING);
 
         // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
         // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if
         // there were changes in completely independent files.
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, isRebuild, false, onlyCheckStatus);
+        didSomething |= runner.invokeCompilers(NewCompiler.CompileOrderPlace.CLASS_POST_PROCESSING);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class,
                                                       FILE_PACKAGING_COMPILER_ADAPTER_FACTORY,
                                                       isRebuild, false, onlyCheckStatus);
+        didSomething |= runner.invokeCompilers(NewCompiler.CompileOrderPlace.PACKAGING);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, FILE_PROCESSING_COMPILER_ADAPTER_FACTORY,
                                                       forceCompile, true, onlyCheckStatus);
+        didSomething |= runner.invokeCompilers(NewCompiler.CompileOrderPlace.VALIDATING);
       }
       catch (ExitException e) {
         if (LOG.isDebugEnabled()) {

@@ -29,7 +29,8 @@ public class CopyToDirectoryInstructionCreator extends IncrementalCompilerInstru
   private final String myOutputPath;
   private final @Nullable VirtualFile myOutputFile;
 
-  public CopyToDirectoryInstructionCreator(ArtifactsProcessingItemsBuilderContext context, String outputPath, @Nullable VirtualFile outputFile) {
+  public CopyToDirectoryInstructionCreator(ArtifactsProcessingItemsBuilderContext context, String outputPath,
+                                           @Nullable VirtualFile outputFile) {
     super(context);
     myOutputPath = outputPath;
     myOutputFile = outputFile;

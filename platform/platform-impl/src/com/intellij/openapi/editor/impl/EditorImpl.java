@@ -4649,7 +4649,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     public synchronized void update(int startLine, int newEndLine, int oldEndLine) {
       final int lineWidthSize = myLineWidths.size();
-      if (lineWidthSize == 0) {
+      if (lineWidthSize == 0 || myDocument.getTextLength() <= 0) {
         reset();
       }
       else {

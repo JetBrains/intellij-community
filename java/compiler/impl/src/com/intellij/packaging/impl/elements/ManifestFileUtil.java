@@ -249,13 +249,19 @@ public class ManifestFileUtil {
         VirtualFile dir = files[0];
         try {
           if (!dir.getName().equals(MANIFEST_DIR_NAME)) {
-            VirtualFile newDir = dir.findChild(MANIFEST_DIR_NAME);
-            if (newDir == null) {
-              newDir = dir.createChildDirectory(this, MANIFEST_DIR_NAME);
-            }
-            dir = newDir;
+            dir = VfsUtil.createDirectoryIfMissing(dir, MANIFEST_DIR_NAME);
           }
-          result.setResult(dir.createChildData(this, MANIFEST_FILE_NAME));
+          final VirtualFile file = dir.createChildData(this, MANIFEST_FILE_NAME);
+          final OutputStream output = file.getOutputStream(this);
+          try {
+            final Manifest manifest = new Manifest();
+            ManifestBuilder.setVersionAttribute(manifest.getMainAttributes());
+            manifest.write(output);
+          }
+          finally {
+            output.close();
+          }
+          result.setResult(file);
         }
         catch (IOException e) {
           exc.set(e);

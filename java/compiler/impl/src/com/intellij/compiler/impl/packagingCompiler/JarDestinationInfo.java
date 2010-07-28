@@ -16,9 +16,9 @@
 
 package com.intellij.compiler.impl.packagingCompiler;
 
-import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 
 /**
  * @author nik
@@ -29,10 +29,16 @@ public class JarDestinationInfo extends DestinationInfo {
   private final JarInfo myJarInfo;
 
   public JarDestinationInfo(final String pathInJar, final JarInfo jarInfo, DestinationInfo jarDestination) {
-    super(DeploymentUtil.appendToPath(jarDestination.getOutputPath(), pathInJar), jarDestination.getOutputFile(), jarDestination.getOutputFilePath());
+    super(appendPathInJar(jarDestination.getOutputPath(), pathInJar), jarDestination.getOutputFile(), jarDestination.getOutputFilePath());
     LOG.assertTrue(!pathInJar.startsWith(".."), pathInJar);
     myPathInJar = StringUtil.startsWithChar(pathInJar, '/') ? pathInJar : "/" + pathInJar;
     myJarInfo = jarInfo;
+  }
+
+  private static String appendPathInJar(String outputPath, String pathInJar) {
+    LOG.assertTrue(outputPath.length() > 0 && outputPath.charAt(outputPath.length() - 1) != '/');
+    LOG.assertTrue(pathInJar.length() > 0 && pathInJar.charAt(0) != '/');
+    return outputPath + JarFileSystem.JAR_SEPARATOR + pathInJar;
   }
 
   public String getPathInJar() {
