@@ -1660,10 +1660,20 @@ public class AbstractTreeUi {
       return result;
     }
 
+    if (myResettingToReadyNow.get()) {
+      getReady(this).notify(result);
+      return result;
+    }
+
     myResettingToReadyNow.set(true);
 
     invokeLaterIfNeeded(new Runnable() {
       public void run() {
+        if (!myResettingToReadyNow.get()) {
+          result.setDone();
+          return;
+        }
+
         Progressive[] progressives = myBatchIndicators.keySet().toArray(new Progressive[myBatchIndicators.size()]);
         for (Progressive each : progressives) {
           myBatchIndicators.remove(each).cancel();
@@ -1788,6 +1798,10 @@ public class AbstractTreeUi {
     return isReady(false);
   }
 
+  public boolean isCancelledReady() {
+    return isReady(false) && myCancelledBuild.size() > 0;
+  }
+
   public boolean isReady(boolean attempt) {
     Boolean ready = _isReady(attempt);
     return ready != null && ready.booleanValue();
@@ -1861,6 +1875,11 @@ public class AbstractTreeUi {
     try {
       try {
         myYeildingPasses.remove(pass);
+
+        if (!canInitiateNewActivity()) {
+          throw new ProcessCanceledException();
+        }
+
         runnable.run();
       }
       finally {

@@ -59,6 +59,43 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertInterruption(Interruption.invokeCancel);
   }
 
+  public void testDoubleCancelUpdate() throws Exception {
+    buildStructure(myRoot);
+
+    runAndInterrupt(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          select(new Object[] {new NodeElement("openapi")}, false, true);
+        }
+        catch (Exception e) {
+          fail();
+        }
+      }
+    }, "getChildren", new NodeElement("intellij"), Interruption.invokeCancel);
+
+    select(new NodeElement("fabrique"), false);
+
+    assertTree("-/\n"
+               + " -com\n"
+               + "  intellij\n"
+               + " -jetbrains\n"
+               + "  +[fabrique]\n"
+               + " +org\n"
+               + " +xunit\n");
+
+    updateFromRoot();
+
+    assertTree("-/\n"
+               + " -com\n"
+               + "  +intellij\n"
+               + " -jetbrains\n"
+               + "  +[fabrique]\n"
+               + " +org\n"
+               + " +xunit\n");
+
+  }
+
 
   public void testBatchUpdate() throws Exception {
     buildStructure(myRoot);
@@ -1978,6 +2015,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public void testClear() throws Exception {
       //todo
     }
+
+    @Override
+    public void testDoubleCancelUpdate() throws Exception {
+      // doesn't make sense in pass-through mode
+    }
+
 
     @Override
     public void testSelectWhenUpdatesArePending() throws Exception {
