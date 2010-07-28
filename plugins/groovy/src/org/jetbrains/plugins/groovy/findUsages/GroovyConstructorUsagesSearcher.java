@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
@@ -41,6 +42,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -82,10 +84,10 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
 
   @Override
   public void processQuery(MethodReferencesSearch.SearchParameters p, Processor<PsiReference> consumer) {
-    processConstructorUsages(p.getMethod(), p.getScope(), consumer, p.getOptimizer());
+    processConstructorUsages(p.getMethod(), p.getScope(), consumer, p.getOptimizer(), true);
   }
 
-  static void processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector) {
+  static void processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector, final boolean searchGppCalls) {
     if (!constructor.isConstructor()) return;
 
     SearchScope onlyGroovy = searchScope;
@@ -113,7 +115,20 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     ReferencesSearch.searchOptimized(clazz, searchScope, true, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
       @Override
       public boolean process(PsiReference ref, SearchRequestCollector collector) {
-        return processClassReference(ref, clazz, constructor, consumer, processedMethods, searchScope, collector);
+        final PsiElement element = ref.getElement();
+        if (element instanceof GrCodeReferenceElement) {
+          if (!processGroovyConstructorUsages((GrCodeReferenceElement)element, constructor, consumer, ref, !searchGppCalls)) {
+            return false;
+          }
+        }
+
+        if (searchGppCalls) {
+          final PsiMethod method = getMethodToSearchForCallsWithLiteralArguments(element, clazz);
+          if (method != null && processedMethods.add(method)) {
+            processGppMethodCalls(clazz, constructor, consumer, searchScope, collector, method);
+          }
+        }
+        return true;
       }
     });
 
@@ -135,14 +150,14 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   }
 
   @Nullable
-  static PsiMethod getMethodToSearchForCallsWithLiteralArguments(PsiElement element, PsiClass clazz, Set<PsiMethod> processedMethods) {
+  static PsiMethod getMethodToSearchForCallsWithLiteralArguments(PsiElement element, PsiClass targetClass) {
     final PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
     if (parameter != null) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
-      if (method != null && processedMethods.add(method) && Arrays.asList(method.getParameterList().getParameters()).contains(parameter)) {
+      if (method != null && Arrays.asList(method.getParameterList().getParameters()).contains(parameter)) {
         final PsiType parameterType = parameter.getType();
         if (parameterType instanceof PsiClassType) {
-          if (method.getManager().areElementsEquivalent(clazz, ((PsiClassType)parameterType).resolve())) {
+          if (method.getManager().areElementsEquivalent(targetClass, ((PsiClassType)parameterType).resolve())) {
             return method;
           }
         }
@@ -151,59 +166,52 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     return null;
   }
 
-  static boolean processClassReference(final PsiReference ref,
-                                               final PsiClass clazz,
-                                               final PsiMethod constructor,
-                                               final Processor<PsiReference> consumer,
-                                               final Set<PsiMethod> processedMethods, SearchScope scope, SearchRequestCollector collector) {
-    final PsiElement element = ref.getElement();
-    if (element instanceof GrCodeReferenceElement) {
-      if (!processGroovyConstructorUsages((GrCodeReferenceElement)element, constructor, consumer, ref)) {
-        return false;
-      }
+  private static void processGppMethodCalls(final PsiClass targetClass,
+                                            final PsiMethod originalTarget,
+                                            final Processor<PsiReference> originalProcessor,
+                                            SearchScope scope,
+                                            SearchRequestCollector originalCollector, @NotNull PsiMethod currentTarget) {
+    final SearchScope gppScope = getGppScope(targetClass.getProject()).intersectWith(scope);
+    final ReadActionProcessor<PsiReference> gppCallProcessor = new ReadActionProcessor<PsiReference>() {
+      @Override
+      public boolean processInReadAction(PsiReference psiReference) {
+        if (psiReference instanceof GrReferenceElement) {
+          final PsiElement parent = ((GrReferenceElement)psiReference).getParent();
+          if (parent instanceof GrCall) {
+            final GrArgumentList argList = ((GrCall)parent).getArgumentList();
+            if (argList != null) {
+              boolean checkedTypedContext = false;
 
-    }
-
-    final PsiMethod method = getMethodToSearchForCallsWithLiteralArguments(element, clazz, processedMethods);
-    if (method != null) {
-      final GlobalSearchScope gppScope = getGppScope(clazz.getProject());
-      MethodReferencesSearch.searchOptimized(method, gppScope.intersectWith(scope), true, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
-        @Override
-        public boolean process(PsiReference psiReference, SearchRequestCollector collector) {
-          if (psiReference instanceof GrReferenceElement) {
-            final PsiElement parent = ((GrReferenceElement)psiReference).getParent();
-            if (parent instanceof GrCall) {
-              final GrArgumentList argList = ((GrCall)parent).getArgumentList();
-              if (argList != null) {
-                boolean checkedTypedContext = false;
-
-                for (GrExpression argument : argList.getExpressionArguments()) {
-                  if (argument instanceof GrListOrMap && !((GrListOrMap)argument).isMap()) {
-                    if (!checkedTypedContext) {
-                      if (!GppTypeConverter.hasTypedContext(parent)) {
-                        return true;
-                      }
-                      checkedTypedContext = true;
+              for (GrExpression argument : argList.getExpressionArguments()) {
+                if (argument instanceof GrListOrMap && !((GrListOrMap)argument).isMap()) {
+                  if (!checkedTypedContext) {
+                    if (!GppTypeConverter.hasTypedContext(parent)) {
+                      return true;
                     }
+                    checkedTypedContext = true;
+                  }
 
-                    for (PsiType psiType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(argument)) {
-                      if (psiType instanceof PsiClassType &&
-                          clazz.getManager().areElementsEquivalent(clazz,((PsiClassType)psiType).resolve()) &&
-                          !checkListInstantiation(constructor, consumer, (GrListOrMap)argument, (PsiClassType)psiType)) {
-                        return false;
-                      }
+                  for (PsiType psiType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(argument)) {
+                    if (psiType instanceof PsiClassType &&
+                        targetClass.getManager().areElementsEquivalent(targetClass, ((PsiClassType)psiType).resolve()) &&
+                        !checkListInstantiation(originalTarget, originalProcessor, (GrListOrMap)argument, (PsiClassType)psiType)) {
+                      return false;
                     }
                   }
                 }
               }
             }
           }
-          return true;
         }
-      });
+        return true;
+      }
+    };
+    if (currentTarget.isConstructor()) {
+      processConstructorUsages(currentTarget, gppScope, gppCallProcessor, originalCollector, false);
     }
-
-    return true;
+    else {
+      MethodReferencesSearch.searchOptimized(currentTarget, gppScope, true, originalCollector, gppCallProcessor);
+    }
   }
 
   static GlobalSearchScope getGppScope(final Project project) {
@@ -218,7 +226,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   static boolean processGroovyConstructorUsages(GrCodeReferenceElement element,
                                                         final PsiMethod constructor,
                                                         final Processor<PsiReference> consumer,
-                                                        PsiReference ref) {
+                                                        PsiReference ref, boolean usualCallsOnly) {
     PsiElement parent = element.getParent();
 
     if (parent instanceof GrAnonymousClassDefinition) {
@@ -230,7 +238,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
         return false;
       }
     }
-    else if (parent instanceof GrTypeElement) {
+    else if (!usualCallsOnly && parent instanceof GrTypeElement) {
       final GrTypeElement typeElement = (GrTypeElement)parent;
 
       final PsiElement grandpa = typeElement.getParent();
