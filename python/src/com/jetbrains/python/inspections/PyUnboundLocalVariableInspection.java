@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
-import com.jetbrains.python.codeInsight.controlflow.PyControlFlowUtil;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -103,27 +102,27 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           final Ref<Boolean> readAccessSeen = new Ref<Boolean>(false);
           final Instruction[] instructions = owner.getControlFlow().getInstructions();
           final int number = ControlFlowUtil.findInstructionNumberByElement(instructions, node);
-          PyControlFlowUtil.iteratePrev(number, instructions, new Function<Instruction, PyControlFlowUtil.Operation>() {
-            public PyControlFlowUtil.Operation fun(final Instruction inst) {
+          ControlFlowUtil.iteratePrev(number, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
+            public ControlFlowUtil.Operation fun(final Instruction inst) {
               if (inst.num() == number){
-                return PyControlFlowUtil.Operation.NEXT;
+                return ControlFlowUtil.Operation.NEXT;
               }
               if (inst instanceof ReadWriteInstruction) {
                 final ReadWriteInstruction rwInst = (ReadWriteInstruction)inst;
                 if (name.equals(rwInst.getName())) {
                   if (scope.getDeclaredVariable(inst.getElement(), name) != null) {
-                    return PyControlFlowUtil.Operation.BREAK;
+                    return ControlFlowUtil.Operation.BREAK;
                   }
                   if (rwInst.getAccess().isWriteAccess()) {
-                    return PyControlFlowUtil.Operation.CONTINUE;
+                    return ControlFlowUtil.Operation.CONTINUE;
                   }
                   else {
                     readAccessSeen.set(true);
-                    return PyControlFlowUtil.Operation.BREAK;
+                    return ControlFlowUtil.Operation.BREAK;
                   }
                 }
               }
-              return PyControlFlowUtil.Operation.NEXT;
+              return ControlFlowUtil.Operation.NEXT;
             }
           });
           // In this case we've already inspected prev read access and shouldn't warn about this one

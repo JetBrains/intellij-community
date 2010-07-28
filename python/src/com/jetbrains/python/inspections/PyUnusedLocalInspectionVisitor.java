@@ -17,7 +17,6 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.codeInsight.controlflow.PyControlFlowUtil;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -149,37 +148,37 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             }
           }
 
-          PyControlFlowUtil
-            .iteratePrev(number, instructions, new Function<Instruction, PyControlFlowUtil.Operation>() {
-              public PyControlFlowUtil.Operation fun(final Instruction inst) {
+          ControlFlowUtil
+            .iteratePrev(number, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
+              public ControlFlowUtil.Operation fun(final Instruction inst) {
                 final PsiElement element = inst.getElement();
                 // Mark function as used
                 if (element instanceof PyFunction){
                   if (name.equals(((PyFunction)element).getName())){
                     myUsedElements.add(element);
                     myUnusedElements.remove(element);
-                    return PyControlFlowUtil.Operation.CONTINUE;
+                    return ControlFlowUtil.Operation.CONTINUE;
                   }
                 }
                 // Mark write access as used
                 else if (inst instanceof ReadWriteInstruction) {
                   final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
                   if (!name.equals(rwInstruction.getName()) || !rwInstruction.getAccess().isWriteAccess()) {
-                    return PyControlFlowUtil.Operation.NEXT;
+                    return ControlFlowUtil.Operation.NEXT;
                   }
                   // Ignore elements out of scope
                   if (element == null || !PsiTreeUtil.isAncestor(node, element, false)) {
-                    return PyControlFlowUtil.Operation.CONTINUE;
+                    return ControlFlowUtil.Operation.CONTINUE;
                   }
                   myUsedElements.add(element);
                   myUnusedElements.remove(element);
                   // In case when assignment is inside try part we should move further
                   if (PsiTreeUtil.getParentOfType(element, PyTryPart.class) != null) {
-                    return PyControlFlowUtil.Operation.NEXT;
+                    return ControlFlowUtil.Operation.NEXT;
                   }
-                  return PyControlFlowUtil.Operation.CONTINUE;
+                  return ControlFlowUtil.Operation.CONTINUE;
                 }
-                return PyControlFlowUtil.Operation.NEXT;
+                return ControlFlowUtil.Operation.NEXT;
               }
             });
         }
