@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,14 @@ import java.util.Map;
  * @author nik
  */
 public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrementalCompilerContext {
-  private boolean myCollectingEnabledItems;
-  protected final Map<VirtualFile, ArtifactPackagingProcessingItem> myItemsBySource;
+  protected final Map<VirtualFile, ArtifactCompilerCompileItem> myItemsBySource;
   private final Map<String, VirtualFile> mySourceByOutput;
   private final Map<String, JarInfo> myJarByPath;
   private final CompileContext myCompileContext;
 
   public ArtifactsProcessingItemsBuilderContext(CompileContext compileContext) {
     myCompileContext = compileContext;
-    myItemsBySource = new HashMap<VirtualFile, ArtifactPackagingProcessingItem>();
+    myItemsBySource = new HashMap<VirtualFile, ArtifactCompilerCompileItem>();
     mySourceByOutput = new HashMap<String, VirtualFile>();
     myJarByPath = new HashMap<String, JarInfo>();
   }
@@ -51,19 +50,14 @@ public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrement
     }
 
     if (checkOutputPath(destinationInfo.getOutputPath(), sourceFile)) {
-      getOrCreateProcessingItem(sourceFile).addDestination(destinationInfo, myCollectingEnabledItems);
+      getOrCreateProcessingItem(sourceFile).addDestination(destinationInfo);
       return true;
     }
     return false;
   }
 
-  public ArtifactPackagingProcessingItem[] getProcessingItems() {
-    final Collection<ArtifactPackagingProcessingItem> processingItems = myItemsBySource.values();
-    return processingItems.toArray(new ArtifactPackagingProcessingItem[processingItems.size()]);
-  }
-
-  public void setCollectingEnabledItems(boolean collectingEnabledItems) {
-    myCollectingEnabledItems = collectingEnabledItems;
+  public Collection<ArtifactCompilerCompileItem> getProcessingItems() {
+    return myItemsBySource.values();
   }
 
   public boolean checkOutputPath(final String outputPath, final VirtualFile sourceFile) {
@@ -76,7 +70,7 @@ public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrement
     return false;
   }
 
-  public ArtifactPackagingProcessingItem getItemBySource(VirtualFile source) {
+  public ArtifactCompilerCompileItem getItemBySource(VirtualFile source) {
     return myItemsBySource.get(source);
   }
 
@@ -102,10 +96,10 @@ public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrement
     return myCompileContext;
   }
 
-  public ArtifactPackagingProcessingItem getOrCreateProcessingItem(VirtualFile sourceFile) {
-    ArtifactPackagingProcessingItem item = myItemsBySource.get(sourceFile);
+  public ArtifactCompilerCompileItem getOrCreateProcessingItem(VirtualFile sourceFile) {
+    ArtifactCompilerCompileItem item = myItemsBySource.get(sourceFile);
     if (item == null) {
-      item = new ArtifactPackagingProcessingItem(sourceFile);
+      item = new ArtifactCompilerCompileItem(sourceFile);
       myItemsBySource.put(sourceFile, item);
     }
     return item;

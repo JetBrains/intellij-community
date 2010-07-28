@@ -29,7 +29,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +67,6 @@ public class CompilerManagerImpl extends CompilerManager {
     addTranslatingCompiler(new JavaCompiler(project), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
     addCompiler(new ResourceCompiler(project, compilerConfiguration));
     addCompiler(new RmicCompiler());
-    addCompiler(new IncrementalArtifactsCompiler());
 
     for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
       addCompiler(compiler);
