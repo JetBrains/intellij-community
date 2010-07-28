@@ -16,14 +16,16 @@
 
 package com.intellij.execution.impl;
 
-import com.intellij.execution.BeforeRunTask;
-import com.intellij.execution.BeforeRunTaskProvider;
-import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -64,7 +66,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   public void projectClosed() {
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public void disposeComponent() {
   }
@@ -94,53 +97,112 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   public void compileAndRun(final Runnable startRunnable,
                             final RunProfile configuration,
                             final RunProfileState state) {
-    final Runnable antAwareRunnable = new Runnable() {
-      public void run() {
-        if (configuration instanceof RunConfiguration) {
-          final RunConfiguration runConfiguration = (RunConfiguration)configuration;
-          final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+    if (configuration instanceof RunConfiguration) {
+      final RunConfiguration runConfiguration = (RunConfiguration)configuration;
+      final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
 
-          final Map<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask> activeProviders = new LinkedHashMap<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask>();
-          for (final BeforeRunTaskProvider<BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
-            final BeforeRunTask task = runManager.getBeforeRunTask(runConfiguration, provider.getId());
-            if (task != null && task.isEnabled()) {
-              activeProviders.put(provider, task);
+      final Map<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask> activeProviders = new LinkedHashMap<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask>();
+      for (final BeforeRunTaskProvider<BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
+        final BeforeRunTask task = runManager.getBeforeRunTask(runConfiguration, provider.getId());
+        if (task != null && task.isEnabled()) {
+          activeProviders.put(provider, task);
+        }
+      }
+
+      if (!activeProviders.isEmpty()) {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          public void run() {
+            ConfigurationPerRunnerSettings configurationSettings = state.getConfigurationSettings();
+            DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
+
+            final DataContext dataContext = configurationSettings != null ? SimpleDataContext
+              .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
+            for (BeforeRunTaskProvider<BeforeRunTask> provider : activeProviders.keySet()) {
+              if(!provider.executeTask(dataContext, runConfiguration, activeProviders.get(provider))) {
+                return;
+              }
+            }
+            DumbService.getInstance(myProject).smartInvokeLater(startRunnable);
+          }
+        });
+      }
+      else {
+        startRunnable.run();
+      }
+    }
+    else {
+      startRunnable.run();
+    }
+  }
+
+  @Override
+  public void startRunProfile(@NotNull final RunProfileStarter starter, @NotNull final RunProfileState state,
+                              @NotNull final Project project, @NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
+    final RunContentDescriptor reuseContent = ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, env.getContentToReuse());
+    final RunProfile profile = env.getRunProfile();
+
+    Runnable startRunnable = new Runnable() {
+      public void run() {
+        boolean started = false;
+        try {
+          if (project.isDisposed()) return;
+
+          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(profile);
+
+          final RunContentDescriptor descriptor = starter.execute(project, executor, state, reuseContent, env);
+
+          if (descriptor != null) {
+            ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
+            final ProcessHandler processHandler = descriptor.getProcessHandler();
+            if (processHandler != null) {
+              processHandler.startNotify();
+              project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(profile, processHandler);
+              started = true;
+              processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
             }
           }
-
-          if (!activeProviders.isEmpty()) {
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              public void run() {
-                ConfigurationPerRunnerSettings configurationSettings = state.getConfigurationSettings();
-                DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
-
-                final DataContext dataContext = configurationSettings != null ? SimpleDataContext
-                  .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
-                for (BeforeRunTaskProvider<BeforeRunTask> provider : activeProviders.keySet()) {
-                  if(!provider.executeTask(dataContext, runConfiguration, activeProviders.get(provider))) {
-                    return;
-                  }
-                }
-                DumbService.getInstance(myProject).smartInvokeLater(startRunnable);
-              }
-            });
-          }
-          else {
-            startRunnable.run();
-          }
         }
-        else {
-          startRunnable.run();
+        catch (ExecutionException e) {
+          ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, e);
+        }
+        if (!started) {
+          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(profile);
         }
       }
     };
 
-    antAwareRunnable.run();
-    //ApplicationManager.getApplication().invokeLater(antAwareRunnable);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      startRunnable.run();
+    }
+    else {
+      compileAndRun(startRunnable, profile, state);
+    }
   }
 
   @NotNull
   public String getComponentName() {
     return "ExecutionManager";
+  }
+
+  private static class ProcessExecutionListener extends ProcessAdapter {
+    private final Project myProject;
+    private final RunProfile myProfile;
+    private final ProcessHandler myProcessHandler;
+
+    public ProcessExecutionListener(Project project, RunProfile profile, ProcessHandler processHandler) {
+      myProject = project;
+      myProfile = profile;
+      myProcessHandler = processHandler;
+    }
+
+    @Override
+    public void processTerminated(ProcessEvent event) {
+      myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
+    }
+
+    @Override
+    public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+      myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminating(myProfile, myProcessHandler);
+    }
   }
 }
