@@ -1,5 +1,6 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Condition;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.treeStructure.Tree;
@@ -108,6 +109,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   protected void tearDown() throws Exception {
     myElementUpdate.clear();
     myElementUpdateHook = null;
+    myStructure.setRevalidator(null);
     super.tearDown();
   }
 
@@ -188,7 +190,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
                  "org\n" +
                  "intellij\n" +
                  "fabrique\n" +
-                 "runner\n" + 
+                 "runner\n" +
                  "eclipse", PlatformTestUtil.print(processedNodes));
 
 
@@ -227,6 +229,10 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
 
   void buildStructure(final Node root) throws Exception {
+    buildStructure(root, true);
+  }
+
+  void buildStructure(final Node root, final boolean activate) throws Exception {
     doAndWaitForBuilder(new Runnable() {
       public void run() {
         myCom = root.addChild("com");
@@ -237,7 +243,9 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
         myRunner = root.addChild("xunit").addChild("runner");
         myRcp = root.addChild("org").addChild("eclipse").addChild("rcp");
 
-        getBuilder().getUi().activate(true);
+        if (activate) {
+          getBuilder().getUi().activate(true);
+        }
       }
     });
   }
@@ -381,6 +389,12 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       return node;
     }
 
+    public Node addChild(NodeElement element) {
+      final Node node = new Node(this, element);
+      myChildElements.add(node);
+      return node;
+    }
+
     @Override
     public String toString() {
       return myElement.toString();
@@ -437,7 +451,8 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
     private final Map<NodeElement, NodeElement> myChild2Parent = new HashMap<NodeElement, NodeElement>();
     private final Map<NodeElement, Node> myElement2Node = new HashMap<NodeElement, Node>();
-    private Set<NodeElement> myLeaves = new HashSet<NodeElement>();
+    private final Set<NodeElement> myLeaves = new HashSet<NodeElement>();
+    private Revalidator myRevalidator;
 
     public Object getRootElement() {
       return myRoot.myElement;
@@ -464,7 +479,8 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     }
 
     public Object getParentElement(final Object element) {
-      return myChild2Parent.get((NodeElement)element);
+      NodeElement nodeElement = (NodeElement)element;
+      return nodeElement.getForcedParent() != null ? nodeElement.getForcedParent() : myChild2Parent.get(nodeElement);
     }
 
 
@@ -514,6 +530,19 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     public Node getNodeFor(NodeElement element) {
       return myElement2Node.get(element);
     }
+
+    @Override
+    public AsyncResult<Object> revalidateElement(Object element) {
+      return myRevalidator != null ? myRevalidator.revalidate((NodeElement)element) : super.revalidateElement(element);
+    }
+
+    public void setRevalidator(Revalidator revalidator) {
+      myRevalidator = revalidator;
+    }
+  }
+
+  interface Revalidator {
+    AsyncResult<Object> revalidate(NodeElement element);
   }
 
   class MyBuilder extends BaseTreeBuilder {
@@ -593,8 +622,8 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     }
   }
 
- 
-  
+
+
   MyBuilder getMyBuilder() {
     return (MyBuilder)getBuilder();
   }
@@ -608,4 +637,4 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
 }
-  
+

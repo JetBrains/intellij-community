@@ -100,7 +100,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     if (myReleaseRequested) return;
 
     assert !toAdd.isExpired();
-    
+
     final AbstractTreeUi ui = myTreeBuilder.getUi();
 
     if (ui.isUpdatingNow(toAdd.getNode())) {
@@ -187,11 +187,9 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
           performUpdate();
         }
         catch (ProcessCanceledException e) {
-          requeueViewUpdateIfNeeded();
           throw e;
         }
         catch (RuntimeException e) {
-          requeueViewUpdateIfNeeded();
           LOG.error(myTreeBuilder.getClass().getName(), e);
         }
       }
@@ -199,6 +197,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   private void queue(Update update) {
+    if (isReleased()) return;
+
     myUpdateQueue.queue(update);
   }
 
@@ -225,11 +225,17 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
       beforeUpdate(eachPass).doWhenDone(new Runnable() {
         public void run() {
-          myTreeBuilder.getUi().updateSubtreeNow(eachPass, false);
+          try {
+            myTreeBuilder.getUi().updateSubtreeNow(eachPass, false);
+          }
+          catch (ProcessCanceledException e) {
+            return;
+          }
         }
       });
-
     }
+
+    if (isReleased()) return;
 
     myTreeBuilder.getUi().maybeReady();
 
@@ -253,6 +259,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
       myTreeBuilder.getReady(this).doWhenDone(runnable);
     }
+  }
+
+  private boolean isReleased() {
+    return myTreeBuilder.getUi() == null;
   }
 
   protected void invokeLater(Runnable runnable) {
@@ -367,8 +377,18 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   public void requestRelease() {
     myReleaseRequested = true;
 
+    reset();
+
+    myUpdateQueue.deactivate();
+  }
+
+  public void reset() {
+    TreeUpdatePass[] passes = myNodeQueue.toArray(new TreeUpdatePass[myNodeQueue.size()]);
     myNodeQueue.clear();
     myUpdateQueue.cancelAllUpdates();
-    myUpdateQueue.deactivate();
+
+    for (TreeUpdatePass each : passes) {
+      myTreeBuilder.getUi().addToCancelled(each.getNode());
+    }
   }
 }

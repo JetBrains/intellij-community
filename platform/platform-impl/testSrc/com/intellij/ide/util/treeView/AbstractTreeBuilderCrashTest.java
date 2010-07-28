@@ -112,7 +112,7 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
 
 
     updateFromRoot();
-    
+
     assertTree("-root\n" +
                " -node1\n" +
                "  node11\n" +
@@ -173,7 +173,6 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
       }
     });
 
-    getBuilder().getUi().setCheckStructure(false);
     Disposer.register(getRootDisposable(), getBuilder());
 
     showTree();
