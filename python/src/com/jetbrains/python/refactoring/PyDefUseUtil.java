@@ -45,13 +45,14 @@ public class PyDefUseUtil {
     visited[instr] = true;
     if (instructions[instr] instanceof ReadWriteInstruction) {
       final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
-      String name = ((PyElement)instruction.getElement()).getName();
+      final PsiElement element = instruction.getElement();
+      String name = element instanceof PyElement ? ((PyElement)element).getName() : null;
       final ReadWriteInstruction.ACCESS access = instruction.getAccess();
       if (access == ReadWriteInstruction.ACCESS.WRITETYPE) {
         name = instruction.getName();
       }
       if (access.isWriteAccess() && Comparing.strEqual(name, var.getName())) {
-        result.add((PyElement)instruction.getElement());
+        result.add((PyElement)element);
         if (access != ReadWriteInstruction.ACCESS.WRITETYPE) {
           return;
         }
