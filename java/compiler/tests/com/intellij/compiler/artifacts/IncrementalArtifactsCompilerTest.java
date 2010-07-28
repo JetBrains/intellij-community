@@ -104,6 +104,21 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertEmptyOutput(a2);
   }
 
+  //todo[nik] uncomment when deleting obsolete directories will be supported
+  public void _testRenameDirectoryInLayout() throws Exception {
+    final VirtualFile file = createFile("a.txt");
+    final Artifact a = addArtifact("a", root().dir("d1").file(file));
+    compileProject();
+    assertOutput(a, fs().dir("d1").file("a.txt"));
+
+    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+    model.getOrCreateModifiableArtifact(a).setRootElement(root().dir("d2").file(file).build());
+    commitModel(model);
+
+    compileProject();
+    assertOutput(a, fs().dir("d2").file("a.txt"));
+  }
+
   public void testDeleteOutputWhenOutputPathIsChanged() throws Exception {
     final VirtualFile file = createFile("a.txt");
     final Artifact a = addArtifact("a", root().file(file));

@@ -70,7 +70,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
                 fail("compilation aborted");
               }
               if (errors > 0) {
-                fail("compilation finished with errors: " + Arrays.asList(compileContext.getMessages(CompilerMessageCategory.ERROR)));
+                fail("compilation finished with errors: " + Arrays.toString(compileContext.getMessages(CompilerMessageCategory.ERROR)));
               }
               result.set(new CompilationLog(CompilerManagerImpl.getPathsToRecompile(), CompilerManagerImpl.getPathsToDelete()));
             }
