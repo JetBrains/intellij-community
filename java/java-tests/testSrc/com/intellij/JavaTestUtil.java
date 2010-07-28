@@ -1,12 +1,12 @@
 package com.intellij;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.lang.PsiBuilderFactory;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaTokenType;
 
 /**
  * @author yole
@@ -20,10 +20,11 @@ public class JavaTestUtil {
     return PathManagerEx.getTestDataPath();
   }
 
-  public static PsiBuilder getJavaBuilder(final String source) {
+  public static PsiBuilder getJavaBuilder(final CharSequence source) {
     final LanguageLevel languageLevel = LanguageLevel.HIGHEST;
     final JavaLexer lexer = new JavaLexer(languageLevel);
-    final PsiBuilder builder = new PsiBuilderImpl(lexer, JavaTokenType.WHITESPACE_BIT_SET, JavaTokenType.COMMENT_BIT_SET, source);
+    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(lexer, StdLanguages.JAVA, source);
+    builder.setDebugMode(true);
     JavaParserUtil.setLanguageLevel(builder, languageLevel);
     return builder;
   }

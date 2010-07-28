@@ -34,8 +34,6 @@ import static com.intellij.lang.java.parser.JavaParserUtil.error;
 
 
 public class ExpressionParser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.parser.ExpressionParser");
-
   private enum ExprType {
     CONDITIONAL_OR, CONDITIONAL_AND, OR, XOR, AND, EQUALITY, RELATIONAL, SHIFT, ADDITIVE, MULTIPLICATIVE, UNARY, TYPE
   }
@@ -168,7 +166,7 @@ public class ExpressionParser {
         return typeInfo != null ? typeInfo.marker : null;
 
       default:
-        LOG.error("Unexpected type: " + type);
+        assert false : "Unexpected type: " + type;
         return null;
     }
   }

@@ -20,6 +20,7 @@ import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
 
+// todo: fix parser and uncomment tests
 public class DeclarationParserTest extends JavaParsingTestCase {
   public DeclarationParserTest() {
     super("parser-partial/declarations");
@@ -27,6 +28,14 @@ public class DeclarationParserTest extends JavaParsingTestCase {
 
   public void testEmptyBody0() { doParserTest("{ }", false, false); }
   public void testEmptyBody1() { doParserTest("{ ", false, false); }
+  public void testEmptyBody2() { doParserTest("{ @Null }", false, false); }
+
+  public void testNoType() { doParserTest("{ new X(); }", false, false); }
+  public void testExtraSemicolon() { doParserTest("{ class C { }; }", false, false); }
+  public void testParameterizedClass() { doParserTest("{ public class A <T extends java.util.List> { } }", false, false); }
+  public void testPines() { doParserTest("{ class A<T extends List<String>> extends List<List<Integer>> { } }", false, false); }
+  public void testIncompleteAnnotation() { doParserTest("{ public class Foo { public void testSomething(); @Null } }", false, false); }
+  public void testClassInit() { doParserTest("{ { /*comment*/ } }", false, false); }
 
   public void testEnumBody0() { doParserTest("{ ; }", false, true); }
   public void testEnumBody1() { doParserTest("{ RED, GREEN, BLUE; }", false, true); }
@@ -34,6 +43,9 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testEnumBody3() { doParserTest("{ RED, GREEN, BLUE, }", false, true); }
   public void testEnumBody4() { doParserTest("{ RED(0), GREEN(1), BLUE(2); }", false, true); }
   public void testEnumBody5() { doParserTest("{ @ANNOTATION A(10) }", false, true); }
+  //public void testEnumBody6() { doParserTest("{ RED, GREEN, BLUE\n OurEnum() {} }", false, true); }
+  public void testEnumWithInitializedConstants() { doParserTest("{ A(10) { },\n B { void method() {} } }", false, true); }
+  public void testEnumWithoutConstants() { doParserTest("{ private A }", false, true); }
 
   public void testFieldSimple() { doParserTest("{ int field = 0; }", false, false); }
   public void testFieldMulti() { doParserTest("{ int field1 = 0, field2; }", false, false); }
@@ -42,10 +54,11 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testUnclosedComma() { doParserTest("{ int field, }", false, false); }
   public void testUnclosedSemicolon() { doParserTest("{ int field }", false, false); }
   public void testMissingInitializerExpression() { doParserTest("{ int field=; }", false, false); }
-  //public void testMultiLineUnclosed() { doParserTest("{ int \n  Object o; }", false, false); }  // todo: implement
+  //public void testMultiLineUnclosed() { doParserTest("{ int \n  Object o; }", false, false); }
 
-  //public void testMethodNormal0() { doParserTest("{ void f() { } }", false, false); }  // todo: parse code block correctly
+  public void testMethodNormal0() { doParserTest("{ void f() {} }", false, false); }
   public void testMethodNormal1() { doParserTest("{ void f(); }", false, false); }
+  public void testSemicolons() { doParserTest("{ void f() {}; void g() {}; }", false, false); }
   public void testUnclosed0() { doParserTest("{ void f() }", false, false); }
   public void testUnclosed1() { doParserTest("{ void f( }", false, false); }
   public void testUnclosed2() { doParserTest("{ void f()\n void g(); }", false, false); }

@@ -1,23 +1,20 @@
-PsiJavaFile:MethodNormal0.java
+PsiJavaFile:NoType.java
   PsiJavaToken:LBRACE('{')
   PsiWhiteSpace(' ')
-  PsiMethod:f
+  PsiErrorElement:Unexpected token
+    PsiKeyword:new('new')
+  PsiWhiteSpace(' ')
+  PsiMethod:X
     PsiModifierList:
       <empty list>
     PsiTypeParameterList
       <empty list>
-    PsiTypeElement:void
-      PsiKeyword:void('void')
-    PsiWhiteSpace(' ')
-    PsiIdentifier:f('f')
+    PsiIdentifier:X('X')
     PsiParameterList:()
       PsiJavaToken:LPARENTH('(')
       PsiJavaToken:RPARENTH(')')
     PsiReferenceList
       <empty list>
-    PsiWhiteSpace(' ')
-    PsiCodeBlock
-      PsiJavaToken:LBRACE('{')
-      PsiJavaToken:RBRACE('}')
+    PsiJavaToken:SEMICOLON(';')
   PsiWhiteSpace(' ')
   PsiJavaToken:RBRACE('}')

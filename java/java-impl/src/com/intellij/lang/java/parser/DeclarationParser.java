@@ -18,7 +18,6 @@ package com.intellij.lang.java.parser;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
+import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
@@ -38,18 +38,14 @@ public class DeclarationParser {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.parser.DeclarationParser");
-
   private static final TokenSet AFTER_END_DECLARATION_SET = TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD);
+  private static final TokenSet BEFORE_LBRACE_ELEMENTS_SET = TokenSet.create(
+    JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD);
 
   private DeclarationParser() { }
 
-  @Nullable
-  public static PsiBuilder.Marker parseClassBodyWithBraces(final PsiBuilder builder, final boolean isAnnotation, final boolean isEnum) {
-    if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
-
-    final PsiBuilder.Marker marker = builder.mark();
-    marker.drop();
+  public static void parseClassBodyWithBraces(final PsiBuilder builder, final boolean isAnnotation, final boolean isEnum) {
+    assert builder.getTokenType() == JavaTokenType.LBRACE : builder.getTokenType();
     builder.advanceLexer();
 
     final PsiBuilder builderWrapper = braceMatchingBuilder(builder);
@@ -59,15 +55,38 @@ public class DeclarationParser {
     parseClassBodyDeclarations(builderWrapper, isAnnotation);
 
     expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
-
-    return marker;
   }
 
-  @Nullable
-  private static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker start,
-                                                        final boolean isAnnotation) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString() + start + isAnnotation);
+  @NotNull
+  private static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker declaration,
+                                                         final boolean isAnnotation) {
+    final IElementType keywordTokenType = builder.getTokenType();
+    assert ElementType.CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
+    builder.advanceLexer();
+    final boolean isEnum = (keywordTokenType == JavaTokenType.ENUM_KEYWORD);
+
+    if (!expect(builder, JavaTokenType.IDENTIFIER)) {
+      error(builder, JavaErrorMessages.message("expected.identifier"));
+      declaration.drop();
+      return declaration;
+    }
+
+    ReferenceParser.parseTypeParameters(builder);
+    ReferenceParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
+    ReferenceParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
+
+    if (builder.getTokenType() != JavaTokenType.LBRACE) {
+      final PsiBuilder.Marker error = builder.mark();
+      while (BEFORE_LBRACE_ELEMENTS_SET.contains(builder.getTokenType())) {
+        builder.advanceLexer();
+      }
+      error.error(JavaErrorMessages.message("expected.lbrace"));
+    }
+
+    parseClassBodyWithBraces(builder, isAnnotation, isEnum);
+
+    declaration.done(JavaElementType.CLASS);
+    return declaration;
   }
 
   private static void parseEnumConstants(final PsiBuilder builder) {
@@ -276,7 +295,7 @@ public class DeclarationParser {
       }
 
       final PsiBuilder.Marker codeBlock = StatementParser.parseCodeBlock(builder);
-      LOG.assertTrue(codeBlock != null);
+      assert codeBlock != null : builder.getOriginalText();
 
       if (typeParams != null) {
         final PsiBuilder.Marker error = typeParams.precede();
@@ -294,6 +313,7 @@ public class DeclarationParser {
         error = builder.mark();
       }
       error.error(JavaErrorMessages.message("expected.identifier.or.type"));
+      declaration.drop();
       return modList;
     }
 
@@ -347,11 +367,7 @@ public class DeclarationParser {
         isEmpty = false;
       }
       else if (tokenType == JavaTokenType.AT) {
-        final PsiBuilder.Marker pos = builder.mark();
-        builder.advanceLexer();
-        final IElementType nextTokenType = builder.getTokenType();
-        pos.rollbackTo();
-        if (ElementType.KEYWORD_BIT_SET.contains(nextTokenType)) {
+        if (ElementType.KEYWORD_BIT_SET.contains(nextTokenType(builder))) {
           break;
         }
         parseAnnotation(builder);
@@ -519,8 +535,8 @@ public class DeclarationParser {
       varType = JavaElementType.LOCAL_VARIABLE;
     }
     else {
-      LOG.error("Unexpected context: " + context);
       declaration.drop();
+      assert false : "Unexpected context: " + context;
       return null;
     }
 
