@@ -16,7 +16,6 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
@@ -185,7 +184,7 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseDeclaration(final PsiBuilder builder, final Context context) {
+  public static PsiBuilder.Marker parseDeclaration(final PsiBuilder builder, final Context context) {
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == null) return null;
 
@@ -231,7 +230,7 @@ public class DeclarationParser {
         while (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.RBRACE) {
           final PsiBuilder.Marker position = builder.mark();
           final PsiBuilder.Marker element = parseDeclaration(builder, Context.CLASS);
-          if (element != null && AFTER_END_DECLARATION_SET.contains(((LighterASTNode)element).getTokenType())) {
+          if (element != null && AFTER_END_DECLARATION_SET.contains(exprType(element))) {
             if (!declarationsAfterEnd) {
               element.precede().error(JavaErrorMessages.message("expected.class.or.interface"));
             }

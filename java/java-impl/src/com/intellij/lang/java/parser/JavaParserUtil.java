@@ -48,6 +48,11 @@ public class JavaParserUtil {
     return level;
   }
 
+  @Nullable
+  public static IElementType exprType(@Nullable final PsiBuilder.Marker marker) {
+    return marker != null ? ((LighterASTNode)marker).getTokenType() : null;
+  }
+
   // used instead of PsiBuilder.error() as it drops all but first subsequent error messages
   public static void error(final PsiBuilder builder, final String message) {
     builder.mark().error(message);
