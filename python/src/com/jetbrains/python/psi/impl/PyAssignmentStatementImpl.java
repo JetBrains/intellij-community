@@ -77,6 +77,12 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
         addCandidate(candidates, pyExpression);
       }
     }
+    else if (psi instanceof PyStarExpression) {
+      final PyExpression expression = ((PyStarExpression)psi).getExpression();
+      if (expression != null) {
+        addCandidate(candidates, expression);
+      }
+    }
     else {
       candidates.add(psi);
     }
