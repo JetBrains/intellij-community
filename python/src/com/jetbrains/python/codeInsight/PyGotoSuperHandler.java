@@ -19,10 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 24, 2009
- * Time: 4:28:58 PM
+ * @author Alexey.Ivanov
  */
 public class PyGotoSuperHandler implements CodeInsightActionHandler {
 
@@ -69,8 +66,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
       return Collections.emptyList();
     }
     final List<PyFunction> result = new ArrayList<PyFunction>();
-    final PyClass[] superClasses = PyUtil.getAllSuperClasses(pyClass);
-    for (PyClass aClass: superClasses) {
+    for (PyClass aClass: pyClass.iterateAncestors()) {
       final PyFunction byName = aClass.findMethodByName(name, false);
       if (byName != null) {
         result.add(byName);
