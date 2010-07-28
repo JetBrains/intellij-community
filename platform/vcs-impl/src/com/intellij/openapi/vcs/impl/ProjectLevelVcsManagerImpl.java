@@ -658,9 +658,22 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     return !myHaveLegacyVcsConfiguration && !myMappingsLoaded;
   }
 
+  /**
+   * Used to guess VCS for automatic mapping through a look into a working copy
+   */
   @Nullable
   public AbstractVcs findVersioningVcs(VirtualFile file) {
-    return getVcsFor(file);
+    final VcsDescriptor[] vcsDescriptors = getAllVcss();
+    VcsDescriptor probableVcs = null;
+    for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
+      if (vcsDescriptor.probablyUnderVcs(file)) {
+        if (probableVcs != null) {
+          return null;
+        }
+        probableVcs = vcsDescriptor;
+      }
+    }
+    return probableVcs == null ? null : findVcsByName(probableVcs.getName());
   }
 
   public CheckoutProvider.Listener getCompositeCheckoutListener() {

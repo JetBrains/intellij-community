@@ -72,6 +72,9 @@
     <extensionPoint name="compiler.additionalCompileScopeProvider"
                     interface="com.intellij.compiler.impl.AdditionalCompileScopeProvider"/>
 
+    <extensionPoint name="compiler.makeDependencyProcessor"
+                    interface="com.intellij.compiler.DependencyProcessor"/>
+
     <extensionPoint name="debugger.codeFragmentFactory"
                     interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory"/>
 

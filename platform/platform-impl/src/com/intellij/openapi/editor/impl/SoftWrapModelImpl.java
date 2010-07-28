@@ -58,8 +58,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
-    this(editor, storage, painter, new DefaultSoftWrapApplianceManager(storage, editor, painter),
-         new SoftWrapDataMapper(editor, storage), new SoftWrapDocumentChangeManager(editor, storage));
+    this(
+      editor, storage, painter, new DefaultSoftWrapApplianceManager(storage, editor, painter),
+      new SoftWrapDataMapper(editor, storage, painter, new DefaultEditorTextRepresentationHelper(editor)),
+      new SoftWrapDocumentChangeManager(editor, storage)
+    );
   }
 
   public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
@@ -253,12 +256,23 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     // We consider visual positions that point after the last symbol before soft wrap and the first symbol after soft wrap to not
     // belong to soft wrap-introduced virtual space.
     VisualPosition visualAfterSoftWrap = myEditor.offsetToVisualPosition(offset);
-    if (visualAfterSoftWrap.equals(visual)) {
+    if (visualAfterSoftWrap.line == visual.line && visualAfterSoftWrap.column <= visual.column) {
       return false;
     }
 
     VisualPosition visualBeforeSoftWrap = myEditor.offsetToVisualPosition(offset - 1);
-    return visual.line > visualBeforeSoftWrap.line || visual.column > visualBeforeSoftWrap.column + 1;
+    int columnOffset = 0;
+    LogicalPosition logLineStart = myEditor.visualToLogicalPosition(new VisualPosition(visualBeforeSoftWrap.line, 0));
+    if (logLineStart.softWrapLinesOnCurrentLogicalLine > 0) {
+      int offsetLineStart = myEditor.logicalPositionToOffset(logLineStart);
+      softWrap = getSoftWrap(offsetLineStart);
+      if (softWrap != null) {
+        columnOffset = getSoftWrapIndentWidthInColumns(softWrap);
+      }
+    }
+    int width = EditorUtil.textWidthInColumns(myEditor, myEditor.getDocument().getCharsSequence(), offset - 1, offset, columnOffset);
+    int softWrapStartColumn = visualBeforeSoftWrap.column  + width;
+    return visual.line > visualBeforeSoftWrap.line || visual.column > softWrapStartColumn;
   }
 
   @Override

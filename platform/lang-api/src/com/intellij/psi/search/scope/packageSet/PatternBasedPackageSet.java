@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.javaCompiler;
-
-import com.intellij.openapi.compiler.CompileContext;
+package com.intellij.psi.search.scope.packageSet;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: Aug 19, 2008
+ * User: anna
+ * Date: Jul 26, 2010
  */
-public interface DependencyProcessor {
-  void processDependencies(CompileContext context, int classQualifiedName);
+public interface PatternBasedPackageSet extends PackageSet{
+  String getPattern();
+  String getModulePattern();
+
+  boolean isOn(String oldQName);
 }

@@ -803,6 +803,45 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +xunit\n");
   }
 
+  public void testCollapsedPathOnExpandedCallback() throws Exception {
+    Node com = myRoot.addChild("com");
+
+    activate();
+    assertTree("+/\n");
+
+    expand(getPath("/"));
+    assertTree("-/\n" +
+               " com\n");
+
+    com.addChild("intellij");
+
+    collapsePath(getPath("/"));
+
+    final Ref<Boolean> done = new Ref<Boolean>();
+    invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        getBuilder().expand(new NodeElement("com"), new Runnable() {
+          @Override
+          public void run() {
+            getBuilder().getTree().collapsePath(getPath("com"));
+            done.set(Boolean.TRUE);
+          }
+        });
+      }
+    });
+
+    waitBuilderToCome(new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return (done.get() != null) && done.get().booleanValue();
+      }
+    });
+
+    assertTree("-/\n" +
+               " +com\n");
+  }
+
   public void testSelectionGoesToParentWhenOnlyChildMoved() throws Exception {
     buildStructure(myRoot);
     buildNode("openapi", true);

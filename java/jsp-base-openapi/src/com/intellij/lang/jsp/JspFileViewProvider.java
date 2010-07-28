@@ -16,17 +16,12 @@
 
 package com.intellij.lang.jsp;
 
-import com.intellij.lang.Language;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Set;
 
 /**
  * @author ik
  */
 public interface JspFileViewProvider extends JspxFileViewProvider {
-  @NotNull
-  Language getTemplateDataLanguage();
 
   Set<String> getKnownTaglibPrefixes();
 }

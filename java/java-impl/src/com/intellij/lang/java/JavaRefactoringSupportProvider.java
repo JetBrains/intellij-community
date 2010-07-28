@@ -78,7 +78,7 @@ public class JavaRefactoringSupportProvider extends DefaultRefactoringSupportPro
     return new JavaPushDownHandler();
   }
 
-  public RefactoringActionHandler getExtractModuleHandler() {
+  public RefactoringActionHandler getExtractInterfaceHandler() {
     return new ExtractInterfaceHandler();
   }
 

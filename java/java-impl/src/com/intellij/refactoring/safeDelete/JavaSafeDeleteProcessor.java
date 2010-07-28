@@ -427,7 +427,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
               break;
             }
           }
-          if (!anyOverridingRefs && isMultipleInterfacesImplementation(overridingMethod, allElementsToDelete)) {
+          if (!anyOverridingRefs && isMultipleInterfacesImplementation(overridingMethod, originalMethod, allElementsToDelete)) {
             anyOverridingRefs = true;
             multipleInterfaceImplementations.add(overridingMethod);
           }
@@ -468,10 +468,12 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
     return validOverriding;
   }
 
-  private static boolean isMultipleInterfacesImplementation(final PsiMethod method, final PsiElement[] allElementsToDelete) {
+  private static boolean isMultipleInterfacesImplementation(final PsiMethod method,
+                                                            PsiMethod originalMethod,
+                                                            final PsiElement[] allElementsToDelete) {
     final PsiMethod[] methods = method.findSuperMethods();
     for(PsiMethod superMethod: methods) {
-      if (ArrayUtil.find(allElementsToDelete, superMethod) < 0) {
+      if (ArrayUtil.find(allElementsToDelete, superMethod) < 0 && !MethodSignatureUtil.isSuperMethod(originalMethod, superMethod)) {
         return true;
       }
     }

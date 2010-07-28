@@ -27,8 +27,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -110,8 +110,8 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
         return ((GrReferenceExpression)expression).advancedResolve();
       }
     }
-    else if (parent instanceof GrConstructorInvocation) {
-      return ((GrConstructorInvocation)parent).resolveConstructorGenerics();
+    else if (parent instanceof GrConstructorCall) {
+      return ((GrConstructorCall)parent).resolveConstructorGenerics();
     }
 
     return null;

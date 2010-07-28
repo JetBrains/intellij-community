@@ -58,7 +58,7 @@ public class FutureResult<T> implements Future<T> {
 
   private T doGet() throws ExecutionException {
     Pair<Object, Boolean> pair = myValue.get();
-    if (!pair.second) throw new ExecutionException((Throwable)pair.first);
+    if (!pair.second) throw new ExecutionException(((Throwable)pair.first).getMessage(), (Throwable)pair.first);
     return (T)pair.first;
   }
 }

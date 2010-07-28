@@ -19,7 +19,10 @@ package com.intellij.psi.impl;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.ObjectUtils.*;
 
 /**
  * @author Dmitry Avdeev

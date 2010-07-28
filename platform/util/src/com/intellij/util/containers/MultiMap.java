@@ -25,7 +25,16 @@ import java.util.*;
  */
 public class MultiMap<K, V> {
 
+  public static final MultiMap EMPTY = new MultiMap() {
+    @Override
+    protected Map createMap() {
+      return Collections.emptyMap();
+    }
+  };
+
   private final Map<K, Collection<V>> myMap;
+
+  private Collection<V> values;
 
   public MultiMap() {
     myMap = createMap();
@@ -117,11 +126,64 @@ public class MultiMap<K, V> {
   }
 
   public Collection<? extends V> values() {
-    ArrayList<V> result = new ArrayList<V>();
-    for (Collection<V> vs : myMap.values()) {
-      result.addAll(vs);
+    if (values == null) {
+      values = new AbstractCollection<V>() {
+        @Override
+        public Iterator<V> iterator() {
+          return new Iterator<V>() {
+
+            private Iterator<Collection<V>> mapIterator = myMap.values().iterator();
+
+            private Iterator<V> itr = EmptyIterator.getInstance();
+
+            @Override
+            public boolean hasNext() {
+              do {
+                if (itr.hasNext()) return true;
+                if (!mapIterator.hasNext()) return false;
+                itr = mapIterator.next().iterator();
+              } while (true);
+            }
+
+            @Override
+            public V next() {
+              do {
+                if (itr.hasNext()) return itr.next();
+                if (!mapIterator.hasNext()) throw new NoSuchElementException();
+                itr = mapIterator.next().iterator();
+              } while (true);
+            }
+
+            @Override
+            public void remove() {
+              throw new UnsupportedOperationException();
+            }
+          };
+        }
+
+        @Override
+        public int size() {
+          int res = 0;
+          for (Collection<V> vs : myMap.values()) {
+            res += vs.size();
+          }
+
+          return res;
+        }
+
+        // Don't remove this method!!!
+        @Override
+        public boolean contains(Object o) {
+          for (Collection<V> vs : myMap.values()) {
+            if (vs.contains(o)) return true;
+          }
+
+          return false;
+        }
+      };
     }
-    return result;
+
+    return values;
   }
 
   public void clear() {
@@ -130,5 +192,9 @@ public class MultiMap<K, V> {
 
   public Collection<V> remove(K key) {
     return myMap.remove(key);
+  }
+
+  public static <K, V> MultiMap<K, V> emptyInstance() {
+    return EMPTY;
   }
 }

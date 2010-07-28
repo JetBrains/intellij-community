@@ -409,7 +409,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitAssignmentExpression(GrAssignmentExpression expression) {
     GrExpression lValue = expression.getLValue();
-    if (!PsiUtil.mightBeLVlaue(lValue)) {
+    if (!PsiUtil.mightBeLValue(lValue)) {
       myHolder.createErrorAnnotation(lValue, GroovyBundle.message("invalid.lvalue"));
     }
   }
@@ -715,6 +715,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static void checkThisOrSuperReferenceExpression(GrExpression expression, AnnotationHolder holder) {
+    if (GroovyConfigUtils.getInstance().isVersionAtLeast(expression, GroovyConfigUtils.GROOVY1_8)) return;
+    
     final GrReferenceExpression qualifier = expression instanceof GrThisReferenceExpression
                                             ? ((GrThisReferenceExpression)expression).getQualifier()
                                             : ((GrSuperReferenceExpression)expression).getQualifier();
@@ -1075,13 +1077,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
     }
     else if (typeDefinition.isAnonymous()) {
-      if (!configUtils.isAtLeastGroovy1_7(typeDefinition)) {
+      if (!configUtils.isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_7)) {
         holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
                                      GroovyBundle.message("anonymous.classes.are.not.supported", configUtils.getSDKVersion(typeDefinition)));
       }
     }
     else if (typeDefinition.getContainingClass() != null && !(typeDefinition instanceof GrEnumTypeDefinition)) {
-      if (!configUtils.isAtLeastGroovy1_7(typeDefinition)) {
+      if (!configUtils.isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_7)) {
         holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
                                      GroovyBundle.message("inner.classes.are.not.supported", configUtils.getSDKVersion(typeDefinition)));
       }

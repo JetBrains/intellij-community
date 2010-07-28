@@ -82,31 +82,31 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public final void select(final Object element, @Nullable final Runnable onDone) {
-    getUi().userSelect(new Object[] {element}, onDone, false, true);
+    getUi().userSelect(new Object[] {element}, new UserRunnable(onDone), false, true);
   }
 
   public final void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
-    getUi().userSelect(new Object[] {element}, onDone, addToSelection, true);
+    getUi().userSelect(new Object[] {element}, new UserRunnable(onDone), addToSelection, true);
   }
 
   public final void select(final Object[] elements, @Nullable final Runnable onDone) {
-    getUi().userSelect(elements, onDone, false, true);
+    getUi().userSelect(elements, new UserRunnable(onDone), false, true);
   }
 
   public final void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
-    getUi().userSelect(elements, onDone, addToSelection, true);
+    getUi().userSelect(elements, new UserRunnable(onDone), addToSelection, true);
   }
 
   public final void expand(Object element, @Nullable Runnable onDone) {
-    getUi().expand(element, onDone);
+    getUi().expand(element, new UserRunnable(onDone));
   }
 
   public final void expand(Object[] element, @Nullable Runnable onDone) {
-    getUi().expand(element, onDone);
+    getUi().expand(element, new UserRunnable(onDone));
   }
 
   public final void collapseChildren(Object element, @Nullable Runnable onDone) {
-    getUi().collapseChildren(element, onDone);
+    getUi().collapseChildren(element, new UserRunnable(onDone));
   }
 
 
@@ -499,6 +499,27 @@ public class AbstractTreeBuilder implements Disposable {
   public static boolean isToPaintSelection(JTree tree) {
     AbstractTreeBuilder builder = getBuilderFor(tree);
     return builder != null && builder.getUi() != null ? builder.getUi().isToPaintSelection() : true;
+  }
+
+  class UserRunnable implements Runnable {
+
+    private Runnable myRunnable;
+
+    public UserRunnable(Runnable runnable) {
+      myRunnable = runnable;
+    }
+
+    @Override
+    public void run() {
+      if (myRunnable != null) {
+        AbstractTreeUi ui = getUi();
+        if (ui != null) {
+          ui.executeUserRunnable(myRunnable);
+        } else {
+          myRunnable.run();
+        }
+      }
+    }
   }
 
 }

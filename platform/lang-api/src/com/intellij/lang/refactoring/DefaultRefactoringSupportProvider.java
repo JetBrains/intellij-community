@@ -59,6 +59,10 @@ public class DefaultRefactoringSupportProvider implements RefactoringSupportProv
     return null;
   }
 
+  public RefactoringActionHandler getExtractInterfaceHandler() {
+    return null;
+  }
+
   public RefactoringActionHandler getExtractModuleHandler() {
     return null;
   }

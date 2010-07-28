@@ -24,6 +24,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 
 import java.util.List;
@@ -81,5 +82,13 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   public void addLast(final Printable printable) {
     super.addLast(printable);
     fireOnNewPrintable(printable);
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    for (AbstractTestProxy proxy : getChildren()) {
+      Disposer.dispose(proxy);
+    }
   }
 }

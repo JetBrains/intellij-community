@@ -4,6 +4,7 @@
       <root url="jar://$PROJECT_DIR$/build/conf/mac/lib/quaqua.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/eawtstub.jar!/" />
     </CLASSES>
+    <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/src/eawtstub_src.zip!/src" />
     </SOURCES>

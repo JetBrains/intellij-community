@@ -54,6 +54,7 @@ public abstract class TestTreeView extends Tree implements DataProvider {
     setModel(new DefaultTreeModel(new DefaultMutableTreeNode(model.getRoot())));
     getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myModel = model;
+    Disposer.register(myModel, myModel.getRoot());
     Disposer.register(myModel, new Disposable() {
       public void dispose() {
         setModel(null);

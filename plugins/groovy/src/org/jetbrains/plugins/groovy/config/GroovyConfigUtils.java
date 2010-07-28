@@ -50,6 +50,8 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   private static GroovyConfigUtils myGroovyConfigUtils;
   @NonNls public static final String GROOVY_JAR_PATTERN = "groovy-(\\d.*)\\.jar";
   public static final String NO_VERSION = "<no version>";
+  public static final String GROOVY1_7 = "1.7";
+  public static final String GROOVY1_8 = "1.8";
 
   private GroovyConfigUtils() {
   }
@@ -91,15 +93,15 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     return getSDKVersion(path);
   }
 
-  public boolean isAtLeastGroovy1_7(Module module) {
+  public boolean isVersionAtLeast(Module module, String version) {
     if (module == null) return false;
-    final String version = getSDKVersion(module);
-    if (version == null) return false;
-    return version.compareTo("1.7") >= 0;
+    final String sdkVersion = getSDKVersion(module);
+    if (sdkVersion == null) return false;
+    return sdkVersion.compareTo(version) >= 0;
   }
 
-  public  boolean isAtLeastGroovy1_7(PsiElement psiElement) {
-    return isAtLeastGroovy1_7(ModuleUtil.findModuleForPsiElement(psiElement));
+  public boolean isVersionAtLeast(PsiElement psiElement, String version) {
+    return isVersionAtLeast(ModuleUtil.findModuleForPsiElement(psiElement), version);
   }
 
   @NotNull

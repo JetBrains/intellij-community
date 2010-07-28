@@ -93,7 +93,7 @@ public interface JavaElementType {
   IElementType CLASS_OBJECT_ACCESS_EXPRESSION = new IJavaElementType("CLASS_OBJECT_ACCESS_EXPRESSION");
   IElementType EMPTY_EXPRESSION = new IJavaElementType("EMPTY_EXPRESSION");
 
-  IElementType EXPRESSION_LIST = new IJavaElementType("EXPRESSION_LIST");
+  IElementType EXPRESSION_LIST = new IJavaElementType("EXPRESSION_LIST", true);
 
   IElementType EMPTY_STATEMENT = new IJavaElementType("EMPTY_STATEMENT");
   IElementType BLOCK_STATEMENT = new IJavaElementType("BLOCK_STATEMENT");

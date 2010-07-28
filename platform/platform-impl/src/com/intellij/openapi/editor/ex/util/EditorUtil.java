@@ -65,9 +65,11 @@ public class EditorUtil {
       TextChange softWrap = softWraps.get(i);
       CharSequence text = document.getCharsSequence();
       if (visualLinesToSkip <= 0) {
-        int result = editor.offsetToVisualPosition(softWrap.getStart() - 1).column;
+        VisualPosition visual = editor.offsetToVisualPosition(softWrap.getStart() - 1);
+        int result = visual.column;
+        int x = editor.visualPositionToXY(visual).x;
         // We need to add width of the next symbol because current result column points to the last symbol before the soft wrap.
-        return  result + textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), result);
+        return  result + textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), x);
       }
 
       int softWrapLineFeeds = StringUtil.countNewLines(softWrap.getText());
@@ -83,13 +85,15 @@ public class EditorUtil {
         }
         // We need to find visual column for line feed of the next soft wrap.
         TextChange nextSoftWrap = softWraps.get(i + 1);
-        int result = editor.offsetToVisualPosition(nextSoftWrap.getStart() - 1).column;
+        VisualPosition visual = editor.offsetToVisualPosition(nextSoftWrap.getStart() - 1);
+        int result = visual.column;
+        int x = editor.visualPositionToXY(visual).x;
 
         // We need to add symbol width because current column points to the last symbol before the next soft wrap;
-        result += textWidthInColumns(editor, text, nextSoftWrap.getStart() - 1, nextSoftWrap.getStart(), result);
+        result += textWidthInColumns(editor, text, nextSoftWrap.getStart() - 1, nextSoftWrap.getStart(), x);
 
         int lineFeedIndex = StringUtil.indexOf(nextSoftWrap.getText(), '\n');
-        result += textWidthInColumns(editor, nextSoftWrap.getText(), 0, lineFeedIndex, result);
+        result += textWidthInColumns(editor, nextSoftWrap.getText(), 0, lineFeedIndex, 0);
         return result;
       }
 
@@ -109,9 +113,12 @@ public class EditorUtil {
           return resVisEnd.column;
         }
       }
-      int result = editor.offsetToVisualPosition(softWrap.getStart() - 1).column; // Column of the symbol just before the soft wrap
+      VisualPosition visual = editor.offsetToVisualPosition(softWrap.getStart() - 1);
+      int result = visual.column; // Column of the symbol just before the soft wrap
+      int x = editor.visualPositionToXY(visual).x;
+
       // Target visual column is located on the last visual line of the current soft wrap.
-      result += textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), result);
+      result += textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), x);
       result += calcColumnNumber(editor, softWrap.getText(), softWrapStartOffset, softWrapEndOffset);
       return result;
     }
@@ -157,40 +164,22 @@ public class EditorUtil {
     }
   }
 
+  /**
+   * Allows to calculate offset of the given column assuming that it belongs to the given text line identified by the
+   * given <code>[start; end)</code> intervals.
+   *
+   * @param editor        editor that is used for representing given text
+   * @param text          target text
+   * @param start         start offset of the logical line that holds target column (inclusive)
+   * @param end           end offset of the logical line that holds target column (exclusive)
+   * @param columnNumber  target column number
+   * @param tabSize       number of desired visual columns to use for tabulation representation
+   * @return              given text offset that identifies the same position that is pointed by the given visual column
+   */
   public static int calcOffset(Editor editor, CharSequence text, int start, int end, int columnNumber, int tabSize) {
-    // If all tabs here goes before any other chars in the line we may use an optimization here.
-    boolean useOptimization = true;
-    boolean hasNonTabs = false;
-    boolean hasTabs = false;
     final int maxScanIndex = Math.min(start + columnNumber + 1, end);
-
-    for (int i = start; i < maxScanIndex; i++) {
-      if (text.charAt(i) == '\t') {
-        hasTabs = true;
-        if (hasNonTabs) {
-          useOptimization = false;
-          break;
-        }
-      } else {
-        hasNonTabs = true;
-      }
-    }
-
-    if (editor == null || useOptimization) {
-      if (!hasTabs) return Math.min(start + columnNumber, end);
-
-      int shift = 0;
-      int offset = start;
-      for (; offset < end && offset + shift < start + columnNumber; offset++) {
-        if (text.charAt(offset) == '\t') {
-          shift += getTabLength(offset + shift - start, tabSize) - 1;
-        }
-      }
-      if (offset + shift > start + columnNumber) {
-        offset--;
-      }
-
-      return offset;
+    if (editor == null) {
+      return calcSoftWrapUnawareOffset(text, start, maxScanIndex, columnNumber, tabSize);
     }
 
     EditorEx editorImpl = (EditorEx)editor;
@@ -200,28 +189,62 @@ public class EditorUtil {
     int column = 0;
     int x = 0;
     int spaceSize = getSpaceWidth(fontType, editorImpl);
+    SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     while (column < columnNumber) {
+      TextChange softWrap = softWrapModel.getSoftWrap(offset);
+      if (softWrap != null) {
+        x = softWrapModel.getSoftWrapIndentWidthInPixels(softWrap);
+      }
       if (offset >= state.getEndOffset()) {
         state.advance();
-
         fontType = state.getMergedAttributes().getFontType();
       }
 
       char c = offset < end ? text.charAt(offset++) : ' ';
+      int prevX = x;
       if (c == '\t') {
-        int prevX = x;
         x = nextTabStop(x, editorImpl);
-        column += (x - prevX) / spaceSize;
       }
       else {
         x += charWidth(c, fontType, editorImpl);
-        column++;
+      }
+      column += columnsNumber(c, x, prevX,  spaceSize);
+    }
+    //if (column == columnNumber && offset < end && text.charAt(offset) == '\t' && (nextTabStop(x, editorImpl) - x) / spaceSize == 0) {
+    //  offset++;
+    //}
+    if (column > columnNumber) offset--;
+
+    return offset;
+  }
+
+  private static int calcSoftWrapUnawareOffset(CharSequence text, int start, int end, int columnNumber, int tabSize) {
+    boolean hasNonTabs = false;
+    boolean hasTabs = false;
+
+    for (int i = start; i < end; i++) {
+      if (text.charAt(i) == '\t') {
+        hasTabs = true;
+        if (hasNonTabs) {
+          break;
+        }
+      } else {
+        hasNonTabs = true;
       }
     }
-    if (column == columnNumber && offset < end && text.charAt(offset) == '\t' && (nextTabStop(x, editorImpl) - x) / spaceSize == 0) {
-      offset++;
+
+    if (!hasTabs) return Math.min(start + columnNumber, end);
+
+    int shift = 0;
+    int offset = start;
+    for (; offset < end && offset + shift < start + columnNumber; offset++) {
+      if (text.charAt(offset) == '\t') {
+        shift += getTabLength(offset + shift - start, tabSize) - 1;
+      }
     }
-    if (column > columnNumber) offset--;
+    if (offset + shift > start + columnNumber) {
+      offset--;
+    }
 
     return offset;
   }
@@ -239,15 +262,21 @@ public class EditorUtil {
 
   public static int calcColumnNumber(Editor editor, CharSequence text, int start, int offset, int tabSize) {
     boolean useOptimization = true;
+    if (editor != null) {
+      TextChange softWrap = editor.getSoftWrapModel().getSoftWrap(start);
+      useOptimization = softWrap == null;
+    }
     boolean hasNonTabs = false;
-    for (int i = start; i < offset; i++) {
-      if (text.charAt(i) == '\t') {
-        if (hasNonTabs) {
-          useOptimization = false;
-          break;
+    if (useOptimization) {
+      for (int i = start; i < offset; i++) {
+        if (text.charAt(i) == '\t') {
+          if (hasNonTabs) {
+            useOptimization = false;
+            break;
+          }
+        } else {
+          hasNonTabs = true;
         }
-      } else {
-        hasNonTabs = true;
       }
     }
 
@@ -306,32 +335,39 @@ public class EditorUtil {
     return (nTabs + 1) * tabSize;
   }
 
-  /**
-   * Allows to answer how many columns are used to represent tabulation symbols that is started at the given visual column
-   * at the given editor.
-   *
-   * @param visualColumn    visual column where target tabulation symbol starts
-   * @param editor          target editor where tabulation symbol is to be represented
-   * @return                number of visual columns required to represent tabulation symbols that starts at the given column
-   */
-  public static int tabWidthInColumns(@NotNull Editor editor, int visualColumn) {
-    if (!editor.getSettings().isWhitespacesShown()) {
-      return 1;
-    }
-    int tabSize = getTabSize(editor);
-    int tabsNumber = visualColumn / tabSize;
-    return (tabsNumber + 1) * tabSize - visualColumn;
-  }
-
-  public static int textWidthInColumns(@NotNull Editor editor, CharSequence text, int start, int end, int columnOffset) {
+  public static int textWidthInColumns(@NotNull Editor editor, CharSequence text, int start, int end, int x) {
     int result = 0;
+    int prevX;
     for (int i = start; i < end; i++) {
-      if (text.charAt(i) == '\t') {
-        result += tabWidthInColumns(editor, columnOffset + result);
+      char c = text.charAt(i);
+      prevX = x;
+      if (c == '\t') {
+        x = nextTabStop(x, editor);
       }
       else {
-        result++;
+        x += charWidth(c, Font.PLAIN, editor);
       }
+      result += columnsNumber(c, x, prevX, getSpaceWidth(Font.PLAIN, editor));
+    }
+    return result;
+  }
+
+  /**
+   * Allows to answer how many columns are necessary for representation of the given char on a screen.
+   *
+   * @param c           target char
+   * @param x           <code>'x'</code> coordinate of the line where given char is represented that indicates char end location
+   * @param prevX       <code>'x'</code> coordinate of the line where given char is represented that indicates char start location
+   * @param spaceSize   <code>'space'</code> symbol width
+   * @return            number of columns necessary for representation of the given char on a screen.
+   */
+  public static int columnsNumber(char c, int x, int prevX, int spaceSize) {
+    if (c != '\t') {
+      return 1;
+    }
+    int result = (x - prevX) / spaceSize;
+    if ((x - prevX) % spaceSize > 0) {
+      result++;
     }
     return result;
   }
@@ -365,12 +401,7 @@ public class EditorUtil {
         continue;
       }
 
-      if (editor.getSettings().isWhitespacesShown()) {
-        result += nextTabStop(x + result, editor) - result - x;
-      }
-      else {
-        result += getSpaceWidth(fontType, editor);
-      }
+      result += nextTabStop(x + result, editor) - result - x;
     }
     return result;
   }

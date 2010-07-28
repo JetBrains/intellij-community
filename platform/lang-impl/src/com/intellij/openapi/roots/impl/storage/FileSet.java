@@ -17,8 +17,10 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.fs.IFile;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 public interface FileSet {
@@ -28,4 +30,5 @@ public interface FileSet {
 
   void commit() throws IOException;
 
+  void listModifiedFiles(List<VirtualFile> list);
 }
