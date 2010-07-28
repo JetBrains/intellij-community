@@ -58,16 +58,19 @@ public class JBScrollPane extends JScrollPane {
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         JViewport vp = getViewport();
-        if (vp != null) {
-          Color bg = vp.getView().getBackground();
-          if (bg != null) {
-            g.setColor(bg);
-            g.drawLine(0, 0, width - 1, 0);
-            g.drawLine(0, height - 1, width - 1, height - 1);
-            g.drawLine(0, 0, 0, height - 1);
-            g.drawLine(width - 1, 0, width - 1, height - 1);
-          }
-        }
+        if (vp == null)  return;
+
+        Component view = vp.getView();
+        if (view == null) return;
+
+        Color bg = view.getBackground();
+        if (bg == null)  return;
+
+        g.setColor(bg);
+        g.drawLine(0, 0, width - 1, 0);
+        g.drawLine(0, height - 1, width - 1, height - 1);
+        g.drawLine(0, 0, 0, height - 1);
+        g.drawLine(width - 1, 0, width - 1, height - 1);
       }
 
       @Override
