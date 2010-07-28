@@ -33,6 +33,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -816,38 +817,43 @@ public class DocumentationManager {
       }
     }
     else {
+      final DocumentationProvider provider = getProviderFromElement(psiElement);
+      if (!(provider instanceof ExternalDocumentationHandler) ||
+          !((ExternalDocumentationHandler)provider).handleExternalLink(manager, url, psiElement)) {
       final String docUrl = url;
 
-      fetchDocInfo
-        (new DocumentationCollector() {
-          public String getDocumentation() throws Exception {
-            if (docUrl.startsWith(DOC_ELEMENT_PROTOCOL)) {
-              final List<String> urls = ApplicationManager.getApplication().runReadAction(
+        fetchDocInfo
+          (new DocumentationCollector() {
+            public String getDocumentation() throws Exception {
+              if (docUrl.startsWith(DOC_ELEMENT_PROTOCOL)) {
+                final List<String> urls = ApplicationManager.getApplication().runReadAction(
                   new Computable<List<String>>() {
                     public List<String> compute() {
                       final DocumentationProvider provider = getProviderFromElement(psiElement);
                       return provider.getUrlFor(psiElement, getOriginalElement(psiElement));
                     }
                   }
-              );
-              BrowserUtil.launchBrowser(urls != null && !urls.isEmpty() ? urls.get(0) : docUrl);
-            } else {
-              BrowserUtil.launchBrowser(docUrl);
+                );
+                BrowserUtil.launchBrowser(urls != null && !urls.isEmpty() ? urls.get(0) : docUrl);
+              }
+              else {
+                BrowserUtil.launchBrowser(docUrl);
+              }
+              return "";
             }
-            return "";
-          }
 
-          public PsiElement getElement() {
-            //String loc = getElementLocator(docUrl);
-            //
-            //if (loc != null) {
-            //  PsiElement context = component.getElement();
-            //  return JavaDocUtil.findReferenceTarget(context.getManager(), loc, context);
-            //}
+            public PsiElement getElement() {
+              //String loc = getElementLocator(docUrl);
+              //
+              //if (loc != null) {
+              //  PsiElement context = component.getElement();
+              //  return JavaDocUtil.findReferenceTarget(context.getManager(), loc, context);
+              //}
 
-            return psiElement;
-          }
-        }, component);
+              return psiElement;
+            }
+          }, component);
+      }
     }
 
     component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
