@@ -164,12 +164,7 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
-      ASTNode prevNode = child.getTreePrev();
-      while (prevNode != null &&
-             (prevNode instanceof PsiWhiteSpace || PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(prevNode.getElementType()))) {
-        prevNode = prevNode.getTreePrev();
-      }
-      return prevNode != null && prevNode.getElementType() == PyTokenTypes.COMMA;
+      return PsiTreeUtil.getParentOfType(child.getPsi(), PyArgumentList.class) != null;
     }
     return true;
   }
