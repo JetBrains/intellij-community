@@ -970,8 +970,7 @@
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyClassesHandler"/>
 
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.JavaMoveFilesOrDirectoriesHandler" id="moveJavaFileOrDir"/>
-    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MovePackagesHandler"/>
-    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesHandler"/>
+    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveMembers.MoveMembersHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandlerDelegate"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveInner.MoveInnerToUpperHandler"/>

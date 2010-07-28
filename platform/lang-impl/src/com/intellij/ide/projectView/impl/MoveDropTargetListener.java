@@ -188,7 +188,7 @@ class MoveDropTargetListener implements DropTargetListener {
       if (dropHandler.isValidTarget(sourceNodes, currentNode)) {
         return currentNode;
       }
-      if (!dropHandler.shouldDelegateToParent(currentNode)) return null;
+      if (!dropHandler.shouldDelegateToParent(sourceNodes, currentNode)) return null;
       currentNode = currentNode.getParent();
       if (currentNode == null) return null;
     }
@@ -214,7 +214,7 @@ class MoveDropTargetListener implements DropTargetListener {
 
     boolean isValidTarget(@NotNull TreeNode[] sourceNodes, @NotNull TreeNode targetNode);
 
-    boolean shouldDelegateToParent(@NotNull TreeNode targetNode);
+    boolean shouldDelegateToParent(TreeNode[] sourceNodes, @NotNull TreeNode targetNode);
 
     boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode);
 
@@ -335,9 +335,9 @@ class MoveDropTargetListener implements DropTargetListener {
       return sourceNode.getParent() == targetNode;
     }
 
-    public boolean shouldDelegateToParent(@NotNull final TreeNode targetNode) {
+    public boolean shouldDelegateToParent(TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
       final PsiElement psiElement = getPsiElement(targetNode);
-      return !MoveHandler.isValidTarget(psiElement);
+      return !MoveHandler.isValidTarget(psiElement, getPsiElements(sourceNodes));
     }
 
     public void doDropFiles(List<File> fileList, TreeNode targetNode) {
@@ -377,7 +377,7 @@ class MoveDropTargetListener implements DropTargetListener {
       return false;
     }
 
-    public boolean shouldDelegateToParent(@NotNull final TreeNode targetNode) {
+    public boolean shouldDelegateToParent(TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
       final PsiElement psiElement = getPsiElement(targetNode);
       return psiElement == null || (!(psiElement instanceof PsiDirectoryContainer) && !(psiElement instanceof PsiDirectory));
     }

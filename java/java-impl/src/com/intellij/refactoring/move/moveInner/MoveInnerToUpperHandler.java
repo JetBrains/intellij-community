@@ -15,20 +15,20 @@
  */
 package com.intellij.refactoring.move.moveInner;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.refactoring.move.MoveHandlerDelegate;
-import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesHandler;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveHandlerDelegate;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
@@ -51,7 +51,7 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
 
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
-    if (isNonStaticInnerClass(element) && !MoveClassesHandler.isReferenceInAnonymousClass(reference)) {
+    if (isNonStaticInnerClass(element) && !MoveClassesOrPackagesHandlerBase.isReferenceInAnonymousClass(reference)) {
       PsiClass aClass = (PsiClass) element;
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
       final PsiClass containingClass = aClass.getContainingClass();
