@@ -28,16 +28,19 @@ public class MavenProjectReaderResult {
   public Set<MavenId> unresolvedArtifactIds;
   public File localRepository;
   public MavenProject nativeMavenProject;
+  public Collection<String> activatedProfiles;
 
   public MavenProjectReaderResult(MavenGeneralSettings settings,
                                   Collection<MavenProjectProblem> readingProblems,
                                   Set<MavenId> unresolvedArtifactIds,
                                   File localRepository,
-                                  MavenProject nativeMavenProject) {
+                                  MavenProject nativeMavenProject,
+                                  Collection<String> activatedProfiles) {
     this.settings = settings;
     this.readingProblems = readingProblems;
     this.unresolvedArtifactIds = unresolvedArtifactIds;
     this.localRepository = localRepository;
     this.nativeMavenProject = nativeMavenProject;
+    this.activatedProfiles = activatedProfiles;
   }
 }
