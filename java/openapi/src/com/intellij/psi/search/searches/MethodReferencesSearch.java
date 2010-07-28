@@ -17,14 +17,10 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchRequestCollector;
-import com.intellij.psi.search.SearchRequestQuery;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.util.MergeQuery;
-import com.intellij.util.Query;
-import com.intellij.util.UniqueResultsQuery;
+import com.intellij.psi.search.*;
+import com.intellij.util.*;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -73,6 +69,21 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
 
   public static Query<PsiReference> search(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
     return search(new SearchParameters(method, scope, strictSignatureSearch));
+  }
+
+  public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch,
+                                     @NotNull SearchRequestCollector collector, final Processor<PsiReference> processor) {
+    searchOptimized(method, scope, strictSignatureSearch, collector, false, new PairProcessor<PsiReference, SearchRequestCollector>() {
+      @Override
+      public boolean process(PsiReference psiReference, SearchRequestCollector collector) {
+        return processor.process(psiReference);
+      }
+    });
+  }
+public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch, SearchRequestCollector collector, final boolean inReadAction, PairProcessor<PsiReference, SearchRequestCollector> processor) {
+    final SearchRequestCollector nested = new SearchRequestCollector();
+    collector.searchQuery(new QuerySearchRequest(search(new SearchParameters(method, scope, strictSignatureSearch, nested)), nested,
+                                                 inReadAction, processor));
   }
 
   public static Query<PsiReference> search(final SearchParameters parameters) {
