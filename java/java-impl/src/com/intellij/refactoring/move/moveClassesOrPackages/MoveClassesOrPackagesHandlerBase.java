@@ -42,7 +42,7 @@ import java.util.Arrays;
 
 public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#" + MoveClassesOrPackagesHandlerBase.class.getName());
-  protected static boolean isPackageOrDirectory(final PsiElement element) {
+  public static boolean isPackageOrDirectory(final PsiElement element) {
     if (element instanceof PsiPackage) return true;
     return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackage((PsiDirectory)element) != null;
   }

@@ -22,21 +22,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.MoveDestination;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.MoveAction;
-import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author yole
@@ -58,72 +54,36 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();
+    for (PsiElement element : elements) {
+      if (element instanceof PsiPackage) continue;
+      if (MoveClassesOrPackagesHandlerBase.isPackageOrDirectory(element)) {
+        filesOrDirs.add(element);
+      } else {
+        final PsiFile containingFile = element.getContainingFile();
+        if (containingFile != null) {
+          filesOrDirs.add(containingFile);
+        }
+      }
+    }
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     LOG.assertTrue(forms != null);
     PsiClass[] classesToMove = new PsiClass[forms.length];
     PsiFile[] filesToMove = new PsiFile[forms.length];
     for(int i=0; i<forms.length; i++) {
       classesToMove [i] = forms [i].getClassToBind();
+      if (classesToMove[i] != null) {
+        filesOrDirs.add(classesToMove[i].getContainingFile());
+      }
       filesToMove [i] = forms [i].getFormFiles() [0];
+      if (filesToMove[i] != null) {
+        filesOrDirs.add(filesToMove[i]);
+      }
     }
 
     final PsiElement initialTargetElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
-    MoveClassesOrPackagesImpl.doMove(project, classesToMove, initialTargetElement, new FormMoveCallback(filesToMove, classesToMove));
+    MoveFilesOrDirectoriesUtil
+      .doMove(project, filesOrDirs.toArray(new PsiElement[filesOrDirs.size()]), new PsiElement[]{initialTargetElement}, null);
   }
 
-  private static class FormMoveCallback implements MoveClassesOrPackagesCallback {
-    private final PsiClass[] myClassesToMove;
-    private final PsiFile[] myFilesToMove;
-
-    public FormMoveCallback(final PsiFile[] filesToMove, final PsiClass[] classesToMove) {
-      myClassesToMove = classesToMove;
-      myFilesToMove = filesToMove;
-    }
-
-    public void refactoringCompleted() {
-    }
-
-    public void classesOrPackagesMoved(MoveDestination destination) {
-      for(PsiFile file: myFilesToMove) {
-        final PsiDirectory psiDirectory;
-        try {
-          psiDirectory = destination.getTargetDirectory(file);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-          continue;
-        }
-        moveFormFile(file, psiDirectory);
-      }
-    }
-
-    public void classesMovedToInner(final PsiClass targetClass) {
-      PsiDirectory target = targetClass.getContainingFile().getContainingDirectory();
-      for(PsiFile file: myFilesToMove) {
-        moveFormFile(file, target);
-      }
-    }
-
-    private static void moveFormFile(final PsiFile file, final PsiDirectory psiDirectory) {
-      new MoveFormsProcessor(file.getProject(), new PsiElement[] { file }, psiDirectory).run();
-    }
-
-    @Nullable
-    public String getElementsToMoveName() {
-      if (myClassesToMove.length == 1) {
-        return UIDesignerBundle.message("move.class.and.form.prompt", UsageViewUtil.getLongName(myClassesToMove[0]));
-      }
-      return UIDesignerBundle.message("move.classes.and.forms.prompt");
-    }
-  }
-
-  private static class MoveFormsProcessor extends MoveFilesOrDirectoriesProcessor {
-    public MoveFormsProcessor(final Project project, final PsiElement[] elements, final PsiDirectory newParent) {
-      super(project, elements, newParent, false, false, null, null);
-    }
-
-    @Override protected boolean isPreviewUsages(UsageInfo[] usages) {
-      return false;
-    }
-  }
 }
