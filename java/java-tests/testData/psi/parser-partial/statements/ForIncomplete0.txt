@@ -1,0 +1,10 @@
+PsiJavaFile:ForIncomplete0.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiForStatement
+      PsiKeyword:for('for')
+      PsiErrorElement:'(' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

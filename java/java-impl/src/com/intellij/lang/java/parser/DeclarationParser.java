@@ -495,7 +495,7 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis) {
+  public static PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis) {
     final PsiBuilder.Marker param = builder.mark();
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
