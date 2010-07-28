@@ -250,7 +250,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  public static PyType getTypeFromTarget(@NotNull final PsiElement target, final TypeEvalContext context, @Nullable PyReferenceExpression anchor) {
+  public static PyType getTypeFromTarget(@NotNull final PsiElement target,
+                                         final TypeEvalContext context,
+                                         @Nullable PyReferenceExpression anchor) {
     final PyType pyType = getReferenceTypeFromProviders(target, context);
     if (pyType != null) {
       return pyType;
@@ -321,7 +323,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public Object[] getTypeCompletionVariants(PyType type) {
     ProcessingContext context = new ProcessingContext();
     context.put(PyType.CTX_NAMES, new HashSet<String>());
-    return type.getCompletionVariants(this, context);
+    return type.getCompletionVariants(this.getName(), this, context);
   }
 
   private static class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {

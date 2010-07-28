@@ -5,6 +5,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.types.PyType;
@@ -38,16 +39,19 @@ public class PyJavaClassType implements PyType {
     return null;
   }
 
-  public Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context) {
-    final VariantsProcessor processor = new VariantsProcessor(referenceExpression);
-    myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
+    final VariantsProcessor processor = new VariantsProcessor(expressionHook);
+    myClass.processDeclarations(processor, ResolveState.initial(), null, expressionHook);
     return processor.getResult();
   }
 
   public String getName() {
-    if (myClass != null)
-    return myClass.getName();
-    else return null;
+    if (myClass != null) {
+      return myClass.getName();
+    }
+    else {
+      return null;
+    }
   }
 
   @Override

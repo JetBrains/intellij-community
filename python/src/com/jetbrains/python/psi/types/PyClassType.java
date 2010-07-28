@@ -78,8 +78,12 @@ public class PyClassType implements PyType {
         if (accessor_code != null) ret.add(accessor_code);
         PyTargetExpression site = property.getDefinitionSite();
         if (site != null) ret.add(site);
-        if (ret.size() > 0) return ret;
-        else return null; // property is found, but the required accessor is explicitly absent
+        if (ret.size() > 0) {
+          return ret;
+        }
+        else {
+          return null;
+        } // property is found, but the required accessor is explicitly absent
       }
     }
     final PsiElement classMember = resolveClassMember(myClass, name);
@@ -135,7 +139,7 @@ public class PyClassType implements PyType {
   @Nullable
   private static PsiElement resolveInner(PyClass aClass, String name) {
     ResolveProcessor processor = new ResolveProcessor(name);
-    ((PyClassImpl) aClass).processDeclarations(processor); // our members are strictly within us.
+    ((PyClassImpl)aClass).processDeclarations(processor); // our members are strictly within us.
     final PsiElement resolveResult = processor.getResult();
     //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
     if (resolveResult != null && resolveResult != aClass) {
@@ -144,13 +148,13 @@ public class PyClassType implements PyType {
     return null;
   }
 
-  public Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
     Set<String> namesAlready = context.get(CTX_NAMES);
     if (namesAlready == null) {
       namesAlready = new HashSet<String>();
     }
     List<Object> ret = new ArrayList<Object>();
-    Condition<String> underscoreFilter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(referenceExpression.getName()));
+    Condition<String> underscoreFilter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(completionPrefix));
     // from providers
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(myClass)) {
@@ -161,29 +165,29 @@ public class PyClassType implements PyType {
       }
     }
 
-    addOwnClassMembers(referenceExpression, namesAlready, ret, underscoreFilter);
+    addOwnClassMembers(expressionHook, namesAlready, ret, underscoreFilter);
 
-    addInheritedMembers(referenceExpression, context, ret);
-    
+    addInheritedMembers(completionPrefix, expressionHook, context, ret);
+
     return ret.toArray();
   }
 
-  private void addOwnClassMembers(PyQualifiedExpression referenceExpression,
+  private void addOwnClassMembers(PyExpression expressionHook,
                                   Set<String> namesAlready,
                                   List<Object> ret, Condition<String> underscoreFilter) {
-    List<? extends PsiElement> classList = new ParentMatcher(PyClass.class).search(referenceExpression);
+    List<? extends PsiElement> classList = new ParentMatcher(PyClass.class).search(expressionHook);
     boolean withinOurClass = classList != null && classList.get(0) == this;
 
     final VariantsProcessor processor = new VariantsProcessor(
-      referenceExpression, new PyResolveUtil.FilterNotInstance(myClass), underscoreFilter
+      expressionHook, new PyResolveUtil.FilterNotInstance(myClass), underscoreFilter
     );
-    ((PyClassImpl) myClass).processClassLevelDeclarations(processor);
+    ((PyClassImpl)myClass).processClassLevelDeclarations(processor);
 
     List<String> slots = myClass.isNewStyleClass() ? myClass.getSlots() : null;
     if (slots != null) {
       processor.setAllowedNames(slots);
     }
-    ((PyClassImpl) myClass).processInstanceLevelDeclarations(processor);
+    ((PyClassImpl)myClass).processInstanceLevelDeclarations(processor);
 
     for (LookupElement le : processor.getResultList()) {
       String name = le.getLookupString();
@@ -201,9 +205,9 @@ public class PyClassType implements PyType {
     }
   }
 
-  private void addInheritedMembers(PyQualifiedExpression referenceExpression, ProcessingContext context, List<Object> ret) {
+  private void addInheritedMembers(String prefix, PyExpression expressionHook, ProcessingContext context, List<Object> ret) {
     for (PyClass ancestor : myClass.getSuperClasses()) {
-      Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(referenceExpression, context);
+      Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(prefix, expressionHook, context);
       for (Object ob : ancestry) {
         if (ob instanceof LookupElementBuilder) {
           final LookupElementBuilder lookupElt = (LookupElementBuilder)ob;
