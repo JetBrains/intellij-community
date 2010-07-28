@@ -17,14 +17,14 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
-public class HgCopyTestCase extends HgAbstractTestCase {
+public class HgCopyTestCase extends HgSingleUserTestCase {
 
   @Test
   public void testCopyUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), added("b.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("b.txt"));
   }
 
   @Test
@@ -32,16 +32,16 @@ public class HgCopyTestCase extends HgAbstractTestCase {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     editFileInCommand(myProject, file, "newer content");
-    verify(runHgOnProjectRepo("status"), modified("a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), modified("a.txt"), added("b.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"), HgTestOutputParser.added("b.txt"));
   }
 
   @Test
   public void testCopyUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), unknown("a.txt"), unknown("b.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("a.txt"), HgTestOutputParser.unknown("b.txt"));
   }
 
   @Test
@@ -50,7 +50,7 @@ public class HgCopyTestCase extends HgAbstractTestCase {
     runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
     copyFileInCommand(file, "c.txt");
-    verify(runHgOnProjectRepo("status"), added("b.txt"), added("c.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("b.txt"), HgTestOutputParser.added("c.txt"));
   }
 
   @Test
@@ -59,7 +59,7 @@ public class HgCopyTestCase extends HgAbstractTestCase {
     createFileInCommand(parent, "a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(parent, "org");
-    verify(runHgOnProjectRepo("status"), added("org", "a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"));
   }
 
 }
