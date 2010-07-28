@@ -394,6 +394,10 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
   
   void select(final Object[] elements, final boolean addToSelection) throws Exception {
+    select(elements, addToSelection, false);
+  }
+
+  void select(final Object[] elements, final boolean addToSelection, final boolean canBeInterrupted) throws Exception {
     final Ref<Boolean> done = new Ref<Boolean>(false);
     doAndWaitForBuilder(new Runnable() {
       public void run() {
@@ -405,7 +409,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       }
     }, new Condition() {
       public boolean value(Object o) {
-        return done.get();
+        return done.get() || (canBeInterrupted && getBuilder().getUi().isCancelledReady());
       }
     });
   }
