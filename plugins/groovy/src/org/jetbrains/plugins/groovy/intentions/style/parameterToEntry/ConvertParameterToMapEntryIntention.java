@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -83,8 +84,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   @NonNls private static final String MAP_TYPE_TEXT = "Map";
   @NonNls private static final String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
 
-  protected void processIntention(@NotNull final PsiElement element) throws IncorrectOperationException {
-    final Project project = element.getProject();
+  protected void processIntention(@NotNull final PsiElement element, final Project project, Editor editor) throws IncorrectOperationException {
     // Method or closure to be refactored
     final GrParametersOwner owner = PsiTreeUtil.getParentOfType(element, GrParametersOwner.class);
     final Collection<PsiElement> occurrences = new ArrayList<PsiElement>();

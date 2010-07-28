@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -53,27 +52,8 @@ public class EachToForIntention extends Intention {
     return new EachToForPredicate();
   }
 
-  private GrVariable var = null;
-
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    super.invoke(project, editor, file);
-    if (var == null) return;
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final Document doc = documentManager.getDocument(file);
-    if (doc == null) return;
-
-
-    documentManager.doPostponedOperationsAndUnblockDocument(doc);
-    editor.getCaretModel().moveToOffset(var.getTextOffset());
-    new VariableInplaceRenamer(var, editor).performInplaceRename();
-  }
-
-  @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrMethodCallExpression expression = (GrMethodCallExpression)element;
     final GrClosableBlock block = expression.getClosureArguments()[0];
     final GrParameterList parameterList = block.getParameterList();
@@ -114,7 +94,19 @@ public class EachToForIntention extends Intention {
     final GrStatement statement = elementFactory.createStatementFromText(builder.toString());
     final GrForStatement forStatement = (GrForStatement)expression.replaceWithStatement(statement);
     final GrForClause clause = forStatement.getClause();
-    this.var = clause.getDeclaredVariables()[0];
+    GrVariable variable = clause.getDeclaredVariables()[0];
+
+    if (variable == null) return;
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    final Document doc = documentManager.getDocument(element.getContainingFile());
+    if (doc == null) return;
+
+    documentManager.doPostponedOperationsAndUnblockDocument(doc);
+    editor.getCaretModel().moveToOffset(variable.getTextOffset());
+    new VariableInplaceRenamer(variable, editor).performInplaceRename();
   }
 
   private static class EachToForPredicate implements PsiElementPredicate {
