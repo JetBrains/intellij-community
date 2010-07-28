@@ -116,7 +116,7 @@ public class PyBlock implements ASTBlock {
     }
     if (ourListElementTypes.contains(parentType)) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
-      if (!PyTokenTypes.OPEN_BRACES.contains(childType) && !PyTokenTypes.CLOSE_BRACES.contains(childType)) {
+      if (needListAlignment(child)) {
         childAlignment = _childListAlignment;
       }
     }
@@ -156,6 +156,22 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(child, childAlignment, childIndent, wrap, mySettings);
+  }
+
+  private static boolean needListAlignment(ASTNode child) {
+    IElementType childType = child.getElementType();
+    if (PyTokenTypes.OPEN_BRACES.contains(childType)) {
+      return false;
+    }
+    if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
+      ASTNode prevNode = child.getTreePrev();
+      while (prevNode != null &&
+             (prevNode instanceof PsiWhiteSpace || PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(prevNode.getElementType()))) {
+        prevNode = prevNode.getTreePrev();
+      }
+      return prevNode != null && prevNode.getElementType() == PyTokenTypes.COMMA;
+    }
+    return true;
   }
 
   private static boolean hasLineBreakBefore(ASTNode child) {
