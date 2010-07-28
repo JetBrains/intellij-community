@@ -8,6 +8,7 @@ class FooClass:
 
   @deco
   def fooFunction(fooParam1, fooParam2=0) :
+    notAField = 3
     pass
 
 def topLevelFunction(tlfp1, tlfp2) :

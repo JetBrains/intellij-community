@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
@@ -242,7 +243,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     }
     final String referencedName = myElement.getReferencedName();
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
-        ((PyFunction)element).getContainingClass() != null) {
+        ((PyFunction)element).getContainingClass() != null && !PyNames.INIT.equals(referencedName)) {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null && qualifier.getType(TypeEvalContext.fast()) == null) {
         return true;

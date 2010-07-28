@@ -12,17 +12,16 @@ import java.util.Collection;
  * @author yole
  */
 public class PyIntroduceVariableTest extends PyLightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/refactoring/introduceVariable";
-  }
-
   public void testSimple() {
     doTest();
   }
 
   public void testPy995() {
     doTest();
+  }
+
+  public void testSkipLeadingWhitespace() {  // PY-1338
+    doTest();    
   }
 
   public void testSuggestKeywordArgumentName() {   // PY-1260
@@ -38,7 +37,7 @@ public class PyIntroduceVariableTest extends PyLightFixtureTestCase {
   }
 
   private void doTestSuggestions(Class<? extends PyExpression> parentClass, String... expectedNames) {
-    myFixture.configureByFile(getTestName(true) + ".py");
+    myFixture.configureByFile("/refactoring/introduceVariable/" + getTestName(true) + ".py");
     VariableIntroduceHandler handler = new VariableIntroduceHandler();
     PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()), parentClass);
     final Collection<String> names = handler.getSuggestedNames(expr);
@@ -48,9 +47,9 @@ public class PyIntroduceVariableTest extends PyLightFixtureTestCase {
   }
 
   private void doTest() {
-    myFixture.configureByFile(getTestName(true) + ".py");
+    myFixture.configureByFile("/refactoring/introduceVariable/" + getTestName(true) + ".py");
     VariableIntroduceHandler handler = new VariableIntroduceHandler();
     handler.performAction(myFixture.getProject(),  myFixture.getEditor(), myFixture.getFile(), "a", true, false, false);
-    myFixture.checkResultByFile(getTestName(true) + ".after.py");
+    myFixture.checkResultByFile("/refactoring/introduceVariable/" + getTestName(true) + ".after.py");
   }
 }

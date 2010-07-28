@@ -5,15 +5,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveResult;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.RootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -365,7 +363,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", element.getText())).add(BR));
         reassignment_marked = true;
       }
-      element = ((PyReferenceExpression)element).followAssignmentsChain().getElement();
+      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)element).followAssignmentsChain();
+      element = resolveResult.isImplicit() ? null : resolveResult.getElement();
     }
     // it may be a call to a standard wrapper
     if (element instanceof PyCallExpression) {

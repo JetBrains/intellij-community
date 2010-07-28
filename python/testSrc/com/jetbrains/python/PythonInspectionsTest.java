@@ -157,12 +157,17 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     LocalInspectionTool inspection = new PyRaisingNewStyleClassInspection();
     doTestWithLanguageLevel(getTestName(false), inspection, LanguageLevel.PYTHON24);
   }
-  
+
   public void testPyUnboundLocalVariableInspection() throws Throwable {
     LocalInspectionTool inspection = new PyUnboundLocalVariableInspection();
     doTest(getTestName(false), inspection);
   }
-  
+
+  public void testPyUnboundLocalVariableInspectionPy3k() throws Throwable {
+    LocalInspectionTool inspection = new PyUnboundLocalVariableInspection();
+    doTestWithPy3k(getTestName(false), inspection);
+  }
+
   public void testPyDocstringInspection() throws Throwable {
     LocalInspectionTool inspection = new PyDocstringInspection();
     doTest(getTestName(false), inspection);
@@ -173,12 +178,11 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPySimplifyBooleanCheckInspection() throws Throwable {
-    LocalInspectionTool inspection = new PySimplifyBooleanCheckInspection();
-    doTest(getTestName(false), inspection);
+  public void testPySimplifyBooleanCheckInspection() {
+    doHighlightingTest(PySimplifyBooleanCheckInspection.class);
   }
 
-  public void testPyFromFutureImportInspection() throws Throwable {
+  public void testPyFromFutureImportInspection() {
     myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
     myFixture.enableInspections(PyFromFutureImportInspection.class);
     myFixture.checkHighlighting(true, false, false);

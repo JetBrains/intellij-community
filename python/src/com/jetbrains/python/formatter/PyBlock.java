@@ -265,7 +265,10 @@ public class PyBlock implements ASTBlock {
     if (isAround(type1, type2, PyTokenTypes.ADDITIVE_OPERATIONS) && parentType != PyElementTypes.PREFIX_EXPRESSION) {
       return getSpacingForOption(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
     }
-    if (isAround(type1, type2, PyTokenTypes.MULTIPLICATIVE_OPERATIONS)) {
+    if (isAround(type1, type2, PyTokenTypes.MULTIPLICATIVE_OPERATIONS) || type1 == PyTokenTypes.EXP || type2 == PyTokenTypes.EXP) {
+      if (parentType == PyElementTypes.NAMED_PARAMETER || parentType == PyElementTypes.STAR_ARGUMENT_EXPRESSION) {
+        return Spacing.createSpacing(0, 0, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
       return getSpacingForOption(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
     }
     if (isAround(type1, type2, PyTokenTypes.SHIFT_OPERATIONS)) {

@@ -14,7 +14,7 @@ import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 
 public class PyResolveTest extends PyResolveTestCase {
   @Override
-  protected PsiElement doResolve() throws Exception {
+  protected PsiElement doResolve() {
     myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
     final Project project = myFixture.getProject();
     project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
@@ -349,9 +349,14 @@ public class PyResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo");
   }
 
-  public void testLambdaDefaultParameter() throws Exception {
+  public void testLambdaDefaultParameter() {
     final PsiElement element = doResolve();
     assertInstanceOf(element, PyTargetExpression.class);
     assertTrue(element.getParent() instanceof PySetCompExpression);
+  }
+
+  public void testListAssignment() {
+    final PsiElement element = doResolve();
+    assertInstanceOf(element, PyTargetExpression.class);
   }
 }
