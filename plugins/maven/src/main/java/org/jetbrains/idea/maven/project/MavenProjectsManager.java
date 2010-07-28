@@ -224,7 +224,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
         myProjectsTree.save(getProjectsTreeFile());
       }
       catch (IOException e) {
-        MavenLog.LOG.error(e);
+        MavenLog.LOG.warn(e);
       }
     }
   }
