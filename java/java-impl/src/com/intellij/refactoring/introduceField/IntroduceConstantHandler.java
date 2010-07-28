@@ -32,6 +32,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
@@ -85,6 +86,15 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
                                            PsiExpression[] occurences,
                                            PsiElement anchorElement,
                                            PsiElement anchorElementIfAll) {
+    for (PsiExpression occurrence : occurences) {
+      if (RefactoringUtil.isAssignmentLHS(occurrence)) {
+        String message =
+          RefactoringBundle.getCannotRefactorMessage("Selected expression is used for write");
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+        highlightError(project, editor, occurrence);
+        return null;
+      }
+    }
     PsiLocalVariable localVariable = null;
     if (expr instanceof PsiReferenceExpression) {
       PsiElement ref = ((PsiReferenceExpression)expr).resolve();

@@ -35,7 +35,7 @@ public class ArtifactAdditionalCompileScopeProvider extends AdditionalCompileSco
     if (ArtifactCompileScope.getArtifacts(baseScope) != null) {
       return null;
     }
-    final IncrementalArtifactsCompiler compiler = IncrementalArtifactsCompiler.getInstance(project);
+    final ArtifactsCompiler compiler = ArtifactsCompiler.getInstance(project);
     if (compiler == null || !filter.acceptCompiler(compiler)) {
       return null;
     }
