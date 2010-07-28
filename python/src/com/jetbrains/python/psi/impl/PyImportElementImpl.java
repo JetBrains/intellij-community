@@ -67,7 +67,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       return StringUtil.isEmpty(asName) ? null : asName;
     }
     final PyTargetExpression element = getAsNameElement();
-    return element != null ? element.getName() : null;    
+    return element != null ? element.getName() : null;
   }
 
   @Nullable
@@ -102,7 +102,9 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
+                                     @NotNull final ResolveState state,
+                                     final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
     // import is per-file
     if (place.getContainingFile() != getContainingFile()) {
@@ -115,17 +117,18 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
         if (processor instanceof PyAsScopeProcessor) {
           PyTargetExpression asName = getAsNameElement();
           if (asName != null) {
-            return ((PyAsScopeProcessor) processor).execute(element, asName.getText()); // might resolve to asName to show the source of name
+            return ((PyAsScopeProcessor)processor).execute(element, asName.getText()); // might resolve to asName to show the source of name
           }
           // maybe the incoming name is qualified
           PyReferenceExpression place_ref = PsiTreeUtil.getChildOfType(place, PyReferenceExpression.class);
           if (place_ref != null) {
             // unfold all qualifiers of import and reference and compare them
-            List<PyReferenceExpression> place_path = PyResolveUtil.unwindQualifiers(place_ref);
-            List<PyReferenceExpression> ref_path = PyResolveUtil.unwindQualifiers(importRef);
-            if (PyResolveUtil.pathsMatch(place_path, ref_path)) {
+            List<String> place_path = PyResolveUtil.unwindQualifiersAsStrList(place_ref);
+            List<String> ref_path = PyResolveUtil.unwindQualifiersAsStrList(importRef);
+            if (PyResolveUtil.pathsMatchStr(place_path, ref_path)) {
               assert ref_path != null; // extraneous, but makes npe inspection happy
-              for (PyReferenceExpression rex: ref_path) { // the thing the processor is looking for must be somewhere here
+              for (PyReferenceExpression rex : PyResolveUtil
+                .unwindQualifiers(importRef)) { // the thing the processor is looking for must be somewhere here
                 final PsiElement elt = rex.getReference().resolve();
                 if (!processor.execute(elt, state)) return false;
               }
@@ -167,7 +170,9 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
             if (imp_src != null) {
               buf.append(PyResolveUtil.toPath(imp_src, "."));
             }
-            else buf.append("<?>");
+            else {
+              buf.append("<?>");
+            }
             buf.append(" import ");
           }
           else { // "import ... "
@@ -201,7 +206,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     PyElement ret = getAsNameElement();
     if (ret == null) {
       List<PyReferenceExpression> unwound_path = PyResolveUtil.unwindQualifiers(getImportReference());
-      if ((unwound_path != null) && (unwound_path.size() > 0)) ret = unwound_path.get(0); 
+      if ((unwound_path != null) && (unwound_path.size() > 0)) ret = unwound_path.get(0);
     }
     if (ret == null) {
       return EmptyIterable.getInstance();

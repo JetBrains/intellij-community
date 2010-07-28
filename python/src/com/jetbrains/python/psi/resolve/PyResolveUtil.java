@@ -30,8 +30,9 @@ public class PyResolveUtil {
 
   /**
    * Returns closest previous node of given class, as input file would have it.
-   * @param elt node from which to look for a previous statement.
-   * @param condition determines where a node is considered found. 
+   *
+   * @param elt       node from which to look for a previous statement.
+   * @param condition determines where a node is considered found.
    * @return previous statement, or null.
    */
   @Nullable
@@ -63,7 +64,9 @@ public class PyResolveUtil {
     if (proc instanceof PyClassScopeProcessor) {
       return getPrevNodeOf(elt, ((PyClassScopeProcessor)proc).getTargetCondition());
     }
-    else return getPrevNodeOf(elt, IS_NAME_DEFINER);
+    else {
+      return getPrevNodeOf(elt, IS_NAME_DEFINER);
+    }
   }
 
   public static final Condition<PsiElement> IS_NAME_DEFINER = new Condition<PsiElement>() {
@@ -74,9 +77,10 @@ public class PyResolveUtil {
 
   /**
    * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.
+   *
    * @param processor a visitor that says when the crawl is done and collects info.
-   * @param elt element from which we start (not checked by processor); if null, the search immediately returns null.
-   * @param roof if not null, search continues only below the roof and including it.
+   * @param elt       element from which we start (not checked by processor); if null, the search immediately returns null.
+   * @param roof      if not null, search continues only below the roof and including it.
    * @param fromunder if true, begin search not above elt, but from a [possibly imaginary] node right below elt; so elt gets analyzed, too.
    * @return first element that the processor accepted.
    */
@@ -88,7 +92,7 @@ public class PyResolveUtil {
     final boolean is_outside_param_list = PsiTreeUtil.getParentOfType(elt, PyParameterList.class) == null;
     do {
       ProgressManager.checkCanceled();
-      if (!seeker.isValid()) return null; 
+      if (!seeker.isValid()) return null;
       if (fromunder) {
         fromunder = false; // only honour fromunder once per call
         seeker = getPrevNodeOf(PsiTreeUtil.getDeepestLast(seeker), processor);
@@ -107,16 +111,22 @@ public class PyResolveUtil {
         if (local_cap == cap) break; // seeker is in the same context as elt
         if ((cap != null) && PsiTreeUtil.isAncestor(local_cap, cap, true)) break; // seeker is in a context above elt's
         if (
-            (local_cap != elt) && // elt isn't the cap of seeker itself
-            ((cap == null) || !PsiTreeUtil.isAncestor(local_cap, cap, true)) // elt's cap is not under local cap
-        ) { // only look at local cap and above
-          if (local_cap instanceof NameDefiner) seeker = local_cap;
-          else seeker = getPrevNodeOf(local_cap, processor);
+          (local_cap != elt) && // elt isn't the cap of seeker itself
+          ((cap == null) || !PsiTreeUtil.isAncestor(local_cap, cap, true)) // elt's cap is not under local cap
+          ) { // only look at local cap and above
+          if (local_cap instanceof NameDefiner) {
+            seeker = local_cap;
+          }
+          else {
+            seeker = getPrevNodeOf(local_cap, processor);
+          }
         }
-        else break; // seeker is contextually under elt already
+        else {
+          break;
+        } // seeker is contextually under elt already
       }
       // are we still under the roof?
-      if ((roof != null) && (seeker != null) && ! PsiTreeUtil.isAncestor(roof, seeker, false)) return null;
+      if ((roof != null) && (seeker != null) && !PsiTreeUtil.isAncestor(roof, seeker, false)) return null;
       // maybe we're capped by a class? param lists are not capped though syntactically inside the function.  
       if (is_outside_param_list && refersFromMethodToClass(cap, seeker)) continue;
       // check what we got
@@ -125,12 +135,15 @@ public class PyResolveUtil {
           if (processor instanceof ResolveProcessor) {
             return ((ResolveProcessor)processor).getResult();
           }
-          else return seeker; // can't point to exact element, but somewhere here
+          else {
+            return seeker;
+          } // can't point to exact element, but somewhere here
         }
       }
-    } while (seeker != null);
+    }
+    while (seeker != null);
     if (processor instanceof ResolveProcessor) {
-      return ((ResolveProcessor) processor).getResult();
+      return ((ResolveProcessor)processor).getResult();
     }
     return null;
   }
@@ -139,7 +152,8 @@ public class PyResolveUtil {
    * Assumes that the start element is inside a function definition. Runs processor through the outer contexts of that function,
    * from closest to outermost. Does not scan anything within the function.
    * Makes sense for finding names that are not visible at definition time but are visible at call time.
-   * @param start element to start from; if it is not within a function, nothing happens.
+   *
+   * @param start     element to start from; if it is not within a function, nothing happens.
    * @param processor should be ready to see duplicate names defined differently in nested contexts.
    * @return the element for which processor's {@code execute()} returned true, or null.
    */
@@ -157,7 +171,7 @@ public class PyResolveUtil {
         ret = treeCrawlUp(processor, true, cap);
         if ((ret != null) && !PsiTreeUtil.isAncestor(our_cap, ret, true)) { // found something and it is below our cap
           // maybe we're in a method, and what we found is in its class context?
-          if (! refersFromMethodToClass(our_cap, ret)) {
+          if (!refersFromMethodToClass(our_cap, ret)) {
             break; // not in method -> must be all right
           }
         }
@@ -185,9 +199,10 @@ public class PyResolveUtil {
 
   /**
    * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.
+   *
    * @param processor a visitor that says when the crawl is done and collects info.
    * @param fromunder if true, search not above elt, but from a [possibly imaginary] node right below elt; so elt gets analyzed, too.
-   * @param elt element from which we start (not checked by processor); if null, the search immediately fails.
+   * @param elt       element from which we start (not checked by processor); if null, the search immediately fails.
    * @return first element that the processor accepted.
    */
   @Nullable
@@ -197,7 +212,8 @@ public class PyResolveUtil {
 
   /**
    * Returns treeCrawlUp(processor, elt, false). A convenience method.
-   * @see PyResolveUtil#treeCrawlUp(com.intellij.psi.scope.PsiScopeProcessor,boolean,com.intellij.psi.PsiElement)
+   *
+   * @see PyResolveUtil#treeCrawlUp(com.intellij.psi.scope.PsiScopeProcessor, boolean, com.intellij.psi.PsiElement)
    */
   @Nullable
   public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
@@ -209,10 +225,11 @@ public class PyResolveUtil {
    * Tries to match two [qualified] reference expression paths by names; target must be a 'sublist' of source to match.
    * E.g., 'a.b.c.d' and 'a.b.c' would match, while 'a.b.c' and 'a.b.c.d' would not. Eqaully, 'a.b.c' and 'a.b.d' would not match.
    * If either source or target is null, false is returned.
-   * @see #unwindQualifiers(PyQualifiedExpression) .
+   *
    * @param source_path expression path to match (the longer list of qualifiers).
    * @param target_path expression path to match against (hopeful sublist of qualifiers of source).
    * @return true if source matches target.
+   * @see #unwindQualifiers(PyQualifiedExpression) .
    */
   public static <S extends PyExpression, T extends PyExpression> boolean pathsMatch(List<S> source_path, List<T> target_path) {
     // turn qualifiers into lists
@@ -224,7 +241,26 @@ public class PyResolveUtil {
         S source_elt = source_iter.next();
         if (!target_elt.getText().equals(source_elt.getText())) return false;
       }
-      else return false; // source exhausted before target
+      else {
+        return false;
+      } // source exhausted before target
+    }
+    return true;
+  }
+
+  public static boolean pathsMatchStr(List<String> source_path, List<String> target_path) {
+    // turn qualifiers into lists
+    if ((source_path == null) || (target_path == null)) return false;
+    // compare until target is exhausted
+    Iterator<String> source_iter = source_path.iterator();
+    for (final String target_elt : target_path) {
+      if (source_iter.hasNext()) {
+        String source_elt = source_iter.next();
+        if (!target_elt.equals(source_elt)) return false;
+      }
+      else {
+        return false;
+      } // source exhausted before target
     }
     return true;
   }
@@ -232,6 +268,7 @@ public class PyResolveUtil {
   /**
    * Unwinds a [multi-level] qualified expression into a path, as seen in source text, i.e. outermost qualifier first.
    * If any qualifier happens to be not a PyQualifiedExpression, or expr is null, null is returned.
+   *
    * @param expr an experssion to unwind.
    * @return path as a list of ref expressions, or null.
    */
@@ -253,6 +290,24 @@ public class PyResolveUtil {
     return path;
   }
 
+  @Nullable
+  public static List<String> unwindQualifiersAsStrList(final PyQualifiedExpression expr) {
+    final List<String> path = new LinkedList<String>();
+    PyExpression maybe_step;
+    PyQualifiedExpression step = expr;
+    try {
+      while (step != null) {
+        path.add(0, step.getText());
+        maybe_step = step.getQualifier();
+        step = (PyQualifiedExpression)maybe_step;
+      }
+    }
+    catch (ClassCastException e) {
+      return null;
+    }
+    return path;
+  }
+
   public static String toPath(PyQualifiedExpression expr, String separator) {
     if (expr == null) return "";
     List<PyQualifiedExpression> path = unwindQualifiers(expr);
@@ -260,15 +315,19 @@ public class PyResolveUtil {
       StringBuilder buf = new StringBuilder();
       boolean is_not_first = false;
       for (PyQualifiedExpression ex : path) {
-        if (is_not_first) buf.append(separator);
-        else is_not_first = true;
+        if (is_not_first) {
+          buf.append(separator);
+        }
+        else {
+          is_not_first = true;
+        }
         buf.append(ex.getName());
       }
       return buf.toString();
     }
     else {
       String s = expr.getName();
-      return s != null? s : "";
+      return s != null ? s : "";
     }
   }
 

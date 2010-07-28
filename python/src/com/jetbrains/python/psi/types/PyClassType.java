@@ -148,13 +148,13 @@ public class PyClassType implements PyType {
     return null;
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
+  public Object[] getCompletionVariants(String prefix, PyExpression expressionHook, ProcessingContext context) {
     Set<String> namesAlready = context.get(CTX_NAMES);
     if (namesAlready == null) {
       namesAlready = new HashSet<String>();
     }
     List<Object> ret = new ArrayList<Object>();
-    Condition<String> underscoreFilter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(completionPrefix));
+    Condition<String> underscoreFilter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(prefix));
     // from providers
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(myClass)) {
@@ -167,7 +167,7 @@ public class PyClassType implements PyType {
 
     addOwnClassMembers(expressionHook, namesAlready, ret, underscoreFilter);
 
-    addInheritedMembers(completionPrefix, expressionHook, context, ret);
+    addInheritedMembers(prefix, expressionHook, context, ret);
 
     return ret.toArray();
   }
@@ -205,9 +205,9 @@ public class PyClassType implements PyType {
     }
   }
 
-  private void addInheritedMembers(String prefix, PyExpression expressionHook, ProcessingContext context, List<Object> ret) {
+  private void addInheritedMembers(String name, PyExpression expressionHook, ProcessingContext context, List<Object> ret) {
     for (PyClass ancestor : myClass.getSuperClasses()) {
-      Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(prefix, expressionHook, context);
+      Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(name, expressionHook, context);
       for (Object ob : ancestry) {
         if (ob instanceof LookupElementBuilder) {
           final LookupElementBuilder lookupElt = (LookupElementBuilder)ob;

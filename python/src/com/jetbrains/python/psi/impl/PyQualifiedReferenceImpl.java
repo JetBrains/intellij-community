@@ -225,7 +225,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
-    List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers(qualifier);
+    List<String> qualifier_path = PyResolveUtil.unwindQualifiersAsStrList(qualifier);
     if (qualifier_path != null) {
       AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifier_path);
       PyResolveUtil.treeCrawlUp(proc, qualifier);
