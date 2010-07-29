@@ -289,7 +289,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiNamedElement) {
       final String elementName = ((PsiNamedElement)element).getName();
-      if (Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) {
+      if ((Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) && !haveQualifiers(element)) {
         if (element instanceof PyParameter || element instanceof PyTargetExpression) {
           PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class, PyLambdaExpression.class);
           PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, PyLambdaExpression.class);
@@ -301,17 +301,29 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         if (resolveResult == element) {
           return true;
         }
-        // TODO support nonlocal statement
-        final ScopeOwner ourScope = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class);
-        final ScopeOwner theirScope = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
-        if (ourScope != null && ourScope.getScope().isGlobal(elementName) && PsiTreeUtil.isAncestor(theirScope, ourScope, false)) {
-          return true;
-        }
-        if (theirScope != null && theirScope.getScope().isGlobal(elementName) && PsiTreeUtil.isAncestor(ourScope, theirScope, false)) {
-          return true;
+        if (!haveQualifiers(element)) {
+          // TODO support nonlocal statement
+          final ScopeOwner ourScope = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class);
+          final ScopeOwner theirScope = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
+          if (ourScope != null && ourScope.getScope().isGlobal(elementName) && PsiTreeUtil.isAncestor(theirScope, ourScope, false)) {
+            return true;
+          }
+          if (theirScope != null && theirScope.getScope().isGlobal(elementName) && PsiTreeUtil.isAncestor(ourScope, theirScope, false)) {
+            return true;
+          }
         }
         return false; // TODO: handle multi-resolve
       }
+    }
+    return false;
+  }
+
+  private boolean haveQualifiers(PsiElement element) {
+    if (myElement.getQualifier() != null) {
+      return true;
+    }
+    if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).getQualifier() != null) {
+      return true;
     }
     return false;
   }
