@@ -58,4 +58,5 @@ class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
   public void testCategoryProperty() {doBasicTest()}
   public void testMultipleCategories() {doBasicTest()}
 
+  public void testArrayLikeAccessForList() throws Throwable {doBasicTest(); }
 }

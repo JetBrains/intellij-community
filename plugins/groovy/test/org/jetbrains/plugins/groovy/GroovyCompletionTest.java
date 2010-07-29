@@ -96,10 +96,6 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doBasicTest();
   }
 
-  public void testArrayLikeAccessForList() throws Throwable {
-    doBasicTest();
-  }
-
   public void testArrayLikeAccessForMap() throws Throwable {
     doBasicTest();
   }
