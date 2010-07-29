@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -191,6 +192,13 @@ public class DaemonListeners implements Disposable {
       }
 
       public void exitDumbMode() {
+        stopDaemon(true);
+      }
+    });
+
+    connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+      @Override
+      public void powerSaveStateChanged() {
         stopDaemon(true);
       }
     });
