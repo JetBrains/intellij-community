@@ -91,7 +91,7 @@ public interface JavaElementType {
   IElementType ARRAY_INITIALIZER_EXPRESSION = new IJavaElementType("ARRAY_INITIALIZER_EXPRESSION");
   IElementType INSTANCE_OF_EXPRESSION = new IJavaElementType("INSTANCE_OF_EXPRESSION");
   IElementType CLASS_OBJECT_ACCESS_EXPRESSION = new IJavaElementType("CLASS_OBJECT_ACCESS_EXPRESSION");
-  IElementType EMPTY_EXPRESSION = new IJavaElementType("EMPTY_EXPRESSION");
+  IElementType EMPTY_EXPRESSION = new IJavaElementType("EMPTY_EXPRESSION", true);
 
   IElementType EXPRESSION_LIST = new IJavaElementType("EXPRESSION_LIST", true);
 
@@ -122,6 +122,8 @@ public interface JavaElementType {
   IElementType NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR");
   IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST", true);
   IElementType METHOD_RECEIVER = new IJavaElementType("METHOD_RECEIVER");
+
+  IElementType INSTANT_CODE_BLOCK = new IJavaElementType("CODE_BLOCK");
 
   ILazyParseableElementType CODE_BLOCK = new IErrorCounterReparseableElementType("CODE_BLOCK", StdLanguages.JAVA) {
     @Override

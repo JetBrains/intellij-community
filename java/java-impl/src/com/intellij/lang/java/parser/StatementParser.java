@@ -110,13 +110,7 @@ public class StatementParser {
 
     parseStatements(builder, (parseUntilEof ? BraceMode.TILL_LAST : BraceMode.TILL_FIRST));
 
-    // todo: check closing brace
-    //final TreeElement lastChild = elementToAdd.getLastChildNode();
-    //if (lastChild == null || lastChild.getElementType() != JavaTokenType.RBRACE){
-    //  CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace"));
-    //  elementToAdd.rawAddChildren(errorElement);
-    //  elementToAdd.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
-    //}
+    expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
 
     codeBlock.done(JavaElementType.CODE_BLOCK);
     return codeBlock;
@@ -128,29 +122,26 @@ public class StatementParser {
       if (statement != null) continue;
 
       final IElementType tokenType = builder.getTokenType();
-      final PsiBuilder.Marker error = builder.mark();
-      builder.advanceLexer();
-
       if (tokenType == JavaTokenType.RBRACE) {
         if (braceMode == BraceMode.TILL_FIRST) {
-          error.drop();
           return;
         }
         else if (braceMode == BraceMode.TILL_LAST) {
-          if (builder.getTokenType() == null) {
-            error.drop();
+          if (nextTokenType(builder) == null) {
             return;
           }
         }
       }
 
+      final PsiBuilder.Marker error = builder.mark();
+      builder.advanceLexer();
       if (tokenType == JavaTokenType.ELSE_KEYWORD) {
         error.error(JavaErrorMessages.message("else.without.if"));
       }
       else if (tokenType == JavaTokenType.CATCH_KEYWORD) {
         error.error(JavaErrorMessages.message("catch.without.try"));
       }
-      else if (tokenType == JavaTokenType.FINAL_KEYWORD) {
+      else if (tokenType == JavaTokenType.FINALLY_KEYWORD) {
         error.error(JavaErrorMessages.message("finally.without.try"));
       }
       else {
@@ -516,22 +507,44 @@ public class StatementParser {
     return statement;
   }
 
-  @NotNull
+  @Nullable
   private static PsiBuilder.Marker parseSwitchLabelStatement(final PsiBuilder builder) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString());
+    final PsiBuilder.Marker statement = builder.mark();
+    final boolean isCase = builder.getTokenType() == JavaTokenType.CASE_KEYWORD;
+    builder.advanceLexer();
+
+    if (isCase) {
+      final PsiBuilder.Marker expr = ExpressionParser.parse(builder);
+      if (expr == null) {
+        statement.rollbackTo();
+        return null;
+      }
+    }
+
+    expectOrError(builder, JavaTokenType.COLON, JavaErrorMessages.message("expected.colon"));
+
+    statement.done(JavaElementType.SWITCH_LABEL_STATEMENT);
+    return statement;
   }
 
   @NotNull
   private static PsiBuilder.Marker parseBreakStatement(final PsiBuilder builder) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString());
+    final PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+    expect(builder, JavaTokenType.IDENTIFIER);
+    semicolon(builder);
+    statement.done(JavaElementType.BREAK_STATEMENT);
+    return statement;
   }
 
   @NotNull
   private static PsiBuilder.Marker parseContinueStatement(final PsiBuilder builder) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString());
+    final PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+    expect(builder, JavaTokenType.IDENTIFIER);
+    semicolon(builder);
+    statement.done(JavaElementType.CONTINUE_STATEMENT);
+    return statement;
   }
 
   @NotNull

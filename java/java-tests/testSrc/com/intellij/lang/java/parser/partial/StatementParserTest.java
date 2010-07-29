@@ -31,7 +31,17 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testAssignmentSimple() { doParserTest("{ int[] a;\n a[0] = 0; }"); }
 
   public void testBlockSimple() { doParserTest("{ {} }"); }
-  //public void testAnonymousInSmartCompletion() { doParserTest("{ new Foo(hash\n#) {};\n new Foo(hash\n#, bar) {};\n new Foo(hash\n#x) {}; }"); }  // todo: spaces
+  public void testBlockEmpty() { doParserTest("{ ; }"); }
+  public void testAnonymousInSmartCompletion() { doParserTest("{ new Foo(hash\n#) {};\n new Foo(hash\n#, bar) {};\n new Foo(hash\n#x) {}; }"); }
+  public void testBlockIncomplete0() { doParserTest("{ "); }
+  public void testBlockIncomplete1() { doParserTest("{ { }"); }
+  public void testBlockIncomplete2() { doParserTest("{ else; catch; finally; }"); }
+
+  public void testBreakNormal0() { doParserTest("{ break; }"); }
+  public void testBreakNormal1() { doParserTest("{ break LABEL; }"); }
+
+  public void testContinueNormal0() { doParserTest("{ continue; }"); }
+  public void testContinueNormal1() { doParserTest("{ continue LABEL; }"); }
 
   public void testLocalVar() { doParserTest("{ List<Integer> list; }"); }
   public void testFor() { doParserTest("{ for(Iterator<String> it = null; it.hasNext();) { String s = it.next(); } }"); }
@@ -83,6 +93,12 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchIncomplete3() { doParserTest("{ switch(o) }"); }
   public void testSwitchIncomplete4() { doParserTest("{ switch(){} }"); }
   public void testSwitchIncomplete5() { doParserTest("{ switch(\n foo(); }"); }
+
+  public void testSwitchLabelsNormal() { doParserTest("{ case 1: break; default: break; }"); }
+  public void testSwitchLabelsIncomplete0() { doParserTest("{ case }"); }
+  public void testSwitchLabelsIncomplete1() { doParserTest("{ case 2 }"); }
+  public void testSwitchLabelsIncomplete2() { doParserTest("{ default }"); }
+  public void testSwitchLabelsIncomplete3() { doParserTest("{ default 3: }"); }
 
   public void testSyncNormal() { doParserTest("{ synchronized(o){} }"); }
   public void testSyncIncomplete0() { doParserTest("{ synchronized }"); }

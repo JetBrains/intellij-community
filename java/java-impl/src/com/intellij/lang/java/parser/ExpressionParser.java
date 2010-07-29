@@ -773,7 +773,7 @@ public class ExpressionParser {
   }
 
   private static void emptyExpression(final PsiBuilder builder) {
-    builder.mark().done(JavaElementType.EMPTY_EXPRESSION);
+    emptyElement(builder, JavaElementType.EMPTY_EXPRESSION);
   }
 
   @Nullable
