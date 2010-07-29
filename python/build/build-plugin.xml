@@ -50,6 +50,7 @@
             <include name="resources"/>
             <include name="src"/>
             <include name="pluginSrc"/>
+            <include name="pydevSrc"/>
         </dirset>
       <dirset dir="${plugin.home}/../ultimate/ultimate-verifier">
         <include name="src"/>
