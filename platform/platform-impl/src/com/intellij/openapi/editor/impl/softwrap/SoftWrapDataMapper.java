@@ -192,6 +192,11 @@ public class SoftWrapDataMapper {
     // If we are here that means that there is no soft wrap on a logical line that corresponds to the target visual line.
     softWrapLinesBeforeCurrentLogicalLine += softWrapLinesOnCurrentLogicalLine;
     int logicalLine = defaultLogical.line - softWrapLinesBeforeCurrentLogicalLine;
+    // There is a possible case that we can't count on given default logical position - e.g. if given visual position line
+    // is more than total document lines count.
+    if (logicalLine < 0) {
+      logicalLine = Math.min(lastSoftWrapLogicalLine + 1, document.getLineCount() - 1);
+    }
     int foldedLines = getFoldedLinesBefore(document.getLineStartOffset(logicalLine));
     int foldingColumnDiff = visual.column - defaultLogical.column;
     return new LogicalPosition(
