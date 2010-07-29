@@ -602,7 +602,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void doUpdateOnRefresh() {
-    if (!myStartupActivityPerformed) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!myStartupActivityPerformed) {
+        return; // in test mode suppress addition to a queue unless project is properly initialized
+      }
+    }
     DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
   }
 
