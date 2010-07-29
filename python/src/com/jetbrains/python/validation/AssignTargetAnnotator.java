@@ -1,7 +1,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -18,17 +17,9 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-    ExprVisitor visitor = new ExprVisitor(Operation.Assign);
-    boolean found = false;
-    for (PyElement expr : node.iterateNames()) {
-      expr.accept(visitor);
-      found = true;
-    }
-    if (! found) {
-      PsiElement lhs = node.getFirstChild();
-      if (lhs instanceof PyElement) {
-        lhs.accept(visitor);
-      }
+    final PyExpression expression = node.getLeftHandSideExpression();
+    if (expression != null) {
+      expression.accept(new ExprVisitor(Operation.Assign));
     }
   }
 
@@ -156,6 +147,14 @@ public class AssignTargetAnnotator extends PyAnnotator {
     @Override
     public void visitPySetCompExpression(PySetCompExpression node) {
       markError(node, message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
+    }
+
+    @Override
+    public void visitPyStarExpression(PyStarExpression node) {
+      super.visitPyStarExpression(node);
+      if (!(node.getParent() instanceof PySequenceExpression)) {
+        markError(node, "starred assignment target must be in a list or tuple");
+      }
     }
 
     @Override
