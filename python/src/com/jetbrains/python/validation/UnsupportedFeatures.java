@@ -157,7 +157,7 @@ public class UnsupportedFeatures extends PyAnnotator {
   public void visitPyStarExpression(PyStarExpression node) {
     super.visitPyStarExpression(node);
     if (isPy2(node)) {
-      getHolder().createWarningAnnotation(node, "Python 2 does not support star expressions");
+      getHolder().createWarningAnnotation(node, "Starred expressions are not allowed as assignment targets in Python 2");
     }
   }
 
