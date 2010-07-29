@@ -959,10 +959,10 @@ public class CompileDriver {
         final TranslatorsOutputSink sink = new TranslatorsOutputSink(context, translators);
         final Set<FileType> generatedTypes = new HashSet<FileType>();
         Collection<VirtualFile> chunkFiles = chunkMap.get(currentChunk);
+        final Set<VirtualFile> filesToRecompile = new HashSet<VirtualFile>();
+        final Set<VirtualFile> allDependent = new HashSet<VirtualFile>();
         try {
           int round = 0;
-          final Set<VirtualFile> filesToRecompile = new HashSet<VirtualFile>();
-          final Set<VirtualFile> allDependent = new HashSet<VirtualFile>();
           Collection<VirtualFile> dependentFiles = Collections.emptyList();
           final Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> dependencyFilter = new DependentClassesCumulativeFilter();
           
@@ -1092,19 +1092,18 @@ public class CompileDriver {
               indicator.popState();
             }
           }
-          
-          if (context.getMessageCount(CompilerMessageCategory.ERROR) != 0) {
-            filesToRecompile.addAll(allDependent);
-          }
-          if (filesToRecompile.size() > 0) {
-            sink.add(null, Collections.<TranslatingCompiler.OutputItem>emptyList(), VfsUtil.toVirtualFileArray(filesToRecompile));
-          }
         }
         catch (CacheCorruptedException e) {
           LOG.info(e);
           context.requestRebuildNextTime(e.getMessage());
         }
         finally {
+          if (context.getMessageCount(CompilerMessageCategory.ERROR) != 0) {
+            filesToRecompile.addAll(allDependent);
+          }
+          if (filesToRecompile.size() > 0) {
+            sink.add(null, Collections.<TranslatingCompiler.OutputItem>emptyList(), VfsUtil.toVirtualFileArray(filesToRecompile));
+          }
           if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
             // perform update only if there were no errors, so it is guaranteed that the file was processd by all neccesary compilers
             sink.flushPostponedItems();
