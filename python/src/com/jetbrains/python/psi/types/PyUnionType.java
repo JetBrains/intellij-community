@@ -62,7 +62,7 @@ public class PyUnionType implements PyType {
   @Override
   public boolean isBuiltin() {
     for (PyType one : myMembers) {
-      if (!one.isBuiltin()) return false;
+      if (one == null || !one.isBuiltin()) return false;
     }
     return true;
   }

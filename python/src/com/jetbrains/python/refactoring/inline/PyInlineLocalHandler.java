@@ -56,6 +56,9 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
   @Override
   public void inlineElement(Project project, Editor editor, PsiElement element) {
+    if (editor == null) {
+      return;
+    }
     final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
     final PyReferenceExpression refExpr = psiReference instanceof PyReferenceExpression ? ((PyReferenceExpression)psiReference) : null;
     invoke(project, editor, (PyTargetExpression)element, refExpr);
@@ -127,11 +130,14 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         isSameDefinition &= isSameDefinition(def, otherDef);
       }
       if (!isSameDefinition) {
-        highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
-        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
-        String message =
-          RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.inlineVariable");
+        if (editor != null) {
+          highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
+          highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
+          String message =
+            RefactoringBundle
+              .getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
+          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.inlineVariable");
+        }
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }

@@ -3,18 +3,20 @@ package com.jetbrains.python.codeInsight.override;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.MemberChooserObject;
 import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.SimpleColoredComponent;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 
+import javax.swing.*;
+
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 14, 2009
- * Time: 5:44:51 PM
+ * @author Alexey.Ivanov
  */
 public class PyMethodMember extends PsiElementMemberChooserObject implements ClassMember {
+  private final String myFullName;
   private static String buildNameFor(final PyElement element) {
     if (element instanceof PyFunction) {
       return element.getName() + ((PyFunction)element).getParameterList().getText();
@@ -23,7 +25,12 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
   }
 
   public PyMethodMember(final PyElement element) {
-    super(element, buildNameFor(element), element.getIcon(0));
+    super(element, trimUnderscores(buildNameFor(element)), element.getIcon(0));
+    myFullName = buildNameFor(element);
+  }
+
+  private static String trimUnderscores(String s) {
+    return StringUtil.trimStart(StringUtil.trimStart(s, "_"), "_");
   }
 
   public MemberChooserObject getParentNodeDelegate() {
@@ -31,5 +38,11 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
     final PyClass parent = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     assert (parent != null);
     return new PyMethodMember(parent);
+  }
+
+  @Override
+  public void renderTreeNode(SimpleColoredComponent component, JTree tree) {
+    component.append(myFullName, getTextAttributes(tree));
+    component.setIcon(getPsiElement().getIcon(0));
   }
 }
