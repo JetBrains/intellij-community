@@ -64,6 +64,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -85,10 +86,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   static void processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector, final boolean searchGppCalls) {
     if (!constructor.isConstructor()) return;
 
-    SearchScope onlyGroovy = searchScope;
-    if (onlyGroovy instanceof GlobalSearchScope) {
-      onlyGroovy = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)onlyGroovy, GroovyFileType.GROOVY_FILE_TYPE);
-    }
+    SearchScope onlyGroovy = PsiUtil.restrictScopeToGroovyFiles(searchScope);
 
     final PsiClass clazz = constructor.getContainingClass();
     if (clazz == null) return;
