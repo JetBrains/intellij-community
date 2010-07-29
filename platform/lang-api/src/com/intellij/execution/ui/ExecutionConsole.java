@@ -16,13 +16,12 @@
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.ui.ComponentContainer;
-
-import javax.swing.*;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 20, 2004
  */
 public interface ExecutionConsole extends ComponentContainer {
-
+  @NonNls String CONSOLE_CONTENT_ID = "ConsoleContent";
 }
