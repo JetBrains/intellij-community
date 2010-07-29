@@ -334,6 +334,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int softWrapLine = myDocument.getLineNumber(softWrap.getStart());
         mySizeContainer.update(softWrapLine, softWrapLine, softWrapLine);
       }
+
+      @Override
+      public void softWrapsRemoved() {
+        mySoftWrapsChanged = true;
+        mySizeContainer.reset();
+      }
     });
 
     EditorHighlighter highlighter = new EmptyEditorHighlighter(myScheme.getAttributes(HighlighterColors.TEXT));
@@ -1691,25 +1697,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
       paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
     }
-
-    // Perform additional activity if soft wrap is added or removed during repainting.
-    // Note: this code lives in this method in assumption that background repainting is the very first activity performed
-    //       during whole editor component repaint.
-    if (mySoftWrapsChanged) {
-      mySoftWrapsChanged = false;
-      validateSize();
-
-      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
-      repaintToScreenBottom(xyToLogicalPosition(position).line);
-
-      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
-      // in accordance with the newly introduced soft wrap(s).
-      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
-
-      // Ask caret model to update visual caret position.
-      //TODO den implement
-      //getCaretModel().moveToOffset(getCaretModel().getOffset());
-    }
   }
 
   private void paintRectangularSelection(Graphics g) {
@@ -1908,6 +1895,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     flushCachedChars(g);
+
+    // Perform additional activity if soft wrap is added or removed during repainting.
+    if (mySoftWrapsChanged) {
+      mySoftWrapsChanged = false;
+      validateSize();
+
+      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
+      repaintToScreenBottom(xyToLogicalPosition(position).line);
+
+      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
+      // in accordance with the newly introduced soft wrap(s).
+      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
+
+      // Ask caret model to update visual caret position.
+      getCaretModel().moveToOffset(getCaretModel().getOffset());
+    }
   }
 
   private boolean paintSelection() {
