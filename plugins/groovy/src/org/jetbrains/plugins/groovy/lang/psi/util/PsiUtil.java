@@ -856,7 +856,7 @@ public class PsiUtil {
 
   public static boolean isMethodUsage(PsiElement element) {
     if (element instanceof GrEnumConstant) return true;
-    if (!(element instanceof GrReferenceElement)) return false;
+    if (!(element instanceof GrReferenceElement || element instanceof GrThisSuperReferenceExpression)) return false;
     PsiElement parent = element.getParent();
     if (parent instanceof GrCall) {
       return true;

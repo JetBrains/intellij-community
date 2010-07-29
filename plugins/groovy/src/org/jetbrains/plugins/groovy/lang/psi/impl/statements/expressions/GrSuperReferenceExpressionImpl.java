@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -22,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author ilyas
  */
-public class GrSuperReferenceExpressionImpl extends GrExpressionImpl implements GrSuperReferenceExpression {
+public class GrSuperReferenceExpressionImpl extends GrThisSuperReferenceExpressionBase implements GrSuperReferenceExpression {
   public GrSuperReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -61,11 +60,6 @@ public class GrSuperReferenceExpressionImpl extends GrExpressionImpl implements 
   }
 
   @Nullable
-  public GrReferenceExpression getQualifier() {
-    return (GrReferenceExpression)findChildByType(GroovyElementTypes.REFERENCE_EXPRESSION);
-  }
-
-  @Nullable
   private PsiType getSuperType(PsiClass aClass) {
     if (aClass.isInterface()) {
       return PsiType.getJavaLangObject(getManager(), getResolveScope());
@@ -87,5 +81,11 @@ public class GrSuperReferenceExpressionImpl extends GrExpressionImpl implements 
     }
 
     return superTypes[0];
+  }
+
+  @NotNull
+  @Override
+  public String getCanonicalText() {
+    return "super";
   }
 }
