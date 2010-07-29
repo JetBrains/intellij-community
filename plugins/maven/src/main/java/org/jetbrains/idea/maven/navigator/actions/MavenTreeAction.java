@@ -21,15 +21,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class MavenTreeAction extends AnAction {
+public abstract class MavenTreeAction extends AnAction implements DumbAware {
   private boolean updated = false;
 
   @Override
@@ -49,6 +51,8 @@ public abstract class MavenTreeAction extends AnAction {
       }
       updated = true;
     }
+    e.getPresentation().setEnabled(MavenActionUtil.hasProject(e.getDataContext())
+                                   && MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject());
   }
 
   @Nullable
