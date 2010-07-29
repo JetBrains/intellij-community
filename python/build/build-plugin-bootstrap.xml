@@ -9,18 +9,18 @@
     <delete dir="${out.dir}/artifacts" failonerror="false"/>
     <delete dir="${out.dir}/jar" failonerror="false"/>
     <delete dir="${out.dir}/deploy" failonerror="false"/>
-    <delete dir="${idea.dir}/jdk15" failonerror="false"/>
+    <delete dir="${idea.dir}/jdk16" failonerror="false"/>
   </target>
 
   <target name="unzip">
     <mkdir dir="${idea.dir}"/>
-    <unzip dest="${idea.dir}/jdk15">
-      <fileset dir="${idea.dir}" includes="idea*-jdk15.zip"/>
+    <unzip dest="${idea.dir}/jdk16">
+      <fileset dir="${idea.dir}" includes="ideaIU*.zip"/>
     </unzip>
   </target>
 
   <target name="main" depends="clean,unzip">
-    <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true" jvm="${jdk15.home}/bin/java">
+    <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true" jvm="${jdk16.home}/bin/java">
 
       <jvmarg line="-Xms64m -Xmx512m"/>
       <jvmarg line="-Dbuild.number=${build.number}"/>
@@ -38,7 +38,7 @@
 
       <arg value="-f"/>
       <arg value="build-plugin.xml"/>
-      <arg value="-Didea.home=${idea.dir}/jdk15"/>
+      <arg value="-Didea.home=${idea.dir}/jdk16"/>
       <arg value="-verbose"/>
     </java>
   </target>
