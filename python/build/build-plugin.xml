@@ -124,10 +124,6 @@
                 <patternset refid="resources.pt"/>
                 <type type="file"/>
             </fileset>
-            <fileset dir="${plugin.home}/pySrc">
-                <patternset refid="resources.pt"/>
-                <type type="file"/>
-            </fileset>
         </copy>
 
         <!-- copy plugin.xml -->
