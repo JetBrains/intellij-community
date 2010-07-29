@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.jsp;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.jsp.BaseJspFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,20 +33,22 @@ public abstract class JspContextManager {
     return project.getComponent(JspContextManager.class);
   }
 
-  public abstract JspFile[] getSuitableContextFiles(@NotNull PsiFile file);
+  public abstract BaseJspFile[] getSuitableContextFiles(@NotNull PsiFile file);
 
-  public abstract void setContextFile(@NotNull PsiFile file, @Nullable JspFile contextFile, final boolean userDefined);
+  public abstract void setContextFile(@NotNull PsiFile file, @Nullable BaseJspFile contextFile, final boolean userDefined);
 
-  public abstract @Nullable JspFile getContextFile(@NotNull PsiFile file);
+  public abstract @Nullable
+  BaseJspFile getContextFile(@NotNull PsiFile file);
 
   public abstract @Nullable JspFile getConfiguredContextFile(@NotNull PsiFile file);
 
-  public @NotNull JspFile getRootContextFile(@NotNull JspFile file) {
-    JspFile rootContext = file;
-    HashSet<JspFile> recursionPreventer = new HashSet<JspFile>();
+  public @NotNull
+  BaseJspFile getRootContextFile(@NotNull BaseJspFile file) {
+    BaseJspFile rootContext = file;
+    HashSet<BaseJspFile> recursionPreventer = new HashSet<BaseJspFile>();
     do {
       recursionPreventer.add(rootContext);
-      JspFile context = getContextFile(rootContext);
+      BaseJspFile context = getContextFile(rootContext);
       if (context == null || recursionPreventer.contains(context)) break;
       rootContext = context;
     }
