@@ -66,9 +66,30 @@ public class StatementParserTest extends JavaParsingTestCase {
 
   //ReturnParsingTest
   //SwitchParsingTest
-  //SynchronizedParsingTest
-  //ThrowParsingTest
-  //TryParsingTest
+
+  public void testSyncNormal() { doParserTest("{ synchronized(o){} }"); }
+  public void testSyncIncomplete0() { doParserTest("{ synchronized }"); }
+  public void testSyncIncomplete1() { doParserTest("{ synchronized( }"); }
+  public void testSyncIncomplete2() { doParserTest("{ synchronized(o }"); }
+  public void testSyncIncomplete3() { doParserTest("{ synchronized(o) }"); }
+  public void testSyncIncomplete4() { doParserTest("{ synchronized(){} }"); }
+  public void testSyncIncomplete5() { doParserTest("{ synchronized(\n foo(); }"); }
+
+  public void testThrowNormal() { doParserTest("{ throw e; }"); }
+  public void testThrowIncomplete0() { doParserTest("{ throw }"); }
+  public void testThrowIncomplete1() { doParserTest("{ throw e }"); }
+
+  public void testTryNormal0() { doParserTest("{ try{}catch(E e){} }"); }
+  public void testTryNormal1() { doParserTest("{ try{}catch(E e){}finally{} }"); }
+  public void testTryNormal2() { doParserTest("{ try{}finally{} }"); }
+  public void testTryIncomplete0() { doParserTest("{ try }"); }
+  public void testTryIncomplete1() { doParserTest("{ try{} }"); }
+  public void testTryIncomplete2() { doParserTest("{ try{}catch }"); }
+  public void testTryIncomplete3() { doParserTest("{ try{}catch( }"); }
+  public void testTryIncomplete4() { doParserTest("{ try{}catch(E }"); }
+  public void testTryIncomplete5() { doParserTest("{ try{}catch(E e }"); }
+  public void testTryIncomplete6() { doParserTest("{ try{}catch(E e) }"); }
+  public void testTryIncomplete7() { doParserTest("{ try{}finally }"); }
 
   public void testWhileNormal() { doParserTest("{ while (true) foo(); }"); }
   public void testWhileIncomplete0() { doParserTest("{ while }"); }

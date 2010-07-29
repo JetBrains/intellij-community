@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,8 @@ public class StatementParser {
   private enum BraceMode {
     TILL_FIRST, TILL_LAST
   }
+
+  private static final TokenSet TRY_CLOSERS_SET = TokenSet.create(JavaTokenType.CATCH_KEYWORD, JavaTokenType.FINALLY_KEYWORD);
 
   private StatementParser() { }
 
@@ -506,20 +509,103 @@ public class StatementParser {
 
   @NotNull
   private static PsiBuilder.Marker parseThrowStatement(final PsiBuilder builder) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString());
+    final PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    final PsiBuilder.Marker expr = ExpressionParser.parse(builder);
+    if (expr == null) {
+      error(builder, JavaErrorMessages.message("expected.expression"));
+      statement.done(JavaElementType.THROW_STATEMENT);
+      return statement;
+    }
+
+    semicolon(builder);
+    statement.done(JavaElementType.THROW_STATEMENT);
+    return statement;
   }
 
   @NotNull
   private static PsiBuilder.Marker parseSynchronizedStatement(final PsiBuilder builder) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString());
+    final PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    if (!parseExpressionInParenth(builder)) {
+      statement.done(JavaElementType.SYNCHRONIZED_STATEMENT);
+      return statement;
+    }
+
+    final PsiBuilder.Marker body = parseCodeBlock(builder);
+    if (body == null) {
+      error(builder, JavaErrorMessages.message("expected.lbrace"));
+    }
+
+    statement.done(JavaElementType.SYNCHRONIZED_STATEMENT);
+    return statement;
   }
 
   @NotNull
   private static PsiBuilder.Marker parseTryStatement(final PsiBuilder builder) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString());
+    final PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    final PsiBuilder.Marker tryBlock = parseCodeBlock(builder);
+    if (tryBlock == null) {
+      error(builder, JavaErrorMessages.message("expected.lbrace"));
+      statement.done(JavaElementType.TRY_STATEMENT);
+      return statement;
+    }
+
+    if (!TRY_CLOSERS_SET.contains(builder.getTokenType())) {
+      error(builder, JavaErrorMessages.message("expected.catch.or.finally"));
+      statement.done(JavaElementType.TRY_STATEMENT);
+      return statement;
+    }
+
+    while (builder.getTokenType() == JavaTokenType.CATCH_KEYWORD) {
+      if (!parseCatchBlock(builder)) break;
+    }
+
+    if (expect(builder, JavaTokenType.FINALLY_KEYWORD)) {
+      final PsiBuilder.Marker finallyBlock = parseCodeBlock(builder);
+      if (finallyBlock == null) {
+        error(builder, JavaErrorMessages.message("expected.lbrace"));
+      }
+    }
+
+    statement.done(JavaElementType.TRY_STATEMENT);
+    return statement;
+  }
+
+  private static boolean parseCatchBlock(final PsiBuilder builder) {
+    final PsiBuilder.Marker section = builder.mark();
+    builder.advanceLexer();
+
+    if (!expect(builder, JavaTokenType.LPARENTH)) {
+      error(builder, JavaErrorMessages.message("expected.lparen"));
+      section.done(JavaElementType.CATCH_SECTION);
+      return false;
+    }
+
+    final PsiBuilder.Marker param = DeclarationParser.parseParameter(builder, false);
+    if (param == null) {
+      error(builder, JavaErrorMessages.message("expected.parameter"));
+    }
+
+    if (!expect(builder, JavaTokenType.RPARENTH)) {
+      error(builder, JavaErrorMessages.message("expected.rparen"));
+      section.done(JavaElementType.CATCH_SECTION);
+      return false;
+    }
+
+    final PsiBuilder.Marker body = parseCodeBlock(builder);
+    if (body == null) {
+      error(builder, JavaErrorMessages.message("expected.lbrace"));
+      section.done(JavaElementType.CATCH_SECTION);
+      return false;
+    }
+
+    section.done(JavaElementType.CATCH_SECTION);
+    return true;
   }
 
   @NotNull

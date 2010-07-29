@@ -514,13 +514,14 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       eatBrackets(builder);
+      param.done(JavaElementType.PARAMETER);
+      return param;
     }
     else {
       error(builder, JavaErrorMessages.message("expected.identifier"));
+      param.drop();
+      return type;
     }
-
-    param.done(JavaElementType.PARAMETER);
-    return param;
   }
 
   @Nullable

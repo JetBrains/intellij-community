@@ -1,0 +1,10 @@
+PsiJavaFile:SyncIncomplete0.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiSynchronizedStatement
+      PsiKeyword:synchronized('synchronized')
+      PsiErrorElement:'(' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')
