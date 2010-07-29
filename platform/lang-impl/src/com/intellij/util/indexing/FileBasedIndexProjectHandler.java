@@ -57,7 +57,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
           startupManager.registerCacheUpdater(rootsChangeUpdater);
           rootManager.registerRootsChangeUpdater(rootsChangeUpdater);
           rootManager.registerRefreshUpdater(refreshUpdater);
-          myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this);
+          myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
           projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
             public void projectClosing(Project project) {
               rootManager.unregisterRefreshUpdater(refreshUpdater);

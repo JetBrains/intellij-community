@@ -610,11 +610,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         return; // in test mode suppress addition to a queue unless project is properly initialized
       }
     }
-    myStartupManager.runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      public void run() {
-        DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
-      }
-    });
+    DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
   }
 
   private void addRootsToWatch() {
