@@ -3,17 +3,15 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
 import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 
 /**
@@ -30,38 +28,29 @@ public class ConstructorReferencesSearchHelper {
                                               final PsiMethod constructor,
                                               final SearchScope searchScope,
                                               boolean ignoreAccessScope,
-                                              final boolean isStrictSignatureSearch) {
-    final Ref<Boolean> result = new Ref<Boolean>();
-    PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-      public PsiClass compute() {
-        PsiClass aClass = constructor.getContainingClass();
-        if (aClass == null) {
-          result.set(true);
-          return null;
-        }
+                                              final boolean isStrictSignatureSearch, SearchRequestCollector collector) {
+    PsiClass aClass = constructor.getContainingClass();
+    if (aClass == null) {
+      return true;
+    }
 
-        if (aClass.isEnum()) {
-          PsiField[] fields = aClass.getFields();
-          for (PsiField field : fields) {
-            if (field instanceof PsiEnumConstant) {
-              PsiReference reference = field.getReference();
-              if (reference != null && reference.isReferenceTo(constructor)) {
-                if (!processor.process(reference)) {
-                  result.set(false);
-                  return null;
-                }
-              }
+    if (aClass.isEnum()) {
+      for (PsiField field : aClass.getFields()) {
+        if (field instanceof PsiEnumConstant) {
+          PsiReference reference = field.getReference();
+          if (reference != null && reference.isReferenceTo(constructor)) {
+            if (!processor.process(reference)) {
+              return false;
             }
           }
         }
-        return aClass;
       }
-    });
-    if (!result.isNull()) return result.get();
+    }
 
     // search usages like "new XXX(..)"
-    Processor<PsiReference> processor1 = new ReadActionProcessor<PsiReference>() {
-      public boolean processInReadAction(final PsiReference reference) {
+    PairProcessor<PsiReference, SearchRequestCollector> processor1 = new PairProcessor<PsiReference, SearchRequestCollector>() {
+      @Override
+      public boolean process(PsiReference reference, SearchRequestCollector collector) {
         PsiElement parent = reference.getElement().getParent();
         if (parent instanceof PsiAnonymousClass) {
           parent = parent.getParent();
@@ -85,12 +74,12 @@ public class ConstructorReferencesSearchHelper {
       }
     };
 
-    if (!ReferencesSearch.search(aClass, searchScope, ignoreAccessScope).forEach(processor1)) return false;
+    ReferencesSearch.searchOptimized(aClass, searchScope, ignoreAccessScope, collector, true, processor1);
 
     final boolean constructorCanBeCalledImplicitly = constructor.getParameterList().getParametersCount() == 0;
     // search usages like "this(..)"
     if (!processSuperOrThis(processor, aClass, constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
-                                                    PsiKeyword.THIS)) {
+                            PsiKeyword.THIS)) {
       return false;
     }
 
@@ -98,7 +87,7 @@ public class ConstructorReferencesSearchHelper {
     Processor<PsiClass> processor2 = new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
         return processSuperOrThis(processor, (PsiClass)inheritor.getNavigationElement(), constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
-                                                          PsiKeyword.SUPER);
+                                  PsiKeyword.SUPER);
       }
     };
 
@@ -110,21 +99,6 @@ public class ConstructorReferencesSearchHelper {
                                                              final PsiMethod constructor, final boolean constructorCanBeCalledImplicitly, final SearchScope searchScope,
                                                              final boolean isStrictSignatureSearch,
                                                              final String superOrThisKeyword) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return processSuperOrThisInReadAction(inheritor, searchScope, superOrThisKeyword, isStrictSignatureSearch, constructor,
-                                   constructorCanBeCalledImplicitly, processor);
-      }
-    });
-  }
-
-  private boolean processSuperOrThisInReadAction(final PsiClass inheritor,
-                                      final SearchScope searchScope,
-                                      final String superOrThisKeyword,
-                                      final boolean isStrictSignatureSearch,
-                                      final PsiMethod constructor,
-                                      final boolean constructorCanBeCalledImplicitly,
-                                      final Processor<PsiReference> processor) {
     PsiMethod[] constructors = inheritor.getConstructors();
     if (constructors.length == 0 && constructorCanBeCalledImplicitly) {
       processImplicitConstructorCall(inheritor, processor, constructor, inheritor);

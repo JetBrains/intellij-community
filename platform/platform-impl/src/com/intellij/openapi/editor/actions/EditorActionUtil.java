@@ -447,11 +447,6 @@ public class EditorActionUtil {
           line++;
           column = EditorUtil.getLastVisualLineColumnNumber(editor, line);
         }
-        // There is a possible case that the last visual line of particular logical line contains only white spaces. We want to move
-        // caret just after 'after soft wrap' drawing then.
-        else if (line == editor.offsetToVisualPosition(document.getLineEndOffset(lineNumber)).line) {
-          column = 1;
-        }
         visualEndOfLineWithCaret = new VisualPosition(line, column);
       }
     }
@@ -466,6 +461,7 @@ public class EditorActionUtil {
     CharSequence text = document.getCharsSequence();
     for (int i = newOffset - 1; i >= document.getLineStartOffset(lineNumber); i--) {
       if (softWrapModel.getSoftWrap(i) != null) {
+        newOffset = offset;
         break;
       }
       if (text.charAt(i) != ' ' && text.charAt(i) != '\t') {

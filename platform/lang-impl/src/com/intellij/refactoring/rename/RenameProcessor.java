@@ -118,8 +118,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     final List<RenamePsiElementProcessor> processors = RenamePsiElementProcessor.allForElement(element);
     myForceShowPreview = false;
     for (RenamePsiElementProcessor processor : processors) {
-      processor.prepareRenaming(element, newName, allRenames);
-      myForceShowPreview |= processor.forcesShowPreview();
+      if (processor.canProcessElement(element)) {
+        processor.prepareRenaming(element, newName, allRenames);
+        myForceShowPreview |= processor.forcesShowPreview();
+      }
     }
   }
 

@@ -43,6 +43,8 @@ public class Alarm implements Disposable {
   private final List<Request> myRequests = new ArrayList<Request>();
   private final List<Request> myPendingRequests = new ArrayList<Request>();
 
+  private final ThreadPoolExecutor myExecutorService;
+
   private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)", Thread.NORM_PRIORITY - 2);
 
   private final Object LOCK = new Object();
@@ -53,6 +55,10 @@ public class Alarm implements Disposable {
   public void dispose() {
     myDisposed = true;
     cancelAllRequests();
+    if (myThreadToUse == ThreadToUse.OWN_THREAD) {
+      myExecutorService.getQueue().clear();
+      myExecutorService.shutdown();
+    }
   }
 
   public enum ThreadToUse {
@@ -78,6 +84,7 @@ public class Alarm implements Disposable {
   }
   public Alarm(@NotNull ThreadToUse threadToUse, Disposable parentDisposable) {
     myThreadToUse = threadToUse;
+    myExecutorService = threadToUse == ThreadToUse.OWN_THREAD ? ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(own)", Thread.NORM_PRIORITY - 2) : ourSharedExecutorService;
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
@@ -236,9 +243,7 @@ public class Alarm implements Disposable {
             }
           }
           else {
-            myFuture = (myThreadToUse == ThreadToUse.SHARED_THREAD)
-                       ? ourSharedExecutorService.submit(scheduledTask)
-                       : ApplicationManager.getApplication().executeOnPooledThread(scheduledTask);
+            myFuture = myExecutorService.submit(scheduledTask);
           }
         }
       }

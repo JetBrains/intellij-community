@@ -10,4 +10,4 @@ int numPermutationsPrinted = 1;
 
     }
 
-def <warning descr="Assignment is not used">x</warning> = 2
+def x = <warning descr="Assignment is not used">2</warning>

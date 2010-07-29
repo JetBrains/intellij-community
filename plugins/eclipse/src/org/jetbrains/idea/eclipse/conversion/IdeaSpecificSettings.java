@@ -115,6 +115,11 @@ public class IdeaSpecificSettings {
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, JavadocOrderRootType.getInstance(), RELATIVE_MODULE_JAVADOC);
         modifiableModel.commit();
+      } else {
+        final Library library = EclipseClasspathReader.findLibraryByName(model.getProject(), libName);
+        if (library != null) {
+          appendLibraryScope(model, libElement, library);
+        }
       }
     }
     overrideModulesScopes(root, model);

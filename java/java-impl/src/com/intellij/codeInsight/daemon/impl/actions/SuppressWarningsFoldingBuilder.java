@@ -86,7 +86,7 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
         return o.toString();
       }
     }
-    return memberValue.getText();
+    return memberValue != null ? memberValue.getText() : "";
   }
 
 

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,13 +16,16 @@ public class IndentationAnnotatorVisitor extends PsiElementVisitor {
   protected final AnnotationHolder myHolder;
   private final IElementType myIndentTokenType;
   private final IElementType myEolTokenType;
+  private final TokenSet myCommentTypes;
 
   public IndentationAnnotatorVisitor(@NotNull final AnnotationHolder holder,
                                      final IElementType indentTokenType,
-                                     final IElementType eolTokenType) {
+                                     final IElementType eolTokenType,
+                                     final TokenSet commentTypes) {
     myHolder = holder;
     myIndentTokenType = indentTokenType;
     myEolTokenType = eolTokenType;
+    myCommentTypes = commentTypes;
   }
 
   @SuppressWarnings({"ConstantConditions"})
@@ -45,43 +49,46 @@ public class IndentationAnnotatorVisitor extends PsiElementVisitor {
     // Iterating over leafs
     while (leaf != null) {
       final IElementType leafType = leaf.getNode().getElementType();
-      if (leafType == myIndentTokenType && nextLeaf!=null && nextLeaf.getNode().getElementType() != myEolTokenType){
-        final String currentIndentText = leaf.getText();
-        final IndentInfo currentIndent = getIndent(currentIndentText);
-        final int currentIndentLength = currentIndent.length;
-        // Check if spaces and tabs are mixed
-        if (currentIndentLength == -1){
-          myHolder.createErrorAnnotation(leaf, "Indentation can't use both tabs and spaces");
-        }
-        else
-        if (currentIndentLength > 0) {
-          // If we don't have indent info registered
-          if (indentInfo == null){
-            indentInfo = currentIndent;
-            lastIndent = currentIndentLength;
-          } else {
-            final Boolean useTab = indentInfo.useTab;
-            final int indentInfoLength = indentInfo.length;
-            // If indent and current indent use different space and tabs
-            if (useTab && currentIndentText.contains(" ") || !useTab && currentIndentText.contains("\t")) {
-              final String message = useTab
-                                     ? "Inconsistent indentation: " + currentIndentLength +
-                                       " spaces were used for indentation, but the rest of the document was indented using " +
-                                       indentInfoLength + " tabs"
-                                     : "Inconsistent indentation: " + currentIndentLength +
-                                       " tabs were used for indentation, but the rest of the document was indented using " +
-                                       indentInfoLength + " spaces";
-              myHolder.createErrorAnnotation(leaf, message);
+      if (leafType == myIndentTokenType && nextLeaf != null) {
+        final IElementType nextLeafType = nextLeaf.getNode().getElementType();
+        if (nextLeafType != myEolTokenType && !myCommentTypes.contains(nextLeafType)){
+          final String currentIndentText = leaf.getText();
+          final IndentInfo currentIndent = getIndent(currentIndentText);
+          final int currentIndentLength = currentIndent.length;
+          // Check if spaces and tabs are mixed
+          if (currentIndentLength == -1){
+            myHolder.createErrorAnnotation(leaf, "Indentation can't use both tabs and spaces");
+          }
+          else
+          if (currentIndentLength > 0) {
+            // If we don't have indent info registered
+            if (indentInfo == null){
+              indentInfo = currentIndent;
+              lastIndent = currentIndentLength;
             } else {
-              // Check indent length
-              final int delta = currentIndentLength - lastIndent;
-              if (currentIndentLength % indentInfoLength != 0 || delta > indentInfoLength) {
-                final String message = useTab 
-                                       ? currentIndentLength + " tabs were used for indentation. Must be indented using " + indentInfoLength + " tabs"
-                                       : currentIndentLength + " spaces were used for indentation. Must be indented using " + indentInfoLength + " spaces";
+              final Boolean useTab = indentInfo.useTab;
+              final int indentInfoLength = indentInfo.length;
+              // If indent and current indent use different space and tabs
+              if (useTab && currentIndentText.contains(" ") || !useTab && currentIndentText.contains("\t")) {
+                final String message = useTab
+                                       ? "Inconsistent indentation: " + currentIndentLength +
+                                         " spaces were used for indentation, but the rest of the document was indented using " +
+                                         indentInfoLength + " tabs"
+                                       : "Inconsistent indentation: " + currentIndentLength +
+                                         " tabs were used for indentation, but the rest of the document was indented using " +
+                                         indentInfoLength + " spaces";
                 myHolder.createErrorAnnotation(leaf, message);
+              } else {
+                // Check indent length
+                final int delta = currentIndentLength - lastIndent;
+                if (currentIndentLength % indentInfoLength != 0 || delta > indentInfoLength) {
+                  final String message = useTab
+                                         ? currentIndentLength + " tabs were used for indentation. Must be indented using " + indentInfoLength + " tabs"
+                                         : currentIndentLength + " spaces were used for indentation. Must be indented using " + indentInfoLength + " spaces";
+                  myHolder.createErrorAnnotation(leaf, message);
+                }
+                lastIndent = currentIndentLength / indentInfoLength * indentInfoLength;
               }
-              lastIndent = currentIndentLength / indentInfoLength * indentInfoLength;
             }
           }
         }

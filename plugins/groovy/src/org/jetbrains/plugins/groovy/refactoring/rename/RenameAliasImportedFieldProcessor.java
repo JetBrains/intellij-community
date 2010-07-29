@@ -20,6 +20,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 import java.util.Collection;
 
@@ -29,7 +30,7 @@ import java.util.Collection;
 public class RenameAliasImportedFieldProcessor extends RenameJavaVariableProcessor{
   @Override
   public boolean canProcessElement(PsiElement element) {
-    return super.canProcessElement(element) && !(element instanceof GrField && ((GrField)element).isProperty());
+    return element instanceof GrVariable && !(element instanceof GrField && ((GrField)element).isProperty());
   }
 
   @NotNull

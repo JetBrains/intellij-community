@@ -136,10 +136,12 @@ private def layoutWin(Map args, String home, Paths paths) {
   patchPropertiesFile(paths.distWin)
   ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: args.vmoptions.replace(' ', '\n'))
 
-  ant.zip(zipfile: "$paths.artifacts/idea${args.buildNumber}.win.zip") {
+  def winZipPath = "$paths.artifacts/idea${args.buildNumber}.win.zip"
+  ant.zip(zipfile: winZipPath) {
     fileset(dir: paths.distAll)
     fileset(dir: paths.distWin)
   }
+  notifyArtifactBuilt(winZipPath)
 }
 
 private def layoutMac(Map args, String home, Paths paths) {
@@ -170,7 +172,8 @@ private def layoutMac(Map args, String home, Paths paths) {
 
   def root = isEap() ? "${version}-${args.buildNumber}.app" : "IntelliJ IDEA ${version} CE.app"
 
-  ant.zip(zipfile: "$paths.artifacts/idea${args.buildNumber}.mac.zip") {
+  def macZipPath = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
+  ant.zip(zipfile: macZipPath) {
     [paths.distAll, paths.distMac].each {
       tarfileset(dir: it, prefix: root) {
         exclude(name: "bin/*.sh")
@@ -183,6 +186,7 @@ private def layoutMac(Map args, String home, Paths paths) {
       include(name: "Contents/MacOS/idea")
     }
   }
+  notifyArtifactBuilt(macZipPath)
 }
 
 def layoutLinux(Map args, String home, Paths paths) {
@@ -216,7 +220,9 @@ def layoutLinux(Map args, String home, Paths paths) {
     }
   }
 
-  ant.gzip(src: tarPath, zipfile: "${tarPath}.gz")
+  def gzPath = "${tarPath}.gz"
+  ant.gzip(src: tarPath, zipfile: gzPath)
   ant.delete(file: tarPath)
+  notifyArtifactBuilt(gzPath)
 }
 

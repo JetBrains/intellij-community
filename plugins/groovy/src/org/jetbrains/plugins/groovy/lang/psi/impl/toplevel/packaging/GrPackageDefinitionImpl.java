@@ -17,6 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.Modifier;
+import com.intellij.psi.PsiModifierList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -55,5 +58,16 @@ public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrP
 
   public GrModifierList getAnnotationList() {
     return (GrModifierList)findChildByType(GroovyElementTypes.MODIFIERS);
+  }
+
+  @Override
+  public PsiModifierList getModifierList() {
+    return getAnnotationList();
+  }
+
+  @Override
+  public boolean hasModifierProperty(@Modifier @NonNls @NotNull String name) {
+    final PsiModifierList list = getModifierList();
+    return list != null && list.hasExplicitModifier(name);
   }
 }

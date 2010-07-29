@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -95,7 +96,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   protected boolean isToDeferIconLoading() {
-    return true;
+    return Registry.is("psi.deferIconLoading");
   }
 
   private Icon computeIconNow(PsiElement element, int flags) {

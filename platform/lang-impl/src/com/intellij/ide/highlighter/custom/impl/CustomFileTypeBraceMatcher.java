@@ -42,8 +42,10 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
   }
 
   public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
-    final IElementType tokenType = iterator.getTokenType();
+    return isRBraceToken(iterator.getTokenType());
+  }
 
+  private static boolean isRBraceToken(IElementType tokenType) {
     return tokenType == CustomHighlighterTokenType.R_BRACKET ||
            tokenType == CustomHighlighterTokenType.R_PARENTH ||
            tokenType == CustomHighlighterTokenType.R_BRACE;
@@ -80,7 +82,9 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
   }
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
-    return contextType == CustomHighlighterTokenType.WHITESPACE;
+    return contextType == CustomHighlighterTokenType.PUNCTUATION ||
+           contextType == CustomHighlighterTokenType.WHITESPACE ||
+           isRBraceToken(contextType);
   }
 
   public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {

@@ -37,6 +37,7 @@ import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
@@ -65,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
@@ -607,20 +609,26 @@ public class PsiUtil {
     return null;
   }
 
-  public static boolean mightBeLVlaue(GrExpression expr) {
-    if (expr instanceof GrParenthesizedExpression) return mightBeLVlaue(((GrParenthesizedExpression)expr).getOperand());
+  public static boolean mightBeLValue(GrExpression expr) {
+    if (expr instanceof GrParenthesizedExpression) return mightBeLValue(((GrParenthesizedExpression)expr).getOperand());
 
     if (expr instanceof GrListOrMap) {
       GrListOrMap listOrMap = (GrListOrMap)expr;
       if (listOrMap.isMap()) return false;
       GrExpression[] initializers = listOrMap.getInitializers();
       for (GrExpression initializer : initializers) {
-        if (!mightBeLVlaue(initializer)) return false;
+        if (!mightBeLValue(initializer)) return false;
       }
       return true;
     }
     if (expr instanceof GrTupleExpression) return true;
-    return expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty || expr instanceof GrPropertySelection;
+    if (expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty || expr instanceof GrPropertySelection) return true;
+
+    if ((expr instanceof GrThisReferenceExpression || expr instanceof GrSuperReferenceExpression) &&
+        GroovyConfigUtils.getInstance().isVersionAtLeast(expr, GroovyConfigUtils.GROOVY1_8)) {
+      return true;
+    }
+    return false;
   }
 
   public static boolean isRawMethodCall(GrMethodCallExpression call) {
@@ -931,5 +939,19 @@ public class PsiUtil {
       }
     }
     return (GrReferenceExpression)replaced;
+  }
+
+  public static GroovyResolveResult[] getConstructorCandidates(PsiClassType classType, PsiType[] argTypes, GroovyPsiElement context) {
+    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+    final PsiClass psiClass = resolveResult.getElement();
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    if (psiClass == null) {
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
+                                         ? (GroovyResolveResult)resolveResult
+                                         : new GroovyResolveResultImpl(psiClass, context, substitutor, true, true);
+    return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
   }
 }

@@ -85,18 +85,9 @@ public abstract class TokenSets implements GroovyTokenTypes {
       kDOUBLE
   );
 
-  /**
-   * all keywords except 'this' and 'super'
-   */
-  public static TokenSet KEYWORD_REFERENCE_NAMES = TokenSet
-    .create(kABSTRACT, kAS, kASSERT, kBOOLEAN, kBREAK, kBYTE, kCASE, kCATCH, kCHAR, kCLASS, kCONTINUE, kDEF, kDEFAULT, kDOUBLE, kELSE,
-            kEXTENDS, kENUM, kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY, kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE, kLONG,
-            kNATIVE, kNEW, kNULL, kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC, kRETURN, kSHORT, kSTATIC, kSTRICTFP, kSWITCH,
-            kSYNCHRONIZED, kTHROW, kTHROWS, kTRANSIENT, kTRUE, kTRY, kVOID, kVOLATILE, kWHILE);
-
   public static final TokenSet PROPERTY_NAMES = TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL);
 
-  public static TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORD_REFERENCE_NAMES, PROPERTY_NAMES);
+  public static TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
 
 
   public static TokenSet VISIBILITY_MODIFIERS = TokenSet.create(

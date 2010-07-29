@@ -4,5 +4,7 @@
       <root url="jar://$PROJECT_DIR$/lib/dev/easymockclassextension.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/easymock.jar!/" />
     </CLASSES>
+    <JAVADOC />
+    <SOURCES />
   </library>
 </component>

@@ -583,10 +583,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener {
     private PopupHandler myHandler;
+    private ErrorStripeButton myErrorStripeButton;
 
     @Override
     protected JButton createDecreaseButton(int orientation) {
-      return new ErrorStripeButton();
+      myErrorStripeButton = new ErrorStripeButton();
+      return myErrorStripeButton;
     }
 
     @Override
@@ -594,12 +596,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       super.installListeners();
       scrollbar.addMouseMotionListener(this);
       scrollbar.addMouseListener(this);
+      myErrorStripeButton.addMouseMotionListener(this);
+      myErrorStripeButton.addMouseListener(this);
     }
 
     @Override
     protected void uninstallListeners() {
       scrollbar.removeMouseMotionListener(this);
       scrollbar.removeMouseListener(this);
+      myErrorStripeButton.removeMouseMotionListener(this);
+      myErrorStripeButton.removeMouseListener(this);
       super.uninstallListeners();
     }
 
@@ -735,10 +741,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     public void setPopupHandler(final PopupHandler handler) {
       if (myHandler != null) {
         scrollbar.removeMouseListener(myHandler);
+        myErrorStripeButton.removeMouseListener(myHandler);
       }
 
       myHandler = handler;
       scrollbar.addMouseListener(handler);
+      myErrorStripeButton.addMouseListener(myHandler);
     }
   }
 

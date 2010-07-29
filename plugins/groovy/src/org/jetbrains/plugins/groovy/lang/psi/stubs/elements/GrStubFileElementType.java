@@ -21,8 +21,9 @@ import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GroovyFileStubBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrFileStubImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex;
 
@@ -43,7 +44,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   @Override
   public int getStubVersion() {
-    return super.getStubVersion() + 5;
+    return super.getStubVersion() + 6;
   }
 
   public String getExternalId() {
@@ -60,6 +61,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     dataStream.writeName(stub.getPackageName().toString());
     dataStream.writeName(stub.getName().toString());
     dataStream.writeBoolean(stub.isScript());
+    GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
   }
 
   @Override
@@ -67,7 +69,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     StringRef packName = dataStream.readName();
     StringRef name = dataStream.readName();
     boolean isScript = dataStream.readBoolean();
-    return new GrFileStubImpl(packName, name, isScript);
+    return new GrFileStub(packName, name, isScript, GrStubUtils.readStringArray(dataStream));
   }
 
   public void indexStub(GrFileStub stub, IndexSink sink) {
@@ -77,6 +79,10 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
       final String pName = stub.getPackageName().toString();
       final String fqn = pName == null || pName.length() == 0 ? name : pName + "." + name;
       sink.occurrence(GrFullScriptNameIndex.KEY, fqn.hashCode());
+    }
+
+    for (String anno : stub.getAnnotations()) {
+      sink.occurrence(GrAnnotatedMemberIndex.KEY, anno);
     }
   }
 

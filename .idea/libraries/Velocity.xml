@@ -4,6 +4,7 @@
       <root url="jar://$PROJECT_DIR$/lib/velocity.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/commons-lang-2.4.jar!/" />
     </CLASSES>
+    <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/src/velocity-1.5-src.zip!/java" />
     </SOURCES>

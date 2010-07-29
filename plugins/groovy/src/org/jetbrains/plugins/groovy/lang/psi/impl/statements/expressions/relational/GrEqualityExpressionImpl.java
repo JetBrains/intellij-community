@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
@@ -36,6 +37,9 @@ public class GrEqualityExpressionImpl extends GrBinaryExpressionImpl {
   }
 
   public PsiType getType() {
+    if (GroovyTokenTypes.mCOMPARE_TO.equals(getOperationTokenType())) {
+      return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
+    }
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
   }
 }

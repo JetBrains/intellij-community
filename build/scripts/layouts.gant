@@ -159,7 +159,7 @@ def layoutFull(String home, String targetDirectory) {
       dir("IntelliLang") {
         dir("lib") {
           jar("IntelliLang.jar") {
-            module("IntelliLangJava")
+            module("IntelliLang")
             module("IntelliLang-java")
             module("IntelliLang-xml")
             module("IntelliLang-javaee")

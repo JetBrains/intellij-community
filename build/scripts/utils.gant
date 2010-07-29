@@ -88,3 +88,11 @@ binding.setVariable("loadProject", {
 requireProperty("home", guessHome())
 
 project.builder.buildInfoPrinter = new org.jetbrains.jps.teamcity.TeamcityBuildInfoPrinter()
+
+binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
+  if (!artifactPath.startsWith(home)) {
+    project.error("Artifact path $artifactPath should start with $home")
+  }
+  def relativePath = artifactPath.substring(home.length())
+  project.info("##teamcity[publishArtifacts '$relativePath']")
+})
