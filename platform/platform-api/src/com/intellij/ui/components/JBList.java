@@ -24,6 +24,7 @@ import com.intellij.util.ui.EmptyTextHelper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 
@@ -48,6 +49,12 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   public JBList(Collection items) {
     super(items.toArray(new Object[items.size()]));
     init();
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    myEmptyTextHelper.paint(g);
   }
 
   private void init() {
