@@ -89,7 +89,7 @@ final class HgHeadMerger {
 
   private static void throwException(Exception e) throws VcsException {
     String msg = "Exception during marking directory dirty: " + e;
-    LOG.error(msg, e);
+    LOG.info(msg, e);
     throw new VcsException(msg);
   }
 

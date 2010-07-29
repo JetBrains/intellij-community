@@ -60,9 +60,9 @@ public class HgExecutableValidator {
         }
       });
     } catch (InvocationTargetException e) {
-      LOG.error(e);
+      LOG.info(e);
     } catch (InterruptedException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
     return myValidHgExecutable;
   }

@@ -86,7 +86,7 @@ public class HgAnnotation implements FileAnnotation {
     try {
       return CurrentContentRevision.create(hgFile.toFilePath()).getContent();
     } catch (VcsException e) {
-      LOG.error(e);
+      LOG.info(e);
       return StringUtils.EMPTY;
     }
   }

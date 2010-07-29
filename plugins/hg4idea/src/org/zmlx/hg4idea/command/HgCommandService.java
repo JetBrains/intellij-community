@@ -117,7 +117,7 @@ public final class HgCommandService {
       cmdLine.add("extensions.mq=");
     } catch (IOException e) {
       showError(e);
-      LOG.error("IOException during preparing command", e);
+      LOG.info("IOException during preparing command", e);
       return null;
     }
     cmdLine.addAll(hgOptions);
@@ -128,12 +128,11 @@ public final class HgCommandService {
     ShellCommand shellCommand = new ShellCommand();
     HgCommandResult result;
     try {
-      LOG.debug(cmdLine.toString());
       String workingDir = repo != null ? repo.getPath() : null;
       result = shellCommand.execute(cmdLine, workingDir, charset);
     } catch (ShellCommandException e) {
       showError(e);
-      LOG.error(e.getMessage(), e);
+      LOG.info(e.getMessage(), e);
       return null;
     } finally {
       promptServer.stop();
