@@ -2700,6 +2700,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (column < 0) column = 0;
+    line = Math.min(line, myDocument.getLineCount() - 1);
 
     LogicalPosition softWrapUnawareResult = new LogicalPosition(line, column);
     return mySoftWrapModel.adjustLogicalPosition(softWrapUnawareResult, visiblePos);
@@ -4797,7 +4798,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // I.e. we shouldn't use widths of the lines that are not shown for max width calculation because previous widths are calculated
         // for another visible area width.
         int startToUse = 0;
-        int endToUse = lineCount;
+        int endToUse = Math.min(lineCount, myLineWidths.size());
         if (getSoftWrapModel().isSoftWrappingEnabled()) {
           Rectangle visibleArea = getScrollingModel().getVisibleArea();
           startToUse = xyToLogicalPosition(visibleArea.getLocation()).line + 1;
