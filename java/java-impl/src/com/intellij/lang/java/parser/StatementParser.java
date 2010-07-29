@@ -473,14 +473,47 @@ public class StatementParser {
 
   @NotNull
   private static PsiBuilder.Marker parseDoWhileStatement(final PsiBuilder builder) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString());
+    final PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    final PsiBuilder.Marker body = parseStatement(builder);
+    if (body == null) {
+      error(builder, JavaErrorMessages.message("expected.statement"));
+      statement.done(JavaElementType.DO_WHILE_STATEMENT);
+      return statement;
+    }
+
+    if (!expect(builder, JavaTokenType.WHILE_KEYWORD)) {
+      error(builder, JavaErrorMessages.message("expected.while"));
+      statement.done(JavaElementType.DO_WHILE_STATEMENT);
+      return statement;
+    }
+
+    if (parseExpressionInParenth(builder)) {
+      semicolon(builder);
+    }
+
+    statement.done(JavaElementType.DO_WHILE_STATEMENT);
+    return statement;
   }
 
   @NotNull
   private static PsiBuilder.Marker parseSwitchStatement(final PsiBuilder builder) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString());
+    final PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    if (!parseExpressionInParenth(builder)) {
+      statement.done(JavaElementType.SWITCH_STATEMENT);
+      return statement;
+    }
+
+    final PsiBuilder.Marker body = parseCodeBlock(builder);
+    if (body == null) {
+      error(builder, JavaErrorMessages.message("expected.lbrace"));
+    }
+
+    statement.done(JavaElementType.SWITCH_STATEMENT);
+    return statement;
   }
 
   @NotNull
@@ -503,8 +536,14 @@ public class StatementParser {
 
   @NotNull
   private static PsiBuilder.Marker parseReturnStatement(final PsiBuilder builder) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString());
+    final PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    ExpressionParser.parse(builder);
+
+    semicolon(builder);
+    statement.done(JavaElementType.RETURN_STATEMENT);
+    return statement;
   }
 
   @NotNull
