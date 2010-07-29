@@ -16,6 +16,7 @@
 
 package com.intellij.xdebugger.frame;
 
+import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -66,6 +67,7 @@ public abstract class XStackFrame extends XValueContainer {
   public void customizePresentation(final SimpleColoredComponent component) {
     XSourcePosition position = getSourcePosition();
     if (position != null) {
+      //FileColorManager.getInstance()
       component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.append(":" + (position.getLine()+1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.setIcon(DebuggerIcons.STACK_FRAME_ICON);
