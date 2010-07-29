@@ -98,10 +98,10 @@ public class ReferenceParser {
     }
 
     while (true) {
+      type.done(JavaElementType.TYPE);
       if (annotationsSupported) {
         DeclarationParser.parseAnnotations(builder);
       }
-      type.done(JavaElementType.TYPE);
 
       if (!expect(builder, JavaTokenType.LBRACKET)) {
         break;

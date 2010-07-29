@@ -35,6 +35,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testType3() { doTypeParserTest("int[][", false); }
   public void testType4() { doTypeParserTest("Map<String,List<String>>", false); }
   public void testType5() { doTypeParserTest("Object[]...", false); }
+  public void testType6() { doTypeParserTest("@English String @NonEmpty []", false); }
 
   public void testTypeParams0() { doTypeParamsParserTest("<T>"); }
   public void testTypeParams1() { doTypeParamsParserTest("<T, U>"); }
