@@ -15,17 +15,63 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
-import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.stubs.PsiFileStubImpl;
+import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionElementType;
 
 /**
  * @author ilyas
  */
-public interface GrFileStub extends PsiFileStub<GroovyFile> {
-  StringRef getPackageName();
+public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
+  private final String[] myAnnotations;
+  private final StringRef myPackageName;
+  private final StringRef myName;
+  private final boolean isScript;
 
-  StringRef getName();
+  public GrFileStub(GroovyFile file) {
+    super(file);
+    myPackageName = StringRef.fromString(file.getPackageName());
+    myName = StringRef.fromString(StringUtil.trimEnd(file.getName(), ".groovy"));
+    isScript = file.isScript();
+    final GrPackageDefinition definition = file.getPackageDefinition();
+    if (definition != null) {
+      myAnnotations = GrTypeDefinitionElementType.getAnnotationNames(definition);
+    } else {
+      myAnnotations = ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+  }
 
-  boolean isScript();
+  public GrFileStub(StringRef packName, StringRef name, boolean isScript, String[] annotations) {
+    super(null);
+    myPackageName = packName;
+    myName = name;
+    this.isScript = isScript;
+    myAnnotations = annotations;
+  }
+
+  public IStubFileElementType getType() {
+    return GroovyParserDefinition.GROOVY_FILE;
+  }
+
+  public StringRef getPackageName() {
+    return myPackageName;
+  }
+
+  public StringRef getName() {
+    return myName;
+  }
+
+  public boolean isScript() {
+    return isScript;
+  }
+
+  public String[] getAnnotations() {
+    return myAnnotations;
+  }
 }

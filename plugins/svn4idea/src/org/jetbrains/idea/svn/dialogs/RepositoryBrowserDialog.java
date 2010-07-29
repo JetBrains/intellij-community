@@ -1099,10 +1099,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     SVNRepository sourceRepository = myVCS.createRepository(sourceURL.toString());
     sourceRepository.setCanceller(new SvnProgressCanceller());
     SvnDiffEditor diffEditor;
-    final long rev = sourceRepository.getLatestRevision();
+    final long rev;
+    SVNRepository targetRepository = null;
     try {
+      rev = sourceRepository.getLatestRevision();
       // generate Map of path->Change
-      diffEditor = new SvnDiffEditor(sourceRepository, myVCS.createRepository(targetURL.toString()), -1, false);
+      targetRepository = myVCS.createRepository(targetURL.toString());
+      diffEditor = new SvnDiffEditor(sourceRepository, targetRepository, -1, false);
       final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null);
       sourceRepository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {
         public void report(ISVNReporter reporter) throws SVNException {
@@ -1113,6 +1116,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     finally {
       sourceRepository.closeSession();
+      if (targetRepository != null) {
+        targetRepository.closeSession();
+      }
     }
     final String sourceTitle = SVNPathUtil.tail(sourceURL.toString());
     final String targetTitle = SVNPathUtil.tail(targetURL.toString());

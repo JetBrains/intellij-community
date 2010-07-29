@@ -23,6 +23,7 @@ import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -55,11 +56,17 @@ public class BranchMerger implements IMerger {
     myBranchName = branchName;
     mySourceCopyRevision = sourceCopyRevision;
     myAtStart = true;
+    SVNRepository repository = null;
     try {
-      mySourceLatestRevision = myVcs.createRepository(mySourceUrl).getLatestRevision();
+      repository = myVcs.createRepository(mySourceUrl);
+      mySourceLatestRevision = repository.getLatestRevision();
     }
     catch (SVNException e) {
       mySourceLatestRevision = SVNRevision.HEAD.getNumber();
+    } finally {
+      if (repository != null) {
+        repository.closeSession();
+      }
     }
   }
 

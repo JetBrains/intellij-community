@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +49,7 @@ public class GppExpectedTypesContributor extends GroovyExpectedTypesContributor 
     final ArrayList<TypeConstraint> result = new ArrayList<TypeConstraint>();
     for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
       if (type instanceof PsiClassType) {
-        for (GroovyResolveResult resolveResult : GppTypeConverter.getConstructorCandidates((PsiClassType)type, argTypes, expression)) {
+        for (GroovyResolveResult resolveResult : PsiUtil.getConstructorCandidates((PsiClassType)type, argTypes, expression)) {
           final PsiElement method = resolveResult.getElement();
           if (method instanceof PsiMethod && ((PsiMethod)method).isConstructor()) {
             final PsiParameter[] constructorParameters = ((PsiMethod)method).getParameterList().getParameters();

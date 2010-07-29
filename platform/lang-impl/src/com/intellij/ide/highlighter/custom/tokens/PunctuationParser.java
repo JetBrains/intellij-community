@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.stubs.DefaultStubBuilder;
-import com.intellij.psi.stubs.StubElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+package com.intellij.ide.highlighter.custom.tokens;
+
+import com.intellij.psi.CustomHighlighterTokenType;
 
 /**
- * @author ilyas
+ * @author peter
  */
-public class GroovyFileStubBuilder extends DefaultStubBuilder {
-  protected StubElement createStubForFile(final PsiFile file) {
-    if (file instanceof GroovyFile && ((GroovyFile) file).isScript()) {
-      return new GrFileStub((GroovyFile)file);
+public class PunctuationParser extends BaseTokenParser {
+  @Override
+  public boolean hasToken(int position) {
+    final char c = myBuffer.charAt(position);
+    if (".,:;".indexOf(c) >= 0) {
+      myTokenInfo.updateData(position, position+1, CustomHighlighterTokenType.PUNCTUATION);
+      return true;
     }
+    return false;
+  }
 
-    return super.createStubForFile(file);
+  @Override
+  public int getSmartUpdateShift() {
+    return 0;
   }
 }

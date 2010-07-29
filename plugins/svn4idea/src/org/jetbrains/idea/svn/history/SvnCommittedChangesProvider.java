@@ -184,13 +184,17 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       }
 
       final String repositoryRoot;
+      SVNRepository repository = null;
       try {
-        final SVNRepository repository = myVcs.createRepository(svnLocation.getURL());
+        repository = myVcs.createRepository(svnLocation.getURL());
         repositoryRoot = repository.getRepositoryRoot(true).toString();
-        repository.closeSession();
       }
       catch (SVNException e) {
         throw new VcsException(e);
+      } finally {
+        if (repository != null) {
+          repository.closeSession();
+        }
       }
 
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
@@ -219,13 +223,18 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     }
 
     final String repositoryRoot;
+    SVNRepository repository = null;
     try {
-      final SVNRepository repository = myVcs.createRepository(svnLocation.getURL());
+      repository = myVcs.createRepository(svnLocation.getURL());
       repositoryRoot = repository.getRepositoryRoot(true).toString();
       repository.closeSession();
     }
     catch (SVNException e) {
       throw new VcsException(e);
+    } finally {
+      if (repository != null) {
+        repository.closeSession();
+      }
     }
 
     getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
@@ -249,13 +258,17 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     }
 
     final String repositoryRoot;
+    SVNRepository repository = null;
     try {
-      final SVNRepository repository = myVcs.createRepository(svnLocation.getURL());
+      repository = myVcs.createRepository(svnLocation.getURL());
       repositoryRoot = repository.getRepositoryRoot(true).toString();
-      repository.closeSession();
     }
     catch (SVNException e) {
       throw new VcsException(e);
+    } finally {
+      if (repository != null) {
+        repository.closeSession();
+      }
     }
 
     final MergeTrackerProxy proxy = new MergeTrackerProxy(new Consumer<TreeStructureNode<SVNLogEntry>>() {
@@ -356,7 +369,17 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         revisionBefore = SVNRevision.create(changeTo.longValue());
       }
       else {
-        revisionBefore = SVNRevision.create(myVcs.createRepository(url).getLatestRevision());
+        SVNRepository repository = null;
+        final long revision;
+        try {
+          repository = myVcs.createRepository(url);
+          revision = repository.getLatestRevision();
+        } finally {
+          if (repository != null) {
+            repository.closeSession();
+          }
+        }
+        revisionBefore = SVNRevision.create(revision);
       }
       final SVNRevision revisionAfter;
       if (dateFrom != null) {

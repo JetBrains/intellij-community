@@ -973,7 +973,7 @@ public class CompileDriver {
               if (context.getProgressIndicator().isCanceled()) {
                 throw new ExitException(ExitStatus.CANCELLED);
               }
-  
+              context.getProgressIndicator().setText("Preparing sources for " + compiler.getDescription());
               DumbService.getInstance(myProject).waitForSmartMode();
   
               if (round == 0) {

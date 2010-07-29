@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.ui;
+package com.intellij.lang.documentation;
 
-import com.intellij.openapi.ui.ComponentContainer;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: Apr 20, 2004
+ * User: spLeaner
  */
-public interface ExecutionConsole extends ComponentContainer {
-  @NonNls String CONSOLE_CONTENT_ID = "ConsoleContent";
+public interface ExternalDocumentationHandler {
+  boolean handleExternal(PsiElement element, PsiElement originalElement);
+  boolean handleExternalLink(PsiManager psiManager, String link, PsiElement context);
 }

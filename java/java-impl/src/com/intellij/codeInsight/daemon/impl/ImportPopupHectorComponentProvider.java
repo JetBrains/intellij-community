@@ -21,7 +21,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
@@ -30,13 +29,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Set;
 
 public class ImportPopupHectorComponentProvider implements HectorComponentPanelsProvider {
 
@@ -48,8 +45,6 @@ public class ImportPopupHectorComponentProvider implements HectorComponentPanels
     assert virtualFile != null;
     final boolean notInLibrary =
       !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
-    final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<Language> languages = viewProvider.getLanguages();
 
     return new HectorComponentPanel() {
       private JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));

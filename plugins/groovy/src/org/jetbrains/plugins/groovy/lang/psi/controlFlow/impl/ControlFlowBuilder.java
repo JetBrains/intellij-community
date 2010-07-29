@@ -107,13 +107,16 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (!(block.getParent() instanceof GrBlockStatement && block.getParent().getParent() instanceof GrLoopStatement)) {
       final GrStatement[] statements = block.getStatements();
       if (statements.length > 0) {
-        final GrStatement last = statements[statements.length - 1];
-        if (last instanceof GrExpression) {
-          final MaybeReturnInstruction instruction = new MaybeReturnInstruction((GrExpression)last, myInstructionNumber++);
-          checkPending(instruction);
-          addNode(instruction);
-        }
+        handlePossibleReturn(statements[statements.length - 1]);
       }
+    }
+  }
+
+  private void handlePossibleReturn(GrStatement last) {
+    if (last instanceof GrExpression) {
+      final MaybeReturnInstruction instruction = new MaybeReturnInstruction((GrExpression)last, myInstructionNumber++);
+      checkPending(instruction);
+      addNode(instruction);
     }
   }
 
@@ -386,6 +389,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         condition.accept(this);
       }
       thenBranch.accept(this);
+      handlePossibleReturn(thenBranch);
       addPendingEdge(ifStatement, myHead);
     }
 
@@ -402,6 +406,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final GrStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch != null) {
       elseBranch.accept(this);
+      handlePossibleReturn(elseBranch);
       addPendingEdge(ifStatement, myHead);
     }
 
