@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -98,6 +99,7 @@ public class PyDemorganIntention extends BaseIntentionAction {
     }
   }
 
+  @Nullable
   private static PyExpression getNegated(PyExpression expression) {
     PyExpression operand = ((PyPrefixExpression)expression).getOperand();
     return operand;  // TODO strip ()
