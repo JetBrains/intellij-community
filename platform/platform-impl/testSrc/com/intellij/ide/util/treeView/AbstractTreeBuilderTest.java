@@ -278,7 +278,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       throw new Exception(myCancelRequest);
     }
 
-    waitFor.assertCompleted("Tree cleanup was not performed");
+    waitFor.assertCompleted("Tree cleanup was not performed. isCancelledReadyState=" + getBuilder().getUi().isCancelledReady());
 
     Assert.assertTrue(getMyBuilder().myWasCleanedUp);
   }
