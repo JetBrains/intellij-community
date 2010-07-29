@@ -33,12 +33,14 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 
 /**
@@ -52,6 +54,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private boolean myIsSynthetic;
   private boolean myIsInLibraryContent;
   private Long myObjectId;
+  private Color myBackgroundColor;
 
   private static final Icon myObsoleteFrameIcon = IconLoader.getIcon("/debugger/db_obsolete.png");
   private Icon myIcon = DebuggerIcons.STACK_FRAME_ICON;
@@ -72,6 +75,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
             myIsInLibraryContent = true;
           }
           else {
+            myBackgroundColor = FileColorManager.getInstance(file.getProject()).getFileColor(file);
+            
             final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getDebugProcess().getProject()).getFileIndex();
             final VirtualFile vFile = file.getVirtualFile();
             myIsInLibraryContent = vFile != null && (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile));
@@ -100,6 +105,11 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public DebugProcess getDebugProcess() {
     return myFrame.getVirtualMachine().getDebugProcess();
+  }
+
+  @Override
+  public Color getBackgroundColor() {
+    return myBackgroundColor;
   }
 
   @Nullable
