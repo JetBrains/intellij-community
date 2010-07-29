@@ -198,7 +198,7 @@ public class NameUtil {
         firstIdentifierLetter = true;
       }
       else {
-        if (prevIsUppercase) {
+        if (c == ':' || prevIsUppercase) {
           buffer.append("[A-Za-z\\s0-9\\$]*");
         }
 
