@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -116,6 +117,14 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (selectionModel.hasSelection()) {
       element1 = file.findElementAt(selectionModel.getSelectionStart());
       element2 = file.findElementAt(selectionModel.getSelectionEnd() - 1);
+      if (element1 instanceof PsiWhiteSpace) {
+        int startOffset = element1.getTextRange().getEndOffset();
+        element1 = file.findElementAt(startOffset);
+      }
+      if (element2 instanceof PsiWhiteSpace) {
+        int endOffset = element2.getTextRange().getStartOffset();
+        element2 = file.findElementAt(endOffset - 1);
+      }
     }
     else {
       final CaretModel caretModel = editor.getCaretModel();

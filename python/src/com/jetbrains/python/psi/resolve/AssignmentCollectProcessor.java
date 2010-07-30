@@ -16,7 +16,7 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
    * Collects all assignments in context above given element, if they match given naming pattern.
    * Used to track creation of attributes by assignment (e.g in constructor).
    */
-  List<? extends PyExpression> my_qualifier;
+  List<String> my_qualifier;
   List<PyExpression> my_result;
   Set<String> my_seen_names;
 
@@ -28,7 +28,7 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
    *
    * @param qualifier qualifying names, outermost first; must not be empty.
    */
-  public AssignmentCollectProcessor(@NotNull List<? extends PyExpression> qualifier) {
+  public AssignmentCollectProcessor(@NotNull List<String> qualifier) {
     assert qualifier.size() > 0;
     my_qualifier = qualifier;
     my_result = new ArrayList<PyExpression>();
@@ -41,18 +41,19 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
       for (PyExpression ex : assignment.getTargets()) {
         if (ex instanceof PyTargetExpression) {
           final PyTargetExpression target = (PyTargetExpression)ex;
-          List<PyTargetExpression> quals = PyResolveUtil.unwindQualifiers(target);
+          List<String> quals = PyResolveUtil.unwindQualifiersAsStrList(target);
+          List<PyTargetExpression> qualsExpr = PyResolveUtil.unwindQualifiers(target);
           if (quals != null) {
-            if (quals.size() == my_qualifier.size() + 1 && PyResolveUtil.pathsMatch(quals, my_qualifier)) {
+            if (quals.size() == my_qualifier.size() + 1 && PyResolveUtil.pathsMatchStr(quals, my_qualifier)) {
               // a new attribute follows last qualifier; collect it.
-              PyTargetExpression last_elt = quals.get(quals.size() - 1); // last item is the outermost, new, attribute.
+              PyTargetExpression last_elt = qualsExpr.get(qualsExpr.size() - 1); // last item is the outermost, new, attribute.
               String last_elt_name = last_elt.getName();
               if (!my_seen_names.contains(last_elt_name)) { // no dupes, only remember the latest
                 my_result.add(last_elt);
                 my_seen_names.add(last_elt_name);
               }
             }
-            else if (quals.size() < my_qualifier.size() + 1 && PyResolveUtil.pathsMatch(my_qualifier, quals)) {
+            else if (quals.size() < my_qualifier.size() + 1 && PyResolveUtil.pathsMatchStr(my_qualifier, quals)) {
               // qualifier(s) get redefined; collect no more.
               return false;
             }

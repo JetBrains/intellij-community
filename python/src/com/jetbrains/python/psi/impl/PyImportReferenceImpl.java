@@ -72,7 +72,9 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       if (type != null) {
         return myElement.getTypeCompletionVariants(type);
       }
-      else return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      else {
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      }
     }
     else {
       // complete to possible modules
@@ -112,7 +114,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
               }
               // collect submodules
               ctx.put(PyType.CTX_NAMES, names_already);
-              Collections.addAll(variants, qualifierType.getCompletionVariants(myElement, ctx));
+              Collections.addAll(variants, qualifierType.getCompletionVariants(myElement.getName(), myElement, ctx));
             }
             return variants.toArray();
           }
@@ -155,11 +157,11 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           }
         }
         // look at dir by level
-        if (current_file != null && (relative_level > 0 || ! ResolveImportUtil.isAbsoluteImportEnabledFor(current_file))) {
+        if (current_file != null && (relative_level > 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(current_file))) {
           fillFromDir(
             ResolveImportUtil.stepBackFrom(current_file, relative_level),
             current_file, underscore_filter, variants,
-            is_importing_from_a_module && ! already_has_import_keyword? ImportKeywordHandler.INSTANCE : null
+            is_importing_from_a_module && !already_has_import_keyword ? ImportKeywordHandler.INSTANCE : null
           );
         }
       }
@@ -174,12 +176,14 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
             if (PyNames.isIdentifier(name) && underscore_filter.value(name)) {
               if (is_importing_from_a_module) {
                 LookupElementBuilder lookup_item = LookupElementBuilder.create(name);
-                if (! result.hasSubmodules() && ! already_has_import_keyword) {
+                if (!result.hasSubmodules() && !already_has_import_keyword) {
                   lookup_item = lookup_item.setInsertHandler(ImportKeywordHandler.INSTANCE);
                 }
                 variants.add(lookup_item);
               }
-              else variants.add(name);
+              else {
+                variants.add(name);
+              }
             }
           }
         }
@@ -204,6 +208,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   }
 
   // adds variants found under given dir
+
   private static void fillFromDir(
     PsiDirectory target_dir,
     PsiFile source_file,
@@ -286,10 +291,12 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     }
   }
 
-  /** Adds ' import ' text after the item. */
+  /**
+   * Adds ' import ' text after the item.
+   */
   private static class ImportKeywordHandler implements InsertHandler<LookupElement> {
     public static final InsertHandler<LookupElement> INSTANCE = new ImportKeywordHandler();
-    
+
     private static final String IMPORT_KWD = " import ";
 
     public void handleInsert(InsertionContext context, LookupElement item) {

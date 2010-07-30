@@ -1,6 +1,5 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
@@ -36,7 +35,7 @@ public class PyStringExceptionInspection extends PyInspection {
     @Override
     public void visitPyRaiseStatement(PyRaiseStatement node) {
       PyExpression[] expressions = node.getExpressions();
-      if (expressions != null) {
+      if (expressions.length > 0) {
         PyExpression expression = expressions[0];
         if (expression instanceof PyStringLiteralExpression) {
           registerProblem(expression, "Raising a string exception");

@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ public abstract class PyTypeReferenceImpl implements PyTypeReference {
     return Collections.emptyList();
   }
 
-  public Object[] getCompletionVariants(PyQualifiedExpression referenceExpression, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

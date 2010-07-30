@@ -2,6 +2,7 @@ package com.jetbrains.python.actions;
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.CreateFromTemplateAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -10,7 +11,7 @@ import com.jetbrains.python.PythonFileType;
 /**
  * @author yole
  */
-public class CreatePythonFileAction extends CreateFromTemplateAction<PsiFile> {
+public class CreatePythonFileAction extends CreateFromTemplateAction<PsiFile> implements DumbAware {
   public CreatePythonFileAction() {
     super("Python File", "Creates a Python file from the specified template", PythonFileType.INSTANCE.getIcon());
   }

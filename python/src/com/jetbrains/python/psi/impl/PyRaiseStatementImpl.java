@@ -5,7 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyRaiseStatement;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Describes 'raise' statement.
@@ -20,8 +20,9 @@ public class PyRaiseStatementImpl extends PyElementImpl implements PyRaiseStatem
     pyVisitor.visitPyRaiseStatement(this);
   }
 
-  @Nullable
+  @NotNull
   public PyExpression[] getExpressions() {
-    return PsiTreeUtil.getChildrenOfType(this, PyExpression.class);
+    final PyExpression[] expressions = PsiTreeUtil.getChildrenOfType(this, PyExpression.class);
+    return expressions != null ? expressions : PyExpression.EMPTY_ARRAY;
   }
 }

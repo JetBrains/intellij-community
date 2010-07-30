@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -31,11 +32,15 @@ public class PyImportedModuleType implements PyType {
   @NotNull
   public List<? extends PsiElement> resolveMember(String name, AccessDirection direction) {
     final PsiElement element = myImportedModule.getElementNamed(name);
-    if (element != null) return new SmartList<PsiElement>(element);
-    else return Collections.emptyList();
+    if (element != null) {
+      return new SmartList<PsiElement>(element);
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
-  public Object[] getCompletionVariants(PyQualifiedExpression referenceExpression, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
     List<LookupElement> result = new ArrayList<LookupElement>();
     final List<PyImportElement> importTargets = ((PyFileImpl)myImportedModule.getContainingFile()).getImportTargets();
     final int imported = myImportedModule.getImportedPrefix().getComponentCount();

@@ -3,6 +3,8 @@ package com.jetbrains.python.psi;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,6 +104,15 @@ public enum LanguageLevel {
       }
     }
 
+    return getDefault();
+  }
+
+  @NotNull
+  public static LanguageLevel forElement(@NotNull PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PyFile) {
+      return ((PyFile) containingFile).getLanguageLevel();
+    }
     return getDefault();
   }
 

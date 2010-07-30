@@ -7,6 +7,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -40,7 +41,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
   public PyModuleType(PsiFile source) {
     myModule = source;
   }
-  
+
   public PsiFile getModule() {
     return myModule;
   }
@@ -56,7 +57,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
 
   /**
    * @return a list of submodules of this module, either files or dirs, for easier naming; may contain filenames
-   * not suitable for import.
+   *         not suitable for import.
    */
   @NotNull
   public List<PsiFileSystemItem> getSubmodulesList() {
@@ -79,13 +80,13 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     return result;
   }
 
-  public Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
     Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
-    ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(referenceExpression.getReference());
+    ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(expressionHook.getReference());
     if (role == NONE) { // when not inside import, add regular attributes
-      final VariantsProcessor processor = new VariantsProcessor(referenceExpression);
-      myModule.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
+      final VariantsProcessor processor = new VariantsProcessor(expressionHook);
+      myModule.processDeclarations(processor, ResolveState.initial(), null, expressionHook);
       if (names_already != null) {
         for (LookupElement le : processor.getResultList()) {
           String name = le.getLookupString();
@@ -95,7 +96,9 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
           }
         }
       }
-      else result.addAll(processor.getResultList());
+      else {
+        result.addAll(processor.getResultList());
+      }
     }
     else /*if (role == AS_MODULE)*/ { // when being imported, add submodules
       for (PsiFileSystemItem pfsi : getSubmodulesList()) {
@@ -104,8 +107,12 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
         if (pos > 0) s = s.substring(0, pos);
         if (!PyNames.isIdentifier(s)) continue;
         if (names_already != null) {
-          if (names_already.contains(s)) continue;
-          else names_already.add(s);
+          if (names_already.contains(s)) {
+            continue;
+          }
+          else {
+            names_already.add(s);
+          }
         }
         result.add(LookupElementBuilder.create(pfsi, s).setPresentableText(s));
       }
@@ -115,8 +122,12 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
 
   public String getName() {
     PsiFile mod = getModule();
-    if (mod != null) return mod.getName();
-    else return null;
+    if (mod != null) {
+      return mod.getName();
+    }
+    else {
+      return null;
+    }
   }
 
   @Override
@@ -128,5 +139,5 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
   public static Set<String> getPossibleInstanceMembers() {
     return ourPossibleFields;
   }
-  
+
 }

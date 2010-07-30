@@ -3,7 +3,6 @@ package com.jetbrains.python.run;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -43,7 +42,7 @@ public class PythonRunner extends DefaultProgramRunner {
     ExecutionResult executionResult;
     RunProfile profile = env.getRunProfile();
     if (state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
-      executionResult = ((PythonCommandLineState)state).execute((CommandLinePatcher)profile);
+      executionResult = ((PythonCommandLineState)state).execute(executor, (CommandLinePatcher)profile);
     }
     else executionResult = state.execute(executor, this);
     if (executionResult == null) return null;

@@ -33,9 +33,11 @@ import java.util.Collection;
  * @author yole
  */
 public class PyDebugRunner extends GenericProgramRunner {
+  public static final String PY_DEBUG_RUNNER = "PyDebugRunner";
+
   @NotNull
   public String getRunnerId() {
-    return "PyDebugRunner";
+    return PY_DEBUG_RUNNER;
   }
 
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
@@ -56,7 +58,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       throw new ExecutionException("Failed to find free socket port", e);
     }
 
-    final PythonCommandLineState pyState = (PythonCommandLineState) state;
+    final PythonCommandLineState pyState = (PythonCommandLineState)state;
     final CommandLinePatcher debug_server_patcher = new CommandLinePatcher() {
       public void patchCommandLine(GeneralCommandLine commandLine) {
         final String[] args = new String[]{
@@ -85,15 +87,15 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (state instanceof PythonCommandLineState && profile instanceof PythonRunConfiguration) {
       run_config_patcher = (PythonRunConfiguration)profile;
     }
-    final ExecutionResult result = pyState.execute(debug_server_patcher, run_config_patcher);
+    final ExecutionResult result = pyState.execute(executor, debug_server_patcher, run_config_patcher);
 
     final XDebugSession session = XDebuggerManager.getInstance(project).
-        startSession(this, env, contentToReuse, new XDebugProcessStarter() {
-          @NotNull
-          public XDebugProcess start(@NotNull final XDebugSession session) {
-            return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler());
-          }
-        });
+      startSession(this, env, contentToReuse, new XDebugProcessStarter() {
+        @NotNull
+        public XDebugProcess start(@NotNull final XDebugSession session) {
+          return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler());
+        }
+      });
     return session.getRunContentDescriptor();
   }
 }

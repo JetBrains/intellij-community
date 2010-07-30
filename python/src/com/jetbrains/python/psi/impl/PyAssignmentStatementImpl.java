@@ -4,8 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
@@ -17,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -72,10 +71,16 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     if (psi instanceof PyParenthesizedExpression) {
       addCandidate(candidates, ((PyParenthesizedExpression)psi).getContainedExpression());
     }
-    else if (psi instanceof PyTupleExpression) {
-      final PyExpression[] pyExpressions = ((PyTupleExpression)psi).getElements();
+    else if (psi instanceof PySequenceExpression) {
+      final PyExpression[] pyExpressions = ((PySequenceExpression)psi).getElements();
       for (PyExpression pyExpression : pyExpressions) {
         addCandidate(candidates, pyExpression);
+      }
+    }
+    else if (psi instanceof PyStarExpression) {
+      final PyExpression expression = ((PyStarExpression)psi).getExpression();
+      if (expression != null) {
+        addCandidate(candidates, expression);
       }
     }
     else {
@@ -123,14 +128,14 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
 
   private static void mapToValues(PyExpression lhs, PyExpression rhs, List<Pair<PyExpression, PyExpression>> map) {
     // cast for convenience
-    PyTupleExpression lhs_tuple = null;
+    PySequenceExpression lhs_tuple = null;
     PyExpression lhs_one = null;
-    if (lhs instanceof PyTupleExpression) lhs_tuple = (PyTupleExpression)lhs;
+    if (lhs instanceof PySequenceExpression) lhs_tuple = (PySequenceExpression)lhs;
     else if (lhs != null) lhs_one = lhs;
     
-    PyTupleExpression rhs_tuple = null;
+    PySequenceExpression rhs_tuple = null;
     PyExpression rhs_one = null;
-    if (rhs instanceof PyTupleExpression) rhs_tuple = (PyTupleExpression)rhs;
+    if (rhs instanceof PySequenceExpression) rhs_tuple = (PySequenceExpression)rhs;
     else if (rhs != null) rhs_one = rhs;
     //
     if (lhs_one != null) { // single LHS, single RHS (direct mapping) or multiple RHS (packing)
@@ -138,10 +143,10 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     }
     else if (lhs_tuple != null && rhs_one != null) { // multiple LHS, single RHS: unpacking
       //for (PyExpression tuple_elt : lhs_tuple.getElements()) map.add(new Pair<PyExpression, PyExpression>(tuple_elt, rhs_one));
-      map.addAll(FP.zipList(lhs_tuple, new RepeatIterable<PyExpression>(rhs_one)));
+      map.addAll(FP.zipList(Arrays.asList(lhs_tuple.getElements()), new RepeatIterable<PyExpression>(rhs_one)));
     }
     else if (lhs_tuple != null && rhs_tuple != null) { // multiple both sides: piecewise mapping
-      map.addAll(FP.zipList(lhs_tuple, rhs_tuple, null, null));
+      map.addAll(FP.zipList(Arrays.asList(lhs_tuple.getElements()), Arrays.asList(rhs_tuple.getElements()), null, null));
     }
   }
 

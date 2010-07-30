@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
@@ -42,7 +43,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     // is it a class-private name qualified by a different class?
     if (PyUtil.isClassPrivateName(referencedName) && qualifierType instanceof PyClassType) {
       final List<? extends PsiElement> match = SyntaxMatchers.DEEP_IN_METHOD.search(qualifier);
-      if (match == null || (match.size() > 1 && ((PyClassType)qualifierType).getPyClass() != match.get(match.size()-1))) {
+      if (match == null || (match.size() > 1 && ((PyClassType)qualifierType).getPyClass() != match.get(match.size() - 1))) {
         return Collections.emptyList();
       }
     }
@@ -152,11 +153,11 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
             namesAlready.add(targetExpr.getName());
           }
         }
-        Collections.addAll(variants, qualifierType.getCompletionVariants(myElement, ctx));
+        Collections.addAll(variants, qualifierType.getCompletionVariants(myElement.getName(), myElement, ctx));
         return variants.toArray();
       }
       else {
-        return qualifierType.getCompletionVariants(myElement, ctx);
+        return qualifierType.getCompletionVariants(myElement.getName(), myElement, ctx);
       }
     }
     return getUntypedVariants();
@@ -172,7 +173,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         classes = filterByImports(classes, myElement.getContainingFile());
         if (classes.size() == 1) {
           final PyClassType classType = new PyClassType(classes.iterator().next(), false);
-          return ((PyReferenceExpressionImpl) myElement).getTypeCompletionVariants(classType);
+          return ((PyReferenceExpressionImpl)myElement).getTypeCompletionVariants(classType);
         }
         return collectSeenMembers(qualifier.getText());
       }
@@ -224,7 +225,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
-    List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers(qualifier);
+    List<String> qualifier_path = PyResolveUtil.unwindQualifiersAsStrList(qualifier);
     if (qualifier_path != null) {
       AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifier_path);
       PyResolveUtil.treeCrawlUp(proc, qualifier);
@@ -242,7 +243,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     }
     final String referencedName = myElement.getReferencedName();
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
-        ((PyFunction)element).getContainingClass() != null) {
+        ((PyFunction)element).getContainingClass() != null && !PyNames.INIT.equals(referencedName)) {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null && qualifier.getType(TypeEvalContext.fast()) == null) {
         return true;

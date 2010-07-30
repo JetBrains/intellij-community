@@ -4,15 +4,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.types.PyType;
@@ -118,6 +116,10 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   private static boolean isUnicode(String text) {
     return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'U';
   } 
+
+  private static boolean isBytes(String text) {
+    return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'B';
+  }
 
   public void iterateCharacterRanges(TextRangeConsumer consumer) {
     int elStart = getTextRange().getStartOffset();
@@ -258,7 +260,21 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    return PyBuiltinCache.getInstance(this).getStrType(); // TODO: detect unicode vs byte
+    final List<ASTNode> nodes = getStringNodes();
+    if (nodes.size() > 0) {
+      String text = getStringNodes().get(0).getText();
+      if (LanguageLevel.forElement(this).isPy3K()) {
+        if (isBytes(text)) {
+          return PyBuiltinCache.getInstance(this).getObjectType("bytes");
+        }
+      }
+      else {
+        if (isUnicode(text)) {
+          return PyBuiltinCache.getInstance(this).getObjectType("unicode");
+        }
+      }
+    }
+    return PyBuiltinCache.getInstance(this).getStrType();
   }
 
   @NotNull

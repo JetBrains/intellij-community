@@ -19,6 +19,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -136,7 +137,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
               if (target == this || target == null) {
                 return null;  // fix SOE on "a = a"
               }
-              return PyReferenceExpressionImpl.getTypeFromTarget(target, context, null);
+              final PyType typeFromTarget = PyReferenceExpressionImpl.getTypeFromTarget(target, context, null);
+              if (target instanceof PyTargetExpression && typeFromTarget instanceof PyNoneType) {
+                // this usually means that the variable is initialized to a non-None value somewhere else where we haven't looked
+                return null;
+              }
+              return typeFromTarget;
             }
           }
           return context.getType(assignedValue);

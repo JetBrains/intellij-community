@@ -77,7 +77,6 @@ def find_binaries(paths):
             #print "+ ", name # XXX
           the_name = prefix + name
           res[the_name.upper()] = (the_name, root + SEP + f)
-          break
   return list(res.values())
 
 

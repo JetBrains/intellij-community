@@ -116,7 +116,7 @@ public class PyBlock implements ASTBlock {
     }
     if (ourListElementTypes.contains(parentType)) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
-      if (!PyTokenTypes.OPEN_BRACES.contains(childType)) {
+      if (needListAlignment(child)) {
         childAlignment = _childListAlignment;
       }
     }
@@ -136,6 +136,14 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getContinuationIndent();
       }
     }
+    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION) {
+      if (childType == PyTokenTypes.RBRACE) {
+        childIndent = Indent.getNoneIndent();
+      }
+      else {
+        childIndent = Indent.getNormalIndent();
+      }
+    }
     try { // maybe enter was pressed and cut us from a previous (nested) statement list
       PsiElement prev = sure(child.getPsi().getPrevSibling());
       sure(prev instanceof PyStatement);
@@ -148,6 +156,17 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(child, childAlignment, childIndent, wrap, mySettings);
+  }
+
+  private static boolean needListAlignment(ASTNode child) {
+    IElementType childType = child.getElementType();
+    if (PyTokenTypes.OPEN_BRACES.contains(childType)) {
+      return false;
+    }
+    if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
+      return PsiTreeUtil.getParentOfType(child.getPsi(), PyArgumentList.class) != null;
+    }
+    return true;
   }
 
   private static boolean hasLineBreakBefore(ASTNode child) {

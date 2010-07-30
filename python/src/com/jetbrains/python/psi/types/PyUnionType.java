@@ -6,6 +6,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +38,11 @@ public class PyUnionType implements PyType {
     return all_nulls ? null : ret;
   }
 
-  public Object[] getCompletionVariants(PyQualifiedExpression referenceExpression, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
     Set<Object> variants = new HashSet<Object>();
     for (PyType member : myMembers) {
       if (member != null) {
-        Collections.addAll(variants, member.getCompletionVariants(referenceExpression, context));
+        Collections.addAll(variants, member.getCompletionVariants(completionPrefix, expressionHook, context));
       }
     }
     return variants.toArray(new Object[variants.size()]);
@@ -61,7 +62,7 @@ public class PyUnionType implements PyType {
   @Override
   public boolean isBuiltin() {
     for (PyType one : myMembers) {
-      if (! one.isBuiltin()) return false;
+      if (one == null || !one.isBuiltin()) return false;
     }
     return true;
   }
