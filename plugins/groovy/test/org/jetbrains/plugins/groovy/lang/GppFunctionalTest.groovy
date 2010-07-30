@@ -92,6 +92,9 @@ Foo f = [name: 'aaa', foo: { println 'hi' }, anotherProperty: 42 ]
   private PsiFile configureScript(String text) {
     return myFixture.configureByText("a.groovy", text)
   }
+  private PsiFile configureGppScript(String text) {
+    return myFixture.configureByText("a.gpp", text)
+  }
 
   public void testDeclaredVariableTypeIsMoreImportantThanTheInitializerOne() throws Exception {
     configureScript("""
@@ -345,12 +348,15 @@ r.apply { it.intV<caret>i } {}
     assertSameElements myFixture.getLookupElementStrings(), "intValue"
   }
 
-  public void testGotoDeclarationFromMapLiterals() throws Exception {
+  public void testGotoSuperMethodFromMapLiterals() throws Exception {
     PsiClass point = myFixture.addClass("""
 class Point {
+  Point() {}
+  Point(int y) {}
   int y;
   void setX(int x) {}
   void move(int x, int y) {}
+  void move(int y) {}
 }""")
 
     configureScript "Point p = [<caret>y:2]"
@@ -361,6 +367,34 @@ class Point {
 
     configureScript "Point p = [mo<caret>ve: { x, y -> z }]"
     assertEquals point.findMethodsByName("move", false)[0], resolveReference()
+
+    configureScript "Point p = [mo<caret>ve: ]"
+    def resolveResults = multiResolveReference()
+    assertSameElements resolveResults.collect { it.element }, point.findMethodsByName("move", false)
+  }
+
+  ResolveResult[] multiResolveReference() {
+    return ((PsiPolyVariantReference) myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)).multiResolve(true)
+  }
+
+  public void testGotoSuperConstructorFromMapLiterals() throws Exception {
+    PsiClass point = myFixture.addClass("""
+class Point {
+  Point() {}
+  Point(int y) {}
+}""")
+
+    configureGppScript "Point p = [su<caret>per: 2]"
+    assertEquals point.constructors[1], resolveReference()
+
+    configureGppScript "Point p = [su<caret>per: [2]]"
+    assertEquals point.constructors[1], resolveReference()
+
+    configureGppScript "Point p = ['su<caret>per': []]"
+    assertEquals point.constructors[0], resolveReference()
+
+    configureGppScript "Point p = ['su<caret>per': 'a']"
+    assertEquals 2, multiResolveReference().size()
   }
 
   public void testResolveTraitMethod() throws Exception {
