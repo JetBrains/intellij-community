@@ -18,7 +18,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jython.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib/jython-2.2.1-src.zip!/" />
         </SOURCES>

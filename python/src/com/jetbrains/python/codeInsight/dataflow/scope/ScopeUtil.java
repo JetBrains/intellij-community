@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class ScopeUtil {
+  private ScopeUtil() {
+  }
+
   @Nullable
   public static PsiElement getParameterScope(final PsiElement element){
     if (element instanceof PyNamedParameter){

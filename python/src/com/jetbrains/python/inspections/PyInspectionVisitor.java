@@ -19,7 +19,7 @@ public class PyInspectionVisitor extends PyElementVisitor {
     myHolder = holder;
   }
 
-  protected ProblemsHolder getHolder() {
+  @Nullable protected ProblemsHolder getHolder() {
     return myHolder;
   }
 

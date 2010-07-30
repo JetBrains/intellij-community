@@ -92,10 +92,9 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
     File bin_path = new File(sdkHome); // this is actually a binary path
     final String PY_TEST = "py.test" + (SystemInfo.isWindows ? ".exe" : "");
     // poke around and see if we got something like runner
-    File runner = null;
     File bin_dir = bin_path.getParentFile();
     if (bin_dir == null) return null;
-    runner = new File(bin_dir, PY_TEST);
+    File runner = new File(bin_dir, PY_TEST);
     if (runner.exists()) return runner.getPath();
     runner = new File(new File(bin_dir, "scripts"), PY_TEST);
     if (runner.exists()) return runner.getPath();

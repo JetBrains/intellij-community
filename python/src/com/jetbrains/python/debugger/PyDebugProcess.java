@@ -66,6 +66,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   }
 
   @Override
+  @NotNull
   public XDebuggerEditorsProvider getEditorsProvider() {
     return myEditorsProvider;
   }

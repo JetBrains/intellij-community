@@ -10,6 +10,9 @@ import java.util.List;
  */
 public class ParamHelper {
 
+  private ParamHelper() {
+  }
+
   /**
    * Runs a {@link ParamWalker ParamWalker} down the array of parameters, recursively descending into tuple parameters.
    * If the array is from PyParamaterList.getParameters(), parameters are visited in the order of textual appearance

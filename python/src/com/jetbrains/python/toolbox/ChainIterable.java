@@ -82,6 +82,7 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
       }
 
       public T next() {
+        //noinspection RedundantCast
         return (T)mixin.next();
       }
 

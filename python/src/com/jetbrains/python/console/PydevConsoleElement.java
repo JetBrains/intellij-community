@@ -39,7 +39,7 @@ public class PydevConsoleElement extends LightElement implements PsiNamedElement
 
   @Override
   public String toString() {
-    return "PydevConsoleElement " + myDescription.toString();
+    return "PydevConsoleElement " + myDescription;
   }
 
   public String getName() {
