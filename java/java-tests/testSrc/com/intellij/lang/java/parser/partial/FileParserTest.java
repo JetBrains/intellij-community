@@ -20,6 +20,7 @@ import com.intellij.lang.java.parser.FileParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
 
+// todo: fix comment binding, uncomment tests
 public class FileParserTest extends JavaParsingTestCase {
   public FileParserTest() {
     super("parser-partial/files");
@@ -45,8 +46,16 @@ public class FileParserTest extends JavaParsingTestCase {
                                                  "public class C { }\n" +
                                                  "class D { }"); }
 
+  //public void testBindBefore0() { doParserTest("class A{\n  // comment\n  int field;\n}"); }
+  public void testBindBefore1() { doParserTest("class A{\n  // comment\n\n  int field;\n}"); }
+  public void testBindBefore2() { doParserTest("class A{ // comment\n  int field;\n}"); }
+  public void testBindBefore3() { doParserTest("class A{// comment\n  int field;\n}"); }
+  //public void testBindBefore4() { doParserTest("class A{\n  // comment 1\n  // comment 2\n  // comment 3\n  int field;\n}"); }
+
+  // todo: doc comment binding tests
+
   private void doParserTest(final String text) {
-    doParserTest(text, new Parser() {
+    doParserTest(text, new TestParser() {
       public void parse(final PsiBuilder builder) {
         FileParser.parse(builder);
       }

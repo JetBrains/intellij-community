@@ -20,12 +20,4 @@ public class JavaTestUtil {
     return PathManagerEx.getTestDataPath();
   }
 
-  public static PsiBuilder getJavaBuilder(final CharSequence source) {
-    final LanguageLevel languageLevel = LanguageLevel.HIGHEST;
-    final JavaLexer lexer = new JavaLexer(languageLevel);
-    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(lexer, StdLanguages.JAVA, source);
-    builder.setDebugMode(true);
-    JavaParserUtil.setLanguageLevel(builder, languageLevel);
-    return builder;
-  }
 }

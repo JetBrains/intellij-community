@@ -18,6 +18,7 @@ package com.intellij.lang.java.parser.partial;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
+import com.intellij.pom.java.LanguageLevel;
 
 
 // todo: fix parser and uncomment tests
@@ -40,14 +41,19 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testEnumSmartTypeCompletion() { doParserTest("{ @Preliminary(A.B\n#) public class TimeTravel {}\n" +
                                                            "  @Preliminary(a=A.B\n#) public class TimeTravel {}\n" +
                                                            "  @Preliminary(a=A.B\n#, b=c) public class TimeTravel {} }", false, false); }
-  public void testTypeAnno() { doParserTest("{ class C<@D T extends @F Object> extends @F Object {\n" +
-                                            "  @F int @F[] method() @F throws @F Exception {\n" +
-                                            "    a = this instanceof @F C;\n" +
-                                            "    C<@F @G C> c = new @Q C<@F C>();\n" +
-                                            "    c = (@F Object)c;\n" +
-                                            "    Class c = @TA String.class;\n" +
-                                            "    @F C.field++;\n" +
-                                            "  }\n} }", false, false); }
+  public void testTypeAnno() {
+    withLevel(LanguageLevel.JDK_1_7,
+              new Runnable() { public void run() {
+                  doParserTest("{ class C<@D T extends @F Object> extends @F Object {\n" +
+                                                "  @F int @F[] method() @F throws @F Exception {\n" +
+                                                "    a = this instanceof @F C;\n" +
+                                                "    C<@F @G C> c = new @Q C<@F C>();\n" +
+                                                "    c = (@F Object)c;\n" +
+                                                "    Class c = @TA String.class;\n" +
+                                                "    @F C.field++;\n" +
+                                                "  }\n} }", false, false);
+              } });
+  }
 
   public void testEnumBody0() { doParserTest("{ ; }", false, true); }
   public void testEnumBody1() { doParserTest("{ RED, GREEN, BLUE; }", false, true); }
@@ -95,7 +101,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testParameterizedMethod() { doParserTest("{ @Nullable <T> T bar() {} }", false, false); }
 
   private void doParserTest(final String text, final boolean isAnnotation, final boolean isEnum) {
-    doParserTest(text, new Parser() {
+    doParserTest(text, new TestParser() {
       public void parse(final PsiBuilder builder) {
         DeclarationParser.parseClassBodyWithBraces(builder, isAnnotation, isEnum);
       }

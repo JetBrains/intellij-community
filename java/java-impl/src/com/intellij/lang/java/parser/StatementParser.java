@@ -34,7 +34,7 @@ import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
 public class StatementParser {
-  private static final boolean DEEP_PARSE_BLOCKS_IN_STATEMENTS = true;  // todo: reset after testing done
+  private static final boolean DEEP_PARSE_BLOCKS_IN_STATEMENTS = false;
 
   private enum BraceMode {
     TILL_FIRST, TILL_LAST
@@ -199,10 +199,8 @@ public class StatementParser {
       return parseBlockStatement(builder);
     }
     else if (tokenType instanceof ILazyParseableElementType) {
-      final PsiBuilder.Marker marker = builder.mark();
-      marker.drop();
       builder.advanceLexer();
-      return marker;
+      return null;
     }
     else if (tokenType == JavaTokenType.SEMICOLON) {
       final PsiBuilder.Marker empty = builder.mark();
@@ -220,6 +218,7 @@ public class StatementParser {
         final PsiBuilder.Marker declStatement = builder.mark();
         final PsiBuilder.Marker decl = DeclarationParser.parse(builder, DeclarationParser.Context.CODE_BLOCK);
         if (decl == null) {
+          ReferenceParser.parseType(builder, false, false);
           error(builder, JavaErrorMessages.message("expected.identifier"));
         }
         declStatement.done(JavaElementType.DECLARATION_STATEMENT);

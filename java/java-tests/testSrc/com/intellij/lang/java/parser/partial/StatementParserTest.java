@@ -133,7 +133,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testWhileIncomplete5() { doParserTest("{ while() foo(); }"); }
 
   private void doParserTest(final String text) {
-    doParserTest(text, new Parser() {
+    doParserTest(text, new TestParser() {
       public void parse(final PsiBuilder builder) {
         StatementParser.parseCodeBlockDeep(builder, true);
       }

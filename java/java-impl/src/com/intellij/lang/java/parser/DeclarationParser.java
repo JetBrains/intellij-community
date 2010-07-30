@@ -56,7 +56,7 @@ public class DeclarationParser {
     expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
   }
 
-  @NotNull
+  @Nullable
   private static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker declaration,
                                                          final boolean isAnnotation) {
     final IElementType keywordTokenType = builder.getTokenType();
@@ -67,7 +67,7 @@ public class DeclarationParser {
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
       error(builder, JavaErrorMessages.message("expected.identifier"));
       declaration.drop();
-      return declaration;
+      return null;
     }
 
     ReferenceParser.parseTypeParameters(builder);
@@ -195,10 +195,8 @@ public class DeclarationParser {
       if (context == Context.FILE) return null;
     }
     else if (tokenType instanceof ILazyParseableElementType) {
-      final PsiBuilder.Marker declaration = builder.mark();
-      declaration.drop();
       builder.advanceLexer();
-      return declaration;
+      return null;
     }
     else if (!ElementType.MODIFIER_BIT_SET.contains(tokenType) &&
              !ElementType.CLASS_KEYWORD_BIT_SET.contains(tokenType) &&

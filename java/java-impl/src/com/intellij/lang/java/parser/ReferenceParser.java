@@ -198,6 +198,7 @@ public class ReferenceParser {
       }
       dotPos.drop();
 
+      final PsiBuilder.Marker prevElement = refElement;
       refElement = refElement.precede();
 
       if (!hasIdentifier) {
@@ -205,7 +206,7 @@ public class ReferenceParser {
         if (isImport) {
           error(builder, JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
           refElement.drop();
-          return refElement;
+          return prevElement;
         }
         else {
           error(builder, JavaErrorMessages.message("expected.identifier"));
