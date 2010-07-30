@@ -41,7 +41,7 @@ public class GppStdLibSupport extends NonCodeMembersContributor {
 
   @Override
   public void processDynamicElements(@NotNull PsiType type, PsiScopeProcessor processor, PsiElement place, ResolveState state) {
-    if (!(type instanceof PsiClassType)) {
+    if (!(type instanceof PsiClassType) && !(type instanceof PsiArrayType)) {
       return;
     }
     if (!GppTypeConverter.hasTypedContext(place)) {
