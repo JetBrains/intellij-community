@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
-  public boolean isReadAccess = false;
-  public boolean isWriteAccess = false;
+  public boolean isReadAccess = true;
+  public boolean isWriteAccess = true;
 
   public JavaVariableFindUsagesOptions(@NotNull Project project) {
     super(project);
