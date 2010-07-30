@@ -22,7 +22,6 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
     <backspaceHandlerDelegate implementation="com.jetbrains.python.editor.PythonBackspaceHandler"/>
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
-    <sdkType implementation="com.jetbrains.python.sdk.BuildoutPythonSdkType"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
@@ -269,6 +268,9 @@
     <inspectionToolProvider implementation="com.jetbrains.appengine.inspection.AppEngineInspectionToolProvider"/>
 
     <colorSettingsPage implementation="com.jetbrains.appengine.lang.gql.highlighting.GqlColorsPage"/>
+
+    <!-- Buildout -->
+    <facetType implementation="com.jetbrains.python.buildout.BuildoutFacetType"/>
   </extensions>
 
   <extensionPoints>

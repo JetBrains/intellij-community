@@ -16,7 +16,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.sdk.BuildoutPythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.FP;
@@ -205,15 +204,6 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
       SdkType sdk_type = sdk.getSdkType();
       if (sdk_type instanceof PythonSdkType) {
         PythonSdkType python_sdk_type = (PythonSdkType)sdk_type;
-        if (python_sdk_type instanceof BuildoutPythonSdkType) {
-          // rewrite pythonpath
-          List<String> paths = python_sdk_type.getCachedSysPath(sdk_home);
-          if (paths != null) {
-            Map<String, String> new_env = cloneEnv(commandLine.getEnvParams());
-            new_env.put("PYTHONPATH", PyUtil.joinWith(File.pathSeparator, paths));
-            commandLine.setEnvParams(new_env);
-          }
-        }
         File virtualenv_root = PythonSdkType.getVirtualEnvRoot(sdk_home);
         if (virtualenv_root != null) {
           // prepend virtualenv bin if it's not already on PATH
