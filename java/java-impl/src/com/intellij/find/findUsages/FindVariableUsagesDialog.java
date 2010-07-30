@@ -32,7 +32,7 @@ public class FindVariableUsagesDialog extends JavaFindUsagesDialog {
     return myCbToSkipResultsWhenOneUsage;
   }
 
-  public void calcFindUsagesOptions(FindUsagesOptions options) {
+  public void calcFindUsagesOptions(JavaFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
     options.isReadAccess = true;

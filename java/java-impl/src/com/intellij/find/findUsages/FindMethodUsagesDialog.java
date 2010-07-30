@@ -41,7 +41,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog {
     return myHasFindWhatPanel ? myCbUsages : null;
   }
 
-  public void calcFindUsagesOptions(FindUsagesOptions options) {
+  public void calcFindUsagesOptions(JavaFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
     options.isUsages = isSelected(myCbUsages) || !myHasFindWhatPanel;
@@ -59,7 +59,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog {
     findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
-    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox"), myFindUsagesOptions.isUsages, findWhatPanel, true);
+    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox"), getFindUsagesOptions().isUsages, findWhatPanel, true);
 
     PsiMethod method = (PsiMethod) getPsiElement();
     PsiClass aClass = method.getContainingClass();
@@ -71,9 +71,9 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog {
             !(aClass instanceof PsiAnonymousClass) &&
             !aClass.hasModifierProperty(PsiModifier.FINAL)) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        myCbImplementingMethods = addCheckboxToPanel(FindBundle.message("find.what.implementing.methods.checkbox"), myFindUsagesOptions.isImplementingMethods, findWhatPanel, true);
+        myCbImplementingMethods = addCheckboxToPanel(FindBundle.message("find.what.implementing.methods.checkbox"), getFindUsagesOptions().isImplementingMethods, findWhatPanel, true);
       } else {
-        myCbOverridingMethods = addCheckboxToPanel(FindBundle.message("find.what.overriding.methods.checkbox"), myFindUsagesOptions.isOverridingMethods, findWhatPanel, true);
+        myCbOverridingMethods = addCheckboxToPanel(FindBundle.message("find.what.overriding.methods.checkbox"), getFindUsagesOptions().isOverridingMethods, findWhatPanel, true);
       }
     } else {
       myHasFindWhatPanel = false;

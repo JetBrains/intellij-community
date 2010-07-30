@@ -38,21 +38,21 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   }
 
   public JavaFindUsagesHandlerFactory(Project project) {
-    final FindUsagesOptions findClassOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    final FindUsagesOptions findMethodOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    final JavaFindUsagesOptions findClassOptions = JavaFindUsagesHandler.createFindUsagesOptions(project);
+    final JavaFindUsagesOptions findMethodOptions = JavaFindUsagesHandler.createFindUsagesOptions(project);
     findMethodOptions.isCheckDeepInheritance = false;
     findMethodOptions.isIncludeSubpackages = false;
-    findMethodOptions.isSearchForTextOccurences = false;
-    final FindUsagesOptions findPackageOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    findMethodOptions.isSearchForTextOccurrences = false;
+    final FindUsagesOptions findPackageOptions = JavaFindUsagesHandler.createFindUsagesOptions(project);
 
-    final FindUsagesOptions findThrowOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    findThrowOptions.isSearchForTextOccurences = false;
+    final JavaFindUsagesOptions findThrowOptions = JavaFindUsagesHandler.createFindUsagesOptions(project);
+    findThrowOptions.isSearchForTextOccurrences = false;
     findThrowOptions.isThrowUsages = true;
 
-    final FindUsagesOptions findVariableOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    final JavaFindUsagesOptions findVariableOptions = JavaFindUsagesHandler.createFindUsagesOptions(project);
     findVariableOptions.isCheckDeepInheritance = false;
     findVariableOptions.isIncludeSubpackages = false;
-    findVariableOptions.isSearchForTextOccurences = false;
+    findVariableOptions.isSearchForTextOccurrences = false;
 
     myFindClassOptions = findClassOptions;
     myFindMethodOptions = findMethodOptions;

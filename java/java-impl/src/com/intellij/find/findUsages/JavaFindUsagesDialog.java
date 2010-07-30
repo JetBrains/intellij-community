@@ -48,10 +48,14 @@ public abstract class JavaFindUsagesDialog extends AbstractFindUsagesDialog {
     return FindUsagesUtil.isSearchForTextOccurencesAvailable(element, isSingleFile, handler);
   }
 
-  public void calcFindUsagesOptions(FindUsagesOptions options) {
-    super.calcFindUsagesOptions(options);
+  public void calcFindUsagesOptions(JavaFindUsagesOptions options) {
     options.isIncludeOverloadUsages =
       myIncludeOverloadedMethodsAvailable && isToChange(myCbIncludeOverloadedMethods) && myCbIncludeOverloadedMethods.isSelected();
+  }
+
+  public void calcFindUsagesOptions(FindUsagesOptions options) {
+    super.calcFindUsagesOptions(options);
+    calcFindUsagesOptions((JavaFindUsagesOptions)options);
   }
 
   protected void doOKAction() {
@@ -94,5 +98,9 @@ public abstract class JavaFindUsagesDialog extends AbstractFindUsagesDialog {
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(FindUsagesManager.getHelpID(myPsiElement));
+  }
+
+  protected JavaFindUsagesOptions getFindUsagesOptions() {
+    return (JavaFindUsagesOptions)myFindUsagesOptions;
   }
 }

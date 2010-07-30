@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -93,6 +94,20 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     myFindThrowOptions = findThrowOptions;
     myFindVariableOptions = findVariableOptions;
   }
+
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
+  public static JavaFindUsagesOptions createFindUsagesOptions(final Project project) {
+    JavaFindUsagesOptions findUsagesOptions = new JavaFindUsagesOptions(project, null);
+    findUsagesOptions.isUsages = true;
+    findUsagesOptions.isIncludeOverloadUsages = false;
+    findUsagesOptions.isIncludeSubpackages = true;
+    findUsagesOptions.isReadAccess = true;
+    findUsagesOptions.isWriteAccess = true;
+    findUsagesOptions.isCheckDeepInheritance = true;
+    findUsagesOptions.isSearchForTextOccurrences = true;
+    return findUsagesOptions;
+  }
+
 
   @NotNull
   public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
@@ -263,7 +278,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @Override
-  public void processElementUsages(@NotNull final PsiElement element, @NotNull final Processor<UsageInfo> processor, @NotNull final FindUsagesOptions options) {
+  public void processElementUsages(@NotNull final PsiElement element, @NotNull final Processor<UsageInfo> processor, @NotNull final FindUsagesOptions _options) {
+    final JavaFindUsagesOptions options = (JavaFindUsagesOptions) _options;
     if (element instanceof PsiVariable){
       if (options.isReadAccess || options.isWriteAccess){
         if (options.isReadAccess && options.isWriteAccess){
@@ -348,13 +364,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
     }
 
-    if (!ThrowSearchUtil.isSearchable(element) && options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
+    if (!ThrowSearchUtil.isSearchable(element) && options.isSearchForTextOccurrences && options.searchScope instanceof GlobalSearchScope) {
       // todo add to fastTrack
       processUsagesInText(element, processor, (GlobalSearchScope)options.searchScope);
     }
   }
 
-  private static void processOverridingMethods(PsiMethod psiMethod, final Processor<UsageInfo> processor, final FindUsagesOptions options) {
+  private static void processOverridingMethods(PsiMethod psiMethod, final Processor<UsageInfo> processor, final JavaFindUsagesOptions options) {
     OverridingMethodsSearch.search(psiMethod, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiMethod>(
       new PsiElementProcessor<PsiMethod>() {
       public boolean execute(PsiMethod element) {
@@ -365,7 +381,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
 
-  private static void addClassesUsages(PsiPackage aPackage, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+  private static void addClassesUsages(PsiPackage aPackage, final Processor<UsageInfo> results, final JavaFindUsagesOptions options) {
     final HashSet<PsiFile> filesSet = new HashSet<PsiFile>();
     final ArrayList<PsiFile> files = new ArrayList<PsiFile>();
     ReferencesSearch.search(new ReferencesSearch.SearchParameters(aPackage, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
@@ -429,7 +445,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     });
   }
 
-  private static void addMethodsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+  private static void addMethodsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final JavaFindUsagesOptions options) {
     if (options.isIncludeInherited) {
       final PsiManager manager = aClass.getManager();
       PsiMethod[] methods = aClass.getAllMethods();
@@ -463,7 +479,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }
   }
 
-  private static void addFieldsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+  private static void addFieldsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final JavaFindUsagesOptions options) {
     if (options.isIncludeInherited) {
       final PsiManager manager = aClass.getManager();
       PsiField[] fields = aClass.getAllFields();
@@ -528,7 +544,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     return null;
   }
 
-  private static void addInheritors(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+  private static void addInheritors(final PsiClass aClass, final Processor<UsageInfo> results, final JavaFindUsagesOptions options) {
     ClassInheritorsSearch.search(aClass, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
       new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
@@ -539,7 +555,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }));
   }
 
-  private static void addDerivedInterfaces(PsiClass anInterface, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+  private static void addDerivedInterfaces(PsiClass anInterface, final Processor<UsageInfo> results, final JavaFindUsagesOptions options) {
     ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
       new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass inheritor) {
@@ -552,7 +568,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }));
   }
 
-  private static void addImplementingClasses(PsiClass anInterface, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+  private static void addImplementingClasses(PsiClass anInterface, final Processor<UsageInfo> results, final JavaFindUsagesOptions options) {
     ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
       new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass inheritor) {
@@ -577,13 +593,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       PsiClass usedClass = getFieldOrMethodAccessedClass((PsiReferenceExpression)refElement, methodClass);
       if (usedClass != null) {
         if (manager.areElementsEquivalent(usedClass, aClass) || usedClass.isInheritor(aClass, true)) {
-          addResult(results, refElement, options, element);
+          addResult(results, refElement, (JavaFindUsagesOptions)options, element);
         }
       }
     }
   }
 
-  public static void addElementUsages(final PsiElement element, final Processor<UsageInfo> result, final FindUsagesOptions options) {
+  public static void addElementUsages(final PsiElement element, final Processor<UsageInfo> result, final JavaFindUsagesOptions options) {
     final SearchScope searchScope = options.searchScope;
     if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()){
       PsiMethod method = (PsiMethod)element;
@@ -613,13 +629,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }
   }
 
-  public static void addResult(Processor<UsageInfo> total, PsiElement element, FindUsagesOptions options, PsiElement refElement) {
+  public static void addResult(Processor<UsageInfo> total, PsiElement element, JavaFindUsagesOptions options, PsiElement refElement) {
     if (filterUsage(element, options, refElement)){
       total.process(new UsageInfo(element));
     }
   }
 
-  public static boolean addResult(Processor<UsageInfo> results, PsiReference ref, FindUsagesOptions options, PsiElement refElement) {
+  public static boolean addResult(Processor<UsageInfo> results, PsiReference ref, JavaFindUsagesOptions options, PsiElement refElement) {
     if (filterUsage(ref.getElement(), options, refElement)){
       TextRange rangeInElement = ref.getRangeInElement();
       return results.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
@@ -627,7 +643,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     return true;
   }
 
-  private static boolean filterUsage(PsiElement usage, FindUsagesOptions options, PsiElement refElement) {
+  private static boolean filterUsage(PsiElement usage, JavaFindUsagesOptions options, PsiElement refElement) {
     if (!(usage instanceof PsiJavaCodeReferenceElement)) {
       return true;
     }

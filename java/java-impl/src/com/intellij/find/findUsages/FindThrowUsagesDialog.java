@@ -62,7 +62,7 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog {
     return panel;
   }
 
-  public void calcFindUsagesOptions(final FindUsagesOptions options) {
+  public void calcFindUsagesOptions(final JavaFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
     options.isUsages = isSelected(myCbUsages) || !myHasFindWhatPanel;
     options.isThrowUsages = true;
