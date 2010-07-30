@@ -15,11 +15,12 @@
  */
 package com.intellij.debugger.ui;
 
+import com.intellij.execution.ui.ExecutionConsole;
 import org.jetbrains.annotations.NonNls;
 
 public interface DebuggerContentInfo {
 
-  @NonNls String CONSOLE_CONTENT = "ConsoleContent";
+  @NonNls String CONSOLE_CONTENT = ExecutionConsole.CONSOLE_CONTENT_ID;
   @NonNls String THREADS_CONTENT = "ThreadsContent";
   @NonNls String VARIABLES_CONTENT = "VariablesContent";
   @NonNls String FRAME_CONTENT = "FrameContent";

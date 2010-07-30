@@ -182,6 +182,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     result = new MavenDomProjectProcessorUtils.DomParentProjectFileProcessor<PsiElement>(myProjectsManager) {
       protected PsiElement doProcessParent(VirtualFile parentFile) {
         MavenDomProjectModel parentProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, parentFile);
+        if (parentProjectDom == null) return null;
         return resolveModelProperty(parentProjectDom, path, recursionGuard);
       }
     }.process(projectDom);

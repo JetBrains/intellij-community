@@ -59,7 +59,7 @@ public class XFramesView extends XDebugViewBase {
     myThreadComboBox.addItemListener(new MyItemListener());
     myMainPanel.add(myThreadComboBox, BorderLayout.NORTH);
 
-    myFramesList = new XDebuggerFramesList();
+    myFramesList = new XDebuggerFramesList(session.getProject());
     myFramesList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;

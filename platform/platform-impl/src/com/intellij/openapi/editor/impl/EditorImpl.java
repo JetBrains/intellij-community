@@ -334,6 +334,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int softWrapLine = myDocument.getLineNumber(softWrap.getStart());
         mySizeContainer.update(softWrapLine, softWrapLine, softWrapLine);
       }
+
+      @Override
+      public void softWrapsRemoved() {
+        mySoftWrapsChanged = true;
+        mySizeContainer.reset();
+      }
     });
 
     EditorHighlighter highlighter = new EmptyEditorHighlighter(myScheme.getAttributes(HighlighterColors.TEXT));
@@ -1055,7 +1061,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    if (logLine == 0) {
+    if (logLine <= 0) {
       lineStartOffset = 0;
     }
     else if (lineStartOffset < 0) {
@@ -1691,25 +1697,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
       paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
     }
-
-    // Perform additional activity if soft wrap is added or removed during repainting.
-    // Note: this code lives in this method in assumption that background repainting is the very first activity performed
-    //       during whole editor component repaint.
-    if (mySoftWrapsChanged) {
-      mySoftWrapsChanged = false;
-      validateSize();
-
-      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
-      repaintToScreenBottom(xyToLogicalPosition(position).line);
-
-      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
-      // in accordance with the newly introduced soft wrap(s).
-      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
-
-      // Ask caret model to update visual caret position.
-      //TODO den implement
-      //getCaretModel().moveToOffset(getCaretModel().getOffset());
-    }
   }
 
   private void paintRectangularSelection(Graphics g) {
@@ -1908,6 +1895,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     flushCachedChars(g);
+
+    // Perform additional activity if soft wrap is added or removed during repainting.
+    if (mySoftWrapsChanged) {
+      mySoftWrapsChanged = false;
+      validateSize();
+
+      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
+      repaintToScreenBottom(xyToLogicalPosition(position).line);
+
+      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
+      // in accordance with the newly introduced soft wrap(s).
+      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
+
+      // Ask caret model to update visual caret position.
+      getCaretModel().moveToOffset(getCaretModel().getOffset());
+    }
   }
 
   private boolean paintSelection() {
@@ -2700,6 +2703,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (column < 0) column = 0;
+    line = Math.min(line, myDocument.getLineCount() - 1);
 
     LogicalPosition softWrapUnawareResult = new LogicalPosition(line, column);
     return mySoftWrapModel.adjustLogicalPosition(softWrapUnawareResult, visiblePos);
@@ -4649,7 +4653,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     public synchronized void update(int startLine, int newEndLine, int oldEndLine) {
       final int lineWidthSize = myLineWidths.size();
-      if (lineWidthSize == 0) {
+      if (lineWidthSize == 0 || myDocument.getTextLength() <= 0) {
         reset();
       }
       else {
@@ -4797,7 +4801,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // I.e. we shouldn't use widths of the lines that are not shown for max width calculation because previous widths are calculated
         // for another visible area width.
         int startToUse = 0;
-        int endToUse = lineCount;
+        int endToUse = Math.min(lineCount, myLineWidths.size());
         if (getSoftWrapModel().isSoftWrappingEnabled()) {
           Rectangle visibleArea = getScrollingModel().getVisibleArea();
           startToUse = xyToLogicalPosition(visibleArea.getLocation()).line + 1;

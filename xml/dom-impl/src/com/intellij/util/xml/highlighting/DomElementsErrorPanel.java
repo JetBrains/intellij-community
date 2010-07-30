@@ -162,7 +162,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     }
 
     @Override
-    protected void fillDaemonCodeAnalyzerErrorsSatus(DaemonCodeAnalyzerStatus status, boolean fillErrorsCount) {
+    protected void fillDaemonCodeAnalyzerErrorsStatus(DaemonCodeAnalyzerStatus status, boolean fillErrorsCount) {
       for (int i = 0; i < status.errorCount.length; i++) {
         final HighlightSeverity minSeverity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
         if (minSeverity == null) {

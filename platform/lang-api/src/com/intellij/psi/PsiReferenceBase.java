@@ -107,23 +107,11 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final PsiElement resolveTo) {
+    return new Immediate<T>(element, true, resolveTo);
+  }
 
-    return new PsiReferenceBase<T>(element,true) {
-      //do nothing. the element will be renamed via PsiMetaData (com.intellij.refactoring.rename.RenameUtil.doRenameGenericNamedElement())
-      public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
-        return getElement();
-      }
-
-      @Nullable
-      public PsiElement resolve() {
-        return resolveTo;
-      }
-
-      @NotNull
-      public Object[] getVariants() {
-        return EMPTY_ARRAY;
-      }
-    };
+  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, TextRange range, final PsiElement resolveTo) {
+    return new Immediate<T>(element, range, resolveTo);
   }
 
   @Nullable
@@ -163,6 +151,45 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     public PsiElement resolve() {
       ResolveResult[] resolveResults = multiResolve(false);
       return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
+    }
+  }
+
+  public static class Immediate<T extends PsiElement> extends PsiReferenceBase<T> {
+    private final PsiElement myResolveTo;
+
+    public Immediate(T element, TextRange range, boolean soft, PsiElement resolveTo) {
+      super(element, range, soft);
+      myResolveTo = resolveTo;
+    }
+
+    public Immediate(T element, TextRange range, PsiElement resolveTo) {
+      super(element, range);
+      myResolveTo = resolveTo;
+    }
+
+    public Immediate(T element, boolean soft, PsiElement resolveTo) {
+      super(element, soft);
+      myResolveTo = resolveTo;
+    }
+
+    public Immediate(@NotNull T element, PsiElement resolveTo) {
+      super(element);
+      myResolveTo = resolveTo;
+    }
+
+    //do nothing. the element will be renamed via PsiMetaData (com.intellij.refactoring.rename.RenameUtil.doRenameGenericNamedElement())
+    public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
+      return getElement();
+    }
+
+    @Nullable
+    public PsiElement resolve() {
+      return myResolveTo;
+    }
+
+    @NotNull
+    public Object[] getVariants() {
+      return EMPTY_ARRAY;
     }
   }
 }

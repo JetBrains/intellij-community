@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -109,7 +110,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myProject);
     status.errorCount = new int[severityRegistrar.getSeveritiesCount()];
     status.rootsNumber = roots.length;
-    fillDaemonCodeAnalyzerErrorsSatus(status, fillErrorsCount);
+    fillDaemonCodeAnalyzerErrorsStatus(status, fillErrorsCount);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myFile);
     ArrayList<DaemonCodeAnalyzerStatus.PassStatus> passStati = new ArrayList<DaemonCodeAnalyzerStatus.PassStatus>();
     for (TextEditorHighlightingPass tepass : passes) {
@@ -127,7 +128,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     return status;
   }
 
-  protected void fillDaemonCodeAnalyzerErrorsSatus(DaemonCodeAnalyzerStatus status, boolean fillErrorsCount) {
+  protected void fillDaemonCodeAnalyzerErrorsStatus(DaemonCodeAnalyzerStatus status, boolean fillErrorsCount) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myProject);
     List<HighlightInfo> highlights = DaemonCodeAnalyzerImpl.getHighlights(myDocument, myProject);
     if (highlights == null) highlights = Arrays.asList(HighlightInfo.EMPTY_ARRAY);
@@ -185,6 +186,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
 
     if (status == null) return null;
     @NonNls String text = HTML_HEADER;
+    if (PowerSaveMode.isEnabled()) {
+      text += "Code analysis is disabled in power save mode.";
+      text += HTML_FOOTER;
+      return text;
+    }
     if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
       text += DaemonBundle.message("analysis.hasnot.been.run");
       text += HTML_FOOTER;

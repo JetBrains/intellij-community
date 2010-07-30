@@ -250,6 +250,21 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testInlineRecursive() throws Exception {
+    doTest(false);
+  }
+
+  public void testCantInlineRecursive() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot find constant initializer for parameter", e.getMessage());
+      return;
+    }
+    fail("Initializer shoul not be found");
+  }
+
   public void testParameterDefWithWriteAccess()  throws Exception {
     try {
       doTest(false);

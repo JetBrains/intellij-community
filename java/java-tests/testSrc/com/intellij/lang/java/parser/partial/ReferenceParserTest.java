@@ -34,6 +34,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testType2() { doTypeParserTest("int[]", false); }
   public void testType3() { doTypeParserTest("int[][", false); }
   public void testType4() { doTypeParserTest("Map<String,List<String>>", false); }
+  public void testType5() { doTypeParserTest("Object[]...", false); }
 
   public void testTypeParams0() { doTypeParamsParserTest("<T>"); }
   public void testTypeParams1() { doTypeParamsParserTest("<T, U>"); }
@@ -55,7 +56,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   private void doTypeParserTest(final String text, final boolean incomplete) {
     doParserTest(text, new Parser() {
       public void parse(final PsiBuilder builder) {
-        ReferenceParser.parseType(builder, incomplete, false);
+        ReferenceParser.parseTypeWithEllipsis(builder, incomplete, false);
       }
     });
   }

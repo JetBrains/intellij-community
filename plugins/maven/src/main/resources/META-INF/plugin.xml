@@ -157,12 +157,12 @@
     </action>
 
     <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
-            text="Update Folders For All Projects" description="Generate sources and update project folders"
+            text="Generate Sources and Update Folders For All Projects"
             icon="/images/updateFolders.png">
     </action>
 
     <action id="Maven.UpdateFoldersForProject" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersForProjectAction"
-            text="Update Folders" description="Generate sources and update folders for selected projects"
+            text="Generate Sources and Update Folders"
             icon="/images/updateFolders.png">
     </action>
 

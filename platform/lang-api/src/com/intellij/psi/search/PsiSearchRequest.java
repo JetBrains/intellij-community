@@ -25,4 +25,8 @@ public class PsiSearchRequest {
     this.processor = processor;
   }
 
+  @Override
+  public String toString() {
+    return "PsiSearchRequest: " + word + "; " + processor;
+  }
 }

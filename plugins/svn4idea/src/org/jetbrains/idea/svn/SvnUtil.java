@@ -616,11 +616,17 @@ public class SvnUtil {
   }
 
   public static boolean doesRepositorySupportMergeinfo(final SvnVcs vcs, final SVNURL url) {
+    SVNRepository repository = null;
     try {
-      return vcs.createRepository(url).hasCapability(SVNCapability.MERGE_INFO);
+      repository = vcs.createRepository(url);
+      return repository.hasCapability(SVNCapability.MERGE_INFO);
     }
     catch (SVNException e) {
       return false;
+    } finally {
+      if (repository != null) {
+        repository.closeSession();
+      }
     }
   }
 }

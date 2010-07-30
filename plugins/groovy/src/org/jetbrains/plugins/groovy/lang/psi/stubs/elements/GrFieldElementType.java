@@ -21,16 +21,10 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrFieldStubImpl;
@@ -64,22 +58,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
   }
 
   public GrFieldStub createStub(GrField psi, StubElement parentStub) {
-    final GrModifierList modifiers = psi.getModifierList();
-    String[] annNames;
-    if (modifiers == null) {
-      annNames = ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-    else {
-      final GrAnnotation[] annotations = modifiers.getAnnotations();
-      annNames = ContainerUtil.map(annotations, new Function<GrAnnotation, String>() {
-        @Nullable
-        public String fun(final GrAnnotation grAnnotation) {
-          final GrCodeReferenceElement element = grAnnotation.getClassReference();
-          if (element == null) return null;
-          return element.getReferenceName();
-        }
-      }, new String[annotations.length]);
-    }
+    String[] annNames = GrTypeDefinitionElementType.getAnnotationNames(psi);
 
     Set<String>[] namedParametersArray = new Set[0];
     if (psi instanceof GrFieldImpl){

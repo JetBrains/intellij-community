@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBList;
 import com.intellij.xdebugger.XDebuggerBundle;
 
@@ -27,8 +28,14 @@ import javax.swing.event.ListSelectionListener;
  * @author nik
  */
 public abstract class DebuggerFramesList extends JBList implements OccurenceNavigator {
-  public DebuggerFramesList() {
+  protected final Project myProject;
+
+  public DebuggerFramesList(Project project) {
     super(new DefaultListModel());
+    myProject = project;
+  }
+
+  protected void doInit() {
     getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setCellRenderer(createListRenderer());
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {

@@ -200,7 +200,47 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
-  private void appendBytes(int record, byte[] bytes) {
+  private static int calcCapacity(int requiredLength) {
+    return Math.max(64, nearestPowerOfTwo(requiredLength * 3 / 2));
+  }
+
+  private static int nearestPowerOfTwo(int n) {
+    int power = 1;
+    while (n != 0) {
+      power *= 2;
+      n /= 2;
+    }
+    return power;
+  }
+
+  public StorageDataOutput writeStream(final int record) {
+    return new StorageDataOutput(this, record);
+  }
+
+  public AppenderStream appendStream(int record) {
+    return new AppenderStream(record);
+  }
+
+  public DataInputStream readStream(int record) throws IOException {
+    final byte[] bytes = readBytes(record);
+    return new DataInputStream(new ByteArrayInputStream(bytes));
+  }
+
+  protected byte[] readBytes(int record) throws IOException {
+    synchronized (myLock) {
+      final int length = myRecordsTable.getSize(record);
+      if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
+      assert length > 0;
+
+      final long address = myRecordsTable.getAddress(record);
+      byte[] result = new byte[length];
+      myDataTable.readBytes(address, result);
+
+      return result;
+    }
+  }
+
+  protected void appendBytes(int record, byte[] bytes) throws IOException {
     int delta = bytes.length;
     if (delta == 0) return;
 
@@ -227,7 +267,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
-  public void writeBytes(int record, byte[] bytes) {
+  protected void writeBytes(int record, byte[] bytes) throws IOException {
     synchronized (myLock) {
       final int requiredLength = bytes.length;
       final int currentCapacity = myRecordsTable.getCapacity(record);
@@ -254,46 +294,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
       myDataTable.writeBytes(address, bytes);
       myRecordsTable.setSize(record, requiredLength);
-    }
-  }
-
-  private static int calcCapacity(int requiredLength) {
-    return Math.max(64, nearestPowerOfTwo(requiredLength * 3 / 2));
-  }
-
-  private static int nearestPowerOfTwo(int n) {
-    int power = 1;
-    while (n != 0) {
-      power *= 2;
-      n /= 2;
-    }
-    return power;
-  }
-
-  public StorageDataOutput writeStream(final int record) {
-    return new StorageDataOutput(this, record);
-  }
-
-  public AppenderStream appendStream(int record) {
-    return new AppenderStream(record);
-  }
-
-  public DataInputStream readStream(int record) {
-    final byte[] bytes = readBytes(record);
-    return new DataInputStream(new ByteArrayInputStream(bytes));
-  }
-
-  byte[] readBytes(int record) {
-    synchronized (myLock) {
-      final int length = myRecordsTable.getSize(record);
-      if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
-      assert length > 0;
-
-      final long address = myRecordsTable.getAddress(record);
-      byte[] result = new byte[length];
-      myDataTable.readBytes(address, result);
-
-      return result;
     }
   }
 

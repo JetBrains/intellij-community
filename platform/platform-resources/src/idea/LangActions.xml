@@ -70,6 +70,12 @@
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ChangeFileEncodingGroup"/>
     </action>
 
+    <group id="PowerSaveGroup">
+      <separator/>
+      <action id="TogglePowerSave" class="com.intellij.ide.actions.TogglePowerSaveAction"/>
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ToggleReadOnlyAttribute"/>
+    </group>
+
     <!-- Edit -->
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>

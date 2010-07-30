@@ -65,6 +65,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
       tokenParsers.add(multilineCommentParser);
     }
     tokenParsers.add(numberParser);
+    tokenParsers.add(new PunctuationParser());
     if (hexNumberParser != null) {
       tokenParsers.add(hexNumberParser);
     }

@@ -484,7 +484,7 @@ public class ContainerUtil {
     };
   }
 
-  public static <T> List<T> concat(@NotNull final List<? extends T>... lists) {
+  public static <T> List<T> concat(@NotNull final List<List<? extends T>> lists) {
     int size = 0;
     for (List<? extends T> each : lists) {
       size += each.size();
@@ -506,6 +506,10 @@ public class ContainerUtil {
         return finalSize;
       }
     };
+  }
+
+  public static <T> List<T> concat(@NotNull final List<? extends T>... lists) {
+    return concat(Arrays.asList(lists));
   }
 
   public static <T, V> List<T> concat(Iterable<? extends V> list, Function<V, Collection<? extends T>> fun) {

@@ -66,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
@@ -938,5 +939,19 @@ public class PsiUtil {
       }
     }
     return (GrReferenceExpression)replaced;
+  }
+
+  public static GroovyResolveResult[] getConstructorCandidates(PsiClassType classType, PsiType[] argTypes, GroovyPsiElement context) {
+    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+    final PsiClass psiClass = resolveResult.getElement();
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    if (psiClass == null) {
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
+                                         ? (GroovyResolveResult)resolveResult
+                                         : new GroovyResolveResultImpl(psiClass, context, substitutor, true, true);
+    return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
   }
 }
