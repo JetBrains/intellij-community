@@ -444,6 +444,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitListOrMap(GrListOrMap listOrMap) {
     for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(listOrMap)) {
       if (type instanceof PsiClassType &&
+          !type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
           !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE) &&
           !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
         final PsiElement startToken = listOrMap.getFirstChild();
