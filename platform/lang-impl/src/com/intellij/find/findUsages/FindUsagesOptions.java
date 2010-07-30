@@ -42,6 +42,10 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
   public boolean isUsages = false;
   public SearchRequestCollector fastTrack = null;
 
+  public FindUsagesOptions(@NotNull Project project) {
+    this(project, null);
+  }
+
   public FindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
     String defaultScopeName = FindSettings.getInstance().getDefaultScopeName();
     List<SearchScope> predefined = ScopeChooserCombo.getPredefinedScopes(project, dataContext, true, false, false, false);

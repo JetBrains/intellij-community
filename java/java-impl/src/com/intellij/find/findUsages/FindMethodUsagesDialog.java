@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FindMethodUsagesDialog extends JavaFindUsagesDialog {
+public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindUsagesOptions> {
   private StateRestoringCheckBox myCbUsages;
   private StateRestoringCheckBox myCbImplementingMethods;
   private StateRestoringCheckBox myCbOverridingMethods;
@@ -41,7 +41,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog {
     return myHasFindWhatPanel ? myCbUsages : null;
   }
 
-  public void calcFindUsagesOptions(JavaFindUsagesOptions options) {
+  public void calcFindUsagesOptions(JavaMethodFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
     options.isUsages = isSelected(myCbUsages) || !myHasFindWhatPanel;

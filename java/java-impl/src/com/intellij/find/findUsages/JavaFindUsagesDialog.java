@@ -30,7 +30,7 @@ import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
 
-public abstract class JavaFindUsagesDialog extends AbstractFindUsagesDialog {
+public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends AbstractFindUsagesDialog {
   protected final PsiElement myPsiElement;
   private StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable = false;
@@ -48,14 +48,16 @@ public abstract class JavaFindUsagesDialog extends AbstractFindUsagesDialog {
     return FindUsagesUtil.isSearchForTextOccurencesAvailable(element, isSingleFile, handler);
   }
 
-  public void calcFindUsagesOptions(JavaFindUsagesOptions options) {
-    options.isIncludeOverloadUsages =
-      myIncludeOverloadedMethodsAvailable && isToChange(myCbIncludeOverloadedMethods) && myCbIncludeOverloadedMethods.isSelected();
+  public void calcFindUsagesOptions(T options) {
+    if (options instanceof JavaMethodFindUsagesOptions) {
+      ((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages =
+        myIncludeOverloadedMethodsAvailable && isToChange(myCbIncludeOverloadedMethods) && myCbIncludeOverloadedMethods.isSelected();
+    }
   }
 
   public void calcFindUsagesOptions(FindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
-    calcFindUsagesOptions((JavaFindUsagesOptions)options);
+    calcFindUsagesOptions((T)options);
   }
 
   protected void doOKAction() {
@@ -100,7 +102,7 @@ public abstract class JavaFindUsagesDialog extends AbstractFindUsagesDialog {
     HelpManager.getInstance().invokeHelp(FindUsagesManager.getHelpID(myPsiElement));
   }
 
-  protected JavaFindUsagesOptions getFindUsagesOptions() {
-    return (JavaFindUsagesOptions)myFindUsagesOptions;
+  protected T getFindUsagesOptions() {
+    return (T)myFindUsagesOptions;
   }
 }

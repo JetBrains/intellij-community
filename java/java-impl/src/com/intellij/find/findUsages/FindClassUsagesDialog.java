@@ -25,7 +25,7 @@ import com.intellij.ui.StateRestoringCheckBox;
 
 import javax.swing.*;
 
-public class FindClassUsagesDialog extends JavaFindUsagesDialog {
+public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsagesOptions> {
   private StateRestoringCheckBox myCbUsages;
   private StateRestoringCheckBox myCbMethodsUsages;
   private StateRestoringCheckBox myCbFieldsUsages;
@@ -43,7 +43,7 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog {
     return myCbUsages;
   }
 
-  public void calcFindUsagesOptions(JavaFindUsagesOptions options) {
+  public void calcFindUsagesOptions(JavaClassFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
     if (isToChange(myCbUsages)){

@@ -21,7 +21,7 @@ import com.intellij.psi.PsiField;
 
 import javax.swing.*;
 
-public class FindVariableUsagesDialog extends JavaFindUsagesDialog {
+public class FindVariableUsagesDialog extends JavaFindUsagesDialog<JavaVariableFindUsagesOptions> {
 
   public FindVariableUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions,
                                   boolean toShowInNewTab, boolean mustOpenInNewTab, boolean isSingleFile, FindUsagesHandler handler){
@@ -32,7 +32,7 @@ public class FindVariableUsagesDialog extends JavaFindUsagesDialog {
     return myCbToSkipResultsWhenOneUsage;
   }
 
-  public void calcFindUsagesOptions(JavaFindUsagesOptions options) {
+  public void calcFindUsagesOptions(JavaVariableFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
     options.isReadAccess = true;
