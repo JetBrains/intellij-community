@@ -82,6 +82,7 @@ public final class HgCommandService {
     return execute(repo, hgOptions, operation, arguments, charset, false);
   }
 
+  @Nullable
   HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
     String operation, List<String> arguments, Charset charset, boolean suppressCommandOutput) {
 
@@ -132,6 +133,9 @@ public final class HgCommandService {
       result = shellCommand.execute(cmdLine, workingDir, charset);
     } catch (ShellCommandException e) {
       showError(e);
+      LOG.info(e.getMessage(), e);
+      return null;
+    } catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
       LOG.info(e.getMessage(), e);
       return null;
     } finally {
