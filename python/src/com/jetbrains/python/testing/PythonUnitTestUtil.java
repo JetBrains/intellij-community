@@ -3,6 +3,7 @@ package com.jetbrains.python.testing;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class PythonUnitTestUtil {
     return true;
   }
 
-  public static boolean isTestCaseClass(PyClass cls) {
+  public static boolean isTestCaseClass(@NotNull PyClass cls) {
     for (PyClass ancestor : cls.iterateAncestors()) {
       if (ancestor == null) continue;
 
