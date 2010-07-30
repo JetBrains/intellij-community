@@ -15,6 +15,7 @@
  */
 package com.theoryinpractice.testng.model;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,9 +27,9 @@ public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties {
     @NonNls private static final String PREFIX = "TestNGSupport.";
     private final TestNGConfiguration myConfiguration;
 
-    public TestNGConsoleProperties(TestNGConfiguration config)
+    public TestNGConsoleProperties(TestNGConfiguration config, Executor executor)
     {
-      super(new Storage.PropertiesComponentStorage(PREFIX, PropertiesComponent.getInstance()), config.getProject());
+      super(new Storage.PropertiesComponentStorage(PREFIX, PropertiesComponent.getInstance()), config.getProject(), executor);
       myConfiguration = config;
     }
 

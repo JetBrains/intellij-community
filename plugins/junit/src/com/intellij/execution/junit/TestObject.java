@@ -260,7 +260,7 @@ public abstract class TestObject implements JavaCommandLine {
       ext.handleStartProcess(myConfiguration, handler);
     }
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
-    final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration);
+    final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration, executor);
     final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings(), unboundOutputRoot);
     consoleView.initUI();
     consoleView.attachToProcess(handler);

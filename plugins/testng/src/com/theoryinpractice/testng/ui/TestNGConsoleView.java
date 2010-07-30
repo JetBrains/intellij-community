@@ -22,9 +22,9 @@
  */
 package com.theoryinpractice.testng.ui;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
@@ -32,9 +32,7 @@ import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import com.theoryinpractice.testng.model.TestProxy;
@@ -42,7 +40,6 @@ import com.theoryinpractice.testng.model.TreeRootNode;
 import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.TestResultMessage;
 
-import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.util.ArrayList;
@@ -68,8 +65,9 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
   public TestNGConsoleView(TestNGConfiguration config,
                            final RunnerSettings runnerSettings,
                            final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
-                           final TreeRootNode unboundOutputRoot) {
-    super(new TestNGConsoleProperties(config), unboundOutputRoot);
+                           final TreeRootNode unboundOutputRoot,
+                           Executor executor) {
+    super(new TestNGConsoleProperties(config, executor), unboundOutputRoot);
     myConfiguration = config;
     myRunnerSettings = runnerSettings;
     myConfigurationPerRunnerSettings = configurationPerRunnerSettings;

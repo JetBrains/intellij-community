@@ -22,6 +22,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.execution.Executor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.config.Storage;
 import org.jetbrains.annotations.Nullable;
@@ -29,13 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class JavaAwareTestConsoleProperties extends TestConsoleProperties {
-  public JavaAwareTestConsoleProperties(final Storage storage, Project project) {
-    super(storage, project);
-  }
-
-  @Override
-  public boolean isDebug() {
-    return getDebugSession() != null;
+  public JavaAwareTestConsoleProperties(final Storage storage, Project project, Executor executor) {
+    super(storage, project, executor);
   }
 
   @Override
