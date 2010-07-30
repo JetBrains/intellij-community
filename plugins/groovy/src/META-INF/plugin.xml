@@ -85,6 +85,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.annotator.ConfigureGroovyLibraryNotificationProvider"/>
     <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduceParameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
     <refactoring.changeSignatureUsageProcessor implementation="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor" id="groovyProcessor" order="before javaProcessor"/>
 
@@ -284,6 +285,11 @@
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.control.DemorgansLawIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.CreateParameterForFieldIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

@@ -15,12 +15,18 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author nik
@@ -28,8 +34,13 @@ import javax.swing.*;
 public class XDebuggerFramesList extends DebuggerFramesList {
   private XStackFrame mySelectedFrame;
 
+  public XDebuggerFramesList(Project project) {
+    super(project);
+    doInit();
+  }
+
   protected ListCellRenderer createListRenderer() {
-    return new XDebuggerFrameListRenderer();
+    return new XDebuggerFrameListRenderer(myProject);
   }
 
   protected void onFrameChanged(final Object selectedValue) {
@@ -49,6 +60,14 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   }
 
   private static class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
+    private final FileColorManager myColorsManager;
+    private final PsiManager myPsiManager;
+
+    public XDebuggerFrameListRenderer(Project project) {
+      myPsiManager = PsiManager.getInstance(project);
+      myColorsManager = FileColorManager.getInstance(project);
+    }
+
     protected void customizeCellRenderer(final JList list,
                                          final Object value,
                                          final int index,
@@ -64,6 +83,16 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       }
 
       XStackFrame stackFrame = (XStackFrame)value;
+      if (!selected) {
+        XSourcePosition position = stackFrame.getSourcePosition();
+        if (position != null) {
+          PsiFile f = myPsiManager.findFile(position.getFile());
+          if (f != null) {
+            Color c = myColorsManager.getFileColor(f);
+            if (c != null) setBackground(c);
+          }
+        }
+      }
       stackFrame.customizePresentation(this);
     }
   }

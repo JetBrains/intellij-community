@@ -434,7 +434,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
 
   public void testClear() throws Exception {
-    getBuilder().getUi().setClearOnHideDelay(10 * Time.SECOND);
+    getBuilder().getUi().setClearOnHideDelay(1 * Time.SECOND);
 
     buildStructure(myRoot);
 
@@ -2078,11 +2078,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(false, true);
     }
 
-
-    @Override
-    public void testDeferredSelection() throws Exception {
-      super.testDeferredSelection();
-    }
 
     @Override
     protected int getNodeDescriptorUpdateDelay() {

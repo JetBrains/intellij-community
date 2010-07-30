@@ -5,7 +5,7 @@ class PerformanceLine extends HashMap {
 }
 -----
 public class PerformanceLine extends java.util.HashMap implements groovy.lang.GroovyObject {
-  public PerformanceLine(java.lang.String data) {
+  public PerformanceLine(java.lang.String... data) {
     super((java.util.Map)null);
   }
 

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -87,7 +86,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     }
     else {
       myMapToArguments =
-        GrClosureSignatureUtil.mapParametersToArguments(signature, list, GlobalSearchScope.allScope(getProject()));
+        GrClosureSignatureUtil.mapParametersToArguments(signature, list);
     }
   }
 

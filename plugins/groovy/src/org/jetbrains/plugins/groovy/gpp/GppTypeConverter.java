@@ -72,24 +72,29 @@ public class GppTypeConverter extends GrTypeConverter {
         return true;
       }
 
-      if (!isMethodCallConversion(context) && hasDefaultConstructor(lType)) {
+      if ((!isMethodCallConversion(context) || hasTypedContext(context)) && hasDefaultConstructor(lType)) {
         return true;
       }
     }
     else if (rType instanceof GrClosureType) {
       final PsiType[] methodParameters = GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(lType);
-      final GrClosureSignature signature = ((GrClosureType)rType).getSignature();
-      if (methodParameters != null && GrClosureSignatureUtil.isSignatureApplicable(signature, methodParameters, context)) {
-        return true;
-      }
+      if (isClosureOverride(methodParameters, (GrClosureType)rType, context)) return true;
     }
 
     return null;
   }
 
+  public static boolean isClosureOverride(PsiType[] methodParameters, GrClosureType closureType, GroovyPsiElement context) {
+    final GrClosureSignature signature = closureType.getSignature();
+    if (methodParameters != null && GrClosureSignatureUtil.isSignatureApplicable(signature, methodParameters, context)) {
+      return true;
+    }
+    return false;
+  }
+
   private static boolean hasDefaultConstructor(PsiType type) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true);
+    return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true, false);
 
   }
 

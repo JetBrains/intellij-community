@@ -19,10 +19,7 @@ import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -125,7 +122,9 @@ public class SoftWrapsStorage {
     if (index < 0 || index >= myWraps.size()) {
       return null;
     }
-    return myWraps.remove(index);
+    TextChangeImpl removed = myWraps.remove(index);
+    notifyListenersAboutRemoval();
+    return removed;
   }
 
   /**
@@ -133,6 +132,7 @@ public class SoftWrapsStorage {
    */
   public void removeAll() {
     myWraps.clear();
+    notifyListenersAboutRemoval();
   }
 
   /**
@@ -143,5 +143,11 @@ public class SoftWrapsStorage {
    */
   public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
     return myListeners.add(listener);
+  }
+
+  private void notifyListenersAboutRemoval() {
+    for (SoftWrapChangeListener listener : myListeners) {
+      listener.softWrapsRemoved();
+    }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.DocumentAdapter;
@@ -78,7 +79,7 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
   private ProblemDescriptor[] analyzeCode(PsiElement where, final InspectionManager manager) {
     if (where == null) return null;
 
-    final ArrayList[] problemList = new ArrayList[]{null};
+    final Ref<ArrayList<ProblemDescriptor>> problemList = new Ref<ArrayList<ProblemDescriptor>>();
     where.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitMethod(PsiMethod method) {}
 
@@ -96,18 +97,18 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
           PsiType rType = rOperand.getType();
 
           if (isCheckedType(lType) || isCheckedType(rType)) {
-            if (problemList[0] == null) problemList[0] = new ArrayList();
-            problemList[0].add(manager.createProblemDescriptor(expression, DESCRIPTION_TEMPLATE,
+            if (problemList.get() == null) problemList.set(new ArrayList<ProblemDescriptor>());
+            problemList.get().add(manager.createProblemDescriptor(expression, DESCRIPTION_TEMPLATE,
                                                                myQuickFix,
-                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly));
+                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
       }
     });
 
-    return problemList[0] == null
+    return problemList.get() == null
            ? null
-           : (ProblemDescriptor[])problemList[0].toArray(new ProblemDescriptor[problemList[0].size()]);
+           : problemList.get().toArray(new ProblemDescriptor[problemList.get().size()]);
   }
 
   private static boolean isNullLiteral(PsiExpression expr) {

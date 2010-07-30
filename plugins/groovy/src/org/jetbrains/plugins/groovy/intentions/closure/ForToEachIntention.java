@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.intentions.closure;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +41,7 @@ public class ForToEachIntention extends Intention {
     return new ForToEachPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrForStatement parentStatement =
         (GrForStatement) element;

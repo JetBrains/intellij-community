@@ -15,13 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.intentions.control;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.intentions.utils.ConditionalUtils;
 import org.jetbrains.plugins.groovy.intentions.utils.ParenthesesUtils;
-import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -34,7 +38,7 @@ public class MergeIfAndIntention extends Intention {
     return new MergeIfAndPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrIfStatement parentStatement =
         (GrIfStatement) element;

@@ -171,6 +171,7 @@ public class CompilerCacheManager implements ProjectComponent {
       }
     }
     myCacheDisposables.clear();
+    myNewCachesMap.clear();
     myCompilerToCacheMap.clear();
   }
 

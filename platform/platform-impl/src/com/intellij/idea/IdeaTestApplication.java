@@ -18,17 +18,13 @@ package com.intellij.idea;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 public class IdeaTestApplication extends CommandLineApplication {
   private DataProvider myDataContext;
@@ -45,10 +41,6 @@ public class IdeaTestApplication extends CommandLineApplication {
         return PluginManager.getPlugins();
       }
     };
-
-    final File system = new File(PathManager.getSystemPath());
-    FileUtil.delete(system);
-    system.mkdirs();
   }
 
   public void setDataProvider(DataProvider dataContext) {

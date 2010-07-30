@@ -127,7 +127,8 @@ public class TestNGRunnableState extends JavaCommandLineState {
       throw e;
     }
     final TreeRootNode unboundOutputRoot = new TreeRootNode();
-    final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings, unboundOutputRoot);
+    final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings, unboundOutputRoot,
+                                                            executor);
     console.initUI();
     unboundOutputRoot.setPrinter(console.getPrinter());
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {

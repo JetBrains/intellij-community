@@ -20,7 +20,9 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
@@ -31,6 +33,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.Storage;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,14 +50,16 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty SHOW_STATISTICS = new BooleanProperty("showStatistics", false);
 
   private final Project myProject;
+  private final Executor myExecutor;
   private ConsoleView myConsole;
 
   protected final HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>> myListeners =
     new HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>>();
 
-  public TestConsoleProperties(final Storage storage, Project project) {
+  public TestConsoleProperties(final Storage storage, Project project, Executor executor) {
     super(storage);
     myProject = project;
+    myExecutor = executor;
   }
 
   public Project getProject() {
@@ -92,9 +98,14 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     }
   }
 
-  public abstract boolean isDebug();
+  public boolean isDebug() {
+    return myExecutor.getId() == DefaultDebugExecutor.EXECUTOR_ID;
+  }
 
-  public abstract boolean isPaused();
+  public boolean isPaused() {
+    final XDebugSession debuggerSession = XDebuggerManager.getInstance(myProject).getDebugSession(getConsole());
+    return debuggerSession != null && debuggerSession.isPaused();
+  }
 
   protected <T> void onPropertyChanged(final AbstractProperty<T> property, final T value) {
     final ArrayList<TestFrameworkPropertyListener> listeners = myListeners.get(property);

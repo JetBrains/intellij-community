@@ -295,14 +295,6 @@ public class PsiUtil {
     return null;
   }
 
-  public static SearchScope restrictScopeToGroovyFiles(final Computable<SearchScope> originalScopeComputation) { //important to compute originalSearchScope in read action!
-    return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      public SearchScope compute() {
-        return restrictScopeToGroovyFiles(originalScopeComputation.compute());
-      }
-    });
-  }
-
   public static SearchScope restrictScopeToGroovyFiles(SearchScope originalScope) {
     if (originalScope instanceof GlobalSearchScope) {
       return GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)originalScope, GroovyFileTypeLoader.getGroovyEnabledFileTypes());
@@ -632,7 +624,7 @@ public class PsiUtil {
   }
 
   public static boolean isRawMethodCall(GrMethodCallExpression call) {
-    final GroovyResolveResult[] resolveResults = call.getMethodVariants(null);
+    final GroovyResolveResult[] resolveResults = call.getCallVariants(null);
     if (resolveResults.length == 0) return false;
     final PsiElement element = resolveResults[0].getElement();
     if (element instanceof PsiMethod) {
@@ -857,7 +849,7 @@ public class PsiUtil {
 
   public static boolean isMethodUsage(PsiElement element) {
     if (element instanceof GrEnumConstant) return true;
-    if (!(element instanceof GrReferenceElement)) return false;
+    if (!(element instanceof GrReferenceElement || element instanceof GrThisSuperReferenceExpression)) return false;
     PsiElement parent = element.getParent();
     if (parent instanceof GrCall) {
       return true;

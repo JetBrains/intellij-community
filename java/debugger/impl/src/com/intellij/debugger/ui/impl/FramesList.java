@@ -16,6 +16,7 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.xdebugger.impl.frame.DebuggerFramesList;
 import com.sun.jdi.Method;
@@ -28,6 +29,11 @@ import javax.swing.*;
  */
 public class FramesList extends DebuggerFramesList {
   private volatile Method mySelectedMethod = null;
+
+  public FramesList(Project project) {
+    super(null);
+    doInit();
+  }
 
   protected FramesListRenderer createListRenderer() {
     return new FramesListRenderer();

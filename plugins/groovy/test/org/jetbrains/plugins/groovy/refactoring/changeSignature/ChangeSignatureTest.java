@@ -216,20 +216,24 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(new SimpleInfo[]{new SimpleInfo("l", 1, null, null, "Map<T, E>[]"), new SimpleInfo(0)});
   }
 
+  public void testConstructorCall() {
+    doTest(new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "1", null, PsiType.INT)});
+  }
+
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
   }
 
 
-  private void doTest(SimpleInfo[] parameterInfos) throws Exception {
+  private void doTest(SimpleInfo[] parameterInfos) {
     doTest("public", null, null, parameterInfos, new ThrownExceptionInfo[0], false);
   }
 
-  private void doTest(String newReturnType, SimpleInfo[] parameterInfos) throws Exception {
+  private void doTest(String newReturnType, SimpleInfo[] parameterInfos) {
     doTest("public", null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], false);
   }
 
-  private void doTest(String newReturnType, SimpleInfo[] parameterInfos, final boolean generateDelegate) throws Exception {
+  private void doTest(String newReturnType, SimpleInfo[] parameterInfos, final boolean generateDelegate) {
     doTest("public", null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }
 
@@ -238,7 +242,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
                       String newReturnType,
                       SimpleInfo[] parameterInfo,
                       ThrownExceptionInfo[] exceptionInfo,
-                      final boolean generateDelegate) throws Exception {
+                      final boolean generateDelegate) {
     final File javaSrc = new File(getTestDataPath() + "/" + getTestName(false) + ".java");
     if (javaSrc.exists()) {
       myFixture.copyFileToProject(getTestName(false) + ".java");

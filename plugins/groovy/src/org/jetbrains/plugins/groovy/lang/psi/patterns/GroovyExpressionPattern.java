@@ -42,7 +42,7 @@ public class GroovyExpressionPattern<T extends GrExpression, Self extends Groovy
   public GroovyMethodCallPattern methodCall(final ElementPattern<? extends PsiMethod> method) {
     return new GroovyMethodCallPattern().and(this).with(new PatternCondition<GrCallExpression>("methodCall") {
       public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
-        final GroovyResolveResult[] results = callExpression.getMethodVariants(null);
+        final GroovyResolveResult[] results = callExpression.getCallVariants(null);
         for (GroovyResolveResult result : results) {
           if (method.getCondition().accepts(result.getElement(), context)) {
             return true;

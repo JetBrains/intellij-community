@@ -15,13 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.intentions.control;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
+import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
+import org.jetbrains.plugins.groovy.intentions.base.MutablyNamedIntention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.intentions.utils.ComparisonUtils;
-import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
@@ -41,7 +45,7 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     return new ComparisonPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrBinaryExpression exp =
         (GrBinaryExpression) element;

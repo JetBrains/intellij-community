@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -44,7 +46,7 @@ public class ConvertGStringToStringIntention extends Intention {
     return new ConvertibleGStringLiteralPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrLiteral exp = (GrLiteral)element;
     IntentionUtils.replaceExpression(convertGStringLiteralToStringLiteral(exp), exp);
   }

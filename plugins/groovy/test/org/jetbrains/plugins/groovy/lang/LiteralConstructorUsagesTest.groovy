@@ -48,6 +48,26 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
     assertOneElement(ReferencesSearch.search(foo.constructors[0]).findAll())
   }
 
+  public void testMap_AsCast() throws Exception {
+    def foo = myFixture.addClass("""class Foo {
+    Foo() {}
+    }
+}""")
+    myFixture.addFileToProject "a.groovy", "def x = [:] as Foo"
+    assertOneElement(ReferencesSearch.search(foo.constructors[0]).findAll())
+  }
+
+  public void testMapSuper_AsCast() throws Exception {
+    def foo = myFixture.addClass("""class Foo {
+    Foo(int a) {}
+    }
+}""")
+    myFixture.addFileToProject "a.gpp", "def x = ['super':[2]] as Foo"
+    myFixture.addFileToProject "c.gpp", "def x = [super:2] as Foo"
+
+    assertEquals(2, ReferencesSearch.search(foo.constructors[0]).findAll().size())
+  }
+
   public void testList_GppMethodCall() throws Exception {
     //------------------------declarations
     def foo = myFixture.addClass("""
@@ -98,6 +118,46 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
     """)
     myFixture.addFileToProject "a.gpp", "new Bar([],[],[])"
     assertEquals(3, ReferencesSearch.search(foo.constructors[0]).findAll().size())
+  }
+
+  public void testMap_GppOverloads() throws Exception {
+    def foo = myFixture.addClass("""
+      class Foo {
+          Foo() {}
+          Foo(int a) {}
+      }
+      """)
+
+    myFixture.addClass("""
+    class Bar {
+      static void foo(Foo f1, Foo f2) {}
+    }
+    """)
+    myFixture.addFileToProject "a.gpp", "Bar.foo([:], [super:2])"
+    assertEquals(1, ReferencesSearch.search(foo.constructors[0]).findAll().size())
+    assertEquals(1, ReferencesSearch.search(foo.constructors[1]).findAll().size())
+  }
+  
+  public void testGppCallVarargs() throws Exception {
+    def foo = myFixture.addClass("""
+      class Foo {
+          Foo() {}
+          Foo(int a) {}
+      }
+      """)
+
+    myFixture.addClass("""
+    class Bar {
+      static void foo(Foo f1, Foo f2) {}
+      static void doo(int a, Foo f1, Foo f2) {}
+    }
+    """)
+    myFixture.addFileToProject "a.gpp", """
+      Bar.foo([:], [super:2])
+      Bar.doo 3, [:], [super:2]
+      """
+    assertEquals(2, ReferencesSearch.search(foo.constructors[0]).findAll().size())
+    assertEquals(2, ReferencesSearch.search(foo.constructors[1]).findAll().size())
   }
 
 }

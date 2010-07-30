@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -50,7 +52,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     StringBuilder builder = new StringBuilder(element.getTextLength());
     if (element instanceof GrBinaryExpression) {
       performIntention((GrBinaryExpression)element, builder);
