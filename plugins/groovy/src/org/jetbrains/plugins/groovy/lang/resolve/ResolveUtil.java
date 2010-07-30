@@ -75,12 +75,12 @@ public class ResolveUtil {
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
       if (processNonCodeMethods) {
         if (run instanceof GrTypeDefinition) {
-          processNonCodeMethods(factory.createType(((GrTypeDefinition)run)), processor, place, false);
+          processNonCodeMethods(factory.createType(((GrTypeDefinition)run)), processor, place);
         }
         else if ((run instanceof GroovyFileBase) && ((GroovyFileBase)run).isScript()) {
           final PsiClass psiClass = ((GroovyFileBase)run).getScriptClass();
           if (psiClass != null) {
-            processNonCodeMethods(factory.createType(psiClass), processor, place, false);
+            processNonCodeMethods(factory.createType(psiClass), processor, place);
           }
         }
       }
@@ -137,8 +137,7 @@ public class ResolveUtil {
 
   public static boolean processNonCodeMethods(PsiType type,
                                               PsiScopeProcessor processor,
-                                              PsiElement place,
-                                              boolean forCompletion) {
+                                              PsiElement place) {
     if (!NonCodeMembersContributor.runContributors(type, processor, place, ResolveState.initial())) {
       return false;
     }
