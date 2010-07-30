@@ -1,8 +1,8 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.util.containers.CollectionFactory;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class InstructionBuilder {
   public static List<Instruction> buildInstructions(ControlFlowBuilder builder, List<PyTypeAssertionEvaluator.Assertion> assertions) {
-    List<Instruction> result = CollectionFactory.arrayList();
+    List<Instruction> result = Lists.newArrayList();
     for (PyTypeAssertionEvaluator.Assertion def: assertions) {
       processDef(builder, def, result);
     }
