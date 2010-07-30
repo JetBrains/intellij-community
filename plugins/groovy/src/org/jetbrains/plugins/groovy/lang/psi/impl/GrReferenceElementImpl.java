@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -129,6 +130,6 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
 
   @Nullable
   public GrTypeArgumentList getTypeArgumentList() {
-    return findChildByClass(GrTypeArgumentList.class);
+    return (GrTypeArgumentList)findChildByType(GroovyElementTypes.TYPE_ARGUMENTS);
   }
 }
