@@ -103,7 +103,8 @@ public class TypesUtil {
     if (candidates.length == 1) {
       final PsiElement element = candidates[0].getElement();
       if (element instanceof PsiMethod) {
-        return candidates[0].getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element));
+        return boxPrimitiveType(candidates[0].getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element)),
+                                place.getManager(), place.getResolveScope());
       }
     }
     return null;

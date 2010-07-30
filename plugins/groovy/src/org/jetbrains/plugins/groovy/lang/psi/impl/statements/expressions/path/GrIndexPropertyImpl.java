@@ -102,12 +102,13 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
           componentType = TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), getManager(), getResolveScope());
         }
         else if (InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP) && argTypes.length == 1) {
-          componentType = substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+          componentType = TypesUtil
+            .boxPrimitiveType(substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true), getManager(), getResolveScope());
         }
 
         if (overloadedOperatorType != null &&
             (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, getManager(), getResolveScope()))) {
-          return overloadedOperatorType;
+          return TypesUtil.boxPrimitiveType(overloadedOperatorType, getManager(), getResolveScope());
         }
         return componentType;
       }

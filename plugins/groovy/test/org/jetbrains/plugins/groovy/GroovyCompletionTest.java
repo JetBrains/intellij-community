@@ -230,4 +230,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
                                                                             "}");
     doSmartTest();
   }
+
+  public void testIntCompletionInPlusMethod() {doBasicTest();}
+  public void testIntCompletionInGenericParameter() {doBasicTest();}
 }
