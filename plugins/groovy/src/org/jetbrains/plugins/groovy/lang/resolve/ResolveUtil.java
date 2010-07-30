@@ -153,11 +153,6 @@ public class ResolveUtil {
       }
     }
 
-    for (PsiType psiType : getAllSuperTypes(type, place).values()) {
-      for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-        if (!membersProcessor.processNonCodeMembers(psiType, processor, place, forCompletion)) return false;
-      }
-    }
     return true;
   }
 

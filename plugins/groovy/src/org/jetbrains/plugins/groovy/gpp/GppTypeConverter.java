@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.gpp;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +30,7 @@ public class GppTypeConverter extends GrTypeConverter {
       return true;
     }
 
-    final VirtualFile vfile = context.getContainingFile().getOriginalFile().getVirtualFile();
-    if (vfile != null && isGppExtension(vfile.getExtension())) {
+    if (isGppExtension(StringUtil.getShortName(context.getContainingFile().getName()))) {
       return true;
     }
 
