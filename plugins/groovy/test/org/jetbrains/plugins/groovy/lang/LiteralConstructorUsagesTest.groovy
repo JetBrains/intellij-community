@@ -137,5 +137,27 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
     assertEquals(1, ReferencesSearch.search(foo.constructors[0]).findAll().size())
     assertEquals(1, ReferencesSearch.search(foo.constructors[1]).findAll().size())
   }
+  
+  public void testGppCallVarargs() throws Exception {
+    def foo = myFixture.addClass("""
+      class Foo {
+          Foo() {}
+          Foo(int a) {}
+      }
+      """)
+
+    myFixture.addClass("""
+    class Bar {
+      static void foo(Foo f1, Foo f2) {}
+      static void doo(int a, Foo f1, Foo f2) {}
+    }
+    """)
+    myFixture.addFileToProject "a.gpp", """
+      Bar.foo([:], [super:2])
+      Bar.doo 3, [:], [super:2]
+      """
+    assertEquals(2, ReferencesSearch.search(foo.constructors[0]).findAll().size())
+    assertEquals(2, ReferencesSearch.search(foo.constructors[1]).findAll().size())
+  }
 
 }

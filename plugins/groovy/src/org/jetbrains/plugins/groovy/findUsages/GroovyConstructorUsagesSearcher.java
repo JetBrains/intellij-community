@@ -171,11 +171,18 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     final PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
     if (parameter != null) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
-      if (method != null && Arrays.asList(method.getParameterList().getParameters()).contains(parameter)) {
-        final PsiType parameterType = parameter.getType();
-        if (parameterType instanceof PsiClassType) {
-          if (method.getManager().areElementsEquivalent(targetClass, ((PsiClassType)parameterType).resolve())) {
-            return method;
+      if (method != null) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        final int idx = Arrays.asList(parameters).indexOf(parameter);
+        if (idx >= 0) {
+          PsiType parameterType = parameter.getType();
+          if (parameterType instanceof PsiArrayType && idx == parameters.length - 1) {
+            parameterType = ((PsiArrayType)parameterType).getComponentType();
+          }
+          if (parameterType instanceof PsiClassType) {
+            if (method.getManager().areElementsEquivalent(targetClass, ((PsiClassType)parameterType).resolve())) {
+              return method;
+            }
           }
         }
       }

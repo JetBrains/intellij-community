@@ -207,7 +207,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
               call instanceof GrCallExpression ? ((GrCallExpression)call).getClosureArguments() : GrClosableBlock.EMPTY_ARRAY;
 
             final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
-              GrClosureSignatureUtil.mapParametersToArguments(signature, argumentList, closureArguments, owner.getResolveScope());
+              GrClosureSignatureUtil.mapParametersToArguments(signature, argumentList, argumentList, closureArguments);
             if (argInfos == null) continue;
             final GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo = argInfos[index];
 

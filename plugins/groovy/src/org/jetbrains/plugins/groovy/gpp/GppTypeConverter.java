@@ -72,7 +72,7 @@ public class GppTypeConverter extends GrTypeConverter {
         return true;
       }
 
-      if (!isMethodCallConversion(context) && hasDefaultConstructor(lType)) {
+      if ((!isMethodCallConversion(context) || hasTypedContext(context)) && hasDefaultConstructor(lType)) {
         return true;
       }
     }
@@ -89,7 +89,7 @@ public class GppTypeConverter extends GrTypeConverter {
 
   private static boolean hasDefaultConstructor(PsiType type) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true);
+    return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true, false);
 
   }
 

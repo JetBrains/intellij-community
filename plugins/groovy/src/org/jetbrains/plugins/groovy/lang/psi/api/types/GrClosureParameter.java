@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -24,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author Maxim.Medvedev
  */
 public interface GrClosureParameter {
-  PsiParameter[] EMPTY_ARRAY = new PsiParameter[0];
 
   @Nullable
   PsiType getType();
