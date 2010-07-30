@@ -439,11 +439,11 @@ public class ResolveUtil {
     return true;
   }
 
-  public static GroovyResolveResult[] getMethodVariants(GroovyPsiElement place) {
+  public static GroovyResolveResult[] getCallVariants(GroovyPsiElement place) {
     final PsiElement parent = place.getParent();
     GroovyResolveResult[] variants = GroovyResolveResult.EMPTY_ARRAY;
     if (parent instanceof GrCallExpression) {
-      variants = ((GrCallExpression) parent).getMethodVariants(place instanceof GrExpression ? (GrExpression)place : null);
+      variants = ((GrCallExpression) parent).getCallVariants(place instanceof GrExpression ? (GrExpression)place : null);
     } else if (parent instanceof GrConstructorInvocation) {
       final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
       if (clazz != null) {

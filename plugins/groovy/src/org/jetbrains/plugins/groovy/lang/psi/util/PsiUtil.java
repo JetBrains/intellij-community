@@ -632,7 +632,7 @@ public class PsiUtil {
   }
 
   public static boolean isRawMethodCall(GrMethodCallExpression call) {
-    final GroovyResolveResult[] resolveResults = call.getMethodVariants(null);
+    final GroovyResolveResult[] resolveResults = call.getCallVariants(null);
     if (resolveResults.length == 0) return false;
     final PsiElement element = resolveResults[0].getElement();
     if (element instanceof PsiMethod) {
