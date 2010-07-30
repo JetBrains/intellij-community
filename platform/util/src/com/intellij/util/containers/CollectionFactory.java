@@ -52,6 +52,10 @@ public class CollectionFactory {
     return new ArrayList<T>();
   }
 
+  public static <T> ArrayList<T> arrayList(T... elements) {
+    return new ArrayList<T>(Arrays.asList(elements));
+  }
+
   public static <T> Stack<T> stack() {
     return new Stack<T>();
   }
@@ -66,5 +70,9 @@ public class CollectionFactory {
 
   public static <T, V> LinkedHashMap<T, V> linkedMap() {
     return new LinkedHashMap<T,V>();
+  }
+
+  public static <T> LinkedHashSet<T> linkedHashSet() {
+    return new LinkedHashSet<T>();
   }
 }
