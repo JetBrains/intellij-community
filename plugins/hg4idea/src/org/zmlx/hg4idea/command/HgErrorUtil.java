@@ -21,6 +21,9 @@ public final class HgErrorUtil {
   private HgErrorUtil() { }
 
   public static boolean isAbort(HgCommandResult result) {
+    if (result == null) {
+      return true;
+    }
     String line = getLastErrorLine(result);
     return StringUtils.isNotBlank(line) && StringUtils.contains(line, "abort:");
   }
