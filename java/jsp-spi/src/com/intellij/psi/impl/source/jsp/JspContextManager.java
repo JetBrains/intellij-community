@@ -35,7 +35,7 @@ public abstract class JspContextManager {
 
   public abstract BaseJspFile[] getSuitableContextFiles(@NotNull PsiFile file);
 
-  public abstract void setContextFile(@NotNull PsiFile file, @Nullable BaseJspFile contextFile, final boolean userDefined);
+  public abstract void setContextFile(@NotNull PsiFile file, @Nullable BaseJspFile contextFile);
 
   public abstract @Nullable
   BaseJspFile getContextFile(@NotNull PsiFile file);
