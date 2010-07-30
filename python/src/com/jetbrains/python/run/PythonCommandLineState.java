@@ -42,18 +42,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    return execute(null);
+    return execute(executor, (CommandLinePatcher[])null);
   }
 
-  public ExecutionResult execute(CommandLinePatcher... patchers) throws ExecutionException {
+  public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(patchers);
-    final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler);
+    final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler, executor);
 
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
   @NotNull
-  protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler) throws ExecutionException {
+  protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor) throws ExecutionException {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     for (Filter filter : myFilters) {
       consoleBuilder.addFilter(filter);

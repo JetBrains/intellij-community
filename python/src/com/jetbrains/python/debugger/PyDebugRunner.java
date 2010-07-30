@@ -87,7 +87,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (state instanceof PythonCommandLineState && profile instanceof PythonRunConfiguration) {
       run_config_patcher = (PythonRunConfiguration)profile;
     }
-    final ExecutionResult result = pyState.execute(debug_server_patcher, run_config_patcher);
+    final ExecutionResult result = pyState.execute(executor, debug_server_patcher, run_config_patcher);
 
     final XDebugSession session = XDebuggerManager.getInstance(project).
       startSession(this, env, contentToReuse, new XDebugProcessStarter() {
