@@ -3,6 +3,7 @@ package com.jetbrains.python.validation;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -157,7 +158,7 @@ public class UnsupportedFeatures extends PyAnnotator {
   public void visitPyStarExpression(PyStarExpression node) {
     super.visitPyStarExpression(node);
     if (isPy2(node)) {
-      getHolder().createWarningAnnotation(node, "Python 2 does not support star expressions");
+      getHolder().createWarningAnnotation(node, "Starred expressions are not allowed as assignment targets in Python 2");
     }
   }
 
@@ -224,7 +225,7 @@ public class UnsupportedFeatures extends PyAnnotator {
   public void visitPyRaiseStatement(PyRaiseStatement node) {
     super.visitPyRaiseStatement(node);
     final PyExpression[] expressions = node.getExpressions();
-    if (expressions != null) {
+    if (expressions.length > 0) {
       if (expressions.length < 2) {
         return;
       }
@@ -243,6 +244,12 @@ public class UnsupportedFeatures extends PyAnnotator {
           getHolder().createWarningAnnotation(node, "Python 3 does not support this syntax")
             .registerFix(new ReplaceRaiseStatementIntention());
         }
+      }
+    }
+    else if (isPy3K(node)) {
+      final PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class);
+      if (exceptPart == null) {
+        getHolder().createErrorAnnotation(node, "raise with no arguments can only be used in an except block");
       }
     }
   }

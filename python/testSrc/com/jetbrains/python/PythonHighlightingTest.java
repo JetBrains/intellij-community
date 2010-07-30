@@ -19,7 +19,7 @@ import java.awt.*;
 public class PythonHighlightingTest extends PyLightFixtureTestCase {
   private static final String TEST_PATH = "/highlighting/";
 
-  public void testBuiltins() throws Exception {
+  public void testBuiltins() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
@@ -39,7 +39,7 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();
   }
 
-  public void testDeclarations() throws Exception {
+  public void testDeclarations() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
@@ -60,7 +60,7 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();
   }
 
-  public void testDocStrings() throws Exception {
+  public void testDocStrings() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
@@ -73,71 +73,75 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();
   }
 
-  public void testAssignmentTargets() throws Exception {
+  public void testAssignmentTargets() {
     doTest(true, false);
   }
 
-  public void testReturnOutsideOfFunction() throws Exception {
+  public void testAssignmentTargets3K() {
+    doTest(LanguageLevel.PYTHON30, true, false);    
+  }
+
+  public void testReturnOutsideOfFunction() {
     doTest();
   }
 
-  public void testContinueInFinallyBlock() throws Exception {
+  public void testContinueInFinallyBlock() {
     doTest(false, false);
   }
 
-  public void testReturnWithArgumentsInGenerator() throws Exception {
+  public void testReturnWithArgumentsInGenerator() {
     doTest();
   }
 
-  public void testYieldOutsideOfFunction() throws Exception {
+  public void testYieldOutsideOfFunction() {
     doTest();
   }
 
-  public void testMalformedStringUnterminated() throws Exception {
+  public void testMalformedStringUnterminated() {
     doTest();
   }
 
-  public void testMalformedStringEscaped() throws Exception {
+  public void testMalformedStringEscaped() {
     doTest(false, false);
   }
 
-  public void testStringEscapedOK() throws Exception {
+  public void testStringEscapedOK() {
     doTest();
   }
 
-  public void testStringMixedSeparatorsOK() throws Exception {   // PY-299
+  public void testStringMixedSeparatorsOK() {   // PY-299
     doTest();
   }
 
-  public void testStringBytesLiteralOK() throws Exception {
+  public void testStringBytesLiteralOK() {
     doTest(LanguageLevel.PYTHON26, true, true);
   }
 
-  public void testArgumentList() throws Exception {
+  public void testArgumentList() {
     doTest(true, false);
   }
 
-  public void testRegularAfterVarArgs() throws Exception {
+  public void testRegularAfterVarArgs() {
     doTest(LanguageLevel.PYTHON30, true, false);
   }
 
-  public void testKeywordOnlyArguments() throws Exception {
+  public void testKeywordOnlyArguments() {
     doTest(LanguageLevel.PYTHON30, true, false);
   }
 
-  public void testMalformedStringTripleQuoteUnterminated() throws Exception {
+  public void testMalformedStringTripleQuoteUnterminated() {
     doTest();
   }
 
-  public void testUnsupportedFeaturesInPython2() throws Exception {
+  public void testUnsupportedFeaturesInPython2() {
     doTest(LanguageLevel.PYTHON25, true, false);
   }
 
-  public void testUnsupportedFeaturesInPython3() throws Exception {
+  public void testUnsupportedFeaturesInPython3() {
     doTest(LanguageLevel.PYTHON30, true, false);
   }
 
-  public void testYieldInNestedFunction() throws Exception {
+  public void testYieldInNestedFunction() {
     // highlight func declaration first, lest we get an "Extra fragment highlighted" error.
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
@@ -151,7 +155,7 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();
   }
 
-  private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) throws Exception {
+  private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {
       doTest(checkWarnings, checkInfos);
@@ -161,12 +165,12 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     }
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     final String TEST_PATH = "/highlighting/";
     myFixture.testHighlighting(true, true, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
   }
 
-  private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
+  private void doTest(boolean checkWarnings, boolean checkInfos) {
     myFixture.testHighlighting(checkWarnings, checkInfos, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
   }
 

@@ -43,7 +43,7 @@ public class PyRaisingNewStyleClassInspection extends PyInspection {
         return;
       }
       final PyExpression[] expressions = node.getExpressions();
-      if (expressions == null || expressions.length == 0) {
+      if (expressions.length == 0) {
         return;
       }
       final PyExpression expression = expressions[0];

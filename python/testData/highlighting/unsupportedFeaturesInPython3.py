@@ -18,3 +18,11 @@ try:
 [x * 2 for x in <warning descr="List comprehensions do not support this syntax in Python 3">vec1, vec2</warning>]
 
 <warning descr="Module __builtin__ renamed to builtins">import __builtin__</warning>
+
+<error descr="raise with no arguments can only be used in an except block">raise</error>
+
+try:
+    pass
+except:
+    raise
+    

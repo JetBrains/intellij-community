@@ -1,6 +1,7 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
@@ -43,8 +44,10 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   @NotNull
-  protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler) throws ExecutionException {
-    final ConsoleView consoleView = SMTestRunnerConnectionUtil.attachRunner("PythonUnitTestRunner", processHandler, this, myConfiguration);
+  protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
+    throws ExecutionException {
+    final ConsoleView consoleView = SMTestRunnerConnectionUtil.attachRunner("PythonUnitTestRunner", processHandler, this, myConfiguration,
+                                                                            executor);
     consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
     return consoleView;
   }

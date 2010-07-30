@@ -102,29 +102,32 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           final Ref<Boolean> readAccessSeen = new Ref<Boolean>(false);
           final Instruction[] instructions = owner.getControlFlow().getInstructions();
           final int number = ControlFlowUtil.findInstructionNumberByElement(instructions, node);
-          ControlFlowUtil.iteratePrev(number, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
-            public ControlFlowUtil.Operation fun(final Instruction inst) {
-              if (inst.num() == number){
-                return ControlFlowUtil.Operation.NEXT;
-              }
-              if (inst instanceof ReadWriteInstruction) {
-                final ReadWriteInstruction rwInst = (ReadWriteInstruction)inst;
-                if (name.equals(rwInst.getName())) {
-                  if (scope.getDeclaredVariable(inst.getElement(), name) != null) {
-                    return ControlFlowUtil.Operation.BREAK;
-                  }
-                  if (rwInst.getAccess().isWriteAccess()) {
-                    return ControlFlowUtil.Operation.CONTINUE;
-                  }
-                  else {
-                    readAccessSeen.set(true);
-                    return ControlFlowUtil.Operation.BREAK;
+          // Do not perform this check if we cannot find corresponding instruction
+          if (number != -1) {
+            ControlFlowUtil.iteratePrev(number, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
+              public ControlFlowUtil.Operation fun(final Instruction inst) {
+                if (inst.num() == number){
+                  return ControlFlowUtil.Operation.NEXT;
+                }
+                if (inst instanceof ReadWriteInstruction) {
+                  final ReadWriteInstruction rwInst = (ReadWriteInstruction)inst;
+                  if (name.equals(rwInst.getName())) {
+                    if (scope.getDeclaredVariable(inst.getElement(), name) != null) {
+                      return ControlFlowUtil.Operation.BREAK;
+                    }
+                    if (rwInst.getAccess().isWriteAccess()) {
+                      return ControlFlowUtil.Operation.CONTINUE;
+                    }
+                    else {
+                      readAccessSeen.set(true);
+                      return ControlFlowUtil.Operation.BREAK;
+                    }
                   }
                 }
+                return ControlFlowUtil.Operation.NEXT;
               }
-              return ControlFlowUtil.Operation.NEXT;
-            }
-          });
+            });
+          }
           // In this case we've already inspected prev read access and shouldn't warn about this one
           if (readAccessSeen.get()){
             return;

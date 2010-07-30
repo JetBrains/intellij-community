@@ -19,7 +19,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   }
 
   public PyExpression getOperand() {
-    return (PyExpression)childToPsiNotNull(PyElementTypes.EXPRESSIONS, 0);
+    return (PyExpression)childToPsi(PyElementTypes.EXPRESSIONS, 0);
   }
 
   @NotNull

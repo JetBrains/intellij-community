@@ -18,10 +18,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   12.03.2010
- * Time:   20:01:16
+ * @author Alexey.Ivanov
  */
 public class PyStringConcatenationToFormatIntention extends BaseIntentionAction {
 
@@ -43,7 +40,11 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
       return false;
     }
 
-    for (PyExpression expression: getSimpleExpressions((PyBinaryExpression) element)) {
+    final Collection<PyExpression> expressions = getSimpleExpressions((PyBinaryExpression)element);
+    if (expressions.size() == 0) {
+      return false;
+    }
+    for (PyExpression expression: expressions) {
       if (!(expression instanceof PyStringLiteralExpression
             || expression instanceof PyReferenceExpression
             || expression instanceof PyCallExpression)) {

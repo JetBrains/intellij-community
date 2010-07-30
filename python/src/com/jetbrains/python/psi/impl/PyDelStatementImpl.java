@@ -1,11 +1,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.psi.PyDelStatement;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.psi.PyDelStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -20,7 +20,7 @@ public class PyDelStatementImpl extends PyElementImpl implements PyDelStatement 
     pyVisitor.visitPyDelStatement(this);
   }
 
-  @Nullable
+  @NotNull
   public PyExpression[] getTargets() {
     return childrenToPsi(PyElementTypes.EXPRESSIONS, PyExpression.EMPTY_ARRAY);
   }

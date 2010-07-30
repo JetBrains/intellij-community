@@ -50,6 +50,7 @@
             <include name="resources"/>
             <include name="src"/>
             <include name="pluginSrc"/>
+            <include name="pydevSrc"/>
         </dirset>
       <dirset dir="${plugin.home}/../ultimate/ultimate-verifier">
         <include name="src"/>
@@ -120,10 +121,6 @@
                 <type type="file"/>
             </fileset>
             <fileset dir="${plugin.home}/src">
-                <patternset refid="resources.pt"/>
-                <type type="file"/>
-            </fileset>
-            <fileset dir="${plugin.home}/pySrc">
                 <patternset refid="resources.pt"/>
                 <type type="file"/>
             </fileset>
