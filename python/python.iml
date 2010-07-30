@@ -41,6 +41,7 @@
     <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="python-pydev" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
   <component name="copyright">
     <Base>
