@@ -57,6 +57,7 @@ public class PythonSdkType extends SdkType {
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
   static final int RUN_TIMEOUT = 60 * 1000; // 60 seconds per script invocation is plenty; anything more seems wrong (10 wasn't enough tho).
+  private List<String> myCachedSysPath;
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -64,6 +65,10 @@ public class PythonSdkType extends SdkType {
 
   public PythonSdkType() {
     super("Python SDK");
+  }
+
+  protected PythonSdkType(@NonNls String name) {
+    super(name);
   }
 
   public Icon getIcon() {
@@ -210,7 +215,7 @@ public class PythonSdkType extends SdkType {
   }
 
   // /home/joe/foo -> ~/foo
-  private static String shortenDirName(String path) {
+  protected static String shortenDirName(String path) {
     String home = System.getProperty("user.home");
     if (path.startsWith(home)) {
       return "~" + path.substring(home.length());
@@ -339,7 +344,7 @@ public class PythonSdkType extends SdkType {
         try {
           final SdkModificator sdkModificator = sdk.getSdkModificator();
           sdkModificator.removeAllRoots();
-          updateSdkRootsFromSysPath(sdkModificator, indicator);
+          updateSdkRootsFromSysPath(sdkModificator, indicator, (PythonSdkType)sdk.getSdkType());
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
             generateSkeletons(indicator, sdk.getHomePath(), getSkeletonsPath(sdk.getHomePath()));
           }
@@ -371,7 +376,7 @@ public class PythonSdkType extends SdkType {
    */
   public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
 
-  public static void updateSdkRootsFromSysPath(SdkModificator sdkModificator, ProgressIndicator indicator) {
+  public static void updateSdkRootsFromSysPath(SdkModificator sdkModificator, ProgressIndicator indicator, PythonSdkType sdkType) {
     Application application = ApplicationManager.getApplication();
     boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
 
@@ -383,7 +388,7 @@ public class PythonSdkType extends SdkType {
       indicator.setText("Adding library roots");
     }
     // Add folders from sys.path
-    final List<String> paths = getSysPath(bin_path);
+    final List<String> paths = sdkType.getSysPath(bin_path);
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
       for (String path : paths) {
@@ -399,8 +404,13 @@ public class PythonSdkType extends SdkType {
       assert builtins_root != null;
       sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
     }
+    if (not_in_unit_test_mode) sdkType.addHardcodedPaths(sdkModificator);
+  }
+
+  protected void addHardcodedPaths(SdkModificator sdkModificator) {
     // Add python-django installed as package in Linux
-    if (SystemInfo.isLinux && not_in_unit_test_mode) {
+    // NOTE: fragile and arbitrary
+    if (SystemInfo.isLinux) {
       final VirtualFile file = LocalFileSystem.getInstance().findFileByPath("/usr/lib/python-django");
       if (file != null){
         sdkModificator.addRoot(file, OrderRootType.SOURCES);
@@ -447,22 +457,50 @@ public class PythonSdkType extends SdkType {
     return PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + FileUtil.toSystemIndependentName(bin_path).hashCode() + sep;
   }
 
-  public static List<String> getSysPath(String bin_path) {
+  @Nullable
+  public List<String> getSysPath(String bin_path) {
     String working_dir = new File(bin_path).getParent();
     Application application = ApplicationManager.getApplication();
     if (application != null && !application.isUnitTestMode()) {
-      String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
-      // in order to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
-      // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
-      String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
-      return SdkUtil.getProcessOutput(new File(scriptFile).getParent(),
-                                      new String[]{bin_path, scriptFile}, add_environment, RUN_TIMEOUT).getStdoutLines();
+      final List<String> paths = getSysPathsFromScript(bin_path);
+      myCachedSysPath = paths;
+      if (paths == null) throw new InvalidSdkException("Failed to determine Python's sys.path value");
+      myCachedSysPath = Collections.unmodifiableList(paths);
+      return paths;
     }
     else { // mock sdk
       List<String> ret = new ArrayList<String>(1);
       ret.add(working_dir);
       return ret;
     }
+  }
+
+  @Nullable
+  public List<String> getCachedSysPath(String bin_path) {
+    if (myCachedSysPath != null) return myCachedSysPath;
+    else return getSysPath(bin_path);
+  }
+
+  protected static boolean checkSuccess(ProcessOutput run_result) {
+    if (run_result.getExitCode() != 0) {
+      LOG.error(run_result.getStderr() + (run_result.isTimeout()? "\nTimed out" : "\nExit code " + run_result.getExitCode()));
+      return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  protected List<String> getSysPathsFromScript(String bin_path) {
+    String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
+    // in order to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
+    // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
+    String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
+    final ProcessOutput run_result = SdkUtil.getProcessOutput(
+      new File(scriptFile).getParent(),
+      new String[]{bin_path, scriptFile},
+      add_environment, RUN_TIMEOUT
+    );
+    return checkSuccess(run_result) ? run_result.getStdoutLines() : null;
   }
 
   // Returns a piece of env good as additional env for getProcessOutput.
@@ -500,9 +538,7 @@ public class PythonSdkType extends SdkType {
       },
       getVirtualEnvAdditionalEnv(binary_path), RUN_TIMEOUT*5
     );
-    if (run_result.getExitCode() != 0) {
-      LOG.error(run_result.getStderr() + (run_result.isTimeout()? "\nTimed out" : "\nExit code " + run_result.getExitCode()));
-    }
+    checkSuccess(run_result);
   }
 
   /**
