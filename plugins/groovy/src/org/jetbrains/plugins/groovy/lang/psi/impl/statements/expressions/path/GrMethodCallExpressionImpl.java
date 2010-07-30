@@ -145,7 +145,10 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
 
   @Nullable
   public GrExpression getInvokedExpression() {
-    return findChildByClass(GrExpression.class);
+    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrExpression) return (GrExpression)cur;
+    }
+    return null;
   }
 
   public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException {
