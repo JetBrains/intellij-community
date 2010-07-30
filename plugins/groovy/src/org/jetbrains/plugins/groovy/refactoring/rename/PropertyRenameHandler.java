@@ -78,7 +78,7 @@ public class PropertyRenameHandler implements RenameHandler {
 
     private void doRename(String newName, boolean searchInComments) {
       final RenameRefactoring rename = new JavaRenameRefactoringImpl(myProperty.getProject(), myProperty, newName, searchInComments, false);
-
+      rename.setPreviewUsages(isPreviewUsages());
       final PsiMethod setter = myProperty.getSetter();
       if (setter != null && !(setter instanceof GrAccessorMethod)) {
         final String setterName = PropertyUtil.suggestSetterName(newName);
