@@ -115,14 +115,6 @@ public class ResolveUtil {
 
     return nameHint.getName(ResolveState.initial());
   }
-  
-  /**
-   * @deprecated
-   * use {@link #processElement(PsiScopeProcessor, PsiNamedElement, ResolveState)} instead
-   */
-  public static boolean processElement(PsiScopeProcessor processor, PsiNamedElement namedElement) {
-    return processElement(processor, namedElement, ResolveState.initial());
-  }
 
   public static boolean processElement(PsiScopeProcessor processor, PsiNamedElement namedElement, ResolveState state) {
     NameHint nameHint = processor.getHint(NameHint.KEY);

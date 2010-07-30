@@ -80,7 +80,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
 
   public boolean processMembers(PsiScopeProcessor processor) {
     for (PsiMethod method : myMethods) {
-      if (!ResolveUtil.processElement(processor, method)) {
+      if (!ResolveUtil.processElement(processor, method, ResolveState.initial())) {
         return false;
       }
     }
