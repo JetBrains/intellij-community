@@ -218,7 +218,7 @@ public class StatementParser {
       refPos.rollbackTo();
       if (suspectedLT == JavaTokenType.LT) {
         final PsiBuilder.Marker declStatement = builder.mark();
-        final PsiBuilder.Marker decl = DeclarationParser.parseDeclaration(builder, DeclarationParser.Context.CODE_BLOCK);
+        final PsiBuilder.Marker decl = DeclarationParser.parse(builder, DeclarationParser.Context.CODE_BLOCK);
         if (decl == null) {
           error(builder, JavaErrorMessages.message("expected.identifier"));
         }
@@ -264,7 +264,7 @@ public class StatementParser {
       pos.drop();
     }
 
-    final PsiBuilder.Marker decl = DeclarationParser.parseDeclaration(builder, DeclarationParser.Context.CODE_BLOCK);
+    final PsiBuilder.Marker decl = DeclarationParser.parse(builder, DeclarationParser.Context.CODE_BLOCK);
     if (decl != null) {
       final PsiBuilder.Marker statement = decl.precede();
       statement.done(JavaElementType.DECLARATION_STATEMENT);
@@ -295,10 +295,6 @@ public class StatementParser {
     while (lookAhead(builder, JavaTokenType.DOT, JavaTokenType.IDENTIFIER)) {
       advance(builder, 2);
     }
-  }
-
-  private static void semicolon(final PsiBuilder builder) {
-    expectOrError(builder, JavaTokenType.SEMICOLON, JavaErrorMessages.message("expected.semicolon"));
   }
 
   @NotNull

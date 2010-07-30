@@ -37,7 +37,7 @@ public class JavaParser implements PsiParser {
     final PsiBuilder.Marker root = builder.mark();
     setLanguageLevel(builder, myLanguageLevel);
 
-    // parse
+    FileParser.parse(builder);
 
     root.done(rootType);
     return builder.getTreeBuilt();

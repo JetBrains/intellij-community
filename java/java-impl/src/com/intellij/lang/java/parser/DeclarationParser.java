@@ -158,7 +158,7 @@ public class DeclarationParser {
         continue;
       }
 
-      final PsiBuilder.Marker declaration = parseDeclaration(builder, context);
+      final PsiBuilder.Marker declaration = parse(builder, context);
       if (declaration != null) {
         if (invalidElements != null) {
           invalidElements.errorBefore(JavaErrorMessages.message("unexpected.token"), declaration);
@@ -184,7 +184,7 @@ public class DeclarationParser {
   }
 
   @Nullable
-  public static PsiBuilder.Marker parseDeclaration(final PsiBuilder builder, final Context context) {
+  public static PsiBuilder.Marker parse(final PsiBuilder builder, final Context context) {
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == null) return null;
 
@@ -229,7 +229,7 @@ public class DeclarationParser {
 
         while (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.RBRACE) {
           final PsiBuilder.Marker position = builder.mark();
-          final PsiBuilder.Marker element = parseDeclaration(builder, Context.CLASS);
+          final PsiBuilder.Marker element = parse(builder, Context.CLASS);
           if (element != null && AFTER_END_DECLARATION_SET.contains(exprType(element))) {
             if (!declarationsAfterEnd) {
               element.precede().error(JavaErrorMessages.message("expected.class.or.interface"));
