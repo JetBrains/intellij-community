@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -39,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaParserDefinition implements ParserDefinition {
 
+  public static final IFileElementType JAVA_FILE = new JavaFileElementType();
+
   @NotNull
   public Lexer createLexer(Project project) {
     return new JavaLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
@@ -50,7 +53,7 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   public IFileElementType getFileNodeType() {
-    return JavaElementType.JAVA_FILE;
+    return JAVA_FILE;
   }
 
   @NotNull

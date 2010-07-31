@@ -22,7 +22,6 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.psi.impl.source.JavaFileElementType;
 
 public class JavaStubElementTypes {
-  public static final JavaFileElementType FILE = new JavaFileElementType();
   public static final JavaClassElementType CLASS = new JavaClassElementType("CLASS");
   public static final JavaClassElementType ANONYMOUS_CLASS = new JavaClassElementType("ANONYMOUS_CLASS");
   public static final JavaClassElementType ENUM_CONSTANT_INITIALIZER = new JavaClassElementType("ENUM_CONSTANT_INITIALIZER");

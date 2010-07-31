@@ -38,7 +38,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 
 public interface JavaElementType {
-  IFileElementType JAVA_FILE = JavaStubElementTypes.FILE;
 
   IElementType CLASS = JavaStubElementTypes.CLASS;
   IElementType ANONYMOUS_CLASS = JavaStubElementTypes.ANONYMOUS_CLASS;

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   public PsiJavaFileImpl(FileViewProvider file) {
-    super(Constants.JAVA_FILE, Constants.JAVA_FILE, file);
+    super(JavaParserDefinition.JAVA_FILE, JavaParserDefinition.JAVA_FILE, file);
   }
 
   public String toString(){

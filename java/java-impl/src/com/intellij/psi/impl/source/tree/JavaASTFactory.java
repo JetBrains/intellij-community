@@ -20,6 +20,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.javadoc.*;
@@ -34,7 +35,7 @@ public class JavaASTFactory extends ASTFactory implements Constants {
 
   @Override
   public LazyParseableElement createLazy(ILazyParseableElementType type, CharSequence text) {
-    if (type == JAVA_FILE) {
+    if (type == JavaParserDefinition.JAVA_FILE) {
       return new JavaFileElement(text);
     }
     else if (type == PlainTextTokenTypes.PLAIN_TEXT_FILE) {
