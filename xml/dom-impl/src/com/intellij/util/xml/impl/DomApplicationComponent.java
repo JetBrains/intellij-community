@@ -25,6 +25,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.TypeChooserManager;
+import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,14 @@ public class DomApplicationComponent {
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   final ReflectionAssignabilityCache assignabilityCache = new ReflectionAssignabilityCache();
+  private final FactoryMap<Class, DomElementsAnnotator> myClass2Annotator = new ConcurrentFactoryMap<Class, DomElementsAnnotator>() {
+
+    @Override
+    protected DomElementsAnnotator create(Class key) {
+      final DomFileDescription desc = findFileDescription(key);
+      return desc == null ? null : desc.createAnnotator();
+    }
+  };
 
   private final ConcurrentFactoryMap<Type, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Type, StaticGenericInfo>() {
     @NotNull
@@ -99,6 +108,28 @@ public class DomApplicationComponent {
     }
 
     myTypeChooserManager.copyFrom(description.getTypeChooserManager());
+  }
+
+  @Nullable
+  private synchronized DomFileDescription findFileDescription(Class rootElementClass) {
+    for (Set<DomFileDescription> descriptions : myRootTagName2FileDescription.values()) {
+      for (DomFileDescription description : descriptions) {
+        if (description.getRootElementClass() == rootElementClass) {
+          return description;
+        }
+      }
+    }
+
+    for (DomFileDescription description : myAcceptingOtherRootTagNamesDescriptions) {
+      if (description.getRootElementClass() == rootElementClass) {
+        return description;
+      }
+    }
+    return null;
+  }
+
+  public DomElementsAnnotator getAnnotator(Class rootElementClass) {
+    return myClass2Annotator.get(rootElementClass);
   }
 
   @Nullable
