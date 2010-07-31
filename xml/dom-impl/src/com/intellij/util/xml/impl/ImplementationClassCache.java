@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.Implementation;
 import gnu.trove.THashMap;
@@ -33,9 +32,9 @@ import java.util.TreeSet;
 /**
  * @author peter
  */
-class ImplementationClassCache extends ConcurrentFactoryMap<Class<? extends DomElement>, Class<? extends DomElement>> {
-  private static final Comparator<Class<? extends DomElement>> CLASS_COMPARATOR = new Comparator<Class<? extends DomElement>>() {
-    public int compare(final Class<? extends DomElement> o1, final Class<? extends DomElement> o2) {
+class ImplementationClassCache {
+  private static final Comparator<Class> CLASS_COMPARATOR = new Comparator<Class>() {
+    public int compare(final Class o1, final Class o2) {
       if (o1.isAssignableFrom(o2)) return 1;
       if (o2.isAssignableFrom(o1)) return -1;
       if (o1.equals(o2)) return 0;
@@ -44,22 +43,22 @@ class ImplementationClassCache extends ConcurrentFactoryMap<Class<? extends DomE
   };
 
 
-  private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses =
-    new THashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final Map<Class, Class> myImplementationClasses = new THashMap<Class, Class>();
+  private final ConcurrentFactoryMap<Class, Class> myCache = new ConcurrentFactoryMap<Class, Class>() {
+      @Nullable
+        protected Class create(final Class concreteInterface) {
+          final TreeSet<Class> set = new TreeSet<Class>(CLASS_COMPARATOR);
+          findImplementationClassDFS(concreteInterface, set);
+          if (!set.isEmpty()) {
+            return set.first();
+          }
+          final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
+          return implementation == null ? null : implementation.value();
+        }
+    };
 
-  @Nullable
-  protected Class<? extends DomElement> create(final Class<? extends DomElement> concreteInterface) {
-    final TreeSet<Class<? extends DomElement>> set = new TreeSet<Class<? extends DomElement>>(CLASS_COMPARATOR);
-    findImplementationClassDFS(concreteInterface, set);
-    if (!set.isEmpty()) {
-      return set.first();
-    }
-    final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
-    return implementation == null ? null : implementation.value();
-  }
-
-  private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class<? extends DomElement>> results) {
-    Class<? extends DomElement> aClass = myImplementationClasses.get(concreteInterface);
+  private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class> results) {
+    Class aClass = myImplementationClasses.get(concreteInterface);
     if (aClass != null) {
       results.add(aClass);
     }
@@ -70,7 +69,7 @@ class ImplementationClassCache extends ConcurrentFactoryMap<Class<? extends DomE
     }
   }
 
-  public final void registerImplementation(final Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
+  public final void registerImplementation(final Class domElementClass, Class implementationClass,
                                            final Disposable parentDisposable) {
     myImplementationClasses.put(domElementClass, implementationClass);
     if (parentDisposable != null) {
@@ -80,7 +79,15 @@ class ImplementationClassCache extends ConcurrentFactoryMap<Class<? extends DomE
         }
       });
     }
-    super.clear();
+    myCache.clear();
+  }
+
+  public Class get(Class key) {
+    return myCache.get(key);
+  }
+
+  public void clear() {
+    myCache.clear();
   }
 
 }
