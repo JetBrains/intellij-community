@@ -3,7 +3,7 @@
     <extensionPoint name="dom.fileDescription"
                     interface="com.intellij.util.xml.DomFileDescription"/>
 
-    <extensionPoint name="dom.implementationClass"
+    <extensionPoint name="dom.implementation"
                     interface="com.intellij.util.xml.impl.DomImplementationClassEP"/>
 
     <extensionPoint name="dom.extender"
