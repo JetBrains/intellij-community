@@ -51,6 +51,7 @@ import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
+import git4idea.checkout.branches.GitBranchConfigurations;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsConfigurable;
@@ -510,6 +511,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myReferenceTracker.activate();
     GitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
+    GitBranchConfigurations.getInstance(myProject).activate();
   }
 
   /**
@@ -517,6 +519,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   @Override
   protected void deactivate() {
+    GitBranchConfigurations.getInstance(myProject).deactivate();
     if (myRootTracker != null) {
       myRootTracker.dispose();
       myRootTracker = null;

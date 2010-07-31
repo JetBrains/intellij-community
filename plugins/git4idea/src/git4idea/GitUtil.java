@@ -494,6 +494,21 @@ public class GitUtil {
   /**
    * Get relative path
    *
+   * @param root a root file
+   * @param file a virtual file
+   * @return a relative path
+   * @throws IllegalArgumentException if path is not under root.
+   */
+  public static String relativeOrFullPath(final VirtualFile root, VirtualFile file) {
+    if (root == null) {
+      file.getPath();
+    }
+    return relativePath(VfsUtil.virtualToIoFile(root), VfsUtil.virtualToIoFile(file));
+  }
+
+  /**
+   * Get relative path
+   *
    * @param root a root path
    * @param path a path to file (possibly deleted file)
    * @return a relative path
