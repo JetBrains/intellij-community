@@ -68,12 +68,11 @@ class ImplementationClassCache {
     for (DomImplementationClassEP value : values) {
       if (value.getInterfaceClass() == concreteInterface) {
         results.add(value.getImplementationClass());
+        return;
       }
     }
-    if (results.isEmpty()) {
-      for (final Class aClass1 : ReflectionCache.getInterfaces(concreteInterface)) {
-        findImplementationClassDFS(aClass1, results);
-      }
+    for (final Class aClass1 : ReflectionCache.getInterfaces(concreteInterface)) {
+      findImplementationClassDFS(aClass1, results);
     }
   }
 
