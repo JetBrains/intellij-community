@@ -20,22 +20,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.patterns.StringPattern;
-import com.intellij.patterns.XmlNamedElementPattern;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.filters.position.PatternFilter;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import com.intellij.xml.util.XmlUtil;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.RncFileReference;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
 import org.intellij.plugins.relaxNG.model.annotation.ModelAnnotator;
-import org.intellij.plugins.relaxNG.references.PrefixReferenceProvider;
 import org.intellij.plugins.relaxNG.xml.dom.*;
 import org.intellij.plugins.relaxNG.xml.dom.impl.RngDefineImpl;
 import org.intellij.plugins.relaxNG.xml.dom.impl.RngGrammarImpl;
@@ -44,9 +38,6 @@ import org.intellij.plugins.relaxNG.xml.dom.impl.RngRefImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.StandardPatterns.string;
-import static com.intellij.patterns.XmlPatterns.*;
-
 /**
  * Created by IntelliJ IDEA.
  * User: sweinreuter
@@ -54,13 +45,6 @@ import static com.intellij.patterns.XmlPatterns.*;
  */
 public class ProjectLoader implements ProjectComponent {
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
-
-  private static final XmlNamedElementPattern RNG_TAG_PATTERN = xmlTag().withNamespace(string().equalTo(RNG_NAMESPACE));
-
-  private static final XmlNamedElementPattern.XmlAttributePattern NAME_ATTR_PATTERN = xmlAttribute("name");
-  private static final StringPattern ELEMENT_OR_ATTRIBUTE_PATTERN = string().oneOf("element", "attribute");
-  private static final XmlNamedElementPattern.XmlAttributePattern NAME_PATTERN = NAME_ATTR_PATTERN.withParent(
-          RNG_TAG_PATTERN.withLocalName(ELEMENT_OR_ATTRIBUTE_PATTERN));
 
   private final Project myProject;
 
@@ -74,25 +58,8 @@ public class ProjectLoader implements ProjectComponent {
     return "RELAX-NG";
   }
 
-  public void initComponent() {
-    registerFileDescriptions();
-
-    registerReferences();
-  }
-
-  private void registerReferences() {
-    final ReferenceProvidersRegistry registry = ReferenceProvidersRegistry.getInstance(myProject);
-    XmlUtil.registerXmlAttributeValueReferenceProvider(registry, new String[]{
-            "name"
-    }, new PatternFilter(xmlAttributeValue().withParent(NAME_PATTERN)), true, new PrefixReferenceProvider());
-
-//    final XmlAttributeValuePattern id = xmlAttributeValue().withParent(xmlAttribute()).with(IdRefProvider.HAS_ID_REF_TYPE);
-//    final XmlAttributeValuePattern idref = xmlAttributeValue().withParent(xmlAttribute()).with(IdRefProvider.HAS_ID_TYPE);
-//    registry.registerXmlAttributeValueReferenceProvider(null, new PatternFilter(or(id, idref)), false, new IdRefProvider());
-  }
-
   @SuppressWarnings({ "deprecation" })
-  private void registerFileDescriptions() {
+  public void initComponent() {
     final DomManager mgr = DomManager.getDomManager(myProject);
     mgr.registerFileDescription(new MyFileDescription<RngGrammar>(RngGrammar.class, "grammar"));
     mgr.registerFileDescription(new MyFileDescription<RngElement>(RngElement.class, "element"));

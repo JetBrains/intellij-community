@@ -64,6 +64,7 @@
 
     <externalAnnotator language="XML" implementationClass="org.intellij.plugins.relaxNG.validation.RngSchemaValidator" />
     <lang.documentationProvider language="XML" implementationClass="org.intellij.plugins.relaxNG.RngDocumentationProvider" />
+    <psi.referenceContributor implementation="org.intellij.plugins.relaxNG.RelaxNGReferenceContributor"/>
   </extensions>
 
   <project-components>
