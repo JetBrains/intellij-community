@@ -108,7 +108,7 @@ public class DomApplicationComponent {
   }
 
   public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
-                                           final Disposable parentDisposable) {
+                                           @Nullable final Disposable parentDisposable) {
     myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass, parentDisposable);
   }
 

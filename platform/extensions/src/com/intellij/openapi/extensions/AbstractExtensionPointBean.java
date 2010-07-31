@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.extensions;
 
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class AbstractExtensionPointBean implements PluginAware {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.AbstractExtensionPointBean");
   protected PluginDescriptor myPluginDescriptor;
 
   public final void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
@@ -32,6 +35,17 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   @NotNull
   public final <T> Class<T> findClass(final String className) throws ClassNotFoundException {
     return (Class<T>)Class.forName(className, true, getLoaderForClass());
+  }
+
+  @Nullable
+  public final <T> Class<T> findClassNoExceptions(final String className) {
+    try {
+      return findClass(className);
+    }
+    catch (ClassNotFoundException e) {
+      LOG.error("Problem loading class " + className + " from plugin " + myPluginDescriptor.getPluginId().getIdString(), e);
+      return null;
+    }
   }
 
   public ClassLoader getLoaderForClass() {
