@@ -16,9 +16,9 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -34,7 +34,7 @@ public class JavaFileElement extends FileElement implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.JavaFileElement");
 
   public JavaFileElement(CharSequence text) {
-    super(JavaParserDefinition.JAVA_FILE, text);
+    super(JavaStubElementTypes.JAVA_FILE, text);
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {

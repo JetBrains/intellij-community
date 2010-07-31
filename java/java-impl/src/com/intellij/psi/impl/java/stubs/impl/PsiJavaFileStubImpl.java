@@ -19,7 +19,6 @@
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -61,7 +60,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   }
 
   public IStubFileElementType getType() {
-    return JavaParserDefinition.JAVA_FILE;
+    return JavaStubElementTypes.JAVA_FILE;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

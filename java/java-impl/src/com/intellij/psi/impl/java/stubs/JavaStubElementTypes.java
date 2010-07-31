@@ -20,6 +20,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.impl.source.JavaFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 
 public class JavaStubElementTypes {
   public static final JavaClassElementType CLASS = new JavaClassElementType("CLASS");
@@ -46,4 +47,5 @@ public class JavaStubElementTypes {
   public static final JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
   public static final JavaImportStatementElementType IMPORT_STATEMENT = new JavaImportStatementElementType("IMPORT_STATEMENT");
   public static final JavaImportStatementElementType IMPORT_STATIC_STATEMENT = new JavaImportStatementElementType("IMPORT_STATIC_STATEMENT");
+  public static final IStubFileElementType JAVA_FILE = new JavaFileElementType();
 }
