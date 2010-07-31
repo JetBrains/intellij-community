@@ -24,18 +24,18 @@ public class BuildoutFacetConfigurator implements DirectoryProjectConfigurator {
     if (modules.length > 0) {
       final Module module = modules[0];
       if (BuildoutFacet.getInstance(module) == null) {
-        if (BuildoutFacet.getBinDir(baseDir) != null) setupFacet(module);
+        if (BuildoutFacet.getBinDir(baseDir) != null) setupFacet(module, null);
       }
     }
   }
 
 
-  static void setupFacet(Module module) {
+  static void setupFacet(Module module, BuildoutFacetConfiguration config) {
     //TODO: refactor, see other python facets
     FacetManager facetManager = FacetManager.getInstance(module);
     final ModifiableFacetModel model = facetManager.createModifiableModel();
     BuildoutFacetType facetType = BuildoutFacetType.getInstance();
-    BuildoutFacetConfiguration config = ProjectFacetManager.getInstance(module.getProject()).createDefaultConfiguration(facetType);
+    if (config == null) config = ProjectFacetManager.getInstance(module.getProject()).createDefaultConfiguration(facetType);
     BuildoutFacet facet = facetManager.createFacet(facetType, facetType.getDefaultFacetName(), config, null);
     model.addFacet(facet);
 

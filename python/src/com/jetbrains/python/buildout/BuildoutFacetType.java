@@ -28,9 +28,7 @@ public class BuildoutFacetType extends FacetType<BuildoutFacet, BuildoutFacetCon
 
   @Override
   public BuildoutFacetConfiguration createDefaultConfiguration() {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     return new BuildoutFacetConfiguration(null);
-    // TODO: can there be no project?
   }
 
   @Override
