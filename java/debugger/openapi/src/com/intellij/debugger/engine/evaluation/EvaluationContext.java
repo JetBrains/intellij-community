@@ -32,4 +32,6 @@ public interface EvaluationContext extends StackFrameContext{
   Project getProject();
 
   ClassLoaderReference getClassLoader() throws EvaluateException;
+
+  Value getThisObject();
 }

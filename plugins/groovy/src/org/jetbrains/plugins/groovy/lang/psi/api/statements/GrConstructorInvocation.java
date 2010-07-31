@@ -16,18 +16,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 29.05.2007
  */
-public interface GrConstructorInvocation extends GrStatement, GrConstructorCall, PsiPolyVariantReference {
+public interface GrConstructorInvocation extends GrStatement, GrConstructorCall {
   boolean isSuperCall();
 
   boolean isThisCall();
@@ -35,7 +34,7 @@ public interface GrConstructorInvocation extends GrStatement, GrConstructorCall,
   @NotNull
   GrArgumentList getArgumentList();
 
-  PsiElement getThisOrSuperKeyword();
+  GrThisSuperReferenceExpression getThisOrSuperKeyword();
 
   @Nullable
   PsiClass getDelegatedClass();

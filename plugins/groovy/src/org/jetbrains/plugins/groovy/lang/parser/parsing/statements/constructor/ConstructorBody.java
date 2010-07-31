@@ -65,8 +65,21 @@ public class ConstructorBody implements GroovyElementTypes {
 
   private static boolean parseExplicitConstructor(PsiBuilder builder, GroovyParser parser) {
     TypeArguments.parse(builder);
+    boolean result = false;
+    if (ParserUtils.lookAhead(builder, kTHIS, mLPAREN)) {
+      final PsiBuilder.Marker marker = builder.mark();
+      ParserUtils.getToken(builder, kTHIS);
+      marker.done(THIS_REFERENCE_EXPRESSION);
+      result = true;
+    }
+    if (ParserUtils.lookAhead(builder, kSUPER, mLPAREN)) {
+      final PsiBuilder.Marker marker = builder.mark();
+      ParserUtils.getToken(builder, kSUPER);
+      marker.done(SUPER_REFERENCE_EXPRESSION);
+      result = true;
+    }
 
-    if ((ParserUtils.getToken(builder, kTHIS) || ParserUtils.getToken(builder, kSUPER)) && ParserUtils.lookAhead(builder, mLPAREN)) {
+    if (result) {
       PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mLPAREN);
       ArgumentList.parseArgumentList(builder, mRPAREN, parser);

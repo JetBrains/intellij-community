@@ -148,7 +148,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   public void calcFindUsagesOptions(FindUsagesOptions options) {
     options.searchScope = myScopeCombo == null ? GlobalSearchScope.allScope(myProject) : myScopeCombo.getSelectedScope();
 
-    options.isSearchForTextOccurences = isToChange(myCbToSearchForTextOccurences) && isSelected(myCbToSearchForTextOccurences);
+    options.isSearchForTextOccurrences = isToChange(myCbToSearchForTextOccurences) && isSelected(myCbToSearchForTextOccurences);
   }
 
   protected void update() {

@@ -35,6 +35,7 @@ public class ReferenceParser {
     public boolean isPrimitive = false;
     public boolean isParameterized = false;
     public boolean isArray = false;
+    public boolean hasErrors = false;
     public PsiBuilder.Marker marker = null;
   }
 
@@ -85,7 +86,7 @@ public class ReferenceParser {
       typeInfo.isPrimitive = true;
     }
     else if (tokenType == JavaTokenType.IDENTIFIER) {
-      parseJavaCodeReference(builder, eatLastDot, true, annotationsSupported, typeInfo);
+      parseJavaCodeReference(builder, eatLastDot, true, annotationsSupported, false, false, typeInfo);
     }
     else if (wildcard && tokenType == JavaTokenType.QUEST) {
       type.drop();
@@ -98,10 +99,10 @@ public class ReferenceParser {
     }
 
     while (true) {
+      type.done(JavaElementType.TYPE);
       if (annotationsSupported) {
         DeclarationParser.parseAnnotations(builder);
       }
-      type.done(JavaElementType.TYPE);
 
       if (!expect(builder, JavaTokenType.LBRACKET)) {
         break;
@@ -137,12 +138,19 @@ public class ReferenceParser {
   @Nullable
   public static PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot,
                                                          final boolean parameterList, final boolean annotations) {
-    return parseJavaCodeReference(builder, eatLastDot, parameterList, annotations, new TypeInfo());
+    return parseJavaCodeReference(builder, eatLastDot, parameterList, annotations, false, false, new TypeInfo());
+  }
+
+  public static boolean parseImportCodeReference(final PsiBuilder builder, final boolean isStatic) {
+    final TypeInfo typeInfo = new TypeInfo();
+    parseJavaCodeReference(builder, true, false, false, true, isStatic, typeInfo);
+    return !typeInfo.hasErrors;
   }
 
   @Nullable
   private static PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot,
                                                           final boolean parameterList, final boolean annotations,
+                                                          final boolean isImport, final boolean isStaticImport,
                                                           final TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
@@ -152,6 +160,10 @@ public class ReferenceParser {
 
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
       refElement.rollbackTo();
+      if (isImport) {
+        error(builder, JavaErrorMessages.message("expected.identifier"));
+      }
+      typeInfo.hasErrors = true;
       return null;
     }
 
@@ -173,6 +185,10 @@ public class ReferenceParser {
       if (expect(builder, JavaTokenType.IDENTIFIER)) {
         hasIdentifier = true;
       }
+      else if (isImport && expect(builder, JavaTokenType.ASTERISK)) {
+        dotPos.drop();
+        return refElement;
+      }
       else {
         if (!eatLastDot) {
           dotPos.rollbackTo();
@@ -182,23 +198,32 @@ public class ReferenceParser {
       }
       dotPos.drop();
 
+      final PsiBuilder.Marker prevElement = refElement;
       refElement = refElement.precede();
 
       if (!hasIdentifier) {
-        error(builder, JavaErrorMessages.message("expected.identifier"));
-        break;
+        typeInfo.hasErrors = true;
+        if (isImport) {
+          error(builder, JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
+          refElement.drop();
+          return prevElement;
+        }
+        else {
+          error(builder, JavaErrorMessages.message("expected.identifier"));
+          break;
+        }
       }
 
       if (parameterList) {
         typeInfo.isParameterized = (builder.getTokenType() == JavaTokenType.LT);
         parseReferenceParameterList(builder, true);
       }
-      else {
+      else if (!isStaticImport || builder.getTokenType() == JavaTokenType.DOT) {
         emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
       }
     }
 
-    refElement.done(JavaElementType.JAVA_CODE_REFERENCE);
+    refElement.done(isStaticImport ? JavaElementType.IMPORT_STATIC_REFERENCE : JavaElementType.JAVA_CODE_REFERENCE);
     return refElement;
   }
 

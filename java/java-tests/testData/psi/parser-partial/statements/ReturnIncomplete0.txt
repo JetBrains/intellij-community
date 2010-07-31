@@ -1,0 +1,10 @@
+PsiJavaFile:ReturnIncomplete0.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiReturnStatement
+      PsiKeyword:return('return')
+      PsiErrorElement:';' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

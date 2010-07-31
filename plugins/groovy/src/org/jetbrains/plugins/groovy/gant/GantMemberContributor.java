@@ -39,7 +39,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
                                      PsiElement place,
                                      ResolveState state) {
     if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place)) {
-      processAntTasks(processor, place);
+      processAntTasks(processor, place, state);
       return;
     }
 
@@ -59,7 +59,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
         final PsiMethod method = ((GrMethodCall)parent).resolveMethod();
         if (method instanceof AntBuilderMethod) {
           antTasksProcessed = true;
-          if (!processAntTasks(processor, place)) {
+          if (!processAntTasks(processor, place, state)) {
             return;
           }
           if (!((AntBuilderMethod)method).processNestedElements(processor)) {
@@ -84,25 +84,25 @@ public class GantMemberContributor extends NonCodeMembersContributor {
       if (targetName != null) {
         final PsiNamedElement variable = new LightVariableBuilder(targetName, GrClosableBlock.GROOVY_LANG_CLOSURE, label).
           setBaseIcon(GantIcons.GANT_TARGET);
-        if (!ResolveUtil.processElement(processor, variable)) {
+        if (!ResolveUtil.processElement(processor, variable, state)) {
           return;
         }
       }
     }
 
     if (!antTasksProcessed) {
-      processAntTasks(processor, place);
+      processAntTasks(processor, place, state);
     }
 
   }
 
-  private static boolean processAntTasks(PsiScopeProcessor processor, PsiElement place) {
+  private static boolean processAntTasks(PsiScopeProcessor processor, PsiElement place, ResolveState state) {
     if (!AntTasksProvider.antAvailable) {
       return true;
     }
 
     for (LightMethodBuilder task : AntTasksProvider.getAntTasks(place)) {
-      if (!ResolveUtil.processElement(processor, task)) {
+      if (!ResolveUtil.processElement(processor, task, state)) {
         return false;
       }
     }

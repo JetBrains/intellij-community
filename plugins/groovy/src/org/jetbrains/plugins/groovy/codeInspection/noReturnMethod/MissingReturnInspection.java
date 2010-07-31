@@ -24,6 +24,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
@@ -86,7 +88,8 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     final Ref<Boolean> hasExplicitReturn = new Ref<Boolean>(false);
     final Ref<Boolean> sometimes = new Ref<Boolean>(false);
     ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
-      public boolean visit(Instruction instruction) {
+      @Override
+      public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
         if (instruction instanceof MaybeReturnInstruction) {
           if (((MaybeReturnInstruction)instruction).mayReturnValue()) {
             sometimes.set(true);
@@ -99,7 +102,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
         final PsiElement element = instruction.getElement();
         if (element instanceof GrReturnStatement) {
           sometimes.set(true);
-          if (((GrReturnStatement)element).getReturnValue() != null) {
+          if (returnValue != null) {
             hasExplicitReturn.set(true);
           }
         }

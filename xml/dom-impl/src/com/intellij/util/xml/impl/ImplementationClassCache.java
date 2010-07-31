@@ -19,23 +19,22 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.xml.DomElement;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.Implementation;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
  * @author peter
  */
-class ImplementationClassCache extends ConcurrentFactoryMap<Class<? extends DomElement>, Class<? extends DomElement>> {
-  private static final Comparator<Class<? extends DomElement>> CLASS_COMPARATOR = new Comparator<Class<? extends DomElement>>() {
-    public int compare(final Class<? extends DomElement> o1, final Class<? extends DomElement> o2) {
+class ImplementationClassCache {
+  private static final Comparator<Class> CLASS_COMPARATOR = new Comparator<Class>() {
+    public int compare(final Class o1, final Class o2) {
       if (o1.isAssignableFrom(o2)) return 1;
       if (o2.isAssignableFrom(o1)) return -1;
       if (o1.equals(o2)) return 0;
@@ -44,43 +43,70 @@ class ImplementationClassCache extends ConcurrentFactoryMap<Class<? extends DomE
   };
 
 
-  private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses =
-    new THashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final MultiMap<String, DomImplementationClassEP> myImplementationClasses = new MultiMap<String, DomImplementationClassEP>();
+  private final ConcurrentFactoryMap<Class, Class> myCache = new ConcurrentFactoryMap<Class, Class>() {
+      @Nullable
+        protected Class create(final Class concreteInterface) {
+          final TreeSet<Class> set = new TreeSet<Class>(CLASS_COMPARATOR);
+          findImplementationClassDFS(concreteInterface, set);
+          if (!set.isEmpty()) {
+            return set.first();
+          }
+          final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
+          return implementation == null ? null : implementation.value();
+        }
+    };
 
-  @Nullable
-  protected Class<? extends DomElement> create(final Class<? extends DomElement> concreteInterface) {
-    final TreeSet<Class<? extends DomElement>> set = new TreeSet<Class<? extends DomElement>>(CLASS_COMPARATOR);
-    findImplementationClassDFS(concreteInterface, set);
-    if (!set.isEmpty()) {
-      return set.first();
+  ImplementationClassCache() {
+    for (DomImplementationClassEP ep : DomImplementationClassEP.EP_NAME.getExtensions()) {
+      myImplementationClasses.putValue(ep.interfaceName, ep);
     }
-    final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
-    return implementation == null ? null : implementation.value();
   }
 
-  private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class<? extends DomElement>> results) {
-    Class<? extends DomElement> aClass = myImplementationClasses.get(concreteInterface);
-    if (aClass != null) {
-      results.add(aClass);
+  private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class> results) {
+    final Collection<DomImplementationClassEP> values = myImplementationClasses.get(concreteInterface.getName());
+    for (DomImplementationClassEP value : values) {
+      if (value.getInterfaceClass() == concreteInterface) {
+        results.add(value.getImplementationClass());
+      }
     }
-    else {
+    if (results.isEmpty()) {
       for (final Class aClass1 : ReflectionCache.getInterfaces(concreteInterface)) {
         findImplementationClassDFS(aClass1, results);
       }
     }
   }
 
-  public final void registerImplementation(final Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
-                                           final Disposable parentDisposable) {
-    myImplementationClasses.put(domElementClass, implementationClass);
+  public final void registerImplementation(final Class domElementClass, final Class implementationClass,
+                                           @Nullable final Disposable parentDisposable) {
+    final DomImplementationClassEP ep = new DomImplementationClassEP() {
+      @Override
+      public Class getInterfaceClass() {
+        return domElementClass;
+      }
+
+      @Override
+      public Class getImplementationClass() {
+        return implementationClass;
+      }
+    };
+    myImplementationClasses.putValue(domElementClass.getName(), ep);
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, new Disposable() {
         public void dispose() {
-          myImplementationClasses.remove(domElementClass);
+          myImplementationClasses.remove(domElementClass.getName());
         }
       });
     }
-    super.clear();
+    myCache.clear();
+  }
+
+  public Class get(Class key) {
+    return myCache.get(key);
+  }
+
+  public void clear() {
+    myCache.clear();
   }
 
 }

@@ -1,0 +1,25 @@
+PsiJavaFile:TryIncomplete4.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiTryStatement
+      PsiKeyword:try('try')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiJavaToken:RBRACE('}')
+      PsiCatchSection
+        PsiKeyword:catch('catch')
+        PsiJavaToken:LPARENTH('(')
+        PsiModifierList:
+          <empty list>
+        PsiTypeElement:E
+          PsiJavaCodeReferenceElement:E
+            PsiIdentifier:E('E')
+            PsiReferenceParameterList
+              <empty list>
+        PsiErrorElement:Identifier expected
+          <empty list>
+        PsiErrorElement:')' expected
+          <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

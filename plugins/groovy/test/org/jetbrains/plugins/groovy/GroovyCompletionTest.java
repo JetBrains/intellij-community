@@ -64,54 +64,6 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doSmartTest();
   }
 
-  public void testEachMethodForList() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testEachMethodForMapWithKeyValue() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testEachMethodForMapWithEntry() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testWithMethod() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testInjectMethodForCollection() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testInjectMethodForArray() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testInjectMethodForMap() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testClosureDefaultParameterInEachMethod() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testArrayLikeAccessForList() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testArrayLikeAccessForMap() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testEachMethodForRanges() throws Throwable {
-    doBasicTest();
-  }
-
-  public void testEachMethodForEnumRanges() throws Throwable {
-    doBasicTest();
-  }
-
   public void testNamedParametersForApplication() throws Throwable {
     doVariantableTest("abx", "aby");
   }
@@ -278,4 +230,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
                                                                             "}");
     doSmartTest();
   }
+
+  public void testIntCompletionInPlusMethod() {doBasicTest();}
+  public void testIntCompletionInGenericParameter() {doBasicTest();}
 }

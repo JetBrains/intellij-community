@@ -65,6 +65,19 @@ public class GrTableParameterInfo {
     myDefaultInitializer = new GroovyCodeFragment(project, "");
   }
 
+  public GrTableParameterInfo(Project project,
+                              PsiElement context,
+                              String name,
+                              String type,
+                              String defaultValue,
+                              String defaultInitializer) {
+    this.myPosition = -1;
+    myName = new GroovyCodeFragment(project, name);
+    myDefaultValue = new GroovyCodeFragment(project, defaultValue);
+    myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment(type, context, true, true);
+    myDefaultInitializer = new GroovyCodeFragment(project, defaultInitializer);
+  }
+
   public GroovyCodeFragment getNameFragment() {
     return myName;
   }

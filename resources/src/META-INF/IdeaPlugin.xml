@@ -362,6 +362,9 @@
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactValidationUtil"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactValidationUtilImpl"/>
 
+    <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
+                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                         serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
 

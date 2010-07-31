@@ -30,7 +30,7 @@ public class GrSourceFilterScope extends DelegatingGlobalSearchScope {
   private final ProjectFileIndex myIndex;
 
   public GrSourceFilterScope(@NotNull final GlobalSearchScope delegate) {
-    super(delegate);
+    super(delegate, "groovy.sourceFilter");
     myIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
   }
 

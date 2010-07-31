@@ -5,7 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -39,9 +40,6 @@ import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
-import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import net.sf.cglib.proxy.AdvancedProxy;
@@ -78,7 +76,6 @@ public final class DomManagerImpl extends DomManager {
 
   private final Project myProject;
   private final DomApplicationComponent myApplicationComponent;
-  private final DomElementAnnotationsManagerImpl myAnnotationsManager;
   private final PsiFileFactory myFileFactory;
 
   private long myModificationCount;
@@ -86,19 +83,12 @@ public final class DomManagerImpl extends DomManager {
   private final ProjectFileIndex myFileIndex;
   private final SemService mySemService;
 
-  public DomManagerImpl(final PomModel pomModel,
-                        final Project project, final PsiManager psiManager,
-                        final XmlAspect xmlAspect, final DomElementAnnotationsManager annotationsManager,
-                        final VirtualFileManager virtualFileManager,
-                        final StartupManager startupManager,
-                        final ProjectRootManager projectRootManager,
-                        final DomApplicationComponent applicationComponent,
-                        final ConverterManager converterManager, SemService semService) {
+  public DomManagerImpl(final Project project, final XmlAspect xmlAspect) {
     myProject = project;
-    mySemService = semService;
-    myConverterManager = (ConverterManagerImpl)converterManager;
-    myApplicationComponent = applicationComponent;
-    myAnnotationsManager = (DomElementAnnotationsManagerImpl)annotationsManager;
+    mySemService = SemService.getSemService(project);
+    myConverterManager = (ConverterManagerImpl)ServiceManager.getService(ConverterManager.class);
+    myApplicationComponent = DomApplicationComponent.getInstance();
+    final PomModel pomModel = PomManager.getModel(project);
     pomModel.addModelListener(new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
@@ -115,6 +105,8 @@ public final class DomManagerImpl extends DomManager {
     }, project);
 
     myFileFactory = PsiFileFactory.getInstance(project);
+
+    final PsiManager psiManager = PsiManager.getInstance(project);
 
     final Runnable setupVfsListeners = new Runnable() {
       public void run() {
@@ -171,20 +163,18 @@ public final class DomManagerImpl extends DomManager {
             }
           }
         };
-        virtualFileManager.addVirtualFileListener(listener, project);
+        VirtualFileManager.getInstance().addVirtualFileListener(listener, project);
       }
     };
+
+    final StartupManager startupManager = StartupManager.getInstance(project);
     if (!((StartupManagerEx)startupManager).startupActivityPassed()) {
       startupManager.registerStartupActivity(setupVfsListeners);
     } else {
       setupVfsListeners.run();
     }
 
-    myFileIndex = projectRootManager.getFileIndex();
-
-    for (final DomFileDescription description : Extensions.getExtensions(DomFileDescription.EP_NAME)) {
-      _registerFileDescription(description);
-    }
+    myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
   private void processVfsChange(final VirtualFile file) {
@@ -478,19 +468,9 @@ public final class DomManagerImpl extends DomManager {
   }
 
   public final void registerFileDescription(final DomFileDescription description) {
-    _registerFileDescription(description);
-
-    myApplicationComponent.registerFileDescription(description);
-  }
-
-  private void _registerFileDescription(final DomFileDescription description) {
     mySemService.clearCache();
 
-    final DomElementsAnnotator annotator = description.createAnnotator();
-    if (annotator != null) {
-      //noinspection unchecked
-      myAnnotationsManager.registerDomElementsAnnotator(annotator, description.getRootElementClass());
-    }
+    myApplicationComponent.registerFileDescription(description);
   }
 
   @NotNull

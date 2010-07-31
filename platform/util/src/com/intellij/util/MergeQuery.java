@@ -38,15 +38,14 @@ public class MergeQuery<T> implements Query<T>{
   @NotNull
   public Collection<T> findAll() {
     List<T> results = new ArrayList<T>();
-    results.addAll(myQuery1.findAll());
-    results.addAll(myQuery2.findAll());
+    forEach(new CommonProcessors.CollectProcessor<T>(results));
     return results;
   }
 
   public T findFirst() {
-    final T r1 = myQuery1.findFirst();
-    if (r1 != null) return r1;
-    return myQuery2.findFirst();
+    final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>();
+    forEach(processor);
+    return processor.getFoundValue();
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {

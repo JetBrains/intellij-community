@@ -1,0 +1,17 @@
+PsiJavaFile:SyncNormal.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiSynchronizedStatement
+      PsiKeyword:synchronized('synchronized')
+      PsiJavaToken:LPARENTH('(')
+      PsiReferenceExpression:o
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:o('o')
+      PsiJavaToken:RPARENTH(')')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

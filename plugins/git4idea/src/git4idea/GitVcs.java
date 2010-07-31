@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
 import git4idea.changes.GitChangeUtils;
@@ -50,6 +51,7 @@ import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
+import git4idea.checkout.branches.GitBranchConfigurations;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsConfigurable;
@@ -178,6 +180,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   private final EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
   /**
+   * The dispatcher object for git configuration events
+   */
+  private final EventDispatcher<GitReferenceListener> myReferenceListeners = EventDispatcher.create(GitReferenceListener.class);
+  /**
    * Tracker for ignored files
    */
   private GitIgnoreTracker myGitIgnoreTracker;
@@ -197,6 +203,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final TreeDiffProvider myTreeDiffProvider;
 
   private final GitCommitAndPushExecutor myCommitAndPushExecutor;
+  /**
+   * The reference tracker
+   */
+  private GitReferenceTracker myReferenceTracker;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -229,6 +239,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(gitCheckinEnvironment);
+    myReferenceTracker = new GitReferenceTracker(myProject, this, myReferenceListeners.getMulticaster());
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
   }
 
@@ -273,6 +284,23 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myConfigListeners.removeListener(listener);
   }
 
+  /**
+   * Add listener for git roots
+   *
+   * @param listener the listener to add
+   */
+  public void addGitReferenceListener(GitReferenceListener listener) {
+    myReferenceListeners.addListener(listener);
+  }
+
+  /**
+   * Remove listener for git roots
+   *
+   * @param listener the listener to remove
+   */
+  public void removeGitReferenceListener(GitReferenceListener listener) {
+    myReferenceListeners.removeListener(listener);
+  }
 
   /**
    * Add listener for git roots
@@ -480,8 +508,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myGitIgnoreTracker == null) {
       myGitIgnoreTracker = new GitIgnoreTracker(myProject, this);
     }
+    myReferenceTracker.activate();
     GitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
+    GitBranchConfigurations.getInstance(myProject).activate();
   }
 
   /**
@@ -489,6 +519,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   @Override
   protected void deactivate() {
+    GitBranchConfigurations.getInstance(myProject).deactivate();
     if (myRootTracker != null) {
       myRootTracker.dispose();
       myRootTracker = null;
@@ -505,6 +536,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myConfigTracker.dispose();
       myConfigTracker = null;
     }
+    myReferenceTracker.deactivate();
     GitUsersComponent.getInstance(myProject).deactivate();
     GitProjectLogManager.getInstance(myProject).deactivate();
   }
@@ -541,8 +573,13 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         buffer.append("\n");
         buffer.append(exception.getMessage());
       }
-      String msg = buffer.toString();
-      Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title"));
+      final String msg = buffer.toString();
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title"));
+        }
+      });
     }
   }
 

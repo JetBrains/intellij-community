@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -124,7 +123,12 @@ public class FileContentQueue {
       if (e instanceof InterruptedException) throw (InterruptedException)e;
 
       if (e instanceof IOException || e instanceof InvalidVirtualFileAccessException) LOG.info(e);
-      else LOG.error(e);
+      else if (ApplicationManager.getApplication().isUnitTestMode()) {
+        e.printStackTrace();
+      }
+      else {
+        LOG.error(e);
+      }
 
       return false;
     }

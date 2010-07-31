@@ -18,6 +18,7 @@ package com.intellij.lang.java.parser.partial;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import com.intellij.lang.java.parser.ReferenceParser;
+import com.intellij.pom.java.LanguageLevel;
 
 
 public class ReferenceParserTest extends JavaParsingTestCase {
@@ -35,6 +36,10 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testType3() { doTypeParserTest("int[][", false); }
   public void testType4() { doTypeParserTest("Map<String,List<String>>", false); }
   public void testType5() { doTypeParserTest("Object[]...", false); }
+  public void testType6() {
+    withLevel(LanguageLevel.JDK_1_7,
+              new Runnable() { public void run() { doTypeParserTest("@English String @NonEmpty []", false); } });
+  }
 
   public void testTypeParams0() { doTypeParamsParserTest("<T>"); }
   public void testTypeParams1() { doTypeParamsParserTest("<T, U>"); }
@@ -46,7 +51,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testTypeParams7() { doTypeParamsParserTest("<T extends X, Y>"); }
 
   private void doRefParserTest(final String text, final boolean incomplete) {
-    doParserTest(text, new Parser() {
+    doParserTest(text, new TestParser() {
       public void parse(final PsiBuilder builder) {
         ReferenceParser.parseJavaCodeReference(builder, incomplete, false, false);
       }
@@ -54,7 +59,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   }
 
   private void doTypeParserTest(final String text, final boolean incomplete) {
-    doParserTest(text, new Parser() {
+    doParserTest(text, new TestParser() {
       public void parse(final PsiBuilder builder) {
         ReferenceParser.parseTypeWithEllipsis(builder, incomplete, false);
       }
@@ -62,7 +67,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   }
 
   private void doTypeParamsParserTest(final String text) {
-    doParserTest(text, new Parser() {
+    doParserTest(text, new TestParser() {
       public void parse(final PsiBuilder builder) {
         ReferenceParser.parseTypeParameters(builder);
       }

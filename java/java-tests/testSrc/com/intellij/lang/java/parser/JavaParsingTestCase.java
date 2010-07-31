@@ -15,16 +15,28 @@
  */
 package com.intellij.lang.java.parser;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
+import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.PsiJavaFileImpl;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ParsingTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
-
-import static com.intellij.JavaTestUtil.getJavaBuilder;
 
 
 public abstract class JavaParsingTestCase extends ParsingTestCase {
@@ -34,33 +46,69 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     IdeaTestCase.initPlatformPrefix();
   }
 
-  protected interface Parser {
+  protected static void withLevel(final LanguageLevel level, final Runnable r) {
+    final LanguageLevel current = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
+    try {
+      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
+      r.run();
+    }
+    finally {
+      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(current);
+    }
+  }
+
+  protected interface TestParser {
     void parse(PsiBuilder builder);
   }
 
-  protected void doParserTest(final String text, final Parser parser) {
+  protected void doParserTest(final String source, final TestParser parser) {
     final String name = getTestName(false);
 
-    final PsiBuilder builder = getJavaBuilder(text);
-    final PsiBuilder.Marker root = builder.mark();
+    final IElementType fileElementType = new IFileElementType("test.java.file", StdLanguages.JAVA) {
+      @Override
+      public ASTNode parseContents(final ASTNode chameleon) {
+        final PsiBuilder builder = createBuilder(chameleon);
 
-    parser.parse(builder);
+        final PsiBuilder.Marker root = builder.mark();
+        parser.parse(builder);
+        if (!builder.eof()) {
+          final PsiBuilder.Marker unparsed = builder.mark();
+          while (!builder.eof()) builder.advanceLexer();
+          unparsed.error("Unparsed tokens");
+        }
+        root.done(this);
 
-    if (builder.getTokenType() != null) {
-      final PsiBuilder.Marker unparsed = builder.mark();
-      while (builder.getTokenType() != null) builder.advanceLexer();
-      unparsed.error("Unparsed tokens");
-    }
+        return builder.getTreeBuilt().getFirstChildNode();
+      }
+    };
 
-    root.done(JavaElementType.JAVA_FILE);
+    final LightVirtualFile virtualFile = new LightVirtualFile(name + '.' + myFileExt, StdFileTypes.JAVA, source, -1);
+    final FileViewProvider viewProvider = new SingleRootFileViewProvider(PsiManager.getInstance(getProject()), virtualFile, true);
+    final PsiJavaFileImpl psiFile = new PsiJavaFileImpl(viewProvider) {
+      @Override
+      protected FileElement createFileElement(final CharSequence text) {
+        return new FileElement(fileElementType, text);
+      }
+    };
 
-    final String raw = DebugUtil.treeToString(builder.getTreeBuilt(), false);
-    final String tree = raw.replaceFirst("com.intellij.psi.util.PsiUtilBase\\S+", "PsiJavaFile:" + name + ".java");
     try {
-      checkResult(name + ".txt", tree);
+      checkResult(name + ".txt", DebugUtil.psiToString(psiFile, false));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static PsiBuilder createBuilder(final ASTNode chameleon) {
+    final Project project = chameleon.getPsi().getProject();
+    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+    final PsiBuilder builder = factory.createBuilder(project, chameleon, null, chameleon.getElementType().getLanguage(), chameleon.getChars());
+
+    builder.setDebugMode(true);
+
+    final LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+    JavaParserUtil.setLanguageLevel(builder, level);
+
+    return builder;
   }
 }

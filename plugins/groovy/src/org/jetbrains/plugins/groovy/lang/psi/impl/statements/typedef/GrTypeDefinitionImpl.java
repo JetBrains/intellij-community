@@ -563,7 +563,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public GrTypeParameterList getTypeParameterList() {
-    return findChildByClass(GrTypeParameterList.class);
+    return (GrTypeParameterList)findChildByType(GroovyElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @NotNull

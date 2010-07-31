@@ -1,0 +1,10 @@
+PsiJavaFile:WhileIncomplete0.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiWhileStatement
+      PsiKeyword:while('while')
+      PsiErrorElement:'(' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

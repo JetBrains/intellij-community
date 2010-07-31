@@ -47,15 +47,26 @@ class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
     return GROOVY_17_PROJECT_DESCRIPTOR;
   }
 
-
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/completionWithLibrary/";
+    return TestUtils.getTestDataPath() + "groovy/completion/";
   }
-
 
   public void testCategoryMethod() {doBasicTest()}
   public void testCategoryProperty() {doBasicTest()}
   public void testMultipleCategories() {doBasicTest()}
 
+  public void testArrayLikeAccessForList() throws Throwable {doBasicTest(); }
+  public void testArrayLikeAccessForMap() throws Throwable {doBasicTest();}
+
+  public void testEachMethodForList() throws Throwable {doBasicTest();}
+  public void testEachMethodForMapWithKeyValue() throws Throwable {doBasicTest();}
+  public void testEachMethodForMapWithEntry() throws Throwable {doBasicTest();}
+  public void testWithMethod() throws Throwable {doBasicTest();}
+  public void testInjectMethodForCollection() throws Throwable {doBasicTest();}
+  public void testInjectMethodForArray() throws Throwable {doBasicTest();}
+  public void testInjectMethodForMap() throws Throwable {doBasicTest();}
+  public void testClosureDefaultParameterInEachMethod() throws Throwable {doBasicTest();}
+  public void testEachMethodForRanges() throws Throwable {doBasicTest();}
+  public void testEachMethodForEnumRanges() throws Throwable {doBasicTest();}
 }

@@ -134,7 +134,6 @@ public class AllClassesGetter {
     }
 
     public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
-      context.setAddCompletionChar(false);
       _handleInsert(context, item);
       item.getTailType().processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
     }

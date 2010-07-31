@@ -21,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -94,10 +95,10 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (expectedType == null || PsiType.VOID.equals(expectedType)) return;
 
       ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
-        public boolean visit(Instruction instruction) {
-          final PsiElement psiElement = instruction.getElement();
-          if (psiElement instanceof GrExpression) {
-            checkAssignability(expectedType, (GrExpression)psiElement, (GrExpression)psiElement);
+        @Override
+        public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+          if (returnValue != null && !(returnValue.getParent() instanceof GrReturnStatement)) {
+            checkAssignability(expectedType, returnValue, returnValue);
           }
           return true;
         }

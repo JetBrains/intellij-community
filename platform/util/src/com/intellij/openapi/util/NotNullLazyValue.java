@@ -29,7 +29,7 @@ public abstract class NotNullLazyValue<T> {
   protected abstract T compute();
 
   @NotNull
-  public final T getValue() {
+  public T getValue() {
     if (!myComputed) {
       myValue = compute();
       myComputed = true;

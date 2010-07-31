@@ -76,6 +76,10 @@ public class AnnotationProcessingCompiler implements TranslatingCompiler{
         final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
         return path != null? lfs.findFileByPath(path) : null;
       }
+
+      public VirtualFile getModuleOutputDirectoryForTests(Module module) {
+        return getModuleOutputDirectory(module);
+      }
     };
     final JavacCompiler javacCompiler = getBackEndCompiler();
     final boolean processorMode = javacCompiler.setAnnotationProcessorMode(true);

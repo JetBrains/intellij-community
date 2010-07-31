@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
@@ -49,7 +50,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
         if (listType instanceof GrTupleType) {
           for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
             if (type instanceof PsiClassType) {
-              for (GroovyResolveResult resolveResult : GppTypeConverter
+              for (GroovyResolveResult resolveResult : PsiUtil
                 .getConstructorCandidates((PsiClassType)type, ((GrTupleType)listType).getComponentTypes(), closure)) {
                 final PsiElement method = resolveResult.getElement();
                 if (method instanceof PsiMethod && ((PsiMethod)method).isConstructor()) {
@@ -80,14 +81,20 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
 
   @Nullable
   public static Pair<PsiMethod, PsiSubstitutor> getOverriddenMethod(GrNamedArgument namedArgument) {
+    return ContainerUtil.getFirstItem(getOverriddenMethodVariants(namedArgument), null);
+  }
+
+  @NotNull
+  public static List<Pair<PsiMethod, PsiSubstitutor>> getOverriddenMethodVariants(GrNamedArgument namedArgument) {
+
     final GrArgumentLabel label = namedArgument.getLabel();
     if (label == null) {
-      return null;
+      return Collections.emptyList();
     }
 
     final String methodName = label.getName();
     if (methodName == null) {
-      return null;
+      return Collections.emptyList();
     }
 
     final PsiElement map = namedArgument.getParent();
@@ -95,20 +102,16 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes((GrExpression)map)) {
         if (expected instanceof PsiClassType) {
           final List<Pair<PsiMethod, PsiSubstitutor>> pairs = getMethodsToOverrideImplementInInheritor((PsiClassType)expected, false);
-          final List<Pair<PsiMethod, PsiSubstitutor>> withName =
-            ContainerUtil.findAll(pairs, new Condition<Pair<PsiMethod, PsiSubstitutor>>() {
+          return ContainerUtil.findAll(pairs, new Condition<Pair<PsiMethod, PsiSubstitutor>>() {
               public boolean value(Pair<PsiMethod, PsiSubstitutor> pair) {
                 return methodName.equals(pair.first.getName());
               }
             });
-          if (withName.size() == 1) {
-            return withName.get(0);
-          }
         }
       }
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -125,19 +128,22 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
     if (type instanceof PsiClassType) {
       List<Pair<PsiMethod, PsiSubstitutor>> result = getMethodsToOverrideImplementInInheritor((PsiClassType)type, true);
       if (result.size() == 1) {
-        final Pair<PsiMethod, PsiSubstitutor> pair = result.get(0);
-        return ContainerUtil.map2Array(pair.first.getParameterList().getParameters(), PsiType.class, new Function<PsiParameter, PsiType>() {
-          public PsiType fun(PsiParameter psiParameter) {
-            return pair.second.substitute(psiParameter.getType());
-          }
-        });
+        return getParameterTypes(result.get(0));
       }
     }
     return null;
   }
 
+  public static PsiType[] getParameterTypes(final Pair<PsiMethod, PsiSubstitutor> pair) {
+    return ContainerUtil.map2Array(pair.first.getParameterList().getParameters(), PsiType.class, new Function<PsiParameter, PsiType>() {
+      public PsiType fun(PsiParameter psiParameter) {
+        return pair.second.substitute(psiParameter.getType());
+      }
+    });
+  }
+
   @NotNull
-  private static List<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplementInInheritor(PsiClassType classType, boolean toImplement) {
+  public static List<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplementInInheritor(PsiClassType classType, boolean toImplement) {
     final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null) {

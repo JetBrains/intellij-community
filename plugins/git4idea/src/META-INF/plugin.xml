@@ -104,6 +104,9 @@
     <projectService
         serviceInterface="git4idea.history.browser.GitProjectLogManager"
         serviceImplementation="git4idea.history.browser.GitProjectLogManager"/>
+    <projectService
+        serviceInterface="git4idea.checkout.branches.GitBranchConfigurations"
+        serviceImplementation="git4idea.checkout.branches.GitBranchConfigurations"/>
     <applicationService
         serviceInterface="git4idea.config.GitVcsApplicationSettings"
         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>

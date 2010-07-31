@@ -15,6 +15,9 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="java-i18n" />
+    <orderEntry type="module" module-name="compiler-impl" />
+    <orderEntry type="library" name="asm" level="project" />
+    <orderEntry type="module" module-name="notNull" />
   </component>
 </module>
 

@@ -67,6 +67,7 @@ public class DomFileDescription<T> {
    * @param domElementClass interface class.
    * @param implementationClass abstract implementation class.
    *
+   * @deprecated use dom.implementation extension point instead
    * @see #initializeFileDescription()
    */
   public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {

@@ -1,0 +1,30 @@
+PsiJavaFile:IfIncomplete6.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiIfStatement
+      PsiKeyword:if('if')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:LPARENTH('(')
+      PsiReferenceExpression:cond
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:cond('cond')
+      PsiJavaToken:RPARENTH(')')
+      PsiWhiteSpace(' ')
+      PsiExpressionStatement
+        PsiMethodCallExpression:foo()
+          PsiReferenceExpression:foo
+            PsiReferenceParameterList
+              <empty list>
+            PsiIdentifier:foo('foo')
+          PsiExpressionList
+            PsiJavaToken:LPARENTH('(')
+            PsiJavaToken:RPARENTH(')')
+        PsiJavaToken:SEMICOLON(';')
+      PsiWhiteSpace(' ')
+      PsiKeyword:else('else')
+      PsiErrorElement:Statement expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

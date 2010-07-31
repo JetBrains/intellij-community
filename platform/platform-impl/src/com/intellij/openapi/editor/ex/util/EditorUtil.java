@@ -341,11 +341,10 @@ public class EditorUtil {
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
       prevX = x;
-      if (c == '\t') {
-        x = nextTabStop(x, editor);
-      }
-      else {
-        x += charWidth(c, Font.PLAIN, editor);
+      switch (c) {
+        case '\t': x = nextTabStop(x, editor); break;
+        case '\n': x = result = 0; break;
+        default: x += charWidth(c, Font.PLAIN, editor);
       }
       result += columnsNumber(c, x, prevX, getSpaceWidth(Font.PLAIN, editor));
     }

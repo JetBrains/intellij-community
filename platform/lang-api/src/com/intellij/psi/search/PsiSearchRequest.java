@@ -25,4 +25,34 @@ public class PsiSearchRequest {
     this.processor = processor;
   }
 
+  @Override
+  public String toString() {
+    return word + " -> " + processor;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PsiSearchRequest)) return false;
+
+    PsiSearchRequest that = (PsiSearchRequest)o;
+
+    if (caseSensitive != that.caseSensitive) return false;
+    if (searchContext != that.searchContext) return false;
+    if (processor != null ? !processor.equals(that.processor) : that.processor != null) return false;
+    if (searchScope != null ? !searchScope.equals(that.searchScope) : that.searchScope != null) return false;
+    if (word != null ? !word.equals(that.word) : that.word != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = searchScope != null ? searchScope.hashCode() : 0;
+    result = 31 * result + (word != null ? word.hashCode() : 0);
+    result = 31 * result + (int)searchContext;
+    result = 31 * result + (caseSensitive ? 1 : 0);
+    result = 31 * result + (processor != null ? processor.hashCode() : 0);
+    return result;
+  }
 }

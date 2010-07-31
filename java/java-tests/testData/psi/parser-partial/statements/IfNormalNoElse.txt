@@ -1,0 +1,26 @@
+PsiJavaFile:IfNormalNoElse.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiIfStatement
+      PsiKeyword:if('if')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:LPARENTH('(')
+      PsiReferenceExpression:a
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:a('a')
+      PsiJavaToken:RPARENTH(')')
+      PsiWhiteSpace(' ')
+      PsiExpressionStatement
+        PsiMethodCallExpression:f1()
+          PsiReferenceExpression:f1
+            PsiReferenceParameterList
+              <empty list>
+            PsiIdentifier:f1('f1')
+          PsiExpressionList
+            PsiJavaToken:LPARENTH('(')
+            PsiJavaToken:RPARENTH(')')
+        PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

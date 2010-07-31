@@ -103,7 +103,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     final JavaParameters parameters = new JavaParameters();
     final PathsList classPathBuilder = parameters.getClassPath();
-    classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
 
     final ModuleChunk chunk = createChunk(module, compileContext);
 
@@ -118,6 +117,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     if (tests) {
       appendOutputPath(module, classPathBuilder, true);
     }
+
+    classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
 
     final List<String> patchers = new SmartList<String>();
     for (final GroovyCompilerExtension extension : GroovyCompilerExtension.EP_NAME.getExtensions()) {

@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -90,8 +91,9 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   private boolean invokeImpl(final Project project, final GrExpression selectedExpr, final Editor editor) {
 
-    if (selectedExpr == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
+    if (selectedExpr == null || (selectedExpr instanceof GrClosableBlock && selectedExpr.getParent() instanceof GrStringInjection)) {
+      String message =
+        RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
       showErrorMessage(project, editor, message);
       return false;
     }
@@ -145,6 +147,12 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
     // Find occurrences
     final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
+    if (occurrences == null || occurrences.length == 0) {
+      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("no.occurences.found"));
+      showErrorMessage(project, editor, message);
+      return false;
+    }
+    
     // Getting settings
     Validator validator = new GroovyVariableValidator(this, project, selectedExpr, occurrences, tempContainer);
     GroovyIntroduceVariableDialog dialog = getDialog(project, editor, selectedExpr, type, occurrences, false, validator);

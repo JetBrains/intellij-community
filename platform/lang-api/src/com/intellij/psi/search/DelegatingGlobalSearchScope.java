@@ -4,15 +4,25 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * @author peter
  */
 public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   protected final GlobalSearchScope myBaseScope;
+  private final Object myEquality;
 
   public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope) {
     super(baseScope.getProject());
     myBaseScope = baseScope;
+    myEquality = new Object();
+  }
+
+  public DelegatingGlobalSearchScope(GlobalSearchScope baseScope, Object... equality) {
+    super(baseScope.getProject());
+    myBaseScope = baseScope;
+    myEquality = Arrays.asList(equality);
   }
 
   @Override
@@ -87,5 +97,26 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   @Override
   public String getDisplayName() {
     return myBaseScope.getDisplayName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DelegatingGlobalSearchScope that = (DelegatingGlobalSearchScope)o;
+
+    if (!myBaseScope.equals(that.myBaseScope)) return false;
+    if (!myEquality.equals(that.myEquality)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + myBaseScope.hashCode();
+    result = 31 * result + myEquality.hashCode();
+    return result;
   }
 }

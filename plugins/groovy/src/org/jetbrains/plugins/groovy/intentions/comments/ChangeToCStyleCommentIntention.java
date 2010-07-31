@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.intentions.comments;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -38,7 +40,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     return new EndOfLineCommentPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final PsiComment selectedComment = (PsiComment) element;
     PsiComment firstComment = selectedComment;
