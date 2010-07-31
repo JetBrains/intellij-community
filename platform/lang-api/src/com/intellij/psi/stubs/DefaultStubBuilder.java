@@ -38,8 +38,9 @@ public class DefaultStubBuilder implements StubBuilder {
     return new PsiFileStubImpl(file);
   }
 
-  protected static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
+  protected StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
     StubElement stub = parentStub;
+    IElementType eltType;
     if (elt instanceof StubBasedPsiElement) {
       final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
 
@@ -47,6 +48,7 @@ public class DefaultStubBuilder implements StubBuilder {
         //noinspection unchecked
         stub = type.createStub(elt, parentStub);
       }
+      eltType = type;
     }
     else {
       final ASTNode node = elt.getNode();
@@ -54,13 +56,21 @@ public class DefaultStubBuilder implements StubBuilder {
       if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
         LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + elt);
       }
+      eltType = type;
     }
 
     for (PsiElement child = elt.getFirstChild(); child != null; child = child.getNextSibling()) {
-      buildStubTreeFor(child, stub);
+      ASTNode childNode = child.getNode();
+      if (!skipChildProcessingWhenBuildingStubs(eltType, childNode != null ? childNode.getElementType():null)) {
+        buildStubTreeFor(child, stub);
+      }
     }
 
     return stub;
   }
 
+  @Override
+  public boolean skipChildProcessingWhenBuildingStubs(IElementType nodeType, IElementType childType) {
+    return false;
+  }
 }
