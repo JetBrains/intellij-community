@@ -331,6 +331,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         for (final File fileToDelete : myFilesToDelete) {
           delete(fileToDelete);
         }
+        LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
         FileUtil.asyncDelete(new File(myTempDirPath));
 
