@@ -140,12 +140,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        refresh(false);
-      }
-    });
-
     myRootsToWatch.clear();
 
     final File file = new File(FileUtil.getTempDirectory());
