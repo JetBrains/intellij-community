@@ -950,6 +950,7 @@ public class CompileDriver {
       }
     }));
 
+    final DumbService dumbService = DumbService.getInstance(myProject);
     try {
       VirtualFile[] snapshot = null;
       final Map<Chunk<Module>, Collection<VirtualFile>> chunkMap = new HashMap<Chunk<Module>, Collection<VirtualFile>>();
@@ -963,6 +964,7 @@ public class CompileDriver {
         final Set<VirtualFile> allDependent = new HashSet<VirtualFile>();
         try {
           int round = 0;
+          boolean compiledSomethingForThisChunk = false;
           Collection<VirtualFile> dependentFiles = Collections.emptyList();
           final Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> dependencyFilter = new DependentClassesCumulativeFilter();
           
@@ -973,8 +975,8 @@ public class CompileDriver {
               if (context.getProgressIndicator().isCanceled()) {
                 throw new ExitException(ExitStatus.CANCELLED);
               }
-              context.getProgressIndicator().setText("Preparing sources for " + compiler.getDescription());
-              DumbService.getInstance(myProject).waitForSmartMode();
+
+              dumbService.waitForSmartMode();
   
               if (round == 0) {
                 if (snapshot == null || ContainerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(compiler))) {
@@ -1022,10 +1024,11 @@ public class CompileDriver {
               }
   
               didSomething |= compiledSomething;
+              compiledSomethingForThisChunk |= didSomething;
             }
 
             final boolean hasUnprocessedTraverseRoots = context.getDependencyCache().hasUnprocessedTraverseRoots();
-            if (!isRebuild && (didSomething || hasUnprocessedTraverseRoots)) {
+            if (!isRebuild && (compiledSomethingForThisChunk || hasUnprocessedTraverseRoots)) {
               final Set<VirtualFile> compiledWithSuccess;
               final Set<VirtualFile> compiledWithErrors = CacheUtils.getFilesCompiledWithErrors(context);
               if (compiledWithErrors.isEmpty()) {
@@ -1516,7 +1519,7 @@ public class CompileDriver {
       });
       if (ex[0] != null) {
         throw ex[0];
-      }
+      }                   
 
       if (onlyCheckStatus) {
         if (toGenerate.isEmpty() && pathsToRemove.isEmpty()) {
