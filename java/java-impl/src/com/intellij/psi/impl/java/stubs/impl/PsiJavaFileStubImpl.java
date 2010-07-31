@@ -61,7 +61,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   }
 
   public IStubFileElementType getType() {
-    return (IStubFileElementType)JavaParserDefinition.JAVA_FILE;
+    return JavaParserDefinition.JAVA_FILE;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

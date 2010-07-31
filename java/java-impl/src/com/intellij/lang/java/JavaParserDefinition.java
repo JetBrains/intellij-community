@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaParserDefinition implements ParserDefinition {
 
-  public static final IFileElementType JAVA_FILE = new JavaFileElementType();
+  public static final IStubFileElementType JAVA_FILE = new JavaFileElementType();
 
   @NotNull
   public Lexer createLexer(Project project) {
