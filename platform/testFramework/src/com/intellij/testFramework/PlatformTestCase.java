@@ -177,7 +177,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     assertNotNull("Cannot instantiate ProjectManager component", myProjectManager);
 
     File projectFile = getIprFile();
-    assert LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile) != null;
+    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     myProject = createProject(projectFile, getClass().getName() + "." + getName());
 
