@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaParserDefinition implements ParserDefinition {
-  private final TokenSet myStringLiteralElementSet = TokenSet.create(JavaElementType.LITERAL_EXPRESSION);
 
   @NotNull
   public Lexer createLexer(Project project) {
@@ -66,7 +65,7 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @NotNull
   public TokenSet getStringLiteralElements() {
-    return myStringLiteralElementSet;
+    return TokenSet.create(JavaElementType.LITERAL_EXPRESSION);
   }
 
   @NotNull
