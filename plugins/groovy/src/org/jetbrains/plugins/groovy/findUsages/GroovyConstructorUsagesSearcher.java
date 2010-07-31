@@ -311,7 +311,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   private static GlobalSearchScope calcGppScope(Project project) {
     final GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     final GlobalSearchScope maximal = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, GroovyFileType.GROOVY_FILE_TYPE);
-    GlobalSearchScope gppExtensions = new DelegatingGlobalSearchScope(maximal) {
+    GlobalSearchScope gppExtensions = new DelegatingGlobalSearchScope(maximal, "groovy.gpp") {
       @Override
       public boolean contains(VirtualFile file) {
         return super.contains(file) && GppTypeConverter.isGppExtension(file.getExtension());
