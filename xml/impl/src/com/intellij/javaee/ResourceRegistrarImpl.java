@@ -18,7 +18,6 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
@@ -48,12 +47,12 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
   }
 
   public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass) {
-    final VirtualFile file = getFile(fileName, klass);
+    final String file = getFile(fileName, klass);
     if (file != null) {
-      saveCache(fileName, klass, file);
+      //saveCache(fileName, klass, file);
       final Map<String, String> map = ExternalResourceManagerImpl.getMap(myResources, version, true);
       assert map != null;
-      map.put(resource, file.getUrl());
+      map.put(resource, file);
     }
     else {
       String message = "Cannot find standard resource. filename:" + fileName + " klass=" + klass;
@@ -87,11 +86,13 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
   }
 
   @Nullable
-  private VirtualFile getFile(String name, Class klass) {
+  private String getFile(String name, Class klass) {
+    /*
     VirtualFile file = findUsingCache(name, klass);
     if (file != null) {
       return file;
     }
+    */
 
     final URL resource = klass.getResource(name);
     if (resource == null) return null;
@@ -100,7 +101,7 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
     // this is done by FileUtil for windows
     path = path.replace('\\','/');
 
-    return VfsUtil.findRelativeFile(path, null);
+    return path;//VfsUtil.findRelativeFile(path, null);
   }
 
   @Nullable
