@@ -96,6 +96,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testErrors() { doParserTest("{ public static <error descr=\"2\">protected int f1 = 0; }", false, false); }
   public void testCompletionHack0() { doParserTest("{ <X IntelliJIdeaRulezz>\n String s = \"\"; }", false, false); }
   public void testCompletionHack1() { doParserTest("{ <X\n String s = \"\"; }", false, false); }
+  public void testCompletionHack2() { doParserTest("{ String foo() def }", true, false); }
   public void testWildcardParsing() { doParserTest("{ List<? extends B> x(Collection<? super B> x); }", false, false); }
   public void testParameterAnnotation() { doParserTest("{ void foo (@Annotation(value=77) int param) {} }", false, false); }
   public void testParameterizedMethod() { doParserTest("{ @Nullable <T> T bar() {} }", false, false); }
