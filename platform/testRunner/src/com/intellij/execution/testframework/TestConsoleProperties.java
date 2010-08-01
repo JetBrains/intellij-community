@@ -98,6 +98,10 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     }
   }
 
+  public Executor getExecutor() {
+    return myExecutor;
+  }
+
   public boolean isDebug() {
     return myExecutor.getId() == DefaultDebugExecutor.EXECUTOR_ID;
   }

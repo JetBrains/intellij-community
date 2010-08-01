@@ -27,6 +27,7 @@ import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.ShowStatisticsAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
+import com.intellij.execution.testframework.export.ExportTestResultsAction;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
@@ -46,6 +47,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
   protected final FailedTestsNavigator myOccurenceNavigator;
   protected final ScrollToTestSourceAction myScrollToSource;
+  private final ExportTestResultsAction myExportAction;
 
   private final ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
 
@@ -101,6 +103,10 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       myActions.add(toggleModelAction);
       actionGroup.add(toggleModelAction);
     }
+
+    myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), properties.getConfiguration());
+    actionGroup.addAction(myExportAction);
+
     appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
 
     add(ActionManager.getInstance().
@@ -118,6 +124,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myScrollToSource.setModel(model);
     myTreeExpander.setModel(model);
     myOccurenceNavigator.setModel(model);
+    myExportAction.setModel(model);
     for (ToggleModelAction action : myActions) {
       action.setModel(model);
     }
@@ -148,7 +155,8 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   }
 
   public void dispose() {
-    myScrollToSource.setModel(null);    
+    myScrollToSource.setModel(null);
+    myExportAction.setModel(null);
   }
 
 }
