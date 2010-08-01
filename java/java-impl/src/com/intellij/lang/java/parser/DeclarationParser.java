@@ -107,6 +107,7 @@ public class DeclarationParser {
       if (!expect(builder, JavaTokenType.COMMA)) {
         if (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.SEMICOLON) {
           error(builder, JavaErrorMessages.message("expected.comma.or.semicolon"));
+          return;
         }
       }
     }

@@ -61,7 +61,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testEnumBody3() { doParserTest("{ RED, GREEN, BLUE, }", false, true); }
   public void testEnumBody4() { doParserTest("{ RED(0), GREEN(1), BLUE(2); }", false, true); }
   public void testEnumBody5() { doParserTest("{ @ANNOTATION A(10) }", false, true); }
-  //public void testEnumBody6() { doParserTest("{ RED, GREEN, BLUE\n OurEnum() {} }", false, true); }
+  public void testEnumBody6() { doParserTest("{ RED, GREEN, BLUE\n OurEnum() {} }", false, true); }
   public void testEnumWithInitializedConstants() { doParserTest("{ A(10) { },\n B { void method() {} } }", false, true); }
   public void testEnumWithoutConstants() { doParserTest("{ private A }", false, true); }
 
