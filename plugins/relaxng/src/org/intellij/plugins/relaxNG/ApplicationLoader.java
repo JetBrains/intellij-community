@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 public class ApplicationLoader implements ApplicationComponent, InspectionToolProvider {
   private static final String RNG_EXT = "rng";
   private static final String VALIDATE_XML = "ValidateXml";
+  public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
 
   @NonNls
   @NotNull
@@ -79,7 +80,7 @@ public class ApplicationLoader implements ApplicationComponent, InspectionToolPr
     final MetaDataRegistrar registrar = MetaDataRegistrar.getInstance();
     registrar.registerMetaData(
             new AndFilter(
-                    new NamespaceFilter(ProjectLoader.RNG_NAMESPACE),
+                    new NamespaceFilter(RNG_NAMESPACE),
                     new ClassFilter(XmlDocument.class)
             ),
             RngNsDescriptor.class);
@@ -116,7 +117,7 @@ public class ApplicationLoader implements ApplicationComponent, InspectionToolPr
 
   public class ResourceProvider implements StandardResourceProvider {
     public void registerResources(ResourceRegistrar registrar) {
-      registrar.addStdResource(ProjectLoader.RNG_NAMESPACE, "resources/relaxng.rng", getClass());
+      registrar.addStdResource(RNG_NAMESPACE, "resources/relaxng.rng", getClass());
       registrar.addIgnoredResource("http://relaxng.org/ns/compatibility/annotations/1.0");
     }
   }

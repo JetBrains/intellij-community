@@ -21,7 +21,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
-import org.intellij.plugins.relaxNG.ProjectLoader;
+import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.references.FileReferenceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public class RngHrefConverter extends Converter<XmlFile> implements CustomRefere
     }
     final FileReferenceSet set = FileReferenceSet.createSet(element, false, false, false);
     if (set != null) {
-      return FileReferenceUtil.restrict(set, FileReferenceUtil.byNamespace(ProjectLoader.RNG_NAMESPACE), true);
+      return FileReferenceUtil.restrict(set, FileReferenceUtil.byNamespace(ApplicationLoader.RNG_NAMESPACE), true);
     } else {
       return PsiReference.EMPTY_ARRAY;
     }

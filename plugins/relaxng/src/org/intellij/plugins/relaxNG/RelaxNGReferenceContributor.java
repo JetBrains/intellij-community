@@ -17,7 +17,7 @@ import static com.intellij.patterns.XmlPatterns.xmlTag;
  * @author peter
  */
 public class RelaxNGReferenceContributor extends PsiReferenceContributor {
-  private static final XmlNamedElementPattern RNG_TAG_PATTERN = xmlTag().withNamespace(string().equalTo(ProjectLoader.RNG_NAMESPACE));
+  private static final XmlNamedElementPattern RNG_TAG_PATTERN = xmlTag().withNamespace(string().equalTo(ApplicationLoader.RNG_NAMESPACE));
 
   private static final XmlNamedElementPattern.XmlAttributePattern NAME_ATTR_PATTERN = xmlAttribute("name");
   private static final StringPattern ELEMENT_OR_ATTRIBUTE_PATTERN = string().oneOf("element", "attribute");
