@@ -49,7 +49,10 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+    System.out.println("ConvertToBasicLatinAction.isAvailable");
+    System.out.println("element = " + element);
     final Pair<PsiElement, Handler> pair = findHandler(element);
+    System.out.println("pair = " + pair);
     if (pair == null) return false;
 
     final String text = pair.first.getText();
@@ -74,16 +77,22 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    System.out.println("ConvertToBasicLatinAction.invoke");
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    System.out.println("element = " + element);
     if (element == null) return;
 
     final Pair<PsiElement, Handler> pair = findHandler(element);
+    System.out.println("pair = " + pair);
     if (pair == null) return;
     element = pair.first;
     final Handler handler = pair.second;
+    System.out.println("handler = " + handler);
 
     final String newText = handler.processText(element);
+    System.out.println("newText = " + newText);
     final PsiElement newElement = handler.createReplacement(element, newText);
+    System.out.println("newElement = " + newElement);
     element.replace(newElement);
   }
 
