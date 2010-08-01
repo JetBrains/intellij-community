@@ -53,7 +53,7 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
       saveCache(fileName, klass, file);
       final Map<String, String> map = ExternalResourceManagerImpl.getMap(myResources, version, true);
       assert map != null;
-      map.put(resource, file.getPath());
+      map.put(resource, file.getUrl());
     }
     else {
       String message = "Cannot find standard resource. filename:" + fileName + " klass=" + klass;
