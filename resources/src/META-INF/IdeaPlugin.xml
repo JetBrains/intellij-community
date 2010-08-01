@@ -364,6 +364,10 @@
 
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"
+                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"/>
+
+    <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="last"/>
 
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                         serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
