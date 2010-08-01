@@ -62,7 +62,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     String oldPrefix = completionState.oldPrefix;
     CompletionVariant lastProposedVariant = completionState.lastProposedVariant;
 
-    if (lastProposedVariant == null || oldPrefix == null || !new CamelHumpMatcher(oldPrefix).prefixMatches(currentPrefix) || oldPrefix.length() == 0 ||
+    if (lastProposedVariant == null || oldPrefix == null || !new CamelHumpMatcher(oldPrefix).prefixMatches(currentPrefix) || //oldPrefix.length() == 0 ||
         !currentPrefix.equals(lastProposedVariant.variant)) {
       //we are starting over
       oldPrefix = currentPrefix;
