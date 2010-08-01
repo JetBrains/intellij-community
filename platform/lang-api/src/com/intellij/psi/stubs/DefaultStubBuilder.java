@@ -21,7 +21,10 @@ package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
 
 public class DefaultStubBuilder implements StubBuilder {
@@ -35,34 +38,29 @@ public class DefaultStubBuilder implements StubBuilder {
     return new PsiFileStubImpl(file);
   }
 
-  // Beware many recursive invokations of this method, the code below reuse locals and parameters to avoid SOE
-  protected StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
-    ASTNode node;
-    IElementType eltType;
+  protected static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
+    StubElement stub = parentStub;
     if (elt instanceof StubBasedPsiElement) {
-      eltType = ((StubBasedPsiElement)elt).getElementType();
+      final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
 
-      if (((IStubElementType)eltType).shouldCreateStub(elt.getNode())) {
+      if (type.shouldCreateStub(elt.getNode())) {
         //noinspection unchecked
-        parentStub = ((IStubElementType)eltType).createStub(elt, parentStub);
+        stub = type.createStub(elt, parentStub);
       }
     }
     else {
-      node = elt.getNode();
-      eltType = node == null? null : node.getElementType();
-      if (eltType instanceof IStubElementType && ((IStubElementType)eltType).shouldCreateStub(node)) {
-        LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + eltType + ", PSI: " + elt);
+      final ASTNode node = elt.getNode();
+      final IElementType type = node == null? null : node.getElementType();
+      if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
+        LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + elt);
       }
     }
 
-    for (elt = elt.getFirstChild(); elt != null; elt = elt.getNextSibling()) {
-      node = elt.getNode();
-      if (!skipChildProcessingWhenBuildingStubs(eltType, node != null ? node.getElementType():null)) {
-        buildStubTreeFor(elt, parentStub);
-      }
+    for (PsiElement child = elt.getFirstChild(); child != null; child = child.getNextSibling()) {
+      buildStubTreeFor(child, stub); // do not filter via skipChildProcessingWhenBuildingStubs here due to SOE in tests
     }
 
-    return parentStub;
+    return stub;
   }
 
   protected StubElement buildStubTreeFor(ASTNode node, StubElement parentStub) {
