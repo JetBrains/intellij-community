@@ -52,10 +52,10 @@ public class FileParser {
         continue;
       }
 
-      final PsiBuilder.Marker decl = DeclarationParser.parse(builder, DeclarationParser.Context.FILE);
-      if (decl != null) {
+      final PsiBuilder.Marker declaration = DeclarationParser.parse(builder, DeclarationParser.Context.FILE);
+      if (declaration != null) {
         if (invalidElements != null) {
-          invalidElements.errorBefore(JavaErrorMessages.message("expected.class.or.interface"), decl);
+          invalidElements.errorBefore(JavaErrorMessages.message("expected.class.or.interface"), declaration);
           invalidElements = null;
         }
         continue;
