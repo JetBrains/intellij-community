@@ -357,6 +357,9 @@ public class IdeaProjectLoader implements MacroExpansion {
               break
           }
         }
+
+        def srcFolderExists = componentTag.content.sourceFolder[0] != null;
+
         componentTag.content.sourceFolder.each {Node folderTag ->
           String path = expandMacro(pathFromUrl(folderTag.@url), moduleBasePath)
           String prefix = folderTag.@packagePrefix
@@ -385,17 +388,19 @@ public class IdeaProjectLoader implements MacroExpansion {
           currentModule["targetLevel"] = ll
         }
 
-        if (componentTag."@inherit-compiler-output" == "true") {
-          if (projectOutputPath == null) {
-            project.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
+        if (srcFolderExists) {
+          if (componentTag."@inherit-compiler-output" == "true") {
+            if (projectOutputPath == null) {
+              project.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
+            }
+            File compileOutput = new File(projectOutputPath, "classes")
+            currentModule.outputPath = new File(new File(compileOutput, "production"), currentModuleName).absolutePath
+            currentModule.testOutputPath = new File(new File(compileOutput, "test"), currentModuleName).absolutePath
           }
-          File compileOutput = new File(projectOutputPath, "classes")
-          currentModule.outputPath = new File(new File(compileOutput, "production"), currentModuleName).absolutePath
-          currentModule.testOutputPath = new File(new File(compileOutput, "test"), currentModuleName).absolutePath
-        }
-        else {
-          currentModule.outputPath = expandMacro(pathFromUrl(componentTag.output[0]?.@url), moduleBasePath)
-          currentModule.testOutputPath = expandMacro(pathFromUrl(componentTag."output-test"[0]?.'@url'), moduleBasePath)
+          else {
+            currentModule.outputPath = expandMacro(pathFromUrl(componentTag.output[0]?.@url), moduleBasePath)
+            currentModule.testOutputPath = expandMacro(pathFromUrl(componentTag."output-test"[0]?.'@url'), moduleBasePath)
+          }
         }
       }
 
