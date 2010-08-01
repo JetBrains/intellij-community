@@ -155,7 +155,8 @@ public class IdeaProjectLoader implements MacroExpansion {
     if (sdk == null) {
       project.info("Project SDK '$sdkName' is not defined. Embedded javac will be used")
     }
-    String outputPath = pathFromUrl(componentTag.output[0].'@url')
+    def outputTag = componentTag.output[0];
+    String outputPath = outputTag != null ? pathFromUrl(outputTag.'@url') : null;
     projectOutputPath = outputPath != null && outputPath.length() > 0 ? expandProjectMacro(outputPath) : null
     project.projectSdk = sdk
   }
