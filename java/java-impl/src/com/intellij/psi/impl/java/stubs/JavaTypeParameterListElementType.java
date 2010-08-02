@@ -26,15 +26,14 @@ import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterListStubImpl;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.psi.stubs.StubOutputStream;
 
 import java.io.IOException;
 
 public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTypeParameterListStub, PsiTypeParameterList> {
   public JavaTypeParameterListElementType() {
-    super("TYPE_PARAMETER_LIST");
+    super("TYPE_PARAMETER_LIST", true);
   }
 
   public PsiTypeParameterList createPsi(final PsiTypeParameterListStub stub) {

@@ -1,0 +1,17 @@
+PsiJavaFile:SwitchNormal.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiSwitchStatement
+      PsiKeyword:switch('switch')
+      PsiJavaToken:LPARENTH('(')
+      PsiReferenceExpression:o
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:o('o')
+      PsiJavaToken:RPARENTH(')')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

@@ -17,19 +17,13 @@ package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,37 +33,12 @@ import javax.swing.*;
  * @author Eugene.Kudelevsky
  */
 public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateFromTemplateAction");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateFromTemplateAction");
 
   public CreateFromTemplateAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
-
-  protected static PsiFile createFileFromTemplate(String name, String templateName, PsiDirectory dir) {
-    final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
-
-    PsiElement element;
-    try {
-      element = FileTemplateUtil
-        .createFromTemplate(template, name, FileTemplateManager.getInstance().getDefaultProperties(), dir);
-      final PsiFile psiFile = element.getContainingFile();
-
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile != null) {
-        FileEditorManager.getInstance(dir.getProject()).openFile(virtualFile, true);
-        return psiFile;
-      }
-    }
-    catch (IncorrectOperationException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-
-    return null;
-  }
-
+  
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
@@ -105,22 +74,30 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
       });
     if (createdElement != null) {
       view.selectElement(createdElement);
-      postProcesss(createdElement, selectedTemplateName.get());
+      postProcess(createdElement, selectedTemplateName.get());
     }
   }
 
-  protected void postProcesss(T createdElement, String templateName) {
+  protected void postProcess(T createdElement, String templateName) {
   }
 
   @Nullable
   protected abstract T createFile(String name, String templateName, PsiDirectory dir);
 
-  protected abstract void checkBeforeCreate(String name, String templateName, PsiDirectory dir);
+  protected void checkBeforeCreate(String name, String templateName, PsiDirectory dir) {
+    dir.checkCreateFile(name);
+  }
 
   protected abstract void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder);
 
   @Nullable
   protected String getDefaultTemplateName(@NotNull PsiDirectory dir) {
+    String property = getDefaultTemplateProperty();
+    return property == null ? null : PropertiesComponent.getInstance(dir.getProject()).getValue(property);
+  }
+
+  @Nullable
+  protected String getDefaultTemplateProperty() {
     return null;
   }
 

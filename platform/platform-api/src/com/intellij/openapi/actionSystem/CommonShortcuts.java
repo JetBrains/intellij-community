@@ -39,6 +39,10 @@ public class CommonShortcuts {
 
   public static final ShortcutSet DOUBLE_CLICK_1 = new CustomShortcutSet(new Shortcut[]{new MouseShortcut(MouseEvent.BUTTON1, 0, 2)});
 
+  public static ShortcutSet getCopy() {
+    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COPY));
+  }
+
   public static ShortcutSet getRerun() {
     return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_RERUN));
   }

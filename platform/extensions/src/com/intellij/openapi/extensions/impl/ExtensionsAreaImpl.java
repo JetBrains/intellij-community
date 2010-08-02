@@ -128,12 +128,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     String implClass = extensionElement.getAttributeValue("implementation");
 
     ExtensionComponentAdapter adapter;
+    final PicoContainer container = getPluginContainer(pluginId.getIdString());
     if (implClass != null) {
-      adapter = new ExtensionComponentAdapter(implClass, extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor, shouldDeserializeInstance(extensionElement));
+      adapter = new ExtensionComponentAdapter(implClass, extensionElement, container, pluginDescriptor, shouldDeserializeInstance(extensionElement));
     }
     else {
       final ExtensionPoint extensionPoint = getExtensionPoint(epName);
-      adapter = new ExtensionComponentAdapter(extensionPoint.getBeanClassName(), extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor, true);
+      adapter = new ExtensionComponentAdapter(extensionPoint.getBeanClassName(), extensionElement, container, pluginDescriptor, true);
     }
     myExtensionElement2extension.put(extensionElement, adapter);
     internalGetPluginContainer().registerComponent(adapter);

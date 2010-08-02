@@ -51,6 +51,7 @@ public interface XDebuggerActions {
   @NonNls String XREMOVE_WATCH = "XDebugger.RemoveWatch";
   @NonNls String XEDIT_WATCH = "XDebugger.EditWatch";
 
+  @NonNls String COPY_VALUE = "XDebugger.CopyValue";
   @NonNls String SET_VALUE = "XDebugger.SetValue";
 
   @NonNls String MUTE_BREAKPOINTS = "XDebugger.MuteBreakpoints";

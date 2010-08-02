@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -34,6 +35,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
@@ -799,56 +802,16 @@ public class StringUtil {
 
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable) {
-    StringWriter stringWriter = new StringWriter();
-    PrintWriter writer = new PrintWriter(stringWriter);
-    aThrowable.printStackTrace(writer);
-    return stringWriter.getBuffer().toString();
+    return ExceptionUtil.getThrowableText(aThrowable);
   }
 
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable, @NonNls @NotNull final String stackFrameSkipPattern) {
-    @NonNls final String prefix = "\tat ";
-    final String skipPattern = prefix + stackFrameSkipPattern;
-    final StringWriter stringWriter = new StringWriter();
-    final PrintWriter writer = new PrintWriter(stringWriter) {
-      boolean skipping = false;
-      public void println(final String x) {
-        if (x != null) {
-          if (!skipping && x.startsWith(skipPattern)) skipping = true;
-          else if (skipping && !x.startsWith(prefix)) skipping = false;
-        }
-        if (skipping) return;
-        super.println(x);
-      }
-    };
-    aThrowable.printStackTrace(writer);
-    return stringWriter.getBuffer().toString();
+    return ExceptionUtil.getThrowableText(aThrowable, stackFrameSkipPattern);
   }
 
   public static String getMessage(@NotNull Throwable e) {
-    String result = e.getMessage();
-    @NonNls final String exceptionPattern = "Exception: ";
-    @NonNls final String errorPattern = "Error: ";
-
-    while ((result == null || result.contains(exceptionPattern) || result.contains(errorPattern)) && e.getCause() != null) {
-      e = e.getCause();
-      result = e.getMessage();
-    }
-
-    if (result != null) {
-      result = extractMessage(result, exceptionPattern);
-      result = extractMessage(result, errorPattern);
-    }
-
-    return result;
-  }
-
-  @NotNull
-  private static String extractMessage(@NotNull String result, @NotNull final String errorPattern) {
-    if (result.lastIndexOf(errorPattern) >= 0) {
-      result = result.substring(result.lastIndexOf(errorPattern) + errorPattern.length());
-    }
-    return result;
+    return ExceptionUtil.getMessage(e);
   }
 
   @NotNull
@@ -1186,6 +1149,17 @@ public class StringUtil {
       }
     }
     return result.toString();
+  }
+
+  public static List<String> findMatches(String s, Pattern pattern) {
+    List<String> result = new SmartList<String>();
+    Matcher m = pattern.matcher(s);
+    while(m.find()) {
+      if (m.groupCount() > 0) {
+        result.add(m.group(1));
+      }
+    }
+    return result;
   }
 
   /**

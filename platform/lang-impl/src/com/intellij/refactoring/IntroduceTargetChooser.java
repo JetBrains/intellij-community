@@ -64,7 +64,11 @@ public class IntroduceTargetChooser {
 
         final T expr = (T)value;
         if (expr.isValid()) {
-          setText(renderer.fun(expr));
+          String text = renderer.fun(expr);
+          int firstNewLinePos = text.indexOf('\n');
+          String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
+          if (trimmedText.length() != text.length()) trimmedText += " ...";
+          setText(trimmedText);
         }
         return rendererComponent;
       }

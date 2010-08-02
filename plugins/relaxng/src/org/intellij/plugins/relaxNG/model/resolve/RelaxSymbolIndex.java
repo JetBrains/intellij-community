@@ -23,7 +23,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.intellij.plugins.relaxNG.ProjectLoader;
+import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.CommonElement;
 import org.intellij.plugins.relaxNG.model.Define;
@@ -68,7 +68,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         final HashMap<String, Void> map = new HashMap<String, Void>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
-          if (CharArrayUtil.indexOf(inputDataContentAsText, ProjectLoader.RNG_NAMESPACE, 0) == -1) return Collections.EMPTY_MAP;
+          if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.EMPTY_MAP;
           NanoXmlUtil.parse(new CharSequenceReader(inputDataContentAsText), new NanoXmlUtil.IXMLBuilderAdapter() {
             NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
             int depth;
@@ -83,7 +83,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
             @Override
             public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
               attributeHandler = null;
-              if (depth == 1 && ProjectLoader.RNG_NAMESPACE.equals(nsURI)) {
+              if (depth == 1 && ApplicationLoader.RNG_NAMESPACE.equals(nsURI)) {
                 if ("define".equals(name)) {
                   attributeHandler = new NanoXmlUtil.IXMLBuilderAdapter() {
                     @Override

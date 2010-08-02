@@ -70,7 +70,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
 
 
   private static void orderSearching(SearchScope searchScope, final String name, @NotNull SearchRequestCollector collector) {
-    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new RequestResultProcessor() {
+    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new RequestResultProcessor("groovy.lateBound") {
       @Override
       public boolean processTextOccurrence(PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {
         if (!(element instanceof GrReferenceExpression)) {

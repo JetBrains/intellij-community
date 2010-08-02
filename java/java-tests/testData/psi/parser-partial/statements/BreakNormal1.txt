@@ -1,0 +1,11 @@
+PsiJavaFile:BreakNormal1.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiBreakStatement
+      PsiKeyword:break('break')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:LABEL('LABEL')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

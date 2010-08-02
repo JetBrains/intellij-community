@@ -21,12 +21,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public abstract class VolatileNotNullLazyValue<T> {
+public abstract class VolatileNotNullLazyValue<T> extends NotNullLazyValue<T> {
 
   private volatile T myValue;
-
-  @NotNull
-  protected abstract T compute();
 
   @NotNull
   public final T getValue() {

@@ -46,7 +46,8 @@ public class ProjectNameStep extends ModuleWizardStep {
     myWizardContext = wizardContext;
     myNamePathComponent = new NamePathComponent(IdeBundle.message("label.project.name"), IdeBundle.message("label.component.file.location",
                                                                                                            StringUtil.capitalize(myWizardContext.getPresentationName())), 'a', 'l',
-                                                IdeBundle.message("title.select.project.file.directory"), IdeBundle.message("description.select.project.file.directory"));
+                                                IdeBundle.message("title.select.project.file.directory", myWizardContext.getPresentationName()),
+                                                IdeBundle.message("description.select.project.file.directory", myWizardContext.getPresentationName()));
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 

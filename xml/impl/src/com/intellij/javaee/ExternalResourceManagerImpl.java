@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.util.XmlUtil;
@@ -102,13 +103,13 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   @Nullable
-  static Map<String, String> getMap(@NotNull final Map<String, Map<String, String>> resources,
+  static <T> Map<String, T> getMap(@NotNull final Map<String, Map<String, T>> resources,
                                     @Nullable final String version,
                                     final boolean create) {
-    Map<String, String> map = resources.get(version);
+    Map<String, T> map = resources.get(version);
     if (map == null) {
       if (create) {
-        map = new HashMap<String, String>();
+        map = CollectionFactory.hashMap();
         resources.put(version, map);
       }
       else if (version == null || !version.equals(DEFAULT_VERSION)) {

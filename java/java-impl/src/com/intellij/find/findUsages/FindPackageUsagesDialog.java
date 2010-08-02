@@ -23,7 +23,7 @@ import com.intellij.ui.StateRestoringCheckBox;
 
 import javax.swing.*;
 
-public class FindPackageUsagesDialog extends JavaFindUsagesDialog {
+public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFindUsagesOptions> {
   private StateRestoringCheckBox myCbUsages;
   private StateRestoringCheckBox myCbClassesUsages;
 
@@ -39,7 +39,7 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog {
     return myCbUsages;
   }
 
-  public void calcFindUsagesOptions(FindUsagesOptions options) {
+  public void calcFindUsagesOptions(JavaPackageFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
     options.isUsages = isSelected(myCbUsages);
@@ -55,8 +55,8 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog {
     findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
-    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox"), myFindUsagesOptions.isUsages, findWhatPanel, true);
-    myCbClassesUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.of.classes.and.interfaces"), myFindUsagesOptions.isClassesUsages, findWhatPanel, true);
+    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox"), getFindUsagesOptions().isUsages, findWhatPanel, true);
+    myCbClassesUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.of.classes.and.interfaces"), getFindUsagesOptions().isClassesUsages, findWhatPanel, true);
 
     return findWhatPanel;
   }

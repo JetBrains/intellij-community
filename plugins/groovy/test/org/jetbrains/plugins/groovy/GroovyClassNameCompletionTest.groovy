@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.IOException;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -52,11 +50,11 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     super.tearDown();
   }
 
-  public void doTest(boolean forceCompletion) throws Exception {
+  public void doTest(boolean force) throws Exception {
     addClassToProject("a", "FooBar");
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.CLASS_NAME);
-    if (forceCompletion) forceCompletion();
+    if (force) forceCompletion();
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
@@ -85,5 +83,21 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
   public void testInComment() throws Exception {doTest(false);}
   public void testInTypeElementPlace() throws Exception {doTest(false);}
   public void testWhenImportExists() throws Exception{doTest(false);}
+
+  public void testFinishByDot() throws Exception{
+    addClassToProject("a", "FooBar");
+    myFixture.configureByText("a.groovy", "FB<caret>a")
+    myFixture.complete(CompletionType.CLASS_NAME)
+    myFixture.type '.'.charAt(0)
+    myFixture.checkResult "a.FooBar.<caret>a"
+  }
+  
+  public void testDelegateBasicToClassName() throws Exception{
+    addClassToProject("a", "FooBarGooDoo");
+    myFixture.configureByText("a.groovy", "FBGD<caret>a")
+    myFixture.completeBasic()
+    myFixture.type '.'.charAt(0)
+    myFixture.checkResult "a.FooBarGooDoo.<caret>a"
+  }
 
 }

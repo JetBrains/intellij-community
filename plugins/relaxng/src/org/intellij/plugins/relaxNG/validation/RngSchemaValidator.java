@@ -31,7 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import org.intellij.plugins.relaxNG.ProjectLoader;
+import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
@@ -66,7 +66,7 @@ public class RngSchemaValidator implements ExternalAnnotator {
       if (rootTag == null) {
         return;
       }
-      if (!ProjectLoader.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
+      if (!ApplicationLoader.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
         return;
       }
     } else {

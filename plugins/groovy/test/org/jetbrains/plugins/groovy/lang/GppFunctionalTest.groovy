@@ -322,6 +322,16 @@ class BarImpl extends Bar {}
     assertEquals "groovy.util.Iterations", method.containingClass.qualifiedName
   }
 
+  public void testResolveToStdLibWithArrayQualifier() throws Exception {
+    configureGppScript """
+Integer[] a = []
+a.fol<caret>dLeft(2, { a, b -> a+b })
+"""
+    PsiMethod method = resolveReference().navigationElement
+    assertEquals "foldLeft", method.name
+    assertEquals "groovy.util.Iterations", method.containingClass.qualifiedName
+  }
+
   private PsiElement resolveReference() {
     return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
   }

@@ -16,21 +16,16 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class CreateHtmlFileAction extends CreateFromTemplateAction<PsiFile> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateHtmlFileAction");
+public class CreateHtmlFileAction extends CreateFileFromTemplateAction {
 
   @NonNls private static final String DEFAULT_HTML_TEMPLATE_PROPERTY = "DefaultHtmlFileTemplate";
 
@@ -39,15 +34,8 @@ public class CreateHtmlFileAction extends CreateFromTemplateAction<PsiFile> {
   }
 
   @Override
-  protected PsiFile createFile(String name, String templateName, PsiDirectory dir) {
-    PropertiesComponent.getInstance(dir.getProject()).setValue(DEFAULT_HTML_TEMPLATE_PROPERTY, templateName);
-
-    return createFileFromTemplate(name, templateName, dir);
-  }
-
-  @Override
-  protected void checkBeforeCreate(String name, String templateName, PsiDirectory dir) {
-    dir.checkCreateFile(name);
+  protected String getDefaultTemplateProperty() {
+    return DEFAULT_HTML_TEMPLATE_PROPERTY;
   }
 
   @Override
@@ -60,12 +48,17 @@ public class CreateHtmlFileAction extends CreateFromTemplateAction<PsiFile> {
   }
 
   @Override
-  protected String getDefaultTemplateName(@NotNull PsiDirectory dir) {
-    return PropertiesComponent.getInstance(dir.getProject()).getValue(DEFAULT_HTML_TEMPLATE_PROPERTY);
+  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
+    return XmlBundle.message("new.html.file.action");
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
-    return XmlBundle.message("new.html.file.action");
+  public int hashCode() {
+    return 0;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof CreateHtmlFileAction;
   }
 }

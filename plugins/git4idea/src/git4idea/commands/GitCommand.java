@@ -138,6 +138,10 @@ public class GitCommand {
    */
   public static final GitCommand CHECK_ATTR = read("check-attr");
   /**
+   * The constant for git command
+   */
+  public static final GitCommand DESCRIBE = meta("describe");
+  /**
    * Name of environment variable that specifies editor for the git
    */
   public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
@@ -251,7 +255,8 @@ public class GitCommand {
     /**
      * Metadata read/write command
      */
-    META, }
+    META,
+  }
 
   /**
    * Thread policy for command

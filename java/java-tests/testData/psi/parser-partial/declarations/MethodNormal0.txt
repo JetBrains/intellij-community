@@ -18,7 +18,6 @@ PsiJavaFile:MethodNormal0.java
     PsiWhiteSpace(' ')
     PsiCodeBlock
       PsiJavaToken:LBRACE('{')
-      PsiWhiteSpace(' ')
       PsiJavaToken:RBRACE('}')
   PsiWhiteSpace(' ')
   PsiJavaToken:RBRACE('}')

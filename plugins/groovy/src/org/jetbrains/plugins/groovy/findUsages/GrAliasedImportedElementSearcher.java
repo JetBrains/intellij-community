@@ -68,6 +68,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
     private final String prefix;
 
     MyProcessor(PsiElement target, @Nullable String prefix) {
+      super(target, prefix);
       myTarget = target;
       this.prefix = prefix;
     }

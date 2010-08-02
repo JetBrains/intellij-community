@@ -252,7 +252,7 @@ public class StatementParsing extends Parsing {
       else if (tokenType == JavaTokenType.CATCH_KEYWORD){
         error = JavaErrorMessages.message("catch.without.try");
       }
-      else if (tokenType == JavaTokenType.FINAL_KEYWORD){
+      else if (tokenType == JavaTokenType.FINALLY_KEYWORD){
         error = JavaErrorMessages.message("finally.without.try");
       }
       else{
