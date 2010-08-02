@@ -320,6 +320,7 @@ public class ArtifactUtil {
                                                          boolean processSubstitutions) {
     processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, processor, context, processSubstitutions);
     processPackagingElements(artifact, PackagingElementFactoryImpl.DIRECTORY_COPY_ELEMENT_TYPE, processor, context, processSubstitutions);
+    processPackagingElements(artifact, PackagingElementFactoryImpl.EXTRACTED_DIRECTORY_ELEMENT_TYPE, processor, context, processSubstitutions);
   }
 
   public static Collection<Trinity<Artifact, PackagingElementPath, String>> findContainingArtifactsWithOutputPaths(@NotNull final VirtualFile file, @NotNull Project project) {
@@ -417,8 +418,8 @@ public class ArtifactUtil {
             ContainerUtil.addIfNotNull(fileCopyElement.findFile(), result);
           }
         }
-        else if (element instanceof DirectoryCopyPackagingElement) {
-          final VirtualFile sourceRoot = ((DirectoryCopyPackagingElement)element).findFile();
+        else if (element instanceof DirectoryCopyPackagingElement || element instanceof ExtractedDirectoryPackagingElement) {
+          final VirtualFile sourceRoot = ((FileOrDirectoryCopyPackagingElement<?>)element).findFile();
           if (sourceRoot != null) {
             ContainerUtil.addIfNotNull(sourceRoot.findFileByRelativePath(path), result);
           }

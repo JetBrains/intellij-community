@@ -51,11 +51,12 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   public static final PackagingElementType<ArchivePackagingElement> ARCHIVE_ELEMENT_TYPE = new ArchiveElementType();
   public static final PackagingElementType<FileCopyPackagingElement> FILE_COPY_ELEMENT_TYPE = new FileCopyElementType();
   public static final PackagingElementType<DirectoryCopyPackagingElement> DIRECTORY_COPY_ELEMENT_TYPE = new DirectoryCopyElementType();
+  public static final PackagingElementType<ExtractedDirectoryPackagingElement> EXTRACTED_DIRECTORY_ELEMENT_TYPE = new ExtractedDirectoryElementType();
   public static final PackagingElementType<ArtifactRootElement<?>> ARTIFACT_ROOT_ELEMENT_TYPE = new ArtifactRootElementType();
   private static final PackagingElementType[] STANDARD_TYPES = {
       DIRECTORY_ELEMENT_TYPE, ARCHIVE_ELEMENT_TYPE,
       LibraryElementType.LIBRARY_ELEMENT_TYPE, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE,
-      ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE, DIRECTORY_COPY_ELEMENT_TYPE
+      ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE, DIRECTORY_COPY_ELEMENT_TYPE, EXTRACTED_DIRECTORY_ELEMENT_TYPE
   };
 
   @NotNull
@@ -251,6 +252,13 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @Override
   public PackagingElement<?> createDirectoryCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath) {
     return createParentDirectories(relativeOutputPath, new DirectoryCopyPackagingElement(filePath));
+  }
+
+  @Override
+  @NotNull
+  public PackagingElement<?> createExtractedDirectoryWithParentDirectories(@NotNull String jarPath, @NotNull String pathInJar,
+                                                                           @NotNull String relativeOutputPath) {
+    return createParentDirectories(relativeOutputPath, new ExtractedDirectoryPackagingElement(jarPath, pathInJar));
   }
 
   @NotNull

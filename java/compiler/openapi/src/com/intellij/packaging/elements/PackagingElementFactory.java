@@ -68,6 +68,10 @@ public abstract class PackagingElementFactory {
   public abstract PackagingElement<?> createDirectoryCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath);
 
   @NotNull
+  public abstract PackagingElement<?> createExtractedDirectoryWithParentDirectories(@NotNull String jarPath, @NotNull String pathInJar,
+                                                                                    @NotNull String relativeOutputPath);
+
+  @NotNull
   public abstract PackagingElement<?> createFileCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath,
                                                                           @Nullable String outputFileName);
   

@@ -15,8 +15,8 @@
  */
 package com.intellij.packaging.elements;
 
-import com.intellij.compiler.ant.Tag;
 import com.intellij.compiler.ant.Generator;
+import com.intellij.compiler.ant.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +32,11 @@ public interface AntCopyInstructionCreator {
   Tag createFileCopyInstruction(@NotNull String filePath, String outputFileName);
 
   @NotNull
-  AntCopyInstructionCreator subFolder(String directoryName);
+  AntCopyInstructionCreator subFolder(@NotNull String directoryName);
 
   @Nullable
-  Generator createSubFolderCommand(String directoryName);
+  Generator createSubFolderCommand(@NotNull String directoryName);
+
+  @NotNull
+  Generator createExtractedDirectoryInstruction(@NotNull String jarPath, @NotNull String pathInJar);
 }
