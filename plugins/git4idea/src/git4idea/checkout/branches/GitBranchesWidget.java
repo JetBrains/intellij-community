@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
@@ -58,7 +59,11 @@ import java.util.Collection;
 /**
  * The git branches widget
  */
-public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
+public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidget {
+  /**
+   * The arrows icon
+   */
+  private static final Icon ARROWS_ICON = IconLoader.getIcon("/ide/statusbar_arrows.png");
   /**
    * The logger
    */
@@ -125,7 +130,6 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
     myDefaultForeground = getForeground();
     myConfigurationsListener = new MyGitBranchConfigurationsListener();
     myConfigurations.addConfigurationListener(myConfigurationsListener);
-    setIcon(IconLoader.findIcon("/icons/branch.png", getClass()));
     Disposer.register(myConfigurations, this);
     addMouseListener(new MouseAdapter() {
       @Override
@@ -241,12 +245,11 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
     final DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
     final DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), myProject, parent);
     myPopup = JBPopupFactory.getInstance()
-      .createActionGroupPopup("Checkout", getPopupActionGroup(), dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
+      .createActionGroupPopup(null, getPopupActionGroup(), dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                               new Runnable() {
                                 @Override
                                 public void run() {
                                   myPopup = null;
-
                                 }
                               }, 20);
     final Dimension dimension = myPopup.getContent().getPreferredSize();
@@ -341,23 +344,32 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
   private void updateLabel() {
     cancelPopup();
     final GitBranchConfigurations.SpecialStatus status = myConfigurations.getSpecialStatus();
-    String t;
+    String text;
     myPopupEnabled = false;
+    Color color = Color.RED;
+    String tooltip;
     switch (status) {
       case CHECKOUT_IN_PROGRESS:
-        t = "Checkout in progress...";
+        text = "Checkout...";
+        color = Color.BLUE;
+        tooltip = "A checkout operation is in progress.";
         break;
       case MERGING:
-        t = "Merging...";
+        text = "Merging...";
+        tooltip = "Merge is in progress in some vcs roots.";
         break;
       case REBASING:
-        t = "Rebasing...";
+        tooltip = "Rebase is in progress in some vcs roots.";
+        text = "Rebasing...";
         break;
       case NON_GIT:
-        t = "Non-Git project";
+        tooltip = "No valid vcs roots are configuration for the project.";
+        text = "Non-Git project";
         break;
       case SUBMODULES:
-        t = "Submodules unsupported";
+        tooltip =
+          "<html>The submodules are unsupported in the current version.<br/>It is possible to disable widget in Git Vcs settings.</html>";
+        text = "Submodules unsupported";
         break;
       case NORMAL:
         GitBranchConfiguration current;
@@ -368,18 +380,49 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
           current = null;
         }
         if (current == null) {
-          t = "Detection in progress";
+          tooltip = "The branch configurations are not yet detected.";
+          text = "Detecting...";
         }
         else {
           myPopupEnabled = true;
-          t = current.getName();
+          text = current.getName();
+          tooltip = "<html>The Git branch configuration <b>" + text + "</b> is selected.<br/>Click to select other configuration.</html>";
+          color = myDefaultForeground;
         }
         break;
       default:
-        t = "Unknown status: " + status;
+        tooltip = "Unknown status: " + status;
+        text = "Unknown status: " + status;
     }
-    setForeground(myPopupEnabled ? myDefaultForeground : Color.RED);
-    setText(t);
+    if (!SystemInfo.isMac) {
+      setForeground(color);
+    }
+    setToolTipText(tooltip);
+    setText(text);
+    invalidate();
+  }
+
+  @Override
+  protected void paintComponent(@NotNull final Graphics g) {
+    super.paintComponent(g);
+
+    if (getText() != null && myPopupEnabled) {
+      final Rectangle r = getBounds();
+      final Insets insets = getInsets();
+      ARROWS_ICON
+        .paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
+    }
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    final Dimension preferredSize = super.getPreferredSize();
+    return new Dimension(preferredSize.width + ARROWS_ICON.getIconWidth() + 4, preferredSize.height);
+  }
+
+  @Override
+  protected String getTextForPreferredSize() {
+    return getText();
   }
 
   /**
