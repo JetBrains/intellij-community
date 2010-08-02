@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -109,6 +110,10 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
    * The current popup
    */
   private ListPopup myPopup;
+  /**
+   * The key for the last popup, used to determine if disposed popup is the actually the last pop up.
+   */
+  private Object myPopupKey;
   /**
    * The default foreground color
    */
@@ -225,7 +230,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
     if (myRemoveConfigurations == null) {
       ArrayList<AnAction> rc = new ArrayList<AnAction>();
       for (final String c : myConfigurations.getRemotesCandidates()) {
-        rc.add(new AnAction(c) {
+        rc.add(new DumbAwareAction(c) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             myConfigurations.startCheckout(null, c, false);
@@ -238,18 +243,28 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
     return myRemoveConfigurations;
   }
 
+  /**
+   * Show popup is if it is not shown.
+   */
   void showPopup() {
     if (!myPopupEnabled) {
       return;
     }
+    if (myPopup != null) {
+      myPopup.cancel();
+    }
     final DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
     final DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), myProject, parent);
+    final Object key = new Object();
+    myPopupKey = key;
     myPopup = JBPopupFactory.getInstance()
       .createActionGroupPopup(null, getPopupActionGroup(), dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                               new Runnable() {
                                 @Override
                                 public void run() {
-                                  myPopup = null;
+                                  if (key == myPopupKey) {
+                                    myPopup = null;
+                                  }
                                 }
                               }, 20);
     final Dimension dimension = myPopup.getContent().getPreferredSize();
@@ -280,7 +295,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
           // skip current config
           continue;
         }
-        rc.add(new AnAction(c) {
+        rc.add(new DumbAwareAction(c) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             try {
@@ -307,13 +322,13 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
   ActionGroup getPopupActionGroup() {
     if (myPopupActionGroup == null) {
       myPopupActionGroup = new DefaultActionGroup(null, false);
-      myPopupActionGroup.addAction(new AnAction("Manage Configurations ...") {
+      myPopupActionGroup.addAction(new DumbAwareAction("Manage Configurations ...") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           GitManageConfigurationsDialog.showDialog(myProject, myConfigurations);
         }
       });
-      myPopupActionGroup.addAction(new AnAction("Modify Current Configuration ...") {
+      myPopupActionGroup.addAction(new DumbAwareAction("Modify Current Configuration ...") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           try {
@@ -325,7 +340,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
           }
         }
       });
-      myPopupActionGroup.addAction(new AnAction("New Configuration ...") {
+      myPopupActionGroup.addAction(new DumbAwareAction("New Configuration ...") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           myConfigurations.startCheckout(null, null, false);
@@ -543,7 +558,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
   /**
    * Refresh git remotes
    */
-  class RefreshRemotesAction extends AnAction {
+  class RefreshRemotesAction extends DumbAwareAction {
     /**
      * The constructor
      */
