@@ -174,7 +174,7 @@ public class IOResourceInspection extends ResourceInspection {
     public boolean isIOResource(PsiExpression expression){
         return TypeUtils.expressionHasTypeOrSubtype(expression,
                 "java.io.InputStream", "java.io.Writer", "java.io.Reader",
-                "java.io.RandomAccessFile", "java.io.OutputStream") != null &&
+                "java.io.RandomAccessFile", "java.io.OutputStream", "java.util.zip.ZipFile") != null &&
                !isIgnoredType(expression);
     }
 
