@@ -193,7 +193,7 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
    * {@inheritDoc}
    */
   @Override
-  public WidgetPresentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
   }
 

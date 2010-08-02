@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
@@ -42,15 +43,15 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
 /**
  * User: spLeaner
  */
 public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.IdeStatusBarImpl");
+
   private InfoAndProgressPanel myInfoAndProgressPanel;
 
   private enum Position {LEFT, RIGHT, CENTER}
@@ -93,7 +94,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   public void addWidget(@NotNull final StatusBarWidget widget) {
-    addWidget(widget, Position.RIGHT, "before Notifications");
+    addWidget(widget, Position.RIGHT, "__AUTODETECT__");
   }
 
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull String anchor) {
@@ -139,7 +140,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       }
 
       @Nullable
-      public WidgetPresentation getPresentation(@NotNull Type type) {
+      public WidgetPresentation getPresentation(@NotNull PlatformType type) {
         return null;
       }
 
@@ -158,19 +159,22 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
-    for (final String key : myWidgetMap.keySet()) {
-      final WidgetBean bean = myWidgetMap.get(key);
-      if (bean.component instanceof CustomStatusBarWidget && ((CustomStatusBarWidget)bean.component).getComponent() == c) {
+    for (final Map.Entry<String, WidgetBean> entry : myWidgetMap.entrySet()) {
+      final WidgetBean value = entry.getValue();
+      if (value.widget instanceof CustomStatusBarWidget && value.component == c) {
+        final String key = entry.getKey();
         removeWidget(key);
+        myCustomComponentIds.remove(key);
       }
     }
   }
 
   public void dispose() {
-    for (final String key : myWidgetMap.keySet()) {
-      final WidgetBean bean = myWidgetMap.get(key);
+    for (final WidgetBean bean : myWidgetMap.values()) {
       Disposer.dispose(bean.widget);
     }
+
+    myWidgetMap.clear();
   }
 
   private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull String anchor) {
@@ -207,20 +211,29 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
     final JComponent c = widget instanceof CustomStatusBarWidget ? ((CustomStatusBarWidget)widget).getComponent() : wrap(widget);
     if (Position.RIGHT == pos && panel.getComponentCount() > 0) {
-      final List<String> parts = StringUtil.split(anchor, " ");
-      if (parts.size() < 2) {
-        throw new IllegalArgumentException(
-          "anchor should be a relative position ('before' or 'after') and widget ID, like 'after Encoding'");
+      String wid;
+      boolean before;
+      if (!anchor.equals("__AUTODETECT__")) {
+        final List<String> parts = StringUtil.split(anchor, " ");
+        if (parts.size() < 2 || !myWidgetMap.keySet().contains(parts.get(1))) {
+          wid = "Notifications";
+          before = true;
+        } else {
+          wid = parts.get(1);
+          before = "before".equalsIgnoreCase(parts.get(0));
+        }
+      } else {
+        wid = "Notifications";
+        before = true;
       }
 
       for (final String id : myWidgetMap.keySet()) {
-        if (id.equalsIgnoreCase(parts.get(1))) {
+        if (id.equalsIgnoreCase(wid)) {
           final WidgetBean bean = myWidgetMap.get(id);
           int i = 0;
           for (final Component component : myRightPanel.getComponents()) {
             if (component == bean.component) {
-              final String _relative = parts.get(0);
-              if ("before".equalsIgnoreCase(_relative)) {
+              if (before) {
                 panel.add(c, i);
                 updateBorder(i);
               }
@@ -238,8 +251,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
           }
         }
       }
-
-      throw new IllegalArgumentException("unable to find widget with id: " + parts.get(1));
     }
 
     if (Position.LEFT == pos && panel.getComponentCount() == 0) {
@@ -323,7 +334,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   private static JComponent wrap(@NotNull final StatusBarWidget widget) {
     final StatusBarWidget.WidgetPresentation presentation =
-      widget.getPresentation(SystemInfo.isMac ? StatusBarWidget.Type.MAC : StatusBarWidget.Type.DEFAULT);
+      widget.getPresentation(SystemInfo.isMac ? StatusBarWidget.PlatformType.MAC : StatusBarWidget.PlatformType.DEFAULT);
     assert presentation != null : "Presentation should not be null!";
 
     JComponent wrapper;

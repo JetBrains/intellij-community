@@ -38,6 +38,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -168,6 +169,16 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
         } else {
           app.executeOnPooledThread(initInspectionProfilesRunnable);
         }
+
+
+        final JLabel statusLabel = new JLabel("YEAH");
+        try {
+          WindowManager.getInstance().getStatusBar(myProject).addCustomIndicationComponent(statusLabel);
+        }
+        finally {
+          WindowManager.getInstance().getStatusBar(myProject).removeCustomIndicationComponent(statusLabel);
+        }
+
       }
     });
   }
