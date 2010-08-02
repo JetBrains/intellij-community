@@ -35,26 +35,22 @@ import java.util.List;
 public interface SoftWrapModelEx extends SoftWrapModel {
 
   /**
-   * Asks current model to adjust logical position for the given visual position if necessary.
-   * <p/>
-   * Given logical position is allowed to be non-soft wrap aware, i.e. the one calculated as there are no soft wraps at the moment.
+   * Asks current model to map given visual position to logical.
    *
-   * @param defaultLogical    default logical position that corresponds to the given visual position
-   * @param visual            target visual position for which logical position should be adjusted if necessary
+   * @param visual            target visual position for which logical position should be mapped
    * @return                  logical position that corresponds to the given visual position
    */
   @NotNull
-  LogicalPosition adjustLogicalPosition(@NotNull LogicalPosition defaultLogical, @NotNull VisualPosition visual);
+  LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visual);
 
   /**
-   * Asks current model to adjust logical position for the given document offset.
+   * Asks current model to map given document offset to logical position.
    *
-   * @param defaultLogical  default logical position that corresponds to the given document offset
    * @param offset    target editor document offset
    * @return          logical position for the given editor document offset
    */
   @NotNull
-  LogicalPosition adjustLogicalPosition(LogicalPosition defaultLogical, int offset);
+  LogicalPosition offsetToLogicalPosition(int offset);
 
   /**
    * Asks current model to adjust visual position that corresponds to the given logical position if necessary.
@@ -103,7 +99,15 @@ public interface SoftWrapModelEx extends SoftWrapModel {
    * @param drawingType   target drawing type
    * @return              width in pixels required for the painting of the given type
    */
-  int getMinDrawingWidth(@NotNull SoftWrapDrawingType drawingType);
+  int getMinDrawingWidthInPixels(@NotNull SoftWrapDrawingType drawingType);
+
+  /**
+   * Allows to ask for the minimal width in columns required for painting of the given type.
+   *
+   * @param drawingType   target drawing type
+   * @return              width in columns required for the painting of the given type
+   */
+  int getMinDrawingWidthInColumns(@NotNull SoftWrapDrawingType drawingType);
 
   /**
    * Registers given listener within the current model

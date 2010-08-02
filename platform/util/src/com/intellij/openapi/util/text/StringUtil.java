@@ -1236,6 +1236,20 @@ public class StringUtil {
     return i;
   }
 
+  /**
+   * Allows to answer if target symbol is contained at given char sequence at <code>[start; end)</code> interval.
+   *
+   * @param s       target char sequence to check
+   * @param start   start offset to use within the given char sequence (inclusive)
+   * @param end     end offset to use within the given char sequence (exclusive)
+   * @param c       target symbol to check
+   * @return        <code>true</code> if given symbol is contained at the target range of the given char sequence;
+   *                <code>false</code> otherwise
+   */
+  public static boolean contains(CharSequence s, int start, int end, char c) {
+    return indexOf(s, c, start, end) >= 0;
+  }
+
   public static int indexOf(@NotNull CharSequence s, char c) {
     return indexOf(s, c, 0, s.length());
   }
