@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -148,7 +149,7 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
         if (statusBar != null) {
           final GitBranchesWidget w = new GitBranchesWidget(project, configurations);
-          statusBar.addWidget(w, "after InsertOverwrite", project);
+          statusBar.addWidget(w, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), project);
           widget.set(w);
         }
       }
