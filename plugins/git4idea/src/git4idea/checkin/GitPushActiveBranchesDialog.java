@@ -256,7 +256,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       if (seenMerges) {
         rootsWithMerges.add(r.root);
       }
-      if (r.remoteCommits > 0 && seenCheckedNode || reorderNeeded) {
+      if (r.remoteCommits > 0 || reorderNeeded) {
         roots.add(r.root);
       }
       if (reorderNeeded) {
