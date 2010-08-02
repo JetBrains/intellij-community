@@ -239,7 +239,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         }
       }
 
-      throw new IllegalArgumentException("unable to find widget with id: " + parts.get(1));
+      //throw new IllegalArgumentException("unable to find widget with id: " + parts.get(1));
     }
 
     if (Position.LEFT == pos && panel.getComponentCount() == 0) {
