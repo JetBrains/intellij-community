@@ -15,7 +15,12 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.AntSupport;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 
@@ -41,6 +46,26 @@ public abstract class AntDomElement implements DomElement {
 
   public final AntDomProject getAntProject() {
     return getParentOfType(AntDomProject.class, false);
+  }
+
+  public final AntDomProject getContextAntProject() {
+    final AntConfigurationBase antConfig = AntConfigurationBase.getInstance(getManager().getProject());
+    final XmlElement xmlElement = getXmlElement();
+    if (xmlElement == null) {
+      return getAntProject();
+    }
+    PsiFile containingFile = xmlElement.getContainingFile();
+    if (containingFile != null) {
+      containingFile = containingFile.getOriginalFile();
+    }
+    if (!(containingFile instanceof XmlFile)) {
+      return getAntProject();
+    }
+    final XmlFile contextFile = antConfig.getEffectiveContextFile(((XmlFile)containingFile));
+    if (contextFile == null) {
+      return getAntProject();
+    }
+    return AntSupport.getAntDomProject(contextFile);
   }
 
   public final List<AntDomElement> getAntChildren() {

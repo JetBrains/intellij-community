@@ -16,8 +16,8 @@
 package com.intellij.lang.ant.config;
 
 import com.intellij.lang.ant.config.impl.AntInstallation;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.config.ExternalizablePropertyContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,11 +71,11 @@ public abstract class AntConfigurationBase extends AntConfiguration {
     }
   }
 
-  public abstract void setContextFile(@NotNull AntFile file, @Nullable AntFile context);
+  public abstract void setContextFile(@NotNull XmlFile file, @Nullable XmlFile context);
 
   @Nullable
-  public abstract AntFile getContextFile(@Nullable AntFile file);
+  public abstract XmlFile getContextFile(@Nullable XmlFile file);
   
   @Nullable
-  public abstract AntFile getEffectiveContextFile(@Nullable AntFile file);
+  public abstract XmlFile getEffectiveContextFile(@Nullable XmlFile file);
 }

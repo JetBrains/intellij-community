@@ -38,7 +38,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     if (s != null) {
       final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
       if (element != null) {
-        return findElementById(getContextProject(element), s);
+        return findElementById(element.getContextAntProject(), s);
       }
     }
     return null;
@@ -69,7 +69,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
           return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
         final Set<String> variants = new LinkedHashSet<String>();
-        getContextProject(invocationElement).accept(new AntDomRecursiveVisitor() {
+        invocationElement.getContextAntProject().accept(new AntDomRecursiveVisitor() {
           public void visitAntDomElement(AntDomElement element) {
             final String variant = element.getId().getRawText();
             if (variant != null) {
@@ -82,12 +82,6 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
       }
     }};
   }
-
-  private AntDomProject getContextProject(AntDomElement element) {
-    // todo: correct project
-    return element.getAntProject();
-  }
-
 
   @Nullable
   private static AntDomElement findElementById(AntDomElement from, final String id) {

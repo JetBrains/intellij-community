@@ -17,7 +17,6 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -37,20 +36,15 @@ public class AntStringResolver extends PropertyProviderFinder{
     if (!expander.hasPropertiesToExpand()) {
       return valueString;
     }
-    final AntDomProject project = calcContextProject(context);
+    AntDomProject project = context.getParentOfType(AntDomProject.class, false);
     if (project == null) {
       return valueString;
     }
+    project = project.getContextAntProject();
     new AntStringResolver(context, expander).execute(project, project.getDefaultTarget().getRawText());
     return expander.getResult();
   }
 
-
-  @Nullable
-  private static AntDomProject calcContextProject(DomElement context) {
-    // todo
-    return context.getParentOfType(AntDomProject.class, false);
-  }
 
   protected void propertyProviderFound(PropertiesProvider propertiesProvider) {
     myExpander.acceptProvider(propertiesProvider);

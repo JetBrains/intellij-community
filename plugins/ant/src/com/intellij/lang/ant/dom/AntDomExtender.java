@@ -56,7 +56,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     final XmlElement xmlElement = antDomElement.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)xmlElement;
-      final String tagName = xmlTag.getName(); // todo: support namespaces
+      final String tagName = xmlTag.getName(); 
 
       final AntDomProject antProject = antDomElement.getAntProject();
       if (antProject == null) {

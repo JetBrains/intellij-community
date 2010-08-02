@@ -43,10 +43,9 @@ public class AntDomPropertyReference extends AntDomReference{
 
   @Override
   public PsiElement resolveInner() {
-    // todo: find proper context project considering includes
     final AntDomProject project = myInvocationContextElement.getParentOfType(AntDomProject.class, true);
     if (project != null) {
-      return PropertyResolver.resolve(project, getCanonicalText(), myInvocationContextElement).getFirst();
+      return PropertyResolver.resolve(project.getContextAntProject(), getCanonicalText(), myInvocationContextElement).getFirst();
     }
     return null;
   }
@@ -71,8 +70,8 @@ public class AntDomPropertyReference extends AntDomReference{
   public Object[] getVariants() {
     final AntDomProject project = myInvocationContextElement.getParentOfType(AntDomProject.class, true);
     if (project != null) {
-      final Collection<String> variants = PropertyResolver.resolve(project, getCanonicalText(), myInvocationContextElement).getSecond();
-      return variants.toArray(new String[variants.size()]);
+      final Collection<String> variants = PropertyResolver.resolve(project.getContextAntProject(), getCanonicalText(), myInvocationContextElement).getSecond();
+       return variants.toArray(new String[variants.size()]);
     }
     return super.getVariants();
   }

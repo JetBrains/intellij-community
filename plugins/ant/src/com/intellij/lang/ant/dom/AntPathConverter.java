@@ -62,8 +62,11 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
   }
 
   protected AntDomProject getEffectiveAntProject(GenericAttributeValue attribValue) {
-    // todo: get context (including) project if configured 
-    return attribValue.getParentOfType(AntDomProject.class, false);
+    AntDomProject project = attribValue.getParentOfType(AntDomProject.class, false);
+    if (project != null) {
+      project = project.getContextAntProject();
+    }
+    return project;
   }
 
   @Nullable

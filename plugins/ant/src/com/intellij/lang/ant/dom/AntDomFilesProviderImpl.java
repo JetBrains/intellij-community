@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.psi.AntFilesProvider;
+import com.intellij.util.PathUtil;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NonNls;
@@ -98,12 +99,11 @@ public abstract class AntDomFilesProviderImpl extends AntDomElement implements A
       if (file.isAbsolute()) {
         return file.getCanonicalFile();
       }
-      // todo: context project for basedir resolution?
-      final String baseDir = getAntProject().getProjectBasedirPath();
+      final String baseDir = getContextAntProject().getProjectBasedirPath();
       if (baseDir == null) {
         return null;
       }
-      return new File(baseDir, path).getCanonicalFile();
+      return new File(PathUtil.getCanonicalPath(new File(baseDir, path).getPath()));
     }
     catch (IOException e) {
       return null;

@@ -67,18 +67,12 @@ public class CustomAntElementsRegistry {
   }
 
   public static CustomAntElementsRegistry getInstance(AntDomProject antProject) {
-    // todo: choose topmost context project
-    CustomAntElementsRegistry registry = getContextProject(antProject).getUserData(REGISTRY_KEY);
+    CustomAntElementsRegistry registry = antProject.getContextAntProject().getUserData(REGISTRY_KEY);
     if (registry == null) {
       registry = new CustomAntElementsRegistry(antProject);
       antProject.putUserData(REGISTRY_KEY, registry);
     }
     return registry;
-  }
-
-  @NotNull
-  private static AntDomProject getContextProject(@NotNull AntDomProject antProject) {
-    return antProject;
   }
 
   @NotNull

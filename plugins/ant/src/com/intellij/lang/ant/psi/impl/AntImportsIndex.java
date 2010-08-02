@@ -26,9 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.StringReader;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,7 +34,7 @@ import java.util.Set;
  */
 public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   public static final ID<Integer, Void> INDEX_NAME = ID.create("ant-imports");
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
   public static final Integer ANT_FILES_WITH_IMPORTS_KEY = new Integer(0);
   
   private static final DataIndexer<Integer,Void,FileContent> DATA_INDEXER = new DataIndexer<Integer, Void, FileContent>() {
@@ -46,7 +44,6 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
       
       NanoXmlUtil.parse(new StringReader(inputData.getContentAsText().toString()), new NanoXmlUtil.IXMLBuilderAdapter() {
         private boolean isFirstElement = true;
-        private Set<String> myAttributes = new HashSet<String>();
         public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
           if (isFirstElement) {
             if (!"project".equalsIgnoreCase(elemName)) {
@@ -63,18 +60,18 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
         }
 
         public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
-          if (myAttributes != null) {
-            myAttributes.add(key);
-          }
+          //if (myAttributes != null) {
+          //  myAttributes.add(key);
+          //}
         }
 
         public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
-          if (myAttributes != null) {
-            if (!(myAttributes.contains("name") && myAttributes.contains("default"))) {
-              stop();
-            }
-            myAttributes = null;
-          }
+          //if (myAttributes != null) {
+          //  if (!(myAttributes.contains("name") && myAttributes.contains("default"))) {
+          //    stop();
+          //  }
+          //  myAttributes = null;
+          //}
         }
 
       });

@@ -41,11 +41,10 @@ import java.util.*;
 public class AntDomTargetDependsListConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
   
   public TargetResolver.Result fromString(@Nullable @NonNls String s, ConvertContext context) {
-    AntDomProject project = context.getInvocationElement().getParentOfType(AntDomProject.class, false);
+    final AntDomProject project = context.getInvocationElement().getParentOfType(AntDomProject.class, false);
     if (project == null) {
       return null;
     }
-    // todo: use context project
     final AntDomTarget contextTarget = context.getInvocationElement().getParentOfType(AntDomTarget.class, false);
     if (contextTarget == null) {
       return null;
@@ -62,7 +61,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
         refs.add(ref.trim());
       }
     }
-    final TargetResolver.Result result = TargetResolver.resolve(project, contextTarget, refs);
+    final TargetResolver.Result result = TargetResolver.resolve(project.getContextAntProject(), contextTarget, refs);
     result.setRefsString(s);
     return result;
   }

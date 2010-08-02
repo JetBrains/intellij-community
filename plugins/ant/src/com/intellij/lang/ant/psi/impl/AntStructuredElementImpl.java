@@ -512,7 +512,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     try {
       int startProp = 0;
       final AntFile self = getAntFile();
-      final AntFile antFile = antConfig.getEffectiveContextFile(self);
+      final AntFile antFile = null/*antConfig.getEffectiveContextFile(self)*/;
       while ((startProp = value.indexOf("${", startProp)) >= 0) {
         if (startProp > 0 && value.charAt(startProp - 1) == '$') {
           // the '$' is escaped

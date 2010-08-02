@@ -15,8 +15,6 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.lang.CompositeLanguage;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.dom.AntDomAntlib;
 import com.intellij.lang.ant.dom.AntDomElement;
 import com.intellij.lang.ant.dom.AntDomProject;
@@ -51,8 +49,8 @@ public class AntSupport implements ApplicationComponent {
   private static final Map<AntFile, WeakHashMap<AntFile, Boolean>> ourFileDependencies = new WeakHashMap<AntFile, WeakHashMap<AntFile, Boolean>>();
 
   public AntSupport(FileTypeManager fileTypeManager) {
-    fileTypeManager.getRegisteredFileTypes();
-    ((CompositeLanguage)StdLanguages.XML).registerLanguageExtension(new AntLanguageExtension());
+    //fileTypeManager.getRegisteredFileTypes();
+    //((CompositeLanguage)StdLanguages.XML).registerLanguageExtension(new AntLanguageExtension());
   }
 
   public static synchronized AntLanguage getLanguage() {

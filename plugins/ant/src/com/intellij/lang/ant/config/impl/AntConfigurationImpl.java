@@ -25,6 +25,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
+import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -861,28 +862,39 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
   }
 
-  public void setContextFile(@NotNull AntFile file, @Nullable AntFile context) {
+  public void setContextFile(@NotNull XmlFile file, @Nullable XmlFile context) {
     if (context != null) {
       myAntFileToContextFileMap.put(file.getVirtualFile(), context.getVirtualFile());
     }
     else {
       myAntFileToContextFileMap.remove(file.getVirtualFile());
     }
-    file.clearCaches();
-  }
-
-  public AntFile getContextFile(@Nullable final AntFile file) {
-    return file != null? AntSupport.toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile()), getProject()) : null;
   }
 
   @Nullable
-  public AntFile getEffectiveContextFile(final AntFile file) {
+  public XmlFile getContextFile(@Nullable final XmlFile file) {
+    if (file == null) {
+      return null;
+    }
+    final VirtualFile context = myAntFileToContextFileMap.get(file.getVirtualFile());
+    if (context == null) {
+      return null;
+    }
+    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(context);
+    if (!(psiFile instanceof XmlFile)) {
+      return null;
+    }
+    final XmlFile xmlFile = (XmlFile)psiFile;
+    return AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
+  }
+
+  @Nullable
+  public XmlFile getEffectiveContextFile(final XmlFile file) {
     return new Object() {
-      @Nullable
-      AntFile findContext(final AntFile file, Set<PsiElement> processed) {
+      @Nullable XmlFile findContext(final XmlFile file, Set<PsiElement> processed) {
         if (file != null) {
           processed.add(file);
-          final AntFile contextFile = AntSupport.toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile()), getProject());
+          final XmlFile contextFile = getContextFile(file);
           return (contextFile == null || processed.contains(contextFile))? file : findContext(contextFile, processed);
         }
         return null;

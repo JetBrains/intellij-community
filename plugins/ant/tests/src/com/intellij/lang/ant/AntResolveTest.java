@@ -15,15 +15,11 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.lang.ant.config.AntConfigurationBase;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.AntTask;
-import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ResolveTestCase;
@@ -237,6 +233,7 @@ public class AntResolveTest extends ResolveTestCase {
     assertNotNull(ref.resolve());
   }
 
+  /* todo: rewrite into DOM
   public void testAntFilePropertyWithContexts() throws Exception {
     final AntPropertyReference refImporting = (AntPropertyReference)configureByFile("PropertyAntFileImporting.ant");
     final AntFile importing = refImporting.getElement().getAntFile();
@@ -253,6 +250,7 @@ public class AntResolveTest extends ResolveTestCase {
     assertTrue(refImported.resolve() != null);
     assertTrue(refImporting.resolve() != null);
   }
+  */
   
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();
