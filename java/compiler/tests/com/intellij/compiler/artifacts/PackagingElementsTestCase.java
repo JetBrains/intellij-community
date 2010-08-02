@@ -101,7 +101,16 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected VirtualFile getJDomJar() {
-    final File file = PathManager.findFileInLibDirectory("jdom.jar");
+    return getJarFromLibDirectory("jdom.jar");
+  }
+
+  protected String getJUnitJarPath() {
+    final VirtualFile jar = getJarFromLibDirectory("junit.jar");
+    return JarFileSystem.getInstance().getVirtualFileForJar(jar).getPath();
+  }
+
+  private VirtualFile getJarFromLibDirectory(final String relativePath) {
+    final File file = PathManager.findFileInLibDirectory(relativePath);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     assertNotNull(file.getAbsolutePath() + " not found", virtualFile);
     final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
@@ -186,6 +195,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
 
     public PackagingElementBuilder dirCopy(String path) {
       myElement.addOrFindChild(getFactory().createDirectoryCopyWithParentDirectories(path, "/"));
+      return this;
+    }
+
+    public PackagingElementBuilder extractedDir(String jarPath, String pathInJar) {
+      myElement.addOrFindChild(getFactory().createExtractedDirectoryWithParentDirectories(jarPath, pathInJar, "/"));
       return this;
     }
 

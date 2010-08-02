@@ -1,5 +1,7 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -142,5 +144,30 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
     compileProject().assertDeleted("out/artifacts/a/a.txt");
     assertEmptyOutput(a);
+  }
+
+  public void testChangeFileInArchive() throws Exception {
+    final VirtualFile file = createFile("a.txt", "a");
+    final Artifact a = addArtifact("a", root().archive("a.jar").file(file));
+    compile(a);
+
+    final String jarPath = a.getOutputPath() + "/a.jar";
+    final Artifact b = addArtifact("b", root().extractedDir(jarPath, "/"));
+    compile(b);
+    assertOutput(b, fs().file("a.txt", "a"));
+
+    compile(a).assertUpToDate();
+    compile(b).assertUpToDate();
+
+    changeFile(file, "b");
+    compile(b).assertUpToDate();
+    compile(a).assertRecompiled("a.txt");
+    assertOutput(a, fs().archive("a.jar").file("a.txt", "b"));
+    final VirtualFile jarFile = LocalFileSystem.getInstance().findFileByPath(jarPath);
+    changeFileInJar(JarFileSystem.getInstance().getJarRootForLocalFile(jarFile).findFileByRelativePath("a.txt"));
+
+    compile(b).assertRecompiled("out/artifacts/a/a.jar!/a.txt");
+    assertOutput(b, fs().file("a.txt", "b"));
+    compile(b).assertUpToDate();
   }
 }

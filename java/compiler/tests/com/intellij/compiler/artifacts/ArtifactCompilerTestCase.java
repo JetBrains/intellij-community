@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -98,6 +99,12 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
       set.add(StringUtil.trimStart(StringUtil.trimStart(FileUtil.toSystemIndependentName(path), basePath), "/"));
     }
     return set;
+  }
+
+  protected void changeFileInJar(VirtualFile jarEntry) throws Exception {
+    final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(jarEntry);
+    changeFile(jarFile);
+    jarEntry.refresh(false, false);
   }
 
   protected void changeFile(VirtualFile file) throws Exception {

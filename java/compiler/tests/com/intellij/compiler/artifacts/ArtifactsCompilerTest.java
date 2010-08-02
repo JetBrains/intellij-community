@@ -188,4 +188,20 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
                        .end()
                      .file("b.txt"));
   }
+
+  public void testExtractDirectory() throws Exception {
+    final Artifact a = addArtifact("a", root().dir("dir").extractedDir(getJUnitJarPath(), "/junit/textui/"));
+    compileProject();
+    assertOutput(a, fs().dir("dir")
+                           .file("ResultPrinter.class")
+                           .file("TestRunner.class"));
+  }
+
+  public void testPackExtractedDirectory() throws Exception {
+    final Artifact a = addArtifact("a", root().archive("a.jar").extractedDir(getJUnitJarPath(), "/junit/textui/"));
+    compileProject();
+    assertOutput(a, fs().archive("a.jar")
+                           .file("ResultPrinter.class")
+                           .file("TestRunner.class"));
+  }
 }
