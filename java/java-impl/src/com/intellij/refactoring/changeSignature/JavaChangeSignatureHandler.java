@@ -111,16 +111,22 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
       return element.getParent();
     }
 
-    final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    final PsiCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
     if (expression != null) {
-      assert element != null;
-      final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
+      final PsiExpression qualifierExpression;
+      if (expression instanceof PsiMethodCallExpression) {
+        qualifierExpression = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
+      } else if (expression instanceof PsiNewExpression) {
+        qualifierExpression = ((PsiNewExpression)expression).getQualifier();
+      } else {
+        qualifierExpression = null;
+      }
       if (PsiTreeUtil.isAncestor(qualifierExpression, element, false)) {
         final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(qualifierExpression, PsiExpressionList.class);
         if (expressionList != null) {
           final PsiElement parent = expressionList.getParent();
-          if (parent instanceof PsiMethodCallExpression) {
-            return ((PsiMethodCallExpression)parent).resolveMethod();
+          if (parent instanceof PsiCallExpression) {
+            return ((PsiCallExpression)parent).resolveMethod();
           }
         }
       }
