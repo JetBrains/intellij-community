@@ -49,6 +49,7 @@ import git4idea.vfs.GitReferenceListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -147,6 +148,10 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
    * Listener for changes
    */
   private final ChangeListAdapter myChangesListener;
+  /**
+   * If true, the widget is enabled
+   */
+  private boolean myWidgetEnabled = true;
 
   /**
    * The constructor used to dependency injection
@@ -268,8 +273,20 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
       }
       referencesChanged();
     }
+    if (isWidgetEnabled()) {
+      installWidget();
+    }
+  }
+
+  /**
+   * Install widget
+   */
+  private void installWidget() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myWidgetUninstall = GitBranchesWidget.install(myProject, this);
+      final Runnable r = GitBranchesWidget.install(myProject, this);
+      synchronized (myStateLock) {
+        myWidgetUninstall = r;
+      }
     }
   }
 
@@ -279,9 +296,17 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
   public void deactivate() {
     myVcs.removeGitReferenceListener(myReferenceListener);
     myChangeManager.removeChangeListListener(myChangesListener);
-    if (myWidgetUninstall != null) {
-      myWidgetUninstall.run();
+    uninstallWidget();
+  }
+
+  private void uninstallWidget() {
+    final Runnable r;
+    synchronized (myStateLock) {
+      r = myWidgetUninstall;
       myWidgetUninstall = null;
+    }
+    if (r != null) {
+      r.run();
     }
   }
 
@@ -310,6 +335,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
   public State getState() {
     synchronized (myStateLock) {
       State rc = new State();
+      rc.IS_WIDGET_ENABLED = myWidgetEnabled;
       rc.CURRENT = myCurrentConfiguration == null ? null : myCurrentConfiguration.getName();
       ArrayList<BranchConfiguration> cs = new ArrayList<BranchConfiguration>(myConfigurations.size());
       for (GitBranchConfiguration ci : myConfigurations.values()) {
@@ -363,8 +389,53 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
       }
       fireCurrentConfigurationChanged();
       fireConfigurationsChanged();
+      if (state.IS_WIDGET_ENABLED != myWidgetEnabled) {
+        myWidgetEnabled = state.IS_WIDGET_ENABLED;
+        updateWidgetState();
+      }
     }
   }
+
+  /**
+   * Update widget state after update
+   */
+  private void updateWidgetState() {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (isWidgetEnabled()) {
+          if (myVcs.isActivated() && myWidgetUninstall == null) {
+            installWidget();
+          }
+        }
+        else {
+          uninstallWidget();
+        }
+      }
+    });
+  }
+
+  /**
+   * @return true if widget is enabled
+   */
+  public boolean isWidgetEnabled() {
+    synchronized (myStateLock) {
+      return myWidgetEnabled;
+    }
+  }
+
+  /**
+   * Update widget state
+   *
+   * @param value true to enable widget
+   */
+  public void setWidgetEnabled(boolean value) {
+    synchronized (myStateLock) {
+      myWidgetEnabled = value;
+      updateWidgetState();
+    }
+  }
+
 
   /**
    * @return the candidate remote configurations
@@ -633,18 +704,6 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
   }
 
   /**
-   * Check if configuration with specified name already exists
-   *
-   * @param name the name to check
-   * @return true if the configuration exists
-   */
-  boolean hasConfigurationName(String name) {
-    synchronized (myStateLock) {
-      return myConfigurations.containsKey(name);
-    }
-  }
-
-  /**
    * Set current configuration
    *
    * @param newConfiguration the new current configuration
@@ -765,6 +824,10 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
    * The configuration state
    */
   public static class State {
+    /**
+     * If true, branches widget is enabled
+     */
+    public boolean IS_WIDGET_ENABLED = true;
     /**
      * The current configuration
      */
