@@ -42,7 +42,6 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +59,9 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   public boolean SUGGEST_PRIVATE_FOR_INNERS = false;
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   @NonNls private static final String SHORT_NAME = "WeakerAccess";
+  private static final String CAN_BE_PRIVATE = InspectionsBundle.message("inspection.visibility.compose.suggestion", "private");
+  private static final String CAN_BE_PACKAGE_LOCAL = InspectionsBundle.message("inspection.visibility.compose.suggestion", "package local");
+  private static final String CAN_BE_PROTECTED = InspectionsBundle.message("inspection.visibility.compose.suggestion", "protected");
 
   private class OptionsPanel extends JPanel {
     private final JCheckBox myPackageLocalForMembersCheckbox;
@@ -174,11 +176,15 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
         if (refClass.isInterface()) return null;
       }
       @Modifier String access = getPossibleAccess(refElement);
-      if (access != refElement.getAccessModifier()) {
+      if (access != refElement.getAccessModifier() && access != null) {
         final PsiElement psiElement = HighlightUsagesHandler.getNameIdentifier(refElement.getElement());
         if (psiElement != null) {
           return new ProblemDescriptor[]{manager.createProblemDescriptor(psiElement,
-                                                                         InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(access)),
+                                                                         access.equals(PsiModifier.PRIVATE)
+                                                                          ? CAN_BE_PRIVATE
+                                                                          : access.equals(PsiModifier.PACKAGE_LOCAL)
+                                                                            ? CAN_BE_PACKAGE_LOCAL
+                                                                            : CAN_BE_PROTECTED,
                                                                          new AcceptSuggestedAccess(globalContext.getRefManager(), access),
                                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
         }
