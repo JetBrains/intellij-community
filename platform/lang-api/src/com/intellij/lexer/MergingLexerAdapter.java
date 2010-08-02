@@ -18,114 +18,28 @@ package com.intellij.lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-public class MergingLexerAdapter extends DelegateLexer {
-  private final TokenSet myTokensToMerge;
-  private IElementType myTokenType;
-  private int myState;
-  private int myTokenStart;
-
-  public MergingLexerAdapter(Lexer original, TokenSet tokensToMerge){
-    super(original);
-    myTokensToMerge = tokensToMerge;
-  }
-
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
-    super.start(buffer, startOffset, endOffset, initialState);
-    myTokenType = null;
-  }
-
-  public int getState(){
-    locateToken();
-    return myState;
-  }
-
-  public IElementType getTokenType(){
-    locateToken();
-    return myTokenType;
-  }
-
-  public int getTokenStart(){
-    locateToken();
-    return myTokenStart;
-  }
-
-  public int getTokenEnd(){
-    locateToken();
-    return super.getTokenStart();
-  }
-
-  public void advance(){
-    myTokenType = null;
-  }
-
-
-  private void locateToken(){
-    if (myTokenType == null){
-      Lexer orig = getDelegate();
-
-      myTokenType = orig.getTokenType();
-      myTokenStart = orig.getTokenStart();
-      myState = orig.getState();
-      if (myTokenType == null) return;
-      orig.advance();
-      if (myTokensToMerge.contains(myTokenType)){
-        while(true){
-          IElementType tokenType = orig.getTokenType();
-          if (tokenType != myTokenType) break;
-          orig.advance();
+public class MergingLexerAdapter extends MergingLexerAdapterBase {
+  public MergingLexerAdapter(final Lexer original, final TokenSet tokensToMerge){
+    super(original, new MergeFunction() {
+      private IElementType currentTokenType;
+      @Override
+      public boolean startMerge(final IElementType type) {
+        if (tokensToMerge.contains(type)){
+          currentTokenType = type;
+          return true;
         }
+        return false;
       }
-    }
-  }
 
-  public Lexer getOriginal() {
-    return getDelegate();
-  }
+      @Override
+      public boolean mergeWith(final IElementType type) {
+        return currentTokenType == type;
+      }
 
-  public void restore(LexerPosition position) {
-    MyLexerPosition pos = (MyLexerPosition)position;
-
-    getDelegate().restore(pos.getOriginalPosition());
-    myTokenType = pos.getType();
-    myTokenStart = pos.getOffset();
-    myState = pos.getOldState();
-  }
-
-  public LexerPosition getCurrentPosition() {
-    return new MyLexerPosition(myTokenStart, myTokenType, getDelegate().getCurrentPosition(), myState);
-  }
-
-  private static class MyLexerPosition implements LexerPosition{
-    private final int myOffset;
-    private final IElementType myTokenType;
-    private final LexerPosition myOriginalPosition;
-    private final int myOldState;
-
-    public MyLexerPosition(final int offset, final IElementType tokenType, final LexerPosition originalPosition, int oldState) {
-      myOffset = offset;
-      myTokenType = tokenType;
-      myOriginalPosition = originalPosition;
-      myOldState = oldState;
-    }
-
-    public int getOffset() {
-      return myOffset;
-    }
-
-    public int getState() {
-      return myOriginalPosition.getState();
-    }
-
-    public IElementType getType() {
-      return myTokenType;
-    }
-
-    public LexerPosition getOriginalPosition() {
-      return myOriginalPosition;
-    }
-
-    public int getOldState() {
-      return myOldState;
-    }
+      @Override
+      public IElementType getMergedTokenType(final IElementType type) {
+        return type;
+      }
+    });
   }
 }
