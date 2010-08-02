@@ -207,6 +207,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * The reference tracker
    */
   private GitReferenceTracker myReferenceTracker;
+  /**
+   * If true, the vcs was activated
+   */
+  private boolean isActivated;
+
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -496,6 +501,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   @Override
   protected void activate() {
+    isActivated = true;
     if (!myProject.isDefault() && myRootTracker == null) {
       myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
     }
@@ -519,6 +525,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   @Override
   protected void deactivate() {
+    isActivated = false;
     GitBranchConfigurations.getInstance(myProject).deactivate();
     if (myRootTracker != null) {
       myRootTracker.dispose();
@@ -767,5 +774,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     final Project project = getProject();
     final VirtualFile vcsRoot = GitUtil.getGitRoot(file);
     return GitChangeUtils.getRevisionChanges(project, vcsRoot, revision.getRevisionNumber().asString(), false);
+  }
+
+  /**
+   * @return true if vcs was activated
+   */
+  public boolean isActivated() {
+    return isActivated;
   }
 }

@@ -224,7 +224,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
 
     boolean allLineCommented = true;
-    
+    boolean commentWithIndent = CodeStyleSettingsManager.getSettings(myProject).LINE_COMMENT_AT_FIRST_COLUMN;
+
     for (int line = myStartLine; line <= myEndLine; line++) {
       Commenter commenter = blockSuitableCommenter != null ? blockSuitableCommenter : findCommenter(line);
       if (commenter == null) return;
@@ -245,12 +246,18 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       myCommenters[line - myStartLine] = commenter;
       if (!isLineCommented(line, chars, commenter) && (singleline || !isLineEmpty(line))) {
         allLineCommented = false;
+        if (commenter instanceof IndentedCommenter){
+          final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
+          if (value != null){
+            commentWithIndent = value;
+          }
+        }
         break;
       }
     }
 
     if (!allLineCommented) {
-      if (CodeStyleSettingsManager.getSettings(myProject).LINE_COMMENT_AT_FIRST_COLUMN) {
+      if (!commentWithIndent) {
         doDefaultCommenting(blockSuitableCommenter);
       }
       else {

@@ -77,6 +77,10 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
    */
   final Project myProject;
   /**
+   * The status bar
+   */
+  private final StatusBar myStatusBar;
+  /**
    * The configurations instance
    */
   private final GitBranchConfigurations myConfigurations;
@@ -88,10 +92,6 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
    * The candidate remote configurations. Null if invalidated or non-initialized
    */
   private AnAction[] myRemoveConfigurations;
-  /**
-   * The status bar
-   */
-  private StatusBar myStatusBar;
   /**
    * If true, the popup is enabled
    */
@@ -113,12 +113,14 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
   /**
    * The constructor
    *
-   * @param project the project instance
+   * @param project        the project instance
+   * @param statusBar      the status bar
+   * @param configurations the configuration settings
    */
-  public GitBranchesWidget(Project project, GitBranchConfigurations configurations) {
+  public GitBranchesWidget(Project project, StatusBar statusBar, GitBranchConfigurations configurations) {
     myProject = project;
+    myStatusBar = statusBar;
     setBorder(WidgetBorder.INSTANCE);
-    //setBorder(BorderFactory.createEtchedBorder());
     myConfigurations = configurations;
     myDefaultForeground = getForeground();
     myConfigurationsListener = new MyGitBranchConfigurationsListener();
@@ -148,7 +150,7 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
       public void run() {
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
         if (statusBar != null) {
-          final GitBranchesWidget w = new GitBranchesWidget(project, configurations);
+          final GitBranchesWidget w = new GitBranchesWidget(project, statusBar, configurations);
           statusBar.addWidget(w, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), project);
           widget.set(w);
         }
@@ -191,7 +193,7 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
    * {@inheritDoc}
    */
   @Override
-  public WidgetPresentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
   }
 
@@ -200,7 +202,6 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
    */
   @Override
   public void install(@NotNull StatusBar statusBar) {
-    myStatusBar = statusBar;
   }
 
   /**
@@ -550,5 +551,4 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
       });
     }
   }
-
 }

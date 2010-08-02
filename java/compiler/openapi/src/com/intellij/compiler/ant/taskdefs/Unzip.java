@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import org.jetbrains.annotations.NonNls;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
+ * @author nik
  */
-public class PatternSet extends Tag{
-  public PatternSet(@NonNls final String id) {
-    super("patternset", pair("id", id));
+public class Unzip extends Tag {
+  public Unzip(String archivePath, String dest) {
+    super("unzip", pair("src", archivePath), pair("dest", dest));
   }
 }

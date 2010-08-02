@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInsight.generation;
 
-package com.intellij.compiler.ant.taskdefs;
-
-import com.intellij.compiler.ant.Tag;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.lang.Commenter;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
+ * @author oleg
  */
-public class PatternSet extends Tag{
-  public PatternSet(@NonNls final String id) {
-    super("patternset", pair("id", id));
-  }
+public interface IndentedCommenter extends Commenter {
+  /**
+   * Used to override CodeStyleSetings#LINE_COMMENT_AT_FIRST_COLUMN option
+   * @return true or false to overrride, null to use settings option
+   */
+  @Nullable
+  Boolean forceIndentedLineComment();
+  
 }

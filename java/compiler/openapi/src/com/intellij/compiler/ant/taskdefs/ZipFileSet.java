@@ -17,9 +17,11 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -31,10 +33,21 @@ import java.io.File;
 public class ZipFileSet extends Tag{
   public static final ZipFileSet[] EMPTY_ARRAY = new ZipFileSet[0];
 
+  private ZipFileSet(@NonNls String tagName, Pair... tagOptions) {
+    super(tagName, tagOptions);
+  }
+
   public ZipFileSet(@NonNls String fileOrDir, @NonNls final String relativePath, boolean isDir) {
     super("zipfileset",
           pair(isDir ? "dir" : "file", fileOrDir),
           pair("prefix", prefix(isDir, relativePath)));
+  }
+
+  public static ZipFileSet createUnpackedSet(@NonNls String zipFilePath, @NotNull String relativePath, final boolean isDir, String pattern) {
+    return new ZipFileSet("zipfileset",
+                          pair("src", zipFilePath),
+                          pair("prefix", prefix(isDir, relativePath)),
+                          pair("includes", pattern));
   }
 
   @Nullable

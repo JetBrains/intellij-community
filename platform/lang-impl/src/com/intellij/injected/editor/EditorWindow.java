@@ -195,7 +195,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   }
 
   @NotNull
-  public FoldingModel getFoldingModel() {
+  public FoldingModelEx getFoldingModel() {
     return myFoldingModelWindow;
   }
 
@@ -283,6 +283,11 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
 
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
+    return offsetToLogicalPosition(offset, true);
+  }
+
+  @NotNull
+  public LogicalPosition offsetToLogicalPosition(final int offset, boolean softWrapAware) {
     assert isValid();
     int lineNumber = myDocumentWindow.getLineNumber(offset);
     int lineStartOffset = myDocumentWindow.getLineStartOffset(lineNumber);
@@ -465,6 +470,11 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
 
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos) {
+    return visualToLogicalPosition(pos, true);
+  }
+
+  @NotNull
+  public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos, boolean softWrapAware) {
     assert isValid();
     return new LogicalPosition(pos.line, pos.column);
   }

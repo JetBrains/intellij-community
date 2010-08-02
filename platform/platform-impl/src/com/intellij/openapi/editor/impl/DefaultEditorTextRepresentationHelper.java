@@ -17,6 +17,9 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 /**
  * @author Denis Zhdanov
@@ -31,17 +34,17 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   @Override
-  public int toVisualColumnSymbolsNumber(CharSequence text, int start, int end, int x) {
+  public int toVisualColumnSymbolsNumber(@NotNull CharSequence text, int start, int end, int x) {
     return EditorUtil.textWidthInColumns(myEditor, text, start, end, x);
   }
 
   @Override
-  public int charWidth(char c, int x, int fontType) {
-    if (c == '\t') {
-      return EditorUtil.nextTabStop(x, myEditor) - x;
-    }
-    else {
-      return EditorUtil.charWidth(c, fontType, myEditor);
-    }
+  public int toVisualColumnSymbolsNumber(int width) {
+    return EditorUtil.columnsNumber(width, EditorUtil.getSpaceWidth(Font.PLAIN, myEditor));
+  }
+
+  @Override
+  public int textWidth(@NotNull CharSequence text, int start, int end, int x) {
+    return EditorUtil.textWidth(myEditor, text, start, end, Font.PLAIN, x);
   }
 }
