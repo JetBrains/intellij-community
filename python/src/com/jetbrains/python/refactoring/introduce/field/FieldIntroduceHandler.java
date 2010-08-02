@@ -15,7 +15,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
@@ -53,7 +52,7 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     }
     if (element1 != null) {
       final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
-      if (PythonUnitTestUtil.isTestCaseClass(clazz)) return true;
+      if (clazz != null && PythonUnitTestUtil.isTestCaseClass(clazz)) return true;
     }
     return false;
   }
