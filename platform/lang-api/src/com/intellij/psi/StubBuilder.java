@@ -20,7 +20,9 @@
 package com.intellij.psi;
 
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 
 public interface StubBuilder {
   StubElement buildStubTree(PsiFile file);
+  boolean skipChildProcessingWhenBuildingStubs(IElementType nodeType, IElementType childType);
 }

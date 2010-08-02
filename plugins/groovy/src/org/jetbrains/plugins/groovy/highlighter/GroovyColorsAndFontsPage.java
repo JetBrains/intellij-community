@@ -64,6 +64,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor(DefaultHighlighter.BAD_CHARACTER_ID, DefaultHighlighter.BAD_CHARACTER),
       new AttributesDescriptor(DefaultHighlighter.WRONG_STRING_ID, DefaultHighlighter.WRONG_STRING),
       new AttributesDescriptor(DefaultHighlighter.UNRESOLVED_ACCESS_ID, DefaultHighlighter.UNRESOLVED_ACCESS),
+      new AttributesDescriptor(DefaultHighlighter.LITERAL_CONVERSION_ID, DefaultHighlighter.LITERAL_CONVERSION),
       new AttributesDescriptor(DefaultHighlighter.ANNOTATION_ID, DefaultHighlighter.ANNOTATION),
       new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
       new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.INSTANCE_FIELD),
@@ -101,7 +102,9 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "<classref>Demo</classref>.<statfield>panel</statfield>.size = " +
            "<classref>Demo</classref>.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
            "'JetBrains'.matches(/Jw+Bw+/) \n" +
-           "def x=1 + <unresolved>unresolved</unresolved>"      
+           "def x=1 + <unresolved>unresolved</unresolved>\n" +
+           "def f1 = []\n" +
+           "<classref>File</classref> f=<literal>[</literal>'path'<literal>]</literal>"
       ;
   }
 
@@ -116,6 +119,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("doctag", DefaultHighlighter.DOC_COMMENT_TAG);
     map.put("unresolved", DefaultHighlighter.UNRESOLVED_ACCESS);
     map.put("classref", DefaultHighlighter.CLASS_REFERENCE);
+    map.put("literal", DefaultHighlighter.LITERAL_CONVERSION);
 
     return map;
   }

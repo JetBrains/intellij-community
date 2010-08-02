@@ -70,7 +70,7 @@ public class GotoSymbolModel2 extends ContributorsBasedGotoByModel {
 
   @NotNull
   public String[] getSeparators() {
-    return new String[] {".", ":"};
+    return new String[] {"."};
   }
 
   @Override

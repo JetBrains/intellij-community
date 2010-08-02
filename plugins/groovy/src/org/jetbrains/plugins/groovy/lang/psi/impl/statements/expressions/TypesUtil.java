@@ -103,7 +103,8 @@ public class TypesUtil {
     if (candidates.length == 1) {
       final PsiElement element = candidates[0].getElement();
       if (element instanceof PsiMethod) {
-        return candidates[0].getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element));
+        return boxPrimitiveType(candidates[0].getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element)),
+                                place.getManager(), place.getResolveScope());
       }
     }
     return null;
@@ -134,7 +135,7 @@ public class TypesUtil {
         }
       }
 
-      ResolveUtil.processNonCodeMethods(thisType, processor, place, false);
+      ResolveUtil.processNonCodeMethods(thisType, processor, place);
       return processor.getCandidates();
     }
     return GroovyResolveResult.EMPTY_ARRAY;

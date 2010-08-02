@@ -15,18 +15,24 @@
  */
 package com.intellij.debugger.ui.impl;
 
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.debugger.ui.tree.StackFrameDescriptor;
 import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import com.sun.jdi.Method;
 
 import javax.swing.*;
+import java.awt.*;
 
 class FramesListRenderer extends ColoredListCellRenderer {
   private final EditorColorsScheme myColorScheme;
@@ -52,10 +58,13 @@ class FramesListRenderer extends ColoredListCellRenderer {
       }
 
       if (selected) {
-        setBackground(com.intellij.util.ui.UIUtil.getListSelectionBackground());
+        setBackground(UIUtil.getListSelectionBackground());
       }
       else {
-        setBackground(shouldHighlightAsRecursive ? myColorScheme.getColor(DebuggerColors.RECURSIVE_CALL_ATTRIBUTES) : com.intellij.util.ui.UIUtil.getListBackground());
+        Color bg = descriptor.getBackgroundColor();
+        if (bg == null) bg = UIUtil.getListBackground();
+        if (shouldHighlightAsRecursive) bg = myColorScheme.getColor(DebuggerColors.RECURSIVE_CALL_ATTRIBUTES);
+        setBackground(bg);
       }
 
       final String label = descriptor.getLabel();

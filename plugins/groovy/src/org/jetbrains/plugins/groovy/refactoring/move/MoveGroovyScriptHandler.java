@@ -72,7 +72,7 @@ public class MoveGroovyScriptHandler extends MoveClassesOrPackagesHandlerBase {
   }
 
   @Override
-  public boolean isValidTarget(PsiElement psiElement) {
+  public boolean isValidTarget(PsiElement psiElement, PsiElement[] sources) {
     return isPackageOrDirectory(psiElement);
   }
 

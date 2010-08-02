@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.java.parser;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
@@ -48,6 +49,11 @@ public class JavaParserUtil {
     return level;
   }
 
+  @Nullable
+  public static IElementType exprType(@Nullable final PsiBuilder.Marker marker) {
+    return marker != null ? ((LighterASTNode)marker).getTokenType() : null;
+  }
+
   // used instead of PsiBuilder.error() as it drops all but first subsequent error messages
   public static void error(final PsiBuilder builder, final String message) {
     builder.mark().error(message);
@@ -76,6 +82,10 @@ public class JavaParserUtil {
 
   public static void emptyElement(final PsiBuilder.Marker before, final IElementType type) {
     before.precede().doneBefore(type, before);
+  }
+
+  public static void semicolon(final PsiBuilder builder) {
+    expectOrError(builder, JavaTokenType.SEMICOLON, JavaErrorMessages.message("expected.semicolon"));
   }
 
   public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {

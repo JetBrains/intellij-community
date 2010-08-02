@@ -31,11 +31,13 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
@@ -313,6 +315,27 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public boolean isSearchOutsideRootModel() {
       return myScope1.isSearchOutsideRootModel() && myScope2.isSearchOutsideRootModel();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof IntersectionScope)) return false;
+
+      IntersectionScope that = (IntersectionScope)o;
+
+      if (!myScope1.equals(that.myScope1)) return false;
+      if (!myScope2.equals(that.myScope2)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + myScope1.hashCode();
+      result = 31 * result + myScope2.hashCode();
+      return result;
+    }
   }
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
@@ -366,6 +389,27 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     public boolean isSearchInLibraries() {
       return myScope1.isSearchInLibraries() || myScope2.isSearchInLibraries();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof UnionScope)) return false;
+
+      UnionScope that = (UnionScope)o;
+
+      if (!myScope1.equals(that.myScope1)) return false;
+      if (!myScope2.equals(that.myScope2)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + myScope1.hashCode();
+      result = 31 * result + myScope2.hashCode();
+      return result;
     }
   }
 
@@ -604,6 +648,25 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         }
       }
       return super.uniteWith(scope);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof FileTypeRestrictionScope)) return false;
+
+      FileTypeRestrictionScope that = (FileTypeRestrictionScope)o;
+
+      if (!Arrays.equals(myFileTypes, that.myFileTypes)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + Arrays.hashCode(myFileTypes);
+      return result;
     }
   }
 

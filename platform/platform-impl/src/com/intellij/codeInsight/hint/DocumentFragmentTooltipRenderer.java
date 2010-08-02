@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.DocumentFragment;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
@@ -51,7 +48,10 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
 
     JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
-    p = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
+    // There is a possible case that collapsed folding region is soft wrapped, hence, we need to anchor
+    // not logical but visual line start.
+    VisualPosition visual = editor.offsetToVisualPosition(startOffset);
+    p = editor.visualPositionToXY(visual);
     p = SwingUtilities.convertPoint(
       ((EditorEx)editor).getGutterComponentEx(),
       p,

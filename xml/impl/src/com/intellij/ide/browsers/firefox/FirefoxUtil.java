@@ -61,9 +61,8 @@ public class FirefoxUtil {
       FirefoxProfile profile = findProfileByNameOrDefault(settings.getProfile(), profiles);
       if (profile != null) {
         File profileDir = profile.getProfileDirectory(profilesFile);
-        File dir = new File(profileDir, "extensions");
-        if (dir.isDirectory()) {
-          return dir;
+        if (profileDir.isDirectory()) {
+          return new File(profileDir, "extensions");
         }
       }
     }

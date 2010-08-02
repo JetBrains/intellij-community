@@ -55,7 +55,7 @@
     <lang.namesValidator language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MyNamesValidator" />
     <lang.syntaxHighlighterFactory key="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MySyntaxHighlighterFactory" />
 
-    <lang.elementManipulator forClass="org.intellij.plugins.relaxNG.compact.psi.RncFileReference" implementationClass="org.intellij.plugins.relaxNG.ProjectLoader$RncFileReferenceManipulator" />
+    <lang.elementManipulator forClass="org.intellij.plugins.relaxNG.compact.psi.RncFileReference" implementationClass="org.intellij.plugins.relaxNG.RncFileReferenceManipulator" />
 
     <lang.documentationProvider language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MyDocumentationProvider" />
 
@@ -64,12 +64,21 @@
 
     <externalAnnotator language="XML" implementationClass="org.intellij.plugins.relaxNG.validation.RngSchemaValidator" />
     <lang.documentationProvider language="XML" implementationClass="org.intellij.plugins.relaxNG.RngDocumentationProvider" />
+    <psi.referenceContributor implementation="org.intellij.plugins.relaxNG.RelaxNGReferenceContributor"/>
+
+    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngChoiceDescription"/>
+    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngElementDescription"/>
+    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngGrammarDescription"/>
+    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngGroupDescription"/>
+    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngInterleaveDescription"/>
+
+    <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngDefine" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngDefineImpl"/>
+    <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngGrammar" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngGrammarImpl"/>
+    <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngInclude" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngIncludeImpl"/>
+    <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngRef" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngRefImpl"/>
   </extensions>
 
   <project-components>
-    <component>
-      <implementation-class>org.intellij.plugins.relaxNG.ProjectLoader</implementation-class>
-    </component>
     <component>
       <interface-class>org.intellij.plugins.relaxNG.config.NoNamespaceConfig</interface-class>
       <implementation-class>org.intellij.plugins.relaxNG.config.NoNamespaceConfigImpl</implementation-class>

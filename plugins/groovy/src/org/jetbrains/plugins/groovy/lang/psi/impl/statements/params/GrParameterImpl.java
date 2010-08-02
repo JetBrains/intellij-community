@@ -84,7 +84,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
         return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, getResolveScope());
       }
       else if (iteratedExpression != null) {
-        PsiType result = ClosureParameterEnhancer.findTypeForCollection(iteratedExpression, factory, this);
+        PsiType result = ClosureParameterEnhancer.findTypeForIteration(iteratedExpression, factory, this);
         if (result != null) {
           return result;
         }

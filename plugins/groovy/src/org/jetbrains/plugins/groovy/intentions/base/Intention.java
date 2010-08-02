@@ -19,15 +19,16 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 
 
 public abstract class Intention implements IntentionAction {
@@ -51,10 +52,10 @@ public abstract class Intention implements IntentionAction {
       return;
     }
     assert element.isValid() : element;
-    processIntention(element);
+    processIntention(element, project, editor);
   }
 
-  protected abstract void processIntention(@NotNull PsiElement element)
+  protected abstract void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException;
 
   @NotNull

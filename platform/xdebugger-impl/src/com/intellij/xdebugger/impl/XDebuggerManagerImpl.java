@@ -21,26 +21,27 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentListener;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -206,6 +207,17 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @NotNull
   public XDebugSession[] getDebugSessions() {
     return mySessions.toArray(new XDebugSession[mySessions.size()]);
+  }
+
+  @Override
+  @Nullable
+  public XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole) {
+    for (final XDebugSession debuggerSession : getDebugSessions()) {
+      if (executionConsole == debuggerSession.getRunContentDescriptor().getExecutionConsole()) {
+        return debuggerSession;
+      }
+    }
+    return null;
   }
 
   @NotNull

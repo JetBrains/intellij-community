@@ -261,10 +261,16 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private void switchFromStubToAST(ASTNode root, final Iterator<StubElement<?>> stubs) {
     ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      final StubBuilder builder = ((IStubFileElementType)getContentElementType()).getBuilder();
+
       @Override
       protected void visitNode(TreeElement tree) {
         final IElementType type = tree.getElementType();
-
+        CompositeElement treeParent = tree.getTreeParent();
+        if(treeParent != null &&
+           builder.skipChildProcessingWhenBuildingStubs(treeParent.getElementType(), type)) {
+          return;
+        }
         if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
           if (!stubs.hasNext()) {
             LOG.error("Stub list in" +
@@ -889,15 +895,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final PsiFileImpl file = this;
 
     final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
-    stubs.next(); // skip file root stub
+    stubs.next();// skip file root stub
     final FileElement fileRoot = file.getTreeElement();
     assert fileRoot != null;
 
-    bindStubs(fileRoot, stubs);
+    bindStubs(fileRoot, stubs, ((IStubFileElementType)getContentElementType()).getBuilder());
   }
 
   @Nullable
-  private StubElement bindStubs(ASTNode tree, Iterator<StubElement<?>> stubs) {
+  private StubElement bindStubs(ASTNode tree, Iterator<StubElement<?>> stubs, StubBuilder builder) {
     final IElementType type = tree.getElementType();
 
     if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
@@ -912,9 +918,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     for (ASTNode node : tree.getChildren(null)) {
-      final StubElement res = bindStubs(node, stubs);
-      if (res != null) {
-        return res;
+      if (!builder.skipChildProcessingWhenBuildingStubs(type, node.getElementType())) {
+        final StubElement res = bindStubs(node, stubs, builder);
+        if (res != null) {
+          return res;
+        }
       }
     }
 

@@ -142,7 +142,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
 
   private class DerivedClosureSignature extends GrClosureSignatureImpl {
     DerivedClosureSignature() {
-      super(GrClosureParameter.EMPTY_ARRAY, null);
+      super(PsiParameter.EMPTY_ARRAY, null);
     }
 
     DerivedClosureSignature(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {

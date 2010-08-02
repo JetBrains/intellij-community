@@ -407,4 +407,8 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
       return true; //Groovy accepts methods and parameters without explicit type
     }
   }
+
+  public GrParameterTableModel getParameterModel() {
+    return myParameterModel;
+  }
 }

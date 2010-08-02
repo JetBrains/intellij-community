@@ -32,9 +32,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -144,12 +143,11 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
     if (handler == null) return; //on failure or cancel (e.g. cancel of super methods dialog)
 
-    final FindUsagesOptions options = new FindUsagesOptions(project, editor == null? null : DataManager.getInstance().getDataContext(editor.getComponent()));
+    final JavaMethodFindUsagesOptions options = new JavaMethodFindUsagesOptions(project);
     options.isImplementingMethods = true;
-    options.isMethodsUsages = true;
     options.isOverridingMethods = true;
     options.isUsages = true;
-    options.isSearchForTextOccurences = false;
+    options.isSearchForTextOccurrences = false;
     final int[] usagesFound = new int[1];
     Runnable runnable = new Runnable() {
       public void run() {

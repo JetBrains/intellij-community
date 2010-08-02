@@ -15,15 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.*;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 
 public class IndexingMethodConversionIntention extends Intention {
 
@@ -32,7 +36,7 @@ public class IndexingMethodConversionIntention extends Intention {
     return new IndexingMethodConversionPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrMethodCallExpression callExpression =
         (GrMethodCallExpression) element;

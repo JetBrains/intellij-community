@@ -52,8 +52,7 @@ public class GroovyFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory
 
   @Override
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
-    return new JavaFindUsagesHandler(element, getFindClassOptions(), getFindMethodOptions(), getFindPackageOptions(), getFindThrowOptions(),
-                                     getFindVariableOptions()) {
+    return new JavaFindUsagesHandler(element, this) {
       @NotNull
       @Override
       public PsiElement[] getSecondaryElements() {

@@ -15,13 +15,11 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.util.config.Storage;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author: Roman Chernyatchik
@@ -32,38 +30,15 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties {
   /**
    * @param config
    * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
+   * @param executor
    */
   public SMTRunnerConsoleProperties(final RuntimeConfiguration config, 
-                                    final String testFrameworkName)
+                                    final String testFrameworkName,
+                                    Executor executor)
   {
-    super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()), config.getProject());
+    super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()), config.getProject(),
+          executor);
     myConfiguration = config;
-  }
-
-  @Override
-  public boolean isDebug() {
-    return getDebugSession() != null;
-  }
-
-  @Override
-  public boolean isPaused() {
-    final XDebugSession debuggerSession = getDebugSession();
-    return debuggerSession != null && debuggerSession.isPaused();
-  }
-
-  @Nullable
-  public XDebugSession getDebugSession() {
-    final XDebuggerManager debuggerManager = XDebuggerManager.getInstance(getProject());
-    if (debuggerManager == null) {
-      return null;
-    }
-    final XDebugSession[] sessions = debuggerManager.getDebugSessions();
-    for (final XDebugSession debuggerSession : sessions) {
-      if (getConsole() == debuggerSession.getRunContentDescriptor().getExecutionConsole()) {
-        return debuggerSession;
-      }
-    }
-    return null;
   }
 
   public RuntimeConfiguration getConfiguration() {

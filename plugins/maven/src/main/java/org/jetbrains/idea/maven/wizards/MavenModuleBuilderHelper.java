@@ -125,6 +125,8 @@ public class MavenModuleBuilderHelper {
     // execute when current dialog is closed (e.g. Project Structure)
     MavenUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
       public void run() {
+        if (!pom.isValid()) return;
+        
         EditorHelper.openInEditor(getPsiFile(project, pom));
         if (myArchetype != null) generateFromArchetype(project, pom);
       }

@@ -15,10 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.*;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 public class ConvertStringToGStringIntention extends Intention {
@@ -28,7 +32,7 @@ public class ConvertStringToGStringIntention extends Intention {
     return new StringLiteralPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrLiteral exp = (GrLiteral)element;
     final String textString = exp.getText();
 

@@ -18,9 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -66,12 +64,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -292,14 +290,6 @@ public class PsiUtil {
     }
 
     return null;
-  }
-
-  public static SearchScope restrictScopeToGroovyFiles(final Computable<SearchScope> originalScopeComputation) { //important to compute originalSearchScope in read action!
-    return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      public SearchScope compute() {
-        return restrictScopeToGroovyFiles(originalScopeComputation.compute());
-      }
-    });
   }
 
   public static SearchScope restrictScopeToGroovyFiles(SearchScope originalScope) {
@@ -631,7 +621,7 @@ public class PsiUtil {
   }
 
   public static boolean isRawMethodCall(GrMethodCallExpression call) {
-    final GroovyResolveResult[] resolveResults = call.getMethodVariants(null);
+    final GroovyResolveResult[] resolveResults = call.getCallVariants(null);
     if (resolveResults.length == 0) return false;
     final PsiElement element = resolveResults[0].getElement();
     if (element instanceof PsiMethod) {
@@ -687,7 +677,7 @@ public class PsiUtil {
         qClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY), null, expr);
       }
 
-      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr, false);
+      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr);
       final GroovyResolveResult[] candidates = processor.getCandidates();
       PsiType type = null;
       if (candidates.length == 1) {
@@ -856,7 +846,7 @@ public class PsiUtil {
 
   public static boolean isMethodUsage(PsiElement element) {
     if (element instanceof GrEnumConstant) return true;
-    if (!(element instanceof GrReferenceElement)) return false;
+    if (!(element instanceof GrReferenceElement || element instanceof GrThisSuperReferenceExpression)) return false;
     PsiElement parent = element.getParent();
     if (parent instanceof GrCall) {
       return true;
@@ -884,9 +874,6 @@ public class PsiUtil {
           ResolveState.initial().put(PsiSubstitutor.KEY, substitutor).put(ResolverProcessor.RESOLVE_CONTEXT, context);
         final boolean toBreak = element.processDeclarations(processor, state, null, place);
 
-        for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-          if (!membersProcessor.processNonCodeMembers(thisType, processor, place, true)) break;
-        }
         NonCodeMembersContributor.runContributors(thisType, processor, place, state);
         ContainerUtil.addAll(constructorResults, processor.getCandidates());
         if (!toBreak) break;
@@ -938,5 +925,19 @@ public class PsiUtil {
       }
     }
     return (GrReferenceExpression)replaced;
+  }
+
+  public static GroovyResolveResult[] getConstructorCandidates(PsiClassType classType, PsiType[] argTypes, GroovyPsiElement context) {
+    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+    final PsiClass psiClass = resolveResult.getElement();
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    if (psiClass == null) {
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
+                                         ? (GroovyResolveResult)resolveResult
+                                         : new GroovyResolveResultImpl(psiClass, context, substitutor, true, true);
+    return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
   }
 }

@@ -580,9 +580,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
           }
         });
       }
-      else if (!AFTER_DOT.accepts(position)) {
-        superItem.setTailType(TailType.DOT);
-      }
 
       result.addElement(superItem);
     }

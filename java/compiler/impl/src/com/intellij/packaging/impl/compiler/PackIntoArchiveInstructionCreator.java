@@ -30,8 +30,8 @@ public class PackIntoArchiveInstructionCreator extends IncrementalCompilerInstru
   private final JarInfo myJarInfo;
   private final String myPathInJar;
 
-  public PackIntoArchiveInstructionCreator(ArtifactsProcessingItemsBuilderContext context, JarInfo jarInfo, String pathInJar,
-                                           DestinationInfo jarDestination) {
+  public PackIntoArchiveInstructionCreator(ArtifactsProcessingItemsBuilderContext context, JarInfo jarInfo,
+                                           String pathInJar, DestinationInfo jarDestination) {
     super(context);
     myJarInfo = jarInfo;
     myPathInJar = pathInJar;
@@ -55,7 +55,8 @@ public class PackIntoArchiveInstructionCreator extends IncrementalCompilerInstru
 
   public IncrementalCompilerInstructionCreator archive(@NotNull String archiveFileName) {
     final JarInfo jarInfo = new JarInfo();
-    if (!myContext.registerJarFile(jarInfo, myJarDestination.getOutputPath() + "/" + archiveFileName)) {
+    final String outputPath = myJarDestination.getOutputPath() + "/" + archiveFileName;
+    if (!myContext.registerJarFile(jarInfo, outputPath)) {
       return new SkipAllInstructionCreator(myContext);
     }
     final JarDestinationInfo destination = new JarDestinationInfo(childPathInJar(archiveFileName), myJarInfo, myJarDestination);

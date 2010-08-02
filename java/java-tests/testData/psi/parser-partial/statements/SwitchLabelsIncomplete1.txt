@@ -1,0 +1,13 @@
+PsiJavaFile:SwitchLabelsIncomplete1.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiSwitchLabelStatement
+      PsiKeyword:case('case')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:2
+        PsiJavaToken:INTEGER_LITERAL('2')
+      PsiErrorElement:':' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

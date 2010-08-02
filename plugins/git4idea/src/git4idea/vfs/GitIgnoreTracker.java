@@ -233,7 +233,10 @@ public class GitIgnoreTracker {
   private static VirtualFile scanParents(VirtualFile root) {
     VirtualFile meta = root.findChild(GIT_FOLDER);
     if (meta != null) {
-      root.findFileByRelativePath(LOCAL_EXCLUDE);
+      final VirtualFile localExclude = root.findFileByRelativePath(LOCAL_EXCLUDE);
+      if (localExclude != null) {
+        localExclude.getTimeStamp();
+      }
       return root;
     }
     else {

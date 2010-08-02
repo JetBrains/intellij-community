@@ -153,7 +153,7 @@ public class GroovyConstructorUsagesSearchHelper {
           final GrConstructorInvocation invocation = (GrConstructorInvocation)statements[0];
           if (invocation.isThisCall() == processThisRefs &&
               invocation.getManager().areElementsEquivalent(invocation.resolveConstructor(), searchedConstructor) &&
-              !consumer.process(invocation)) {
+              !consumer.process(invocation.getThisOrSuperKeyword())) {
             return false;
           }
         }

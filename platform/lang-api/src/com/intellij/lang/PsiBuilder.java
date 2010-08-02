@@ -164,6 +164,7 @@ public interface PsiBuilder extends UserDataHolder {
 
   /**
    * Adds an error marker with the specified message text at the current position in the tree.
+   * <br><b>Note</b>: from series of subsequent errors messages only first will be part of resulting tree.
    *
    * @param messageText the text of the error message displayed to the user.
    */

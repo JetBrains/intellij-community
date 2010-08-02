@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex;
@@ -59,7 +60,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
                                         flags);
   }
 
-  private static String[] getAnnotationNames(GrTypeDefinition psi) {
+  public static String[] getAnnotationNames(PsiModifierListOwner psi) {
     List<String> annoNames = CollectionFactory.arrayList();
     final PsiModifierList modifierList = psi.getModifierList();
     if (modifierList instanceof GrModifierList) {

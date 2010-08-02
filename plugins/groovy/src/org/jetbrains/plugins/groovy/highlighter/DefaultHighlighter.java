@@ -76,6 +76,7 @@ public class DefaultHighlighter {
 
   @NonNls
   static final String UNRESOLVED_ACCESS_ID = "Unresolved reference access";
+  static final String LITERAL_CONVERSION_ID = "List/map to object conversion";
 
 
   public static TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID,
@@ -148,7 +149,13 @@ public class DefaultHighlighter {
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectColor(Color.GRAY);
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectType(EffectType.LINE_UNDERSCORE);
   }
+  public static final TextAttributes LITERAL_CONVERSION_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
+  static{
+    LITERAL_CONVERSION_ATTRIBUTES.setForegroundColor(Color.BLUE);
+    LITERAL_CONVERSION_ATTRIBUTES.setFontType(Font.BOLD);
+  }
   public static TextAttributesKey UNRESOLVED_ACCESS = TextAttributesKey.createTextAttributesKey(UNRESOLVED_ACCESS_ID, UNRESOLVED_ACCESS_ATTRIBUTES);
+  public static TextAttributesKey LITERAL_CONVERSION = TextAttributesKey.createTextAttributesKey(LITERAL_CONVERSION_ID, LITERAL_CONVERSION_ATTRIBUTES);
 
   private DefaultHighlighter() {
   }

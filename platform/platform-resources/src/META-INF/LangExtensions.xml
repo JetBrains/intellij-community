@@ -128,6 +128,9 @@
   <applicationService serviceInterface="com.intellij.patterns.compiler.PatternCompilerFactory"
                       serviceImplementation="com.intellij.patterns.compiler.PatternCompilerFactoryImpl"/>
 
+  <applicationService serviceInterface="com.intellij.ide.PowerSaveMode"
+                      serviceImplementation="com.intellij.ide.PowerSaveMode"/>
+
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
 
@@ -568,4 +571,6 @@
   <applicationService serviceInterface="com.intellij.ide.todo.TodoConfiguration"
                       serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
   <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
+
+  <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
 </extensions>

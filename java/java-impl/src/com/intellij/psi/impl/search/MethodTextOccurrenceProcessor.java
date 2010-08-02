@@ -23,16 +23,19 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * @author peter
  */
-public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
+public final class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiMethod[] myMethods;
   private final PsiClass myContainingClass;
   private final boolean myStrictSignatureSearch;
 
   public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass, final boolean strictSignatureSearch, final PsiMethod... methods) {
+    super(strictSignatureSearch, Arrays.asList(methods));
     myMethods = methods;
     myContainingClass = aClass;
     myStrictSignatureSearch = strictSignatureSearch;

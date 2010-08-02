@@ -101,7 +101,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testPrimitiveClassObjectAccess() { doParserTest("int.class"); }
 
   private void doParserTest(final String text) {
-    doParserTest(text, new Parser() {
+    doParserTest(text, new TestParser() {
       public void parse(final PsiBuilder builder) {
         ExpressionParser.parse(builder);
       }

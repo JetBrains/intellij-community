@@ -114,19 +114,15 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
    */
   @Nullable
   public static List<VirtualFile> getGitRoots(Project project, GitVcs vcs) {
-    final VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
-    if (contentRoots == null || contentRoots.length == 0) {
-      Messages.showErrorDialog(project, GitBundle.getString("repository.action.missing.roots.unconfigured.message"),
+    List<VirtualFile> roots;
+    try {
+      roots = GitUtil.getGitRoots(project, vcs);
+    }
+    catch (VcsException e) {
+      Messages.showErrorDialog(project, e.getMessage(),
                                GitBundle.getString("repository.action.missing.roots.title"));
       return null;
     }
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>(GitUtil.gitRootsForPaths(Arrays.asList(contentRoots)));
-    if (roots.size() == 0) {
-      Messages.showErrorDialog(project, GitBundle.getString("repository.action.missing.roots.misconfigured"),
-                               GitBundle.getString("repository.action.missing.roots.title"));
-      return null;
-    }
-    Collections.sort(roots, GitUtil.VIRTUAL_FILE_COMPARATOR);
     return roots;
   }
 

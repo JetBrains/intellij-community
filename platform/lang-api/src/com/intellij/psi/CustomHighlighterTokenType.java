@@ -45,6 +45,7 @@ public interface CustomHighlighterTokenType {
   IElementType MULTI_LINE_COMMENT = new CustomElementType("MULTI_LINE_COMMENT");
   IElementType WHITESPACE = new CustomElementType("WHITESPACE");
   IElementType CHARACTER = new CustomElementType("CHARACTER");
+  IElementType PUNCTUATION = new CustomElementType("PUNCTUATION");
 
   IElementType L_BRACE = new CustomElementType("L_BRACE");
   IElementType R_BRACE = new CustomElementType("R_BRACE");

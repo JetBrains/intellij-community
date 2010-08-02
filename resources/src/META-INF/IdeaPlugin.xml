@@ -252,6 +252,7 @@
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.JarArtifactType" order="first"/>
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.PlainArtifactType" order="last"/>
     <compiler.additionalCompileScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactAdditionalCompileScopeProvider"/>
+    <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
 
@@ -360,6 +361,13 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactValidationUtil"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactValidationUtilImpl"/>
+
+    <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
+                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"
+                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"/>
+
+    <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="last"/>
 
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                         serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
@@ -962,8 +970,7 @@
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyClassesHandler"/>
 
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.JavaMoveFilesOrDirectoriesHandler" id="moveJavaFileOrDir"/>
-    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MovePackagesHandler"/>
-    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesHandler"/>
+    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveMembers.MoveMembersHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandlerDelegate"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveInner.MoveInnerToUpperHandler"/>

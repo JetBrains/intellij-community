@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -28,16 +29,16 @@ import java.util.Arrays;
  * @author oleg
  */
 public class ControlFlowUtil {
-    private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class.getName());
 
   private ControlFlowUtil() {
   }
 
   public static class Stack {
+
     private final int myCapacity;
     private final int[] myValues;
     private int myIndex;
-
     public Stack(final int capacity) {
       myCapacity = capacity;
       myValues = new int[myCapacity];
@@ -65,8 +66,8 @@ public class ControlFlowUtil {
     public String toString() {
       return "Stack(" + (myIndex + 1) + ") elements";
     }
-  }
 
+  }
   public static int[] postOrder(Instruction[] flow) {
     final int length = flow.length;
     int[] result = new int[length];
@@ -108,6 +109,7 @@ public class ControlFlowUtil {
   }
 
   // Process control flow in depth first order
+
   public static boolean process(final Instruction[] flow, final int start, final Processor<Instruction> processor){
     final int length = flow.length;
     boolean[] visited = new boolean[length];
@@ -134,5 +136,36 @@ public class ControlFlowUtil {
       }
     }
     return true;
+  }
+
+
+  public static void iteratePrev(final int startInstruction,
+                                 @NotNull final Instruction[] instructions,
+                                 @NotNull final Function<Instruction, Operation> closure) {
+    final Stack stack = new Stack(instructions.length);
+    final boolean[] visited = new boolean[instructions.length];
+
+    stack.push(startInstruction);
+    while (!stack.isEmpty()) {
+      final int num = stack.pop();
+      if (visited[num]){
+        continue;
+      }
+      visited[num] = true;
+      final Instruction instr = instructions[num];
+      final Operation nextOperation = closure.fun(instr);
+      if (nextOperation == Operation.CONTINUE) {
+        continue;
+      } else if (nextOperation == Operation.BREAK) {
+        break;
+      }
+      for (Instruction pred : instr.allPred()) {
+        stack.push(pred.num());
+      }
+    }
+  }
+
+  public static enum Operation {
+    CONTINUE, BREAK, NEXT;
   }
 }

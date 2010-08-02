@@ -48,7 +48,7 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
     compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
 
     compilerManager.addTranslatingCompiler(new GroovycStubGenerator(myProject),
-                                           new HashSet<FileType>(Arrays.asList(GroovyFileType.GROOVY_FILE_TYPE)),
+                                           new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA, GroovyFileType.GROOVY_FILE_TYPE)),
                                            new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)));
 
     compilerManager.addTranslatingCompiler(new GroovyCompiler(myProject),

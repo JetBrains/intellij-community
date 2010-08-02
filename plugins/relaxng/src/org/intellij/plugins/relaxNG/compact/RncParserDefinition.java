@@ -42,6 +42,8 @@ import org.jetbrains.annotations.NotNull;
  * Date: 10.08.2007
  */
 public class RncParserDefinition implements ParserDefinition {
+  public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
+
   @NotNull
   public Lexer createLexer(Project project) {
     return new CompactSyntaxLexerAdapter();
@@ -52,7 +54,7 @@ public class RncParserDefinition implements ParserDefinition {
   }
 
   public IFileElementType getFileNodeType() {
-    return RncElementTypes.FILE_ELEMENT_TYPE;
+    return FILE_ELEMENT_TYPE;
   }
 
   @NotNull

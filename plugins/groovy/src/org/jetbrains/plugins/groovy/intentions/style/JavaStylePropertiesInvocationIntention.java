@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy.intentions.style;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -31,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiElementUtil.*;
 
 /**
@@ -42,7 +45,7 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
     return super.isStopElement(element) || element instanceof GrClosableBlock;
   }
 
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     assert element instanceof GrMethodCallExpression || element instanceof GrApplicationStatement;
     GrCall call = ((GrCall) element);
     GrExpression invoked = call instanceof GrMethodCallExpression ?

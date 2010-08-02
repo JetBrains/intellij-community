@@ -1,0 +1,16 @@
+PsiJavaFile:EmptyBody2.java
+  PsiJavaToken:LBRACE('{')
+  PsiWhiteSpace(' ')
+  PsiModifierList:@Null
+    PsiAnnotation
+      PsiJavaToken:AT('@')
+      PsiJavaCodeReferenceElement:Null
+        PsiIdentifier:Null('Null')
+        PsiReferenceParameterList
+          <empty list>
+      PsiAnnotationParameterList
+        <empty list>
+  PsiErrorElement:Identifier or type expected
+    <empty list>
+  PsiWhiteSpace(' ')
+  PsiJavaToken:RBRACE('}')

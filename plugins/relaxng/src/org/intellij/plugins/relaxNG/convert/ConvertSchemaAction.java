@@ -29,7 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import org.intellij.plugins.relaxNG.ProjectLoader;
+import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.ValidateAction;
 
@@ -71,7 +71,7 @@ public class ConvertSchemaAction extends AnAction {
           final XmlTag rootTag = document.getRootTag();
           assert rootTag != null;
           final String uri = rootTag.getNamespace();
-          if (ProjectLoader.RNG_NAMESPACE.equals(uri) && files.length == 1) {
+          if (ApplicationLoader.RNG_NAMESPACE.equals(uri) && files.length == 1) {
             return SchemaType.RNG;
           }
         }

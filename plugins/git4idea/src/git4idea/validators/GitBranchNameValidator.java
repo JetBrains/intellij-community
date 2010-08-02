@@ -33,7 +33,7 @@ public class GitBranchNameValidator implements InputValidator {
     // based on the git-check-ref-format command description
     final String goodChar = "[!-~&&[^\\^~:\\[\\]\\?\\*\\./<>\\|'`]]";
     final String component = "(?:" + goodChar + "+\\.?)+";
-    REF_FORMAT_PATTERN = Pattern.compile(component + "+(?:/*" + component + ")*");
+    REF_FORMAT_PATTERN = Pattern.compile("^" + component + "+(?:/*" + component + ")*$");
   }
 
   /**

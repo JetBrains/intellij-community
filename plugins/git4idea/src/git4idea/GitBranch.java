@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.StringTokenizer;
@@ -96,7 +99,8 @@ public class GitBranch extends GitReference {
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--no-color");
-    for (StringTokenizer lines = new StringTokenizer(h.run(), "\n"); lines.hasMoreTokens();) {
+    String output = h.run();
+    for (StringTokenizer lines = new StringTokenizer(output, "\n"); lines.hasMoreTokens();) {
       String line = lines.nextToken();
       if (line != null && line.startsWith("*")) {
         //noinspection HardCodedStringLiteral
@@ -106,6 +110,20 @@ public class GitBranch extends GitReference {
         else {
           return new GitBranch(line.substring(2), true, false);
         }
+      }
+    }
+    if (output.trim().length() == 0) {
+      // the case for situation after git init and before first commit
+      String text;
+      try {
+        text = new String(FileUtil.loadFileText(new File(root.getPath(), ".git/HEAD"), GitUtil.UTF8_ENCODING)).trim();
+      }
+      catch (IOException e) {
+        return null;
+      }
+      String prefix = "ref: refs/heads/";
+      if (text.startsWith(prefix)) {
+        return new GitBranch(text.substring(prefix.length()), true, false);
       }
     }
     return null;

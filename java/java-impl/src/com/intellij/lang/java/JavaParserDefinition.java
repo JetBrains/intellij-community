@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaParserDefinition implements ParserDefinition {
-  private final TokenSet myStringLiteralElementSet = TokenSet.create(JavaElementType.LITERAL_EXPRESSION);
 
   @NotNull
   public Lexer createLexer(Project project) {
@@ -51,7 +51,7 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   public IFileElementType getFileNodeType() {
-    return JavaElementType.JAVA_FILE;
+    return JavaStubElementTypes.JAVA_FILE;
   }
 
   @NotNull
@@ -66,7 +66,7 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @NotNull
   public TokenSet getStringLiteralElements() {
-    return myStringLiteralElementSet;
+    return TokenSet.create(JavaElementType.LITERAL_EXPRESSION);
   }
 
   @NotNull

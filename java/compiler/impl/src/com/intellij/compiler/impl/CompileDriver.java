@@ -24,6 +24,7 @@ package com.intellij.compiler.impl;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
+import com.intellij.compiler.impl.newApi.NewCompiler;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.CacheUtils;
 import com.intellij.compiler.make.DependencyCache;
@@ -560,7 +561,7 @@ public class CompileDriver {
     return CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
   }
 
-  private static class ExitStatus {
+  static class ExitStatus {
     private final String myName;
 
     private ExitStatus(@NonNls String name) {
@@ -577,10 +578,10 @@ public class CompileDriver {
     public static final ExitStatus UP_TO_DATE = new ExitStatus("UP_TO_DATE");
   }
 
-  private static class ExitException extends Exception {
+  static class ExitException extends Exception {
     private final ExitStatus myStatus;
 
-    private ExitException(ExitStatus status) {
+    ExitException(ExitStatus status) {
       myStatus = status;
     }
 
@@ -724,7 +725,7 @@ public class CompileDriver {
       boolean didSomething = false;
 
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-
+      NewCompilerRunner runner = new NewCompilerRunner(context, compilerManager, forceCompile, onlyCheckStatus);
       try {
         didSomething |= generateSources(compilerManager, context, forceCompile, onlyCheckStatus);
 
@@ -746,19 +747,23 @@ public class CompileDriver {
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, isRebuild, false, onlyCheckStatus);
+        didSomething |= runner.invokeCompilers(NewCompiler.CompileOrderPlace.CLASS_INSTRUMENTING);
 
         // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
         // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if
         // there were changes in completely independent files.
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, isRebuild, false, onlyCheckStatus);
+        didSomething |= runner.invokeCompilers(NewCompiler.CompileOrderPlace.CLASS_POST_PROCESSING);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class,
                                                       FILE_PACKAGING_COMPILER_ADAPTER_FACTORY,
                                                       isRebuild, false, onlyCheckStatus);
+        didSomething |= runner.invokeCompilers(NewCompiler.CompileOrderPlace.PACKAGING);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, FILE_PROCESSING_COMPILER_ADAPTER_FACTORY,
                                                       forceCompile, true, onlyCheckStatus);
+        didSomething |= runner.invokeCompilers(NewCompiler.CompileOrderPlace.VALIDATING);
       }
       catch (ExitException e) {
         if (LOG.isDebugEnabled()) {
@@ -945,6 +950,7 @@ public class CompileDriver {
       }
     }));
 
+    final DumbService dumbService = DumbService.getInstance(myProject);
     try {
       VirtualFile[] snapshot = null;
       final Map<Chunk<Module>, Collection<VirtualFile>> chunkMap = new HashMap<Chunk<Module>, Collection<VirtualFile>>();
@@ -954,10 +960,11 @@ public class CompileDriver {
         final TranslatorsOutputSink sink = new TranslatorsOutputSink(context, translators);
         final Set<FileType> generatedTypes = new HashSet<FileType>();
         Collection<VirtualFile> chunkFiles = chunkMap.get(currentChunk);
+        final Set<VirtualFile> filesToRecompile = new HashSet<VirtualFile>();
+        final Set<VirtualFile> allDependent = new HashSet<VirtualFile>();
         try {
           int round = 0;
-          final Set<VirtualFile> filesToRecompile = new HashSet<VirtualFile>();
-          final Set<VirtualFile> allDependent = new HashSet<VirtualFile>();
+          boolean compiledSomethingForThisChunk = false;
           Collection<VirtualFile> dependentFiles = Collections.emptyList();
           final Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> dependencyFilter = new DependentClassesCumulativeFilter();
           
@@ -968,8 +975,8 @@ public class CompileDriver {
               if (context.getProgressIndicator().isCanceled()) {
                 throw new ExitException(ExitStatus.CANCELLED);
               }
-  
-              DumbService.getInstance(myProject).waitForSmartMode();
+
+              dumbService.waitForSmartMode();
   
               if (round == 0) {
                 if (snapshot == null || ContainerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(compiler))) {
@@ -1017,10 +1024,11 @@ public class CompileDriver {
               }
   
               didSomething |= compiledSomething;
+              compiledSomethingForThisChunk |= didSomething;
             }
 
             final boolean hasUnprocessedTraverseRoots = context.getDependencyCache().hasUnprocessedTraverseRoots();
-            if (!isRebuild && (didSomething || hasUnprocessedTraverseRoots)) {
+            if (!isRebuild && (compiledSomethingForThisChunk || hasUnprocessedTraverseRoots)) {
               final Set<VirtualFile> compiledWithSuccess;
               final Set<VirtualFile> compiledWithErrors = CacheUtils.getFilesCompiledWithErrors(context);
               if (compiledWithErrors.isEmpty()) {
@@ -1087,19 +1095,18 @@ public class CompileDriver {
               indicator.popState();
             }
           }
-          
-          if (context.getMessageCount(CompilerMessageCategory.ERROR) != 0) {
-            filesToRecompile.addAll(allDependent);
-          }
-          if (filesToRecompile.size() > 0) {
-            sink.add(null, Collections.<TranslatingCompiler.OutputItem>emptyList(), VfsUtil.toVirtualFileArray(filesToRecompile));
-          }
         }
         catch (CacheCorruptedException e) {
           LOG.info(e);
           context.requestRebuildNextTime(e.getMessage());
         }
         finally {
+          if (context.getMessageCount(CompilerMessageCategory.ERROR) != 0) {
+            filesToRecompile.addAll(allDependent);
+          }
+          if (filesToRecompile.size() > 0) {
+            sink.add(null, Collections.<TranslatingCompiler.OutputItem>emptyList(), VfsUtil.toVirtualFileArray(filesToRecompile));
+          }
           if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
             // perform update only if there were no errors, so it is guaranteed that the file was processd by all neccesary compilers
             sink.flushPostponedItems();
@@ -1512,7 +1519,7 @@ public class CompileDriver {
       });
       if (ex[0] != null) {
         throw ex[0];
-      }
+      }                   
 
       if (onlyCheckStatus) {
         if (toGenerate.isEmpty() && pathsToRemove.isEmpty()) {

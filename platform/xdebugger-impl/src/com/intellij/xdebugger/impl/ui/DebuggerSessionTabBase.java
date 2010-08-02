@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -202,7 +203,11 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
+          boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
+          ProjectUtil.focusProjectWindow(getProject(), focusWnd);
+          if (!focusWnd) {
+            AppIcon.getInstance().requestAttention(true);
+          }
         }
       });
     }

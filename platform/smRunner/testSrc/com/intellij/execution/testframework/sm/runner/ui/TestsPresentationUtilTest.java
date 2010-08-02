@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
@@ -638,7 +639,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     public MyRenderer(final boolean isPaused,
                       final UITestUtil.FragmentsContainer fragmentsContainer) {
-      super(new SMTRunnerConsoleProperties(createRunConfiguration(), "SMRunnerTests") {
+      super(new SMTRunnerConsoleProperties(createRunConfiguration(), "SMRunnerTests", DefaultDebugExecutor.getDebugExecutorInstance()) {
         @Override
         public boolean isPaused() {
           return isPaused;

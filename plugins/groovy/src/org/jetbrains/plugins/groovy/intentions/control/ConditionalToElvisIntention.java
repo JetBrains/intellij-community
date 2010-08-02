@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy.intentions.control;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author ilyas
  */
 public class ConditionalToElvisIntention extends Intention {
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrConditionalExpression expr =
         (GrConditionalExpression) element;
 

@@ -57,10 +57,40 @@ public class DefaultStubBuilder implements StubBuilder {
     }
 
     for (PsiElement child = elt.getFirstChild(); child != null; child = child.getNextSibling()) {
-      buildStubTreeFor(child, stub);
+      buildStubTreeFor(child, stub); // do not filter via skipChildProcessingWhenBuildingStubs here due to SOE in tests
     }
 
     return stub;
   }
 
+  protected StubElement buildStubTreeFor(ASTNode node, StubElement parentStub) {
+    StubElement stub = parentStub;
+    IElementType nodeType = node.getElementType();
+
+    if (nodeType instanceof IStubElementType) {
+      final IStubElementType type = (IStubElementType)nodeType;
+
+      if (type.shouldCreateStub(node)) {
+        //noinspection unchecked
+        PsiElement element = node.getPsi();
+        if (!(element instanceof StubBasedPsiElement)) {
+          LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element);
+        }
+        stub = type.createStub(element, parentStub);
+      }
+    }
+
+    for (ASTNode childNode = node.getFirstChildNode(); childNode != null; childNode = childNode.getTreeNext()) {
+      if (!skipChildProcessingWhenBuildingStubs(nodeType, childNode.getElementType())) {
+        buildStubTreeFor(childNode, stub);
+      }
+    }
+
+    return stub;
+  }
+
+  @Override
+  public boolean skipChildProcessingWhenBuildingStubs(IElementType nodeType, IElementType childType) {
+    return false;
+  }
 }

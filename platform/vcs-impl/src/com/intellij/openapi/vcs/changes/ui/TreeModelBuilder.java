@@ -221,7 +221,7 @@ public class TreeModelBuilder {
       final FilePath fp1 = ChangesUtil.getFilePath(o1);
       final FilePath fp2 = ChangesUtil.getFilePath(o2);
 
-      final int diff = fp1.getPath().length() - fp2.getPath().length();
+      final int diff = fp1.getIOFile().getPath().length() - fp2.getIOFile().getPath().length();
       return diff == 0 ? 0 : (diff < 0 ? -1 : 1);
     }
   }
