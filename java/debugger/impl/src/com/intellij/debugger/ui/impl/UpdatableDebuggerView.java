@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import com.sun.jdi.VMDisconnectedException;
@@ -124,7 +125,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
     myDisposables.clear();
   }
 
-  protected void overrideShortcut(final JComponent forComponent, final String actionId, final CustomShortcutSet shortcutSet) {
+  protected void overrideShortcut(final JComponent forComponent, final String actionId, final ShortcutSet shortcutSet) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     action.registerCustomShortcutSet(shortcutSet, forComponent);
     registerDisposable(new Disposable() {
