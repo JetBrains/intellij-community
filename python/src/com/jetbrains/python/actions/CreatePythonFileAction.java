@@ -1,29 +1,18 @@
 package com.jetbrains.python.actions;
 
+import com.intellij.ide.actions.CreateFileFromTemplateAction;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
-import com.intellij.ide.actions.CreateFromTemplateAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
 
 /**
  * @author yole
  */
-public class CreatePythonFileAction extends CreateFromTemplateAction<PsiFile> implements DumbAware {
+public class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware {
   public CreatePythonFileAction() {
     super("Python File", "Creates a Python file from the specified template", PythonFileType.INSTANCE.getIcon());
-  }
-
-  @Override
-  protected PsiFile createFile(String name, String templateName, PsiDirectory dir) {
-    return createFileFromTemplate(name, templateName, dir);
-  }
-
-  @Override
-  protected void checkBeforeCreate(String name, String templateName, PsiDirectory dir) {
-    dir.checkCreateFile(name);
   }
 
   @Override

@@ -61,7 +61,7 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
   void setPaths(@Nullable List<String> paths) {
     if (paths != null) {
       myPaths = new ArrayList<String>(paths.size());
-      Collections.copy(myPaths, paths);
+      for (String s : paths) myPaths.add(s);
     }
     else myPaths = null;                   
   }
