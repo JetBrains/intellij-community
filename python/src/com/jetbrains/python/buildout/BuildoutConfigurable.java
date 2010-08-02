@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -42,14 +43,15 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   public BuildoutConfigurable(Project project) {
     Module[] modules = ModuleManager.getInstance(project).getModules();
     myModule = modules.length == 0 ? null : modules [0];
-    VirtualFile root = null;
+    BuildoutFacetConfiguration config = null;
     if (myModule != null) {
-      root = myModule.getModuleFile();
-      if (root != null) root = root.getParent();
+      BuildoutFacet facet = BuildoutFacet.getInstance(myModule);
+      if (facet != null) config = facet.getConfiguration();
     }
-    if (root == null) root = project.getBaseDir();
-    mySettingsPanel = new BuildoutConfigPanel(new BuildoutFacetConfiguration(null));
+    if (config == null) config = new BuildoutFacetConfiguration(null);
+    mySettingsPanel = new BuildoutConfigPanel(config);
     myPlaceholder.add(mySettingsPanel, BorderLayout.CENTER);
+    myEnabledCheckbox.setSelected(! StringUtil.isEmptyOrSpaces(config.getScriptName()));
     myEnabledCheckbox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         UIUtil.setEnabled(mySettingsPanel, myEnabledCheckbox.isSelected(), true);
@@ -60,7 +62,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   @Nls
   @Override
   public String getDisplayName() {
-    return "Buildout";
+    return "Buildout Support";
   }
 
   @Override
@@ -97,22 +99,24 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     boolean facet_is_desired = myEnabledCheckbox.isSelected();
 
     mySettingsPanel.apply();
-    String script_name = mySettingsPanel.getScriptName();
-    VirtualFile script_file = LocalFileSystem.getInstance().findFileByPath(script_name);
-    if (script_file == null || script_file.isDirectory()) {
-      throw new ConfigurationException("Invalid script file '" + script_name + "'");
-    }
-    List<String> paths_from_script = BuildoutFacet.extractFromScript(script_file);
-    if (paths_from_script == null) {
-      throw new ConfigurationException("Failed to extract paths from '" + script_file.getPresentableName() + "'");
-    }
-    mySettingsPanel.getConfiguration().setPaths(paths_from_script);
+    List<String> paths_from_script = null;
+    if (facet_is_desired) {
+      String script_name = mySettingsPanel.getScriptName();
+      VirtualFile script_file = LocalFileSystem.getInstance().findFileByPath(script_name);
+      if (script_file == null || script_file.isDirectory()) {
+        throw new ConfigurationException("Invalid script file '" + script_name + "'");
+      }
+      paths_from_script = BuildoutFacet.extractFromScript(script_file);
+      if (paths_from_script == null) {
+        throw new ConfigurationException("Failed to extract paths from '" + script_file.getPresentableName() + "'");
+      }
+      mySettingsPanel.getConfiguration().setPaths(paths_from_script);
 
-    if (facet_is_desired && ! got_facet) addFacet();
+    }
+    if (facet_is_desired && ! got_facet) addFacet(mySettingsPanel.getConfiguration());
     if (! facet_is_desired && got_facet) removeFacet(facet);
     if (facet_is_desired) attachLibrary(paths_from_script);
     else detachLibrary();
-    //updateEnablingCheckbox();
   }
 
   private void attachLibrary(final List<String> paths) throws ConfigurationException {
@@ -147,7 +151,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     for (String root : lib.getUrls(OrderRootType.CLASSES)) {
       modifiableModel.removeRoot(root, OrderRootType.CLASSES);
     }
-    for (String dir : paths) modifiableModel.addRoot(dir, OrderRootType.CLASSES);
+    for (String dir : paths) modifiableModel.addRoot("file://"+dir, OrderRootType.CLASSES);
     modifiableModel.commit();
   }
 
@@ -184,8 +188,8 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     return null;
   }
 
-  private void addFacet() {
-    BuildoutFacetConfigurator.setupFacet(myModule);
+  private void addFacet(BuildoutFacetConfiguration config) {
+    BuildoutFacetConfigurator.setupFacet(myModule, config);
   }
 
   private void removeFacet(BuildoutFacet facet) {
@@ -209,8 +213,9 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
       myEnabledCheckbox.setEnabled(true);
       final BuildoutFacet instance = BuildoutFacet.getInstance(myModule);
       if (instance != null) {
-        myEnabledCheckbox.setSelected(true);
-        mySettingsPanel.setEnabled(true);
+        boolean selected = ! StringUtil.isEmptyOrSpaces(instance.getConfiguration().getScriptName());
+        myEnabledCheckbox.setSelected(selected);
+        mySettingsPanel.setEnabled(selected);
         mySettingsPanel.reset();
       }
       else {

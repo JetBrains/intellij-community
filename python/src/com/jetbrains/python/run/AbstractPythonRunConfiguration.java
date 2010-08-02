@@ -15,6 +15,8 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.buildout.BuildoutFacet;
+import com.jetbrains.python.buildout.BuildoutFacetType;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -202,13 +204,13 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     Sdk sdk = PythonSdkType.findPythonSdk(getModule());
     if (sdk != null && sdk_home != null) {
       SdkType sdk_type = sdk.getSdkType();
+      String path_value;
       if (sdk_type instanceof PythonSdkType) {
-        PythonSdkType python_sdk_type = (PythonSdkType)sdk_type;
         File virtualenv_root = PythonSdkType.getVirtualEnvRoot(sdk_home);
         if (virtualenv_root != null) {
           // prepend virtualenv bin if it's not already on PATH
           String virtualenv_bin = new File(virtualenv_root, "bin").getPath();
-          String path_value;
+          
           if (isPassParentEnvs()) {
             // append to PATH
             path_value = System.getenv("PATH");
@@ -220,6 +222,22 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
           String existing_path = new_env.get("PATH");
           if (existing_path == null || existing_path.indexOf(virtualenv_bin) < 0) {
             new_env.put("PATH", path_value);
+            commandLine.setEnvParams(new_env);
+          }
+        }
+      }
+      Module module = getModule();
+      if (module != null) {
+        BuildoutFacet facet = BuildoutFacet.getInstance(module);
+        if (facet != null) {
+          List<String> paths = facet.getAdditionalPythonPath();
+          if (paths != null) {
+            Map<String, String> new_env = cloneEnv(commandLine.getEnvParams()); // we need a copy lest we change config's map.
+            final String PYTHONPATH = "PYTHONPATH";
+            String old_path = new_env.get(PYTHONPATH);
+            path_value = PyUtil.joinWith(File.pathSeparator, paths);
+            if (old_path != null) path_value = path_value + File.pathSeparator + old_path; 
+            new_env.put(PYTHONPATH, path_value);
             commandLine.setEnvParams(new_env);
           }
         }
