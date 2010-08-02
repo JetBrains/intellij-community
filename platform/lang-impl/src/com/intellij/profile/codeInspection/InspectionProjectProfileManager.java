@@ -169,16 +169,6 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
         } else {
           app.executeOnPooledThread(initInspectionProfilesRunnable);
         }
-
-
-        final JLabel statusLabel = new JLabel("YEAH");
-        try {
-          WindowManager.getInstance().getStatusBar(myProject).addCustomIndicationComponent(statusLabel);
-        }
-        finally {
-          WindowManager.getInstance().getStatusBar(myProject).removeCustomIndicationComponent(statusLabel);
-        }
-
       }
     });
   }

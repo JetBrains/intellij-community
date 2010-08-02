@@ -159,10 +159,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
-    for (final Map.Entry<String, WidgetBean> entry : myWidgetMap.entrySet()) {
-      final WidgetBean value = entry.getValue();
+    final Set<String> keySet = myWidgetMap.keySet();
+    final String[] keys = keySet.toArray(new String[keySet.size()]);
+    for (final String key : keys) {
+      final WidgetBean value = myWidgetMap.get(key);
       if (value.widget instanceof CustomStatusBarWidget && value.component == c) {
-        final String key = entry.getKey();
         removeWidget(key);
         myCustomComponentIds.remove(key);
       }
