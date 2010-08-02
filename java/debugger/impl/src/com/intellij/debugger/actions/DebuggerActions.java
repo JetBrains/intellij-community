@@ -38,6 +38,7 @@ public interface DebuggerActions extends XDebuggerActions {
   @NonNls String NEW_WATCH = "Debugger.NewWatch";
   @NonNls String EDIT_WATCH = "Debugger.EditWatch";
   @NonNls String MARK_OBJECT = "Debugger.MarkObject";
+  @NonNls String COPY_VALUE = "Debugger.CopyValue";
   @NonNls String SET_VALUE = "Debugger.SetValue";
   @NonNls String EDIT_FRAME_SOURCE = "Debugger.EditFrameSource";
   @NonNls String EDIT_NODE_SOURCE = "Debugger.EditNodeSource";

@@ -16,9 +16,6 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.facet.impl.autodetecting.FacetAutodetectingManager</interface-class>
       <implementation-class>com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl</implementation-class>
       <skipForDummyProject/>

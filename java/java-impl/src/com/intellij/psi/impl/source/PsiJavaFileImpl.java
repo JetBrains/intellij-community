@@ -26,6 +26,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.testFramework.LightVirtualFile;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   public PsiJavaFileImpl(FileViewProvider file) {
-    super(Constants.JAVA_FILE, Constants.JAVA_FILE, file);
+    super(JavaStubElementTypes.JAVA_FILE, JavaStubElementTypes.JAVA_FILE, file);
   }
 
   public String toString(){

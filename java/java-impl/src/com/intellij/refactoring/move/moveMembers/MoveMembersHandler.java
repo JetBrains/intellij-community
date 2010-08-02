@@ -32,7 +32,7 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
     return super.canMove(elements, targetContainer);
   }
 
-  public boolean isValidTarget(final PsiElement psiElement) {
+  public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
     return psiElement instanceof PsiClass && !(psiElement instanceof PsiAnonymousClass);
   }
 

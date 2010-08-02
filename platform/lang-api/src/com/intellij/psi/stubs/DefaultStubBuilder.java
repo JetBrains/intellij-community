@@ -38,9 +38,8 @@ public class DefaultStubBuilder implements StubBuilder {
     return new PsiFileStubImpl(file);
   }
 
-  protected StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
+  protected static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
     StubElement stub = parentStub;
-    IElementType eltType;
     if (elt instanceof StubBasedPsiElement) {
       final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
 
@@ -48,7 +47,6 @@ public class DefaultStubBuilder implements StubBuilder {
         //noinspection unchecked
         stub = type.createStub(elt, parentStub);
       }
-      eltType = type;
     }
     else {
       final ASTNode node = elt.getNode();
@@ -56,13 +54,35 @@ public class DefaultStubBuilder implements StubBuilder {
       if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
         LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + elt);
       }
-      eltType = type;
     }
 
     for (PsiElement child = elt.getFirstChild(); child != null; child = child.getNextSibling()) {
-      ASTNode childNode = child.getNode();
-      if (!skipChildProcessingWhenBuildingStubs(eltType, childNode != null ? childNode.getElementType():null)) {
-        buildStubTreeFor(child, stub);
+      buildStubTreeFor(child, stub); // do not filter via skipChildProcessingWhenBuildingStubs here due to SOE in tests
+    }
+
+    return stub;
+  }
+
+  protected StubElement buildStubTreeFor(ASTNode node, StubElement parentStub) {
+    StubElement stub = parentStub;
+    IElementType nodeType = node.getElementType();
+
+    if (nodeType instanceof IStubElementType) {
+      final IStubElementType type = (IStubElementType)nodeType;
+
+      if (type.shouldCreateStub(node)) {
+        //noinspection unchecked
+        PsiElement element = node.getPsi();
+        if (!(element instanceof StubBasedPsiElement)) {
+          LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element);
+        }
+        stub = type.createStub(element, parentStub);
+      }
+    }
+
+    for (ASTNode childNode = node.getFirstChildNode(); childNode != null; childNode = childNode.getTreeNext()) {
+      if (!skipChildProcessingWhenBuildingStubs(nodeType, childNode.getElementType())) {
+        buildStubTreeFor(childNode, stub);
       }
     }
 

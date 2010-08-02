@@ -61,7 +61,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testEnumBody3() { doParserTest("{ RED, GREEN, BLUE, }", false, true); }
   public void testEnumBody4() { doParserTest("{ RED(0), GREEN(1), BLUE(2); }", false, true); }
   public void testEnumBody5() { doParserTest("{ @ANNOTATION A(10) }", false, true); }
-  //public void testEnumBody6() { doParserTest("{ RED, GREEN, BLUE\n OurEnum() {} }", false, true); }
+  public void testEnumBody6() { doParserTest("{ RED, GREEN, BLUE\n OurEnum() {} }", false, true); }
   public void testEnumWithInitializedConstants() { doParserTest("{ A(10) { },\n B { void method() {} } }", false, true); }
   public void testEnumWithoutConstants() { doParserTest("{ private A }", false, true); }
 
@@ -96,6 +96,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testErrors() { doParserTest("{ public static <error descr=\"2\">protected int f1 = 0; }", false, false); }
   public void testCompletionHack0() { doParserTest("{ <X IntelliJIdeaRulezz>\n String s = \"\"; }", false, false); }
   public void testCompletionHack1() { doParserTest("{ <X\n String s = \"\"; }", false, false); }
+  public void testCompletionHack2() { doParserTest("{ String foo() def }", true, false); }
   public void testWildcardParsing() { doParserTest("{ List<? extends B> x(Collection<? super B> x); }", false, false); }
   public void testParameterAnnotation() { doParserTest("{ void foo (@Annotation(value=77) int param) {} }", false, false); }
   public void testParameterizedMethod() { doParserTest("{ @Nullable <T> T bar() {} }", false, false); }

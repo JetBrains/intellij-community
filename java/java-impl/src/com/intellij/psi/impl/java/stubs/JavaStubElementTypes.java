@@ -20,9 +20,9 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.impl.source.JavaFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 
 public class JavaStubElementTypes {
-  public static final JavaFileElementType FILE = new JavaFileElementType();
   public static final JavaClassElementType CLASS = new JavaClassElementType("CLASS");
   public static final JavaClassElementType ANONYMOUS_CLASS = new JavaClassElementType("ANONYMOUS_CLASS");
   public static final JavaClassElementType ENUM_CONSTANT_INITIALIZER = new JavaClassElementType("ENUM_CONSTANT_INITIALIZER");
@@ -47,4 +47,5 @@ public class JavaStubElementTypes {
   public static final JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
   public static final JavaImportStatementElementType IMPORT_STATEMENT = new JavaImportStatementElementType("IMPORT_STATEMENT");
   public static final JavaImportStatementElementType IMPORT_STATIC_STATEMENT = new JavaImportStatementElementType("IMPORT_STATIC_STATEMENT");
+  public static final IStubFileElementType JAVA_FILE = new JavaFileElementType();
 }

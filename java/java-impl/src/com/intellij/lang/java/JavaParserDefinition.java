@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -50,7 +51,7 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   public IFileElementType getFileNodeType() {
-    return JavaElementType.JAVA_FILE;
+    return JavaStubElementTypes.JAVA_FILE;
   }
 
   @NotNull

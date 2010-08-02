@@ -229,6 +229,16 @@ public class PsiTreeUtil {
     return result == null ? null : ArrayUtil.toObjectArray(result, aClass);
   }
 
+  @NotNull public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+    List<T> result = new SmartList<T>();
+    for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
+      if (instanceOf(aClass, child)) {
+        result.add((T)child);
+      }
+    }
+    return result;
+  }
+
 
   private static boolean instanceOf(final Class aClass, final PsiElement child) {
     /*

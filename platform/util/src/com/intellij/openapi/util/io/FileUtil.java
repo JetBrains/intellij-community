@@ -510,7 +510,7 @@ public class FileUtil {
         return parentFile.exists() && parentFile.isDirectory() || parentFile.mkdirs();
       }
     }
-    return false;
+    return true;
   }
 
   public static boolean createIfDoesntExist(File file) {

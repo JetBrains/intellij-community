@@ -163,7 +163,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   }
 
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   interface Key {

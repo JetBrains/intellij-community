@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -64,6 +65,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Configuration that holds configured xml tag, attribute and method parameter
  * injection settings as well as the annotations to use for injection, pattern
  * validation and for substituting non-compile time constant expression.
+ *
+ * Making it a service may result in FileContentUtil.reparseFiles at a random loading moment which may cause
+ * mysterious PSI validity losses
  */
 @State(
   name = Configuration.COMPONENT_NAME,
@@ -282,7 +286,7 @@ public final class Configuration implements PersistentStateComponent<Element>, M
   }
 
   public static Configuration getInstance() {
-    return ServiceManager.getService(Configuration.class);
+    return ApplicationManager.getApplication().getComponent(Configuration.class);
   }
 
   public String getLanguageAnnotationClass() {

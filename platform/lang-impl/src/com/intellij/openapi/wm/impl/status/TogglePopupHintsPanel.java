@@ -112,7 +112,7 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
     return "InspectionProfile";
   }
 
-  public WidgetPresentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return this;
   }
 

@@ -22,15 +22,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +41,6 @@ public class FileReferenceSet {
   private static final FileType[] EMPTY_FILE_TYPES = {};
   private static final char SEPARATOR = '/';
   private static final String SEPARATOR_STRING = "/";
-  private static final Key<CachedValue<Collection<PsiFileSystemItem>>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<Collection<PsiFileSystemItem>>>("default file contexts");
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>> DEFAULT_PATH_EVALUATOR_OPTION =
     new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>(PsiBundle.message("default.path.evaluator.option"));
   public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL = new Function<PsiFile, Collection<PsiFileSystemItem>>() {
@@ -262,17 +256,7 @@ public class FileReferenceSet {
       return getAbsoluteTopLevelDirLocations(file);
     }
 
-    final CachedValueProvider<Collection<PsiFileSystemItem>> myDefaultContextProvider = new CachedValueProvider<Collection<PsiFileSystemItem>>() {
-      public Result<Collection<PsiFileSystemItem>> compute() {
-        final Collection<PsiFileSystemItem> contexts = getContextByFile(file);
-        return Result.createSingleDependency(contexts,
-                                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-    };
-    final CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(myElement.getProject());
-    final Collection<PsiFileSystemItem> value =
-      cachedValuesManager.getCachedValue(file, DEFAULT_CONTEXTS_KEY, myDefaultContextProvider, false);
-    return value == null ? Collections.<PsiFileSystemItem>emptyList() : value;
+    return getContextByFile(file);
   }
 
   @Nullable
@@ -285,7 +269,7 @@ public class FileReferenceSet {
     return file.getOriginalFile();
   }
 
-  @Nullable
+  @NotNull
   private Collection<PsiFileSystemItem> getContextByFile(@NotNull PsiFile file) {
     final PsiElement context = file.getContext();
     if (context != null) file = context.getContainingFile();

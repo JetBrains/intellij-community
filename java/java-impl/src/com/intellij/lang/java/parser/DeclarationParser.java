@@ -40,6 +40,8 @@ public class DeclarationParser {
   private static final TokenSet AFTER_END_DECLARATION_SET = TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD);
   private static final TokenSet BEFORE_LBRACE_ELEMENTS_SET = TokenSet.create(
     JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD);
+  private static final TokenSet APPEND_TO_METHOD_SET = TokenSet.create(
+    JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.THROWS_KEYWORD);
 
   private DeclarationParser() { }
 
@@ -107,6 +109,7 @@ public class DeclarationParser {
       if (!expect(builder, JavaTokenType.COMMA)) {
         if (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.SEMICOLON) {
           error(builder, JavaErrorMessages.message("expected.comma.or.semicolon"));
+          return;
         }
       }
     }
@@ -410,8 +413,19 @@ public class DeclarationParser {
       StatementParser.parseCodeBlock(builder);
     }
     else {
-      error(builder, JavaErrorMessages.message("expected.lbrace.or.semicolon"));
-      // todo: special treatment - like in fields (DeclarationParserTest.testMultiLineUnclosed())
+      final PsiBuilder.Marker error = builder.mark();
+      // heuristic: going to next line obviously means method signature is over, starting new method (actually, another one completion hack)
+      final CharSequence text = builder.getOriginalText();
+      Loop:
+      while (true) {
+        for (int i = builder.getCurrentOffset() - 1; i >= 0; i--) {
+          final char ch = text.charAt(i);
+          if (ch == '\n') break Loop;
+          else if (ch != ' ' && ch != '\t') break;
+        }
+        if (!expect(builder, APPEND_TO_METHOD_SET)) break;
+      }
+      error.error(JavaErrorMessages.message("expected.lbrace.or.semicolon"));
     }
 
     declaration.done(anno ? JavaElementType.ANNOTATION_METHOD : JavaElementType.METHOD);

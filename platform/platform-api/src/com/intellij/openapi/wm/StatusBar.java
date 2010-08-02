@@ -70,6 +70,10 @@ public interface StatusBar extends StatusBarInfo {
   @Deprecated
   void addCustomIndicationComponent(@NotNull JComponent c);
 
+  /**
+   * @deprecated use removeWidget instead
+   */
+  @Deprecated
   void removeCustomIndicationComponent(@NotNull JComponent c);
 
   void removeWidget(@NotNull String id);
