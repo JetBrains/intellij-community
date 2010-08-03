@@ -108,15 +108,12 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     assertNotNull(jarRoot);
     VirtualFile jarEntry = jarRoot.findFileByRelativePath(pathInJar);
     assertNotNull(jarEntry);
-    System.out.println("ArtifactCompilerTestCase.changeFileInJar");
-    System.out.println(" timestamp before: " + jarEntry.getTimeStamp());
     assertNotNull(jarFile);
     changeFile(jarFile);
     jarFile.refresh(false, false);
 
     jarEntry = jarRoot.findFileByRelativePath(pathInJar);
     assertNotNull(jarEntry);
-    System.out.println(" timestamp after: " + jarEntry.getTimeStamp());
   }
 
   protected void changeFile(VirtualFile file) throws Exception {
