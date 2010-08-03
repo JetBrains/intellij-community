@@ -84,10 +84,8 @@ class RepositoryLoader extends Loader {
   private void startLoadTask(final Pair<RepositoryTreeNode, Expander> data) {
     final ModalityState state = ModalityState.current();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
       public void run() {
         ProgressManager.getInstance().runProcess(new LoadTask(data), new EmptyProgressIndicator() {
-          @Override
           public ModalityState getModalityState() {
             return state;
           }
