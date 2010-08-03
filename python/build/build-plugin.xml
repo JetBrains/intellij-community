@@ -9,6 +9,7 @@
     <property name="plugin.revision" value="${build.number}"/>
 
     <property name="idea.lib" value="${idea.home}/lib"/>
+    <property name="community.lib" value="${idea.home}/community/lib"/>
     <property name="idea.plugins" value="${idea.home}/plugins"/>
 
     <property name="build.number" value="snapshot"/>
@@ -35,6 +36,9 @@
 
     <path id="classpath.lib">
         <fileset dir="${idea.lib}">
+            <include name="?*.jar"/>
+        </fileset>
+      <fileset dir="${community.lib}">
             <include name="?*.jar"/>
         </fileset>
         <fileset dir="${plugin.home}/lib">
