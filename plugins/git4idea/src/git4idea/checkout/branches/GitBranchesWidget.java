@@ -69,7 +69,6 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
    * The logger
    */
   private static final Logger LOG = Logger.getInstance(GitBranchesWidget.class.getName());
-
   /**
    * The ID of the widget
    */
@@ -94,6 +93,10 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
    * The selectable configurations. Null if invalidated or non-initialized
    */
   private AnAction[] mySelectableConfigurations;
+  /**
+   * The selectable configurations. Null if invalidated or non-initialized
+   */
+  private AnAction[] mySelectableWithChangesConfigurations;
   /**
    * The candidate remote configurations. Null if invalidated or non-initialized
    */
@@ -273,13 +276,13 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
   }
 
   /**
+   * Ensure that action for checking out configurations are crated
+   *
    * @return get or create selectable configuration group
    */
-  private AnAction[] getSelectable() {
+  private AnAction[] ensureSelectableCreated() {
     assert myPopupEnabled : "pop should be enabled";
-    if (mySelectableConfigurations == null) {
-      ArrayList<AnAction> rc = new ArrayList<AnAction>();
-
+    if (mySelectableConfigurations == null || mySelectableWithChangesConfigurations == null) {
       GitBranchConfiguration current;
       try {
         current = myConfigurations.getCurrentConfiguration();
@@ -287,33 +290,48 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
       catch (VcsException e) {
         LOG.error("Unexpected error at this point", e);
         mySelectableConfigurations = new AnAction[0];
+        mySelectableWithChangesConfigurations = new AnAction[0];
+
         return mySelectableConfigurations;
       }
       String name = current == null ? "" : current.getName();
-      for (final String c : myConfigurations.getConfigurationNames()) {
-        if (name.equals(c)) {
-          // skip current config
-          continue;
-        }
-        rc.add(new DumbAwareAction(c) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            try {
-              final GitBranchConfiguration toCheckout = myConfigurations.getConfiguration(c);
-              if (toCheckout == null) {
-                throw new VcsException("The configuration " + c + " cannot be found.");
-              }
-              myConfigurations.startCheckout(toCheckout, null, true);
-            }
-            catch (VcsException e1) {
-              GitUIUtil.showOperationError(myProject, e1, "Unable to load: " + c);
-            }
-          }
-        });
-      }
-      mySelectableConfigurations = rc.toArray(new AnAction[rc.size()]);
+      mySelectableConfigurations = checkoutActions(name, true);
+      mySelectableWithChangesConfigurations = checkoutActions(name, false);
     }
     return mySelectableConfigurations;
+  }
+
+  /**
+   * Checkout actions
+   *
+   * @param name  the excluded name
+   * @param quick true, if quick checkout actions
+   * @return an array of actions for the configurations
+   */
+  private AnAction[] checkoutActions(String name, final boolean quick) {
+    ArrayList<AnAction> rc = new ArrayList<AnAction>();
+    for (final String c : myConfigurations.getConfigurationNames()) {
+      if (name.equals(c)) {
+        // skip current config
+        continue;
+      }
+      rc.add(new DumbAwareAction(c) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          try {
+            final GitBranchConfiguration toCheckout = myConfigurations.getConfiguration(c);
+            if (toCheckout == null) {
+              throw new VcsException("The configuration " + c + " cannot be found.");
+            }
+            myConfigurations.startCheckout(toCheckout, null, quick);
+          }
+          catch (VcsException e1) {
+            GitUIUtil.showOperationError(myProject, e1, "Unable to load: " + c);
+          }
+        }
+      });
+    }
+    return rc.toArray(new AnAction[rc.size()]);
   }
 
   /**
@@ -347,6 +365,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
         }
       });
       myPopupActionGroup.add(new MyRemotesActionGroup());
+      myPopupActionGroup.add(new MySelectableWithChangesActionGroup());
       myPopupActionGroup.addSeparator("Branch Configurations");
       myPopupActionGroup.add(new MySelectableActionGroup());
     }
@@ -466,7 +485,29 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return getSelectable();
+      return ensureSelectableCreated();
+    }
+  }
+
+  /**
+   * Remotes action group
+   */
+  class MySelectableWithChangesActionGroup extends ActionGroup {
+    /**
+     * The constructor
+     */
+    public MySelectableWithChangesActionGroup() {
+      super("Check out with Selected Changes...", true);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      ensureSelectableCreated();
+      return mySelectableWithChangesConfigurations;
     }
   }
 
@@ -504,6 +545,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
         @Override
         public void run() {
           mySelectableConfigurations = null;
+          mySelectableWithChangesConfigurations = null;
         }
       });
     }
@@ -535,6 +577,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
         @Override
         public void run() {
           mySelectableConfigurations = null;
+          mySelectableWithChangesConfigurations = null;
           updateLabel();
         }
       });
