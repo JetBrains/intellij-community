@@ -50,7 +50,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.idea.eclipse.conversion.EPathUtil.*;
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.expandEclipsePath2Url;
 
 public class EclipseClasspathReader {
   private final String myRootPath;
@@ -138,6 +138,7 @@ public class EclipseClasspathReader {
 
     final boolean exported = EclipseXml.TRUE_VALUE.equals(element.getAttributeValue(EclipseXml.EXPORTED_ATTR));
 
+    final EclipseModuleManager eclipseModuleManager = EclipseModuleManager.getInstance(rootModel.getModule());
     if (kind.equals(EclipseXml.SRC_KIND)) {
       if (path.startsWith("/")) {
         final String moduleName = path.substring(1);
@@ -154,7 +155,7 @@ public class EclipseClasspathReader {
           final String toPathVariableFormat =
             getVariableRelatedPath(varName, path.length() > varName.length() ? path.substring(varName.length()) : null);
           srcUrl = VfsUtil.pathToUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(toPathVariableFormat));
-          EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseLinkedSrcVarPath(srcUrl, path);
+          eclipseModuleManager.registerEclipseLinkedSrcVarPath(srcUrl, path);
 
           rootModel.addContentEntry(srcUrl).addSourceFolder(srcUrl, isTestFolder);
         } else {
@@ -173,11 +174,14 @@ public class EclipseClasspathReader {
       final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(libName);
       final Library.ModifiableModel modifiableModel = library.getModifiableModel();
 
-      modifiableModel.addRoot(expandEclipsePath2Url(path, rootModel, myCurrentRoots), OrderRootType.CLASSES);
+      final String url = expandEclipsePath2Url(path, rootModel, myCurrentRoots);
+      modifiableModel.addRoot(url, OrderRootType.CLASSES);
+      eclipseModuleManager.registerEclipseLibUrl(url);
 
       final String sourcePath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (sourcePath != null) {
-        modifiableModel.addRoot(expandEclipsePath2Url(sourcePath, rootModel, myCurrentRoots), OrderRootType.SOURCES);
+        final String srcUrl = expandEclipsePath2Url(sourcePath, rootModel, myCurrentRoots);
+        modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
       }
 
       EJavadocUtil.appendJavadocRoots(element, rootModel, myCurrentRoots, modifiableModel);
@@ -197,13 +201,13 @@ public class EclipseClasspathReader {
 
       final String url = eclipseVariabledPath2Url(rootModel, usedVariables, path, 0);
       modifiableModel.addRoot(url, OrderRootType.CLASSES);
-      EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseVariablePath(url, path);
+      eclipseModuleManager.registerEclipseVariablePath(url, path);
 
       final String srcPathAttr = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (srcPathAttr != null) {
         final String srcUrl = eclipseVariabledPath2Url(rootModel, usedVariables, srcPathAttr, srcVarStart(srcPathAttr));
         modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
-        EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
+        eclipseModuleManager.registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
       }
 
       EJavadocUtil.appendJavadocRoots(element, rootModel, myCurrentRoots, modifiableModel);
@@ -244,7 +248,7 @@ public class EclipseClasspathReader {
         modifiableModel.addRoot(getJunitClsUrl(junitName.contains("4")), OrderRootType.CLASSES);
         modifiableModel.commit();
       } else {
-        EclipseModuleManager.getInstance(rootModel.getModule()).registerUnknownCons(path);
+        eclipseModuleManager.registerUnknownCons(path);
         addNamedLibrary(rootModel, new ArrayList<String>(), exported, path, LibraryTablesRegistrar.APPLICATION_LEVEL);
       }
     }
@@ -374,8 +378,8 @@ public class EclipseClasspathReader {
   }
 
   private static class EPathVariable {
-    private String myVariable;
-    private String myRelatedPath;
+    private final String myVariable;
+    private final String myRelatedPath;
 
     private EPathVariable(final Set<String> usedVariables, final String variable, final String relatedPath) {
       myVariable = variable;

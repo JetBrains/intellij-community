@@ -35,7 +35,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -610,11 +609,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         return; // in test mode suppress addition to a queue unless project is properly initialized
       }
     }
-    myStartupManager.runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      public void run() {
-        DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
-      }
-    });
+    DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
   }
 
   private void addRootsToWatch() {

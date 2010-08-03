@@ -17,9 +17,9 @@ package com.intellij.ide;
 
 
 import com.intellij.Patches;
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -159,6 +159,8 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     });
+
+    addDispatcher(new WindowsAltSupressor(), null);
   }
 
 
@@ -363,14 +365,12 @@ public class IdeEventQueue extends EventQueue {
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
-    JobSchedulerImpl.suspend();
     try {
       _dispatchEvent(e);
     }
     finally {
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
-      JobSchedulerImpl.resume();
 
       for (EventDispatcher each : myPostprocessors) {
         each.dispatch(e);
@@ -402,6 +402,10 @@ public class IdeEventQueue extends EventQueue {
 
 
   private void _dispatchEvent(final AWTEvent e) {
+    _dispatchEvent(e, false);
+  }
+
+  public void _dispatchEvent(AWTEvent e, boolean typeaheadFlushing) {
     if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
       if (dndManager != null) {
@@ -413,9 +417,13 @@ public class IdeEventQueue extends EventQueue {
     myEventCount++;
 
 
+
+
     if (processAppActivationEvents(e)) return;
 
-    fixStickyFocusedComponents(e);
+    if (!typeaheadFlushing) {
+      fixStickyFocusedComponents(e);
+    }
 
     if (!myPopupManager.isPopupActive()) {
       enterSuspendModeIfNeeded(e);
@@ -425,7 +433,7 @@ public class IdeEventQueue extends EventQueue {
       myKeyboardBusy = e.getID() != KeyEvent.KEY_RELEASED || ((KeyEvent)e).getModifiers() != 0;
     }
 
-    if (typeAheadDispatchToFocusManager(e)) return;
+    if (!typeaheadFlushing && typeAheadDispatchToFocusManager(e)) return;
 
     if (e instanceof WindowEvent) {
       ActivityTracker.getInstance().inc();
@@ -550,6 +558,14 @@ public class IdeEventQueue extends EventQueue {
     if (Registry.is("actionSystem.fixNullFocusedComponent")) {
       final Component focusOwner = mgr.getFocusOwner();
       if (focusOwner == null) {
+
+        IdeEventQueue queue = IdeEventQueue.getInstance();
+        boolean mouseEventsAhead = e instanceof MouseEvent
+                                   || queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null
+                                   || queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null
+                                   || queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
+
+        if (!mouseEventsAhead) {
         Window showingWindow = mgr.getActiveWindow();
         if (showingWindow != null) {
           final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
@@ -566,6 +582,7 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     }
+  }
   }
 
   private void enterSuspendModeIfNeeded(AWTEvent e) {
@@ -777,5 +794,63 @@ public class IdeEventQueue extends EventQueue {
 
   public boolean isPopupActive() {
     return myPopupManager.isPopupActive();
+  }
+
+  private static class WindowsAltSupressor implements EventDispatcher {
+
+    private boolean myPureAltWasPressed;
+    private boolean myWaitingForAltRelease;
+    private boolean myWaiterScheduled;
+
+    private Robot myRobot;
+
+    public boolean dispatch(AWTEvent e) {
+      boolean dispatch = true;
+      if (e instanceof KeyEvent) {
+        KeyEvent ke = ((KeyEvent)e);
+        boolean pureAlt =  ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | KeyEvent.ALT_MASK) == KeyEvent.ALT_MASK;
+        if (!pureAlt) {
+          myPureAltWasPressed = false;
+          myWaitingForAltRelease = false;
+          myWaiterScheduled = false;
+        } else {
+          Application app = ApplicationManager.getApplication();
+          if (app == null || !SystemInfo.isWindows || !Registry.is("actionSystem.win.supressAlt") || !UISettings.getInstance().HIDE_TOOL_STRIPES) {
+            return !dispatch;
+          }
+
+          if (ke.getID() == KeyEvent.KEY_PRESSED) {
+            myPureAltWasPressed = true;
+            dispatch = !myWaitingForAltRelease;
+          } else if (ke.getID() == KeyEvent.KEY_RELEASED) {
+            if (myWaitingForAltRelease) {
+              myPureAltWasPressed = false;
+              myWaitingForAltRelease = false;
+              myWaiterScheduled = false;
+              dispatch = false;
+            } else {
+              myWaiterScheduled = true;
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  try {
+                    myWaitingForAltRelease = true;
+                    if (myRobot == null) {
+                      myRobot = new Robot();
+                    }
+                    myRobot.keyPress(KeyEvent.VK_ALT);
+                    myRobot.keyRelease(KeyEvent.VK_ALT);
+                  }
+                  catch (AWTException e1) {
+                    LOG.debug(e1);
+                  }
+                }
+              });
+            }
+          }
+        }
+      }
+
+      return !dispatch;
+    }
   }
 }

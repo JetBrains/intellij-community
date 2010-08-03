@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.ServerSocket;
 
 /**
@@ -83,7 +82,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
           detectedPortNumber = port;
           return true;
         }
-        catch (BindException ignored) {
+        catch (IOException ignored) {
         }
       }
 
@@ -92,11 +91,9 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
         socket = new ServerSocket(0);
         detectedPortNumber = socket.getLocalPort();
         return true;
-      } catch (BindException ignored) {
       }
-    }
-    catch (IOException e) {
-      LOG.info(e);
+      catch (IOException ignored) {
+      }
     }
     finally {
       if (socket != null) {

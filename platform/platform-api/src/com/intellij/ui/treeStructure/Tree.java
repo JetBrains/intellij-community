@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.Position;
@@ -45,6 +46,9 @@ public class Tree extends JTree implements Autoscroll, Queryable {
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
   private Rectangle myLastVisibleRec;
+
+  private Dimension myHoldSize;
+  private MySelectionModel mySelectionModel = new MySelectionModel();
 
   public Tree() {
     initTree_();
@@ -64,10 +68,7 @@ public class Tree extends JTree implements Autoscroll, Queryable {
     myEmptyTextHelper = new EmptyTextHelper(this) {
       @Override
       protected boolean isEmpty() {
-        TreeModel model = getModel();
-        if (model == null) return true;
-        if (model.getRoot() == null) return true;
-        return !isRootVisible() && model.getChildCount(model.getRoot()) == 0;
+        return Tree.this.isEmpty();
       }
     };
 
@@ -77,6 +78,15 @@ public class Tree extends JTree implements Autoscroll, Queryable {
     }
 
     setCellRenderer(new NodeRenderer());
+
+    setSelectionModel(mySelectionModel);
+  }
+
+  public boolean isEmpty() {
+    TreeModel model = getModel();
+    if (model == null) return true;
+    if (model.getRoot() == null) return true;
+    return !isRootVisible() && model.getChildCount(model.getRoot()) == 0;
   }
 
   public String getEmptyText() {
@@ -140,15 +150,25 @@ public class Tree extends JTree implements Autoscroll, Queryable {
 
   @Override
   public void paint(Graphics g) {
-    super.paint(g);
-
+    Rectangle clip = g.getClipBounds();
     final Rectangle visible = getVisibleRect();
 
-    if (!visible.equals(myLastVisibleRec)) {
-      updateBusyIconLocation();
+    if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+      mySelectionModel.holdSelection();
     }
 
-    myLastVisibleRec = visible;
+    try {
+      super.paint(g);
+
+      if (!visible.equals(myLastVisibleRec)) {
+        updateBusyIconLocation();
+      }
+
+      myLastVisibleRec = visible;
+    }
+    finally {
+      mySelectionModel.unholdSelection();
+    }
   }
 
   public void setPaintBusy(boolean paintBusy) {
@@ -161,17 +181,30 @@ public class Tree extends JTree implements Autoscroll, Queryable {
   private void updateBusy() {
     if (myBusy) {
       if (myBusyIcon == null) {
-        myBusyIcon = new AsyncProcessIcon(toString());
+        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(false);
+        myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);
+        myBusyIcon.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            if (!UIUtil.isActionClick(e)) return;
+            AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(Tree.this);
+            if (builder != null) {
+              builder.cancelUpdate();
+            }
+          }
+        });
       }
     }
 
     if (myBusyIcon != null) {
       if (myBusy) {
         myBusyIcon.resume();
+        myBusyIcon.setToolTipText("Update is in progress. Click to cancel");
       } else {
         myBusyIcon.suspend();
+        myBusyIcon.setToolTipText(null);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             if (myBusyIcon != null) {
@@ -419,6 +452,30 @@ public class Tree extends JTree implements Autoscroll, Queryable {
     return treeNode != null ? new TreePath(treeNode.getPath()) : new TreePath(node);
   }
 
+  private static class MySelectionModel extends DefaultTreeSelectionModel {
+
+    private TreePath[] myHeldSelection;
+
+    @Override
+    protected void fireValueChanged(TreeSelectionEvent e) {
+      if (myHeldSelection == null) {
+        super.fireValueChanged(e);
+      }
+    }
+
+    public void holdSelection() {
+      myHeldSelection = getSelectionPaths();
+      clearSelection();
+    }
+
+    public void unholdSelection() {
+      if (myHeldSelection != null) {
+        setSelectionPaths(myHeldSelection);
+        myHeldSelection = null;
+      }
+    }
+  }
+
   private class MyMouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent mouseevent) {
       if (!SwingUtilities.isLeftMouseButton(mouseevent) &&
@@ -513,5 +570,30 @@ public class Tree extends JTree implements Autoscroll, Queryable {
     if (nodesText.length() > 0) {
       info.put("selectedNodes", nodesText.toString());
     }
+  }
+
+  @Override
+  public void reshape(int x, int y, int w, int h) {
+    super.reshape(x, y, w, h);
+  }
+
+  public void setHoldSize(boolean hold) {
+    if (hold && myHoldSize == null) {
+      myHoldSize = getPreferredSize();
+    } else if (!hold && myHoldSize != null) {
+      myHoldSize = null;
+      revalidate();
+    }
+  }
+
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+
+    if (myHoldSize != null) {
+      size.width = Math.max(size.width, myHoldSize.width);
+      size.height = Math.max(size.height, myHoldSize.height);
+    }
+
+    return size;
   }
 }

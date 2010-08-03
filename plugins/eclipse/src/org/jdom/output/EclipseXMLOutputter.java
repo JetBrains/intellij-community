@@ -61,10 +61,10 @@ import org.jdom.*;
 
 import javax.xml.transform.Result;
 import java.io.*;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Outputs a JDOM document as a stream of bytes. The outputter can manage many
@@ -132,7 +132,7 @@ public class EclipseXMLOutputter implements Cloneable {
     /** Whether output escaping is enabled for the being processed
       * Element - default is <code>true</code> */
     private boolean escapeOutput = true;
-    private String lineSeparator;
+    private final String lineSeparator;
 
   // * * * * * * * * * * Constructors * * * * * * * * * *
     // * * * * * * * * * * Constructors * * * * * * * * * *

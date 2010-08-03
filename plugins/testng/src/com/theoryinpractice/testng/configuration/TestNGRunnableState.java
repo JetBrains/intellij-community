@@ -322,7 +322,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       myTempFile = File.createTempFile("idea_testng", ".tmp");
       myTempFile.deleteOnExit();
       javaParameters.getProgramParametersList().add("-temp", myTempFile.getAbsolutePath());
-      final SearchingForTestsTask task = new SearchingForTestsTask(serverSocket, is15, config, myTempFile);
+      final SearchingForTestsTask task = createSearchingForTestsTask(serverSocket, is15, config, myTempFile);
       mySearchForTestIndicator = new BackgroundableProcessIndicator(task) {
         @Override
         public void cancel() {
@@ -358,5 +358,11 @@ public class TestNGRunnableState extends JavaCommandLineState {
     }
 
     return javaParameters;
+  }
+
+  protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket, boolean is15,
+                                                              final TestNGConfiguration config,
+                                                              final File tempFile) {
+    return new SearchingForTestsTask(serverSocket, is15, config, tempFile);
   }
 }

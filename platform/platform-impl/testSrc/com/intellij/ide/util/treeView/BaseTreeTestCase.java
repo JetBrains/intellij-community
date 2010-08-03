@@ -40,6 +40,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   final Set<StructureElement> myAlwaysShowPlus = new HashSet<StructureElement>();
   boolean mySmartExpand;
   private Thread myTestThread;
+  protected Validator myValidator;
 
   protected BaseTreeTestCase(boolean passthrougth) {
     this(false, false);
@@ -97,11 +98,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }.isConditionRealized();
 
     if (myCancelRequest != null) {
-      Thread.dumpStack();
       throw new Exception(myCancelRequest);
     }
 
-    Assert.assertTrue(getBuilder().getUi().getNodeActions().isEmpty());
+    if (myCancelRequest == null && !myReadyRequest) {
+      Assert.assertTrue(getBuilder().getUi().getNodeActions().isEmpty());
+    }
 
     Assert.assertTrue(success);
   }
@@ -171,6 +173,8 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
         }
       }
 
+      if (getUi() == null) return false;
+
       return super.updateNodeDescriptor(descriptor);
     }
 
@@ -204,7 +208,10 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       _runBackgroundLoading(runnable);
     }
 
-
+    @Override
+    protected boolean validateNode(Object child) {
+      return myValidator != null ? myValidator.isValid(child) : super.validateNode(child);
+    }
 
     @Override
     public void cleanUp() {
@@ -224,7 +231,13 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void _runBackgroundLoading(Runnable runnable) {
-    SimpleTimer.getInstance().setUp(runnable, getChildrenLoadingDelay());
+    try {
+      Thread.currentThread().sleep(getChildrenLoadingDelay());
+      runnable.run();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 
@@ -309,6 +322,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myValidator = null;
     myCancelRequest = null;
     myReadyRequest = false;
     mySmartExpand = false;
@@ -326,6 +340,13 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
         }
       }
     });
+
+    new WaitFor(6000) {
+      @Override
+      protected boolean condition() {
+        return getBuilder() == null || getBuilder().getUi() == null;
+      }
+    };
 
     super.tearDown();
   }
@@ -371,8 +392,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   void select(final Object element, final boolean addToSelection) throws Exception {
     select(new Object[] {element}, addToSelection);
   }
-  
+
   void select(final Object[] elements, final boolean addToSelection) throws Exception {
+    select(elements, addToSelection, false);
+  }
+
+  void select(final Object[] elements, final boolean addToSelection, final boolean canBeInterrupted) throws Exception {
     final Ref<Boolean> done = new Ref<Boolean>(false);
     doAndWaitForBuilder(new Runnable() {
       public void run() {
@@ -384,7 +409,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       }
     }, new Condition() {
       public boolean value(Object o) {
-        return done.get();
+        return done.get() || (canBeInterrupted && getBuilder().getUi().isCancelledReady());
       }
     });
   }
@@ -446,6 +471,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   public static class NodeElement extends ComparableObject.Impl implements Comparable<NodeElement>{
 
     final String myName;
+    private NodeElement myForcedParent;
 
     public NodeElement(String name) {
       super(name);
@@ -459,6 +485,18 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     public int compareTo(NodeElement o) {
       return myName.compareTo(o.myName);
     }
+
+    public NodeElement getForcedParent() {
+      return myForcedParent;
+    }
+
+    public void setForcedParent(NodeElement forcedParent) {
+      myForcedParent = forcedParent;
+    }
+  }
+
+  protected interface Validator {
+    boolean isValid(Object element);
   }
 
 }

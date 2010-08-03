@@ -14,15 +14,17 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.theoryinpractice.testng.configuration.SearchingForTestsTask;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGRunnableState;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.io.File;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -47,24 +49,30 @@ public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
 
         return new TestNGRunnableState(env, configuration) {
-          protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project, boolean is15)
-            throws CantRunException {
-            for (AbstractTestProxy proxy : failedTests) {
-              final Location location = proxy.getLocation(project);
-              if (location != null) {
-                final PsiElement element = location.getPsiElement();
-                if (element instanceof PsiMethod && element.isValid()) {
-                  final PsiMethod psiMethod = (PsiMethod)element;
-                  final PsiClass psiClass = psiMethod.getContainingClass();
-                  Collection<PsiMethod> psiMethods = classes.get(psiClass);
-                  if (psiMethods == null) {
-                    psiMethods = new ArrayList<PsiMethod>();
-                    classes.put(psiClass, psiMethods);
+          @Override
+          protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket, boolean is15,
+                                                                      final TestNGConfiguration config, final File tempFile) {
+            return new SearchingForTestsTask(serverSocket, is15, config, tempFile) {
+              @Override
+              protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes) throws CantRunException {
+                for (AbstractTestProxy proxy : failedTests) {
+                  final Location location = proxy.getLocation(config.getProject());
+                  if (location != null) {
+                    final PsiElement element = location.getPsiElement();
+                    if (element instanceof PsiMethod && element.isValid()) {
+                      final PsiMethod psiMethod = (PsiMethod)element;
+                      final PsiClass psiClass = psiMethod.getContainingClass();
+                      Collection<PsiMethod> psiMethods = classes.get(psiClass);
+                      if (psiMethods == null) {
+                        psiMethods = new ArrayList<PsiMethod>();
+                        classes.put(psiClass, psiMethods);
+                      }
+                      psiMethods.add(psiMethod);
+                    }
                   }
-                  psiMethods.add(psiMethod);
                 }
               }
-            }
+            };
           }
         };
       }

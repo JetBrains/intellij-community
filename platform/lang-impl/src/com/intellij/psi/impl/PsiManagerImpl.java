@@ -56,6 +56,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -764,27 +765,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     //element.checkDelete(); //move != delete + add
     newContainer.checkAdd(element);
-    checkIfMoveIntoSelf(element, newContainer);
-  }
-
-  private static void checkIfMoveIntoSelf(PsiElement element, PsiElement newContainer) throws IncorrectOperationException {
-    PsiElement container = newContainer;
-    while (container != null) {
-      if (container == element) {
-        if (element instanceof PsiDirectory) {
-          if (element == newContainer) {
-            throw new IncorrectOperationException("Cannot move directory into itself.");
-          }
-          else {
-            throw new IncorrectOperationException("Cannot move directory into its subdirectory.");
-          }
-        }
-        else {
-          throw new IncorrectOperationException();
-        }
-      }
-      container = container.getParent();
-    }
+    MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(element, newContainer);
   }
 
   public void startBatchFilesProcessingMode() {

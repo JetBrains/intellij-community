@@ -21,8 +21,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -81,31 +82,31 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public final void select(final Object element, @Nullable final Runnable onDone) {
-    getUi().userSelect(new Object[] {element}, onDone, false, true);
+    getUi().userSelect(new Object[] {element}, new UserRunnable(onDone), false, true);
   }
 
   public final void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
-    getUi().userSelect(new Object[] {element}, onDone, addToSelection, true);
+    getUi().userSelect(new Object[] {element}, new UserRunnable(onDone), addToSelection, true);
   }
 
   public final void select(final Object[] elements, @Nullable final Runnable onDone) {
-    getUi().userSelect(elements, onDone, false, true);
+    getUi().userSelect(elements, new UserRunnable(onDone), false, true);
   }
 
   public final void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
-    getUi().userSelect(elements, onDone, addToSelection, true);
+    getUi().userSelect(elements, new UserRunnable(onDone), addToSelection, true);
   }
 
   public final void expand(Object element, @Nullable Runnable onDone) {
-    getUi().expand(element, onDone);
+    getUi().expand(element, new UserRunnable(onDone));
   }
 
   public final void expand(Object[] element, @Nullable Runnable onDone) {
-    getUi().expand(element, onDone);
+    getUi().expand(element, new UserRunnable(onDone));
   }
 
   public final void collapseChildren(Object element, @Nullable Runnable onDone) {
-    getUi().collapseChildren(element, onDone);
+    getUi().collapseChildren(element, new UserRunnable(onDone));
   }
 
 
@@ -373,6 +374,18 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().expandAll(onDone);
   }
 
+  public ActionCallback cancelUpdate() {
+    return getUi().cancelUpdate();
+  }
+
+  public ActionCallback batch(Progressive progressive) {
+    return getUi().batch(progressive);
+  }
+
+  public AsyncResult<Object> revalidateElement(Object element) {
+    return getTreeStructure().revalidateElement(element);
+  }
+
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
     public AbstractTreeNodeWrapper() {
       super(null, null);
@@ -481,6 +494,31 @@ public class AbstractTreeBuilder implements Disposable {
   protected boolean isUnitTestingMode() {
     Application app = ApplicationManager.getApplication();
     return app != null && app.isUnitTestMode();
+  }
+
+  public static boolean isToPaintSelection(JTree tree) {
+    AbstractTreeBuilder builder = getBuilderFor(tree);
+    return builder != null && builder.getUi() != null ? builder.getUi().isToPaintSelection() : true;
+  }
+
+  class UserRunnable implements Runnable {
+
+    private Runnable myRunnable;
+
+    public UserRunnable(Runnable runnable) {
+      myRunnable = runnable;
+    }
+
+    public void run() {
+      if (myRunnable != null) {
+        AbstractTreeUi ui = getUi();
+        if (ui != null) {
+          ui.executeUserRunnable(myRunnable);
+        } else {
+          myRunnable.run();
+        }
+      }
+    }
   }
 
 }

@@ -385,7 +385,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFileImpl clone() {
     FileViewProvider provider = getViewProvider().clone();
     final Language language = getLanguage();
-    PsiFileImpl clone = (PsiFileImpl)provider.getPsi(language);
+    PsiFileImpl clone = provider != null ? (PsiFileImpl)provider.getPsi(language) : null;
     assert clone != null:"Cannot find psi file with language:"+language + " from viewprovider:"+provider+" virtual file:"+getVirtualFile();
 
     copyCopyableDataTo(clone);

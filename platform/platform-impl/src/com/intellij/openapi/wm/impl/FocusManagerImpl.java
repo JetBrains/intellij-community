@@ -38,15 +38,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
-  private Application myApp;
+  private final Application myApp;
 
   private FocusCommand myRequestFocusCmd;
   private final ArrayList<FocusCommand> myFocusRequests = new ArrayList<FocusCommand>();
@@ -81,10 +81,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   };
 
-  private WindowManager myWindowManager;
+  private final WindowManager myWindowManager;
 
-  private Map<IdeFrame, Component> myLastFocused = new WeakHashMap<IdeFrame, Component>();
-  private Map<IdeFrame, Component> myLastFocusedAtDeactivation = new WeakHashMap<IdeFrame, Component>();
+  private final Map<IdeFrame, Component> myLastFocused = new WeakHashMap<IdeFrame, Component>();
+  private final Map<IdeFrame, Component> myLastFocusedAtDeactivation = new WeakHashMap<IdeFrame, Component>();
 
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();
@@ -108,6 +108,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           Component parent = UIUtil.findUltimateParent(c);
           if (parent instanceof IdeFrame) {
             myLastFocused.put((IdeFrame)parent, c);
+          }
+        } else if (e instanceof WindowEvent) {
+          if (e.getID() == WindowEvent.WINDOW_CLOSED) {
+            Window wnd = ((WindowEvent)e).getWindow();
+            if (wnd instanceof IdeFrame) {
+              myLastFocused.remove(wnd);
+              myLastFocusedAtDeactivation.remove(wnd);
+            }
           }
         }
 
@@ -333,8 +341,13 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
     final boolean needsRestart = isIdleQueueEmpty();
     myIdleRequests.add(runnable);
-    if (needsRestart) {
-      restartIdleAlarm();
+
+    if (isFocusTransferReady()) {
+      flushIdleRequests();
+    } else {
+      if (needsRestart) {
+        restartIdleAlarm();
+      }
     }
   }
 
@@ -367,15 +380,21 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           }
         }
 
-        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (owner == null) {
+          owner = JOptionPane.getRootFrame();
+        }
+
+        KeyEvent keyEvent = new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(),
+                                         each.getKeyLocation());
+
+        myToDispatchOnDone.remove(each);
+
         if (owner != null && SwingUtilities.getWindowAncestor(owner) != null) {
-          myToDispatchOnDone.remove(each);
-          IdeEventQueue.getInstance().dispatchEvent(
-            new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(),
-                         each.getKeyLocation()));
+          IdeEventQueue.getInstance().dispatchEvent(keyEvent);
         }
         else {
-          break;
+          myQueue._dispatchEvent(keyEvent, true);
         }
       }
 
@@ -473,6 +492,33 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     };
   }
+
+  @Override
+  public FocusRequestor getFurtherRequestor() {
+    return new FurtherRequestor(this, getTimestamp(true));
+  }
+
+  private static class FurtherRequestor implements FocusRequestor {
+
+    private IdeFocusManager myManager;
+    private Expirable myExpirable;
+
+    private FurtherRequestor(IdeFocusManager manager, Expirable expirable) {
+      myManager = manager;
+      myExpirable = expirable;
+    }
+
+    @NotNull
+    public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
+      return myExpirable.isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(c, forced);
+    }
+
+    @NotNull
+    public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
+      return myExpirable.isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(command, forced);
+    }
+  }
+
 
   static class EdtAlarm {
     private final Alarm myAlarm;
@@ -578,5 +624,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   @Override
   public ActionCallback requestDefaultFocus(boolean forced) {
     return new ActionCallback.Done();
+  }
+
+  @Override
+  public boolean isFocusTransferEnabled() {
+    return myApp.isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
   }
 }
