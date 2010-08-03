@@ -168,7 +168,7 @@ public class GitManageConfigurationsDialog extends DialogWrapper {
         myShelveNameLabel.setText(d);
         myShelveNameLabel.setToolTipText("<html><table><tr><td>Shelve Path:</td><td>" +
                                          StringUtil.escapeXml(ch.SHELVE_PATH) +
-                                         "</td></tr><tr><td>Shelve Path:</td><td>" +
+                                         "</td></tr><tr><td>Shelve Name:</td><td>" +
                                          StringUtil.escapeXml(d) +
                                          "</td></tr></html>");
       }
