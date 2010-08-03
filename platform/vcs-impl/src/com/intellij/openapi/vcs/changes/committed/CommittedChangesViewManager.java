@@ -24,6 +24,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -89,6 +90,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
   public void disposeContent() {
     myVcsManager.removeVcsListener(myVcsListener);
     myConnection.disconnect();
+    Disposer.dispose(myComponent);
     myComponent = null;
   }
 
