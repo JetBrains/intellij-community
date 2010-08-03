@@ -89,7 +89,7 @@ public class GitBranchConfigurationChangedDialog extends DialogWrapper {
     myTable.setModel(new DescriptorTableModel());
     myNameTextField.setText(config.getName());
     myNewAction = new DialogWrapperExitAction("New Configuration", NEW_CONFIGURATION);
-    myNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    final DocumentAdapter l = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         String text = myNameTextField.getText().trim();
@@ -113,8 +113,9 @@ public class GitBranchConfigurationChangedDialog extends DialogWrapper {
         setOKActionEnabled(s == null);
         myNewAction.setEnabled(s == null);
       }
-    });
-
+    };
+    myNameTextField.getDocument().addDocumentListener(l);
+    l.changedUpdate(null);
     setOKButtonText("Update");
     init();
   }
