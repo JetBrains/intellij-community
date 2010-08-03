@@ -38,6 +38,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -805,14 +806,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static String getTypeText(@Nullable PsiType type, @Nullable PsiElement context, boolean allowVarargs) {
-    if (context != null && type instanceof PsiClassType) {
-      final String accessible = findAccessibleSuperClass(context, ((PsiClassType)type).resolve());
-      if (accessible != null) {
-        return accessible;
-      }
-    }
-
+  private static String getTypeText(@Nullable PsiType type, @Nullable final PsiElement context, boolean allowVarargs) {
     if (type instanceof PsiArrayType) {
       String componentText = getTypeText(((PsiArrayType)type).getComponentType(), context, false);
       if (allowVarargs && type instanceof PsiEllipsisType) {
@@ -825,28 +819,55 @@ public class GroovyToJavaGenerator {
       return CommonClassNames.JAVA_LANG_OBJECT;
     }
 
+    if (type instanceof PsiClassType) {
+      final PsiClass raw = ((PsiClassType)type).resolve();
+      if (raw != null) {
+        final String qname = getClassQualifiedName(raw, context);
+        if (qname != null) {
+          final PsiType[] parameters = ((PsiClassType)type).getParameters();
+          if (parameters.length > 0) {
+            return qname + "<" + StringUtil.join(parameters, new Function<PsiType, String>() {
+              @Override
+              public String fun(PsiType type) {
+                return getTypeText(type, context, false);
+              }
+            }, ", ") + ">";
+          }
+          return qname;
+        }
+      }
+    }
+
     String canonicalText = type.getCanonicalText();
     return canonicalText != null ? canonicalText : type.getPresentableText();
   }
 
   @Nullable
-  private static String findAccessibleSuperClass(PsiElement context, @Nullable PsiClass initialClass) {
-    if (initialClass == null) {
+  private static String getClassQualifiedName(PsiClass psiClass, @Nullable PsiElement context) {
+    if (context != null) {
+      psiClass = findAccessibleSuperClass(context, psiClass);
+    }
+    if (psiClass == null) {
       return null;
     }
 
+    if (psiClass instanceof GrTypeDefinition) {
+      final PsiClass container = psiClass.getContainingClass();
+      if (container != null) {
+        return getClassQualifiedName(container, null) + "$" + psiClass.getName();
+      }
+    }
+    return psiClass.getQualifiedName();
+  }
+
+  @Nullable
+  private static PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
     PsiClass curClass = initialClass;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     while (curClass != null && !resolveHelper.isAccessible(curClass, context, null)) {
       curClass = curClass.getSuperClass();
     }
-    if (curClass != null && !initialClass.isEquivalentTo(curClass)) {
-      final String qname = curClass.getQualifiedName();
-      if (qname != null) {
-        return qname;
-      }
-    }
-    return null;
+    return curClass;
   }
 
   CharTrie myTrie = new CharTrie();
