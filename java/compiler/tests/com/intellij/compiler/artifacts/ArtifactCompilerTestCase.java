@@ -101,10 +101,23 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     return set;
   }
 
-  protected void changeFileInJar(VirtualFile jarEntry) throws Exception {
-    final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(jarEntry);
+  protected void changeFileInJar(String jarPath, String pathInJar) throws Exception {
+    final VirtualFile jarFile = LocalFileSystem.getInstance().findFileByPath(jarPath);
+    assertNotNull(jarFile);
+    final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarFile);
+    assertNotNull(jarRoot);
+    VirtualFile jarEntry = jarRoot.findFileByRelativePath(pathInJar);
+    assertNotNull(jarEntry);
+    System.out.println("ArtifactCompilerTestCase.changeFileInJar");
+    System.out.println(" timestamp before: " + jarEntry.getTimeStamp());
+    assertNotNull(jarFile);
     changeFile(jarFile);
+    jarFile.refresh(false, false);
+
+    jarEntry = jarRoot.findFileByRelativePath(pathInJar);
+    assertNotNull(jarEntry);
     jarEntry.refresh(false, false);
+    System.out.println(" timestamp after: " + jarEntry.getTimeStamp());
   }
 
   protected void changeFile(VirtualFile file) throws Exception {
