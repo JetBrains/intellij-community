@@ -1,5 +1,6 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -150,6 +151,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     compile(a);
 
     final String jarPath = a.getOutputPath() + "/a.jar";
+    JarFileSystem.getInstance().setNoCopyJarForPath(jarPath + JarFileSystem.JAR_SEPARATOR);
     final Artifact b = addArtifact("b", root().extractedDir(jarPath, "/"));
     compile(b);
     assertOutput(b, fs().file("a.txt", "a"));

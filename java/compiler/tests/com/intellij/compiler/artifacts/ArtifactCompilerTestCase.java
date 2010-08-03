@@ -116,7 +116,6 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
 
     jarEntry = jarRoot.findFileByRelativePath(pathInJar);
     assertNotNull(jarEntry);
-    jarEntry.refresh(false, false);
     System.out.println(" timestamp after: " + jarEntry.getTimeStamp());
   }
 
