@@ -1318,8 +1318,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void paint(Graphics g) {
-    //TODO den remove
-    System.out.printf("EditorImpl.paint(): (%d; %d) - [%d; %d]%n", g.getClipBounds().x, g.getClipBounds().y, g.getClipBounds().width, g.getClipBounds().height);
     startOptimizedScrolling();
 
     if (myCursorUpdater != null) {
