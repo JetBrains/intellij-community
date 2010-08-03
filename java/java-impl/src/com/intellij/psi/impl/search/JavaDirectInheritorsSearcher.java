@@ -82,8 +82,12 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     for (PsiReferenceList referenceList : candidates) {
       ProgressManager.checkCanceled();
-      PsiClass candidate = (PsiClass)referenceList.getParent();
-      String fqn = candidate.getQualifiedName();
+      final PsiClass candidate = (PsiClass)referenceList.getParent();
+      String fqn = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          return candidate.getQualifiedName();
+        }
+      });
       List<PsiClass> list = classes.get(fqn);
       if (list == null) {
         list = new ArrayList<PsiClass>();
