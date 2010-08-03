@@ -34,6 +34,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testInnerInnerClass() throws Exception {
+    doTest(true);
+  }
+
   public void testIDEADEV950 () throws Exception {
     doTest(false);
   }
