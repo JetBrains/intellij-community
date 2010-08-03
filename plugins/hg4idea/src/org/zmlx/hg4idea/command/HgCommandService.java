@@ -83,9 +83,10 @@ public final class HgCommandService {
   }
 
   @Nullable
-  HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
-    String operation, List<String> arguments, Charset charset, boolean suppressCommandOutput) {
-
+  HgCommandResult execute(VirtualFile repo, List<String> hgOptions, String operation, List<String> arguments, Charset charset, boolean suppressCommandOutput) {
+    if (myProject.isDisposed()) {
+      return null;
+    }
     if (!validator.check(mySettings)) {
       return null;
     }
