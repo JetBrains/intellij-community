@@ -64,7 +64,7 @@ public class EncodingPanel implements StatusBarWidget, StatusBarWidget.MultipleT
     return "Encoding";
   }
 
-  public WidgetPresentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return this;
   }
 

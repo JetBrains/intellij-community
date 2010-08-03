@@ -43,11 +43,18 @@ public class ArchiveAntCopyInstructionCreator implements AntCopyInstructionCreat
   }
 
   @NotNull
-  public AntCopyInstructionCreator subFolder(String directoryName) {
+  public AntCopyInstructionCreator subFolder(@NotNull String directoryName) {
     return new ArchiveAntCopyInstructionCreator(myPrefix + "/" + directoryName);
   }
 
-  public Generator createSubFolderCommand(String directoryName) {
+  public Generator createSubFolderCommand(@NotNull String directoryName) {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Generator createExtractedDirectoryInstruction(@NotNull String jarPath, @NotNull String pathInJar) {
+    final String pattern = pathInJar.length() == 0 ? null : pathInJar + "**";
+    return ZipFileSet.createUnpackedSet(jarPath, pathInJar, true, pattern);
   }
 }

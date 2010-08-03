@@ -51,7 +51,7 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
                                                           @NotNull ArtifactAntGenerationContext generationContext,
                                                           @NotNull ArtifactType artifactType) {
     final String path = generationContext.getSubstitutedPath(myFilePath);
-    return Collections.singletonList((Generator)creator.createDirectoryContentCopyInstruction(path));
+    return Collections.singletonList(creator.createDirectoryContentCopyInstruction(path));
   }
 
   @Override

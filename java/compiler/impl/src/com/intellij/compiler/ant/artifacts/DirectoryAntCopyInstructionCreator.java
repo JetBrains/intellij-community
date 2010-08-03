@@ -17,9 +17,7 @@ package com.intellij.compiler.ant.artifacts;
 
 import com.intellij.compiler.ant.Generator;
 import com.intellij.compiler.ant.Tag;
-import com.intellij.compiler.ant.taskdefs.Copy;
-import com.intellij.compiler.ant.taskdefs.FileSet;
-import com.intellij.compiler.ant.taskdefs.Mkdir;
+import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.packaging.elements.AntCopyInstructionCreator;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,11 +48,23 @@ public class DirectoryAntCopyInstructionCreator implements AntCopyInstructionCre
   }
 
   @NotNull
-  public AntCopyInstructionCreator subFolder(String directoryName) {
+  public AntCopyInstructionCreator subFolder(@NotNull String directoryName) {
     return new DirectoryAntCopyInstructionCreator(myOutputDirectory + "/" + directoryName);
   }
 
-  public Generator createSubFolderCommand(String directoryName) {
+  public Generator createSubFolderCommand(@NotNull String directoryName) {
     return new Mkdir(myOutputDirectory + "/" + directoryName);
+  }
+
+  @NotNull
+  @Override
+  public Generator createExtractedDirectoryInstruction(@NotNull String jarPath, @NotNull String pathInJar) {
+    final Unzip unzip = new Unzip(jarPath, myOutputDirectory);
+    if (pathInJar.length() > 0) {
+      final PatternSet patterns = new PatternSet(null);
+      patterns.add(new Include(pathInJar + "**"));
+      unzip.add(patterns);
+    }
+    return unzip;
   }
 }

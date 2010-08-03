@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitVcs;
+import git4idea.checkout.branches.GitBranchConfigurations;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,6 +58,10 @@ public class GitVcsPanel {
    * The confirmation checkbox
    */
   private JCheckBox myAskBeforeConversionsCheckBox;
+  /**
+   * The if selected, the branches widget is enabled in the status bar
+   */
+  private JCheckBox myEnableBranchesWidgetCheckBox;
   /**
    * The project
    */
@@ -107,6 +112,7 @@ public class GitVcsPanel {
     myConvertTextFilesComboBox.setSelectedItem(CRLF_CONVERT_TO_PROJECT);
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        new FileChooserDescriptor(true, false, false, false, false, false));
+    myEnableBranchesWidgetCheckBox.setSelected(GitBranchConfigurations.getInstance(myProject).isWidgetEnabled());
   }
 
   /**
@@ -148,6 +154,7 @@ public class GitVcsPanel {
     mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
     myAskBeforeConversionsCheckBox.setSelected(settings.askBeforeLineSeparatorConversion());
     myConvertTextFilesComboBox.setSelectedItem(crlfPolicyItem(settings));
+    myEnableBranchesWidgetCheckBox.setSelected(GitBranchConfigurations.getInstance(myProject).isWidgetEnabled());
   }
 
   /**
@@ -181,7 +188,8 @@ public class GitVcsPanel {
     return !settings.getGitExecutable().equals(myGitField.getText()) ||
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
-           settings.askBeforeLineSeparatorConversion() != myAskBeforeConversionsCheckBox.isSelected();
+           settings.askBeforeLineSeparatorConversion() != myAskBeforeConversionsCheckBox.isSelected() ||
+           GitBranchConfigurations.getInstance(myProject).isWidgetEnabled() != myEnableBranchesWidgetCheckBox.isSelected();
   }
 
   /**
@@ -205,5 +213,6 @@ public class GitVcsPanel {
     }
     settings.setLineSeparatorsConversion(conversionPolicy);
     settings.setAskBeforeLineSeparatorConversion(myAskBeforeConversionsCheckBox.isSelected());
+    GitBranchConfigurations.getInstance(myProject).setWidgetEnabled(myEnableBranchesWidgetCheckBox.isSelected());
   }
 }

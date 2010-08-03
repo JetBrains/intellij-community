@@ -20,7 +20,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.impl.elements.FileCopyElementType;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.ui.SimpleTextAttributes;
@@ -33,12 +32,10 @@ import org.jetbrains.annotations.NotNull;
 public class FileCopyPresentation extends PackagingElementPresentation {
   private final String mySourcePath;
   private final String myOutputFileName;
-  private final ArtifactEditorContext myContext;
   private final VirtualFile myFile;
 
-  public FileCopyPresentation(String filePath, String outputFileName, ArtifactEditorContext context) {
+  public FileCopyPresentation(String filePath, String outputFileName) {
     myOutputFileName = outputFileName;
-    myContext = context;
 
     String parentPath;
     myFile = LocalFileSystem.getInstance().findFileByPath(filePath);
@@ -65,7 +62,7 @@ public class FileCopyPresentation extends PackagingElementPresentation {
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myFile != null && !myFile.isDirectory()) {
-      presentationData.setIcons(myFile != null ? myFile.getIcon() : FileCopyElementType.ICON);
+      presentationData.setIcons(myFile.getIcon());
       presentationData.addText(myOutputFileName, mainAttributes);
       presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
     }

@@ -17,7 +17,6 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,8 +26,7 @@ import org.jetbrains.annotations.NonNls;
 public class Include extends Tag {
 
   public Include(@NonNls final String name) {
-    //noinspection HardCodedStringLiteral
-    super("include", new Pair[] {new Pair<String, String>("name", name)});
+    super("include", pair("name", name));
   }
 
 }

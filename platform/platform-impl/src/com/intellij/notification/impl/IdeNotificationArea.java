@@ -50,7 +50,7 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
   public IdeNotificationArea() {
   }
 
-  public WidgetPresentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return this;
   }
 

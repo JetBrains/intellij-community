@@ -31,7 +31,7 @@ import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProcessCanceledException;                                          
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -53,9 +53,7 @@ import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -164,7 +162,7 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
 
   private boolean doBuild(final List<Pair<ArtifactCompilerCompileItem, ArtifactPackagingItemOutputState>> changedItems,
                           final Set<ArtifactCompilerCompileItem> processedItems,
-                          final Set<String> writtenPaths, final Set<String> deletedJars) {
+                          final @NotNull Set<String> writtenPaths, final Set<String> deletedJars) {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
 
     final DeploymentUtil deploymentUtil = DeploymentUtil.getInstance();
@@ -188,19 +186,25 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
         final Ref<IOException> exception = Ref.create(null);
         new ReadAction() {
           protected void run(final Result result) {
-            final File fromFile = VfsUtil.virtualToIoFile(sourceItem.getFile());
+            final VirtualFile sourceFile = sourceItem.getFile();
             for (DestinationInfo destination : sourceItem.getDestinations()) {
               if (destination instanceof ExplodedDestinationInfo) {
                 final ExplodedDestinationInfo explodedDestination = (ExplodedDestinationInfo)destination;
                 File toFile = new File(FileUtil.toSystemDependentName(explodedDestination.getOutputPath()));
-                if (fromFile.exists()) {
-                  try {
-                    deploymentUtil.copyFile(fromFile, toFile, myContext, writtenPaths, fileFilter);
+                try {
+                  if (sourceFile.isInLocalFileSystem()) {
+                    final File ioFromFile = VfsUtil.virtualToIoFile(sourceFile);
+                    if (ioFromFile.exists()) {
+                      deploymentUtil.copyFile(ioFromFile, toFile, myContext, writtenPaths, fileFilter);
+                    }
                   }
-                  catch (IOException e) {
-                    exception.set(e);
-                    return;
+                  else {
+                    extractFile(sourceFile, toFile, writtenPaths, fileFilter);
                   }
+                }
+                catch (IOException e) {
+                  exception.set(e);
+                  return;
                 }
               }
               else {
@@ -252,6 +256,28 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
       return false;
     }
     return true;
+  }
+
+  private void extractFile(VirtualFile sourceFile, File toFile, Set<String> writtenPaths, FileFilter fileFilter) throws IOException {
+    if (!writtenPaths.add(toFile.getPath())) {
+      return;
+    }
+
+    if (!FileUtil.createParentDirs(toFile)) {
+      myContext.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory for '" + toFile.getAbsolutePath() + "' file", null, -1, -1);
+      return;
+    }
+
+    final BufferedInputStream input = ArtifactCompilerUtil.getJarEntryInputStream(sourceFile, myContext);
+    if (input == null) return;
+    final BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(toFile));
+    try {
+      FileUtil.copy(input, output);
+    }
+    finally {
+      input.close();
+      output.close();
+    }
   }
 
   private void onBuildStartedOrFinished(final boolean finished) throws Exception {

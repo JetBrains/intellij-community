@@ -24,7 +24,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.PairProcessor;
-import org.apache.tools.ant.taskdefs.optional.junit.XMLConstants;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -34,7 +33,18 @@ import java.util.Map;
 
 // this class generates resulting XML compatible to that of XMLJUnitResultFormatter
 
-public class TestResultsXmlFormatter implements XMLConstants {
+public class TestResultsXmlFormatter {
+
+  // see org.apache.tools.ant.taskdefs.optional.junit.XmlConstants
+  private static final String TESTSUITES = "testsuites";
+  private static final String TESTSUITE = "testsuite";
+  private static final String TESTCASE = "testcase";
+  private static final String FAILURE = "failure";
+  private static final String ATTR_NAME = "name";
+  private static final String ATTR_FAILURES = "failures";
+  private static final String ATTR_TESTS = "tests";
+
+  
   private static final Logger LOG = Logger.getInstance(TestResultsXmlFormatter.class.getName());
 
   private final RuntimeConfiguration myRuntimeConfiguration;

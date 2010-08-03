@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Strategy interface for various utility methods used for representing document text at the editor.
  * <p/>
@@ -37,16 +39,28 @@ public interface EditorTextRepresentationHelper {
    * @param x       <code>'x'</code> offset from the visual line start
    * @return        number of visual columns necessary for the target text sub-sequence representation
    */
-  int toVisualColumnSymbolsNumber(CharSequence text, int start, int end, int x);
+  int toVisualColumnSymbolsNumber(@NotNull CharSequence text, int start, int end, int x);
 
   /**
-   * Allows to retrieve width (in pixels) necessary to represent given symbol at the given <code>'x'</code> offset from
-   * visual line start using given font type.
+   * Allows to answer how many visual columns is necessary for representing text of the given width.
    *
-   * @param c         target symbol which width should be calculated
-   * @param x         current <code>'x'</code> of the visual line start to use for the target symbol representation
-   * @param fontType  font type to use for representing given symbol
-   * @return          number of pixels necessary for the given symbol representation
+   * @param width   target width
+   * @return        number of visual columns necessary for representation of the text with the given width
    */
-  int charWidth(char c, int x, int fontType);
+  int toVisualColumnSymbolsNumber(int width);
+
+  /**
+   * Allows to retrieve width (in pixels) necessary to represent given region (<code>[start; end)</code>) starting
+   * at the given <code>'x'</code> offset from visual line start using given font type.
+   * <p/>
+   * <b>Note:</b> target region is allows to contain line feeds, the width is calculated as a difference between <code>'x'</code>
+   * coordinates of the last and first symbols.
+   *
+   * @param text    target text holder
+   * @param start   start offset of the target text sub-sequence (inclusive)
+   * @param end     end offset of the target text sub-sequence (exclusive)
+   * @param x       <code>'x'</code> offset from the visual line start
+   * @return        width in pixels necessary for the target text sub-sequence representation
+   */
+  int textWidth(@NotNull CharSequence text, int start, int end, int x);
 }

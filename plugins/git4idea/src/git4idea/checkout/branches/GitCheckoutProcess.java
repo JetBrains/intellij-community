@@ -585,10 +585,7 @@ public class GitCheckoutProcess {
       LocalChangeList defaultList = myChangeManager.getDefaultChangeList();
       for (ChangeListInfo changeListInfo : changes.CHANGE_LISTS) {
         LocalChangeList changeList = lists.get(changeListInfo.NAME);
-        if (changeList != null) {
-          myChangeManager.setReadOnly(changeList.getName(), false);
-        }
-        else {
+        if (changeList == null) {
           changeList = myChangeManager.addChangeList(changeListInfo.NAME, changeListInfo.COMMENT);
           lists.put(changeListInfo.NAME, changeList);
         }
