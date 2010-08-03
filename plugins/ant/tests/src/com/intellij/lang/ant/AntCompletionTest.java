@@ -121,7 +121,6 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     final String filePath = "targetCompletion2.xml";
 
     configureByFile(filePath);
-    AntSupport.markFileAsAntFile(myVFile, myFile.getViewProvider(), true);
 
     performNormalCompletion();
     select();

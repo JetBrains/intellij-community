@@ -72,6 +72,14 @@ public abstract class AntDomElement implements DomElement {
     return DomUtil.getDefinedChildrenOfType(this, AntDomElement.class, true, false);
   }
 
+  public final boolean isTask() {
+    return Role.TASK.equals(getChildDescription().getUserData(ROLE));
+  }
+
+  public final boolean isDataType() {
+    return Role.DATA_TYPE.equals(getChildDescription().getUserData(ROLE));
+  }
+  
   public String toString() {
     final XmlTag tag = getXmlTag();
     if (tag == null) {

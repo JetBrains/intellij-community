@@ -39,6 +39,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
   private static final Map<String, Class<? extends AntDomElement>> TAG_MAPPING = new HashMap<String, Class<? extends AntDomElement>>();
   static {
     TAG_MAPPING.put("property", AntDomProperty.class);
+    TAG_MAPPING.put("dirname", AntDomDirname.class);
     TAG_MAPPING.put("fileset", AntDomFileSet.class);
     TAG_MAPPING.put("dirset", AntDomDirSet.class);
     TAG_MAPPING.put("filelist", AntDomFileList.class);
@@ -105,7 +106,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
       if (parentElementIntrospector != null) {
         final Enumeration attributes = parentElementIntrospector.getAttributes();
-        while (attributes.hasMoreElements()) {
+         while (attributes.hasMoreElements()) {
           registerAttribute(registrar, genericInfo, (String)attributes.nextElement());
         }
 

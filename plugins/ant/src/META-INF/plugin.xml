@@ -20,8 +20,6 @@
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>    
     <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
     <extendWordSelectionHandler implementation="com.intellij.lang.ant.AntPropertyRefSelectioner"/>
-    <!--<annotator language="ANT" implementationClass="com.intellij.lang.ant.validation.AntAnnotator"/>-->
-    <!--<lang.documentationProvider language="ANT" implementationClass="com.intellij.lang.ant.doc.AntDocumentationProvider"/>-->
     <!--<lang.namesValidator language="ANT" implementationClass="com.intellij.lang.ant.AntNamesValidator"/>-->
     <!--<lang.parserDefinition language="ANT" implementationClass="com.intellij.lang.ant.AntParserDefinition"/>-->
     <!--<lang.findUsagesProvider language="ANT" implementationClass="com.intellij.lang.ant.psi.usages.AntUsagesProvider"/>-->
@@ -64,10 +62,6 @@
       <implementation-class>com.intellij.lang.ant.config.impl.AntToolwindowRegistrar</implementation-class>
       <skipForDummyProject/>
     </component>
-    <!--<component>-->
-      <!--<implementation-class>com.intellij.lang.ant.config.impl.AntProjectComponent</implementation-class>-->
-      <!--<skipForDummyProject/>-->
-    <!--</component>-->
   </project-components>
 
   <actions>

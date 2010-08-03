@@ -86,7 +86,7 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
       if (psiFile instanceof XmlFile) {
         final VirtualFile file = psiFile.getVirtualFile();
         if (file != null) {
-          AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
+          //AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
         }
         return AntSupport.getAntFile(psiFile);
       }

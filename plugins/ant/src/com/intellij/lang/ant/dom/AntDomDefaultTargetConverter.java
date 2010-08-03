@@ -65,7 +65,7 @@ public class AntDomDefaultTargetConverter extends Converter<Trinity<AntDomTarget
     final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
     if (element != null && s != null) {
       final AntDomProject project = element.getAntProject();
-      final TargetResolver.Result result = TargetResolver.resolve(project, null, s);
+      final TargetResolver.Result result = TargetResolver.resolve(project.getContextAntProject(), null, s);
       final Pair<AntDomTarget,String> pair = result.getResolvedTarget(s);
       return new Trinity<AntDomTarget, String, Map<String, AntDomTarget>>(pair != null? pair.getFirst() : null, pair != null? pair.getSecond() : null, result.getVariants());
     }

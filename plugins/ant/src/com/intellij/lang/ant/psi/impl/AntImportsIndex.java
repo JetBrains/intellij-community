@@ -52,7 +52,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
             isFirstElement = false;
           }
           else {
-            if ("import".equalsIgnoreCase(elemName)) {
+            if ("import".equalsIgnoreCase(elemName) || "include".equalsIgnoreCase(elemName)) {
               map.put(ANT_FILES_WITH_IMPORTS_KEY, null);
               stop();
             }

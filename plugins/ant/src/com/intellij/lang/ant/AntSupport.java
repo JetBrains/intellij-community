@@ -19,7 +19,6 @@ import com.intellij.lang.ant.dom.AntDomAntlib;
 import com.intellij.lang.ant.dom.AntDomElement;
 import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileType;
@@ -45,7 +44,6 @@ import java.util.*;
 public class AntSupport implements ApplicationComponent {
   private static LanguageFileType ourFileType = null;
   private static AntLanguage ourLanguage = null;
-  private static AntChangeVisitor ourChangeVisitor = null;
   private static final Map<AntFile, WeakHashMap<AntFile, Boolean>> ourFileDependencies = new WeakHashMap<AntFile, WeakHashMap<AntFile, Boolean>>();
 
   public AntSupport(FileTypeManager fileTypeManager) {
@@ -61,13 +59,6 @@ public class AntSupport implements ApplicationComponent {
       ourLanguage = (AntLanguage)ourFileType.getLanguage();
     }
     return ourLanguage;
-  }
-
-  public static synchronized AntChangeVisitor getChangeVisitor() {
-    if (ourChangeVisitor == null) {
-      ourChangeVisitor = new AntChangeVisitor();
-    }
-    return ourChangeVisitor;
   }
 
   @NotNull
