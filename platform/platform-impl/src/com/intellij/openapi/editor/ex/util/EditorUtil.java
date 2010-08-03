@@ -296,7 +296,7 @@ public class EditorUtil {
     int fontType = state.getMergedAttributes().getFontType();
     int column = currentColumn.get();
     int spaceSize = getSpaceWidth(fontType, editorImpl);
-    for (; column <= columnNumber && offset < end; offset++) {
+    for (; column < columnNumber && offset < end; offset++) {
       if (offset >= state.getEndOffset()) {
         state.advance();
         fontType = state.getMergedAttributes().getFontType();
