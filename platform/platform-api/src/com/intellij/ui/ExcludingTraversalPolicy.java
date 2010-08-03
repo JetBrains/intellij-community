@@ -27,6 +27,7 @@ import java.util.Set;
 public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
   private final FocusTraversalPolicy myWrappee;
   private final Set<Component> myExcludes = new THashSet<Component>();
+  private final Set<String> myRecursionGuard = new THashSet<String>();
 
   public ExcludingTraversalPolicy(Component... excludes) {
     this(KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalPolicy(), excludes);
@@ -43,26 +44,40 @@ public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
 
   @Override
   public Component getComponentAfter(Container aContainer, Component aComponent) {
-    return traverse(aContainer, aComponent, new Function<Pair<Container, Component>, Component>() {
-      public Component fun(Pair<Container, Component> param) {
-        return myWrappee.getComponentAfter(param.first, param.second);
-      }
-    });
+    try {
+      if (!myRecursionGuard.add("getComponentAfter")) return null;
+
+      return traverse(aContainer, aComponent, new Function<Pair<Container, Component>, Component>() {
+        public Component fun(Pair<Container, Component> param) {
+          return myWrappee.getComponentAfter(param.first, param.second);
+        }
+      });
+    }
+    finally {
+      myRecursionGuard.clear();
+    }
   }
 
   @Override
   public Component getComponentBefore(Container aContainer, Component aComponent) {
-    return traverse(aContainer, aComponent, new Function<Pair<Container, Component>, Component>() {
-      public Component fun(Pair<Container, Component> param) {
-        return myWrappee.getComponentBefore(param.first, param.second);
-      }
-    });
+    try {
+      if (!myRecursionGuard.add("getComponentBefore")) return null;
+
+      return traverse(aContainer, aComponent, new Function<Pair<Container, Component>, Component>() {
+        public Component fun(Pair<Container, Component> param) {
+          return myWrappee.getComponentBefore(param.first, param.second);
+        }
+      });
+    }
+    finally {
+      myRecursionGuard.clear();
+    }
   }
 
   private Component traverse(Container aContainer, Component aComponent, Function<Pair<Container, Component>, Component> func) {
-    Set<Component> guard = new THashSet<Component>();
+    Set<Component> loopGuard = new THashSet<Component>();
     do {
-      if (!guard.add(aComponent)) return null;
+      if (!loopGuard.add(aComponent)) return null;
       aComponent = func.fun(Pair.create(aContainer, aComponent));
     }
     while (aComponent != null && myExcludes.contains(aComponent));
@@ -71,20 +86,41 @@ public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
 
   @Override
   public Component getFirstComponent(Container aContainer) {
-    Component result = myWrappee.getFirstComponent(aContainer);
-    if (result == null) return null;
-    return myExcludes.contains(result) ? getComponentAfter(aContainer, result) : result;
+    try {
+      if (!myRecursionGuard.add("getFirstComponent")) return null;
+
+      Component result = myWrappee.getFirstComponent(aContainer);
+      if (result == null) return null;
+      return myExcludes.contains(result) ? getComponentAfter(aContainer, result) : result;
+    }
+    finally {
+      myRecursionGuard.clear();
+    }
   }
 
   @Override
   public Component getLastComponent(Container aContainer) {
-    Component result = myWrappee.getLastComponent(aContainer);
-    if (result == null) return null;
-    return myExcludes.contains(result) ? getComponentBefore(aContainer, result) : result;
+    try {
+      if (!myRecursionGuard.add("getLastComponent")) return null;
+
+      Component result = myWrappee.getLastComponent(aContainer);
+      if (result == null) return null;
+      return myExcludes.contains(result) ? getComponentBefore(aContainer, result) : result;
+    }
+    finally {
+      myRecursionGuard.clear();
+    }
   }
 
   @Override
   public Component getDefaultComponent(Container aContainer) {
-    return getFirstComponent(aContainer);
+    try {
+      if (!myRecursionGuard.add("getDefaultComponent")) return null;
+
+      return getFirstComponent(aContainer);
+    }
+    finally {
+      myRecursionGuard.clear();
+    }
   }
 }
