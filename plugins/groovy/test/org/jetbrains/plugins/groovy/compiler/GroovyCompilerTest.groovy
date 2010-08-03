@@ -372,5 +372,22 @@ class Usage {
     assertEmpty make()
   }
 
+  public void testDollarGroovyInnerClassUsagesInStubs2() throws Exception {
+    myFixture.addClass(""" public class JavaClass { } """)
+    myFixture.addFileToProject("WithInner.groovy", """
+class WithInner {
+  static class Inner {}
+}
+""")
+
+    myFixture.addFileToProject("Usage.groovy", """
+class Usage {
+  def foo(WithInner.Inner i) {}
+}
+""")
+
+    assertEmpty make()
+  }
+
 
 }

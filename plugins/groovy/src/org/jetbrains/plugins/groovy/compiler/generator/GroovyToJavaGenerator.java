@@ -108,11 +108,13 @@ public class GroovyToJavaGenerator {
 
   private static final CharSequence PREFIX_SEPARATOR = "/";
   private final CompileContext myContext;
+  private final List<VirtualFile> myAllToCompile;
   private final Project myProject;
 
-  public GroovyToJavaGenerator(Project project, CompileContext context) {
+  public GroovyToJavaGenerator(Project project, CompileContext context, List<VirtualFile> allToCompile) {
     myProject = project;
     myContext = context;
+    myAllToCompile = allToCompile;
   }
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
@@ -421,7 +423,7 @@ public class GroovyToJavaGenerator {
     text.append("}");
   }
 
-  private static void writeAllMethods(StringBuffer text, List<PsiMethod> methods, PsiClass aClass) {
+  private void writeAllMethods(StringBuffer text, List<PsiMethod> methods, PsiClass aClass) {
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
     for (PsiMethod method : methods) {
       if (LightMethodBuilder.isLightMethod(method, GrClassImplUtil.SYNTHETIC_METHOD_IMPLEMENTATION)) {
@@ -509,7 +511,7 @@ public class GroovyToJavaGenerator {
     return psiClass != null && GrClassSubstitutor.getSubstitutedClass(psiClass).isInterface();
   }
 
-  private static void appendTypeParameters(StringBuffer text, PsiTypeParameterListOwner typeParameterListOwner) {
+  private void appendTypeParameters(StringBuffer text, PsiTypeParameterListOwner typeParameterListOwner) {
     if (typeParameterListOwner.hasTypeParameters()) {
       text.append("<");
       PsiTypeParameter[] parameters = typeParameterListOwner.getTypeParameters();
@@ -530,7 +532,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static void writeEnumConstants(StringBuffer text, GrEnumTypeDefinition enumDefinition) {
+  private void writeEnumConstants(StringBuffer text, GrEnumTypeDefinition enumDefinition) {
     text.append("\n  ");
     GrEnumConstant[] enumConstants = enumDefinition.getEnumConstants();
     for (int i = 0; i < enumConstants.length; i++) {
@@ -556,7 +558,7 @@ public class GroovyToJavaGenerator {
     text.append(";");
   }
 
-  private static void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor, PsiSubstitutor substitutor) {
+  private void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor, PsiSubstitutor substitutor) {
     final PsiParameter[] superParams = constructor.getParameterList().getParameters();
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
@@ -575,7 +577,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static void writeConstructor(final StringBuffer text, final GrConstructor constructor, boolean isEnum) {
+  private void writeConstructor(final StringBuffer text, final GrConstructor constructor, boolean isEnum) {
     text.append("\n");
     text.append("  ");
     if (!isEnum) {
@@ -614,7 +616,7 @@ public class GroovyToJavaGenerator {
     text.append("\n  }\n");
   }
 
-  private static Set<String> collectThrowsTypes(GrConstructor constructor, Set<PsiMethod> visited) {
+  private Set<String> collectThrowsTypes(GrConstructor constructor, Set<PsiMethod> visited) {
     final GroovyResolveResult resolveResult = resolveChainingConstructor(constructor);
     if (resolveResult == null) {
       return Collections.emptySet();
@@ -674,7 +676,7 @@ public class GroovyToJavaGenerator {
     return result;
   }
 
-  private static void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
+  private void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
     GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
     final String type = typeElement == null ? CommonClassNames.JAVA_LANG_OBJECT : getTypeText(typeElement.getType(), typeElement, false);
     final String initializer = getDefaultValueText(type);
@@ -695,7 +697,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
+  private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
     if (method == null) return;
     String name = method.getName();
     if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name))
@@ -740,7 +742,7 @@ public class GroovyToJavaGenerator {
     text.append("\n");
   }
 
-  private static void writeParameterList(StringBuffer text, PsiParameter[] parameters) {
+  private void writeParameterList(StringBuffer text, PsiParameter[] parameters) {
     text.append("(");
 
     //writes myParameters
@@ -806,7 +808,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static String getTypeText(@Nullable PsiType type, @Nullable final PsiElement context, boolean allowVarargs) {
+  private String getTypeText(@Nullable PsiType type, @Nullable final PsiElement context, boolean allowVarargs) {
     if (type instanceof PsiArrayType) {
       String componentText = getTypeText(((PsiArrayType)type).getComponentType(), context, false);
       if (allowVarargs && type instanceof PsiEllipsisType) {
@@ -843,7 +845,7 @@ public class GroovyToJavaGenerator {
   }
 
   @Nullable
-  private static String getClassQualifiedName(PsiClass psiClass, @Nullable PsiElement context) {
+  private String getClassQualifiedName(PsiClass psiClass, @Nullable PsiElement context) {
     if (context != null) {
       psiClass = findAccessibleSuperClass(context, psiClass);
     }
@@ -852,9 +854,11 @@ public class GroovyToJavaGenerator {
     }
 
     if (psiClass instanceof GrTypeDefinition) {
-      final PsiClass container = psiClass.getContainingClass();
-      if (container != null) {
-        return getClassQualifiedName(container, null) + "$" + psiClass.getName();
+      if (!myAllToCompile.contains(psiClass.getContainingFile().getVirtualFile())) {
+        final PsiClass container = psiClass.getContainingClass();
+        if (container != null) {
+          return getClassQualifiedName(container, null) + "$" + psiClass.getName();
+        }
       }
     }
     return psiClass.getQualifiedName();
