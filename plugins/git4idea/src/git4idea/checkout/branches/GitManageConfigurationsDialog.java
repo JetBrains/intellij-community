@@ -173,7 +173,7 @@ public class GitManageConfigurationsDialog extends DialogWrapper {
                                          "</td></tr></html>");
       }
     }
-    boolean isNonCurrent = selected != null || selected != current;
+    boolean isNonCurrent = selected != null && selected != current;
     myDeleteButton.setEnabled(isNonCurrent);
     setOKActionEnabled(isNonCurrent && myConfigurations.getSpecialStatus() == GitBranchConfigurations.SpecialStatus.NORMAL);
   }
