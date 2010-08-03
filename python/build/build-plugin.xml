@@ -9,7 +9,7 @@
     <property name="plugin.revision" value="${build.number}"/>
 
     <property name="idea.lib" value="${idea.home}/lib"/>
-    <property name="community.lib" value="${idea.dir}/community/lib"/>
+    <property name="community.lib" value="${idea.home}/../community/lib"/>
     <property name="idea.plugins" value="${idea.home}/plugins"/>
 
     <property name="build.number" value="snapshot"/>
