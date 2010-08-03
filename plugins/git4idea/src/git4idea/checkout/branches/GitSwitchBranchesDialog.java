@@ -60,6 +60,10 @@ import java.util.List;
  */
 public class GitSwitchBranchesDialog extends DialogWrapper {
   /**
+   * The prefix for remote references
+   */
+  public static final String REMOTES_PREFIX = "remotes/";
+  /**
    * The branch configuration name text field
    */
   private JTextField myNameTextField;
@@ -226,7 +230,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
    * @param remoteBranch the remote branch
    * @param config       the configuration
    * @param isModify     the modify mode flag
-   * @return the pair of selected changes and
+   * @return the dialog result object
    * @throws VcsException if there is a problem with accessing git
    */
   @Nullable
@@ -346,11 +350,11 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
       }
     }
     if (name == null) {
-      name = "Unnamed";
+      name = "untitled";
     }
     if (myExistingConfigNames.contains(name)) {
       for (int i = 2; i < Integer.MAX_VALUE; i++) {
-        String t = name + " " + i;
+        String t = name + i;
         if (!myExistingConfigNames.contains(t)) {
           name = t;
           break;
@@ -373,19 +377,31 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     assert roots.size() > 0;
     List<BranchDescriptor> rc = new ArrayList<BranchDescriptor>();
     HashSet<String> allBranches = new HashSet<String>();
+    allBranches.addAll(myConfig.getConfigurationNames());
+    final String qualifiedBranch = "remotes/" + remoteBranch;
+    String firstRemote = remoteBranch.endsWith("/HEAD") ? null : qualifiedBranch;
     for (VirtualFile root : roots) {
       BranchDescriptor d = new BranchDescriptor();
       d.root = root;
       d.currentReference = myConfig.describeRoot(root);
-      d.referenceToCheckout = "remotes/" + remoteBranch;
+      if (firstRemote == null) {
+        firstRemote = resolveHead(qualifiedBranch, d.root.getPath());
+      }
+      d.referenceToCheckout = qualifiedBranch;
       GitBranch.listAsStrings(myProject, root, false, true, d.existingBranches, null);
       GitBranch.listAsStrings(myProject, root, true, true, d.referencesToSelect, null);
       allBranches.addAll(d.existingBranches);
       rc.add(d);
     }
-    int p = remoteBranch.indexOf('/');
-    assert p > 0 && p < remoteBranch.length() - 1 : "Unexpected format for remote branch: " + remoteBranch;
-    String candidate = remoteBranch.substring(p + 1);
+    String candidate;
+    if (firstRemote == null) {
+      candidate = "untitled";
+    }
+    else {
+      int p = firstRemote.indexOf('/', REMOTES_PREFIX.length() + 1);
+      assert p > 0 && p < firstRemote.length() - 1 : "Unexpected format for remote branch: " + firstRemote;
+      candidate = firstRemote.substring(p + 1);
+    }
     String actual = null;
     if (!allBranches.contains(candidate)) {
       actual = candidate;
@@ -405,6 +421,73 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
       d.updateStatus();
     }
     return rc;
+  }
+
+  /**
+   * Get candidate new branch name from remote branch
+   *
+   * @param value the value used to guess new reference
+   * @param d     a description to use
+   * @return the candidate branch name
+   */
+  @Nullable
+  private String getCandidateLocal(String value, BranchDescriptor d) {
+    if (StringUtil.isEmpty(value) || !value.startsWith(REMOTES_PREFIX)) {
+      return null;
+    }
+    int p = value.indexOf('/', REMOTES_PREFIX.length() + 1);
+    String candidate = null;
+    if (p != -1) {
+      String c = value.substring(p + 1);
+      if (!d.existingBranches.contains(c)) {
+        candidate = c;
+      }
+      else {
+        for (int i = 2; i < Integer.MAX_VALUE; i++) {
+          String cn = c + i;
+          if (!d.existingBranches.contains(cn)) {
+            candidate = cn;
+            break;
+          }
+        }
+      }
+      if ("HEAD".equals(candidate)) {
+        final String rootPath = d.root.getPath();
+        String newRef = resolveHead(value, rootPath);
+        candidate = newRef == null ? null : getCandidateLocal(newRef, d);
+      }
+    }
+    return candidate;
+  }
+
+  /**
+   * Resolve remote had reference
+   *
+   * @param value    the reference to resolve
+   * @param rootPath the root path
+   * @return the resolved reference or null
+   */
+  @Nullable
+  private static String resolveHead(String value, String rootPath) {
+    if (!value.startsWith("remotes/")) {
+      return null;
+    }
+    String newRef;
+    try {
+      final String refText =
+        new String(FileUtil.loadFileText(new File(rootPath, ".git/refs/" + value), GitUtil.UTF8_ENCODING)).trim();
+      String refsPrefix = "ref: refs/";
+      if (refText.endsWith("/HEAD") || !refText.startsWith(refsPrefix)) {
+        newRef = null;
+      }
+      else {
+        newRef = refText.substring(refsPrefix.length());
+      }
+    }
+    catch (Exception e) {
+      newRef = null;
+    }
+    return newRef;
   }
 
   /**
@@ -485,10 +568,6 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
      * The total number of columns
      */
     static final int COLUMNS = STATUS_COLUMN + 1;
-    /**
-     * The prefix for remote references
-     */
-    public static final String REMOTES_PREFIX = "remotes/";
 
     /**
      * {@inheritDoc}
@@ -548,53 +627,6 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
       fireTableRowsUpdated(rowIndex, rowIndex);
     }
 
-    /**
-     * Get candidate new branch name from remote branch
-     *
-     * @param value the value used to guess new reference
-     * @param d     a description to use
-     * @return the candidate branch name
-     */
-    @Nullable
-    private String getCandidateLocal(String value, BranchDescriptor d) {
-      if (StringUtil.isEmpty(value) || !value.startsWith(REMOTES_PREFIX)) {
-        return null;
-      }
-      int p = value.indexOf('/', REMOTES_PREFIX.length() + 1);
-      String candidate = null;
-      if (p != -1) {
-        String c = value.substring(p + 1);
-        if (!d.existingBranches.contains(c)) {
-          candidate = c;
-        }
-        else {
-          for (int i = 2; i < Integer.MAX_VALUE; i++) {
-            String cn = c + i;
-            if (!d.existingBranches.contains(cn)) {
-              candidate = cn;
-              break;
-            }
-          }
-        }
-        if ("HEAD".equals(candidate)) {
-          try {
-            final String refText =
-              new String(FileUtil.loadFileText(new File(d.root.getPath(), ".git/refs/" + value), GitUtil.UTF8_ENCODING)).trim();
-            String refsPrefix = "ref: refs/";
-            if (refText.endsWith("/HEAD") || !refText.startsWith(refsPrefix)) {
-              candidate = null;
-            }
-            else {
-              candidate = getCandidateLocal(refText.substring(refsPrefix.length()), d);
-            }
-          }
-          catch (Exception e) {
-            candidate = null;
-          }
-        }
-      }
-      return candidate;
-    }
 
     /**
      * {@inheritDoc}

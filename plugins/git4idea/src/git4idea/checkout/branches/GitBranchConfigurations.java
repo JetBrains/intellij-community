@@ -526,7 +526,21 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
         if (myCurrentConfiguration == null) {
           // the configuration does not matches any standard, there could be no configurations with spaces at this point
           // since it is not allowed branch name.
-          String name = "Unknown 1";
+          String name = "untitled";
+          if (locals.contains(name)) {
+            String p = name;
+            name = null;
+            for (int i = 0; i < Integer.MAX_VALUE; i++) {
+              final String c = name + i;
+              if (!locals.contains(c)) {
+                name = c;
+                break;
+              }
+            }
+            if (name == null) {
+              name = "untitled 1";
+            }
+          }
           GitBranchConfiguration c = createConfiguration(name);
           for (VirtualFile root : myGitRoots) {
             c.setBranch(root.getPath(), describeRoot(root));
