@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter
 import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
+import com.intellij.openapi.project.Project
 
 /**
  * @author ilyas
@@ -16,13 +17,15 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
 public class GroovyDslExecutor {
   static final def cats = PsiEnhancerCategory.EP_NAME.extensions.collect { it.class }
   final List<Pair<ContextFilter, Closure>> enhancers = []
+  final List<Pair<Closure>> categoryEnhancers = []
+
   private final String myFileName;
   static final String ideaVersion
 
   static {
     def major = ApplicationInfo.instance.majorVersion
-      def minor = ApplicationInfo.instance.minorVersion
-      def full = major + (minor ? ".$minor" : "")
+    def minor = ApplicationInfo.instance.minorVersion
+    def full = major + (minor ? ".$minor" : "")
     ideaVersion = full
   }
 
@@ -56,6 +59,10 @@ public class GroovyDslExecutor {
     enhancers << Pair.create(CompositeContextFilter.compose(cts, false), toDo)
   }
 
+  def addCategoryEnhancer(Closure toDo) {
+    categoryEnhancers << toDo
+  }
+
   def processVariants(GroovyClassDescriptor descriptor, consumer, ProcessingContext ctx) {
     for (pair in enhancers) {
       if (pair.first.isApplicable(descriptor, ctx)) {
@@ -68,6 +75,18 @@ public class GroovyDslExecutor {
         }
       }
     }
+  }
+
+  def processCategoryVariants(Project project, consumer) {
+    for (enhancer in categoryEnhancers) {
+        Closure f = enhancer.clone()
+        f.delegate = consumer
+        f.resolveStrategy = Closure.DELEGATE_FIRST
+
+        use(cats) {
+          f.call()
+        }
+      }
   }
 
   def String toString() {

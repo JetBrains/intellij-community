@@ -57,7 +57,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     final String name = method.getName();
     final MethodResolverProcessor processor = new MethodResolverProcessor(name, ((GrMethod)method), false, null, null, PsiType.EMPTY_ARRAY);
-    ResolveUtil.processNonCodeMethods(JavaPsiFacade.getElementFactory(project).createType(psiClass), processor, method, false);
+    ResolveUtil.processNonCodeMethods(JavaPsiFacade.getElementFactory(project).createType(psiClass), processor, method);
 
     final GroovyResolveResult[] candidates = processor.getCandidates();
 

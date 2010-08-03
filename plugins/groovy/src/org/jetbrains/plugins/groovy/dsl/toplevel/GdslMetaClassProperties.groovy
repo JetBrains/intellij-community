@@ -42,6 +42,10 @@ class GdslMetaClassProperties {
     }
   }
 
+  Closure staticContributor = { Closure toDo ->
+    myExecutor.addCategoryEnhancer toDo
+  }
+
   /**
    * Auxiliary methods for context definition
    */
