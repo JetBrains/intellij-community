@@ -233,7 +233,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
     if (myRemoveConfigurations == null) {
       ArrayList<AnAction> rc = new ArrayList<AnAction>();
       for (final String c : myConfigurations.getRemotesCandidates()) {
-        rc.add(new DumbAwareAction(c) {
+        rc.add(new DumbAwareAction(escapeActionText(c)) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             myConfigurations.startCheckout(null, c, false);
@@ -315,7 +315,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
         // skip current config
         continue;
       }
-      rc.add(new DumbAwareAction(c) {
+      rc.add(new DumbAwareAction(escapeActionText(c)) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           try {
@@ -370,6 +370,17 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
       myPopupActionGroup.add(new MySelectableActionGroup());
     }
     return myPopupActionGroup;
+  }
+
+
+  /**
+   * Escape action text (underscores)
+   *
+   * @param t the text to escape
+   * @return escaped text
+   */
+  private static String escapeActionText(String t) {
+    return t.replaceAll("_", "__");
   }
 
   /**
