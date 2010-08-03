@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -33,7 +34,7 @@ public class ConcurrentTasks<T> {
   private volatile T myResult;
   private volatile int myCntAlive;
   private final ProgressIndicator myParentIndicator;
-  private final Consumer<Consumer<T>>[] myTasks;
+  private final List<Consumer<Consumer<T>>> myTasks;
 
   public void compute() {
     final EmptyProgressIndicator pi = new EmptyProgressIndicator() {
@@ -45,7 +46,7 @@ public class ConcurrentTasks<T> {
         super.checkCanceled();
       }
     };
-    myCntAlive = myTasks.length;
+    myCntAlive = myTasks.size();
     mySemaphore.down();
 
     final List<Future<?>> futures = new LinkedList<Future<?>>();
@@ -85,7 +86,7 @@ public class ConcurrentTasks<T> {
       if (myResultKnown) break;
       if (myCntAlive <= 0) break;
       pi.checkCanceled();
-      mySemaphore.waitFor(1000);
+      mySemaphore.waitFor(300);
     }
     // in it possible to even interrupt() threads involved, but at the moment it's better for tasks themselves to check cancel status
     for (Future<?> future : futures) {
@@ -104,6 +105,12 @@ public class ConcurrentTasks<T> {
   }
 
   public ConcurrentTasks(final ProgressIndicator parentIndicator, final Consumer<Consumer<T>>... tasks) {
+    myParentIndicator = parentIndicator;
+    myTasks = Arrays.asList(tasks);
+    mySemaphore = new Semaphore();
+  }
+
+  public ConcurrentTasks(final ProgressIndicator parentIndicator, final List<Consumer<Consumer<T>>> tasks) {
     myParentIndicator = parentIndicator;
     myTasks = tasks;
     mySemaphore = new Semaphore();

@@ -16,6 +16,9 @@
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
@@ -45,7 +48,7 @@ class RepositoryLoader extends Loader {
 
     final Pair<RepositoryTreeNode, Expander> data = new Pair<RepositoryTreeNode, Expander>(node, afterRefreshExpander);
     if (! myQueueProcessorActive) {
-      ApplicationManager.getApplication().executeOnPooledThread(new LoadTask(data));
+      startLoadTask(data);
       myQueueProcessorActive = true;
     } else {
       myLoadQueue.offer(data);
@@ -74,8 +77,23 @@ class RepositoryLoader extends Loader {
       // ignore if node is already disposed
       startNext();
     } else {
-      ApplicationManager.getApplication().executeOnPooledThread(new LoadTask(data));
+      startLoadTask(data);
     }
+  }
+
+  private void startLoadTask(final Pair<RepositoryTreeNode, Expander> data) {
+    final ModalityState state = ModalityState.current();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        ProgressManager.getInstance().runProcess(new LoadTask(data), new EmptyProgressIndicator() {
+          @Override
+          public ModalityState getModalityState() {
+            return state;
+          }
+        });
+      }
+    });
   }
 
   public void forceRefresh(final String repositoryRootUrl) {

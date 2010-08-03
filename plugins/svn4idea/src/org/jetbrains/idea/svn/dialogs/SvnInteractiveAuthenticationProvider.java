@@ -24,6 +24,7 @@ import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.auth.ProviderType;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
@@ -34,12 +35,10 @@ import java.lang.reflect.InvocationTargetException;
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider");
   private final Project myProject;
-  private static ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
-  private final SvnVcs myVcs;
+  private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
   private final SvnAuthenticationManager myManager;
 
   public SvnInteractiveAuthenticationProvider(final SvnVcs vcs, SvnAuthenticationManager manager) {
-    myVcs = vcs;
     myManager = manager;
     myProject = vcs.getProject();
   }
@@ -101,7 +100,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
         public void run() {
           UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
           dialog.setup(realm, userName, authCredsOn);
-          if (previousAuth == null) {                                                               
+          if (previousAuth == null) {
             dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }
           else {
@@ -173,14 +172,11 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       }
       log("3 authentication result: " + result[0]);
     }
+
     final boolean wasCanceled = result[0] == null;
     callState.setWasCancelled(wasCanceled);
-    if ((! wasCanceled) && (ISVNAuthenticationManager.USERNAME != kind) && (result[0].isStorageAllowed())) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          myManager.checkContinueSaveCredentials(result[0], kind, realm);
-        }
-      });
+    if (! ISVNAuthenticationManager.USERNAME.equals(kind)) {
+      myManager.requested(ProviderType.interactive, url, realm, kind, wasCanceled);
     }
     return result[0];
   }
@@ -195,7 +191,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
   }
 
   public static class MyCallState {
-    private boolean myWasCalled;
+    private final boolean myWasCalled;
     private boolean myWasCancelled;
 
     public MyCallState(boolean wasCalled, boolean wasCancelled) {
