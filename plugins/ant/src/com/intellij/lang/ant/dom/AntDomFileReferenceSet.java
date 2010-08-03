@@ -93,7 +93,7 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
     }
     return FileUtil.isAbsolute(pathString);
   }
-  // todo: correct context for "output" attribute file reference of the "ant" task
+
   @NotNull
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
     final AntDomElement element = myValue.getParentOfType(AntDomElement.class, false);
@@ -109,15 +109,25 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
         }
       }
       else {
-        final String basedir;
-        if (element instanceof AntDomIncludingDirective) {
-          basedir = containingProject.getContainingFileDir();
+        
+        if (element instanceof AntDomAnt) {
+          final PsiFileSystemItem dirValue = ((AntDomAnt)element).getAntFileDir().getValue();
+          if (dirValue instanceof PsiDirectory) {
+            root = dirValue.getVirtualFile();
+          }
         }
-        else {
-          basedir = containingProject.getContextAntProject().getProjectBasedirPath();
+
+        if (root == null) {
+          final String basedir;
+          if (element instanceof AntDomIncludingDirective) {
+            basedir = containingProject.getContainingFileDir();
+          }
+          else {
+            basedir = containingProject.getContextAntProject().getProjectBasedirPath();
+          }
+          assert basedir != null;
+          root = LocalFileSystem.getInstance().findFileByPath(basedir);
         }
-        assert basedir != null;
-        root = LocalFileSystem.getInstance().findFileByPath(basedir);
       }
 
       if (root != null) {

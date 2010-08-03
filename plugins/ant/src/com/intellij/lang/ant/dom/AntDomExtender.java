@@ -51,6 +51,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     TAG_MAPPING.put("macrodef", AntDomMacroDef.class);
     TAG_MAPPING.put("scriptdef", AntDomScriptDef.class);
     TAG_MAPPING.put("antlib", AntDomAntlib.class);
+    TAG_MAPPING.put("ant", AntDomAnt.class);
   }
 
   public void registerExtensions(@NotNull AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
