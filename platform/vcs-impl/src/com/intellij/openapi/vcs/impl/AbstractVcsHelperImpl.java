@@ -191,7 +191,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myBuffer.flush();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (myFileHistoryPanel != null) {
+          if (myFileHistoryPanel != null && mySession != null) {
             myFileHistoryPanel.getHistoryPanelRefresh().finished();
           }
         }
