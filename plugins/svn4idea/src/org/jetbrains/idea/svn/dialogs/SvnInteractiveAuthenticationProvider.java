@@ -24,6 +24,7 @@ import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.auth.ProviderType;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
@@ -35,11 +36,9 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider");
   private final Project myProject;
   private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
-  private final SvnVcs myVcs;
   private final SvnAuthenticationManager myManager;
 
   public SvnInteractiveAuthenticationProvider(final SvnVcs vcs, SvnAuthenticationManager manager) {
-    myVcs = vcs;
     myManager = manager;
     myProject = vcs.getProject();
   }
@@ -176,6 +175,9 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
 
     final boolean wasCanceled = result[0] == null;
     callState.setWasCancelled(wasCanceled);
+    if (! ISVNAuthenticationManager.USERNAME.equals(kind)) {
+      myManager.requested(ProviderType.interactive, url, realm, kind, wasCanceled);
+    }
     return result[0];
   }
 

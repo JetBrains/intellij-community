@@ -93,6 +93,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
   private final List<AnnotationListener> myAnnotationListeners;
+  private SvnInteractiveAuthenticationProvider myInteractiveProvider;
 
   public static SvnConfiguration getInstance(Project project) {
     return project.getComponent(SvnConfiguration.class);
@@ -200,6 +201,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     myAuthManager = null;
     myPassiveAuthManager = null;
     myInteractiveManager = null;
+    myInteractiveProvider = null;
     RUNTIME_AUTH_CACHE.clear();
   }
 
@@ -209,6 +211,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     myAuthManager = null;
     myPassiveAuthManager = null;
     myInteractiveManager = null;
+    myInteractiveProvider = null;
     RUNTIME_AUTH_CACHE.clear();
   }
 
@@ -224,8 +227,9 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
         myAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
-        myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, getInteractiveManager(svnVcs)));
-        myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
+      // to init
+      myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider));
+      myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
     return myAuthManager;
   }
@@ -242,7 +246,8 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     if (myInteractiveManager == null) {
       myInteractiveManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
       myInteractiveManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
-      myInteractiveManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(svnVcs, myInteractiveManager));
+      myInteractiveProvider = new SvnInteractiveAuthenticationProvider(svnVcs, myInteractiveManager);
+      myInteractiveManager.setAuthenticationProvider(myInteractiveProvider);
     }
     return myInteractiveManager;
   }
