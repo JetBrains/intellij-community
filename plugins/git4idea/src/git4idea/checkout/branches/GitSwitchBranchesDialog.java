@@ -168,6 +168,12 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     else {
       myBranches = prepareBranchDescriptors(target, roots);
     }
+    Collections.sort(myBranches, new Comparator<BranchDescriptor>() {
+      @Override
+      public int compare(BranchDescriptor o1, BranchDescriptor o2) {
+        return o1.getRoot().compareTo(o2.getRoot());
+      }
+    });
     if (target == null) {
       myNameTextField.setText(generateNewConfigurationName());
     }
