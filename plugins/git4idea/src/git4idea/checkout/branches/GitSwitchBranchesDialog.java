@@ -205,6 +205,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
         verify();
       }
     });
+    verify();
     init();
   }
 
@@ -819,8 +820,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
         @Override
         protected void textChanged(DocumentEvent e) {
           String s = myTextField.getText();
-          if (s.length() == 0 &&
-              (myInvalidValues == null || !myInvalidValues.contains(s)) &&
+          if ((myInvalidValues == null || !myInvalidValues.contains(s)) &&
               (s.length() == 0 || GitBranchNameValidator.INSTANCE.checkInput(s))) {
             myTextField.setForeground(myDefaultForeground);
           }
