@@ -107,6 +107,25 @@ public class JavaParserUtil {
         }
         return (braceCount == 0 ? null : tokenType);
       }
+
+      @Override
+      public boolean eof() {
+        return braceCount == 0 || super.eof();
+      }
+    };
+  }
+
+  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final int stopAt) {
+    return new PsiBuilderAdapter(builder) {
+      @Override
+      public IElementType getTokenType() {
+        return getCurrentOffset() < stopAt ? super.getTokenType() : null;
+      }
+
+      @Override
+      public boolean eof() {
+        return getCurrentOffset() < stopAt || super.eof();
+      }
     };
   }
 

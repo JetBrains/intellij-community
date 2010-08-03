@@ -21,7 +21,6 @@ import com.intellij.lang.java.parser.JavaParsingTestCase;
 import com.intellij.pom.java.LanguageLevel;
 
 
-// todo: fix parser and uncomment tests
 public class DeclarationParserTest extends JavaParsingTestCase {
   public DeclarationParserTest() {
     super("parser-partial/declarations");
@@ -78,7 +77,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testUnclosedComma() { doParserTest("{ int field, }", false, false); }
   public void testUnclosedSemicolon() { doParserTest("{ int field }", false, false); }
   public void testMissingInitializerExpression() { doParserTest("{ int field=; }", false, false); }
-  //public void testMultiLineUnclosed() { doParserTest("{ int \n  Object o; }", false, false); }
+  public void testMultiLineUnclosed() { doParserTest("{ int \n Object o; }", false, false); }
 
   public void testMethodNormal0() { doParserTest("{ void f() {} }", false, false); }
   public void testMethodNormal1() { doParserTest("{ void f(); }", false, false); }
