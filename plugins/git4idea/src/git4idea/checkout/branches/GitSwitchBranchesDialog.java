@@ -264,7 +264,11 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     for (BranchDescriptor d : myBranches) {
       if (d.root != null) {
         if (!StringUtil.isEmpty(d.newBranchName)) {
-          rc.referencesToUse.put(d.root, d.referenceToCheckout.trim());
+          String ref = d.referenceToCheckout.trim();
+          if (!d.existingBranches.contains(ref)) {
+            ref = myConfig.detectTag(d.root, ref);
+          }
+          rc.referencesToUse.put(d.root, ref);
           rc.target.setBranch(d.root.getPath(), d.newBranchName.trim());
           rc.checkoutNeeded.add(d.root);
         }
