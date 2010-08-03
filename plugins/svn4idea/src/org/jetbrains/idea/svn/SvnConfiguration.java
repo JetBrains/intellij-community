@@ -227,6 +227,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
         myAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
+      getInteractiveManager(svnVcs);
       // to init
       myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider));
       myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
