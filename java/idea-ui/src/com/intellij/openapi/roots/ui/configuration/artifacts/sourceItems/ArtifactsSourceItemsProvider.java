@@ -39,13 +39,13 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
                                                                   @NotNull Artifact artifact,
                                                                   @Nullable PackagingSourceItem parent) {
     if (parent == null) {
-      if (!ArtifactElementType.getAvailableArtifacts(editorContext, artifact).isEmpty()) {
+      if (!ArtifactElementType.getAvailableArtifacts(editorContext, artifact, true).isEmpty()) {
         return Collections.singletonList(new ArtifactsGroupSourceItem());
       }
     }
     else if (parent instanceof ArtifactsGroupSourceItem) {
       List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
-      for (Artifact another : ArtifactElementType.getAvailableArtifacts(editorContext, artifact)) {
+      for (Artifact another : ArtifactElementType.getAvailableArtifacts(editorContext, artifact, true)) {
         items.add(new ArtifactSourceItem(another));
       }
       return items;
