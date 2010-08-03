@@ -407,6 +407,9 @@ public class EditorUtil {
   }
 
   public static int nextTabStop(int x, Editor editor, int tabSize) {
+    if (tabSize <= 0) {
+      return x + getSpaceWidth(Font.PLAIN, editor);
+    }
     tabSize *= getSpaceWidth(Font.PLAIN, editor);
 
     int nTabs = x / tabSize;
