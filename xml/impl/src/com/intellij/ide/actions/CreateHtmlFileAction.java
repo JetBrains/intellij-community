@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.xml.XmlBundle;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author Eugene.Kudelevsky
  */
-public class CreateHtmlFileAction extends CreateFileFromTemplateAction {
+public class CreateHtmlFileAction extends CreateFileFromTemplateAction implements DumbAware {
 
   @NonNls private static final String DEFAULT_HTML_TEMPLATE_PROPERTY = "DefaultHtmlFileTemplate";
 
