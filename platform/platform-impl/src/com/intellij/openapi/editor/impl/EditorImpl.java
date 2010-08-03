@@ -4654,7 +4654,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMaxWidth = mySize != null ? mySize.width : -1;
       }
 
-      myOldEndLine = getVisualPositionLine(e.getOffset() + e.getOldLength());
+      myOldEndLine = offsetToLogicalPosition(e.getOffset() + e.getOldLength()).line;
     }
 
     private int getVisualPositionLine(int offset) {
@@ -4685,15 +4685,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           myLineWidths.insert(oldEndLine + 1, delta);
         }
         else if (oldEndLine > newEndLine && !toAddNewLines && newEndLine + 1 < lineWidthSize) {
-          myLineWidths.remove(newEndLine + 1, Math.min(oldEndLine, lineWidthSize) - newEndLine);
+          myLineWidths.remove(newEndLine + 1, Math.min(oldEndLine, lineWidthSize) - newEndLine - 1);
         }
         myIsDirty = true;
       }
     }
 
     public synchronized void changedUpdate(DocumentEvent e) {
-      int startLine = e.getOldLength() == 0 ? myOldEndLine : getVisualPositionLine(e.getOffset());
-      int newEndLine = e.getNewLength() == 0 ? startLine : getVisualPositionLine(e.getOffset() + e.getNewLength());
+      int startLine = e.getOldLength() == 0 ? myOldEndLine : offsetToLogicalPosition(e.getOffset()).line;
+      int newEndLine = e.getNewLength() == 0 ? startLine : offsetToLogicalPosition(e.getOffset() + e.getNewLength()).line;
       int oldEndLine = myOldEndLine;
 
       update(startLine, newEndLine, oldEndLine);

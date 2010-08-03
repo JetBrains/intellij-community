@@ -480,11 +480,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     int y = myEditor.visualPositionToXY(visualPosition).y;
     int height = myEditor.getLineHeight();
     int visualLine = visualPosition.line + 1;
-    while (true) {
+    int lastVisualLine = myEditor.offsetToVisualPosition(document.getTextLength() - 1).line;
+    for (; visualLine <= lastVisualLine; visualLine++) {
       LogicalPosition logical = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
       if (logical.line == logicalLine) {
         height += myEditor.getLineHeight();
-        visualLine++;
       }
       else {
         break;
