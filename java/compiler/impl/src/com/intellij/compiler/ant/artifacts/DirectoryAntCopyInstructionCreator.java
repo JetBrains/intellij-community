@@ -58,13 +58,7 @@ public class DirectoryAntCopyInstructionCreator implements AntCopyInstructionCre
 
   @NotNull
   @Override
-  public Generator createExtractedDirectoryInstruction(@NotNull String jarPath, @NotNull String pathInJar) {
-    final Unzip unzip = new Unzip(jarPath, myOutputDirectory);
-    if (pathInJar.length() > 0) {
-      final PatternSet patterns = new PatternSet(null);
-      patterns.add(new Include(pathInJar + "**"));
-      unzip.add(patterns);
-    }
-    return unzip;
+  public Generator createExtractedDirectoryInstruction(@NotNull String jarPath) {
+    return new Unzip(jarPath, myOutputDirectory);
   }
 }

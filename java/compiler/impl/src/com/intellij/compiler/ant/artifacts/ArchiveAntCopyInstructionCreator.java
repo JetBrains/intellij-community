@@ -53,8 +53,7 @@ public class ArchiveAntCopyInstructionCreator implements AntCopyInstructionCreat
 
   @NotNull
   @Override
-  public Generator createExtractedDirectoryInstruction(@NotNull String jarPath, @NotNull String pathInJar) {
-    final String pattern = pathInJar.length() == 0 ? null : pathInJar + "**";
-    return ZipFileSet.createUnpackedSet(jarPath, pathInJar, true, pattern);
+  public Generator createExtractedDirectoryInstruction(@NotNull String jarPath) {
+    return ZipFileSet.createUnpackedSet(jarPath, myPrefix, true);
   }
 }
