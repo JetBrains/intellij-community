@@ -31,7 +31,11 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public State getState() {
-    return new State(myCheckIncoming, myCheckOutgoing, myGlobalSettings);
+    final State s = new State();
+    s.myCheckIncoming = myCheckIncoming;
+    s.myCheckOutgoing = myCheckOutgoing;
+    s.myGlobalSettings = myGlobalSettings;
+    return s;
   }
 
   public void loadState(State state) {
@@ -76,10 +80,5 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     private boolean myCheckIncoming;
     private boolean myCheckOutgoing;
     private HgGlobalSettings myGlobalSettings;
-    private State(boolean checkIncoming, boolean checkOutgoing, HgGlobalSettings globalSettings) {
-      myCheckIncoming = checkIncoming;
-      myCheckOutgoing = checkOutgoing;
-      myGlobalSettings = globalSettings;
-    }
   }
 }
