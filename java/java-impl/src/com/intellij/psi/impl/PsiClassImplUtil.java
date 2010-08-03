@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -39,10 +38,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -864,6 +860,7 @@ public class PsiClassImplUtil {
   }
 
   public static boolean isClassEquivalentTo(PsiClass aClass, PsiElement another) {
+    if (aClass == another) return true;
     if (!(another instanceof PsiClass)) return false;
     String name1 = aClass.getName();
     if (name1 == null) return false;
@@ -900,17 +897,13 @@ public class PsiClassImplUtil {
 
     final PsiFile file1 = aClass.getContainingFile().getOriginalFile();
     final PsiFile file2 = another.getContainingFile().getOriginalFile();
-    if (file1.equals(file2)) {
-      return true;
-    }
 
     //see com.intellij.openapi.vcs.changes.PsiChangeTracker
     //see com.intellij.psi.impl.PsiFileFactoryImpl#createFileFromText(CharSequence,PsiFile)
     final PsiFile original1 = file1.getUserData(PsiFileFactory.ORIGINAL_FILE);
     final PsiFile original2 = file2.getUserData(PsiFileFactory.ORIGINAL_FILE);
-    if (original1 == original2 && original1 != null
-        || original1 == file2 || original2 == file1) {
-      return true;
+    if (original1 == original2 && original1 != null || original1 == file2 || original2 == file1 || file1 == file2) {
+      return compareClassSeqNumber(aClass, (PsiClass)another);
     }    
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
@@ -918,6 +911,28 @@ public class PsiClassImplUtil {
     final VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     return (fileIndex.isInSource(vfile1) || fileIndex.isInLibraryClasses(vfile1)) &&
            (fileIndex.isInSource(vfile2) || fileIndex.isInLibraryClasses(vfile2));
+  }
+
+  private static boolean compareClassSeqNumber(PsiClass aClass, PsiClass another) {
+    // there may be several classes in one file, they must not be equal
+    int index1 = getSeqNumber(aClass);
+    if (index1 == -1) return true;
+    int index2 = getSeqNumber(another);
+    return index1 == index2;
+  }
+
+  private static int getSeqNumber(PsiClass aClass) {
+    // sequence number of this class among its parent' child classes named the same
+    PsiElement parent = aClass.getParent();
+    if (parent == null) return -1;
+    int seqNo = 0;
+    for (PsiElement child : parent.getChildren()) {
+      if (child == aClass) return seqNo;
+      if (child instanceof PsiClass && Comparing.strEqual(aClass.getName(), ((PsiClass)child).getName())) {
+        seqNo++;
+      }
+    }
+    return -1;
   }
 
   private static PsiElement originalElement(PsiClass aClass) {

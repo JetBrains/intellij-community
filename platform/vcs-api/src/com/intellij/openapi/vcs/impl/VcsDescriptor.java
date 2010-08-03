@@ -84,6 +84,6 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
 
   @Override
   public String toString() {
-    return myDisplayName;
+    return getDisplayName();
   }
 }

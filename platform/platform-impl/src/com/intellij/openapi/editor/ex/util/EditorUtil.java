@@ -263,13 +263,15 @@ public class EditorUtil {
         }
       }
 
+      // This variable holds number of 'virtual' tab-introduced columns, e.g. there is a possible case that particular tab owns
+      // three columns, hence, it increases 'shift' by two (3 - 1).
       int shift = 0;
       int offset = start;
       int prevX = x;
       for (; offset < end && offset + shift + currentColumn.get() < start + columnNumber; offset++) {
         if (text.charAt(offset) == '\t') {
           int nextX = nextTabStop(prevX, editor, tabSize);
-          shift += columnsNumber(nextX - prevX, getSpaceWidth(Font.PLAIN, editor));
+          shift += columnsNumber(nextX - prevX, getSpaceWidth(Font.PLAIN, editor)) - 1;
           prevX = nextX;
         }
       }
@@ -294,7 +296,7 @@ public class EditorUtil {
     int fontType = state.getMergedAttributes().getFontType();
     int column = currentColumn.get();
     int spaceSize = getSpaceWidth(fontType, editorImpl);
-    for (; column <= columnNumber && offset < end; offset++) {
+    for (; column < columnNumber && offset < end; offset++) {
       if (offset >= state.getEndOffset()) {
         state.advance();
         fontType = state.getMergedAttributes().getFontType();
@@ -405,6 +407,9 @@ public class EditorUtil {
   }
 
   public static int nextTabStop(int x, Editor editor, int tabSize) {
+    if (tabSize <= 0) {
+      return x + getSpaceWidth(Font.PLAIN, editor);
+    }
     tabSize *= getSpaceWidth(Font.PLAIN, editor);
 
     int nTabs = x / tabSize;

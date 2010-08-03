@@ -17,7 +17,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * HgHistoryTestCase tests retrieving file history and specific revisions.
  */
-public class HgHistoryTestCase extends HgAbstractTestCase {
+public class HgHistoryTestCase extends HgSingleUserTestCase {
 
   /**
    * 1. Make two versions of a file (create, add, commit, modify, commit).
@@ -27,11 +27,11 @@ public class HgHistoryTestCase extends HgAbstractTestCase {
   @Test
   public void testCurrentAndPreviousRevisions() throws Exception {
     int versions = 0;
-    fillFile(myProjectRepo, new String[]{ AFILE }, FILE_CONTENT);
+    fillFile(myProjectDir, new String[]{ AFILE }, FILE_CONTENT);
     addAll();
     commitAll("initial content");
     versions++;
-    fillFile(myProjectRepo, new String[] { AFILE} , FILE_CONTENT_2);
+    fillFile(myProjectDir, new String[] { AFILE} , FILE_CONTENT_2);
     commitAll("updated content");
     versions++;
 
@@ -58,7 +58,7 @@ public class HgHistoryTestCase extends HgAbstractTestCase {
   public void renameShouldPreserveFileHistory() throws Exception {
     int versions = 0;
 
-    fillFile(myProjectRepo, new String[]{ AFILE }, FILE_CONTENT);
+    fillFile(myProjectDir, new String[]{ AFILE }, FILE_CONTENT);
     addAll();
     commitAll("initial content");
     versions++;
@@ -67,7 +67,7 @@ public class HgHistoryTestCase extends HgAbstractTestCase {
     commitAll("file renamed");
     versions++;
 
-    fillFile(myProjectRepo, new String[]{ BFILE }, FILE_CONTENT_2);
+    fillFile(myProjectDir, new String[]{ BFILE }, FILE_CONTENT_2);
     commitAll("updated content");
     versions++;
 
@@ -88,7 +88,7 @@ public class HgHistoryTestCase extends HgAbstractTestCase {
   }
 
   private VcsHistorySession getHistorySession(String relativePath) throws VcsException {
-    return HgVcs.getInstance(myProject).getVcsHistoryProvider().createSessionFor(VcsUtil.getFilePath(new File(myProjectRepo, relativePath), false));
+    return HgVcs.getInstance(myProject).getVcsHistoryProvider().createSessionFor(VcsUtil.getFilePath(new File(myProjectDir, relativePath), false));
   }
 
 }

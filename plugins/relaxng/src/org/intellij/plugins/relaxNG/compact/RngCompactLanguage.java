@@ -101,11 +101,11 @@ public class RngCompactLanguage extends Language {
 
   public static class MyNamesValidator implements NamesValidator {
     public boolean isKeyword(String name, Project project) {
-      return RenameUtil.isKeyword(PsiManager.getInstance(project), name);
+      return RenameUtil.isKeyword(name);
     }
 
     public boolean isIdentifier(String name, Project project) {
-      return RenameUtil.isIdentifier(PsiManager.getInstance(project), name);
+      return RenameUtil.isIdentifier(name);
     }
   }
 

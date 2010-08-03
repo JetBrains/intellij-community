@@ -8,6 +8,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
@@ -19,14 +21,17 @@ import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.HashMap;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author max
  */
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
-
   public boolean execute(final DirectClassInheritorsSearch.SearchParameters p, final Processor<PsiClass> consumer) {
     final PsiClass aClass = p.getClassToProcess();
     final PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(aClass.getProject());
@@ -73,10 +78,26 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       }
     });
 
+    Map<String, List<PsiClass>> classes = new HashMap<String, List<PsiClass>>();
+
     for (PsiReferenceList referenceList : candidates) {
       ProgressManager.checkCanceled();
-      PsiClass candidate = (PsiClass)referenceList.getParent();
-      if (!consumer.process(candidate)) return false;
+      final PsiClass candidate = (PsiClass)referenceList.getParent();
+      String fqn = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          return candidate.getQualifiedName();
+        }
+      });
+      List<PsiClass> list = classes.get(fqn);
+      if (list == null) {
+        list = new ArrayList<PsiClass>();
+        classes.put(fqn, list);
+      }
+      list.add(candidate);
+    }
+
+    for (List<PsiClass> sameNamedClasses : classes.values()) {
+      if (!processSameNamedClasses(consumer, aClass, sameNamedClasses)) return false;
     }
 
     if (p.includeAnonymous()) {
@@ -116,4 +137,37 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     return true;
   }
+
+  private static boolean processSameNamedClasses(Processor<PsiClass> consumer, PsiClass aClass, List<PsiClass> sameNamedClasses) {
+    // if there is a class from the same jar, prefer it
+    boolean sameJarClassFound = false;
+    for (PsiClass sameNamedClass : sameNamedClasses) {
+      boolean fromSameJar = isFromTheSameJar(sameNamedClass, aClass);
+      if (fromSameJar) {
+        sameJarClassFound = true;
+        if (!consumer.process(sameNamedClass)) return false;
+      }
+    }
+
+    if (!sameJarClassFound) {
+      for (PsiClass sameNamedClass : sameNamedClasses) {
+        if (!consumer.process(sameNamedClass)) return false;
+      }
+    }
+    return true;
+  }
+
+  private static VirtualFile getJarFile(PsiElement candidate) {
+    VirtualFile file = candidate.getContainingFile().getVirtualFile();
+    if (file != null && file.getFileSystem() instanceof JarFileSystem) {
+      return JarFileSystem.getInstance().getVirtualFileForJar(file);
+    }
+    return file;
+  }
+  public static boolean isFromTheSameJar(PsiElement candidate, PsiElement other) {
+    VirtualFile c1 = getJarFile(candidate);
+    VirtualFile c2 = getJarFile(other);
+    return c1 != null && c1 == c2;
+  }
+
 }

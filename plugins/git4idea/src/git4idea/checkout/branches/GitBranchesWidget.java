@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -37,6 +38,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
@@ -58,12 +60,15 @@ import java.util.Collection;
 /**
  * The git branches widget
  */
-public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
+public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidget {
+  /**
+   * The arrows icon
+   */
+  private static final Icon ARROWS_ICON = IconLoader.getIcon("/ide/statusbar_arrows.png");
   /**
    * The logger
    */
   private static final Logger LOG = Logger.getInstance(GitBranchesWidget.class.getName());
-
   /**
    * The ID of the widget
    */
@@ -89,6 +94,10 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
    */
   private AnAction[] mySelectableConfigurations;
   /**
+   * The selectable configurations. Null if invalidated or non-initialized
+   */
+  private AnAction[] mySelectableWithChangesConfigurations;
+  /**
    * The candidate remote configurations. Null if invalidated or non-initialized
    */
   private AnAction[] myRemoveConfigurations;
@@ -104,6 +113,10 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
    * The current popup
    */
   private ListPopup myPopup;
+  /**
+   * The key for the last popup, used to determine if disposed popup is the actually the last pop up.
+   */
+  private Object myPopupKey;
   /**
    * The default foreground color
    */
@@ -125,7 +138,6 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
     myDefaultForeground = getForeground();
     myConfigurationsListener = new MyGitBranchConfigurationsListener();
     myConfigurations.addConfigurationListener(myConfigurationsListener);
-    setIcon(IconLoader.findIcon("/icons/branch.png", getClass()));
     Disposer.register(myConfigurations, this);
     addMouseListener(new MouseAdapter() {
       @Override
@@ -221,7 +233,7 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
     if (myRemoveConfigurations == null) {
       ArrayList<AnAction> rc = new ArrayList<AnAction>();
       for (final String c : myConfigurations.getRemotesCandidates()) {
-        rc.add(new AnAction(c) {
+        rc.add(new DumbAwareAction(escapeActionText(c)) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             myConfigurations.startCheckout(null, c, false);
@@ -234,19 +246,28 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
     return myRemoveConfigurations;
   }
 
+  /**
+   * Show popup is if it is not shown.
+   */
   void showPopup() {
     if (!myPopupEnabled) {
       return;
     }
+    if (myPopup != null) {
+      myPopup.cancel();
+    }
     final DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
     final DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), myProject, parent);
+    final Object key = new Object();
+    myPopupKey = key;
     myPopup = JBPopupFactory.getInstance()
-      .createActionGroupPopup("Checkout", getPopupActionGroup(), dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
+      .createActionGroupPopup(null, getPopupActionGroup(), dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                               new Runnable() {
                                 @Override
                                 public void run() {
-                                  myPopup = null;
-
+                                  if (key == myPopupKey) {
+                                    myPopup = null;
+                                  }
                                 }
                               }, 20);
     final Dimension dimension = myPopup.getContent().getPreferredSize();
@@ -255,13 +276,13 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
   }
 
   /**
+   * Ensure that action for checking out configurations are crated
+   *
    * @return get or create selectable configuration group
    */
-  private AnAction[] getSelectable() {
+  private AnAction[] ensureSelectableCreated() {
     assert myPopupEnabled : "pop should be enabled";
-    if (mySelectableConfigurations == null) {
-      ArrayList<AnAction> rc = new ArrayList<AnAction>();
-
+    if (mySelectableConfigurations == null || mySelectableWithChangesConfigurations == null) {
       GitBranchConfiguration current;
       try {
         current = myConfigurations.getCurrentConfiguration();
@@ -269,33 +290,48 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
       catch (VcsException e) {
         LOG.error("Unexpected error at this point", e);
         mySelectableConfigurations = new AnAction[0];
+        mySelectableWithChangesConfigurations = new AnAction[0];
+
         return mySelectableConfigurations;
       }
       String name = current == null ? "" : current.getName();
-      for (final String c : myConfigurations.getConfigurationNames()) {
-        if (name.equals(c)) {
-          // skip current config
-          continue;
-        }
-        rc.add(new AnAction(c) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            try {
-              final GitBranchConfiguration toCheckout = myConfigurations.getConfiguration(c);
-              if (toCheckout == null) {
-                throw new VcsException("The configuration " + c + " cannot be found.");
-              }
-              myConfigurations.startCheckout(toCheckout, null, true);
-            }
-            catch (VcsException e1) {
-              GitUIUtil.showOperationError(myProject, e1, "Unable to load: " + c);
-            }
-          }
-        });
-      }
-      mySelectableConfigurations = rc.toArray(new AnAction[rc.size()]);
+      mySelectableConfigurations = checkoutActions(name, true);
+      mySelectableWithChangesConfigurations = checkoutActions(name, false);
     }
     return mySelectableConfigurations;
+  }
+
+  /**
+   * Checkout actions
+   *
+   * @param name  the excluded name
+   * @param quick true, if quick checkout actions
+   * @return an array of actions for the configurations
+   */
+  private AnAction[] checkoutActions(String name, final boolean quick) {
+    ArrayList<AnAction> rc = new ArrayList<AnAction>();
+    for (final String c : myConfigurations.getConfigurationNames()) {
+      if (name.equals(c)) {
+        // skip current config
+        continue;
+      }
+      rc.add(new DumbAwareAction(escapeActionText(c)) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          try {
+            final GitBranchConfiguration toCheckout = myConfigurations.getConfiguration(c);
+            if (toCheckout == null) {
+              throw new VcsException("The configuration " + c + " cannot be found.");
+            }
+            myConfigurations.startCheckout(toCheckout, null, quick);
+          }
+          catch (VcsException e1) {
+            GitUIUtil.showOperationError(myProject, e1, "Unable to load: " + c);
+          }
+        }
+      });
+    }
+    return rc.toArray(new AnAction[rc.size()]);
   }
 
   /**
@@ -304,13 +340,13 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
   ActionGroup getPopupActionGroup() {
     if (myPopupActionGroup == null) {
       myPopupActionGroup = new DefaultActionGroup(null, false);
-      myPopupActionGroup.addAction(new AnAction("Manage Configurations ...") {
+      myPopupActionGroup.addAction(new DumbAwareAction("Manage Configurations ...") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           GitManageConfigurationsDialog.showDialog(myProject, myConfigurations);
         }
       });
-      myPopupActionGroup.addAction(new AnAction("Modify Current Configuration ...") {
+      myPopupActionGroup.addAction(new DumbAwareAction("Modify Current Configuration ...") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           try {
@@ -322,17 +358,29 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
           }
         }
       });
-      myPopupActionGroup.addAction(new AnAction("New Configuration ...") {
+      myPopupActionGroup.addAction(new DumbAwareAction("New Configuration ...") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           myConfigurations.startCheckout(null, null, false);
         }
       });
       myPopupActionGroup.add(new MyRemotesActionGroup());
+      myPopupActionGroup.add(new MySelectableWithChangesActionGroup());
       myPopupActionGroup.addSeparator("Branch Configurations");
       myPopupActionGroup.add(new MySelectableActionGroup());
     }
     return myPopupActionGroup;
+  }
+
+
+  /**
+   * Escape action text (underscores)
+   *
+   * @param t the text to escape
+   * @return escaped text
+   */
+  private static String escapeActionText(String t) {
+    return t.replaceAll("_", "__");
   }
 
   /**
@@ -341,23 +389,32 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
   private void updateLabel() {
     cancelPopup();
     final GitBranchConfigurations.SpecialStatus status = myConfigurations.getSpecialStatus();
-    String t;
+    String text;
     myPopupEnabled = false;
+    Color color = Color.RED;
+    String tooltip;
     switch (status) {
       case CHECKOUT_IN_PROGRESS:
-        t = "Checkout in progress...";
+        text = "Checkout...";
+        color = Color.BLUE;
+        tooltip = "A checkout operation is in progress.";
         break;
       case MERGING:
-        t = "Merging...";
+        text = "Merging...";
+        tooltip = "Merge is in progress in some vcs roots.";
         break;
       case REBASING:
-        t = "Rebasing...";
+        tooltip = "Rebase is in progress in some vcs roots.";
+        text = "Rebasing...";
         break;
       case NON_GIT:
-        t = "Non-Git project";
+        tooltip = "No valid vcs roots are configuration for the project.";
+        text = "Non-Git project";
         break;
       case SUBMODULES:
-        t = "Submodules unsupported";
+        tooltip =
+          "<html>The submodules are unsupported in the current version.<br/>It is possible to disable widget in Git Vcs settings.</html>";
+        text = "Submodules unsupported";
         break;
       case NORMAL:
         GitBranchConfiguration current;
@@ -368,18 +425,49 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
           current = null;
         }
         if (current == null) {
-          t = "Detection in progress";
+          tooltip = "The branch configurations are not yet detected.";
+          text = "Detecting...";
         }
         else {
           myPopupEnabled = true;
-          t = current.getName();
+          text = current.getName();
+          tooltip = "<html>The Git branch configuration <b>" + text + "</b> is selected.<br/>Click to select other configuration.</html>";
+          color = myDefaultForeground;
         }
         break;
       default:
-        t = "Unknown status: " + status;
+        tooltip = "Unknown status: " + status;
+        text = "Unknown status: " + status;
     }
-    setForeground(myPopupEnabled ? myDefaultForeground : Color.RED);
-    setText(t);
+    if (!SystemInfo.isMac) {
+      setForeground(color);
+    }
+    setToolTipText(tooltip);
+    setText(text);
+    invalidate();
+  }
+
+  @Override
+  protected void paintComponent(@NotNull final Graphics g) {
+    super.paintComponent(g);
+
+    if (getText() != null && myPopupEnabled) {
+      final Rectangle r = getBounds();
+      final Insets insets = getInsets();
+      ARROWS_ICON
+        .paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
+    }
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    final Dimension preferredSize = super.getPreferredSize();
+    return new Dimension(preferredSize.width + ARROWS_ICON.getIconWidth() + 4, preferredSize.height);
+  }
+
+  @Override
+  protected String getTextForPreferredSize() {
+    return getText();
   }
 
   /**
@@ -408,7 +496,29 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return getSelectable();
+      return ensureSelectableCreated();
+    }
+  }
+
+  /**
+   * Remotes action group
+   */
+  class MySelectableWithChangesActionGroup extends ActionGroup {
+    /**
+     * The constructor
+     */
+    public MySelectableWithChangesActionGroup() {
+      super("Check out with Selected Changes...", true);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      ensureSelectableCreated();
+      return mySelectableWithChangesConfigurations;
     }
   }
 
@@ -446,6 +556,7 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
         @Override
         public void run() {
           mySelectableConfigurations = null;
+          mySelectableWithChangesConfigurations = null;
         }
       });
     }
@@ -477,6 +588,7 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
         @Override
         public void run() {
           mySelectableConfigurations = null;
+          mySelectableWithChangesConfigurations = null;
           updateLabel();
         }
       });
@@ -500,7 +612,7 @@ public class GitBranchesWidget extends JLabel implements CustomStatusBarWidget {
   /**
    * Refresh git remotes
    */
-  class RefreshRemotesAction extends AnAction {
+  class RefreshRemotesAction extends DumbAwareAction {
     /**
      * The constructor
      */

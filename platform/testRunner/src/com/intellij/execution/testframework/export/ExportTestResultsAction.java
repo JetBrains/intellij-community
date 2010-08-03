@@ -45,7 +45,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.io.URLUtil;
-import org.apache.tools.ant.taskdefs.optional.junit.XMLConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
@@ -258,7 +257,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
     else {
       Source xslSource;
       if (config.getExportFormat() == ExportTestResultsConfiguration.ExportFormat.BundledTemplate) {
-        URL bundledXsltUrl = XMLConstants.class.getResource("/org/apache/tools/ant/taskdefs/optional/junit/xsl/junit-noframes.xsl");
+        URL bundledXsltUrl = getClass().getResource("junit-noframes.xsl");
         xslSource = new StreamSource(URLUtil.openStream(bundledXsltUrl));
       }
       else {

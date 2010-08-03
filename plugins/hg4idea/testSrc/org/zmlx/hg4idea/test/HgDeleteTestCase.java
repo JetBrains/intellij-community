@@ -18,20 +18,20 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
-public class HgDeleteTestCase extends HgAbstractTestCase {
+public class HgDeleteTestCase extends HgSingleUserTestCase {
 
   @Test
   public void testDeleteUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     deleteFileInCommand(file);
-    verify(runHgOnProjectRepo("status"), removed("a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.removed("a.txt"));
   }
 
   @Test
   public void testDeleteUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
-    verify(runHgOnProjectRepo("status"), unknown("a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("a.txt"));
     deleteFileInCommand(file);
     Assert.assertFalse(file.exists());
   }
@@ -48,9 +48,9 @@ public class HgDeleteTestCase extends HgAbstractTestCase {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     editFileInCommand(myProject, file, "even newer content");
-    verify(runHgOnProjectRepo("status"), modified("a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"));
     deleteFileInCommand(file);
-    verify(runHgOnProjectRepo("status"), removed("a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.removed("a.txt"));
   }
 
   @Test
@@ -59,7 +59,7 @@ public class HgDeleteTestCase extends HgAbstractTestCase {
     createFileInCommand(parent, "a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     deleteFileInCommand(parent);
-    verify(runHgOnProjectRepo("status"), removed("com", "a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.removed("com", "a.txt"));
   }
 
 }

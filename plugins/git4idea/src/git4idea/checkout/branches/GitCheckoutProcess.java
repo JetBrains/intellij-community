@@ -210,7 +210,7 @@ public class GitCheckoutProcess {
         // preparation phase finished. do actual checkout.
         assert myNewConfiguration != null;
         List<VirtualFile> checkoutRoots = rootsToCheckout();
-        if (checkoutRoots.size() > 0) {
+        if (myNewConfiguration != oldConfiguration || checkoutRoots.size() > 0) {
           // TODO disable saving
           myProgress.setText("Shelving changes...");
           Pair<BranchChanges, BranchChanges> changesPair = shelveChanges(myProgress, oldConfiguration.getName(), selected);
@@ -218,15 +218,20 @@ public class GitCheckoutProcess {
             // save changes in old root, it also may be aliased with new root
             oldConfiguration.setChanges(changesPair.first);
             try {
-              HashSet<VirtualFile> startedRoots = new HashSet<VirtualFile>();
-              boolean failed = !checkoutAndRefreshRoots(checkoutRoots, startedRoots);
-              myProgress.setText2("");
-              if (!failed) {
-                myConfig.setCurrentConfiguration(myNewConfiguration);
+              if (checkoutRoots.size() > 0) {
+                HashSet<VirtualFile> startedRoots = new HashSet<VirtualFile>();
+                boolean failed = !checkoutAndRefreshRoots(checkoutRoots, startedRoots);
+                myProgress.setText2("");
+                if (!failed) {
+                  myConfig.setCurrentConfiguration(myNewConfiguration);
+                }
+                else {
+                  myNewConfiguration = oldConfiguration;
+                  rollbackRootCheckout(startedRoots);
+                }
               }
               else {
-                myNewConfiguration = oldConfiguration;
-                rollbackRootCheckout(startedRoots);
+                myConfig.setCurrentConfiguration(myNewConfiguration);
               }
             }
             finally {
@@ -241,9 +246,6 @@ public class GitCheckoutProcess {
           }
           // TODO enable saving
         }
-        else {
-          myConfig.setCurrentConfiguration(myNewConfiguration);
-        }
       }
       finally {
         myProjectManager.unblockReloadingProjectOnExternalChanges();
@@ -252,6 +254,9 @@ public class GitCheckoutProcess {
     }
     catch (VcsException e) {
       myExceptions.add(e);
+    }
+    catch (Throwable e) {
+      myExceptions.add(new VcsException("The checkout process failed: " + e.getMessage(), e));
     }
     finally {
       saveAll(); // saves configuration changes

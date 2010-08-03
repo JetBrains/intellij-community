@@ -35,9 +35,8 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
   private static final JBReentrantReadWriteLock[] ourLocks = new JBReentrantReadWriteLock[NUM_LOCKS];
   private static int ourLockAllocationCounter = 0;
 
-  private final JBReentrantReadWriteLock mutex = allocateLock();
-  private final JBLock r = mutex.readLock();
-  private final JBLock w = mutex.writeLock();
+  private final JBLock r;
+  private final JBLock w;
 
   static {
     for (int i = 0; i < ourLocks.length; i++) {
@@ -45,6 +44,11 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  {
+    final JBReentrantReadWriteLock mutex = allocateLock();
+    r = mutex.readLock();
+    w = mutex.writeLock();
+  }
   public LockPoolSynchronizedMap() {
   }
 
@@ -250,14 +254,11 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
   public boolean remove(Object key, Object oldValue) {
     w.lock();
     try {
-      if (!Comparing.equal(oldValue, get(key))) {
-        return false;
-      }
-      return super.remove(key) != null;
+      V currentValue = get(key);
+      return Comparing.equal(oldValue, currentValue) && super.remove(key) != null;
     }
     finally {
       w.unlock();
     }
   }
-
 }

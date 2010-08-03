@@ -28,25 +28,29 @@ import com.intellij.openapi.editor.event.DocumentListener;
  */
 public abstract class LineOrientedDocumentChangeAdapter implements DocumentListener {
 
-  private enum ChangeType {
-    BEFORE, AFTER
-  }
-
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
-    onChange(event, ChangeType.BEFORE);
+    Document document = event.getDocument();
+    int startLine = document.getLineNumber(normalize(event.getDocument(), event.getOffset()));
+    int endLine = document.getLineNumber(normalize(event.getDocument(), event.getOffset() + event.getOldLength()));
+    int symbolsDifference = event.getNewLength() - event.getOldLength();
+    beforeDocumentChange(startLine, endLine, symbolsDifference);
   }
 
   @Override
   public void documentChanged(DocumentEvent event) {
-    onChange(event, ChangeType.AFTER);
+    Document document = event.getDocument();
+    int startLine = document.getLineNumber(normalize(event.getDocument(), event.getOffset()));
+    int endLine = document.getLineNumber(normalize(event.getDocument(), event.getOffset() + event.getNewLength()));
+    int symbolsDifference = event.getNewLength() - event.getOldLength();
+    afterDocumentChange(startLine, endLine, symbolsDifference);
   }
 
   /**
    * Callback adapter method for {@link DocumentListener#beforeDocumentChange(DocumentEvent)} event.
    *
    * @param startLine           first logical document line affected by the target event (inclusive)
-   * @param endLine             last logical document line affected by the target event (inclusive)
+   * @param endLine             old last logical document line affected by the target event (inclusive)
    * @param symbolsDifference   difference in number in symbols applied to the target document
    */
   public abstract void beforeDocumentChange(int startLine, int endLine, int symbolsDifference);
@@ -55,25 +59,10 @@ public abstract class LineOrientedDocumentChangeAdapter implements DocumentListe
    * Callback adapter method for {@link DocumentListener#documentChanged(DocumentEvent)} event.
    *
    * @param startLine           first logical document line affected by the target event (inclusive)
-   * @param endLine             last logical document line affected by the target event (inclusive)
+   * @param endLine             new last logical document line affected by the target event (inclusive)
    * @param symbolsDifference   difference in number in symbols applied to the target document
    */
   public abstract void afterDocumentChange(int startLine, int endLine, int symbolsDifference);
-
-  private void onChange(DocumentEvent event, ChangeType type) {
-    Document document = event.getDocument();
-    int startLine = document.getLineNumber(normalize(event.getDocument(), event.getOffset()));
-    int endLine = document.getLineNumber(
-      normalize(event.getDocument(), Math.max(event.getOffset() + event.getNewLength(), event.getOffset() + event.getOldLength()))
-    );
-
-    int symbolsDifference = event.getNewLength() - event.getOldLength();
-    switch (type) {
-      case AFTER: beforeDocumentChange(startLine, endLine, symbolsDifference); break;
-      case BEFORE: afterDocumentChange(startLine, endLine, symbolsDifference); break;
-      default: throw new IllegalStateException("Unsupported event change type: " + type);
-    }
-  }
 
   private static int normalize(Document document, int offset) {
     if (offset < 0) {

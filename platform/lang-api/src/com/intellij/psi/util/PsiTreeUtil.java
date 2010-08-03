@@ -590,7 +590,8 @@ public class PsiTreeUtil {
     while (true);
   }
 
-  public static PsiElement prevLeaf(PsiElement current){
+  @Nullable
+  public static PsiElement prevLeaf(@NotNull PsiElement current){
     final PsiElement prevSibling = current.getPrevSibling();
     if(prevSibling != null) return lastChild(prevSibling);
     final PsiElement parent = current.getParent();
@@ -598,7 +599,8 @@ public class PsiTreeUtil {
     return prevLeaf(parent);
   }
 
-  public static PsiElement nextLeaf(PsiElement current){
+  @Nullable
+  public static PsiElement nextLeaf(@NotNull PsiElement current){
     final PsiElement nextSibling = current.getNextSibling();
     if(nextSibling != null) return firstChild(nextSibling);
     final PsiElement parent = current.getParent();
@@ -612,17 +614,20 @@ public class PsiTreeUtil {
     return element;
   }
 
-  public static PsiElement firstChild(final PsiElement element) {
-    if(element.getFirstChild() != null) return firstChild(element.getFirstChild());
+  public static PsiElement firstChild(@NotNull final PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    if(child != null) return firstChild(child);
     return element;
   }
 
-  public static PsiElement prevLeaf(final PsiErrorElement element, final boolean skipEmptyElements) {
+  @Nullable
+  public static PsiElement prevLeaf(@NotNull final PsiErrorElement element, final boolean skipEmptyElements) {
     PsiElement prevLeaf = prevLeaf(element);
     while (skipEmptyElements && prevLeaf != null && prevLeaf.getTextLength() == 0) prevLeaf = prevLeaf(prevLeaf);
     return prevLeaf;
   }
 
+  @Nullable
   public static PsiElement nextLeaf(final PsiErrorElement element, final boolean skipEmptyElements) {
     PsiElement nextLeaf = nextLeaf(element);
     while (skipEmptyElements && nextLeaf != null && nextLeaf.getTextLength() == 0) nextLeaf = nextLeaf(nextLeaf);

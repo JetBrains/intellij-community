@@ -25,8 +25,7 @@ final class ShellCommand {
 
   private static final int BUFFER_SIZE = 1024;
 
-  public HgCommandResult execute(List<String> commandLine, String dir, Charset charset)
-    throws ShellCommandException {
+  public HgCommandResult execute(List<String> commandLine, String dir, Charset charset) throws ShellCommandException, InterruptedException {
     if (commandLine == null || commandLine.isEmpty()) {
       throw new IllegalArgumentException("commandLine is empty");
     }
@@ -50,8 +49,6 @@ final class ShellCommand {
       errReaderThread.join();
       return new HgCommandResult(out, err, exitValue );
     } catch (IOException e) {
-      throw new ShellCommandException(e);
-    } catch (InterruptedException e) {
       throw new ShellCommandException(e);
     }
   }

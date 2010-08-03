@@ -67,7 +67,7 @@ public class HgCommitCommand {
       ensureSuccess(HgCommandService.getInstance(project).execute(repo, "commit", parameters));
       project.getMessageBus().syncPublisher(HgVcs.OUTGOING_TOPIC).update(project);
     } catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
   }
 

@@ -38,10 +38,9 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
 
   private final Map<String, List<T>> myExplicitExtensions = new THashMap<String, List<T>>();
   private final Map<String, List<T>> myCache = new HashMap<String, List<T>>();
-  private final JBReentrantReadWriteLock mutex = LockFactory.createReadWriteLock();
 
-  private final JBLock r = mutex.readLock();
-  private final JBLock w = mutex.writeLock();
+  private final JBLock w;
+  private final JBLock r;
 
   private ExtensionPoint<KeyedLazyInstance<T>> myPoint;
   private final String myEpName;
@@ -49,6 +48,9 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   private final List<ExtensionPointListener<T>> myListeners = ContainerUtil.createEmptyCOWList();
 
   public KeyedExtensionCollector(@NonNls String epName) {
+    JBReentrantReadWriteLock mutex = LockFactory.createReadWriteLock();
+    r = mutex.readLock();
+    w = mutex.writeLock();
     myEpName = epName;
     resetAreaListener();
   }

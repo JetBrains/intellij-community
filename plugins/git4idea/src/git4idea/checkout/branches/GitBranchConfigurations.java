@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.EventDispatcher;
 import git4idea.GitBranch;
+import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
@@ -525,7 +526,21 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
         if (myCurrentConfiguration == null) {
           // the configuration does not matches any standard, there could be no configurations with spaces at this point
           // since it is not allowed branch name.
-          String name = "Unknown 1";
+          String name = "untitled";
+          if (locals.contains(name)) {
+            String p = name;
+            name = null;
+            for (int i = 0; i < Integer.MAX_VALUE; i++) {
+              final String c = name + i;
+              if (!locals.contains(c)) {
+                name = c;
+                break;
+              }
+            }
+            if (name == null) {
+              name = "untitled 1";
+            }
+          }
           GitBranchConfiguration c = createConfiguration(name);
           for (VirtualFile root : myGitRoots) {
             c.setBranch(root.getPath(), describeRoot(root));
@@ -562,7 +577,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
     GitBranch current = GitBranch.current(myProject, root);
     if (current == null) {
       // It is on the tag or specific commit. In future, support for submodules should be added.
-      return detectTag(root);
+      return detectTag(root, "HEAD");
     }
     else {
       return current.getName();
@@ -573,12 +588,13 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
    * Get tag name for the head
    *
    * @param root the root to describe
+   * @param ref  the ref to detect
    * @return the commit expression that describes root state
    */
-  private String detectTag(VirtualFile root) {
+  String detectTag(VirtualFile root, final String ref) {
     try {
       GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.DESCRIBE);
-      h.addParameters("--tags", "--exact", "HEAD");
+      h.addParameters("--tags", "--exact", ref);
       h.setNoSSH(true);
       return h.run().trim();
     }
@@ -586,11 +602,8 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
       if (LOG.isDebugEnabled()) {
         LOG.debug("describe HEAD failed for root: " + root.getPath());
       }
-      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.SHOW);
-      h.setNoSSH(true);
-      h.addParameters("--pretty=format:%H", "HEAD");
       try {
-        return h.run().trim();
+        return GitRevisionNumber.resolve(myProject, root, ref).asString();
       }
       catch (VcsException e1) {
         throw new RuntimeException("Unexpected exception at this time, the failure should have been detected at current(): ", e1);
@@ -601,7 +614,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
   /**
    * Detect possible configurations
    *
-   * @param roots
+   * @param roots the vcs roots used to detect configuraitons
    * @return a sorted list of branches
    * @throws VcsException if there is a problem with running git
    */

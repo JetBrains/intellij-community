@@ -240,6 +240,10 @@ public class SoftWrapDataMapper {
 
     @Nullable
     private LogicalPosition process(@NotNull FoldRegion region) {
+      int endDocumentOffset = myEditor.getDocument().getTextLength();
+      if (region.getEndOffset() >= endDocumentOffset) {
+        return advanceToOffset(endDocumentOffset).build();
+      }
       if (region.getStartOffset() > context.offset) {
         Context newContext = advanceToOffset(region.getStartOffset());
         if (strategy.exceeds(newContext)) {
@@ -289,6 +293,10 @@ public class SoftWrapDataMapper {
 
     @Nullable
     private LogicalPosition process(@NotNull TextChange softWrap) {
+      int endDocumentOffset = myEditor.getDocument().getTextLength();
+      if (softWrap.getStart() >= endDocumentOffset) {
+        return advanceToOffset(endDocumentOffset).build();
+      }
       Context newContext = advanceToOffset(softWrap.getStart());
       if (strategy.exceeds(newContext)) {
         return strategy.build(context);

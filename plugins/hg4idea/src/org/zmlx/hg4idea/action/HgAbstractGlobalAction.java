@@ -99,7 +99,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
   }
 
   private static void handleException(Project project, Exception e) {
-    LOG.error(e);
+    LOG.info(e);
     VcsUtil.showErrorMessage(project, e.getMessage(), "Error");
   }
 

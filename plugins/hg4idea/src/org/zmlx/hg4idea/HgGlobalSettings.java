@@ -16,7 +16,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.HashMap;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -47,10 +49,16 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
 
   /**
    * Adds the information about visited URL.
-   * @param stringUrl String representation of the URL.
-   * @param username  Login used to access the URL.
+   * @param stringUrl String representation of the URL. If null or blank String is passed, nothing is saved.
+   * @param username  Login used to access the URL. If null is passed, a blank String is used.
    */
-  public void addRememberedUrl(@NotNull String stringUrl, @NotNull String username) {
+  public void addRememberedUrl(@Nullable String stringUrl, @Nullable String username) {
+    if (StringUtils.isBlank(stringUrl)) {
+      return;
+    }
+    if (username == null) {
+      username = "";
+    }
     List<String> list = myRememberedUrls.get(stringUrl);
     if (list == null) {
       list = new LinkedList<String>();

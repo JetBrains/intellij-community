@@ -133,9 +133,10 @@ abstract class HgAbstractFilesAction extends AnAction {
           HgUtil.markFileDirty(project, file);
       }
     } catch (InvocationTargetException e) {
-      LOG.error("Exception while marking files dirty", e);
+      LOG.info("Exception while marking files dirty", e);
+
     } catch (InterruptedException e) {
-      LOG.error("Exception while marking files dirty", e);
+      LOG.info("Exception while marking files dirty", e);
     }
   }
 

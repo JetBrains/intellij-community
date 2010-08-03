@@ -66,7 +66,7 @@ class HgCommandAuthenticator {
                 HgVcs.getInstance(project).getGlobalSettings().addRememberedUrl(runnable.getURL(), runnable.getUserName());
               }
               catch (PasswordSafeException e) {
-                LOG.error("Couldn't store the password for key [" + key + "]", e);
+                LOG.info("Couldn't store the password for key [" + key + "]", e);
               }
             }
 
@@ -125,7 +125,7 @@ class HgCommandAuthenticator {
         try {
           password = PasswordSafe.getInstance().getPassword(project, HgCommandAuthenticator.class, key);
         } catch (PasswordSafeException e) {
-          LOG.error("Couldn't get password for key [" + key + "]", e);
+          LOG.info("Couldn't get password for key [" + key + "]", e);
         }
       }
       
