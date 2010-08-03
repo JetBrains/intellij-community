@@ -84,6 +84,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -441,6 +442,22 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitListOrMap(GrListOrMap listOrMap) {
+    for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(listOrMap)) {
+      if (type instanceof PsiClassType &&
+          !type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+          !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE) &&
+          !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+        final PsiElement startToken = listOrMap.getFirstChild();
+        if (startToken != null && startToken.getNode().getElementType() == GroovyTokenTypes.mLBRACK) {
+          myHolder.createInfoAnnotation(startToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
+        }
+        final PsiElement endToken = listOrMap.getLastChild();
+        if (endToken != null && endToken.getNode().getElementType() == GroovyTokenTypes.mRBRACK) {
+          myHolder.createInfoAnnotation(endToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
+        }
+      }
+    }
+
     MultiMap<String, GrNamedArgument> map = new MultiMap<String, GrNamedArgument>();
 
     for (GrNamedArgument element : listOrMap.getNamedArguments()) {

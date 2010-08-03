@@ -30,16 +30,16 @@ public class TextPanel extends JComponent {
   private boolean myDecorate = true;
   private float myAlignment;
 
-  TextPanel() {
+  protected TextPanel() {
     this(null);
   }
 
-  TextPanel(final boolean decorate) {
+  protected TextPanel(final boolean decorate) {
     this(null);
     myDecorate = decorate;
   }
 
-  TextPanel(@Nullable final String maxPossibleString) {
+  protected TextPanel(@Nullable final String maxPossibleString) {
     myMaxPossibleString = maxPossibleString;
 
     setFont(SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont());
@@ -93,7 +93,7 @@ public class TextPanel extends JComponent {
       final int y = UIUtil.getStringY(s, bounds, g2);
       if (SystemInfo.isMac && myDecorate) {
         g2.setColor(new Color(215, 215, 215));
-        g2.drawString(s, x, y+1);
+        g2.drawString(s, x, y + 1);
       }
 
       g2.setColor(getForeground());
@@ -105,7 +105,7 @@ public class TextPanel extends JComponent {
     myAlignment = alignment;
   }
 
-  private static String splitText(final JLabel label, final String text, final int widthLimit){
+  private static String splitText(final JLabel label, final String text, final int widthLimit) {
     final FontMetrics fontMetrics = label.getFontMetrics(label.getFont());
 
     final String[] lines = UIUtil.splitText(text, fontMetrics, widthLimit, ' ');
@@ -130,14 +130,22 @@ public class TextPanel extends JComponent {
     return myText;
   }
 
-  public Dimension getPreferredSize(){
+  public Dimension getPreferredSize() {
     int max = 0;
-    if (myMaxPossibleString != null) max = getFontMetrics(getFont()).stringWidth(myMaxPossibleString);
+    String text = getTextForPreferredSize();
+    if (text != null) max = getFontMetrics(getFont()).stringWidth(text);
 
     if (myPrefSize != null) {
       return new Dimension(20 + max, myPrefSize.height);
     }
 
     return new Dimension(20 + max, getMinimumSize().height);
+  }
+
+  /**
+   * @return the text that is used to calculate the preferred size
+   */
+  protected String getTextForPreferredSize() {
+    return myMaxPossibleString;
   }
 }

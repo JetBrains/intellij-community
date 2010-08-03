@@ -117,4 +117,9 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericWildcard/A.groovy").getElement();
     assertEquals("A<Base>", ref.getType().getCanonicalText());
   }
+
+  public void testArrayLikeAccessWithIntSequence() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("arrayLikeAccessWithIntSequence/A.groovy").getElement();
+    assertEquals("java.util.List", ref.getType().getCanonicalText());
+  }
 }

@@ -1,0 +1,18 @@
+PsiJavaFile:DoNormal.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiDoWhileStatement
+      PsiKeyword:do('do')
+      PsiBlockStatement
+        PsiCodeBlock
+          PsiJavaToken:LBRACE('{')
+          PsiJavaToken:RBRACE('}')
+      PsiKeyword:while('while')
+      PsiJavaToken:LPARENTH('(')
+      PsiLiteralExpression:true
+        PsiJavaToken:TRUE_KEYWORD('true')
+      PsiJavaToken:RPARENTH(')')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

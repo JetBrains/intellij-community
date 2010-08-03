@@ -21,6 +21,9 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
@@ -124,4 +127,13 @@ public interface EditorEx extends Editor {
   int calcColumnNumber(int offset, int lineIndex);
 
   TextDrawingCallback getTextDrawingCallback();
+
+  @NotNull
+  @Override
+  FoldingModelEx getFoldingModel();
+
+  @NotNull
+  LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware);
+
+  @NotNull LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware);
 }

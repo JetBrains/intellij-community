@@ -21,24 +21,23 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 /**
@@ -73,17 +72,18 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   }
 
   public boolean isSuperCall() {
-    return findChildByType(GroovyTokenTypes.kSUPER) != null;
+    return findChildByType(GroovyElementTypes.SUPER_REFERENCE_EXPRESSION) != null;
   }
 
   public boolean isThisCall() {
-    return findChildByType(GroovyTokenTypes.kTHIS) != null;
+    return findChildByType(GroovyElementTypes.THIS_REFERENCE_EXPRESSION) != null;
   }
 
-  private static final TokenSet THIS_OR_SUPER_SET = TokenSet.create(GroovyTokenTypes.kTHIS, GroovyTokenTypes.kSUPER);
+  private static final TokenSet THIS_OR_SUPER_SET =
+    TokenSet.create(GroovyElementTypes.THIS_REFERENCE_EXPRESSION, GroovyElementTypes.SUPER_REFERENCE_EXPRESSION);
 
-  public PsiElement getThisOrSuperKeyword() {
-    return findChildByType(THIS_OR_SUPER_SET);
+  public GrThisSuperReferenceExpression getThisOrSuperKeyword() {
+    return (GrThisSuperReferenceExpression)findChildByType(THIS_OR_SUPER_SET);
   }
 
   public GroovyResolveResult[] multiResolveConstructor() {
@@ -103,9 +103,6 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
       MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
       clazz.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, this);
 
-      for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-        if (!membersProcessor.processNonCodeMembers(thisType, processor, this, true)) break;
-      }
       NonCodeMembersContributor.runContributors(thisType, processor, this, ResolveState.initial());
 
       return processor.getCandidates();
@@ -155,37 +152,5 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   @NotNull
   public String getCanonicalText() {
     return getText(); //TODO
-  }
-
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return this;
-  }
-
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    return this;
-  }
-
-  public boolean isReferenceTo(PsiElement element) {
-    return element instanceof PsiMethod && ((PsiMethod)element).isConstructor() && getManager().areElementsEquivalent(element, resolve());
-
-  }
-
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  public boolean isSoft() {
-    return false;
-  }
-
-  @Override
-  public PsiReference getReference() {
-    return this;
-  }
-
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
-    return multiResolveConstructor();
   }
 }

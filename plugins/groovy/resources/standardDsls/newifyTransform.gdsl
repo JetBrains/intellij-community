@@ -1,4 +1,4 @@
-contributor(context()) {
+contributor(context(scope:annotatedScope(ctype: "groovy.lang.Newify"))) {
   // For methods
   def memb = enclosingMember()
   if (memb) {

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.intentions.comments;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -31,7 +33,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
     return new CStyleCommentPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final PsiComment comment = (PsiComment) element;
     final JavaPsiFacade manager = JavaPsiFacade.getInstance(comment.getProject());

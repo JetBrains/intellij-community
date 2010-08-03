@@ -105,6 +105,15 @@ public class MultiMap<K, V> {
     return collection == null ? createEmptyCollection() : collection;
   }
 
+  @NotNull
+  public Collection<V> getModifiable(final K key) {
+    Collection<V> collection = myMap.get(key);
+    if (collection == null) {
+      myMap.put(key, collection = createCollection());
+    }
+    return collection;
+  }
+
   public Set<K> keySet() {
     return myMap.keySet();
   }

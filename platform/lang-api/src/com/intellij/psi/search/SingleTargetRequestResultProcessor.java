@@ -10,11 +10,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class SingleTargetRequestResultProcessor extends RequestResultProcessor {
+public final class SingleTargetRequestResultProcessor extends RequestResultProcessor {
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiElement myTarget;
 
   public SingleTargetRequestResultProcessor(@NotNull PsiElement target) {
+    super(target);
     myTarget = target;
   }
 
@@ -31,4 +32,8 @@ public class SingleTargetRequestResultProcessor extends RequestResultProcessor {
     return true;
   }
 
+  @Override
+  public String toString() {
+    return "SingleTarget: " + myTarget;
+  }
 }

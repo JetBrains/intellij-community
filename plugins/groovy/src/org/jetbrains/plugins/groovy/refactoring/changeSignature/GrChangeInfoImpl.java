@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-class GrChangeInfoImpl implements JavaChangeInfo {
+public class GrChangeInfoImpl implements JavaChangeInfo {
   GrMethod method;
   final String newName;
   @Nullable final CanonicalTypes.Type returnType;
@@ -61,7 +61,7 @@ class GrChangeInfoImpl implements JavaChangeInfo {
   private String[] myOldParameterTypes;
 
   public GrChangeInfoImpl(GrMethod method,
-                          String visibilityModifier,
+                          @Nullable String visibilityModifier,
                           @Nullable CanonicalTypes.Type returnType,
                           String newName,
                           List<GrParameterInfo> parameters, ThrownExceptionInfo[] exceptions, boolean generateDelegate) {
@@ -77,7 +77,7 @@ class GrChangeInfoImpl implements JavaChangeInfo {
       myIsNameChanged = true;
     }
 
-    myIsVisibilityChanged = !method.hasModifierProperty(visibilityModifier);
+    myIsVisibilityChanged = visibilityModifier != null && !method.hasModifierProperty(visibilityModifier);
 
     if (!method.isConstructor()) {
       PsiType oldReturnType = null;

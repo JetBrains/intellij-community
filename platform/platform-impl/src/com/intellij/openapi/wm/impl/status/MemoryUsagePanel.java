@@ -70,7 +70,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   }
 
   @Nullable
-  public WidgetPresentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
   }
 

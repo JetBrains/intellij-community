@@ -19,6 +19,7 @@ package com.intellij.xdebugger;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
@@ -42,6 +43,9 @@ public abstract class XDebuggerManager {
 
   @NotNull
   public abstract XDebugSession[] getDebugSessions();
+
+  @Nullable
+  public abstract XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole);
 
   @NotNull
   public abstract <T extends XDebugProcess> Collection<? extends T> getDebugProcesses(Class<T> processClass);

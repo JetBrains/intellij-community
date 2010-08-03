@@ -1,0 +1,10 @@
+PsiJavaFile:BlockSimple.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiBlockStatement
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

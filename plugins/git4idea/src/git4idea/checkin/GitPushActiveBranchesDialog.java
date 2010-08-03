@@ -232,6 +232,9 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       Set<String> unchecked = new HashSet<String>();
       uncheckedCommits.put(r.root, unchecked);
       if (r.commits.size() == 0) {
+        if (r.remoteCommits > 0) {
+          roots.add(r.root);
+        }
         continue;
       }
       boolean seenCheckedNode = false;
@@ -256,7 +259,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       if (seenMerges) {
         rootsWithMerges.add(r.root);
       }
-      if (r.remoteCommits > 0 && seenCheckedNode || reorderNeeded) {
+      if (r.remoteCommits > 0 || reorderNeeded) {
         roots.add(r.root);
       }
       if (reorderNeeded) {

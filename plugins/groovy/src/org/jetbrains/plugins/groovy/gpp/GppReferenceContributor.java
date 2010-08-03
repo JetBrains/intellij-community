@@ -7,18 +7,58 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
  */
 public class GppReferenceContributor extends PsiReferenceContributor {
+  public static boolean mayInvokeConstructor(PsiClassType expectedType, PsiMethod constructor, GrExpression args) {
+    if (args == null) {
+      return true;
+    }
+
+    final PsiType type = args.getType();
+    if (type == null) {
+      return true;
+    }
+
+    if (type instanceof GrTupleType) {
+      return isConstructorCall(expectedType, ((GrTupleType)type).getComponentTypes(), constructor, args);
+    }
+
+    return isConstructorCall(expectedType, new PsiType[]{type}, constructor, args);
+  }
+
+  public static boolean isConstructorCall(PsiClassType expectedType,
+                                           PsiType[] argTypes,
+                                           PsiMethod constructor,
+                                           GroovyPsiElement context) {
+    for (GroovyResolveResult candidate : PsiUtil.getConstructorCandidates(expectedType, argTypes, context)) {
+      if (constructor.getManager().areElementsEquivalent(candidate.getElement(), constructor)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(GrArgumentLabel.class), new PsiReferenceProvider() {
@@ -34,7 +74,7 @@ public class GppReferenceContributor extends PsiReferenceContributor {
     });
   }
 
-  private static class GppMapMemberReference extends PsiReferenceBase<GrArgumentLabel> {
+  private static class GppMapMemberReference extends PsiReferenceBase.Poly<GrArgumentLabel> {
 
     public GppMapMemberReference(PsiElement element) {
       super((GrArgumentLabel)element);
@@ -45,30 +85,98 @@ public class GppReferenceContributor extends PsiReferenceContributor {
       return element instanceof PsiMethod && super.isReferenceTo(element);
     }
 
-    public PsiElement resolve() {
-      final GrNamedArgument namedArgument = (GrNamedArgument) getElement().getParent();
-      for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes((GrExpression)namedArgument.getParent())) {
+    @NotNull
+    @Override
+    public ResolveResult[] multiResolve(boolean incompleteCode) {
+      final GrArgumentLabel context = getElement();
+      final GrNamedArgument namedArgument = (GrNamedArgument) context.getParent();
+      for (PsiType type : getTargetConversionTypes((GrExpression)namedArgument.getParent())) {
         if (type instanceof PsiClassType) {
-          final GrExpression value = namedArgument.getExpression();
-          if (value != null && InheritanceUtil.isInheritor(value.getType(), GrClosableBlock.GROOVY_LANG_CLOSURE)) {
-            final Pair<PsiMethod,PsiSubstitutor> method = GppClosureParameterTypeProvider.getOverriddenMethod(namedArgument);
-            if (method != null) {
-              return method.first;
+          final PsiClassType classType = (PsiClassType)type;
+          final PsiClass psiClass = classType.resolve();
+          if (psiClass != null) {
+            final GrExpression value = namedArgument.getExpression();
+
+            final List<ResolveResult> applicable = addMethodCandidates(classType, value);
+
+            final String memberName = getValue();
+            if ("super".equals(memberName) && GppTypeConverter.hasTypedContext(myElement)) {
+              applicable.addAll(addConstructorCandidates(classType, psiClass, value));
             }
-          } else {
-            final PsiClass psiClass = ((PsiClassType)type).resolve();
-            if (psiClass != null) {
-              final String propertyName = getValue();
-              final PsiMethod setter = PropertyUtil.findPropertySetter(psiClass, propertyName, false, true);
+
+            if (value == null || applicable.isEmpty()) {
+              final PsiMethod setter = PropertyUtil.findPropertySetter(psiClass, memberName, false, true);
               if (setter != null) {
-                return setter;
+                applicable.add(new PsiElementResolveResult(setter));
+              } else {
+                final PsiField field = PropertyUtil.findPropertyField(psiClass.getProject(), psiClass, memberName, false);
+                if (field != null) {
+                  applicable.add(new PsiElementResolveResult(field));
+                }
               }
-              return PropertyUtil.findPropertyField(psiClass.getProject(), psiClass, propertyName, false);
             }
+
+            return applicable.toArray(new ResolveResult[applicable.size()]);
           }
         }
       }
-      return null;
+      return ResolveResult.EMPTY_ARRAY;
+    }
+
+    private static Set<PsiType> getTargetConversionTypes(GrExpression expression) {
+      //todo hack
+      if (expression.getParent() instanceof GrSafeCastExpression) {
+        final PsiType type = ((GrSafeCastExpression)expression.getParent()).getType();
+        if (type != null) {
+          return Collections.singleton(type);
+        }
+      }
+
+      return GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression);
+    }
+
+
+    private static List<ResolveResult> addConstructorCandidates(PsiClassType classType, PsiClass psiClass, GrExpression value) {
+      List<ResolveResult> applicable = CollectionFactory.arrayList();
+      final List<ResolveResult> byName = CollectionFactory.arrayList();
+      for (PsiMethod constructor : psiClass.getConstructors()) {
+        final ResolveResult resolveResult = new PsiElementResolveResult(constructor);
+        byName.add(resolveResult);
+        if (mayInvokeConstructor(classType, constructor, value)) {
+          applicable.add(resolveResult);
+        }
+      }
+      if (applicable.isEmpty()) {
+        applicable.addAll(byName);
+      }
+      return applicable;
+    }
+
+    private List<ResolveResult> addMethodCandidates(PsiClassType classType, GrExpression value) {
+      PsiType valueType = value == null ? null : value.getType();
+      final List<ResolveResult> applicable = CollectionFactory.arrayList();
+
+      if (value == null || InheritanceUtil.isInheritor(valueType, GrClosableBlock.GROOVY_LANG_CLOSURE)) {
+        final List<ResolveResult> byName = CollectionFactory.arrayList();
+        for (Pair<PsiMethod, PsiSubstitutor> variant : GppClosureParameterTypeProvider.getMethodsToOverrideImplementInInheritor(classType, false)) {
+          final PsiMethod method = variant.first;
+          if (getValue().equals(method.getName())) {
+            final ResolveResult resolveResult = new PsiElementResolveResult(method);
+            byName.add(resolveResult);
+            if (valueType instanceof GrClosureType) {
+              final PsiType[] psiTypes = GppClosureParameterTypeProvider.getParameterTypes(variant);
+              if (GppTypeConverter.isClosureOverride(psiTypes, (GrClosureType)valueType, myElement)) {
+                applicable.add(resolveResult);
+              }
+            }
+          }
+        }
+
+        if (applicable.isEmpty()) {
+          return byName;
+        }
+      }
+      return applicable;
     }
 
     @NotNull

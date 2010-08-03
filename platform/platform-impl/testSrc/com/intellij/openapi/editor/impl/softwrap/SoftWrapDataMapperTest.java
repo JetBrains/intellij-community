@@ -3,10 +3,13 @@ package com.intellij.openapi.editor.impl.softwrap;
 import com.intellij.mock.MockFoldRegion;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -18,7 +21,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -88,7 +90,8 @@ public class SoftWrapDataMapperTest {
   private EditorEx                           myEditor;
   private Document                           myDocument;
   private SoftWrapsStorage                   myStorage;
-  private FoldingModel                       myFoldingModel;
+  private SoftWrapModelEx                    mySoftWrapModel;
+  private FoldingModelEx                     myFoldingModel;
   private MockEditorTextRepresentationHelper myRepresentationHelper;
     
   @Before
@@ -100,7 +103,8 @@ public class SoftWrapDataMapperTest {
     myEditor = myMockery.mock(EditorEx.class);
     myDocument = myMockery.mock(Document.class);
     myStorage = new SoftWrapsStorage();
-    myFoldingModel = myMockery.mock(FoldingModel.class);
+    mySoftWrapModel = myMockery.mock(SoftWrapModelEx.class);
+    myFoldingModel = myMockery.mock(FoldingModelEx.class);
     final EditorSettings settings = myMockery.mock(EditorSettings.class);
     final Project project = myMockery.mock(Project.class);
     final SoftWrapPainter painter = myMockery.mock(SoftWrapPainter.class);
@@ -140,6 +144,23 @@ public class SoftWrapDataMapperTest {
       allowing(settings).isWhitespacesShown();will(returnValue(true));
       allowing(myEditor).getProject();will(returnValue(project));
 
+      // Soft wraps.
+      allowing(myEditor).getSoftWrapModel(); will(returnValue(mySoftWrapModel));
+      allowing(mySoftWrapModel).getSoftWrapIndentWidthInColumns(with(any(TextChange.class)));
+      will(new CustomAction("getSoftWrapIndentWidthInColumns") {
+        @Override
+        public Object invoke(Invocation invocation) throws Throwable {
+          return getSoftWrapIndentWidthInColumns((TextChange)invocation.getParameter(0));
+        }
+      });
+      allowing(mySoftWrapModel).getSoftWrapIndentWidthInPixels(with(any(TextChange.class)));
+      will(new CustomAction("getSoftWrapIndentWidthInPixels") {
+        @Override
+        public Object invoke(Invocation invocation) throws Throwable {
+          return getSoftWrapIndentWidthInPixels((TextChange)invocation.getParameter(0));
+        }
+      });
+
       // Folding.
       allowing(myEditor).getFoldingModel();will(returnValue(myFoldingModel));
       allowing(myFoldingModel).isOffsetCollapsed(with(any(int.class))); will(new CustomAction("isOffsetCollapsed()") {
@@ -155,7 +176,7 @@ public class SoftWrapDataMapperTest {
           return getCollapsedFoldRegion((Integer)invocation.getParameter(0));
         }
       });
-      allowing(myFoldingModel).getAllFoldRegions(); will(new CustomAction("getAllFoldRegions()") {
+      allowing(myFoldingModel).fetchTopLevel(); will(new CustomAction("fetchTopLevel()") {
         @Override
         public Object invoke(Invocation invocation) throws Throwable {
           return myFoldRegions.toArray(new FoldRegion[myFoldRegions.size()]);
@@ -188,12 +209,22 @@ public class SoftWrapDataMapperTest {
 
     myRepresentationHelper = new MockEditorTextRepresentationHelper();
 
-    myAdjuster = new SoftWrapDataMapper(myEditor, myStorage, painter, myRepresentationHelper, new MockFontTypeProvider());
+    myAdjuster = new SoftWrapDataMapper(myEditor, myStorage, myRepresentationHelper/*, new MockFontTypeProvider()*/);
   }
   
   @After
   public void checkExpectations() {
     myMockery.assertIsSatisfied();
+  }
+
+  @Test
+  public void noSoftWrapsAndFolding() {
+    String document =
+      "class Test { \n" +
+      "  public void foo() {}  \n" +
+      "  \n" +
+      "}";
+    test(document);
   }
 
   @Test
@@ -216,13 +247,13 @@ public class SoftWrapDataMapperTest {
     String document =
       "public class Test {\n" +
       "  public void foo(int[] data) {\n" +
-      "    bar(data[0], data[1], <WRAP>\n" +
-      "       </WRAP>data[2], data[3], <WRAP> \n" +
-      "       </WRAP>data[4], data[5],     \n" +
-      "       data[6], data[7], \n" +
-      "       data[8], data[9], <WRAP>\n" +
-      "       </WRAP>data[10], data[11], <WRAP> \n" +
-      "       </WRAP>data[12], data[13]);     \n" +
+      "    bar(data[0], <WRAP>\n" +
+      "       </WRAP>data[1] <WRAP> \n" +
+      "       </WRAP>data[2]     \n" +
+      "       data[3], \n" +
+      "       data[4], <WRAP>\n" +
+      "       </WRAP>data[5] <WRAP> \n" +
+      "       </WRAP>data[6]);     \n" +
       "  }\n" +
       "  public void bar(int ... i) {\n" +
       "  }\n" +
@@ -345,6 +376,34 @@ public class SoftWrapDataMapperTest {
     test(document);
   }
 
+  private static int getSoftWrapIndentWidthInColumns(TextChange softWrap) {
+    int result = 0;
+    CharSequence text = softWrap.getText();
+    for (int i = text.length() - 1; i >= 0; i--) {
+      if (text.charAt(i) == '\n') {
+        break;
+      }
+      result++;
+    }
+    if (SOFT_WRAP_DRAWING_WIDTH > 0) {
+      result++;
+    }
+    return result;
+  }
+
+  private int getSoftWrapIndentWidthInPixels(TextChange softWrap) {
+    int result = 0;
+    CharSequence text = softWrap.getText();
+    for (int i = text.length() - 1; i >= 0; i--) {
+      if (text.charAt(i) == '\n') {
+        break;
+      }
+      result += myRepresentationHelper.textWidth(text, i, i + 1, 0);
+    }
+    result += SOFT_WRAP_DRAWING_WIDTH;
+    return result;
+  }
+
   private int getLineNumber(int offset) {
     int line = 0;
     for (TextRange range : myLineRanges) {
@@ -430,10 +489,12 @@ public class SoftWrapDataMapperTest {
     for (DataEntry data : myExpectedData) {
 
       // Check logical by visual.
-      LogicalPosition actualLogicalByVisual = myAdjuster.adjustLogicalPosition(toSoftWrapUnawareLogicalByVisual(data), data.visual);
+      LogicalPosition actualLogicalByVisual = myAdjuster.visualToLogical(data.visual);
       // We don't want to perform the check for logical positions that correspond to the folded space because all of them relate to
       // the same logical position of the folding start.
       if (!data.foldedSpace && !data.insideTab && !equals(data.logical, actualLogicalByVisual)) {
+        //TODO den remove
+        myAdjuster.visualToLogical(data.visual);
         throw new AssertionError(
           String.format("Detected unmatched logical position by visual (%s). Expected: '%s', actual: '%s'. Calculation was performed "
                         + "against soft wrap-unaware logical: '%s'",
@@ -446,6 +507,8 @@ public class SoftWrapDataMapperTest {
       // We don't to perform the check for the data that points to soft wrap location here. The reason is that it shares offset
       // with the first document symbol after soft wrap, hence, examination always fails.
       if (!data.virtualSpace && !data.insideTab && !equals(data.logical, actualLogicalByOffset)) {
+        //TODO den remove
+        myAdjuster.offsetToLogicalPosition(data.offset);
         throw new AssertionError(
           String.format("Detected unmatched logical position by offset. Expected: '%s', actual: '%s'. Calculation was performed "
                         + "against offset: '%d' and soft wrap-unaware logical: '%s'",
@@ -635,7 +698,7 @@ public class SoftWrapDataMapperTest {
         }
         else if (c == '\t') {
           int tabWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(c, x);
-          x += myRepresentationHelper.charWidth(c, x, Font.PLAIN);
+          x += MockEditorTextRepresentationHelper.charWidth(c, x);
 
           // There is a possible case that single tabulation symbols is shown in more than one visual column at IntelliJ editor.
           // We store data entry only for the first tab column without 'inside tab' flag then.
@@ -652,7 +715,7 @@ public class SoftWrapDataMapperTest {
         } else {
           logicalColumn++;
           offset++;
-          x += myRepresentationHelper.charWidth(c, x, Font.PLAIN);
+          x += MockEditorTextRepresentationHelper.charWidth(c, x);
           foldingColumnDiff--;
         }
         return;
@@ -685,7 +748,7 @@ public class SoftWrapDataMapperTest {
           visualColumn++;
           softWrapColumnDiff++;
           softWrapSymbolsOnCurrentVisualLine++;
-          x += myRepresentationHelper.charWidth(c, x, Font.PLAIN);
+          x += MockEditorTextRepresentationHelper.charWidth(c, x);
         }
         return;
       }
@@ -706,7 +769,7 @@ public class SoftWrapDataMapperTest {
       }
       else if (c == '\t') {
         int tabWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(c, x);
-        x += myRepresentationHelper.charWidth(c, x, Font.PLAIN);
+        x += MockEditorTextRepresentationHelper.charWidth(c, x);
 
         // There is a possible case that single tabulation symbols is shown in more than one visual column at IntelliJ editor.
         // We store data entry only for the first tab column without 'inside tab' flag then.
@@ -726,7 +789,7 @@ public class SoftWrapDataMapperTest {
         visualColumn++;
         logicalColumn++;
         offset++;
-        x += myRepresentationHelper.charWidth(c, x, Font.PLAIN);
+        x += MockEditorTextRepresentationHelper.charWidth(c, x);
       }
     }
 
@@ -782,10 +845,10 @@ public class SoftWrapDataMapperTest {
     }
 
     @Override
-    public int toVisualColumnSymbolsNumber(CharSequence text, int start, int end, int x) {
+    public int toVisualColumnSymbolsNumber(@NotNull CharSequence text, int start, int end, int x) {
       int result = 0;
       for (int i = start; i < end; i++) {
-        int width = charWidth(text.charAt(i), x, Font.PLAIN);
+        int width = charWidth(text.charAt(i), x);
         result += width / SPACE_SIZE;
         if (width % SPACE_SIZE > 0) {
           result++;
@@ -796,7 +859,28 @@ public class SoftWrapDataMapperTest {
     }
 
     @Override
-    public int charWidth(char c, int x, int fontType) {
+    public int toVisualColumnSymbolsNumber(int width) {
+      int result = width / SPACE_SIZE;
+      if (width % SPACE_SIZE > 0) {
+        result++;
+      }
+      return result;
+    }
+
+    @Override
+    public int textWidth(@NotNull CharSequence text, int start, int end, int x) {
+      int result = 0;
+      for (int i = start; i < end; i++) {
+        char c = text.charAt(i);
+        switch (c) {
+          case '\n': result = 0; break;
+          default: result += charWidth(c, result);
+        }
+      }
+      return result;
+    }
+
+    public static int charWidth(char c, int x) {
       if (c == '\t') {
         int tabWidth = SPACE_SIZE * TAB_SIZE;
         int tabsNumber = x / tabWidth;
@@ -808,18 +892,18 @@ public class SoftWrapDataMapperTest {
     }
   }
 
-  private static class MockFontTypeProvider implements SoftWrapDataMapper.FontTypeProvider {
-    @Override
-    public void init(int start) {
-    }
-
-    @Override
-    public int getFontType(int offset) {
-      return Font.PLAIN;
-    }
-
-    @Override
-    public void cleanup() {
-    }
-  }
+  //private static class MockFontTypeProvider implements SoftWrapDataMapper.FontTypeProvider {
+  //  @Override
+  //  public void init(int start) {
+  //  }
+  //
+  //  @Override
+  //  public int getFontType(int offset) {
+  //    return Font.PLAIN;
+  //  }
+  //
+  //  @Override
+  //  public void cleanup() {
+  //  }
+  //}
 }

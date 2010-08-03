@@ -58,6 +58,9 @@ public class WindowsCryptUtils {
    * @return the the protected form the data
    */
   public static byte[] protect(byte[] data) throws MasterPasswordUnavailableException {
+    if(data.length == 0) {
+      return data;
+    }
     Memory input = new Memory(data.length);
     input.write(0, data, 0, data.length);
     Crypt32.DATA_BLOB in = new Crypt32.DATA_BLOB();
@@ -87,6 +90,9 @@ public class WindowsCryptUtils {
    * @return the the protected form the data
    */
   public static byte[] unprotect(byte[] data) throws MasterPasswordUnavailableException {
+    if(data.length == 0) {
+      return data;
+    }
     Memory input = new Memory(data.length);
     input.write(0, data, 0, data.length);
     Crypt32.DATA_BLOB in = new Crypt32.DATA_BLOB();

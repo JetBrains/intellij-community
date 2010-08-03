@@ -74,39 +74,43 @@ BOOL CtrlHandler(DWORD fdwCtrlType) {
 	}
 }
 
-struct StdInThreadParams
-{
+struct StdInThreadParams {
 	HANDLE hEvent;
 	HANDLE write_stdin;
 };
 
-DWORD WINAPI StdInThread(void *param)
-{
+DWORD WINAPI StdInThread(void *param) {
 	StdInThreadParams *threadParams = (StdInThreadParams *) param;
 	char buf[1];
 	memset(buf, 0, sizeof(buf));
 
 	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-	while(true)
-	{
+	while (true) {
 		DWORD cbRead = 0;
 		DWORD cbWrite = 0;
 
 		char c;
 		ReadFile(hStdin, &c, 1, &cbRead, NULL);
-		if (cbRead > 0)
-		{
+		if (cbRead > 0) {
 			buf[0] = c;
 			bool ctrlBroken = Scan(buf, 1);
 			WriteFile(threadParams->write_stdin, buf, 1, &cbWrite, NULL);
-			if (ctrlBroken)
-			{
+			if (ctrlBroken) {
 				SetEvent(threadParams->hEvent);
 				break;
 			}
 		}
 	}
 	return 0;
+}
+
+bool hasEnding(std::string const &fullString, std::string const &ending) {
+	if (fullString.length() > ending.length()) {
+		return (0 == fullString.compare(fullString.length() - ending.length(),
+				ending.length(), ending));
+	} else {
+		return false;
+	}
 }
 
 int main(int argc, char * argv[]) {
@@ -119,14 +123,11 @@ int main(int argc, char * argv[]) {
 
 	for (int i = 2; i < argc; i++) {
 		args += " ";
-		if (strchr(argv [i], ' '))
-		{
+		if (strchr(argv[i], ' ')) {
 			args += "\"";
 			args += argv[i];
 			args += "\"";
-		}
-		else 
-		{
+		} else {
 			args += argv[i];
 		}
 	}
@@ -162,6 +163,11 @@ int main(int argc, char * argv[]) {
 	char* c_app = new char[app.size() + 1];
 	strcpy(c_app, app.c_str());
 
+	if (hasEnding(app, std::string(".bat"))) {
+		args = app + " " + args;
+		c_app = NULL;
+	}
+
 	char* c_args = new char[args.size() + 1];
 	strcpy(c_args, args.c_str());
 
@@ -192,11 +198,9 @@ int main(int argc, char * argv[]) {
 	objects_to_wait[0] = threadEvent;
 	objects_to_wait[1] = pi.hProcess;
 
-	while(true)
-	{
+	while (true) {
 		int rc = WaitForMultipleObjects(2, objects_to_wait, FALSE, INFINITE);
-		if (rc == WAIT_OBJECT_0 + 1)
-		{
+		if (rc == WAIT_OBJECT_0 + 1) {
 			break;
 		}
 	}

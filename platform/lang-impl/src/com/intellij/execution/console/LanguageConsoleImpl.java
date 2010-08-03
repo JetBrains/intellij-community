@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -99,7 +98,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private final AtomicBoolean myForceScrollToEnd = new AtomicBoolean(false);
   private final MergingUpdateQueue myUpdateQueue;
   private Runnable myUiUpdateRunnable;
+
   private Editor myFullEditor;
+  private ActionGroup myFullEditorActions;
 
   public LanguageConsoleImpl(final Project project, String title, final Language language) {
     myProject = project;
@@ -154,8 +155,14 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
       myFullEditor = fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
       assert myFullEditor != null;
+      configureFullEditor();      
       fileManager.getCurrentWindow().setFilePinned(virtualFile, true);
     }
+  }
+
+  public void setFullEditorActions(ActionGroup actionGroup) {
+    myFullEditorActions = actionGroup;
+    configureFullEditor();
   }
 
   private void setupComponents() {
@@ -543,9 +550,18 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
         editorManager.closeFile(file);
         myFullEditor = editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
-        ((FileEditorManagerEx)editorManager).getCurrentWindow().setFilePinned(newVFile, true);        
+        configureFullEditor();
+        ((FileEditorManagerEx)editorManager).getCurrentWindow().setFilePinned(newVFile, true);
       }
     }
+  }
+
+  private void configureFullEditor() {
+    if (myFullEditor == null || myFullEditorActions == null) return;
+    final JPanel header = new JPanel(new BorderLayout());
+    header.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true).getComponent(), BorderLayout.EAST);
+    myFullEditor.setHeaderComponent(header);
+    myFullEditor.getSettings().setLineMarkerAreaShown(false);
   }
 
   public void setInputText(final String query) {

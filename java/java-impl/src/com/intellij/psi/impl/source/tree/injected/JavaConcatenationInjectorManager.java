@@ -16,10 +16,9 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.injection.ConcatenationAwareInjector;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -30,27 +29,22 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author cdr
  */
-public class JavaConcatenationInjectorManager implements ProjectComponent, ModificationTracker {
+public class JavaConcatenationInjectorManager implements ModificationTracker {
   public static final ExtensionPointName<ConcatenationAwareInjector> CONCATENATION_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.concatenationAwareInjector");
-  private final AtomicReference<MultiHostInjector> myRegisteredConcatenationAdapter = new AtomicReference<MultiHostInjector>();
-  private final InjectedLanguageManager myInjectedLanguageManager;
   private volatile long myModificationCounter;
   private static final ConcatenationPsiCachedValueProvider CONCATENATION_PSI_CACHED_VALUE_PROVIDER = new ConcatenationPsiCachedValueProvider();
 
-  public JavaConcatenationInjectorManager(Project project, InjectedLanguageManager injectedLanguageManager, PsiManagerEx psiManagerEx) {
-    myInjectedLanguageManager = injectedLanguageManager;
+  public JavaConcatenationInjectorManager(Project project, PsiManagerEx psiManagerEx) {
     final ExtensionPoint<ConcatenationAwareInjector> concatPoint = Extensions.getArea(project).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
     concatPoint.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
       public void extensionAdded(ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
@@ -68,30 +62,8 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
     });
   }
 
-  public void projectOpened() {
-
-  }
-
-  public void projectClosed() {
-
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "JavaConcatenationInjectorManager";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
-  }
-
   public static JavaConcatenationInjectorManager getInstance(final Project project) {
-    return project.getComponent(JavaConcatenationInjectorManager.class);
+    return ServiceManager.getService(project, JavaConcatenationInjectorManager.class);
   }
 
   public long getModificationCount() {
@@ -151,10 +123,16 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
   }
 
   private static final Key<ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>> INJECTED_PSI_IN_CONCATENATION = Key.create("INJECTED_PSI_IN_CONCATENATION");
-  private final Concatenation2InjectorAdapter myConcatenation2InjectorAdapter = new Concatenation2InjectorAdapter();
-  private class Concatenation2InjectorAdapter implements MultiHostInjector {
+
+  public static class Concatenation2InjectorAdapter implements MultiHostInjector {
+    private final JavaConcatenationInjectorManager myManager;
+
+    public Concatenation2InjectorAdapter(Project project) {
+      myManager = getInstance(project);
+    }
+
     public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
-      if (myConcatenationInjectors.isEmpty()) return;
+      if (myManager.myConcatenationInjectors.isEmpty()) return;
 
       ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue = context.getUserData(INJECTED_PSI_IN_CONCATENATION);
       MultiHostRegistrarImpl result;
@@ -203,16 +181,5 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
 
   private void concatenationInjectorsChanged() {
     myModificationCounter++;
-    if (myConcatenationInjectors.isEmpty()) {
-      MultiHostInjector prev = myRegisteredConcatenationAdapter.getAndSet(null);
-      if (prev != null) {
-        myInjectedLanguageManager.unregisterMultiHostInjector(prev);
-      }
-    }
-    else {
-      if (myRegisteredConcatenationAdapter.compareAndSet(null, myConcatenation2InjectorAdapter)) {
-        myInjectedLanguageManager.registerMultiHostInjector(myConcatenation2InjectorAdapter);
-      }
-    }
   }
 }

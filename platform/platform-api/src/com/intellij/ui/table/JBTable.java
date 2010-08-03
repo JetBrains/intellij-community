@@ -82,6 +82,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
   }
 
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    myEmptyTextHelper.paint(g);
+  }
+
   public static DefaultCellEditor createBooleanEditor() {
     return new DefaultCellEditor(new JCheckBox()) {
       {

@@ -7,7 +7,7 @@ import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.intellij.plugins.relaxNG.ProjectLoader;
+import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.psi.RncElement;
 import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
@@ -72,7 +72,7 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
 
     @Override
     public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
-      boolean isRngTag = ProjectLoader.RNG_NAMESPACE.equals(nsURI);
+      boolean isRngTag = ApplicationLoader.RNG_NAMESPACE.equals(nsURI);
       if (!isRNG) { // analyzing start tag
         if (!isRngTag) {
           throw new NanoXmlUtil.ParserStoppedException();

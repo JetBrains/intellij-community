@@ -1,0 +1,14 @@
+PsiJavaFile:AssertNormal0.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiAssertStatement
+      PsiKeyword:assert('assert')
+      PsiWhiteSpace(' ')
+      PsiReferenceExpression:cond
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:cond('cond')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

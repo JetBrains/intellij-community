@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -25,7 +24,10 @@ import java.io.File;
 
 import static org.testng.Assert.assertTrue;
 
-public class HgFromClonedTestCase extends HgAbstractTestCase {
+/**
+ * TODO: substitute by new interface from HgCollaborativeTestCase and HgTestRepository.
+ */
+public class HgFromClonedTestCase extends HgCollaborativeTestCase {
 
   protected File remoteRepo;
   protected File projectRepo;
@@ -34,8 +36,9 @@ public class HgFromClonedTestCase extends HgAbstractTestCase {
   protected VirtualFile projectRepoVirtualFile;
 
   @BeforeMethod
+  @Override
   public void setUp() throws Exception {
-    setHGExecutablePath();
+    super.setUp();
 
     remoteRepoDir = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     projectRepoDir = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
@@ -47,9 +50,6 @@ public class HgFromClonedTestCase extends HgAbstractTestCase {
     activateVCS(HgVcs.VCS_NAME);
 
     projectRepoVirtualFile = VcsUtil.getVirtualFile(projectRepo);
-
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
   private File cloneRemoteRepository(TempDirTestFixture projectRepoDir, File remoteRepo, String destination) throws Exception {
@@ -73,7 +73,7 @@ public class HgFromClonedTestCase extends HgAbstractTestCase {
     File aFile = fillFile(remoteRepo, new String[]{"com", "a.txt"}, "file contents");
 
     verify(runHg(remoteRepo, "add", aFile.getPath()));
-    verify(runHg(remoteRepo, "status"), added("com", "a.txt"));
+    verify(runHg(remoteRepo, "status"), HgTestOutputParser.added("com", "a.txt"));
     verify(runHg(remoteRepo, "commit", "-m", "initial contents"));
 
     return remoteRepo;

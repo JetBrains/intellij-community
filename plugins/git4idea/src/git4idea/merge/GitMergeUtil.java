@@ -29,16 +29,19 @@ import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -185,5 +188,30 @@ public class GitMergeUtil {
         }
       });
     }
+  }
+
+
+  /**
+   * @param root the vcs root
+   * @return the path to merge head file
+   */
+  @Nullable
+  private static File getMergeHead(VirtualFile root) {
+    File gitDir = new File(VfsUtil.virtualToIoFile(root), ".git");
+    File f = new File(gitDir, "MERGE_HEAD");
+    if (f.exists()) {
+      return f;
+    }
+    return null;
+  }
+
+  /**
+   * Checks if the merge is in the progress for the specified git root
+   *
+   * @param root the git root
+   * @return true if the merge_head file presents in the root
+   */
+  public static boolean isMergeInTheProgress(VirtualFile root) {
+    return getMergeHead(root) != null;
   }
 }

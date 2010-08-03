@@ -66,6 +66,9 @@
                         serviceImplementation="com.intellij.ide.util.PlatformModuleRendererFactory"/>
     <projectService serviceInterface="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable$Factory"
                     serviceImplementation="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable$Factory"/>
+    <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
+                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>

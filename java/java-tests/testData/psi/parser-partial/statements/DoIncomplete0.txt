@@ -1,0 +1,10 @@
+PsiJavaFile:DoIncomplete0.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiDoWhileStatement
+      PsiKeyword:do('do')
+      PsiErrorElement:Statement expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

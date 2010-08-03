@@ -74,7 +74,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Cust
     return "FatalError";
   }
 
-  public WidgetPresentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
   }
 

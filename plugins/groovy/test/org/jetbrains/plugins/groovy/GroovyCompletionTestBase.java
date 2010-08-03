@@ -31,7 +31,7 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
   }
 
-  protected void doBasicTest() throws Exception {
+  protected void doBasicTest() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 

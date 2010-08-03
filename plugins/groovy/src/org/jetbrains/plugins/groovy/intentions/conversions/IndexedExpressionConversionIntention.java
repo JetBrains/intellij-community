@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +35,7 @@ public class IndexedExpressionConversionIntention extends Intention {
         return new IndexedExpressionConversionPredicate();
     }
 
-    public void processIntention(@NotNull PsiElement element)
+    public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
             throws IncorrectOperationException {
 
         final GrIndexProperty arrayIndexExpression = (GrIndexProperty) element;

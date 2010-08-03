@@ -152,6 +152,10 @@
   <projectService serviceInterface="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"
                   serviceImplementation="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"/>
 
+  <projectService serviceInterface="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"
+                      serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
+
+
   <!-- General -->
   <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>
 

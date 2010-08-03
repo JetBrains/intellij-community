@@ -1,0 +1,10 @@
+PsiJavaFile:SwitchLabelsIncomplete2.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiSwitchLabelStatement
+      PsiKeyword:default('default')
+      PsiErrorElement:':' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

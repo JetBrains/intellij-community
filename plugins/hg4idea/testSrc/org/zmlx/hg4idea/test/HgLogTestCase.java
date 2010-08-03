@@ -20,15 +20,15 @@ import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 
-public class HgLogTestCase extends HgAbstractTestCase {
+public class HgLogTestCase extends HgSingleUserTestCase {
   
   @Test
   public void testCommitMessagesWithMultipleLines() throws Exception {
-    fillFile(myProjectRepo, new String[]{"file.txt"}, "initial contents");
+    fillFile(myProjectDir, new String[]{"file.txt"}, "initial contents");
     runHgOnProjectRepo("add", ".");
     runHgOnProjectRepo("commit", "-m", "initial\ncontents");
 
-    fillFile(myProjectRepo, new String[]{"file.txt"}, "updated contents");
+    fillFile(myProjectDir, new String[]{"file.txt"}, "updated contents");
     runHgOnProjectRepo("commit", "-m", "updated\ncontents");
 
     List<HgFileRevision> fileLog = new HgLogCommand(myProject).execute(getHgFile("file.txt"), 10, false);

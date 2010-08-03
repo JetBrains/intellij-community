@@ -32,6 +32,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 27.03.2007
@@ -72,7 +75,11 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
   }
 
   public GrVariable[] getVariables() {
-    return findChildrenByClass(GrVariable.class);
+    List<GrVariable> result = new ArrayList<GrVariable>();
+    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrVariable) result.add((GrVariable)cur);
+    }
+    return result.toArray(new GrVariable[result.size()]);
   }
 
   public void setType(@Nullable PsiType type) {

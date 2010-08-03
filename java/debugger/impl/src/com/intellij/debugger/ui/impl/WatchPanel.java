@@ -30,6 +30,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
@@ -44,8 +45,8 @@ public abstract class WatchPanel extends DebuggerTreePanel {
   public WatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
     add(ScrollPaneFactory.createScrollPane(getWatchTree()), BorderLayout.CENTER);
-    final Disposable disposable = DebuggerAction.installEditAction(getWatchTree(), DebuggerActions.EDIT_NODE_SOURCE);
-    registerDisposable(disposable);
+    registerDisposable(DebuggerAction.installEditAction(getWatchTree(), DebuggerActions.EDIT_NODE_SOURCE));
+    overrideShortcut(getWatchTree(), DebuggerActions.COPY_VALUE, CommonShortcuts.getCopy());
   }
 
   protected DebuggerTree createTreeView() {

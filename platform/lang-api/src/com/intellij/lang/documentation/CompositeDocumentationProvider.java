@@ -38,7 +38,9 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
         list.add(provider);
       }
     }
-    return list.size() == 1 ? list.get(0) : new CompositeDocumentationProvider(Collections.unmodifiableList(list));
+    // CompositeDocumentationProvider should be returned anyway because it
+    // handles DocumentationProvider.EP as well as providers from the list
+    return new CompositeDocumentationProvider(Collections.unmodifiableList(list));
   }
 
   private CompositeDocumentationProvider(List<DocumentationProvider> providers) {

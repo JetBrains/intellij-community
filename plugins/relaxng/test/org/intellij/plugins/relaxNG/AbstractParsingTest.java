@@ -42,7 +42,6 @@ public abstract class AbstractParsingTest extends ParsingTestCase {
     new WriteAction() {
       protected void run(Result result) throws Throwable {
         new ApplicationLoader().initComponent();
-        new ProjectLoader(getProject()).initComponent();
         ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined");
       }
     }.execute();

@@ -50,12 +50,6 @@ public class SearchRequestCollector {
     }
   }
 
-  public boolean hasRequests() {
-    synchronized (lock) {
-      return !myWordRequests.isEmpty() || !myCustomSearchActions.isEmpty() || !myQueryRequests.isEmpty();
-    }
-  }
-
   public List<QuerySearchRequest> takeQueryRequests() {
     return takeRequests(myQueryRequests);
   }
@@ -75,5 +69,10 @@ public class SearchRequestCollector {
 
   public List<Processor<Processor<PsiReference>>> takeCustomSearchActions() {
     return takeRequests(myCustomSearchActions);
+  }
+
+  @Override
+  public String toString() {
+    return myWordRequests.toString().replace(',', '\n');
   }
 }

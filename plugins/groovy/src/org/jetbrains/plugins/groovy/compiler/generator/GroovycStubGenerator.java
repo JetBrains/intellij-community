@@ -24,10 +24,10 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -62,18 +62,21 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
   @Override
   public void compile(CompileContext compileContext, Chunk<Module> moduleChunk, VirtualFile[] virtualFiles, OutputSink sink) {
-    final CompileScope scope = compileContext.getCompileScope();
-    final VirtualFile[] javaFiles = scope.getFiles(StdFileTypes.JAVA, true);
-    if (javaFiles.length == 0) {
-      return;
-    }
-
     boolean hasJava = false;
-    for (VirtualFile javaFile : javaFiles) {
-      final Module module = ModuleUtil.findModuleForFile(javaFile, myProject);
-      if (module != null && moduleChunk.containsNode(module)) {
+
+    final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getExcludeConfiguration(myProject);
+
+    List<VirtualFile> total = new ArrayList<VirtualFile>();
+    for (final VirtualFile virtualFile : virtualFiles) {
+      final FileType fileType = virtualFile.getFileType();
+      if (fileType == StdFileTypes.JAVA) {
         hasJava = true;
-        break;
+      }
+
+      if (!excluded.isExcluded(virtualFile)) {
+        if (fileType == GroovyFileType.GROOVY_FILE_TYPE) {
+          total.add(virtualFile);
+        }
       }
     }
 
@@ -81,22 +84,16 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       return;
     }
 
-    final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getExcludeConfiguration(myProject);
-
-    List<VirtualFile> total = new ArrayList<VirtualFile>();
-    for (final VirtualFile virtualFile : virtualFiles) {
-      if (!excluded.isExcluded(virtualFile)) {
-        if (virtualFile.getFileType() == GroovyFileType.GROOVY_FILE_TYPE) {
-          total.add(virtualFile);
-        }
-      }
-    }
-
     if (total.isEmpty()) {
       return;
     }
 
     super.compile(compileContext, moduleChunk, VfsUtil.toVirtualFileArray(total), sink);
+  }
+
+  @Override
+  public boolean isCompilableFile(VirtualFile file, CompileContext context) {
+    return super.isCompilableFile(file, context) || StdFileTypes.JAVA.equals(file.getFileType());
   }
 
   @Override

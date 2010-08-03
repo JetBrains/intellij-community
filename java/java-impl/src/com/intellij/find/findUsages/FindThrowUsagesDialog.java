@@ -25,7 +25,7 @@ import com.intellij.ui.StateRestoringCheckBox;
 import javax.swing.*;
 import java.awt.*;
 
-public class FindThrowUsagesDialog extends JavaFindUsagesDialog {
+public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsagesOptions> {
   private StateRestoringCheckBox myCbUsages;
   private JComboBox myCbExns;
   private boolean myHasFindWhatPanel;
@@ -62,10 +62,9 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog {
     return panel;
   }
 
-  public void calcFindUsagesOptions(final FindUsagesOptions options) {
+  public void calcFindUsagesOptions(final JavaThrowFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
     options.isUsages = isSelected(myCbUsages) || !myHasFindWhatPanel;
-    options.isThrowUsages = true;
   }
 
   protected JPanel createFindWhatPanel() {

@@ -16,9 +16,7 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -26,10 +24,12 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
+import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
@@ -38,18 +38,19 @@ public class DeclarationParser {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.parser.DeclarationParser");
-
   private static final TokenSet AFTER_END_DECLARATION_SET = TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD);
+  private static final TokenSet BEFORE_LBRACE_ELEMENTS_SET = TokenSet.create(
+    JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD);
+  private static final TokenSet APPEND_TO_METHOD_SET = TokenSet.create(
+    JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.THROWS_KEYWORD);
+
+  private static final String WHITESPACES = "\n\r \t";
+  private static final String LINE_ENDS = "\n\r";
 
   private DeclarationParser() { }
 
-  @Nullable
-  public static PsiBuilder.Marker parseClassBodyWithBraces(final PsiBuilder builder, final boolean isAnnotation, final boolean isEnum) {
-    if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
-
-    final PsiBuilder.Marker marker = builder.mark();
-    marker.drop();
+  public static void parseClassBodyWithBraces(final PsiBuilder builder, final boolean isAnnotation, final boolean isEnum) {
+    assert builder.getTokenType() == JavaTokenType.LBRACE : builder.getTokenType();
     builder.advanceLexer();
 
     final PsiBuilder builderWrapper = braceMatchingBuilder(builder);
@@ -59,15 +60,38 @@ public class DeclarationParser {
     parseClassBodyDeclarations(builderWrapper, isAnnotation);
 
     expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
-
-    return marker;
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker start,
-                                                        final boolean isAnnotation) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString() + start + isAnnotation);
+  private static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker declaration,
+                                                         final boolean isAnnotation) {
+    final IElementType keywordTokenType = builder.getTokenType();
+    assert ElementType.CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
+    builder.advanceLexer();
+    final boolean isEnum = (keywordTokenType == JavaTokenType.ENUM_KEYWORD);
+
+    if (!expect(builder, JavaTokenType.IDENTIFIER)) {
+      error(builder, JavaErrorMessages.message("expected.identifier"));
+      declaration.drop();
+      return null;
+    }
+
+    ReferenceParser.parseTypeParameters(builder);
+    ReferenceParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
+    ReferenceParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
+
+    if (builder.getTokenType() != JavaTokenType.LBRACE) {
+      final PsiBuilder.Marker error = builder.mark();
+      while (BEFORE_LBRACE_ELEMENTS_SET.contains(builder.getTokenType())) {
+        builder.advanceLexer();
+      }
+      error.error(JavaErrorMessages.message("expected.lbrace"));
+    }
+
+    parseClassBodyWithBraces(builder, isAnnotation, isEnum);
+
+    declaration.done(JavaElementType.CLASS);
+    return declaration;
   }
 
   private static void parseEnumConstants(final PsiBuilder builder) {
@@ -89,6 +113,7 @@ public class DeclarationParser {
       if (!expect(builder, JavaTokenType.COMMA)) {
         if (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.SEMICOLON) {
           error(builder, JavaErrorMessages.message("expected.comma.or.semicolon"));
+          return;
         }
       }
     }
@@ -140,7 +165,7 @@ public class DeclarationParser {
         continue;
       }
 
-      final PsiBuilder.Marker declaration = parseDeclaration(builder, context);
+      final PsiBuilder.Marker declaration = parse(builder, context);
       if (declaration != null) {
         if (invalidElements != null) {
           invalidElements.errorBefore(JavaErrorMessages.message("unexpected.token"), declaration);
@@ -166,7 +191,7 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseDeclaration(final PsiBuilder builder, final Context context) {
+  public static PsiBuilder.Marker parse(final PsiBuilder builder, final Context context) {
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == null) return null;
 
@@ -177,10 +202,8 @@ public class DeclarationParser {
       if (context == Context.FILE) return null;
     }
     else if (tokenType instanceof ILazyParseableElementType) {
-      final PsiBuilder.Marker declaration = builder.mark();
-      declaration.drop();
       builder.advanceLexer();
-      return declaration;
+      return null;
     }
     else if (!ElementType.MODIFIER_BIT_SET.contains(tokenType) &&
              !ElementType.CLASS_KEYWORD_BIT_SET.contains(tokenType) &&
@@ -190,6 +213,7 @@ public class DeclarationParser {
     }
 
     final PsiBuilder.Marker declaration = builder.mark();
+    final int declarationStart = builder.getCurrentOffset();
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
     final PsiBuilder.Marker modList = modListInfo.first;
@@ -206,13 +230,13 @@ public class DeclarationParser {
     else if (ElementType.CLASS_KEYWORD_BIT_SET.contains(builder.getTokenType())) {
       final PsiBuilder.Marker root = parseClassFromKeyword(builder, declaration, false);
       if (context == Context.FILE) {
-        // todo: append following declarations to root
+        // todo: append following declarations to root (?)
         boolean declarationsAfterEnd = false;
 
         while (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.RBRACE) {
           final PsiBuilder.Marker position = builder.mark();
-          final PsiBuilder.Marker element = parseDeclaration(builder, Context.CLASS);
-          if (element != null && AFTER_END_DECLARATION_SET.contains(((LighterASTNode)element).getTokenType())) {
+          final PsiBuilder.Marker element = parse(builder, Context.CLASS);
+          if (element != null && AFTER_END_DECLARATION_SET.contains(exprType(element))) {
             if (!declarationsAfterEnd) {
               element.precede().error(JavaErrorMessages.message("expected.class.or.interface"));
             }
@@ -276,7 +300,7 @@ public class DeclarationParser {
       }
 
       final PsiBuilder.Marker codeBlock = StatementParser.parseCodeBlock(builder);
-      LOG.assertTrue(codeBlock != null);
+      assert codeBlock != null : builder.getOriginalText();
 
       if (typeParams != null) {
         final PsiBuilder.Marker error = typeParams.precede();
@@ -294,6 +318,7 @@ public class DeclarationParser {
         error = builder.mark();
       }
       error.error(JavaErrorMessages.message("expected.identifier.or.type"));
+      declaration.drop();
       return modList;
     }
 
@@ -324,7 +349,7 @@ public class DeclarationParser {
     if (typeParams != null) {
       typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type);
     }
-    return parseFieldOrLocalVariable(builder, declaration, context);
+    return parseFieldOrLocalVariable(builder, declaration, declarationStart, context);
   }
 
   @NotNull
@@ -347,11 +372,7 @@ public class DeclarationParser {
         isEmpty = false;
       }
       else if (tokenType == JavaTokenType.AT) {
-        final PsiBuilder.Marker pos = builder.mark();
-        builder.advanceLexer();
-        final IElementType nextTokenType = builder.getTokenType();
-        pos.rollbackTo();
-        if (ElementType.KEYWORD_BIT_SET.contains(nextTokenType)) {
+        if (ElementType.KEYWORD_BIT_SET.contains(nextTokenType(builder))) {
           break;
         }
         parseAnnotation(builder);
@@ -397,8 +418,19 @@ public class DeclarationParser {
       StatementParser.parseCodeBlock(builder);
     }
     else {
-      error(builder, JavaErrorMessages.message("expected.lbrace.or.semicolon"));
-      // todo: special treatment - like in fields (DeclarationParserTest.testMultiLineUnclosed())
+      final PsiBuilder.Marker error = builder.mark();
+      // heuristic: going to next line obviously means method signature is over, starting new method (actually, another one completion hack)
+      final CharSequence text = builder.getOriginalText();
+      Loop:
+      while (true) {
+        for (int i = builder.getCurrentOffset() - 1; i >= 0; i--) {
+          final char ch = text.charAt(i);
+          if (ch == '\n') break Loop;
+          else if (ch != ' ' && ch != '\t') break;
+        }
+        if (!expect(builder, APPEND_TO_METHOD_SET)) break;
+      }
+      error.error(JavaErrorMessages.message("expected.lbrace.or.semicolon"));
     }
 
     declaration.done(anno ? JavaElementType.ANNOTATION_METHOD : JavaElementType.METHOD);
@@ -480,7 +512,7 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis) {
+  public static PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis) {
     final PsiBuilder.Marker param = builder.mark();
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
@@ -499,18 +531,19 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       eatBrackets(builder);
+      param.done(JavaElementType.PARAMETER);
+      return param;
     }
     else {
       error(builder, JavaErrorMessages.message("expected.identifier"));
+      param.drop();
+      return type;
     }
-
-    param.done(JavaElementType.PARAMETER);
-    return param;
   }
 
   @Nullable
   private static PsiBuilder.Marker parseFieldOrLocalVariable(final PsiBuilder builder, final PsiBuilder.Marker declaration,
-                                                             final Context context) {
+                                                             final int declarationStart, final Context context) {
     final IElementType varType;
     if (context == Context.CLASS || context == Context.ANNOTATION_INTERFACE) {
       varType = JavaElementType.FIELD;
@@ -519,52 +552,72 @@ public class DeclarationParser {
       varType = JavaElementType.LOCAL_VARIABLE;
     }
     else {
-      LOG.error("Unexpected context: " + context);
       declaration.drop();
+      assert false : "Unexpected context: " + context;
       return null;
     }
 
     PsiBuilder.Marker variable = declaration;
-    boolean openMarker = true;
+    boolean unclosed = false;
     boolean eatSemicolon = true;
-    boolean expectSemicolon = true;
+    boolean shouldRollback;
+    boolean openMarker = true;
     while (true) {
+      shouldRollback = true;
+
       if (!eatBrackets(builder)) {
-        expectSemicolon = false;
+        unclosed = true;
       }
 
       if (expect(builder, JavaTokenType.EQ)) {
         final PsiBuilder.Marker expr = ExpressionParser.parse(builder);
-        if (expr == null) {
+        if (expr != null) {
+          shouldRollback = false;
+        }
+        else {
           error(builder, JavaErrorMessages.message("expected.expression"));
-          expectSemicolon = false;
+          unclosed = true;
           break;
         }
       }
 
-      if (builder.getTokenType() == JavaTokenType.COMMA) {
-        variable.done(varType);
-        builder.advanceLexer();
-        variable = builder.mark();
-      }
-      else {
+      if (builder.getTokenType() != JavaTokenType.COMMA) break;
+      variable.done(varType);
+      builder.advanceLexer();
+
+      if (builder.getTokenType() != JavaTokenType.IDENTIFIER) {
+        error(builder, JavaErrorMessages.message("expected.identifier"));
+        unclosed = true;
+        eatSemicolon = false;
+        openMarker = false;
         break;
       }
 
-      if (!expect(builder, JavaTokenType.IDENTIFIER)) {
-        variable.drop();
-        error(builder, JavaErrorMessages.message("expected.identifier"));
-        openMarker = false;
-        eatSemicolon = false;
-        break;
-      }
+      variable = builder.mark();
+      builder.advanceLexer();
     }
 
-    if (eatSemicolon) {
-      if (!expect(builder, JavaTokenType.SEMICOLON) && expectSemicolon) {
+    if (builder.getTokenType() == JavaTokenType.SEMICOLON && eatSemicolon) {
+      builder.advanceLexer();
+    }
+    else {
+      // special treatment (see DeclarationParserTest.testMultiLineUnclosed())
+      if (!builder.eof() && shouldRollback) {
+        final CharSequence text = builder.getOriginalText();
+        final int spaceEnd = builder.getCurrentOffset();
+        final int spaceStart = CharArrayUtil.shiftBackward(text, spaceEnd-1, WHITESPACES);
+        final int lineStart = CharArrayUtil.shiftBackwardUntil(text, spaceEnd, LINE_ENDS);
+
+        if (declarationStart < lineStart && lineStart < spaceStart) {
+          final int newBufferEnd = CharArrayUtil.shiftForward(text, lineStart, WHITESPACES);
+          declaration.rollbackTo();
+          return parse(stoppingBuilder(builder, newBufferEnd), context);
+        }
+      }
+
+      if (!unclosed) {
         error(builder, JavaErrorMessages.message("expected.semicolon"));
       }
-      // todo: special treatment - see DeclarationParserTest.testMultiLineUnclosed()
     }
 
     if (openMarker) {

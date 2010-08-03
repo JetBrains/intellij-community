@@ -80,7 +80,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     myThreadsListener = new ThreadsListener();
     myThreadsCombo.addItemListener(myThreadsListener);
 
-    myFramesList = new FramesList();
+    myFramesList = new FramesList(project);
     myFramesListener = new FramesListener();
     myFramesList.addListSelectionListener(myFramesListener);
 

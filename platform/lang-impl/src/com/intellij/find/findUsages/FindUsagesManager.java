@@ -257,9 +257,6 @@ public class FindUsagesManager implements JDOMExternalizable {
       new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
     if (singleFile) {
       findUsagesOptions = (FindUsagesOptions)findUsagesOptions.clone();
-      findUsagesOptions.isDerivedClasses = false;
-      findUsagesOptions.isDerivedInterfaces = false;
-      findUsagesOptions.isImplementingClasses = false;
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
       findUsagesInEditor(descriptor, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions, editor);
     }
@@ -571,41 +568,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private static String generateUsagesString(final FindUsagesOptions selectedOptions) {
-    String suffix = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
-    ArrayList<String> strings = new ArrayList<String>();
-    if (selectedOptions.isUsages
-        || selectedOptions.isClassesUsages ||
-        selectedOptions.isMethodsUsages ||
-        selectedOptions.isFieldsUsages) {
-      strings.add(FindBundle.message("find.usages.panel.title.usages"));
-    }
-    if (selectedOptions.isIncludeOverloadUsages) {
-      strings.add(FindBundle.message("find.usages.panel.title.overloaded.methods.usages"));
-    }
-    if (selectedOptions.isDerivedClasses) {
-      strings.add(FindBundle.message("find.usages.panel.title.derived.classes"));
-    }
-    if (selectedOptions.isDerivedInterfaces) {
-      strings.add(FindBundle.message("find.usages.panel.title.derived.interfaces"));
-    }
-    if (selectedOptions.isImplementingClasses) {
-      strings.add(FindBundle.message("find.usages.panel.title.implementing.classes"));
-    }
-    if (selectedOptions.isImplementingMethods) {
-      strings.add(FindBundle.message("find.usages.panel.title.implementing.methods"));
-    }
-    if (selectedOptions.isOverridingMethods) {
-      strings.add(FindBundle.message("find.usages.panel.title.overriding.methods"));
-    }
-    if (strings.isEmpty()) {
-      strings.add(FindBundle.message("find.usages.panel.title.usages"));
-    }
-    String usagesString = "";
-    for (int i = 0; i < strings.size(); i++) {
-      String s = strings.get(i);
-      usagesString += i == strings.size() - 1 ? s : s + suffix;
-    }
-    return usagesString;
+    return selectedOptions.generateUsagesString();
   }
 
   private static void showEditorHint(String message, final Editor editor) {

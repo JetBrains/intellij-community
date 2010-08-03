@@ -75,12 +75,12 @@ public class ResolveUtil {
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
       if (processNonCodeMethods) {
         if (run instanceof GrTypeDefinition) {
-          processNonCodeMethods(factory.createType(((GrTypeDefinition)run)), processor, place, false);
+          processNonCodeMethods(factory.createType(((GrTypeDefinition)run)), processor, place);
         }
         else if ((run instanceof GroovyFileBase) && ((GroovyFileBase)run).isScript()) {
           final PsiClass psiClass = ((GroovyFileBase)run).getScriptClass();
           if (psiClass != null) {
-            processNonCodeMethods(factory.createType(psiClass), processor, place, false);
+            processNonCodeMethods(factory.createType(psiClass), processor, place);
           }
         }
       }
@@ -115,14 +115,6 @@ public class ResolveUtil {
 
     return nameHint.getName(ResolveState.initial());
   }
-  
-  /**
-   * @deprecated
-   * use {@link #processElement(PsiScopeProcessor, PsiNamedElement, ResolveState)} instead
-   */
-  public static boolean processElement(PsiScopeProcessor processor, PsiNamedElement namedElement) {
-    return processElement(processor, namedElement, ResolveState.initial());
-  }
 
   public static boolean processElement(PsiScopeProcessor processor, PsiNamedElement namedElement, ResolveState state) {
     NameHint nameHint = processor.getHint(NameHint.KEY);
@@ -137,8 +129,7 @@ public class ResolveUtil {
 
   public static boolean processNonCodeMethods(PsiType type,
                                               PsiScopeProcessor processor,
-                                              PsiElement place,
-                                              boolean forCompletion) {
+                                              PsiElement place) {
     if (!NonCodeMembersContributor.runContributors(type, processor, place, ResolveState.initial())) {
       return false;
     }
@@ -153,11 +144,6 @@ public class ResolveUtil {
       }
     }
 
-    for (PsiType psiType : getAllSuperTypes(type, place).values()) {
-      for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-        if (!membersProcessor.processNonCodeMembers(psiType, processor, place, forCompletion)) return false;
-      }
-    }
     return true;
   }
 
@@ -439,11 +425,11 @@ public class ResolveUtil {
     return true;
   }
 
-  public static GroovyResolveResult[] getMethodVariants(GroovyPsiElement place) {
+  public static GroovyResolveResult[] getCallVariants(GroovyPsiElement place) {
     final PsiElement parent = place.getParent();
     GroovyResolveResult[] variants = GroovyResolveResult.EMPTY_ARRAY;
     if (parent instanceof GrCallExpression) {
-      variants = ((GrCallExpression) parent).getMethodVariants(place instanceof GrExpression ? (GrExpression)place : null);
+      variants = ((GrCallExpression) parent).getCallVariants(place instanceof GrExpression ? (GrExpression)place : null);
     } else if (parent instanceof GrConstructorInvocation) {
       final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
       if (clazz != null) {

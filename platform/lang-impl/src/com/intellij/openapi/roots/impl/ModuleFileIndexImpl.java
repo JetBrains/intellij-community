@@ -104,12 +104,21 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     final List<OrderEntry> orderEntries = info.getOrderEntries();
     if (orderEntries.isEmpty()) return Collections.emptyList();
 
-    SmartList<OrderEntry> answer = new SmartList<OrderEntry>();
-    for (OrderEntry entry : orderEntries) {
-      if (entry.getOwnerModule() == myModule) answer.add(entry);
+    final Module module = myModule;
+
+    SmartList<OrderEntry> answer = null;
+    final int size = orderEntries.size();
+    for (int i = 0; i < size; i++) {
+      OrderEntry entry = orderEntries.get(i);
+      if (entry.getOwnerModule() == module) {
+        if (answer == null) {
+          answer = new SmartList<OrderEntry>();
+        }
+        answer.add(entry);
+      }
     }
 
-    return answer;
+    return answer == null ? Collections.<OrderEntry>emptyList() : answer;
   }
 
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {

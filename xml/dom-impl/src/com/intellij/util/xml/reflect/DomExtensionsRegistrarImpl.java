@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.util.ParameterizedTypeImpl;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,7 +23,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.XmlName;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -71,7 +71,7 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
 
   @NotNull
   public DomExtension registerGenericAttributeValueChildExtension(@NotNull final XmlName name, final Type parameterType) {
-    return addExtension(myAttributes, name, ParameterizedTypeImpl.make(GenericAttributeValue.class, new Type[]{parameterType}, null));
+    return addExtension(myAttributes, name, new ParameterizedTypeImpl(GenericAttributeValue.class, parameterType));
   }
 
   @NotNull

@@ -32,6 +32,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
 /**
@@ -58,7 +61,11 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
 
   @NotNull
   public GrExpression[] getExpressionArguments() {
-    return findChildrenByClass(GrExpression.class);
+    List<GrExpression> result = new ArrayList<GrExpression>();
+    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrExpression) result.add((GrExpression)cur);
+    }
+    return result.toArray(new GrExpression[result.size()]);
   }
 
   public GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException {

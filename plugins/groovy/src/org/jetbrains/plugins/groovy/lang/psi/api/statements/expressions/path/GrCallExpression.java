@@ -43,7 +43,7 @@ public interface GrCallExpression extends GrExpression, GrCall {
   PsiMethod resolveMethod();
 
   @NotNull
-  GroovyResolveResult[] getMethodVariants(@Nullable GrExpression upToArgument);
+  GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument);
 
   //PsiElement addNamedArgument(GrNamedArgument argument);
 }

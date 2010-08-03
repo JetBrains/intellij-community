@@ -1,0 +1,18 @@
+PsiJavaFile:SwitchLabelsIncomplete3.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiSwitchLabelStatement
+      PsiKeyword:default('default')
+      PsiErrorElement:':' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiExpressionStatement
+      PsiLiteralExpression:3
+        PsiJavaToken:INTEGER_LITERAL('3')
+      PsiErrorElement:';' expected
+        <empty list>
+    PsiErrorElement:Unexpected token
+      PsiJavaToken:COLON(':')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

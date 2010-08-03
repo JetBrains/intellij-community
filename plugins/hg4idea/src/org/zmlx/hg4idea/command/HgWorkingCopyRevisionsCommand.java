@@ -47,6 +47,7 @@ public class HgWorkingCopyRevisionsCommand {
     }
   }
 
+  @Nullable
   public HgRevisionNumber tip(@NotNull VirtualFile repo) {
     List<HgRevisionNumber> tips = getRevisions(repo, "tip");
     if (tips.size() > 1) {
@@ -58,13 +59,17 @@ public class HgWorkingCopyRevisionsCommand {
     else return null;
   }
 
+  @Nullable
   public HgRevisionNumber identify(@NotNull VirtualFile repo) {
     HgCommandService commandService = HgCommandService.getInstance(project);
     HgCommandResult result = commandService.execute(
       repo, "identify", Arrays.asList("--num", "--id")
     );
-    List<String> lines = result.getOutputLines();
-    if (!lines.isEmpty()) {
+    if (result == null) {
+      return null;
+    }
+    final List<String> lines = result.getOutputLines();
+    if (lines != null && !lines.isEmpty()) {
       String[] parts = StringUtils.split(lines.get(0), ' ');
       if (parts.length >= 2) {
         return HgRevisionNumber.getInstance(parts[1], parts[0]);
@@ -73,11 +78,16 @@ public class HgWorkingCopyRevisionsCommand {
     return null;
   }
 
+  @NotNull
   private List<HgRevisionNumber> getRevisions(VirtualFile repo, String command) {
     HgCommandService commandService = HgCommandService.getInstance(project);
     HgCommandResult result = commandService.execute(
       repo, command, Arrays.asList("--template", "{rev}|{node|short}\\n")
     );
+
+    if (result == null) {
+      return new ArrayList<HgRevisionNumber>(0);
+    }
     List<String> lines = result.getOutputLines();
     List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(lines.size());
     

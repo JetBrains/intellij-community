@@ -41,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrRefer
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.ArrayList;
 
@@ -146,7 +145,10 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
 
   @Nullable
   public GrExpression getInvokedExpression() {
-    return findChildByClass(GrExpression.class);
+    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrExpression) return (GrExpression)cur;
+    }
+    return null;
   }
 
   public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException {
@@ -187,17 +189,11 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
   }
 
   @NotNull
-  public GroovyResolveResult[] getMethodVariants(@Nullable GrExpression upToArgument) {
+  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpressionImpl)) return GroovyResolveResult.EMPTY_ARRAY;
 
-    final PsiType[] partialArgs = PsiUtil.getArgumentTypes(invoked, false, upToArgument);
-    final MethodResolverProcessor processor = ((GrReferenceExpressionImpl)invoked).runMethodResolverProcessor(partialArgs, true);
-    if (processor != null) {
-      return processor.getCandidates();
-    }
-
-    return GroovyResolveResult.EMPTY_ARRAY;
+    return ((GrReferenceExpressionImpl)invoked).getCallVariants(upToArgument);
   }
 
 }

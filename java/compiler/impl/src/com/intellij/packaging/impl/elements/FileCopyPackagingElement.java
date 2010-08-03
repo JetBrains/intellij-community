@@ -58,7 +58,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
   }
 
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new FileCopyPresentation(myFilePath, getOutputFileName(), context);
+    return new FileCopyPresentation(myFilePath, getOutputFileName());
   }
 
   @Override

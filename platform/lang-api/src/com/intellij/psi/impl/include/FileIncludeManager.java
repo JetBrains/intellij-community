@@ -18,9 +18,11 @@ package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,6 +38,8 @@ public abstract class FileIncludeManager {
 
   public abstract VirtualFile[] getIncludingFiles(VirtualFile file, boolean compileTimeOnly);
 
+  public abstract void processIncludingFiles(PsiFile context, Processor<Pair<VirtualFile, FileIncludeInfo>> processor);
+
   @Nullable
-  public abstract PsiFileSystemItem resolveFileReference(String text, PsiFile context);
+  public abstract PsiFileSystemItem resolveFileInclude(FileIncludeInfo info, PsiFile context);
 }

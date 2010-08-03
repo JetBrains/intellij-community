@@ -23,6 +23,7 @@
 package com.intellij.lang.injection;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -41,7 +42,7 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME;
 
   public static InjectedLanguageManager getInstance(Project project) {
-    return project.getComponent(InjectedLanguageManager.class);
+    return ServiceManager.getService(project, InjectedLanguageManager.class);
   }
 
   @Nullable

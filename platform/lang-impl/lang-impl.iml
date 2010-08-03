@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="platform-impl" exported="" />
     <orderEntry type="module" module-name="usageView" exported="" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 

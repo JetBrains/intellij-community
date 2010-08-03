@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
+import com.intellij.psi.impl.search.JavaDirectInheritorsSearcher;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -167,7 +168,15 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)element)) {
       if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
-    return JavaPsiFacade.getInstance(getProject()).findClass(myQualifiedName, getResolveScope());
+    return resolveClassPreferringMyJar();
+  }
+
+  private PsiClass resolveClassPreferringMyJar() {
+    PsiClass[] classes = JavaPsiFacade.getInstance(getProject()).findClasses(myQualifiedName, getResolveScope());
+    for (PsiClass aClass : classes) {
+      if (JavaDirectInheritorsSearcher.isFromTheSameJar(aClass, this)) return aClass;
+    }
+    return classes.length == 0 ? null : classes[0];
   }
 
   public void processVariants(PsiScopeProcessor processor) {

@@ -1,0 +1,11 @@
+PsiJavaFile:SwitchIncomplete1.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiSwitchStatement
+      PsiKeyword:switch('switch')
+      PsiJavaToken:LPARENTH('(')
+      PsiErrorElement:Expression expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

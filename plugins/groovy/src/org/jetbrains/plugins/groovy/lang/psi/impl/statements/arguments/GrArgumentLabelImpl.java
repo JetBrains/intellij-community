@@ -154,7 +154,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
             if (field != null) return field;
             final PropertyResolverProcessor processor = new PropertyResolverProcessor(propName, this);
             ResolveUtil
-              .processNonCodeMethods(JavaPsiFacade.getElementFactory(getProject()).createType(clazz), processor, this, false);
+              .processNonCodeMethods(JavaPsiFacade.getElementFactory(getProject()).createType(clazz), processor, this);
             final GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length == 0) return null;
             return candidates[0].getElement();

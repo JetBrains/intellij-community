@@ -34,12 +34,12 @@ public class JavaParser implements PsiParser {
 
   @NotNull
   public ASTNode parse(final IElementType rootType, final PsiBuilder builder) {
-    final PsiBuilder.Marker root = builder.mark();
     setLanguageLevel(builder, myLanguageLevel);
 
-    // parse
-
+    final PsiBuilder.Marker root = builder.mark();
+    FileParser.parse(builder);
     root.done(rootType);
+
     return builder.getTreeBuilt();
   }
 }

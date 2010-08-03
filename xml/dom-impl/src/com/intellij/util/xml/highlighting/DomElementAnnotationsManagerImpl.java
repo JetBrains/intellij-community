@@ -46,14 +46,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.xml.impl.DomApplicationComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager {
   public static final Object LOCK = new Object();
@@ -62,8 +60,6 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private static final Key<DomElementsProblemsHolderImpl> DOM_PROBLEM_HOLDER_KEY = Key.create("DomProblemHolder");
   private static final Key<CachedValue<Boolean>> CACHED_VALUE_KEY = Key.create("DomProblemHolderCachedValue");
   private final EventDispatcher<DomHighlightingListener> myDispatcher = EventDispatcher.create(DomHighlightingListener.class);
-
-  private final Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new THashMap<Class, List<DomElementsAnnotator>>();
 
   private static final DomElementsProblemsHolder EMPTY_PROBLEMS_HOLDER = new DomElementsProblemsHolder() {
     @NotNull
@@ -105,16 +101,12 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
 
   };
-  private final DomHighlightingHelperImpl myHighlightingHelper = new DomHighlightingHelperImpl(this);
   private final ModificationTracker myModificationTracker;
-  private final ProjectRootManager myProjectRootManager;
-  private final CachedValuesManager myCachedValuesManager;
+  private final Project myProject;
   private long myModificationCount;
   
-  public DomElementAnnotationsManagerImpl(Project project, final InspectionProfileManager inspectionProfileManager, ProjectRootManager projectRootManager,
-                                          final CachedValuesManager cachedValuesManager) {
-    myCachedValuesManager = cachedValuesManager;
-    myProjectRootManager = projectRootManager;
+  public DomElementAnnotationsManagerImpl(Project project) {
+    myProject = project;
     myModificationTracker = new ModificationTracker() {
       public long getModificationCount() {
         return myModificationCount;
@@ -129,6 +121,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
         dropAnnotationsCache();
       }
     };
+
+    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     inspectionProfileManager.addProfileChangeListener(profileChangeAdapter, project);
     Disposer.register(project, new Disposable() {
       public void dispose() {
@@ -161,9 +155,9 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     if (isHolderOutdated(element.getFile()) || holder == null) {
       holder = new DomElementsProblemsHolderImpl(element);
       rootTag.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
-      final CachedValue<Boolean> cachedValue = myCachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
+      final CachedValue<Boolean> cachedValue = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Boolean>() {
         public Result<Boolean> compute() {
-          return new Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myModificationTracker, myProjectRootManager);
+          return new Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myModificationTracker, ProjectRootManager.getInstance(myProject));
         }
       }, false);
       cachedValue.getValue();
@@ -211,31 +205,11 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return getProblemHolder(element);
   }
 
-  public void annotate(final DomElement element, final DomElementAnnotationHolder holder, final Class rootClass) {
-    final List<DomElementsAnnotator> list = getAnnotators(rootClass);
-    if (list != null) {
-      for (DomElementsAnnotator annotator : list) {
-        annotator.annotate(element, holder);
-      }
+  public static void annotate(final DomElement element, final DomElementAnnotationHolder holder, final Class rootClass) {
+    final DomElementsAnnotator annotator = DomApplicationComponent.getInstance().getAnnotator(rootClass);
+    if (annotator != null) {
+      annotator.annotate(element, holder);
     }
-  }
-
-
-  public final void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class<? extends DomElement> aClass) {
-    getOrCreateAnnotators(aClass).add(annotator);
-  }
-
-  private List<DomElementsAnnotator> getOrCreateAnnotators(final Class aClass) {
-    List<DomElementsAnnotator> annotators = getAnnotators(aClass);
-    if (annotators == null) {
-      myClass2Annotator.put(aClass, annotators = new ArrayList<DomElementsAnnotator>());
-    }
-    return annotators;
-  }
-
-  @Nullable
-  private List<DomElementsAnnotator> getAnnotators(final Class aClass) {
-    return myClass2Annotator.get(aClass);
   }
 
   public List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
@@ -256,7 +230,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   public DomHighlightingHelper getHighlightingHelper() {
-    return myHighlightingHelper;
+    return DomHighlightingHelperImpl.INSTANCE;
   }
 
   @NotNull

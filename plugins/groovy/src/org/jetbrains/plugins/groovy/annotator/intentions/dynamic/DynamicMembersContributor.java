@@ -18,11 +18,11 @@ public class DynamicMembersContributor extends NonCodeMembersContributor {
     final DynamicManager manager = DynamicManager.getInstance(place.getProject());
     for (String qName : ResolveUtil.getAllSuperTypes(qualifierType, place).keySet()) {
       for (PsiMethod method : manager.getMethods(qName)) {
-        if (!ResolveUtil.processElement(processor, method)) return;
+        if (!ResolveUtil.processElement(processor, method, state)) return;
       }
 
       for (PsiVariable var : manager.getProperties(qName)) {
-        if (!ResolveUtil.processElement(processor, var)) return;
+        if (!ResolveUtil.processElement(processor, var, state)) return;
       }
     }
   }

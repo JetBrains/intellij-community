@@ -32,16 +32,6 @@ import java.util.List;
  */
 public class SoftWrapDocumentChangeManager {
 
-  /**
-   * Holds logical lines where soft wraps should be removed.
-   * <p/>
-   * The general idea is to do the following:
-   * <ul>
-   *   <li>listen for document changes, mark all soft wraps that belong to modified logical line as <code>'dirty'</code>;</li>
-   *   <li>remove soft wraps marked as 'dirty' on repaint;</li>
-   * </ul>
-   */
-  private final TIntHashSet          myDirtyLines      = new TIntHashSet();
   private final List<DeferredChange> myDeferredChanges = new ArrayList<DeferredChange>();
 
   private final SoftWrapsStorage myStorage;
@@ -76,20 +66,19 @@ public class SoftWrapDocumentChangeManager {
     // Update offsets for soft wraps that remain after the changed line(s).
     List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
     for (DeferredChange change : myDeferredChanges) {
-      if (change.startLine >= document.getLineCount()) {
+      if (change.startOffset >= document.getTextLength()) {
         continue;
       }
-      int index = myStorage.getSoftWrapIndex(document.getLineStartOffset(change.startLine));
+      int index = myStorage.getSoftWrapIndex(change.startOffset);
       if (index < 0) {
         index = -index -1;
       }
       for (int i = index; i < softWraps.size(); i++) {
         TextChangeImpl softWrap = softWraps.get(i);
-        if (softWrap.getStart() >= document.getTextLength()) {
+        if (softWrapsToRemoveIndices.contains(i)) {
           continue;
         }
-        int softWrapLine = document.getLineNumber(softWrap.getStart());
-        if (myDirtyLines.contains(softWrapLine)) {
+        if (softWrap.getStart() < change.endOffset || softWrap.getStart() >= document.getTextLength()) {
           softWrapsToRemoveIndices.add(i);
           continue;
         }
@@ -106,44 +95,38 @@ public class SoftWrapDocumentChangeManager {
       }
     });
 
-    myDirtyLines.clear();
     myDeferredChanges.clear();
   }
 
-  private void init(Document document) {
+  private void init(final Document document) {
     document.addDocumentListener(new LineOrientedDocumentChangeAdapter() {
       @Override
       public void beforeDocumentChange(int startLine, int endLine, int symbolsDifference) {
+        myDeferredChanges.add(
+          new DeferredChange(document.getLineStartOffset(startLine), document.getLineEndOffset(endLine), symbolsDifference)
+        );
       }
 
       @Override
       public void afterDocumentChange(int startLine, int endLine, int symbolsDifference) {
-        updateDeferredData(startLine, endLine, symbolsDifference);
       }
     });
   }
 
-  private void updateDeferredData(int startLine, int endLine, int symbolsDifference) {
-    for (int i = startLine; i <= endLine; i++) {
-      myDirtyLines.add(i);
-    }
-    myDeferredChanges.add(new DeferredChange(startLine, endLine, symbolsDifference));
-  }
-
   private static class DeferredChange {
-    final int startLine;
-    final int endLine;
+    final int startOffset;
+    final int endOffset;
     final int symbolsDifference;
 
-    DeferredChange(int startLine, int endLine, int symbolsDifference) {
-      this.startLine = startLine;
-      this.endLine = endLine;
+    DeferredChange(int startOffset, int endOffset, int symbolsDifference) {
+      this.startOffset = startOffset;
+      this.endOffset = endOffset;
       this.symbolsDifference = symbolsDifference;
     }
 
     @Override
     public String toString() {
-      return startLine + "-" + endLine + ": " + symbolsDifference;
+      return startOffset + "-" + endOffset + ": " + symbolsDifference;
     }
   }
 }

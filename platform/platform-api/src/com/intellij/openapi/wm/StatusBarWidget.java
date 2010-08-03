@@ -33,7 +33,7 @@ import java.awt.event.MouseEvent;
  */
 public interface StatusBarWidget extends Disposable {
 
-  enum Type {
+  enum PlatformType {
     DEFAULT, MAC
   }
 
@@ -75,7 +75,7 @@ public interface StatusBarWidget extends Disposable {
   String ID();
 
   @Nullable
-  WidgetPresentation getPresentation(@NotNull Type type);
+  WidgetPresentation getPresentation(@NotNull PlatformType type);
 
   void install(@NotNull final StatusBar statusBar);
 
