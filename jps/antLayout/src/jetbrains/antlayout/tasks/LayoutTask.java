@@ -33,6 +33,10 @@ public class LayoutTask extends Task {
         containers.add(container);
     }
 
+    public void addExtractedDir(ExtractedDirContent content) {
+        containers.add(content);
+    }
+
     public void addModule(IdeaModule module) {
         containers.add(new FileSetContainer(module));
     }

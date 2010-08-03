@@ -40,6 +40,17 @@ class DirectoryCopyElement extends LayoutElement {
   }
 }
 
+class ExtractedDirectoryElement extends LayoutElement {
+  String jarPath
+  String pathInJar
+
+  def build(Project project) {
+    if (new File(jarPath).isFile()) {
+      project.binding.ant.extractedDir(jarPath:jarPath, pathInJar: pathInJar)
+    }
+  }
+}
+
 class ModuleOutputElement extends LayoutElement {
   String moduleName
 

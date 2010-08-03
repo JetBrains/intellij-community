@@ -44,6 +44,10 @@ public abstract class Container extends Content {
         children.add(container);
     }
 
+    public void addExtractedDir(ExtractedDirContent content) {
+        children.add(content);
+    }
+
     public void addContainer(Container container) {
         children.add(container);
     }

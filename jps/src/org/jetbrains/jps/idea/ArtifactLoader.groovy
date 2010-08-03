@@ -40,6 +40,14 @@ class ArtifactLoader {
           project.warning("Error in '$artifactName' artifact: directory '$path' doesn't exist")
         }
         return new DirectoryCopyElement(dirPath: path);
+      case "extracted-dir":
+        def jarPath = loader.expandProjectMacro(tag."@path")
+        String pathInJar = tag."@path-in-jar"
+        if (pathInJar == null) pathInJar = "/"
+        if (!new File(pathInJar).exists()) {
+          project.warning("Error in '$artifactName' artifact: file '$jarPath' doesn't exist")
+        }
+        return new ExtractedDirectoryElement(jarPath: jarPath, pathInJar: pathInJar)
       case "javaee-facet-resources":
         return new JavaeeFacetResourcesElement(facetId: tag."@facet");
       case "javaee-facet-classes":

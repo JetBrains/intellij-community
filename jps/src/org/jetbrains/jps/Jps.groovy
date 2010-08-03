@@ -59,6 +59,12 @@ final class Jps {
         }
         binding.ant."renamedFile"(filePath: args[0], newName: args[1])
       })
+      binding.setVariable("extractedDir", {Object[] args ->
+        if (args.length != 2) {
+          project.error("unexpected number of parameters for extractedDir")
+        }
+        binding.ant."extractedDir"(jarPath: args[0], pathInJar: args[1])
+      })
 
       try {
         def meta = new Expando()
