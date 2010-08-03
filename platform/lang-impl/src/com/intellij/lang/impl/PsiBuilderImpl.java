@@ -79,7 +79,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private boolean myDebugMode = false;
   private ASTNode myOriginalTree = null;
   private int myLexemeCount = 0;
-  boolean myTokenTypeChecked;
+  private boolean myTokenTypeChecked;
+  private ITokenTypeRemapper myRemapper;
 
   private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
 
@@ -105,7 +106,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @NonNls private static final String UNBALANCED_MESSAGE =
     "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
-  private ITokenTypeRemapper myRemapper;
 
   public static void registerWhitespaceToken(IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
