@@ -1263,9 +1263,12 @@ public class HighlightMethodUtil {
               return;
             }
             highlightInfo = GenericsHighlightUtil.checkGenericCallWithRawArguments(result, (PsiCallExpression)constructorCall);
-          }
-          if (highlightInfo != null) {
-            holder.add(highlightInfo);
+            if (highlightInfo != null) {
+              holder.add(highlightInfo);
+            }
+            if (PsiUtil.isLanguageLevel7OrHigher(constructorCall)) {
+              //check if not diamand - apply corresponding fix
+            }
           }
         }
       }

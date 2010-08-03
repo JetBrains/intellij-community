@@ -67,6 +67,7 @@ public interface JavaElementType {
 
   IElementType IMPORT_STATIC_REFERENCE = new IJavaElementType("IMPORT_STATIC_REFERENCE");
   IElementType TYPE = new IJavaElementType("TYPE");
+  IElementType DIAMOND_TYPE = new IJavaElementType("DIAMOND_TYPE");
   IElementType REFERENCE_PARAMETER_LIST = new IJavaElementType("REFERENCE_PARAMETER_LIST", true);
   IElementType JAVA_CODE_REFERENCE = new IJavaElementType("JAVA_CODE_REFERENCE");
   IElementType PACKAGE_STATEMENT = new IJavaElementType("PACKAGE_STATEMENT");

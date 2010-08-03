@@ -61,7 +61,7 @@ public class Parsing  {
     lexer.start(buffer, startOffset, endOffset);
 
     JavaParsingContext context = new JavaParsingContext(table, LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
-    CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false, true, false);
+    CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false, true, false, false);
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     if (ref == null) {
       if (!eatAll) return null;
@@ -85,7 +85,7 @@ public class Parsing  {
   }
 
   public CompositeElement parseJavaCodeReference(Lexer lexer, boolean allowIncomplete, final boolean parseParameterList,
-                                                 boolean parseAnnotations) {
+                                                 boolean parseAnnotations, boolean parseNewExpression) {
     CompositeElement refElement = ASTFactory.composite(JavaElementType.JAVA_CODE_REFERENCE);
     LexerPosition beforeAnnos = lexer.getCurrentPosition();
     if (parseAnnotations) {
@@ -102,7 +102,7 @@ public class Parsing  {
     refElement.rawAddChildren(identifier);
     CompositeElement parameterList;
     if (parseParameterList) {
-      parameterList = parseReferenceParameterList(lexer, true);
+      parameterList = parseReferenceParameterList(lexer, true, parseNewExpression);
     }
     else {
       parameterList = ASTFactory.composite(JavaElementType.REFERENCE_PARAMETER_LIST);
@@ -136,7 +136,7 @@ public class Parsing  {
       refElement1.rawAddChildren(identifier);
       CompositeElement parameterList1;
       if (parseParameterList) {
-        parameterList1 = parseReferenceParameterList(lexer, true);
+        parameterList1 = parseReferenceParameterList(lexer, true, parseNewExpression);
       }
       else {
         parameterList1 = ASTFactory.composite(JavaElementType.REFERENCE_PARAMETER_LIST);
@@ -148,14 +148,14 @@ public class Parsing  {
     return refElement;
   }
 
-  public CompositeElement parseReferenceParameterList(Lexer lexer, boolean allowWildcard) {
+  public CompositeElement parseReferenceParameterList(Lexer lexer, boolean allowWildcard, boolean allowDiamonds) {
     final CompositeElement list = ASTFactory.composite(JavaElementType.REFERENCE_PARAMETER_LIST);
     if (lexer.getTokenType() != JavaTokenType.LT) return list;
     final TreeElement lt = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
     list.rawAddChildren(lt);
     lexer.advance();
     while (true) {
-      final CompositeElement typeElement = parseType(lexer, true, allowWildcard);
+      final CompositeElement typeElement = parseType(lexer, true, allowWildcard, allowDiamonds);
       if (typeElement != null) {
         list.rawAddChildren(typeElement);
       }
@@ -199,7 +199,7 @@ public class Parsing  {
   }
 
   public CompositeElement parseTypeWithEllipsis(Lexer lexer, boolean eatLastDot, boolean allowWilcard) {
-    CompositeElement type = parseType(lexer, eatLastDot, allowWilcard);
+    CompositeElement type = parseType(lexer, eatLastDot, allowWilcard, false);
     if (type == null) return null;
     if (lexer.getTokenType() == JavaTokenType.ELLIPSIS) {
       CompositeElement type1 = ASTFactory.composite(JavaElementType.TYPE);
@@ -217,7 +217,7 @@ public class Parsing  {
   }
 
   public CompositeElement parseType(Lexer lexer){
-    return parseType(lexer, true, true);
+    return parseType(lexer, true, true, false);
   }
 
   protected void parseAnnotationListTo(@NotNull Lexer lexer, @Nullable CompositeElement element) {
@@ -229,7 +229,7 @@ public class Parsing  {
     }
   }
 
-  public CompositeElement parseType(Lexer lexer, boolean eatLastDot, boolean allowWildcard){
+  public CompositeElement parseType(Lexer lexer, boolean eatLastDot, boolean allowWildcard, boolean allowDiamonds){
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) {
       return null;
@@ -244,10 +244,15 @@ public class Parsing  {
       lexer.advance();
     }
     else if (tokenType == JavaTokenType.IDENTIFIER){
-      refElement = parseJavaCodeReference(lexer, eatLastDot, true, false);
+      refElement = parseJavaCodeReference(lexer, eatLastDot, true, false, allowDiamonds);
     }
     else if (allowWildcard && lexer.getTokenType() == JavaTokenType.QUEST) {
       return parseWildcardType(lexer);
+    }
+    else if (allowDiamonds && lexer.getTokenType() == JavaTokenType.GT) {
+      final CompositeElement typeElement = ASTFactory.composite(JavaElementType.TYPE);
+      typeElement.rawAddChildren(ASTFactory.composite(JavaElementType.DIAMOND_TYPE));
+      return typeElement;
     }
     else {
       return null;
@@ -304,7 +309,7 @@ public class Parsing  {
     if (lexer.getTokenType() == JavaTokenType.SUPER_KEYWORD || lexer.getTokenType() == JavaTokenType.EXTENDS_KEYWORD) {
       type.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
-      CompositeElement boundType = parseType(lexer, true, false);
+      CompositeElement boundType = parseType(lexer, true, false, false);
       if (boundType != null) {
         type.rawAddChildren(boundType);
       }

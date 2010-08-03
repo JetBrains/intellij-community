@@ -119,7 +119,7 @@ public class TypeConversionUtil {
   private static boolean isNarrowingReferenceConversionAllowed(PsiType fromType, PsiType toType) {
     if (toType instanceof PsiPrimitiveType || fromType instanceof PsiPrimitiveType) return fromType.equals(toType);
     //Done with primitives
-
+    if (toType instanceof PsiDiamondType || fromType instanceof PsiDiamondType) return false;
     if (toType instanceof PsiArrayType && !(fromType instanceof PsiArrayType)) {
       if (fromType instanceof PsiClassType) {
         final PsiClass resolved = ((PsiClassType)fromType).resolve();
