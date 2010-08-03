@@ -16,12 +16,13 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.CharBuffer;
 import java.util.List;
 
 /**
@@ -33,118 +34,44 @@ import java.util.List;
  */
 public class SoftWrapDataMapper {
 
-  private final CharBuffer myCharBuffer = CharBuffer.allocate(1);
+  private final EditorTextRepresentationHelper myTextRepresentationHelper;
+  private final EditorEx                       myEditor;
+  private final SoftWrapsStorage               myStorage;
+  //private final FontTypeProvider               myFontTypeProvider;
 
-  private final Editor           myEditor;
-  private final SoftWrapsStorage myStorage;
+  //public SoftWrapDataMapper(EditorEx editor,
+  //                          SoftWrapsStorage storage,
+  //                          EditorTextRepresentationHelper textRepresentationHelper)
+  //{
+  //  this(editor, storage, textRepresentationHelper, new IterationStateFontTypeProvider(editor));
+  //}
 
-  public SoftWrapDataMapper(Editor editor, SoftWrapsStorage storage) {
+  public SoftWrapDataMapper(EditorEx editor,
+                            SoftWrapsStorage storage,
+                            EditorTextRepresentationHelper textRepresentationHelper/*,
+                            FontTypeProvider fontTypeProvider*/)
+  {
     myEditor = editor;
     myStorage = storage;
+    myTextRepresentationHelper = textRepresentationHelper;
+    //myFontTypeProvider = fontTypeProvider;
   }
 
   @NotNull
-  public LogicalPosition adjustLogicalPosition(@NotNull LogicalPosition defaultLogical, @NotNull VisualPosition visual) {
-    Document document = myEditor.getDocument();
-    int maxOffset = document.getLineEndOffset(Math.min(defaultLogical.line, document.getLineCount() - 1));
+  public LogicalPosition visualToLogical(@NotNull VisualPosition visual) {
+    return toLogical(new VisualPositionBasedStrategy(visual));
+  }
 
-    // This index points to registered soft wrap that is guaranteed to be located after the target visual line.
-    int endIndex = myStorage.getSoftWrapIndex(maxOffset + 1);
-    if (endIndex < 0) {
-      endIndex = -endIndex - 1;
-    }
+  @NotNull
+  public LogicalPosition offsetToLogicalPosition(int offset) {
+    OffsetBasedStrategy strategy = new OffsetBasedStrategy(myTextRepresentationHelper, myEditor.getDocument(), offset);
+    return toLogical(strategy);
+  }
 
-    int softWrapLinesBeforeCurrentLogicalLine = 0;
-    int softWrapLinesOnCurrentLogicalLine = 0;
-    int lastSoftWrapLogicalLine = -1;
-
-    FoldingModel foldingModel = myEditor.getFoldingModel();
-    int i = 0;
-    List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
-    int max = Math.min(softWraps.size(), endIndex);
-    for (; i < max; i++) {
-      TextChange softWrap = softWraps.get(i);
-      if (foldingModel.isOffsetCollapsed(softWrap.getStart())) {
-        continue;
-      }
-
-      int currentSoftWrapLineFeeds = StringUtil.countNewLines(softWrap.getText());
-      int softWrapLine = document.getLineNumber(softWrap.getStart());
-      int visualLineBeforeSoftWrapAppliance = myEditor.logicalToVisualPosition(new LogicalPosition(softWrapLine, 0)).line
-                                              + softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine;
-      if (visualLineBeforeSoftWrapAppliance > visual.line) {
-        softWrapLinesBeforeCurrentLogicalLine += softWrapLinesOnCurrentLogicalLine;
-        int logicalLine = defaultLogical.line - softWrapLinesBeforeCurrentLogicalLine;
-        LogicalPosition foldingUnawarePosition = new LogicalPosition(
-          logicalLine, defaultLogical.column, softWrapLinesBeforeCurrentLogicalLine, 0, 0, 0, 0
-        );
-        return adjustFoldingData(foldingModel, foldingUnawarePosition);
-      }
-
-      if (lastSoftWrapLogicalLine >= 0 && lastSoftWrapLogicalLine != softWrapLine) {
-        softWrapLinesBeforeCurrentLogicalLine += softWrapLinesOnCurrentLogicalLine;
-        softWrapLinesOnCurrentLogicalLine = 0;
-      }
-      lastSoftWrapLogicalLine = softWrapLine;
-
-      int visualLineAfterSoftWrapAppliance = visualLineBeforeSoftWrapAppliance + currentSoftWrapLineFeeds;
-      if (visualLineAfterSoftWrapAppliance < visual.line) {
-        softWrapLinesOnCurrentLogicalLine += currentSoftWrapLineFeeds;
-        continue;
-      }
-
-      // If we're here that means that current soft wrap affects logical line that is matched to the given visual line.
-      // We iterate from the logical line start then in order to calculate resulting logical position.
-      Context context = new Context(
-        defaultLogical, visual, softWrapLinesBeforeCurrentLogicalLine, softWrapLinesOnCurrentLogicalLine,
-        visualLineBeforeSoftWrapAppliance, foldingModel
-      );
-      int startLineOffset = document.getLineStartOffset(softWrapLine);
-      int endLineOffset = document.getLineEndOffset(softWrapLine);
-      CharSequence documentText = document.getCharsSequence();
-      for (int j = startLineOffset; j < endLineOffset; j++) {
-
-        // Process soft wrap at the current offset if any.
-        TextChange softWrapToProcess = myStorage.getSoftWrap(j);
-        if (softWrapToProcess != null && j >= softWrap.getStart()) {
-          CharSequence softWrapText = softWrapToProcess.getText();
-          for (int k = 0; k < softWrapText.length(); k++) {
-            LogicalPosition result = context.onSoftWrapSymbol(softWrapText.charAt(k));
-            if (result != null) {
-              return result;
-            }
-          }
-          // Emulate 'after soft wrap' sign
-          //int afterSoftWrapColumns = myEditor.getSoftWrapModel().get
-          context.onSoftWrapSymbol('a');
-        }
-
-        // Process document symbol.
-        LogicalPosition result = context.onNonSoftWrapSymbol(documentText.charAt(j));
-        if (result != null) {
-          return result;
-        }
-      }
-
-      // If we are here that means that target visual position is located at virtual space after the line end.
-      int logicalLine = defaultLogical.line - softWrapLinesBeforeCurrentLogicalLine
-                        - context.softWrapLinesOnCurrentLineBeforeTargetSoftWrap - context.targetSoftWrapLines;
-      int logicalColumn = context.symbolsOnCurrentLogicalLine + visual.column - context.symbolsOnCurrentVisualLine;
-      int softWrapColumnDiff = visual.column - logicalColumn;
-      LogicalPosition foldingUnawarePosition = new LogicalPosition(
-        logicalLine, logicalColumn, softWrapLinesBeforeCurrentLogicalLine,
-        context.softWrapLinesOnCurrentLineBeforeTargetSoftWrap + context.targetSoftWrapLines, softWrapColumnDiff, 0, 0
-      );
-      return adjustFoldingData(foldingModel, foldingUnawarePosition);
-    }
-
-    // If we are here that means that there is no soft wrap on a logical line that corresponds to the target visual line.
-    softWrapLinesBeforeCurrentLogicalLine += softWrapLinesOnCurrentLogicalLine;
-    int logicalLine = defaultLogical.line - softWrapLinesBeforeCurrentLogicalLine;
-    LogicalPosition foldingUnaware = new LogicalPosition(
-      logicalLine, defaultLogical.column, softWrapLinesBeforeCurrentLogicalLine, 0, 0, 0, 0
-    );
-    return adjustFoldingData(foldingModel, foldingUnaware);
+  @NotNull
+  private LogicalPosition toLogical(LogicalPositionCalculatorStrategy strategy) {
+    LogicalPositionCalculator calculator = new LogicalPositionCalculator(strategy);
+    return calculator.calculate();
   }
 
   @NotNull
@@ -172,7 +99,6 @@ public class SoftWrapDataMapper {
     int lineDiff = 0;
     int column = -1;
 
-    FoldingModel foldingModel = myEditor.getFoldingModel();
     int targetLogicalLineStartOffset = myEditor.logicalPositionToOffset(new LogicalPosition(logical.line, 0));
     for (int i = endIndex; i >= 0; i--) {
       TextChange softWrap = softWraps.get(i);
@@ -181,7 +107,7 @@ public class SoftWrapDataMapper {
         continue;
       }
 
-      if (foldingModel.isOffsetCollapsed(softWrap.getStart())) {
+      if (!isVisible(softWrap)) {
         continue;
       }
 
@@ -207,369 +133,445 @@ public class SoftWrapDataMapper {
     return new VisualPosition(visual.line + lineDiff, columnToUse);
   }
 
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
-  public LogicalPosition offsetToLogicalPosition(int offset) {
-    Document document = myEditor.getDocument();
-    CharSequence chars = document.getCharsSequence();
-
-    int targetLine = document.getLineNumber(offset);
-    int targetLineStartOffset = document.getLineStartOffset(targetLine);
-
-    int softWrapIntroducedLinesBefore = 0;
-    int softWrapsOnCurrentLogicalLine = 0;
-    int symbolsOnCurrentLogicalLine = 0;
-    int symbolsOnCurrentVisibleLine = 0;
-    List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
-
-    // Retrieve information about logical position that is soft-wraps unaware.
-    LogicalPosition rawLineStartLogicalPosition = myEditor.offsetToLogicalPosition(targetLineStartOffset);
-
-    // Calculate number of soft wrap-introduced lines before the line that holds target offset.
-    int index = myStorage.getSoftWrapIndex(targetLineStartOffset);
-    if (index < 0) {
-      index = -index - 1;
-    }
-    int max = Math.min(index, softWraps.size());
-    for (int j = 0; j < max; j++) {
-      softWrapIntroducedLinesBefore += StringUtil.countNewLines(softWraps.get(j).getText());
-    }
-
+  private boolean isVisible(TextChange softWrap) {
     FoldingModel foldingModel = myEditor.getFoldingModel();
+    int start = softWrap.getStart();
 
-    // Return eagerly if there are no soft wraps before the target offset on a line that contains it.
-    if (max >= softWraps.size() || softWraps.get(max).getStart() > offset) {
-      int column = toVisualColumnSymbolsNumber(chars, targetLineStartOffset, offset, 0);
-      LogicalPosition foldingUnawarePosition = new LogicalPosition(
-        rawLineStartLogicalPosition.line, column, softWrapIntroducedLinesBefore, 0, 0, 0, 0
+    // There is a possible case that folding region starts just after soft wrap, i.e. soft wrap and folding region share the
+    // same offset. However, soft wrap is shown, hence, we also check offset just before the target one.
+    return !foldingModel.isOffsetCollapsed(start) || !foldingModel.isOffsetCollapsed(start - 1);
+  }
+
+  private static class Context implements Cloneable {
+
+    public int logicalLine;
+    public int logicalColumn;
+    public int visualLine;
+    public int visualColumn;
+    public int offset;
+    public int softWrapLinesBefore;
+    public int softWrapLinesCurrent;
+    public int softWrapColumnDiff;
+    public int foldedLines;
+    public int foldingColumnDiff;
+    public int x;
+
+    @NotNull
+    public LogicalPosition build() {
+      return new LogicalPosition(
+        logicalLine, logicalColumn, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumnDiff, foldedLines, foldingColumnDiff
       );
-      return adjustFoldingData(foldingModel, foldingUnawarePosition);
     }
 
-    // Calculate number of lines and columns introduced by soft wrap located at the line that holds target offset if any.
+    @Override
+    protected Context clone() {
+      Context result = new Context();
+      result.logicalLine = logicalLine;
+      result.logicalColumn = logicalColumn;
+      result.visualLine = visualLine;
+      result.visualColumn = visualColumn;
+      result.offset = offset;
+      result.softWrapLinesBefore = softWrapLinesBefore;
+      result.softWrapLinesCurrent = softWrapLinesCurrent;
+      result.softWrapColumnDiff = softWrapColumnDiff;
+      result.foldedLines = foldedLines;
+      result.foldingColumnDiff = foldingColumnDiff;
+      result.x = x;
+      return result;
+    }
 
+    private void onNewLine() {
+      softWrapLinesBefore += softWrapLinesCurrent;
+      softWrapLinesCurrent = 0;
+      softWrapColumnDiff = 0;
+      foldingColumnDiff = 0;
+    }
+  }
 
-    // We add '1' here in order to correctly process situation when there is soft wrap at target offset (it impacts resulting logical
-    // position but document symbol at that offset should not be count).
-    max = Math.min(chars.length(), offset + 1);
+  private class LogicalPositionCalculator {
 
-    for (int i = targetLineStartOffset; i < max; i++) {
-      FoldRegion region = foldingModel.getCollapsedRegionAtOffset(i);
-      if (region != null) {
-        // Assuming that folded region placeholder doesn't contain line feed symbols.
-        i = region.getEndOffset();
-        symbolsOnCurrentVisibleLine += region.getPlaceholderText().length();
-        continue;
-      }
+    public final LogicalPositionCalculatorStrategy strategy;
 
-      TextChange softWrap = myStorage.getSoftWrap(i);
-      if (softWrap != null) {
-        CharSequence softWrapText = softWrap.getText();
-        for (int j = 0; j < softWrapText.length(); j++) {
-          if (softWrapText.charAt(j) == '\n') {
-            softWrapsOnCurrentLogicalLine++;
-            symbolsOnCurrentVisibleLine = 0;
+    public Context context = new Context();
+
+    LogicalPositionCalculator(LogicalPositionCalculatorStrategy strategy) {
+      this.strategy = strategy;
+    }
+
+    @NotNull
+    public LogicalPosition calculate() {
+      FoldingProvider foldRegions = new FoldingProvider();
+      SoftWrapsProvider softWraps = new SoftWrapsProvider();
+
+      FoldRegion foldRegion = foldRegions.get();
+      TextChange softWrap = softWraps.get();
+
+      LogicalPosition result = null;
+      while (true) {
+        if (foldRegion == null && softWrap == null || strategy.exceeds(context)) {
+          return strategy.build(context);
+        }
+
+        if (foldRegion != null && softWrap != null) {
+          if (softWrap.getStart() <= foldRegion.getStartOffset()) {
+            result = process(softWrap);
+            softWrap = softWraps.get();
           }
           else {
-            symbolsOnCurrentVisibleLine++;
+            result = process(foldRegion);
+            foldRegion = foldRegions.get();
           }
         }
-        symbolsOnCurrentVisibleLine++; // For 'after soft wrap' sign.
+        else {
+          if (foldRegion != null) {
+            result = process(foldRegion);
+            foldRegion = foldRegions.get();
+          }
+          if (softWrap != null) {
+            result = process(softWrap);
+            softWrap = softWraps.get();
+          }
+        }
+        if (result != null) {
+          return result;
+        }
       }
-
-      // We don't want to count symbol at target offset.
-      if (i == offset) {
-        break;
-      }
-
-      // Assuming that no line feed is contained before target offset on a line that holds it.
-      int columnsForSymbol = toVisualColumnSymbolsNumber(chars.charAt(i), symbolsOnCurrentVisibleLine);
-      symbolsOnCurrentLogicalLine += columnsForSymbol;
-      symbolsOnCurrentVisibleLine += columnsForSymbol;
     }
 
-    LogicalPosition foldingUnawarePosition = new LogicalPosition(
-      rawLineStartLogicalPosition.line, symbolsOnCurrentLogicalLine, softWrapIntroducedLinesBefore, softWrapsOnCurrentLogicalLine,
-      symbolsOnCurrentVisibleLine - symbolsOnCurrentLogicalLine, 0, 0
-    );
-    return adjustFoldingData(foldingModel, foldingUnawarePosition);
+    @Nullable
+    private LogicalPosition process(@NotNull FoldRegion region) {
+      if (region.getStartOffset() > context.offset) {
+        Context newContext = advanceToOffset(region.getStartOffset());
+        if (strategy.exceeds(newContext)) {
+          return strategy.build(context);
+        }
+        context = newContext;
+      }
+
+      Document document = myEditor.getDocument();
+      CharSequence text = document.getCharsSequence();
+      int foldingStartLine = document.getLineNumber(region.getStartOffset());
+
+      Context afterFolding = context.clone();
+      afterFolding.logicalLine += document.getLineNumber(region.getEndOffset()) - foldingStartLine;
+      int visualColumnInc = region.getPlaceholderText().length();  // Assuming that no tabulations are used at placeholder.
+      afterFolding.visualColumn += visualColumnInc;
+
+      int i = CharArrayUtil.shiftBackwardUntil(text, region.getEndOffset() - 1, "\n");
+      // Process multi-line folding.
+      if (i >= region.getStartOffset()) {
+        int width = myTextRepresentationHelper.textWidth(text, i + 1, region.getEndOffset(), 0);
+        afterFolding.logicalColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(width);
+        afterFolding.x = width;
+        afterFolding.softWrapLinesBefore += afterFolding.softWrapLinesCurrent;
+        afterFolding.softWrapLinesCurrent = 0;
+        afterFolding.softWrapColumnDiff = 0;
+        afterFolding.foldedLines += document.getLineNumber(region.getEndOffset()) - foldingStartLine;
+        afterFolding.foldingColumnDiff = afterFolding.visualColumn - afterFolding.logicalColumn;
+      }
+      // Process single-line folding
+      else {
+        int width = myTextRepresentationHelper.textWidth(text, region.getStartOffset(), region.getEndOffset(), context.x);
+        int logicalColumnInc = myTextRepresentationHelper.toVisualColumnSymbolsNumber(width);
+        afterFolding.logicalColumn += logicalColumnInc;
+        afterFolding.x += width;
+        afterFolding.foldingColumnDiff += visualColumnInc - logicalColumnInc;
+      }
+      afterFolding.offset = region.getEndOffset();
+
+      if (!strategy.exceeds(afterFolding)) {
+        context = afterFolding;
+        return null;
+      }
+
+      return strategy.build(context, region);
+    }
+
+    @Nullable
+    private LogicalPosition process(@NotNull TextChange softWrap) {
+      Context newContext = advanceToOffset(softWrap.getStart());
+      if (strategy.exceeds(newContext)) {
+        return strategy.build(context);
+      }
+      Document document = myEditor.getDocument();
+      int lastUsedLogicalLine = document.getLineNumber(context.offset);
+      context = newContext;
+
+      // Create context that points to the soft wrap end visual position.
+      Context afterSoftWrap = context.clone();
+      int lineFeeds = StringUtil.countNewLines(softWrap.getText());
+      afterSoftWrap.visualLine += lineFeeds;
+      afterSoftWrap.visualColumn = myEditor.getSoftWrapModel().getSoftWrapIndentWidthInColumns(softWrap);
+      afterSoftWrap.x = myEditor.getSoftWrapModel().getSoftWrapIndentWidthInPixels(softWrap);
+      if (lastUsedLogicalLine == context.logicalLine) {
+        afterSoftWrap.softWrapLinesCurrent += lineFeeds;
+      }
+      else {
+        afterSoftWrap.softWrapLinesBefore += context.softWrapLinesCurrent;
+        afterSoftWrap.softWrapLinesCurrent = lineFeeds;
+      }
+      afterSoftWrap.softWrapColumnDiff = afterSoftWrap.visualColumn - afterSoftWrap.logicalColumn;
+      afterSoftWrap.foldingColumnDiff = 0;
+
+      if (!strategy.exceeds(afterSoftWrap)) {
+        context = afterSoftWrap;
+        return null;
+      }
+      return strategy.build(context, softWrap);
+    }
+
+    private Context advanceToOffset(int newOffset) {
+      Context result = context.clone();
+      if (result.offset == newOffset) {
+        return result;
+      }
+
+      Document document = myEditor.getDocument();
+      CharSequence text = document.getCharsSequence();
+      int lastUsedLogicalLine = document.getLineNumber(context.offset);
+      int currentLogicalLine = document.getLineNumber(newOffset);
+
+      // Update state to the offset that corresponds to the same logical line that was used last time.
+      if (currentLogicalLine == lastUsedLogicalLine) {
+        int width = myTextRepresentationHelper.textWidth(text, result.offset, newOffset, result.x);
+        int columnDiff = myTextRepresentationHelper.toVisualColumnSymbolsNumber(width);
+        result.x += width;
+        result.logicalColumn += columnDiff;
+        result.visualColumn += columnDiff;
+      }
+      // Update state to the start of the folding that doesn't belong to the same logical line that was used last time.
+      else {
+        int lineDiff = currentLogicalLine - lastUsedLogicalLine;
+        result.logicalLine += lineDiff;
+        result.visualLine += lineDiff;
+        int startLineOffset = document.getLineStartOffset(currentLogicalLine);
+        result.x = myTextRepresentationHelper.textWidth(text, startLineOffset, newOffset, result.x);
+        result.visualColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(result.x);
+        result.logicalColumn = result.visualColumn;
+        result.onNewLine();
+      }
+      result.offset = newOffset;
+      return result;
+    }
+  }
+
+  private interface LogicalPositionCalculatorStrategy {
+    boolean exceeds(Context context);
+    @NotNull LogicalPosition build(Context context);
+    @NotNull LogicalPosition build(Context context, FoldRegion region);
+    @NotNull LogicalPosition build(Context context, TextChange softWrap);
+  }
+
+  private static class VisualPositionBasedStrategy implements LogicalPositionCalculatorStrategy {
+
+    private final VisualPosition myTargetVisual;
+
+    VisualPositionBasedStrategy(VisualPosition visual) {
+      myTargetVisual = visual;
+    }
+
+    @Override
+    public boolean exceeds(Context context) {
+      return context.visualLine > myTargetVisual.line
+        || (context.visualLine == myTargetVisual.line && context.visualColumn > myTargetVisual.column);
+    }
+
+    @NotNull
+    @Override
+    public LogicalPosition build(Context context) {
+      if (context.visualLine == myTargetVisual.line) {
+        context.logicalColumn += myTargetVisual.column - context.visualColumn;
+        return context.build();
+      }
+      context.logicalLine += myTargetVisual.line - context.visualLine;
+      context.logicalColumn = myTargetVisual.column;
+      context.onNewLine();
+      return context.build();
+    }
+
+    @NotNull
+    @Override
+    public LogicalPosition build(Context context, FoldRegion region) {
+      // We just point to the logical position of folding region start if visual position points to collapsed fold region placeholder.
+      return context.build();
+    }
+
+    @NotNull
+    @Override
+    public LogicalPosition build(Context context, TextChange softWrap) {
+      if (myTargetVisual.line == context.visualLine) {
+        context.softWrapColumnDiff = myTargetVisual.column - context.logicalColumn - context.foldingColumnDiff;
+      }
+      else {
+        context.foldingColumnDiff = 0;
+        context.softWrapLinesCurrent += myTargetVisual.line - context.visualLine;
+        context.softWrapColumnDiff = myTargetVisual.column - context.logicalColumn;
+      }
+      return context.build();
+    }
+  }
+
+  private static class OffsetBasedStrategy implements LogicalPositionCalculatorStrategy {
+
+    private final EditorTextRepresentationHelper myRepresentationHelper;
+    private final Document                       myDocument;
+
+    private final int myOffset;
+
+    OffsetBasedStrategy(EditorTextRepresentationHelper representationHelper, Document document, int offset) {
+      myRepresentationHelper = representationHelper;
+      myDocument = document;
+      myOffset = offset;
+    }
+
+    @Override
+    public boolean exceeds(Context context) {
+      return context.offset > myOffset;
+    }
+
+    @NotNull
+    @Override
+    public LogicalPosition build(Context context) {
+      int targetLogicalLine = myDocument.getLineNumber(myOffset);
+      if (targetLogicalLine == context.logicalLine) {
+        context.logicalColumn
+          += myRepresentationHelper.toVisualColumnSymbolsNumber(myDocument.getCharsSequence(), context.offset, myOffset, context.x);
+        return context.build();
+      }
+      context.logicalLine = targetLogicalLine;
+      int i = CharArrayUtil.shiftBackwardUntil(myDocument.getCharsSequence(), myOffset - 1, "\n");
+      if (i >= context.offset) {
+        context.logicalColumn = myRepresentationHelper.toVisualColumnSymbolsNumber(myDocument.getCharsSequence(), i + 1, myOffset, 0);
+      }
+      else {
+        context.logicalColumn
+          = myRepresentationHelper.toVisualColumnSymbolsNumber(myDocument.getCharsSequence(), context.offset, myOffset, context.x);
+      }
+      context.onNewLine();
+      return context.build();
+    }
+
+    @NotNull
+    @Override
+    public LogicalPosition build(Context context, FoldRegion region) {
+      // We want to return logical position that corresponds to the visual start of the given folding region.
+      int startLine = myDocument.getLineNumber(region.getStartOffset());
+      int endLine = myDocument.getLineNumber(myOffset);
+      int lineFeeds = endLine - startLine;
+
+      if (lineFeeds > 0) {
+        context.logicalLine += lineFeeds;
+        context.foldedLines += lineFeeds;
+        context.onNewLine();
+        int i = CharArrayUtil.shiftBackwardUntil(myDocument.getCharsSequence(), myOffset - 1, "\n");
+        context.logicalColumn = myRepresentationHelper.toVisualColumnSymbolsNumber(myDocument.getCharsSequence(), i + 1, myOffset, 0);
+        context.foldingColumnDiff = context.visualColumn - context.logicalColumn;
+      }
+      else {
+        int logicalColumns
+          = myRepresentationHelper.toVisualColumnSymbolsNumber(myDocument.getCharsSequence(), region.getStartOffset(), myOffset, context.x);
+        context.logicalColumn += logicalColumns;
+        context.foldingColumnDiff -= logicalColumns;
+      }
+      return context.build();
+    }
+
+    @NotNull
+    @Override
+    public LogicalPosition build(Context context, TextChange softWrap) {
+      assert false; // Don't expect soft wrap do affect offset-based mapping request.
+      return new LogicalPosition(0, 0);
+    }
   }
 
   /**
-   * Builds folding-aware logical position on the basis of the given folding-unaware position and folding model
-   *
-   * @param foldingModel    folding model to use for retrieving information about folding
-   * @param position        folding-unaware logical position
-   * @return                folding-aware logical position
+   * Strategy interface for providing font type to use during working with editor text.
+   * <p/>
+   * It's primary purpose is to relief unit testing.
    */
-  private LogicalPosition adjustFoldingData(FoldingModel foldingModel, LogicalPosition position) {
-    int offset = myEditor.logicalPositionToOffset(position);
-    int foldedLines = 0;
-    int foldColumnDiff = 0;
-    int softWrapColumnDiff = position.softWrapColumnDiff;
-    Document document = myEditor.getDocument();
-    int targetLine = document.getLineNumber(offset);
-    int lastFoldEndLogicalLine = -1;
-    for (FoldRegion foldRegion : foldingModel.getAllFoldRegions()) {
-      if (foldRegion.getStartOffset() >= offset) {
-        break;
-      }
+  //interface FontTypeProvider {
+  //  void init(int start);
+  //  int getFontType(int offset);
+  //  void cleanup();
+  //}
 
-      if (foldRegion.isExpanded() || !foldRegion.isValid()) {
-        continue;
-      }
+  //private static class IterationStateFontTypeProvider implements FontTypeProvider {
+  //
+  //  private final EditorEx myEditor;
+  //
+  //  private IterationState myState;
+  //  private int            myFontType;
+  //
+  //  private IterationStateFontTypeProvider(EditorEx editor) {
+  //    myEditor = editor;
+  //  }
+  //
+  //  @Override
+  //  public void init(int start) {
+  //    myState = new IterationState(myEditor, start, false);
+  //    myFontType = myState.getMergedAttributes().getFontType();
+  //  }
+  //
+  //  @Override
+  //  public int getFontType(int offset) {
+  //    if (offset >= myState.getEndOffset()) {
+  //      myState.advance();
+  //      myFontType = myState.getMergedAttributes().getFontType();
+  //    }
+  //    return myFontType;
+  //  }
+  //
+  //  @Override
+  //  public void cleanup() {
+  //    myState = null;
+  //  }
+  //}
 
-      int foldingStartLine = document.getLineNumber(foldRegion.getStartOffset());
-      int foldingEndLine = document.getLineNumber(foldRegion.getEndOffset());
-      foldedLines += Math.min(targetLine, foldingEndLine) - foldingStartLine;
+  private class SoftWrapsProvider {
 
-      // Process situation when target offset is located inside the folded region.
-      if (offset >= foldRegion.getStartOffset()) {
-        if (offset < foldRegion.getEndOffset()) {
-          // Our purpose is to define folding data in order to point to the visual folding start.
-          int visualFoldingStartColumn = calculateVisualFoldingStartColumn(foldRegion);
-          int diff = visualFoldingStartColumn - position.column - softWrapColumnDiff;
-          if (lastFoldEndLogicalLine == foldingStartLine) {
-            foldColumnDiff += diff;
-          }
-          else {
-            foldColumnDiff = diff;
-          }
-          return new LogicalPosition(
-            position.line, position.column, position.softWrapLinesBeforeCurrentLogicalLine, position.softWrapLinesOnCurrentLogicalLine,
-            softWrapColumnDiff, foldedLines, foldColumnDiff
-          );
-        }
+    private final List<? extends TextChange> mySoftWraps;
+    private int myIndex;
 
-        int diff = getFoldColumnDiff(foldRegion);
-        if (lastFoldEndLogicalLine == foldingStartLine) {
-          foldColumnDiff += diff;
-        }
-        else {
-          foldColumnDiff = diff;
-        }
-        lastFoldEndLogicalLine = foldingEndLine;
-      }
+    SoftWrapsProvider() {
+      mySoftWraps = myStorage.getSoftWraps();
     }
 
-    if (lastFoldEndLogicalLine != position.line) {
-      foldColumnDiff = 0;
-    }
-
-    return new LogicalPosition(
-      position.line, position.column, position.softWrapLinesBeforeCurrentLogicalLine, position.softWrapLinesOnCurrentLogicalLine,
-      softWrapColumnDiff, foldedLines, foldColumnDiff
-    );
-  }
-
-  private int getFoldColumnDiff(FoldRegion region) {
-    int visualFoldingStartColumn = calculateVisualFoldingStartColumn(region);
-    LogicalPosition foldEndLogical = myEditor.offsetToLogicalPosition(region.getEndOffset());
-    // Assuming that there is no tabulations symbols at placeholder text.
-    int foldingPlaceholderWidth = region.getPlaceholderText().length();
-    return visualFoldingStartColumn + foldingPlaceholderWidth - foldEndLogical.column;
-  }
-
-  private int calculateVisualFoldingStartColumn(FoldRegion region) {
-    Document document = myEditor.getDocument();
-    int foldingStartOffset = region.getStartOffset();
-    int logicalLine = document.getLineNumber(foldingStartOffset);
-    int logicalLineStartOffset = document.getLineStartOffset(logicalLine);
-
-    int softWrapIndex = myStorage.getSoftWrapIndex(logicalLineStartOffset);
-    if (softWrapIndex < 0) {
-      softWrapIndex = -softWrapIndex - 1;
-    }
-
-    List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
-    int startOffsetOfVisualLineWithFoldingStart = logicalLineStartOffset;
-    int softWrapOffsetInColumns = 0;
-    for (; softWrapIndex < softWraps.size(); softWrapIndex++) {
-      TextChange softWrap = softWraps.get(softWrapIndex);
-      if (softWrap.getStart() >= foldingStartOffset) {
-        break;
+    @Nullable
+    public TextChange get() {
+      if (myIndex < 0 || myIndex >= mySoftWraps.size()) {
+        return null;
       }
-
-      startOffsetOfVisualLineWithFoldingStart = softWrap.getStart();
-      softWrapOffsetInColumns = numberOfSymbolsOnLastVisualLine(softWrap);
-    }
-
-    assert startOffsetOfVisualLineWithFoldingStart <= foldingStartOffset;
-    return EditorUtil.textWidthInColumns(
-      myEditor, document.getCharsSequence(), startOffsetOfVisualLineWithFoldingStart, foldingStartOffset, softWrapOffsetInColumns
-    );
-  }
-
-  private static int numberOfSymbolsOnLastVisualLine(TextChange textChange) {
-    int result = 0;
-    for (int i = textChange.getText().length() - 1; i >= 0; i--) {
-      if (i == '\n') {
+      TextChange result = mySoftWraps.get(myIndex++);
+      if (isVisible(result)) {
         return result;
       }
       else {
-        result++;
+        return get();
       }
     }
-    return result;
   }
 
-  private int toVisualColumnSymbolsNumber(char c, int offsetInColumns) {
-    myCharBuffer.clear();
-    myCharBuffer.put(c);
-    myCharBuffer.flip();
-    return toVisualColumnSymbolsNumber(myCharBuffer, 0, 1, offsetInColumns);
-  }
+  private class FoldingProvider {
 
-  private int toVisualColumnSymbolsNumber(CharSequence text, int start, int end, int offsetInColumns) {
-    int result = 0;
-    for (int i = start; i < end; i++) {
-      if (text.charAt(i) == '\t') {
-        result += EditorUtil.tabWidthInColumns(myEditor, offsetInColumns + result);
-      }
-      else {
-        result++;
-      }
-    }
-    return result;
-  }
+    private final FoldRegion[] myFoldRegions;
+    private int myIndex;
 
-  private class Context {
-
-    public final FoldingModel    foldingModel;
-    public final LogicalPosition softWrapUnawareLogicalPosition;
-    public final VisualPosition  targetVisualPosition;
-    public final int             softWrapLinesBefore;
-    public final int             visualLineBeforeSoftWrapAppliance;
-    public final int             softWrapLinesOnCurrentLineBeforeTargetSoftWrap;
-
-    public int targetSoftWrapLines;
-    public int symbolsOnCurrentLogicalLine;
-    public int symbolsOnCurrentVisualLine;
-    /**
-     * There is a possible case that single tabulation symbols is shown in more than one visual column (IntelliJ editor is configured
-     * to show white spaces and tabulations and tab size is more than one). We keep track in number of such excessive visual
-     * columns used to show tabulations on a current visual line.
-     */
-    public int excessiveTabColumns;
-
-    Context(LogicalPosition softWrapUnawareLogicalPosition, VisualPosition targetVisualPosition, int softWrapLinesBefore,
-            int softWrapLinesOnCurrentLineBeforeTargetSoftWrap, int visualLineBeforeSoftWrapAppliance, FoldingModel foldingModel)
-    {
-      this.softWrapUnawareLogicalPosition = softWrapUnawareLogicalPosition;
-      this.targetVisualPosition = targetVisualPosition;
-      this.softWrapLinesBefore = softWrapLinesBefore;
-      this.softWrapLinesOnCurrentLineBeforeTargetSoftWrap = softWrapLinesOnCurrentLineBeforeTargetSoftWrap;
-      this.visualLineBeforeSoftWrapAppliance = visualLineBeforeSoftWrapAppliance;
-      this.foldingModel = foldingModel;
+    FoldingProvider() {
+      myFoldRegions = myEditor.getFoldingModel().fetchTopLevel();
     }
 
-    /**
-     * Updates current context within the soft wrap symbol.
-     *
-     * @param c   soft wrap symbol to process
-     * @return    logical position that matches target visual position if given symbol processing makes it possible to calculate it;
-     *            <code>null</code> otherwise
-     */
     @Nullable
-    public LogicalPosition onSoftWrapSymbol(char c) {
-      // Process line feed inside soft wrap.
-      if (c == '\n') {
-        if (targetVisualPosition.line == visualLineBeforeSoftWrapAppliance + targetSoftWrapLines) {
-          return build(targetVisualPosition.column - symbolsOnCurrentLogicalLine);
-        }
-        else {
-          targetSoftWrapLines++;
-          symbolsOnCurrentVisualLine = 0;
-          excessiveTabColumns = 0;
-          return null;
-        }
-      }
-
-      // Just update information about tracked symbols number if current visual line is too low.
-      if (targetVisualPosition.line > visualLineBeforeSoftWrapAppliance + targetSoftWrapLines) {
-        symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c, symbolsOnCurrentVisualLine);
+    public FoldRegion get() {
+      if (myFoldRegions == null || myIndex < 0 || myIndex >= myFoldRegions.length) {
         return null;
       }
-
-      // There is a possible case that, for example, target visual column is zero and it points to the soft-wrapped line,
-      // i.e. soft wrap are. We shouldn't count symbols then. Hence, we perform this preliminary examination with eager
-      // return if necessary.
-      if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
-        return build();
-      }
-
-      // Process non-line feed inside soft wrap.
-      symbolsOnCurrentVisualLine++; // Don't expect tabulation to be used inside soft wrap text.
-      if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
-        return build();
+      FoldRegion result = myFoldRegions[myIndex++];
+      if (result.isExpanded()) {
+        return get();
       }
       else {
-        return null;
+        return result;
       }
-    }
-
-    /**
-     * Updates current context within the non-soft wrap symbol.
-     *
-     * @param c   soft wrap symbol to process
-     * @return    logical position that matches target visual position if given symbol processing makes it possible to calculate it;
-     *            <code>null</code> otherwise
-     */
-    @Nullable
-    public LogicalPosition onNonSoftWrapSymbol(char c) {
-      // Don't expect line feed symbol to be delivered to this method in assumption that we process only one logical line here.
-      if (c == '\n') {
-        assert false;
-        return null;
-      }
-
-      // Just update information about tracked symbols number if current visual line is too low.
-      if (targetVisualPosition.line > visualLineBeforeSoftWrapAppliance + targetSoftWrapLines) {
-        int columnsForSymbol = toVisualColumnSymbolsNumber(c, symbolsOnCurrentVisualLine);
-        symbolsOnCurrentVisualLine += columnsForSymbol;
-        symbolsOnCurrentLogicalLine += columnsForSymbol;
-        return null;
-      }
-
-      // There is a possible case that, for example, target visual column is zero. We shouldn't count symbols then.
-      // Hence, we perform this preliminary examination with eager return if necessary.
-      if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
-        return build();
-      }
-
-      int columnsForSymbol = toVisualColumnSymbolsNumber(c, symbolsOnCurrentVisualLine);
-      int diffInColumns = targetVisualPosition.column - symbolsOnCurrentVisualLine;
-      int incrementToUse = columnsForSymbol;
-      if (columnsForSymbol >= diffInColumns) {
-        incrementToUse = Math.min(columnsForSymbol, diffInColumns);
-      }
-      symbolsOnCurrentVisualLine += incrementToUse;
-      symbolsOnCurrentLogicalLine += incrementToUse;
-
-      if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
-        return build();
-      }
-      else {
-        return null;
-      }
-    }
-
-    private LogicalPosition build() {
-      return build(symbolsOnCurrentVisualLine - symbolsOnCurrentLogicalLine);
-    }
-
-    private LogicalPosition build(int softWrapColumnDiff) {
-      int logicalLine = softWrapUnawareLogicalPosition.line - softWrapLinesBefore
-                        - softWrapLinesOnCurrentLineBeforeTargetSoftWrap - targetSoftWrapLines;
-      LogicalPosition foldingUnawareResult = new LogicalPosition(
-        logicalLine,
-        symbolsOnCurrentLogicalLine,
-        softWrapLinesBefore,
-        softWrapLinesOnCurrentLineBeforeTargetSoftWrap  + targetSoftWrapLines,
-        softWrapColumnDiff,
-        0,
-        0
-      );
-      return adjustFoldingData(foldingModel, foldingUnawareResult);
     }
   }
 }

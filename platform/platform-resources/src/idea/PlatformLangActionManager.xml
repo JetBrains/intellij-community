@@ -51,6 +51,7 @@
     <group id="InspectCodeGroup">
       <separator/>
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
 
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </group>

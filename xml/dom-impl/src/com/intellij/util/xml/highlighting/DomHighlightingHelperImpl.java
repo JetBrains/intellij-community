@@ -51,15 +51,15 @@ import java.util.List;
  * @author peter
  */
 public class DomHighlightingHelperImpl extends DomHighlightingHelper {
+  public static final DomHighlightingHelperImpl INSTANCE = new DomHighlightingHelperImpl();
   private final GenericValueReferenceProvider myProvider = new GenericValueReferenceProvider();
-  private final DomElementAnnotationsManagerImpl myAnnotationsManager;
-
-  public DomHighlightingHelperImpl(final DomElementAnnotationsManagerImpl annotationsManager) {
-    myAnnotationsManager = annotationsManager;
-  }
+  private final DomApplicationComponent myDomApplicationComponent = DomApplicationComponent.getInstance();
 
   public void runAnnotators(DomElement element, DomElementAnnotationHolder holder, Class<? extends DomElement> rootClass) {
-    myAnnotationsManager.annotate(element, holder, rootClass);
+    final DomElementsAnnotator annotator = myDomApplicationComponent.getAnnotator(rootClass);
+    if (annotator != null) {
+      annotator.annotate(element, holder);
+    }
   }
 
   @NotNull

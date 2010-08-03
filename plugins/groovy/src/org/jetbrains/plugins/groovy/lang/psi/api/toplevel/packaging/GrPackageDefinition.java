@@ -16,10 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging;
 
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -28,10 +25,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 /**
  * @author ilyas
  */
-public interface GrPackageDefinition
-  extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrTopStatement {
+public interface GrPackageDefinition extends GrTopStatement, PsiModifierListOwner {
+  @Nullable
   String getPackageName();
 
+  @Nullable
   GrCodeReferenceElement getPackageReference();
 
   @Nullable

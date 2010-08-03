@@ -98,7 +98,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private final AtomicBoolean myForceScrollToEnd = new AtomicBoolean(false);
   private final MergingUpdateQueue myUpdateQueue;
   private Runnable myUiUpdateRunnable;
+
   private Editor myFullEditor;
+  private ActionGroup myFullEditorActions;
 
   public LanguageConsoleImpl(final Project project, String title, final Language language) {
     myProject = project;
@@ -109,8 +111,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myEditorDocument = editorFactory.createDocument("");
     setLanguage(language);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
+    myConsoleEditor.setBackgroundColor(myConsoleEditor.getColorsScheme().getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
     myCurrentEditor = myConsoleEditor;
     myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), myProject);
+    myHistoryViewer.setBackgroundColor(myHistoryViewer.getColorsScheme().getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
     myPanel.add(myHistoryViewer.getComponent(), BorderLayout.NORTH);
     myPanel.add(myConsoleEditor.getComponent(), BorderLayout.CENTER);
     setupComponents();
@@ -151,8 +155,14 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
       myFullEditor = fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
       assert myFullEditor != null;
+      configureFullEditor();      
       fileManager.getCurrentWindow().setFilePinned(virtualFile, true);
     }
+  }
+
+  public void setFullEditorActions(ActionGroup actionGroup) {
+    myFullEditorActions = actionGroup;
+    configureFullEditor();
   }
 
   private void setupComponents() {
@@ -540,9 +550,18 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
         editorManager.closeFile(file);
         myFullEditor = editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
-        ((FileEditorManagerEx)editorManager).getCurrentWindow().setFilePinned(newVFile, true);        
+        configureFullEditor();
+        ((FileEditorManagerEx)editorManager).getCurrentWindow().setFilePinned(newVFile, true);
       }
     }
+  }
+
+  private void configureFullEditor() {
+    if (myFullEditor == null || myFullEditorActions == null) return;
+    final JPanel header = new JPanel(new BorderLayout());
+    header.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true).getComponent(), BorderLayout.EAST);
+    myFullEditor.setHeaderComponent(header);
+    myFullEditor.getSettings().setLineMarkerAreaShown(false);
   }
 
   public void setInputText(final String query) {

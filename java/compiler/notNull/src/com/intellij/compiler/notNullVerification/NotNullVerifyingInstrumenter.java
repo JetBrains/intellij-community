@@ -93,15 +93,13 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
         av = mv.visitParameterAnnotation(parameter,
                                          anno,
                                          visible);
-        if (isReferenceType(args[parameter])) {
-          if (anno.equals(NOT_NULL_ANNO)) {
-            myNotNullParams.add(new Integer(parameter));
-          }
-          else if (anno.equals("Ljava/lang/Synthetic;")) {
-            // See asm r1278 for what we do this,
-            // http://forge.objectweb.org/tracker/index.php?func=detail&aid=307392&group_id=23&atid=100023
-            mySyntheticCount++;
-          }
+        if (isReferenceType(args[parameter]) && anno.equals(NOT_NULL_ANNO)) {
+          myNotNullParams.add(new Integer(parameter));
+        }
+        else if (anno.equals("Ljava/lang/Synthetic;")) {
+          // See asm r1278 for what we do this,
+          // http://forge.objectweb.org/tracker/index.php?func=detail&aid=307392&group_id=23&atid=100023
+          mySyntheticCount++;
         }
         return av;
       }
@@ -197,9 +195,6 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
   private int getStartParameterIndex(final String name) {
     int result = 0;
     if (CONSTRUCTOR_NAME.equals(name)) {
-      if (mySuperName.equals(ENUM_CLASS_NAME)) {
-        result += 2;
-      }
       if (myIsNotStaticInner) {
         result += 1;
       }

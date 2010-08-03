@@ -102,8 +102,8 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   private ChangeSetBlock doReadBlock(int id) {
-    DataInputStream in = myStorage.readStream(id);
     try {
+      DataInputStream in = myStorage.readStream(id);
       try {
         int size = in.readInt();
         List<ChangeSet> changes = new ArrayList<ChangeSet>(size);

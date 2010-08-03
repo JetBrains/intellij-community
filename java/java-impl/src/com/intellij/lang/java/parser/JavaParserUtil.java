@@ -15,12 +15,17 @@
  */
 package com.intellij.lang.java.parser;
 
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiBuilderUtil;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class JavaParserUtil {
@@ -40,13 +45,27 @@ public class JavaParserUtil {
   @NotNull
   private static LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     final LanguageLevel level = builder.getUserData(LANG_LEVEL_KEY);
-    assert level != null;
+    assert level != null : builder;
     return level;
+  }
+
+  @Nullable
+  public static IElementType exprType(@Nullable final PsiBuilder.Marker marker) {
+    return marker != null ? ((LighterASTNode)marker).getTokenType() : null;
   }
 
   // used instead of PsiBuilder.error() as it drops all but first subsequent error messages
   public static void error(final PsiBuilder builder, final String message) {
     builder.mark().error(message);
+  }
+
+  public static void error(final PsiBuilder builder, final String message, @Nullable final PsiBuilder.Marker before) {
+    if (before == null) {
+      error(builder, message);
+    }
+    else {
+      before.precede().errorBefore(message, before);
+    }
   }
 
   public static boolean expectOrError(final PsiBuilder builder, final IElementType expectedType, final String errorMessage) {
@@ -59,5 +78,111 @@ public class JavaParserUtil {
 
   public static void emptyElement(final PsiBuilder builder, final IElementType type) {
     builder.mark().done(type);
+  }
+
+  public static void emptyElement(final PsiBuilder.Marker before, final IElementType type) {
+    before.precede().doneBefore(type, before);
+  }
+
+  public static void semicolon(final PsiBuilder builder) {
+    expectOrError(builder, JavaTokenType.SEMICOLON, JavaErrorMessages.message("expected.semicolon"));
+  }
+
+  public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {
+    return new PsiBuilderAdapter(builder) {
+      private int braceCount = 1;
+      private int lastOffset = -1;
+
+      @Override
+      public IElementType getTokenType() {
+        final IElementType tokenType = super.getTokenType();
+        if (getCurrentOffset() != lastOffset) {
+          if (tokenType == JavaTokenType.LBRACE) {
+            braceCount++;
+          }
+          else if (tokenType == JavaTokenType.RBRACE) {
+            braceCount--;
+          }
+          lastOffset = getCurrentOffset();
+        }
+        return (braceCount == 0 ? null : tokenType);
+      }
+    };
+  }
+
+  public static class PsiBuilderAdapter implements PsiBuilder {
+    protected final PsiBuilder myDelegate;
+
+    public PsiBuilderAdapter(final PsiBuilder delegate) {
+      myDelegate = delegate;
+    }
+
+    public CharSequence getOriginalText() {
+      return myDelegate.getOriginalText();
+    }
+
+    public void advanceLexer() {
+      myDelegate.advanceLexer();
+    }
+
+    @Nullable
+    public IElementType getTokenType() {
+      return myDelegate.getTokenType();
+    }
+
+    public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
+      myDelegate.setTokenTypeRemapper(remapper);
+    }
+
+    @Nullable @NonNls
+    public String getTokenText() {
+      return myDelegate.getTokenText();
+    }
+
+    public int getCurrentOffset() {
+      return myDelegate.getCurrentOffset();
+    }
+
+    public Marker mark() {
+      return myDelegate.mark();
+    }
+
+    public void error(final String messageText) {
+      myDelegate.error(messageText);
+    }
+
+    public boolean eof() {
+      return myDelegate.eof();
+    }
+
+    public ASTNode getTreeBuilt() {
+      return myDelegate.getTreeBuilt();
+    }
+
+    public FlyweightCapableTreeStructure<LighterASTNode> getLightTree() {
+      return myDelegate.getLightTree();
+    }
+
+    public void setDebugMode(final boolean dbgMode) {
+      myDelegate.setDebugMode(dbgMode);
+    }
+
+    public void enforceCommentTokens(final TokenSet tokens) {
+      myDelegate.enforceCommentTokens(tokens);
+    }
+
+    @Nullable
+    public LighterASTNode getLatestDoneMarker() {
+      return myDelegate.getLatestDoneMarker();
+    }
+
+    @Nullable
+    public <T> T getUserData(@NotNull final Key<T> key) {
+      return myDelegate.getUserData(key);
+    }
+
+    public <T> void putUserData(@NotNull final Key<T> key, @Nullable final T value) {
+      myDelegate.putUserData(key, value);
+    }
   }
 }

@@ -589,17 +589,7 @@ public class GroovyToJavaGenerator {
     /************* parameters **********/
     GrParameter[] parameterList = constructor.getParameters();
 
-    text.append("(");
-
-    for (int i = 0; i < parameterList.length; i++) {
-      if (i > 0) text.append(", ");
-
-      GrParameter parameter = parameterList[i];
-
-      text.append(getTypeText(parameter.getTypeElementGroovy())).append(" ").append(parameter.getName());
-    }
-
-    text.append(") ");
+    writeParameterList(text, parameterList);
 
     final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
     if (!throwsTypes.isEmpty()) {
@@ -684,7 +674,8 @@ public class GroovyToJavaGenerator {
   }
 
   private static void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
-    final String type = getTypeText(variableDeclaration.getTypeElementGroovy());
+    GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
+    final String type = typeElement == null ? CommonClassNames.JAVA_LANG_OBJECT : getTypeText(typeElement.getType(), typeElement, false);
     final String initializer = getDefaultValueText(type);
 
     final GrModifierList modifierList = variableDeclaration.getModifierList();
@@ -728,11 +719,27 @@ public class GroovyToJavaGenerator {
     text.append(getTypeText(retType, method, false));
     text.append(" ");
 
-    //append method name
     text.append(name);
 
-    /************* parameters **********/
+    writeParameterList(text, parameters);
 
+    if (!isAbstract) {
+      /************* body **********/
+      text.append("{\n");
+      text.append("    return ");
+
+      text.append(getDefaultValueText(getTypeText(retType, method, false)));
+
+      text.append(";");
+
+      text.append("\n  }");
+    } else {
+      text.append(";");
+    }
+    text.append("\n");
+  }
+
+  private static void writeParameterList(StringBuffer text, PsiParameter[] parameters) {
     text.append("(");
 
     //writes myParameters
@@ -751,21 +758,6 @@ public class GroovyToJavaGenerator {
     }
     text.append(")");
     text.append(" ");
-
-    if (!isAbstract) {
-      /************* body **********/
-      text.append("{\n");
-      text.append("    return ");
-
-      text.append(getDefaultValueText(getTypeText(retType, method, false)));
-
-      text.append(";");
-
-      text.append("\n  }");
-    } else {
-      text.append(";");
-    }
-    text.append("\n");
   }
 
   private static boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
@@ -811,14 +803,6 @@ public class GroovyToJavaGenerator {
         }
       }
     }
-  }
-
-  private static String getTypeText(GrTypeElement typeElement) {
-    if (typeElement == null) {
-      return CommonClassNames.JAVA_LANG_OBJECT;
-    }
-
-    return getTypeText(typeElement.getType(), typeElement, false);
   }
 
   private static String getTypeText(@Nullable PsiType type, @Nullable PsiElement context, boolean allowVarargs) {

@@ -18,6 +18,8 @@ package com.intellij.psi.impl.include;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -26,7 +28,7 @@ class FileIncludeInfoImpl extends FileIncludeInfo {
   public final String providerId;
 
   public FileIncludeInfoImpl(@NotNull String path, int offset, boolean runtimeOnly, String providerId) {
-    super("", path, offset, runtimeOnly);
+    super(new File(path).getName(), path, offset, runtimeOnly);
     this.providerId = providerId;
   }
 

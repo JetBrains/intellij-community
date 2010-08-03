@@ -59,6 +59,43 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertInterruption(Interruption.invokeCancel);
   }
 
+  public void testDoubleCancelUpdate() throws Exception {
+    buildStructure(myRoot);
+
+    runAndInterrupt(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          select(new Object[] {new NodeElement("openapi")}, false, true);
+        }
+        catch (Exception e) {
+          fail();
+        }
+      }
+    }, "getChildren", new NodeElement("intellij"), Interruption.invokeCancel);
+
+    select(new NodeElement("fabrique"), false);
+
+    assertTree("-/\n"
+               + " -com\n"
+               + "  intellij\n"
+               + " -jetbrains\n"
+               + "  +[fabrique]\n"
+               + " +org\n"
+               + " +xunit\n");
+
+    updateFromRoot();
+
+    assertTree("-/\n"
+               + " -com\n"
+               + "  +intellij\n"
+               + " -jetbrains\n"
+               + "  +[fabrique]\n"
+               + " +org\n"
+               + " +xunit\n");
+
+  }
+
 
   public void testBatchUpdate() throws Exception {
     buildStructure(myRoot);
@@ -397,7 +434,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
 
   public void testClear() throws Exception {
-    getBuilder().getUi().setClearOnHideDelay(10 * Time.SECOND);
+    getBuilder().getUi().setClearOnHideDelay(1 * Time.SECOND);
 
     buildStructure(myRoot);
 
@@ -801,6 +838,45 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +jetbrains\n" +
       " +org\n" +
       " +xunit\n");
+  }
+
+  public void testCollapsedPathOnExpandedCallback() throws Exception {
+    Node com = myRoot.addChild("com");
+
+    activate();
+    assertTree("+/\n");
+
+    expand(getPath("/"));
+    assertTree("-/\n" +
+               " com\n");
+
+    com.addChild("intellij");
+
+    collapsePath(getPath("/"));
+
+    final Ref<Boolean> done = new Ref<Boolean>();
+    invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        getBuilder().expand(new NodeElement("com"), new Runnable() {
+          @Override
+          public void run() {
+            getBuilder().getTree().collapsePath(getPath("com"));
+            done.set(Boolean.TRUE);
+          }
+        });
+      }
+    });
+
+    waitBuilderToCome(new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return (done.get() != null) && done.get().booleanValue();
+      }
+    });
+
+    assertTree("-/\n" +
+               " +com\n");
   }
 
   public void testSelectionGoesToParentWhenOnlyChildMoved() throws Exception {
@@ -1949,6 +2025,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
+    public void testDoubleCancelUpdate() throws Exception {
+      // doesn't make sense in pass-through mode
+    }
+
+
+    @Override
     public void testSelectWhenUpdatesArePending() throws Exception {
       // doesn't make sense in pass-through mode
     }
@@ -1996,11 +2078,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(false, true);
     }
 
-
-    @Override
-    public void testDeferredSelection() throws Exception {
-      super.testDeferredSelection();
-    }
 
     @Override
     protected int getNodeDescriptorUpdateDelay() {

@@ -194,12 +194,20 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return tempExpr;
   }
 
-  public static PsiExpression getSelectedExpression(final Project project, final PsiFile file, final int startOffset, final int endOffset) {
+  public static PsiExpression getSelectedExpression(final Project project, final PsiFile file, int startOffset, int endOffset) {
 
-    final PsiElement elementAtStart = file.findElementAt(startOffset);
-    if (elementAtStart == null) return null;
-    final PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
-    if (elementAtEnd == null) return null;
+    PsiElement elementAtStart = file.findElementAt(startOffset);
+    if (elementAtStart == null || elementAtStart instanceof PsiWhiteSpace || elementAtStart instanceof PsiComment) {
+      elementAtStart = PsiTreeUtil.skipSiblingsForward(elementAtStart, PsiWhiteSpace.class, PsiComment.class);
+      if (elementAtStart == null) return null;
+      startOffset = elementAtStart.getTextOffset();
+    }
+    PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
+    if (elementAtEnd == null || elementAtEnd instanceof PsiWhiteSpace || elementAtEnd instanceof PsiComment) {
+      elementAtEnd = PsiTreeUtil.skipSiblingsBackward(elementAtEnd, PsiWhiteSpace.class, PsiComment.class);
+      if (elementAtEnd == null) return null;
+      endOffset = elementAtEnd.getTextRange().getEndOffset();
+    }
 
     PsiExpression tempExpr;
     PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
@@ -295,7 +303,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
       }
       else {
-        PsiErrorElement errorElement = PsiTreeUtil.getNextSiblingOfType(elementAtStart, PsiErrorElement.class);
+        PsiErrorElement errorElement = elementAtStart instanceof PsiErrorElement
+                                       ? (PsiErrorElement)elementAtStart
+                                       : PsiTreeUtil.getNextSiblingOfType(elementAtStart, PsiErrorElement.class);
         if (errorElement == null) {
           errorElement = PsiTreeUtil.getParentOfType(elementAtStart, PsiErrorElement.class);
         }

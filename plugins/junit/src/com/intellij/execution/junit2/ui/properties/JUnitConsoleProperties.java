@@ -16,6 +16,7 @@
 
 package com.intellij.execution.junit2.ui.properties;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.ide.util.PropertiesComponent;
@@ -29,12 +30,12 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties {
 
   private final JUnitConfiguration myConfiguration;
 
-  public JUnitConsoleProperties(@NotNull JUnitConfiguration configuration) {
-    this(configuration, new Storage.PropertiesComponentStorage(GROUP_NAME, PropertiesComponent.getInstance()));
+  public JUnitConsoleProperties(@NotNull JUnitConfiguration configuration, Executor executor) {
+    this(configuration, new Storage.PropertiesComponentStorage(GROUP_NAME, PropertiesComponent.getInstance()), executor);
   }
 
-  public JUnitConsoleProperties(@NotNull JUnitConfiguration configuration, final Storage storage) {
-    super(storage, configuration.getProject());
+  public JUnitConsoleProperties(@NotNull JUnitConfiguration configuration, final Storage storage, Executor executor) {
+    super(storage, configuration.getProject(), executor);
     myConfiguration = configuration;
   }
 

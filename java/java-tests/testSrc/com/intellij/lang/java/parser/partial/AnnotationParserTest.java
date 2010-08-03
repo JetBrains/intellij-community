@@ -38,7 +38,7 @@ public class AnnotationParserTest extends JavaParsingTestCase {
   public void testFirstNameMissed() { doParserTest("@Anno(value1, param2=value2)"); }
 
   private void doParserTest(final String text) {
-    doParserTest(text, new Parser() {
+    doParserTest(text, new TestParser() {
       public void parse(final PsiBuilder builder) {
         DeclarationParser.parseAnnotations(builder);
       }

@@ -8,7 +8,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -18,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.DominanceAwareMethod;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.HashMap;
@@ -28,7 +27,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class GppStdLibSupport implements NonCodeMembersProcessor {
+public class GppStdLibSupport extends NonCodeMembersContributor {
   private static final Key<CachedValue<Map<String, List<PsiMethod>>>> CACHED_STDLIB = Key.create("GppStdLib");
   private static final String[] STDLIB_CLASSES =  {
     "groovy.util.Conversions",
@@ -40,15 +39,14 @@ public class GppStdLibSupport implements NonCodeMembersProcessor {
     "org.mbte.groovypp.runtime.ArraysMethods",
     "org.mbte.groovypp.runtime.DefaultGroovyPPMethods"};
 
-  public boolean processNonCodeMembers(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion) {
-    if (!(type instanceof PsiClassType)) {
-      return true;
+  @Override
+  public void processDynamicElements(@NotNull PsiType type, PsiScopeProcessor processor, PsiElement place, ResolveState state) {
+    if (!(type instanceof PsiClassType) && !(type instanceof PsiArrayType)) {
+      return;
     }
     if (!GppTypeConverter.hasTypedContext(place)) {
-      return true;
+      return;
     }
-
-    final String className = TypeConversionUtil.erasure(type).getCanonicalText();
 
     final Project project = place.getProject();
     final Map<String, List<PsiMethod>> map = CachedValuesManager.getManager(project).getCachedValue(project, CACHED_STDLIB, new CachedValueProvider<Map<String, List<PsiMethod>>>() {
@@ -76,17 +74,17 @@ public class GppStdLibSupport implements NonCodeMembersProcessor {
           return Result.create(result, ProjectRootManager.getInstance(project));
         }
       }, false);
-    final List<PsiMethod> methods = map.get(className);
-    if (methods == null) {
-      return true;
-    }
 
-    for (PsiMethod method : methods) {
-      if (!ResolveUtil.processElement(processor, method)) {
-        return false;
+    for (String className : ResolveUtil.getAllSuperTypes(type, place).keySet()) {
+      final List<PsiMethod> methods = map.get(className);
+      if (methods != null) {
+        for (PsiMethod method : methods) {
+          if (!ResolveUtil.processElement(processor, method, state)) {
+            return;
+          }
+        }
       }
     }
-    return true;
   }
 
   private static class GppGdkMethod extends GrGdkMethodImpl implements DominanceAwareMethod {

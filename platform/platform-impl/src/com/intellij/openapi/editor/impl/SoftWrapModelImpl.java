@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class SoftWrapModelImpl implements SoftWrapModelEx {
 
-  private final SoftWrapDataMapper            myDataAdjuster;
+  private final SoftWrapDataMapper            myDataMapper;
   private final SoftWrapsStorage              myStorage;
   private final SoftWrapPainter               myPainter;
   private final SoftWrapApplianceManager      myApplianceManager;
@@ -58,19 +58,22 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
-    this(editor, storage, painter, new DefaultSoftWrapApplianceManager(storage, editor, painter),
-         new SoftWrapDataMapper(editor, storage), new SoftWrapDocumentChangeManager(editor, storage));
+    this(
+      editor, storage, painter, new DefaultSoftWrapApplianceManager(storage, editor, painter),
+      new SoftWrapDataMapper(editor, storage, new DefaultEditorTextRepresentationHelper(editor)),
+      new SoftWrapDocumentChangeManager(editor, storage)
+    );
   }
 
   public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
-                           @NotNull SoftWrapApplianceManager applianceManager, @NotNull SoftWrapDataMapper dataAdjuster,
+                           @NotNull SoftWrapApplianceManager applianceManager, @NotNull SoftWrapDataMapper dataMapper,
                            @NotNull SoftWrapDocumentChangeManager documentChangeManager)
   {
     myEditor = editor;
     myStorage = storage;
     myPainter = painter;
     myApplianceManager = applianceManager;
-    myDataAdjuster = dataAdjuster;
+    myDataMapper = dataMapper;
     myDocumentChangeManager = documentChangeManager;
   }
 
@@ -181,25 +184,39 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   @Override
-  public int getMinDrawingWidth(@NotNull SoftWrapDrawingType drawingType) {
+  public int getMinDrawingWidthInPixels(@NotNull SoftWrapDrawingType drawingType) {
     return myPainter.getMinDrawingWidth(drawingType);
   }
 
+  @Override
+  public int getMinDrawingWidthInColumns(@NotNull SoftWrapDrawingType drawingType) {
+    return myPainter.getMinDrawingWidth(drawingType) > 0 ? 1 : 0;
+  }
+
   @NotNull
-  public LogicalPosition adjustLogicalPosition(@NotNull LogicalPosition defaultLogical, @NotNull VisualPosition visual) {
+  @Override
+  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visual) {
     if (myActive > 0 || !isSoftWrappingEnabled() || myStorage.isEmpty() || myEditor.getDocument().getTextLength() <= 0) {
-      return defaultLogical;
+      return myEditor.visualToLogicalPosition(visual, false);
     }
-
-    if (defaultLogical.visualPositionAware) {
-      return defaultLogical;
-    }
-
     myActive++;
     try {
-      return myDataAdjuster.adjustLogicalPosition(defaultLogical, visual);
+      return myDataMapper.visualToLogical(visual);
+    } finally {
+      myActive--;
     }
-    finally {
+  }
+
+  @NotNull
+  @Override
+  public LogicalPosition offsetToLogicalPosition(int offset) {
+    if (myActive > 0 || !isSoftWrappingEnabled() || myStorage.isEmpty() || myEditor.getDocument().getTextLength() <= 0) {
+      return myEditor.offsetToLogicalPosition(offset, false);
+    }
+    myActive++;
+    try {
+      return myDataMapper.offsetToLogicalPosition(offset);
+    } finally {
       myActive--;
     }
   }
@@ -212,7 +229,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
     myActive++;
     try {
-      return myDataAdjuster.offsetToLogicalPosition(offset);
+      return myDataMapper.offsetToLogicalPosition(offset);
     } finally {
       myActive--;
     }
@@ -226,7 +243,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
     myActive++;
     try {
-      return myDataAdjuster.adjustVisualPosition(logical, defaultVisual);
+      return myDataMapper.adjustVisualPosition(logical, defaultVisual);
     }
     finally {
       myActive--;
@@ -289,7 +306,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     }
 
     if (start < end) {
-      result += EditorUtil.textWidth(myEditor, chars, start, end, Font.PLAIN, 0);
+      result += EditorUtil.textWidth(myEditor, softWrap.getText(), start, end, Font.PLAIN, 0);
     }
 
     return result;

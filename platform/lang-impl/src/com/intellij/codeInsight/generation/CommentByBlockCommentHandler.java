@@ -349,7 +349,14 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         else {
           space = "";
         }
-        TextRange range = insertNestedComments(chars, startOffset, endOffset, space + commentPrefix + "\n", space + commentSuffix + "\n", commenter);
+        final StringBuilder nestingPrefix = new StringBuilder(space).append(commentPrefix);
+        if (!commentPrefix.endsWith("\n")){
+          nestingPrefix.append("\n");
+        }
+        final StringBuilder nestingSuffix = new StringBuilder(space);
+        nestingSuffix.append(commentSuffix.startsWith("\n") ? commentSuffix.substring(1) : commentSuffix);
+        nestingSuffix.append("\n");
+        TextRange range = insertNestedComments(chars, startOffset, endOffset, nestingPrefix.toString(), nestingSuffix.toString(), commenter);
         myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
         //myEditor.getSelectionModel().removeSelection();
         LogicalPosition pos = new LogicalPosition(caretPosition.line + 1, caretPosition.column);

@@ -543,7 +543,7 @@ public class ControlFlowUtils {
 
 
   public interface ExitPointVisitor {
-    boolean visit(Instruction instruction);
+    boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue);
   }
 
   public static void visitAllExitPoints(@Nullable GrCodeBlock block, ExitPointVisitor visitor) {
@@ -556,12 +556,16 @@ public class ControlFlowUtils {
   private static boolean visitAllExitPointsInner(Instruction last, Instruction first, boolean[] visited, ExitPointVisitor visitor) {
     if (first == last) return true;
     if (last instanceof MaybeReturnInstruction) {
-      return visitor.visit(last);
+      return visitor.visitExitPoint(last, (GrExpression)last.getElement());
     }
 
-    final PsiElement element = last.getElement();
+    PsiElement element = last.getElement();
     if (element != null) {
-      return visitor.visit(last);
+      if (element instanceof GrReturnStatement) {
+        element = ((GrReturnStatement)element).getReturnValue();
+      }
+
+      return visitor.visitExitPoint(last, element instanceof GrExpression ? (GrExpression)element : null);
     }
     visited[last.num()] = true;
     for (Instruction pred : last.allPred()) {
@@ -571,4 +575,5 @@ public class ControlFlowUtils {
     }
     return true;
   }
+
 }

@@ -36,12 +36,12 @@ import java.util.Set;
 public class GroovyNameSuggestionProvider implements NameSuggestionProvider {
   @Override
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, @Nullable PsiElement nameSuggestionContext, Set<String> result) {
-    if (nameSuggestionContext == null || !(element instanceof GroovyPsiElement)) return null;
-    if (element instanceof GrVariable) {
+    if (nameSuggestionContext == null) nameSuggestionContext = element;
+    if (element instanceof GrVariable && nameSuggestionContext instanceof GroovyPsiElement) {
       final PsiType type = ((GrVariable)element).getTypeGroovy();
       if (type != null) {
-        final String[] names =
-          GroovyNameSuggestionUtil.suggestVariableNameByType(type, new DefaultGroovyVariableNameValidator(nameSuggestionContext));
+        final String[] names = GroovyNameSuggestionUtil
+          .suggestVariableNameByType(type, new DefaultGroovyVariableNameValidator((GroovyPsiElement)nameSuggestionContext));
         result.addAll(Arrays.asList(names));
         return new SuggestedNameInfo(names) {
           @Override

@@ -42,7 +42,7 @@ public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> im
 
   @NotNull
   protected static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project) {
-    return DescindingFilesFilter.filterDescindingFiles(roots, project, null);
+    return DescindingFilesFilter.filterDescindingFiles(roots, project);
   }
 
   protected VcsContext prepareDataFromContext(final AnActionEvent e) {

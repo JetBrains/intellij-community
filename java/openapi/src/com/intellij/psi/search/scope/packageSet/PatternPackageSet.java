@@ -18,17 +18,18 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
-public class PatternPackageSet implements PackageSet {
+public class PatternPackageSet implements PatternBasedPackageSet {
   @NonNls public static final String SCOPE_TEST = "test";
   @NonNls public static final String SCOPE_SOURCE = "src";
   @NonNls public static final String SCOPE_LIBRARY = "lib";
@@ -136,4 +137,20 @@ public class PatternPackageSet implements PackageSet {
     return buf.toString();
   }
 
+  @Override
+  public String getModulePattern() {
+    return myModulePatternText;
+  }
+
+  @Override
+  public boolean isOn(String oldQName) {
+    return Comparing.strEqual(oldQName, myAspectJSyntaxPattern) || //class qname
+           Comparing.strEqual(oldQName + "..*", myAspectJSyntaxPattern) || //package req
+           Comparing.strEqual(oldQName + ".*", myAspectJSyntaxPattern); //package
+  }
+
+  @Override
+  public String getPattern() {
+    return myAspectJSyntaxPattern;
+  }
 }

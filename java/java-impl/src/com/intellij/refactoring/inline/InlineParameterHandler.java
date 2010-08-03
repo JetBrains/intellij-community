@@ -99,8 +99,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
             else if (!isSameConstant(argument, refConstantInitializer.get())) {
               return false;
             }
-          }
-          else {
+          } else if (!isRecursiveReferencedParameter(argument, psiParameter)) {
             if (!refConstantInitializer.isNull()) return false;
             refInitializer.set(argument);
             refMethodCall.set(methodCall);
@@ -226,6 +225,16 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       }
     }
     return null;
+  }
+
+  private static boolean isRecursiveReferencedParameter(final PsiExpression argument, final PsiParameter param) {
+    if (argument instanceof PsiReferenceExpression) {
+      final PsiElement element = ((PsiReferenceExpression)argument).resolve();
+      if (element instanceof PsiParameter) {
+        return element.equals(param);
+      }
+    }
+    return false;
   }
 
   private static boolean isSameConstant(final PsiExpression expr1, final PsiExpression expr2) {

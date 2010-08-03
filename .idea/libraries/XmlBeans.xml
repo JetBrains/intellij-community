@@ -5,5 +5,7 @@
       <root url="jar://$PROJECT_DIR$/lib/xbean.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/resolver.jar!/" />
     </CLASSES>
+    <JAVADOC />
+    <SOURCES />
   </library>
 </component>

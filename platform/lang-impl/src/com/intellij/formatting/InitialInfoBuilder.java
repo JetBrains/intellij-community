@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.google.common.collect.ImmutableCollection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -24,7 +25,7 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
 import gnu.trove.THashMap;
-import org.apache.commons.collections.list.UnmodifiableList;
+import org.apache.commons.collections.Unmodifiable;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -198,7 +199,7 @@ class InitialInfoBuilder {
       }
       previous = block;
 
-      if (!blocksAreReadOnly && !(subBlocks instanceof UnmodifiableList)) {
+      if (!blocksAreReadOnly && !(subBlocks instanceof Unmodifiable) && !(subBlocks instanceof ImmutableCollection)) {
         subBlocks.set(i, null); // to prevent extra strong refs during model building
       }
     }

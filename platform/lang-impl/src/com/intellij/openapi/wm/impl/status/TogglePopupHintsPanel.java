@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HectorComponent;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -38,6 +39,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +59,8 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
 
   public TogglePopupHintsPanel(@NotNull final Project project) {
     myCurrentIcon = EMPTY_ICON;
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    final MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(FileEditorManagerEvent event) {
         updateStatus();
@@ -65,6 +68,12 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
 
       @Override
       public void fileOpened(FileEditorManager source, VirtualFile file) {
+        updateStatus();
+      }
+    });
+    connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+      @Override
+      public void powerSaveStateChanged() {
         updateStatus();
       }
     });
@@ -103,7 +112,7 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
     return "InspectionProfile";
   }
 
-  public WidgetPresentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return this;
   }
 
@@ -130,13 +139,21 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
 
   private void updateStatus(PsiFile file) {
     if (isStateChangeable(file)) {
-      if (HighlightLevelUtil.shouldInspect(file)) {
+      if (PowerSaveMode.isEnabled()) {
+        myCurrentIcon = EMPTY_ICON;
+        myToolTipText = "Code analysis is disabled in power save mode. ";
+      }
+      else if (HighlightLevelUtil.shouldInspect(file)) {
         myCurrentIcon = INSPECTIONS_ICON;
-        myToolTipText =  "Current inspection profile: " + InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName() + ". ";
-      } else if (HighlightLevelUtil.shouldHighlight(file)) {
+        myToolTipText = "Current inspection profile: " +
+                        InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName() +
+                        ". ";
+      }
+      else if (HighlightLevelUtil.shouldHighlight(file)) {
         myCurrentIcon = SYNTAX_ONLY_ICON;
-        myToolTipText = "Highlighting level is: Syntax. ";        
-      } else {
+        myToolTipText = "Highlighting level is: Syntax. ";
+      }
+      else {
         myCurrentIcon = INSPECTIONS_OFF_ICON;
         myToolTipText = "Inspections are off. ";
       }

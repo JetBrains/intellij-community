@@ -38,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Map;
@@ -107,6 +108,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           Component parent = UIUtil.findUltimateParent(c);
           if (parent instanceof IdeFrame) {
             myLastFocused.put((IdeFrame)parent, c);
+          }
+        } else if (e instanceof WindowEvent) {
+          if (e.getID() == WindowEvent.WINDOW_CLOSED) {
+            Window wnd = ((WindowEvent)e).getWindow();
+            if (wnd instanceof IdeFrame) {
+              myLastFocused.remove(wnd);
+              myLastFocusedAtDeactivation.remove(wnd);
+            }
           }
         }
 

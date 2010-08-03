@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.BaseJspFile;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
@@ -289,10 +290,10 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         }
 
         final Set<PsiFile> allIncluded = new THashSet<PsiFile>(10);
-        final JspFile rootContext = contextManager.getRootContextFile(jspFile);
+        final BaseJspFile rootContext = contextManager.getRootContextFile(jspFile);
         allIncluded.add(rootContext);
-        JspSpiUtil.visitAllIncludedFilesRecursively(rootContext, new Processor<JspFile>()  {
-          public boolean process(final JspFile file) {
+        JspSpiUtil.visitAllIncludedFilesRecursively(rootContext, new Processor<BaseJspFile>()  {
+          public boolean process(final BaseJspFile file) {
             allIncluded.add(file);
             return true;
           }

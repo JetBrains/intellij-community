@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -131,16 +132,18 @@ public class SMTestRunnerConnectionUtil {
    * @param processHandler Process handler
    * @param commandLineState  Command line state
    * @param config User run configuration settings
+   * @param executor Executor
    * @return Console view
    * @throws ExecutionException If IDEA cannot execute process this Exception will
    * be caught and shown in error message box
    */
   public static ConsoleView attachRunner(@NotNull final String testFrameworkName, @NotNull final ProcessHandler processHandler,
                                          @NotNull final CommandLineState commandLineState,
-                                         @NotNull final RuntimeConfiguration config
+                                         @NotNull final RuntimeConfiguration config,
+                                         @NotNull final Executor executor
   ) throws ExecutionException {
     // final String testFrameworkName
-    final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName);
+    final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName, executor);
 
     return attachRunner(testFrameworkName, processHandler, consoleProperties,
                         commandLineState.getRunnerSettings(),

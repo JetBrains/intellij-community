@@ -54,7 +54,7 @@ public class GitLogTreeFileSelector extends DialogWrapper {
   }
 
   private void initUi() {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true);
     descriptor.setRoot(myRoot);
     myFileSystemTree = FileSystemTreeFactory.SERVICE.getInstance().createFileSystemTree(myProject, descriptor);
     final JTree tree = myFileSystemTree.getTree();

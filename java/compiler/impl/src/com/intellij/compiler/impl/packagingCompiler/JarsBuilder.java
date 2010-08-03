@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -159,8 +160,14 @@ public class JarsBuilder {
     try {
       final THashSet<String> writtenPaths = new THashSet<String>();
       for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
-        File file = VfsUtil.virtualToIoFile(pair.getSecond());
-        addFileToJar(jarOutputStream, file, pair.getFirst(), writtenPaths);
+        final VirtualFile sourceFile = pair.getSecond();
+        if (sourceFile.isInLocalFileSystem()) {
+          File file = VfsUtil.virtualToIoFile(sourceFile);
+          addFileToJar(jarOutputStream, file, pair.getFirst(), writtenPaths);
+        }
+        else {
+          extractFileAndAddToJar(jarOutputStream, sourceFile, pair.getFirst(), writtenPaths);
+        }
       }
 
       for (Pair<String, JarInfo> nestedJar : jar.getPackedJars()) {
@@ -178,9 +185,35 @@ public class JarsBuilder {
     }
   }
 
+  private void extractFileAndAddToJar(JarOutputStream jarOutputStream, VirtualFile sourceFile, String relativePath, THashSet<String> writtenPaths)
+    throws IOException {
+    relativePath = addParentDirectories(jarOutputStream, writtenPaths, relativePath);
+    myContext.getProgressIndicator().setText2(relativePath);
+    if (!writtenPaths.add(relativePath)) return;
+
+    final BufferedInputStream input = ArtifactCompilerUtil.getJarEntryInputStream(sourceFile, myContext);
+    if (input == null) return;
+
+    ZipEntry entry = new ZipEntry(relativePath);
+    entry.setTime(ArtifactCompilerUtil.getJarFile(sourceFile).lastModified());
+    jarOutputStream.putNextEntry(entry);
+    FileUtil.copy(input, jarOutputStream);
+    jarOutputStream.closeEntry();
+  }
+
   private void addFileToJar(final @NotNull JarOutputStream jarOutputStream, final @NotNull File file, @NotNull String relativePath,
                             final @NotNull THashSet<String> writtenPaths) throws IOException {
-    //todo[nik] check file exists?
+    if (!file.exists()) {
+      return;
+    }
+
+    relativePath = addParentDirectories(jarOutputStream, writtenPaths, relativePath);
+    myContext.getProgressIndicator().setText2(relativePath);
+    ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenPaths, myFileFilter);
+  }
+
+  private static String addParentDirectories(JarOutputStream jarOutputStream, THashSet<String> writtenPaths, String relativePath)
+    throws IOException {
     while (relativePath.startsWith("/")) {
       relativePath = relativePath.substring(1);
     }
@@ -193,9 +226,7 @@ public class JarsBuilder {
       }
       i = relativePath.indexOf('/', i + 1);
     }
-
-    myContext.getProgressIndicator().setText2(relativePath);
-    ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenPaths, myFileFilter);
+    return relativePath;
   }
 
   private static void addEntry(final ZipOutputStream output, @NonNls final String relativePath) throws IOException {

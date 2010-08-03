@@ -157,7 +157,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
       }
     }
 
-    final Content consoleContent = ui.createContent("Console", console.getComponent(), "Console",
+    final Content consoleContent = ui.createContent(ExecutionConsole.CONSOLE_CONTENT_ID, console.getComponent(), "Console",
                                                       IconLoader.getIcon("/debugger/console.png"),
                                                       console.getPreferredFocusableComponent());
 

@@ -1,0 +1,27 @@
+PsiJavaFile:ForNormal1.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiForStatement
+      PsiKeyword:for('for')
+      PsiJavaToken:LPARENTH('(')
+      PsiWhiteSpace(' ')
+      PsiEmptyStatement
+        PsiJavaToken:SEMICOLON(';')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:SEMICOLON(';')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:RPARENTH(')')
+      PsiWhiteSpace(' ')
+      PsiExpressionStatement
+        PsiMethodCallExpression:foo()
+          PsiReferenceExpression:foo
+            PsiReferenceParameterList
+              <empty list>
+            PsiIdentifier:foo('foo')
+          PsiExpressionList
+            PsiJavaToken:LPARENTH('(')
+            PsiJavaToken:RPARENTH(')')
+        PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.intentions.style;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -51,12 +52,12 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement psiElement) throws IncorrectOperationException {
-    Project project = psiElement.getProject();
+  protected void processIntention(@NotNull PsiElement psiElement, Project project, Editor editor) throws IncorrectOperationException {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final GrNewExpression newExpr = (GrNewExpression)psiElement;
     GrCodeReferenceElement ref = newExpr.getReferenceElement();
+    assert ref != null;
 
     final PsiElement resolved = ref.resolve();
     assert resolved instanceof PsiClass;// && ((PsiClass)resolved).isInterface();

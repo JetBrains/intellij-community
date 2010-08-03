@@ -27,38 +27,22 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
 */
 public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
-  private final FindUsagesOptions myFindClassOptions;
-  private final FindUsagesOptions myFindMethodOptions;
-  private final FindUsagesOptions myFindPackageOptions;
-  private final FindUsagesOptions myFindThrowOptions;                   
-  private final FindUsagesOptions myFindVariableOptions;
+  private final JavaClassFindUsagesOptions myFindClassOptions;
+  private final JavaMethodFindUsagesOptions myFindMethodOptions;
+  private final JavaPackageFindUsagesOptions myFindPackageOptions;
+  private final JavaThrowFindUsagesOptions myFindThrowOptions;
+  private final JavaVariableFindUsagesOptions myFindVariableOptions;
 
   public static JavaFindUsagesHandlerFactory getInstance(@NotNull Project project) {
     return ContainerUtil.findInstance(Extensions.getExtensions(EP_NAME, project), JavaFindUsagesHandlerFactory.class);
   }
 
   public JavaFindUsagesHandlerFactory(Project project) {
-    final FindUsagesOptions findClassOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    final FindUsagesOptions findMethodOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    findMethodOptions.isCheckDeepInheritance = false;
-    findMethodOptions.isIncludeSubpackages = false;
-    findMethodOptions.isSearchForTextOccurences = false;
-    final FindUsagesOptions findPackageOptions = FindUsagesHandler.createFindUsagesOptions(project);
-
-    final FindUsagesOptions findThrowOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    findThrowOptions.isSearchForTextOccurences = false;
-    findThrowOptions.isThrowUsages = true;
-
-    final FindUsagesOptions findVariableOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    findVariableOptions.isCheckDeepInheritance = false;
-    findVariableOptions.isIncludeSubpackages = false;
-    findVariableOptions.isSearchForTextOccurences = false;
-
-    myFindClassOptions = findClassOptions;
-    myFindMethodOptions = findMethodOptions;
-    myFindPackageOptions = findPackageOptions;
-    myFindThrowOptions = findThrowOptions;
-    myFindVariableOptions = findVariableOptions;
+    myFindClassOptions = new JavaClassFindUsagesOptions(project);
+    myFindMethodOptions = new JavaMethodFindUsagesOptions(project);
+    myFindPackageOptions = new JavaPackageFindUsagesOptions(project);
+    myFindThrowOptions = new JavaThrowFindUsagesOptions(project);
+    myFindVariableOptions = new JavaVariableFindUsagesOptions(project);
   }
 
   public boolean canFindUsages(@NotNull final PsiElement element) {
@@ -68,46 +52,40 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   public FindUsagesHandler createFindUsagesHandler(@NotNull final PsiElement element, final boolean forHighlightUsages) {
     if (element instanceof PsiDirectory) {
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
-      return psiPackage == null
-             ? null
-             : new JavaFindUsagesHandler(psiPackage, myFindClassOptions, myFindMethodOptions, myFindPackageOptions, myFindThrowOptions,
-                                         myFindVariableOptions);
+      return psiPackage == null ? null : new JavaFindUsagesHandler(psiPackage, this);
     }
 
     if (element instanceof PsiMethod && !forHighlightUsages) {
       final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, JavaFindUsagesHandler.ACTION_STRING);
       if (methods.length > 1) {
-        return new JavaFindUsagesHandler(element, methods, myFindClassOptions, myFindMethodOptions, myFindPackageOptions,
-                                         myFindThrowOptions, myFindVariableOptions);
+        return new JavaFindUsagesHandler(element, methods, this);
       }
       if (methods.length == 1) {
-        return new JavaFindUsagesHandler(methods[0], myFindClassOptions, myFindMethodOptions, myFindPackageOptions, myFindThrowOptions,
-                                         myFindVariableOptions);
+        return new JavaFindUsagesHandler(methods[0], this);
       }
       return FindUsagesHandler.NULL_HANDLER;
     }
 
-    return new JavaFindUsagesHandler(element, myFindClassOptions, myFindMethodOptions, myFindPackageOptions, myFindThrowOptions,
-                                     myFindVariableOptions);
+    return new JavaFindUsagesHandler(element, this);
   }
 
-  public FindUsagesOptions getFindClassOptions() {
+  public JavaClassFindUsagesOptions getFindClassOptions() {
     return myFindClassOptions;
   }
 
-  public FindUsagesOptions getFindMethodOptions() {
+  public JavaMethodFindUsagesOptions getFindMethodOptions() {
     return myFindMethodOptions;
   }
 
-  public FindUsagesOptions getFindPackageOptions() {
+  public JavaPackageFindUsagesOptions getFindPackageOptions() {
     return myFindPackageOptions;
   }
 
-  public FindUsagesOptions getFindThrowOptions() {
+  public JavaThrowFindUsagesOptions getFindThrowOptions() {
     return myFindThrowOptions;
   }
 
-  public FindUsagesOptions getFindVariableOptions() {
+  public JavaVariableFindUsagesOptions getFindVariableOptions() {
     return myFindVariableOptions;
   }
 }

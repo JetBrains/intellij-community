@@ -32,7 +32,9 @@ public interface BusyObject {
     public final void onReady() {
       ActionCallback[] ready = getReadyCallbacks(true);
       for (ActionCallback each : ready) {
-        each.setDone();
+        if (each != null) {
+          each.setDone();
+        }
       }
     }
 

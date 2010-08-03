@@ -4,6 +4,7 @@
     <scope name="IDEA Test Sources" pattern="test:*..*" />
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
+  <component name="IdProvider" IDEtalkID="88DB5D232B345F18EEFB2825E88EC093" />
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
     <option name="OPTION_SCOPE" value="protected" />

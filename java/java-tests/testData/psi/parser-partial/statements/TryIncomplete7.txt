@@ -1,0 +1,14 @@
+PsiJavaFile:TryIncomplete7.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiTryStatement
+      PsiKeyword:try('try')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiJavaToken:RBRACE('}')
+      PsiKeyword:finally('finally')
+      PsiErrorElement:'{' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

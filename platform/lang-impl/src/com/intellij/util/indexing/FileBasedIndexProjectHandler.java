@@ -51,17 +51,17 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     if (startupManager != null) {
       startupManager.registerPreStartupActivity(new Runnable() {
         public void run() {
-          final RefreshCacheUpdater refreshUpdater = new RefreshCacheUpdater();
-          final UnindexedFilesUpdater rootsChangeUpdater = new UnindexedFilesUpdater(project, index);
+          final RefreshCacheUpdater changedFilesUpdater = new RefreshCacheUpdater();
+          final UnindexedFilesUpdater unindexedFilesUpdater = new UnindexedFilesUpdater(project, index);
 
-          startupManager.registerCacheUpdater(rootsChangeUpdater);
-          rootManager.registerRootsChangeUpdater(rootsChangeUpdater);
-          rootManager.registerRefreshUpdater(refreshUpdater);
+          startupManager.registerCacheUpdater(unindexedFilesUpdater);
+          rootManager.registerRootsChangeUpdater(unindexedFilesUpdater);
+          rootManager.registerRefreshUpdater(changedFilesUpdater);
           myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
           projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
             public void projectClosing(Project project) {
-              rootManager.unregisterRefreshUpdater(refreshUpdater);
-              rootManager.unregisterRootsChangeUpdater(rootsChangeUpdater);
+              rootManager.unregisterRefreshUpdater(changedFilesUpdater);
+              rootManager.unregisterRootsChangeUpdater(unindexedFilesUpdater);
               myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
             }
           });

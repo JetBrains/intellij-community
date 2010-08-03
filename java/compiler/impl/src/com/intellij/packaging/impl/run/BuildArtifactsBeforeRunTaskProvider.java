@@ -35,7 +35,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.compiler.ArtifactAwareCompiler;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
+import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -148,7 +148,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
     };
     final CompilerFilter compilerFilter = new CompilerFilter() {
       public boolean acceptCompiler(Compiler compiler) {
-        return compiler instanceof IncrementalArtifactsCompiler
+        return compiler instanceof ArtifactsCompiler
                || compiler instanceof ArtifactAwareCompiler && ((ArtifactAwareCompiler)compiler).shouldRun(artifacts);
       }
     };

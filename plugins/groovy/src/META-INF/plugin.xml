@@ -30,7 +30,6 @@
   <extensionPoints>
     <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager"/>
 
-    <extensionPoint name="nonCodeProcessor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor"/>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer"/>
     <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter"/>
@@ -78,12 +77,13 @@
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
     <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
-    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.gpp.GppStdLibSupport"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.gpp.GppStdLibSupport"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gpp.GppPositionManager"/>
     
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.annotator.ConfigureGroovyLibraryNotificationProvider"/>
     <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduceParameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
     <refactoring.changeSignatureUsageProcessor implementation="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor" id="groovyProcessor" order="before javaProcessor"/>
 
@@ -166,7 +166,8 @@
                                     implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
     <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
-    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"/>
+    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyBasicToClassNameDelegator" order="before groovyBasic"/>
+    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor" id="groovyBasic"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>
     <classNameInsertHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyClassNameInsertHandler"/>
 
@@ -283,6 +284,11 @@
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.control.DemorgansLawIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.CreateParameterForFieldIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

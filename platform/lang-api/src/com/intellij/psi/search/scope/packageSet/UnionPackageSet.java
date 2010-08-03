@@ -42,4 +42,12 @@ public class UnionPackageSet implements PackageSet {
   public String getText() {
     return myFirstSet.getText() + "||" + mySecondSet.getText();
   }
+
+  public PackageSet getFirstSet() {
+    return myFirstSet;
+  }
+
+  public PackageSet getSecondSet() {
+    return mySecondSet;
+  }
 }

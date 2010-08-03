@@ -50,6 +50,7 @@ import java.util.concurrent.ConcurrentMap;
  * To change this template use Options | File Templates.
  */
 public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
+  private static final PsiReferenceContributor[] ourExtensions = Extensions.getExtensions(PsiReferenceContributor.EP_NAME);
   private final ConcurrentMap<Class, SimpleProviderBinding> myBindingsMap = new ConcurrentHashMap<Class, SimpleProviderBinding>();
   private final ConcurrentMap<Class, NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentHashMap<Class, NamedObjectProviderBinding>();
   private final FactoryMap<Class, List<Class>> myKnownSupers = new ConcurrentFactoryMap<Class, List<Class>>() {
@@ -91,7 +92,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
 
   public ReferenceProvidersRegistry(Project project) {
     myProject = project;
-    for (final PsiReferenceContributor contributor : Extensions.getExtensions(PsiReferenceContributor.EP_NAME)) {
+    for (final PsiReferenceContributor contributor : ourExtensions) {
       contributor.registerReferenceProviders(this);
     }
   }

@@ -9,8 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -22,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author ilyas
  */
-public class GrThisReferenceExpressionImpl extends GrExpressionImpl implements GrThisReferenceExpression {
+public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressionBase implements GrThisReferenceExpression {
   public GrThisReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -73,8 +71,9 @@ public class GrThisReferenceExpressionImpl extends GrExpressionImpl implements G
     return elementFactory.createType(context);
   }
 
-  @Nullable
-  public GrReferenceExpression getQualifier() {
-    return (GrReferenceExpression)findChildByType(GroovyElementTypes.REFERENCE_EXPRESSION);
+  @NotNull
+  @Override
+  public String getCanonicalText() {
+    return "this";
   }
 }

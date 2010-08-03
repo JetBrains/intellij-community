@@ -102,7 +102,7 @@ public class RngDocumentationProvider implements DocumentationProvider {
   }
 
   private static StringBuilder getDocumentationFromTag(XmlTag tag, String localName, String kind) {
-    if (tag.getNamespace().equals(ProjectLoader.RNG_NAMESPACE)) {
+    if (tag.getNamespace().equals(ApplicationLoader.RNG_NAMESPACE)) {
       final StringBuilder sb = new StringBuilder();
       sb.append(kind).append(": <b>").append(localName).append("</b><br>");
       final XmlTag[] docTags = tag.findSubTags("documentation", COMPATIBILITY_ANNOTATIONS_1_0);

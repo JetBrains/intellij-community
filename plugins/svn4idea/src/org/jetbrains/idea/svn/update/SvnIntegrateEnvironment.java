@@ -20,10 +20,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -131,14 +131,18 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       }
       else {
 
+        SVNRepository repos = null;
         try {
-          SVNRepository repos = myVcs.createRepository(svnURL2.toString());
+          repos = myVcs.createRepository(svnURL2.toString());
           final long latestRev = repos.getLatestRevision();
-          repos.closeSession();
           return String.valueOf(latestRev);
         }
         catch (SVNException e) {
           return null;
+        } finally {
+          if (repos != null) {
+            repos.closeSession();
+          }
         }
       }
     }

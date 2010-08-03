@@ -705,8 +705,8 @@ public class DeclarationParsing extends Parsing {
       aClass.rawAddChildren(invalidElementsGroup);
       while (true) {
         IElementType tokenType = lexer.getTokenType();
-        if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.COMMA || tokenType == JavaTokenType.EXTENDS_KEYWORD || tokenType ==
-                                                                                                                                       JavaTokenType.IMPLEMENTS_KEYWORD) {
+        if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.COMMA || tokenType == JavaTokenType.EXTENDS_KEYWORD ||
+            tokenType == JavaTokenType.IMPLEMENTS_KEYWORD) {
           invalidElementsGroup.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         }
         else {
@@ -905,13 +905,14 @@ public class DeclarationParsing extends Parsing {
     if (tokenType != JavaTokenType.SEMICOLON && tokenType != JavaTokenType.LBRACE){
       CompositeElement invalidElementsGroup = Factory.createErrorElement(JavaErrorMessages.message("expected.lbrace.or.semicolon"));
       method.rawAddChildren(invalidElementsGroup);
+
+      final CharSequence buf = lexer.getBufferSequence();
       Loop:
         while(true){
           tokenType = lexer.getTokenType();
 
           // Heuristic. Going to next line obviously means method signature is over, starting new method.
           // Necessary for correct CompleteStatementTest operation.
-          final CharSequence buf = lexer.getBufferSequence();
           int start = lexer.getTokenStart();
           for (int i = start - 1; i >= 0; i--) {
             if (buf.charAt(i) == '\n') break Loop;
@@ -1086,7 +1087,7 @@ public class DeclarationParsing extends Parsing {
 
     if (type == null) {
       type = ASTFactory.composite(JavaElementType.TYPE);
-      param.rawAddChildren(Factory.createErrorElement("Parameter type missing"));
+      param.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.type")));
     }
 
     param.rawAddChildren(type);

@@ -25,9 +25,9 @@ contributor([gdslScriptContext]) {
   method name: "supportsVersion", params: [version: "java.lang.String"], type: boolean
 
   // scopes
-  property name: "closureScope", params: [contexts: "java.util.Map"], type: {}
-  property name: "scriptScope", params: [contexts: "java.util.Map"], type: {}
-  property name: "annotatedScope", params: [contexts: "java.util.Map"], type: {}
+  method name: "closureScope", params: [contexts: "java.util.Map"], type: {}
+  method name: "scriptScope", params: [contexts: "java.util.Map"], type: {}
+  method name: "annotatedScope", params: [contexts: "java.util.Map"], type: {}
 
   method name: "hasAnnotation", params:[fqn: "java.lang.String"], type: "java.lang.Object"
   method name: "hasMethod", params:[memberPattern: "java.lang.Object"], type: "java.lang.Object"

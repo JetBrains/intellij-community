@@ -27,7 +27,6 @@ import org.intellij.plugins.relaxNG.compact.psi.impl.*;
 * Date: 01.08.2007
 */
 public class RncElementTypes {
-  public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
 
   public static final IElementType DOCUMENT = new RncElementTypeEx<RncDocument>("DOCUMENT", RncDocument.class);
 

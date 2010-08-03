@@ -114,7 +114,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
-    GroovyResolveResult[] variants = ResolveUtil.getMethodVariants(place);
+    GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
     final List<GroovyResolveResult> namedElements = ContainerUtil.findAll(variants, new Condition<GroovyResolveResult>() {
       public boolean value(GroovyResolveResult groovyResolveResult) {
         final PsiElement element = groovyResolveResult.getElement();

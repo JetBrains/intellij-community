@@ -180,12 +180,22 @@ public class PsiTreeUtil {
   }
 
   @Nullable public static <T extends PsiElement> T findChildOfType(@NotNull final PsiElement element, @NotNull final Class<T> aClass, final boolean strict) {
+    return findChildOfAnyType(element, strict, aClass);
+  }
+
+  @Nullable public static <T extends PsiElement> T findChildOfAnyType(@NotNull final PsiElement element, @NotNull final Class<T>... classes) {
+    return findChildOfAnyType(element, true, classes);
+  }
+
+  @Nullable public static <T extends PsiElement> T findChildOfAnyType(@NotNull final PsiElement element, final boolean strict, @NotNull final Class<T>... classes) {
     PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
       @Override
       public boolean execute(PsiElement each) {
         if (strict && each == element) return true;
-        if (instanceOf(aClass, each)) {
-          return setFound(each);
+        for (Class<T> eachClass : classes) {
+          if (instanceOf(eachClass, each)) {
+            return setFound(each);
+          }
         }
         return true;
       }
@@ -217,6 +227,16 @@ public class PsiTreeUtil {
       }
     }
     return result == null ? null : ArrayUtil.toObjectArray(result, aClass);
+  }
+
+  @NotNull public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+    List<T> result = new SmartList<T>();
+    for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
+      if (instanceOf(aClass, child)) {
+        result.add((T)child);
+      }
+    }
+    return result;
   }
 
 
@@ -570,7 +590,8 @@ public class PsiTreeUtil {
     while (true);
   }
 
-  public static PsiElement prevLeaf(PsiElement current){
+  @Nullable
+  public static PsiElement prevLeaf(@NotNull PsiElement current){
     final PsiElement prevSibling = current.getPrevSibling();
     if(prevSibling != null) return lastChild(prevSibling);
     final PsiElement parent = current.getParent();
@@ -578,7 +599,8 @@ public class PsiTreeUtil {
     return prevLeaf(parent);
   }
 
-  public static PsiElement nextLeaf(PsiElement current){
+  @Nullable
+  public static PsiElement nextLeaf(@NotNull PsiElement current){
     final PsiElement nextSibling = current.getNextSibling();
     if(nextSibling != null) return firstChild(nextSibling);
     final PsiElement parent = current.getParent();
@@ -592,17 +614,20 @@ public class PsiTreeUtil {
     return element;
   }
 
-  public static PsiElement firstChild(final PsiElement element) {
-    if(element.getFirstChild() != null) return firstChild(element.getFirstChild());
+  public static PsiElement firstChild(@NotNull final PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    if(child != null) return firstChild(child);
     return element;
   }
 
-  public static PsiElement prevLeaf(final PsiErrorElement element, final boolean skipEmptyElements) {
+  @Nullable
+  public static PsiElement prevLeaf(@NotNull final PsiErrorElement element, final boolean skipEmptyElements) {
     PsiElement prevLeaf = prevLeaf(element);
     while (skipEmptyElements && prevLeaf != null && prevLeaf.getTextLength() == 0) prevLeaf = prevLeaf(prevLeaf);
     return prevLeaf;
   }
 
+  @Nullable
   public static PsiElement nextLeaf(final PsiErrorElement element, final boolean skipEmptyElements) {
     PsiElement nextLeaf = nextLeaf(element);
     while (skipEmptyElements && nextLeaf != null && nextLeaf.getTextLength() == 0) nextLeaf = nextLeaf(nextLeaf);

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -27,8 +26,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -87,7 +86,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     }
     else {
       myMapToArguments =
-        GrClosureSignatureUtil.mapParametersToArguments(signature, list, GlobalSearchScope.allScope(getProject()));
+        GrClosureSignatureUtil.mapParametersToArguments(signature, list);
     }
   }
 
@@ -110,8 +109,8 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
         return ((GrReferenceExpression)expression).advancedResolve();
       }
     }
-    else if (parent instanceof GrConstructorInvocation) {
-      return ((GrConstructorInvocation)parent).resolveConstructorGenerics();
+    else if (parent instanceof GrConstructorCall) {
+      return ((GrConstructorCall)parent).resolveConstructorGenerics();
     }
 
     return null;

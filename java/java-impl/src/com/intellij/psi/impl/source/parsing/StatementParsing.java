@@ -111,6 +111,7 @@ public class StatementParsing extends Parsing {
     return dummyRoot.getFirstChildNode();
   }
 
+  @Nullable
   public TreeElement parseCodeBlock(Lexer lexer, boolean deep) {
     if (lexer.getTokenType() != JavaTokenType.LBRACE) return null;
     Lexer badLexer = lexer instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)lexer).getDelegate() : lexer;
@@ -151,11 +152,10 @@ public class StatementParsing extends Parsing {
           List<IElementType> list = new SmartList<IElementType>();
           while (true) {
             final IElementType type = lexer.getTokenType();
-            if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(type) || type == JavaTokenType.IDENTIFIER || ElementType.MODIFIER_BIT_SET.contains(type) ||
-                   type == JavaTokenType.LT || type == JavaTokenType.GT || type == JavaTokenType.GTGT || type == JavaTokenType.GTGTGT || type ==
-                                                                                                                                         JavaTokenType.COMMA || type ==
-                                                                                                                                                                JavaTokenType.DOT ||
-                   type == JavaTokenType.EXTENDS_KEYWORD || type == JavaTokenType.IMPLEMENTS_KEYWORD) {
+            if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(type) || ElementType.MODIFIER_BIT_SET.contains(type) ||
+                type == JavaTokenType.IDENTIFIER || type == JavaTokenType.LT || type == JavaTokenType.GT ||
+                type == JavaTokenType.GTGT || type == JavaTokenType.GTGTGT || type == JavaTokenType.COMMA ||
+                type == JavaTokenType.DOT || type == JavaTokenType.EXTENDS_KEYWORD || type == JavaTokenType.IMPLEMENTS_KEYWORD) {
               list.add(type);
               lexer.advance();
             } else {
@@ -252,7 +252,7 @@ public class StatementParsing extends Parsing {
       else if (tokenType == JavaTokenType.CATCH_KEYWORD){
         error = JavaErrorMessages.message("catch.without.try");
       }
-      else if (tokenType == JavaTokenType.FINAL_KEYWORD){
+      else if (tokenType == JavaTokenType.FINALLY_KEYWORD){
         error = JavaErrorMessages.message("finally.without.try");
       }
       else{

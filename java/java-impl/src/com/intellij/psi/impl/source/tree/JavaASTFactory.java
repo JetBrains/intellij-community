@@ -21,6 +21,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.psi.PlainTextTokenTypes;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.tree.java.*;
@@ -34,7 +35,7 @@ public class JavaASTFactory extends ASTFactory implements Constants {
 
   @Override
   public LazyParseableElement createLazy(ILazyParseableElementType type, CharSequence text) {
-    if (type == JAVA_FILE) {
+    if (type == JavaStubElementTypes.JAVA_FILE) {
       return new JavaFileElement(text);
     }
     else if (type == PlainTextTokenTypes.PLAIN_TEXT_FILE) {
@@ -288,6 +289,10 @@ public class JavaASTFactory extends ASTFactory implements Constants {
     }
     else if (type == METHOD_RECEIVER) {
       return new PsiMethodReceiverImpl();
+    }
+    else if (type == CODE_BLOCK) {
+      // deep code block parsing
+      return new PsiCodeBlockImpl(null);
     }
 
     return new CompositePsiElement(type){};

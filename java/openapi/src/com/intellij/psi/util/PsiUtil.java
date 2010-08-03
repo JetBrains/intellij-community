@@ -796,10 +796,14 @@ public final class PsiUtil extends PsiUtilBase {
   }
   
   public static boolean hasDefaultConstructor(PsiClass clazz, boolean allowProtected) {
+    return hasDefaultConstructor(clazz, allowProtected, true);
+  }
+
+  public static boolean hasDefaultConstructor(PsiClass clazz, boolean allowProtected, boolean checkModifiers) {
     final PsiMethod[] constructors = clazz.getConstructors();
     if (constructors.length > 0) {
       for (PsiMethod cls: constructors) {
-        if ((cls.hasModifierProperty(PsiModifier.PUBLIC) ||
+        if ((!checkModifiers || cls.hasModifierProperty(PsiModifier.PUBLIC) ||
              allowProtected && cls.hasModifierProperty(PsiModifier.PROTECTED)) &&
             cls.getParameterList().getParametersCount() == 0) {
           return true;
@@ -807,7 +811,7 @@ public final class PsiUtil extends PsiUtilBase {
       }
     } else {
       final PsiClass superClass = clazz.getSuperClass();
-      return superClass == null || hasDefaultConstructor(superClass, true);
+      return superClass == null || hasDefaultConstructor(superClass, true, true);
     }
     return false;
   }

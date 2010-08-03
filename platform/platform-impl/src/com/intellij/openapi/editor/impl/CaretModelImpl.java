@@ -470,24 +470,27 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
   private VerticalInfo createVerticalInfo(LogicalPosition position) {
     Document document = myEditor.getDocument();
-    int line = position.line;
+    int logicalLine = position.line;
 
     // There is a possible case that active logical line is represented on multiple lines due to soft wraps processing.
     // We want to highlight those visual lines as 'active' then, so, we calculate 'y' position for the logical line start
     // and height in accordance with the number of occupied visual lines.
-    int y = myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
+    LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(document.getLineStartOffset(logicalLine));
+    VisualPosition visualPosition = myEditor.logicalToVisualPosition(logicalPosition);
+    int y = myEditor.visualPositionToXY(visualPosition).y;
     int height = myEditor.getLineHeight();
-    if (line < document.getLineCount() - 1) {
-      int nextLineY = myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(document.getLineStartOffset(line + 1))).y;
-      int heightCandidate = nextLineY - y;
-
-      // There is a possible case that active line is the one that ends with folding, so, 'y' position
-      // of its next logical line is the same as the previous. We explicitly check that in order to use non-standard
-      // line height only in case of visible soft-wrapped line.
-      if (heightCandidate > height) {
-        height = heightCandidate;
+    int visualLine = visualPosition.line + 1;
+    while (true) {
+      LogicalPosition logical = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
+      if (logical.line == logicalLine) {
+        height += myEditor.getLineHeight();
+        visualLine++;
+      }
+      else {
+        break;
       }
     }
+
     return new VerticalInfo(y, height);
   }
 

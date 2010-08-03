@@ -226,7 +226,8 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
   TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
 
   TokenSet BINARY_OP_SET =
-    TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR, mLT, mLE, mMINUS, mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL);
+    TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR, mLT, mLE, mMINUS, mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL,
+                    mCOMPARE_TO);
 
   TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT);
 

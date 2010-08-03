@@ -29,6 +29,8 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.CharBuffer;
+
 /**
  * Default {@link SoftWrapApplianceManager} implementation that is built with the following design guide lines:
  * <pre>
@@ -214,7 +216,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     int x = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
     int prevSoftWrapOffset = start;
     for (int i = start; i < end; i++) {
-      int symbolWidth = EditorUtil.textWidth(myEditor, text, i, i + 1, fontType, x);
+      int symbolWidth = EditorUtil.textWidth(myEditor, CharBuffer.wrap(text), i, i + 1, fontType, x);
       if (x + symbolWidth >= myVisibleAreaWidth) {
         int offset = calculateSoftWrapOffset(text, i - 1, prevSoftWrapOffset, end);
         if (offset >= end || offset <= prevSoftWrapOffset) {

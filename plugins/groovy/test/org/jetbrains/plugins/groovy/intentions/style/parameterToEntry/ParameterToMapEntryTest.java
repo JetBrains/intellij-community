@@ -109,7 +109,7 @@ public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
     Assert.assertTrue(condition.satisfiedBy(element));
 
     // Launch it!
-    intention.processIntention(element);
+    intention.processIntention(element, myFixture.getProject(), myFixture.getEditor());
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     final String result = file.getText();
     //System.out.println(result);

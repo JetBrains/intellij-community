@@ -1,18 +1,16 @@
 package org.jetbrains.plugins.groovy.gpp;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.toplevel.AnnotatedContextFilter;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
@@ -21,24 +19,26 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
  */
 public class GppTypeConverter extends GrTypeConverter {
 
+  public static final String GROOVY_LANG_TYPED = "groovy.lang.Typed";
+
   public static boolean hasTypedContext(PsiElement context) {
     if (context == null) {
       return false;
     }
 
-    if (AnnotatedContextFilter.hasAnnotatedContext(context, "groovy.lang.Typed")) {
+    if (AnnotatedContextFilter.hasAnnotatedContext(context, GROOVY_LANG_TYPED)) {
       return true;
     }
 
-    final VirtualFile vfile = context.getContainingFile().getOriginalFile().getVirtualFile();
-    if (vfile != null) {
-      final String extension = vfile.getExtension();
-      if ("gpp".equals(extension) || "grunit".equals(vfile.getExtension())) {
-        return true;
-      }
+    if (isGppExtension(StringUtil.getShortName(context.getContainingFile().getName()))) {
+      return true;
     }
 
     return false;
+  }
+
+  public static boolean isGppExtension(String extension) {
+    return "gpp".equals(extension) || "grunit".equals(extension);
   }
 
   @Override
@@ -71,43 +71,34 @@ public class GppTypeConverter extends GrTypeConverter {
         return true;
       }
 
-      if (hasDefaultConstructor(lType)) {
+      if ((!isMethodCallConversion(context) || hasTypedContext(context)) && hasDefaultConstructor(lType)) {
         return true;
       }
     }
     else if (rType instanceof GrClosureType) {
       final PsiType[] methodParameters = GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(lType);
-      final GrClosureSignature signature = ((GrClosureType)rType).getSignature();
-      if (methodParameters != null && GrClosureSignatureUtil.isSignatureApplicable(signature, methodParameters, context)) {
-        return true;
-      }
+      if (isClosureOverride(methodParameters, (GrClosureType)rType, context)) return true;
     }
 
     return null;
   }
 
+  public static boolean isClosureOverride(PsiType[] methodParameters, GrClosureType closureType, GroovyPsiElement context) {
+    final GrClosureSignature signature = closureType.getSignature();
+    if (methodParameters != null && GrClosureSignatureUtil.isSignatureApplicable(signature, methodParameters, context)) {
+      return true;
+    }
+    return false;
+  }
+
   private static boolean hasDefaultConstructor(PsiType type) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true);
+    return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true, false);
 
   }
 
   private static boolean hasConstructor(PsiClassType lType, PsiType[] argTypes, GroovyPsiElement context) {
-    return getConstructorCandidates(lType, argTypes, context).length == 1;
-  }
-
-  public static GroovyResolveResult[] getConstructorCandidates(PsiClassType classType, PsiType[] argTypes, GroovyPsiElement context) {
-    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-    final PsiClass psiClass = resolveResult.getElement();
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    if (psiClass == null) {
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
-
-    final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
-                                         ? (GroovyResolveResult)resolveResult
-                                         : new GroovyResolveResultImpl(psiClass, context, substitutor, true, true);
-    return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
+    return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates(lType, argTypes, context).length == 1;
   }
 
 }

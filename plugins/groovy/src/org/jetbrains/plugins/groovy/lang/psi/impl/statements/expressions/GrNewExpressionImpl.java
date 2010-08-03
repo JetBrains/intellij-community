@@ -182,7 +182,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   @NotNull
-  public GroovyResolveResult[] getMethodVariants(@Nullable GrExpression upToArgument) {
+  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrCodeReferenceElement referenceElement = getReferenceElement();
     if (referenceElement == null) return GroovyResolveResult.EMPTY_ARRAY;
     final GroovyResolveResult[] classResults = referenceElement.multiResolve(false);

@@ -334,6 +334,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int softWrapLine = myDocument.getLineNumber(softWrap.getStart());
         mySizeContainer.update(softWrapLine, softWrapLine, softWrapLine);
       }
+
+      @Override
+      public void softWrapsRemoved() {
+        mySoftWrapsChanged = true;
+        mySizeContainer.reset();
+      }
     });
 
     EditorHighlighter highlighter = new EmptyEditorHighlighter(myScheme.getAttributes(HighlighterColors.TEXT));
@@ -434,7 +440,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public FoldingModel getFoldingModel() {
+  public FoldingModelEx getFoldingModel() {
     return myFoldingModel;
   }
 
@@ -890,13 +896,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (x >= px) {
               break outer;
             }
-            column += columnsNumber(c, x, prevX, spaceSize);
+            column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
           }
           activeSoftWrapProcessed = true;
 
           // Process 'after soft wrap' sign.
           prevX = x;
-          charWidth = mySoftWrapModel.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+          charWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
           x += charWidth;
           if (x >= px) {
             break outer;
@@ -916,7 +922,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (x >= px) {
           break;
         }
-        column += columnsNumber(c, x, prevX, spaceSize);
+        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
 
         offset++;
       }
@@ -932,7 +938,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if ((px - prevX) % spaceSize > spaceSize / 2) column++;
       }
       else if ((x - px) * 2 < x - prevX) {
-        column += columnsNumber(c, x, prevX, spaceSize);
+        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
       }
     }
     else {
@@ -967,26 +973,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return EditorUtil.charWidth(c, fontType, this);
   }
 
-  /**
-   * Allows to answer how many columns are necessary for representation of the given char on a screen.
-   *
-   * @param c           target char
-   * @param x           <code>'x'</code> coordinate of the line where given char is represented that indicates char end location
-   * @param prevX       <code>'x'</code> coordinate of the line where given char is represented that indicates char start location
-   * @param spaceSize   <code>'space'</code> symbol width
-   * @return            number of columns necessary for representation of the given char on a screen.
-   */
-  private static int columnsNumber(char c, int x, int prevX, int spaceSize) {
-    if (c != '\t') {
-      return 1;
-    }
-    int result = (x - prevX) / spaceSize;
-    if ((x - prevX) % spaceSize > 0) {
-      result++;
-    }
-    return result;
-  }
-
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset) {
     return logicalToVisualPosition(offsetToLogicalPosition(offset));
@@ -997,16 +983,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return offsetToLogicalPosition(offset, true);
   }
 
+  @NotNull
+  @Override
   public LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware) {
+    if (softWrapAware) {
+      return mySoftWrapModel.offsetToLogicalPosition(offset);
+    }
     int line = calcLogicalLineNumber(offset, false);
     int column = calcColumnNumber(offset, line, false);
-    LogicalPosition position = new LogicalPosition(line, column);
-    if (softWrapAware) {
-      return mySoftWrapModel.adjustLogicalPosition(position, offset);
-    }
-    else {
-      return position;
-    }
+    return new LogicalPosition(line, column);
   }
 
   @NotNull
@@ -1069,13 +1054,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (i >= 0) {
             start = i + 1;
           }
-          return new Point(EditorUtil.textWidth(this, softWrapChars, start, column + 1, Font.PLAIN, 0), y);
+          return new Point(EditorUtil.textWidth(this, softWrap.getText(), start, column + 1, Font.PLAIN, 0), y);
         }
         break;
       }
     }
 
-    if (logLine == 0) {
+    if (logLine <= 0) {
       lineStartOffset = 0;
     }
     else if (lineStartOffset < 0) {
@@ -1333,6 +1318,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void paint(Graphics g) {
+    //TODO den remove
+    System.out.printf("EditorImpl.paint(): (%d; %d) - [%d; %d]%n", g.getClipBounds().x, g.getClipBounds().y, g.getClipBounds().width, g.getClipBounds().height);
     startOptimizedScrolling();
 
     if (myCursorUpdater != null) {
@@ -1711,25 +1698,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
       paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
     }
-
-    // Perform additional activity if soft wrap is added or removed during repainting.
-    // Note: this code lives in this method in assumption that background repainting is the very first activity performed
-    //       during whole editor component repaint.
-    if (mySoftWrapsChanged) {
-      mySoftWrapsChanged = false;
-      validateSize();
-
-      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
-      repaintToScreenBottom(xyToLogicalPosition(position).line);
-
-      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
-      // in accordance with the newly introduced soft wrap(s).
-      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
-
-      // Ask caret model to update visual caret position.
-      //TODO den implement
-      //getCaretModel().moveToOffset(getCaretModel().getOffset());
-    }
   }
 
   private void paintRectangularSelection(Graphics g) {
@@ -1928,6 +1896,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     flushCachedChars(g);
+
+    // Perform additional activity if soft wrap is added or removed during repainting.
+    if (mySoftWrapsChanged) {
+      mySoftWrapsChanged = false;
+      validateSize();
+
+      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
+      repaintToScreenBottom(xyToLogicalPosition(position).line);
+
+      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
+      // in accordance with the newly introduced soft wrap(s).
+      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
+
+      // Ask caret model to update visual caret position.
+      getCaretModel().moveToOffset(getCaretModel().getOffset());
+    }
   }
 
   private boolean paintSelection() {
@@ -2684,10 +2668,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
-    assertReadAccess();
-    if (!myFoldingModel.isFoldingEnabled() && !mySoftWrapModel.isSoftWrappingEnabled()) {
-      return new LogicalPosition(visiblePos.line, visiblePos.column);
+    return visualToLogicalPosition(visiblePos, true);
+  }
+
+  @NotNull
+  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware) {
+    if (softWrapAware) {
+      return mySoftWrapModel.visualToLogicalPosition(visiblePos);
     }
+    assertReadAccess();
+    if (!myFoldingModel.isFoldingEnabled()) return new LogicalPosition(visiblePos.line, visiblePos.column);
 
     int line = visiblePos.line;
     int column = visiblePos.column;
@@ -2695,34 +2685,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     FoldRegion lastCollapsedBefore = getLastCollapsedBeforePosition(visiblePos);
 
     if (lastCollapsedBefore != null) {
-      LogicalPosition softWrapAwareLogFoldEnd = offsetToLogicalPosition(lastCollapsedBefore.getEndOffset());
-      VisualPosition softWrapAwareVisFoldEnd = logicalToVisualPosition(softWrapAwareLogFoldEnd);
-      if (softWrapAwareVisFoldEnd.line == visiblePos.line) {
-        if (visiblePos.column == softWrapAwareVisFoldEnd.column) {
-          return softWrapAwareLogFoldEnd;
-        }
-        else if (visiblePos.column > softWrapAwareVisFoldEnd.column) {
-          int columnToUse = softWrapAwareLogFoldEnd.column + visiblePos.column - softWrapAwareVisFoldEnd.column;
-          return new LogicalPosition(
-            softWrapAwareLogFoldEnd.line, columnToUse, softWrapAwareLogFoldEnd.softWrapLinesBeforeCurrentLogicalLine,
-            softWrapAwareLogFoldEnd.softWrapLinesOnCurrentLogicalLine, visiblePos.column - columnToUse - softWrapAwareLogFoldEnd.foldingColumnDiff,
-            softWrapAwareLogFoldEnd.foldedLines, softWrapAwareLogFoldEnd.foldingColumnDiff
-          );
+      LogicalPosition logFoldEnd = offsetToLogicalPosition(lastCollapsedBefore.getEndOffset(), false);
+      VisualPosition visFoldEnd = logicalToVisualPosition(logFoldEnd, false);
+
+      line = logFoldEnd.line + (visiblePos.line - visFoldEnd.line);
+      if (visFoldEnd.line == visiblePos.line) {
+        if (visiblePos.column >= visFoldEnd.column) {
+          column = logFoldEnd.column + (visiblePos.column - visFoldEnd.column);
         }
         else {
-          return offsetToLogicalPosition(lastCollapsedBefore.getStartOffset());
+          return offsetToLogicalPosition(lastCollapsedBefore.getStartOffset(), false);
         }
       }
-
-      LogicalPosition softWrapUnawareLogFoldEnd = offsetToLogicalPosition(lastCollapsedBefore.getEndOffset(), false);
-      VisualPosition softWrapUnawareVisFoldEnd = logicalToVisualPosition(softWrapUnawareLogFoldEnd, false);
-      line = softWrapUnawareLogFoldEnd.line + (visiblePos.line - softWrapUnawareVisFoldEnd.line);
     }
 
     if (column < 0) column = 0;
 
-    LogicalPosition softWrapUnawareResult = new LogicalPosition(line, column);
-    return mySoftWrapModel.adjustLogicalPosition(softWrapUnawareResult, visiblePos);
+    return new LogicalPosition(line, column);
   }
 
   private int calcLogicalLineNumber(int offset) {
@@ -4669,7 +4648,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     public synchronized void update(int startLine, int newEndLine, int oldEndLine) {
       final int lineWidthSize = myLineWidths.size();
-      if (lineWidthSize == 0) {
+      if (lineWidthSize == 0 || myDocument.getTextLength() <= 0) {
         reset();
       }
       else {
@@ -4817,7 +4796,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // I.e. we shouldn't use widths of the lines that are not shown for max width calculation because previous widths are calculated
         // for another visible area width.
         int startToUse = 0;
-        int endToUse = lineCount;
+        int endToUse = Math.min(lineCount, myLineWidths.size());
         if (getSoftWrapModel().isSoftWrappingEnabled()) {
           Rectangle visibleArea = getScrollingModel().getVisibleArea();
           startToUse = xyToLogicalPosition(visibleArea.getLocation()).line + 1;
@@ -4860,14 +4839,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       TextChange softWrap = getSoftWrapModel().getSoftWrap(i);
       if (softWrap != null) {
         column++; // For 'after soft wrap' drawing.
-        x = getSoftWrapModel().getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+        x = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
       }
 
       char c = text.charAt(i);
       if (c == '\t') {
         int prevX = x;
         x = EditorUtil.nextTabStop(x, this);
-        column += columnsNumber(c, x, prevX, spaceSize);
+        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
         //column += Math.max(1, (x - prevX) / spaceSize);
       }
       else {

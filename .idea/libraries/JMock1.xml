@@ -4,5 +4,7 @@
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-1.0.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-cglib-1.0.1.jar!/" />
     </CLASSES>
+    <JAVADOC />
+    <SOURCES />
   </library>
 </component>

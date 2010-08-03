@@ -37,29 +37,30 @@ public class MoveJavaClassHandler implements MoveClassHandler {
     final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
 
     PsiClass newClass = null;
-    if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1) {
-      correctSelfReferences(aClass, newPackage);
-      final PsiClass created = JavaDirectoryService.getInstance().createClass(moveDestination, aClass.getName());
-      if (aClass.getDocComment() == null) {
-        final PsiDocComment createdDocComment = created.getDocComment();
-        if (createdDocComment != null) {
-          aClass.addAfter(createdDocComment, null);
-        }
+    if (file instanceof PsiJavaFile) {
+      if (!moveDestination.equals(file.getContainingDirectory()) &&
+           moveDestination.findFile(file.getName()) != null) {
+        // moving second of two classes which were in the same file to a different directory (IDEADEV-3089)
+        correctSelfReferences(aClass, newPackage);
+        final PsiFile newFile = moveDestination.findFile(file.getName());
+        LOG.assertTrue(newFile != null);
+        newClass = (PsiClass)newFile.add(aClass);
+        correctOldClassReferences(newClass, aClass);
+        aClass.delete();
       }
-      newClass = (PsiClass)created.replace(aClass);
-      correctOldClassReferences(newClass, aClass);
-      aClass.delete();
-    }
-    else if (file instanceof PsiJavaFile &&
-             !moveDestination.equals(file.getContainingDirectory()) &&
-             moveDestination.findFile(file.getName()) != null) {
-      // moving second of two classes which were in the same file to a different directory (IDEADEV-3089)
-      correctSelfReferences(aClass, newPackage);
-      final PsiFile newFile = moveDestination.findFile(file.getName());
-      LOG.assertTrue(newFile != null);
-      newClass = (PsiClass)newFile.add(aClass);
-      correctOldClassReferences(newClass, aClass);
-      aClass.delete();
+      else if (((PsiJavaFile)file).getClasses().length > 1) {
+        correctSelfReferences(aClass, newPackage);
+        final PsiClass created = JavaDirectoryService.getInstance().createClass(moveDestination, aClass.getName());
+        if (aClass.getDocComment() == null) {
+          final PsiDocComment createdDocComment = created.getDocComment();
+          if (createdDocComment != null) {
+            aClass.addAfter(createdDocComment, null);
+          }
+        }
+        newClass = (PsiClass)created.replace(aClass);
+        correctOldClassReferences(newClass, aClass);
+        aClass.delete();
+      }
     }
     return newClass;
   }

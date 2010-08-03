@@ -50,8 +50,12 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
   }
 
   public void addRow() {
+    addRow(new GrTableParameterInfo(myProject, myMethod));
+  }
+
+  public void addRow(GrTableParameterInfo info) {
     final int row = infos.size();
-    infos.add(new GrTableParameterInfo(myProject, myMethod));
+    infos.add(info);
     fireTableRowsInserted(row, row);
   }
 

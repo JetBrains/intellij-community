@@ -17,6 +17,7 @@ package git4idea.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
@@ -216,6 +217,17 @@ public class GitUIUtil {
    */
   public static void showOperationError(final Project project, final String operation, final String message) {
     Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
+  }
+
+  /**
+   * Show errors on the tab
+   *
+   * @param project the context project
+   * @param title   the operation title
+   * @param errors  the errors to display
+   */
+  public static void showTabErrors(Project project, String title, List<VcsException> errors) {
+    AbstractVcsHelper.getInstance(project).showErrors(errors, title);
   }
 
   /**

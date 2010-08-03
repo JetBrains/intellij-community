@@ -35,16 +35,12 @@ public class FileIncludeInfo {
     this.runtimeOnly = runtimeOnly;
   }
 
-  public FileIncludeInfo(@NotNull String fileName, @NotNull String path, int offset) {
-    this(fileName, path, offset, false);
-  }
-
-  public FileIncludeInfo(@NotNull String fileName, @NotNull String path) {
-    this(fileName, path, -1, false);
+  public FileIncludeInfo(@NotNull String path, int offset) {
+    this(getFileName(path), path, offset, false);
   }
 
   public FileIncludeInfo(@NotNull String path) {
-    this(getFileName(path), path, -1, false);
+    this(path, -1);
   }
 
   private static String getFileName(String path) {

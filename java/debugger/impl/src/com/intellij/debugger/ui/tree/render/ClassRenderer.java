@@ -39,6 +39,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -147,7 +148,7 @@ public class ClassRenderer extends NodeRendererImpl{
       final List<Field> fields = refType.allFields();
       if (fields.size() > 0) {
         for (final Field field : fields) {
-          if (!shouldDisplay(field)) {
+          if (!shouldDisplay(evaluationContext, objRef, field)) {
             continue;
           }
           children.add(nodeManager.createNode(nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field), evaluationContext));
@@ -164,13 +165,15 @@ public class ClassRenderer extends NodeRendererImpl{
     builder.setChildren(children);
   }
 
-  private boolean shouldDisplay(Field field) {
+  private boolean shouldDisplay(EvaluationContext context, @NotNull ObjectReference objInstance, @NotNull Field field) {
     final boolean isSynthetic = DebuggerUtils.isSynthetic(field);
     if (!SHOW_SYNTHETICS && isSynthetic) {
       return false;
     }
-    if (isSynthetic && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
-      return false;
+    if (isSynthetic) {
+      if (objInstance.equals(context.getThisObject()) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+        return false;
+      }
     }
     if(!SHOW_STATIC && field.isStatic()) {
       return false;

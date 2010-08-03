@@ -137,7 +137,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       super.visitAssignmentExpression(assignment);
 
       GrExpression lValue = assignment.getLValue();
-      if (!PsiUtil.mightBeLVlaue(lValue)) return;
+      if (!PsiUtil.mightBeLValue(lValue)) return;
 
       IElementType opToken = assignment.getOperationToken();
       if (opToken != GroovyTokenTypes.mASSIGN) return;

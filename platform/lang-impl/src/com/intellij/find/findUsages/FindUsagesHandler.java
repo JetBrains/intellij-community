@@ -73,19 +73,14 @@ public abstract class FindUsagesHandler {
   public static FindUsagesOptions createFindUsagesOptions(final Project project) {
     FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, null);
     findUsagesOptions.isUsages = true;
-    findUsagesOptions.isIncludeOverloadUsages = false;
-    findUsagesOptions.isIncludeSubpackages = true;
-    findUsagesOptions.isReadAccess = true;
-    findUsagesOptions.isWriteAccess = true;
-    findUsagesOptions.isCheckDeepInheritance = true;
-    findUsagesOptions.isSearchForTextOccurences = true;
+    findUsagesOptions.isSearchForTextOccurrences = true;
     return findUsagesOptions;
   }
 
   @NotNull
   public FindUsagesOptions getFindUsagesOptions() {
     FindUsagesOptions options = createFindUsagesOptions(getProject());
-    options.isSearchForTextOccurences &= isSearchForTextOccurencesAvailable(getPsiElement(), false);
+    options.isSearchForTextOccurrences &= isSearchForTextOccurencesAvailable(getPsiElement(), false);
     return options;
   }
 
@@ -100,7 +95,7 @@ public abstract class FindUsagesHandler {
 
     final SearchScope scope = options.searchScope;
 
-    final boolean searchText = options.isSearchForTextOccurences && scope instanceof GlobalSearchScope;
+    final boolean searchText = options.isSearchForTextOccurrences && scope instanceof GlobalSearchScope;
 
     if (options.isUsages) {
       ReferencesSearch.search(new ReferencesSearch.SearchParameters(element, scope, false, options.fastTrack)).forEach(refProcessor);

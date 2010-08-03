@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 public class JavaClassNameInsertHandler implements AllClassesGetter.ClassNameInsertHandler {
   public AllClassesGetter.ClassNameInsertHandlerResult handleInsert(InsertionContext context,
                               JavaPsiClassReferenceElement item) {
+    context.setAddCompletionChar(false);
     Editor editor = context.getEditor();
     PsiFile file = context.getFile();
     int endOffset = editor.getCaretModel().getOffset();

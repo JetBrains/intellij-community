@@ -39,7 +39,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import org.intellij.plugins.relaxNG.ProjectLoader;
+import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.intellij.plugins.relaxNG.validation.RngParser;
 import org.intellij.plugins.relaxNG.validation.XmlInstanceValidator;
@@ -243,7 +243,7 @@ public class RngNsDescriptor implements XmlNSDescriptor, Validator {
       return;
     }
     // RNG XML itself is validated by parsing it with Jing, so we don't want to schema-validate it
-    if (!ProjectLoader.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
+    if (!ApplicationLoader.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
       XmlInstanceValidator.doValidation(doc, host, getDescriptorFile());
     }
   }

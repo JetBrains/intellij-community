@@ -15,6 +15,7 @@
             <option name="SMART_TABS" value="false" />
             <option name="LABEL_INDENT_SIZE" value="0" />
             <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+            <option name="USE_RELATIVE_INDENTS" value="false" />
           </value>
         </option>
         <option name="JSP_INDENT_OPTIONS">
@@ -26,6 +27,7 @@
             <option name="SMART_TABS" value="false" />
             <option name="LABEL_INDENT_SIZE" value="0" />
             <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+            <option name="USE_RELATIVE_INDENTS" value="false" />
           </value>
         </option>
         <option name="XML_INDENT_OPTIONS">
@@ -37,6 +39,7 @@
             <option name="SMART_TABS" value="false" />
             <option name="LABEL_INDENT_SIZE" value="0" />
             <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+            <option name="USE_RELATIVE_INDENTS" value="false" />
           </value>
         </option>
         <option name="OTHER_INDENT_OPTIONS">
@@ -48,6 +51,7 @@
             <option name="SMART_TABS" value="false" />
             <option name="LABEL_INDENT_SIZE" value="0" />
             <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+            <option name="USE_RELATIVE_INDENTS" value="false" />
           </value>
         </option>
         <option name="ELSE_ON_NEW_LINE" value="true" />
@@ -64,8 +68,6 @@
         <option name="SPACE_AFTER_TYPE_CAST" value="false" />
         <option name="FIELD_NAME_PREFIX" value="my" />
         <option name="STATIC_FIELD_NAME_PREFIX" value="our" />
-        <option name="OPTIMIZE_IMPORTS_ON_THE_FLY" value="true" />
-        <option name="ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY" value="true" />
         <option name="RIGHT_MARGIN" value="140" />
         <option name="CALL_PARAMETERS_WRAP" value="1" />
         <option name="METHOD_PARAMETERS_WRAP" value="5" />
@@ -93,6 +95,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="groovy">
           <option name="INDENT_SIZE" value="2" />
@@ -102,6 +105,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="gsp">
           <option name="INDENT_SIZE" value="2" />
@@ -111,6 +115,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="haml">
           <option name="INDENT_SIZE" value="2" />
@@ -120,6 +125,17 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="html">
+          <option name="INDENT_SIZE" value="2" />
+          <option name="CONTINUATION_INDENT_SIZE" value="4" />
+          <option name="TAB_SIZE" value="8" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="java">
           <option name="INDENT_SIZE" value="2" />
@@ -129,6 +145,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="js">
           <option name="INDENT_SIZE" value="4" />
@@ -138,15 +155,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
-        </ADDITIONAL_INDENT_OPTIONS>
-        <ADDITIONAL_INDENT_OPTIONS fileType="jsp">
-          <option name="INDENT_SIZE" value="2" />
-          <option name="CONTINUATION_INDENT_SIZE" value="4" />
-          <option name="TAB_SIZE" value="8" />
-          <option name="USE_TAB_CHARACTER" value="false" />
-          <option name="SMART_TABS" value="false" />
-          <option name="LABEL_INDENT_SIZE" value="0" />
-          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="rb">
           <option name="INDENT_SIZE" value="2" />
@@ -156,6 +165,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="sass">
           <option name="INDENT_SIZE" value="2" />
@@ -165,6 +175,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="sql">
           <option name="INDENT_SIZE" value="2" />
@@ -174,6 +185,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="txt">
           <option name="INDENT_SIZE" value="4" />
@@ -183,6 +195,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="xml">
           <option name="INDENT_SIZE" value="2" />
@@ -192,6 +205,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="yml">
           <option name="INDENT_SIZE" value="2" />
@@ -201,6 +215,7 @@
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
       </value>
     </option>
