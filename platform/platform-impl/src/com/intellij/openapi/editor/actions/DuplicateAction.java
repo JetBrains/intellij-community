@@ -61,6 +61,9 @@ public class DuplicateAction extends EditorAction {
       VisualPosition caret = editor.getCaretModel().getVisualPosition();
       LogicalPosition lineStart = editor.visualToLogicalPosition(new VisualPosition(caret.line, 0));
       LogicalPosition nextLineStart = editor.visualToLogicalPosition(new VisualPosition(caret.line + 1, 0));
+      if (nextLineStart.line == lineStart.line) {
+        nextLineStart = new LogicalPosition(lineStart.line+1, 0);
+      }
 
       int start = editor.logicalPositionToOffset(lineStart);
       int end = editor.logicalPositionToOffset(nextLineStart);
