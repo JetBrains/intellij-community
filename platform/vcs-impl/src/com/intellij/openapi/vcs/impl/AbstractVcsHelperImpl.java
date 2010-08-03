@@ -192,6 +192,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myBuffer.flush();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (mySession == null) {
+            // nothing to be done, exit
+            return;
+          }
           ensureHistoryPanelCreated().getHistoryPanelRefresh().finished();
         }
       });
