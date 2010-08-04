@@ -18,6 +18,8 @@ package com.intellij.ide.mavenService;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
+import java.util.List;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -29,7 +31,7 @@ public abstract class MavenService {
 
   public abstract Artifact[] getVersions(String groupId, String artifactId);
 
-  public abstract Artifact[] resolveDependencies(Artifact[] artifact, String[] repositories);
+  public abstract List<Artifact> resolveDependencies(List<Artifact> artifact, List<String> repositories);
 
-  public abstract DownloadResult[] downloadArtifacts(Artifact[] artifacts, int options);
+  public abstract List<DownloadResult> downloadArtifacts(List<Artifact> artifacts, int options);
 }
