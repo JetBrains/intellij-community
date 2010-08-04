@@ -73,14 +73,14 @@ public class CvsOperationExecutor {
     myProject = project;
     myShowProgress = showProgress;
     myExecutor = new ModalityContextImpl(modalityState, false);
-    myConfiguration = project != null ? CvsConfiguration.getInstanceChecked(project) : null;
+    myConfiguration = project != null ? CvsConfiguration.getInstance(project) : null;
   }
 
   public CvsOperationExecutor(boolean showProgress, Project project, ModalityContext modalityContext) {
     myProject = project;
     myShowProgress = showProgress;
     myExecutor = modalityContext;
-    myConfiguration = project != null ? CvsConfiguration.getInstanceChecked(project) : null;
+    myConfiguration = project != null ? CvsConfiguration.getInstance(project) : null;
   }
 
   public CvsOperationExecutor(Project project) {
