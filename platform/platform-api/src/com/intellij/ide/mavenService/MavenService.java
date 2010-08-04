@@ -29,6 +29,8 @@ public abstract class MavenService {
     return ServiceManager.getService(project, MavenService.class);
   }
 
+  public abstract Artifact createArtifact(String groupId, String artifactId, String versionId);
+
   public abstract Artifact[] getVersions(String groupId, String artifactId);
 
   public abstract List<Artifact> resolveDependencies(List<Artifact> artifact, List<String> repositories);

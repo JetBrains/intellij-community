@@ -57,6 +57,26 @@ public class MavenServiceImpl extends MavenService {
   }
 
   @Override
+  public Artifact createArtifact(final String groupId, final String artifactId, final String versionId) {
+    return new Artifact() {
+      @Override
+      public String getGroupId() {
+        return groupId;
+      }
+
+      @Override
+      public String getArtifactId() {
+        return artifactId;
+      }
+
+      @Override
+      public String getVersion() {
+        return versionId;
+      }
+    };
+  }
+
+  @Override
   public Artifact[] getVersions(String groupId, String artifactId) {
     return new Artifact[0];  //To change body of implemented methods use File | Settings | File Templates.
   }
