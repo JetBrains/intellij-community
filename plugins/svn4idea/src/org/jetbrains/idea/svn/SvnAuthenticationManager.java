@@ -146,30 +146,38 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         return;
       }
 
-      if ((!auth.isStorageAllowed()) || (USERNAME.equals(kind))) return;
+      if (!auth.isStorageAllowed()) return;
 
-      saveCredentialsIfAllowed(auth, kind, realm, new Runnable() {
+      final String actualKind = auth.getKind();
+      final Runnable actualSave = new Runnable() {
         @Override
         public void run() {
-          File dir = new File(myAuthDir, kind);
+          File dir = new File(myAuthDir, actualKind);
           String fileName = SVNFileUtil.computeChecksum(realm);
           File authFile = new File(dir, fileName);
 
-          myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, kind);
+          myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, actualKind);
           try {
-            ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
+            ((IPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, actualKind, realm);
           }
           catch (SVNException e) {
             if (myProject != null) {
               ApplicationManager.getApplication().invokeLater(new ChangesViewBalloonProblemNotifier(myProject,
-                    "<b>Problem when storing Subversion credentials:</b>&nbsp;" + e.getMessage(), MessageType.ERROR));
+                                                                                                    "<b>Problem when storing Subversion credentials:</b>&nbsp;" +
+                                                                                                    e.getMessage(), MessageType.ERROR));
             }
-          } finally {
+          }
+          finally {
             // do not make password file readonly
             setWriteable(authFile);
           }
         }
-      });
+      };
+      if (USERNAME.equals(actualKind)) {
+        actualSave.run();
+        return;
+      }
+      saveCredentialsIfAllowed(auth, actualKind, realm, actualSave);
     }
 
     private final static int maxAttempts = 10;
