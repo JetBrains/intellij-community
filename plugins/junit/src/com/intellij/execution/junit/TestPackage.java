@@ -51,7 +51,7 @@ import java.net.Socket;
 import java.util.Collection;
 
 public class TestPackage extends TestObject {
-  private static BackgroundableProcessIndicator mySearchForTestsIndicator;
+  private BackgroundableProcessIndicator mySearchForTestsIndicator;
 
   public TestPackage(final Project project,
                      final JUnitConfiguration configuration,
@@ -191,7 +191,7 @@ public class TestPackage extends TestObject {
     }
   }
 
-  private static void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter, final ServerSocket serverSocket) {
+  private void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter, final ServerSocket serverSocket) {
     if (isSyncSearch()) {
       THashSet<PsiClass> classes = new THashSet<PsiClass>();
       boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
