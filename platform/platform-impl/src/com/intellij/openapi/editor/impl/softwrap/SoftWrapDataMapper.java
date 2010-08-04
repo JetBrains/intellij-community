@@ -264,9 +264,8 @@ public class SoftWrapDataMapper {
       int i = CharArrayUtil.shiftBackwardUntil(text, region.getEndOffset() - 1, "\n");
       // Process multi-line folding.
       if (i >= region.getStartOffset()) {
-        int width = myTextRepresentationHelper.textWidth(text, i + 1, region.getEndOffset(), 0);
-        afterFolding.logicalColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(width);
-        afterFolding.x = width;
+        afterFolding.x = myTextRepresentationHelper.textWidth(text, i + 1, region.getEndOffset(), 0);
+        afterFolding.logicalColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, i + 1, region.getEndOffset(), 0);
         afterFolding.softWrapLinesBefore += afterFolding.softWrapLinesCurrent;
         afterFolding.softWrapLinesCurrent = 0;
         afterFolding.softWrapColumnDiff = 0;
@@ -276,7 +275,9 @@ public class SoftWrapDataMapper {
       // Process single-line folding
       else {
         int width = myTextRepresentationHelper.textWidth(text, region.getStartOffset(), region.getEndOffset(), context.x);
-        int logicalColumnInc = myTextRepresentationHelper.toVisualColumnSymbolsNumber(width);
+        int logicalColumnInc = myTextRepresentationHelper.toVisualColumnSymbolsNumber(
+          text, region.getStartOffset(), region.getEndOffset(), context.x
+        );
         afterFolding.logicalColumn += logicalColumnInc;
         afterFolding.x += width;
         afterFolding.foldingColumnDiff += visualColumnInc - logicalColumnInc;
@@ -342,19 +343,20 @@ public class SoftWrapDataMapper {
       // Update state to the offset that corresponds to the same logical line that was used last time.
       if (currentLogicalLine == lastUsedLogicalLine) {
         int width = myTextRepresentationHelper.textWidth(text, result.offset, newOffset, result.x);
-        int columnDiff = myTextRepresentationHelper.toVisualColumnSymbolsNumber(width);
+        int columnDiff = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, result.offset, newOffset, result.x);
         result.x += width;
         result.logicalColumn += columnDiff;
         result.visualColumn += columnDiff;
       }
-      // Update state to the start of the folding that doesn't belong to the same logical line that was used last time.
+      // Update state to offset that doesn't correspond to the same logical line that was used last time.
       else {
         int lineDiff = currentLogicalLine - lastUsedLogicalLine;
         result.logicalLine += lineDiff;
         result.visualLine += lineDiff;
         int startLineOffset = document.getLineStartOffset(currentLogicalLine);
-        result.x = myTextRepresentationHelper.textWidth(text, startLineOffset, newOffset, result.x);
-        result.visualColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(result.x);
+        int newX = myTextRepresentationHelper.textWidth(text, startLineOffset, newOffset, result.x);
+        result.visualColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, startLineOffset, newOffset, 0);
+        result.x = newX;
         result.logicalColumn = result.visualColumn;
         result.onNewLine();
       }

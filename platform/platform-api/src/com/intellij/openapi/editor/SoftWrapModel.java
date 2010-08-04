@@ -107,6 +107,16 @@ public interface SoftWrapModel {
   List<? extends TextChange> getSoftWrapsForLine(int documentLine);
 
   /**
+   * Allows to answer if given soft wrap is shown.
+   * <p/>
+   * The soft wrap may be not shown if it's located, for example, inside collapsed folding region.
+   *
+   * @param softWrap    soft wrap to check
+   * @return            <code>true</code> if given soft wrap is visible; <code>false</code> otherwise
+   */
+  boolean isVisible(TextChange softWrap);
+
+  /**
    * Notifies current model that target document is about to be changed at current caret location.
    * <p/>
    * Primary purpose of this method is to perform {@code 'soft wrap' -> 'hard wrap'} conversion if the user types in virtual

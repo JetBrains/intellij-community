@@ -1033,7 +1033,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int linesToSkip = logical.softWrapLinesOnCurrentLogicalLine;
       List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForLine(logLine);
       for (TextChange softWrap : softWraps) {
-        if (myFoldingModel.isOffsetCollapsed(softWrap.getStart())) {
+        if (myFoldingModel.isOffsetCollapsed(softWrap.getStart()) && myFoldingModel.isOffsetCollapsed(softWrap.getStart() - 1)) {
           continue;
         }
         int lineFeeds = StringUtil.countNewLines(softWrap.getText());
@@ -1061,7 +1061,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    if (logLine <= 0) {
+    if (logLine < 0) {
       lineStartOffset = 0;
     }
     else if (lineStartOffset < 0) {

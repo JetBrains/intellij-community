@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -168,11 +169,26 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     }
   }
 
+  @Override
   public List<? extends TextChange> getRegisteredSoftWraps() {
     if (!isSoftWrappingEnabled()) {
       return Collections.emptyList();
     }
     return myStorage.getSoftWraps();
+  }
+
+  @Override
+  public boolean isVisible(TextChange softWrap) {
+    FoldingModel foldingModel = myEditor.getFoldingModel();
+    int start = softWrap.getStart();
+    if (!foldingModel.isOffsetCollapsed(start)) {
+      return false;
+    }
+
+    // There is a possible case that soft wrap and collapsed folding region share the same offset, i.e. soft wrap is represented
+    // before the folding. We need to return 'true' in such situation. Hence, we check if offset just before the soft wrap
+    // is collapsed as well.
+    return start <= 0 || !foldingModel.isOffsetCollapsed(start - 1);
   }
 
   @Override
