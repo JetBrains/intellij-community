@@ -22,6 +22,9 @@ contributor([gdslScriptContext]) {
   method name: "contributor", params: [contexts: "java.util.Map", body: {}], type: void
   method name: "contributor", params: [contexts: "java.lang.Object", body: {}], type: void
 
+  method name: "category", params: [categoryClass: "java.lang.String", isStatic:"java.lang.Boolean", body: {}], type: void
+  method name: "category", params: [categoryClass: "java.lang.String", body: {}], type: void
+
   method name: "supportsVersion", params: [version: "java.lang.String"], type: boolean
 
   // scopes
@@ -54,8 +57,9 @@ contributor([contributorBody]) {
     method name: "enclosingClass", type: "com.intellij.psi.PsiClass"
 
     property name: "place", type: "com.intellij.psi.PsiElement"
-    property name: "classType", type: "com.intellij.psi.PsiType"
+    property name: "classType", type: "com.intellij.psi.PsiClass"
     property name: "psiClass", type: "com.intellij.psi.PsiClass"
+    property name: "psiType", type: "com.intellij.psi.PsiType"
   }
 }
 

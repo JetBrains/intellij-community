@@ -30,7 +30,8 @@ public interface GdslMembersHolderConsumer {
   void addMemberHolder(CustomMembersHolder holder);
   Project getProject();
   PsiElement getPlace();
-  PsiType getClassType();
+  PsiClass getClassType();
+  PsiType getPsiType();
   @Nullable
   PsiClass getPsiClass();
 }

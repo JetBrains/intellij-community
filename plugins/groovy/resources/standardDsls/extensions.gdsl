@@ -17,44 +17,16 @@
 
 package standardDsls
 
-import com.intellij.psi.PsiParameter
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.TypeConversionUtil
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
-
 /**
  * @author Maxim.Medvedev
- *//*
-*/
+ */
 
-def extension(def className, boolean isStatic = false) {
-  contributor(context()) {
-
-    if (!classType) return;
-
-    def categoryClass = findClass(className)
-    if (!categoryClass) return;
-    def myPlace = PsiTreeUtil.getParentOfType(place, GroovyPsiElement, false)
-    if (myPlace == null) return;
-    categoryClass.methods.each {m ->
-      def params = m.parameterList.parameters as List<PsiParameter>
-      if (!params) return;
-      def targetType = params[0].type
-      if (!TypesUtil.isAssignableByMethodCallConversion(TypeConversionUtil.erasure(targetType), classType, myPlace)) return;
-
-      add new GrGdkMethodImpl(m, isStatic)
-    }
-  }
-}
-
-extension "org.codehaus.groovy.runtime.DefaultGroovyMethods"
-extension "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods", true
-extension "org.codehaus.groovy.runtime.DateGroovyMethods"
-extension "org.codehaus.groovy.runtime.EncodingGroovyMethods"
-extension "org.codehaus.groovy.runtime.SqlGroovyMethods"
-extension "org.codehaus.groovy.runtime.SwingGroovyMethods"
-extension "org.codehaus.groovy.runtime.XmlGroovyMethods"
+category "org.codehaus.groovy.runtime.DefaultGroovyMethods"
+category "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods", true
+category "org.codehaus.groovy.runtime.DateGroovyMethods"
+category "org.codehaus.groovy.runtime.EncodingGroovyMethods"
+category "org.codehaus.groovy.runtime.SqlGroovyMethods"
+category "org.codehaus.groovy.runtime.SwingGroovyMethods"
+category "org.codehaus.groovy.runtime.XmlGroovyMethods"
 
 

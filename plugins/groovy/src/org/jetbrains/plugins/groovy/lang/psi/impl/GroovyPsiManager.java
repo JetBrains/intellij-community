@@ -25,25 +25,16 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.GroovyDslExecutor;
-import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.*;
@@ -54,12 +45,10 @@ import java.util.*;
 public class GroovyPsiManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
   private final Project myProject;
-  private Map<String, List<PsiMethod>> myDefaultMethods;
 
   private GrTypeDefinition myArrayClass;
 
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
-  private volatile boolean myRebuildGdkPending = true;
   private final GroovyShortNamesCache myCache;
 
   private final TypeInferenceHelper myTypeInferenceHelper;
@@ -84,7 +73,6 @@ public class GroovyPsiManager {
 
       public void rootsChanged(ModuleRootEvent event) {
         dropTypesCache();
-        myRebuildGdkPending = true;
       }
     });
   }
@@ -98,65 +86,6 @@ public class GroovyPsiManager {
   }
 
 
-   public List<PsiMethod> getDefaultMethods(String qName) {
-    if (myRebuildGdkPending) {
-      final Map<String, List<PsiMethod>> gdk = buildGDK();
-      if (myRebuildGdkPending) {
-        myDefaultMethods = gdk;
-        myRebuildGdkPending = false;
-      }
-    }
-
-    List<PsiMethod> methods = myDefaultMethods.get(qName);
-    if (methods == null) return Collections.emptyList();
-    return methods;
-  }
-
-  private Map<String, List<PsiMethod>> buildGDK() {
-    return null;  //To change body of created methods use File | Settings | File Templates.
-  }
-
-  public List<PsiMethod> getDefaultMethods(PsiClass psiClass) {
-    List<PsiMethod> list = new ArrayList<PsiMethod>();
-    getDefaultMethodsInner(psiClass, new HashSet<PsiClass>(), list);
-    return list;
-  }
-
-  public void getDefaultMethodsInner(PsiClass psiClass, Set<PsiClass> watched, List<PsiMethod> methods) {
-    if (watched.contains(psiClass)) return;
-    watched.add(psiClass);
-    methods.addAll(getDefaultMethods(psiClass.getQualifiedName()));
-    for (PsiClass aClass : psiClass.getSupers()) {
-      getDefaultMethodsInner(aClass, watched, methods);
-    }
-  }
-
-  public void addCategoryMethods(String fromClass, Map<String, List<PsiMethod>> toMap, NotNullFunction<PsiMethod, PsiMethod> converter) {
-    PsiClass categoryClass = JavaPsiFacade.getInstance(myProject).findClass(fromClass, GlobalSearchScope.allScope(myProject));
-    if (categoryClass != null) {
-      for (PsiMethod method : categoryClass.getMethods()) {
-        if (method.isConstructor()) continue;
-        if (!method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
-        addDefaultMethod(method, toMap, converter);
-      }
-    }
-  }
-
-  private static void addDefaultMethod(PsiMethod method, Map<String, List<PsiMethod>> map, NotNullFunction<PsiMethod, PsiMethod> converter) {
-    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return;
-
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    LOG.assertTrue(parameters.length > 0, method.getName());
-    PsiType thisType = TypeConversionUtil.erasure(parameters[0].getType());
-    String thisCanonicalText = thisType.getCanonicalText();
-    LOG.assertTrue(thisCanonicalText != null);
-    List<PsiMethod> hisMethods = map.get(thisCanonicalText);
-    if (hisMethods == null) {
-      hisMethods = new ArrayList<PsiMethod>();
-      map.put(thisCanonicalText, hisMethods);
-    }
-    hisMethods.add(converter.fun(method));
-  }
 
   public static GroovyPsiManager getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiManager.class);

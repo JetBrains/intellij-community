@@ -2,7 +2,6 @@ package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import groovy.lang.Closure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
@@ -21,7 +20,6 @@ import java.util.Set;
 public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   private final Set<Map> myMethods = new HashSet<Map>();
   private final Project myProject;
-  private final String myTypeText;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
   private final GroovyClassDescriptor myDescriptor;
   private final String myQualifiedName;
@@ -29,7 +27,6 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   public CustomMembersGenerator(GroovyClassDescriptor descriptor) {
     myDescriptor = descriptor;
     myProject = descriptor.getProject();
-    myTypeText = descriptor.getTypeText();
     final PsiType type = descriptor.getPsiType();
     if (type instanceof PsiClassType) {
       final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -48,16 +45,12 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   }
 
   @Nullable
-  public PsiType getClassType() {
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
-    try {
-      return factory.createTypeFromText(myTypeText, getPlace());
-    }
-    catch (IncorrectOperationException e) {
-      final PsiClass psiClass = getPsiClass();
-      if (psiClass != null) return factory.createType(psiClass);
-    }
-    return null;
+  public PsiClass getClassType() {
+    return getPsiClass();
+  }
+
+  public PsiType getPsiType() {
+    return myDescriptor.getPsiType();
   }
 
   @Nullable

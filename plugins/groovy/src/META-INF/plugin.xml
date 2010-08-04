@@ -77,7 +77,6 @@
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
     <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.gpp.GppStdLibSupport"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gpp.GppPositionManager"/>
     
   </extensions>

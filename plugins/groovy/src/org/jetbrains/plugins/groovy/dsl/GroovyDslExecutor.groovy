@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 public class GroovyDslExecutor {
   static final def cats = PsiEnhancerCategory.EP_NAME.extensions.collect { it.class }
   final List<Pair<ContextFilter, Closure>> enhancers = []
-  final List<Pair<Closure>> categoryEnhancers = []
 
   private final String myFileName;
   static final String ideaVersion
@@ -59,10 +58,6 @@ public class GroovyDslExecutor {
     enhancers << Pair.create(CompositeContextFilter.compose(cts, false), toDo)
   }
 
-  def addCategoryEnhancer(Closure toDo) {
-    categoryEnhancers << toDo
-  }
-
   def processVariants(GroovyClassDescriptor descriptor, consumer, ProcessingContext ctx) {
     for (pair in enhancers) {
       if (pair.first.isApplicable(descriptor, ctx)) {
@@ -75,18 +70,6 @@ public class GroovyDslExecutor {
         }
       }
     }
-  }
-
-  def processCategoryVariants(Project project, consumer) {
-    for (enhancer in categoryEnhancers) {
-        Closure f = enhancer.clone()
-        f.delegate = consumer
-        f.resolveStrategy = Closure.DELEGATE_FIRST
-
-        use(cats) {
-          f.call()
-        }
-      }
   }
 
   def String toString() {
