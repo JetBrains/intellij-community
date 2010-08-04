@@ -57,7 +57,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private PersistentAuthenticationProviderProxy myPersistentAuthenticationProviderProxy;
   private SvnConfiguration myConfig;
   // instead of ThreadLocal
-  private final Set<Thread> myPlainTextAllowed;
+  private final Map<Thread, Boolean> myPlainTextAllowed;
   private static final ThreadLocal<Boolean> ourJustEntered = new ThreadLocal<Boolean>();
   private SvnAuthenticationInteraction myInteraction;
   private final EventDispatcher<SvnAuthenticationListener> myListener;
@@ -71,7 +71,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     if (myPersistentAuthenticationProviderProxy != null) {
       myPersistentAuthenticationProviderProxy.setProject(myProject);
     }
-    myPlainTextAllowed = Collections.synchronizedSet(new HashSet<Thread>());
+    myPlainTextAllowed = Collections.synchronizedMap(new HashMap<Thread, Boolean>());
     myInteraction = new MySvnAuthenticationInteraction(myProject);
   }
 
@@ -80,8 +80,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   @Override
-  public void actualSaveWillBeTried(ProviderType type, SVNURL url, String realm, String kind) {
-    myListener.getMulticaster().actualSaveWillBeTried(type, url, realm, kind);
+  public void actualSaveWillBeTried(ProviderType type, SVNURL url, String realm, String kind, boolean withCredentials) {
+    myListener.getMulticaster().actualSaveWillBeTried(type, url, realm, kind, withCredentials);
   }
 
   @Override
@@ -126,6 +126,22 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       myProject = project;
     }
 
+    /*private boolean passwordSpecified(final SVNAuthentication authentication) {
+      final String kind = authentication.getKind();
+      if (ISVNAuthenticationManager.SSH.equals(kind)) {
+        if (((SVNSSHAuthentication) authentication).hasPrivateKey()) {
+          return ((((SVNSSHAuthentication) authentication).getPrivateKey() != null) || (((SVNSSHAuthentication) authentication).getPrivateKeyFile() != null));
+        } else {
+          return ((SVNSSHAuthentication) authentication).getPassword() != null;
+        }
+      } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+        return ((SVNPasswordAuthentication) authentication).getPassword() != null;
+      } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+        return ((SVNSSLAuthentication) authentication).getPassword() != null;
+      }
+      return true;
+    }*/
+
     public SVNAuthentication requestClientAuthentication(final String kind, final SVNURL url, final String realm, final SVNErrorMessage errorMessage,
                                                          final SVNAuthentication previousAuth, final boolean authMayBeStored) {
       final SVNAuthentication svnAuthentication =
@@ -146,8 +162,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         return;
       }
 
-      if (!auth.isStorageAllowed()) return;
-
       final String actualKind = auth.getKind();
       final Runnable actualSave = new Runnable() {
         @Override
@@ -156,7 +170,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
           String fileName = SVNFileUtil.computeChecksum(realm);
           File authFile = new File(dir, fileName);
 
-          myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, actualKind);
+          myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, actualKind, 
+                                                            ! Boolean.FALSE.equals(myPlainTextAllowed.get(Thread.currentThread())));
           try {
             ((IPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, actualKind, realm);
           }
@@ -177,6 +192,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         actualSave.run();
         return;
       }
+      if (!auth.isStorageAllowed()) return;
       saveCredentialsIfAllowed(auth, actualKind, realm, actualSave);
     }
 
@@ -488,12 +504,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
   @Override
   protected boolean isStorePlainTextPasswords(String realm, SVNAuthentication auth) throws SVNException {
-    return myPlainTextAllowed.contains(Thread.currentThread()) || super.isStorePlainTextPasswords(realm, auth);
+    return Boolean.TRUE.equals(myPlainTextAllowed.get(Thread.currentThread())) || super.isStorePlainTextPasswords(realm, auth);
   }
 
   @Override
   protected boolean isStorePlainTextPassphrases(String realm, SVNAuthentication auth) throws SVNException {
-    return myPlainTextAllowed.contains(Thread.currentThread()) || super.isStorePlainTextPassphrases(realm, auth);
+    return Boolean.TRUE.equals(myPlainTextAllowed.get(Thread.currentThread())) || super.isStorePlainTextPassphrases(realm, auth);
   }
 
   private ModalityState getCurrent() {
@@ -511,11 +527,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     final Runnable saveRunnable,
     final Getter<Boolean> prompt) {
 
+    final Boolean[] saveOnce = new Boolean[1];
     final Runnable actualSave = new Runnable() {
       @Override
       public void run() {
         final Thread currentThread = Thread.currentThread();
-        myPlainTextAllowed.add(currentThread);
+        myPlainTextAllowed.put(currentThread, Boolean.TRUE.equals(saveOnce[0]));
         try {
           saveRunnable.run();
         }
@@ -529,18 +546,13 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       new AbstractCalledLater(myProject, getCurrent()) {
         @Override
         public void run() {
-          final boolean saveOnce = Boolean.TRUE.equals(prompt.get());
-          if (saveOnce) {
-            ApplicationManager.getApplication().executeOnPooledThread(actualSave);
-          } else {
-          }
+          saveOnce[0] = Boolean.TRUE.equals(prompt.get());
+          ApplicationManager.getApplication().executeOnPooledThread(actualSave);
         }
       }.callMe();
     } else {
-      final boolean saveOnce = Boolean.TRUE.equals(prompt.get());
-      if (saveOnce) {
-        actualSave.run();
-      }
+      saveOnce[0] = Boolean.TRUE.equals(prompt.get());
+      actualSave.run();
     }
   }
 

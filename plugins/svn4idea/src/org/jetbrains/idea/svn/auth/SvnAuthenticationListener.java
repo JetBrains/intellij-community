@@ -21,5 +21,5 @@ import java.util.EventListener;
 
 public interface SvnAuthenticationListener extends EventListener {
   void requested(final ProviderType type, final SVNURL url, String realm, String kind, boolean canceled);
-  void actualSaveWillBeTried(final ProviderType type, final SVNURL url, String realm, String kind);
+  void actualSaveWillBeTried(final ProviderType type, final SVNURL url, String realm, String kind, boolean withCredentials);
 }
