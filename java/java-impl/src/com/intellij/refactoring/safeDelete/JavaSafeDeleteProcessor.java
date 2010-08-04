@@ -24,9 +24,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -39,9 +41,11 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -581,6 +585,30 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
                 }
               }
             }
+          }
+        }
+        else if (element instanceof PsiDocMethodOrFieldRef) {
+          if (((PsiDocMethodOrFieldRef)element).getSignature() != null) {
+            @NonNls final StringBuffer newText = new StringBuffer();
+            newText.append("/** @see #").append(method.getName()).append('(');
+            final List<PsiParameter> parameters = new ArrayList<PsiParameter>(Arrays.asList(method.getParameterList().getParameters()));
+            parameters.remove(parameter);
+            newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
+              @Override
+              public String fun(PsiParameter psiParameter) {
+                return parameter.getType().getCanonicalText();
+              }
+            }, ","));
+            newText.append(")*/");
+            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
+              public void deleteElement() throws IncorrectOperationException {
+                final PsiDocMethodOrFieldRef.MyReference javadocMethodReference =
+                  (PsiDocMethodOrFieldRef.MyReference)element.getReference();
+                if (javadocMethodReference != null) {
+                  javadocMethodReference.bindToText(method.getContainingClass(), newText);
+                }
+              }
+            });
           }
         }
         return true;
