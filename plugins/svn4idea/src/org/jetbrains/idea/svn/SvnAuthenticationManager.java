@@ -453,20 +453,21 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       myInteraction.warnOnAuthStorageDisabled(url);
       return;
     }
+    boolean passwordWillBeSaved = true;
     final boolean passwordStorageEnabled = isStorePasswords(url);
     // check can store
     if ((! ISVNAuthenticationManager.SSL.equals(kind)) && (! passwordStorageEnabled)) {
       // but it should be
       myInteraction.warnOnPasswordStorageDisabled(url);
-      return;
+      passwordWillBeSaved = false;
     }
     if (ISVNAuthenticationManager.SSL.equals(kind) && (! isStoreSSLClientCertificatePassphrases(url))) {
       myInteraction.warnOnSSLPassphraseStorageDisabled(url);
-      return;
+      passwordWillBeSaved = false;
     }
 
     // check can encrypt
-    if (!(SystemInfo.isWindows && SVNJNAUtil.isWinCryptEnabled())) {
+    if (passwordWillBeSaved && ( !(SystemInfo.isWindows && SVNJNAUtil.isWinCryptEnabled()))) {
       try {
         if (ISVNAuthenticationManager.SSL.equals(kind)) {
           if (!isStorePlainTextPassphrases(realm, auth)) {
