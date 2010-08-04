@@ -1,5 +1,5 @@
 class LonelyConstructor {
 
-  <caret>def LonelyConstructor() {
+  <caret>LonelyConstructor() {
   }
 }
