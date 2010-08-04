@@ -478,9 +478,6 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
         if (GitMergeUtil.isMergeInTheProgress(root)) {
           return SpecialStatus.MERGING;
         }
-        if (root.findChild(".gitmodules") != null) {
-          return SpecialStatus.SUBMODULES;
-        }
       }
       for (LocalChangeList changeList : myChangeManager.getChangeListsCopy()) {
         for (Change change : changeList.getChanges()) {
@@ -531,7 +528,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
             String p = name;
             name = null;
             for (int i = 0; i < Integer.MAX_VALUE; i++) {
-              final String c = name + i;
+              final String c = p + i;
               if (!locals.contains(c)) {
                 name = c;
                 break;
@@ -962,10 +959,6 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
      * Non git project
      */
     NON_GIT,
-    /**
-     * The submodules are detected in the project
-     */
-    SUBMODULES,
     /**
      * The background checkout process is in progress
      */
