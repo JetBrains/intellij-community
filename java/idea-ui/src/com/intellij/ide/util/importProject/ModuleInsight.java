@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
@@ -576,7 +577,7 @@ public class ModuleInsight {
   }
   
   private static void skipWhiteSpaceAndComments(Lexer lexer){
-    while(JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(lexer.getTokenType())) {
+    while(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(lexer.getTokenType())) {
       lexer.advance();
     }
   }

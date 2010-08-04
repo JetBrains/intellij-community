@@ -31,15 +31,19 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
 
 public class ParseUtil {
+  private ParseUtil() { }
+
+  @Nullable
   public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
-    if (tokenType == JavaTokenType.DOC_COMMENT) {
+    if (tokenType == JavaDocElementType.DOC_COMMENT) {
       return ASTFactory.lazy(JavaDocElementType.DOC_COMMENT, LexerUtil.internToken(lexer, table));
     }
     else {
@@ -263,7 +267,7 @@ public class ParseUtil {
                                                                                        TokenType.WHITE_SPACE);
 
     private static void bindPrecedingComment(TreeElement comment, ASTNode bindTo) {
-      if (bindTo == null || bindTo.getFirstChildNode() != null && bindTo.getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT) return;
+      if (bindTo == null || bindTo.getFirstChildNode() != null && bindTo.getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT) return;
 
       if (bindTo.getElementType() == JavaElementType.IMPORT_LIST && bindTo.getTextLength() == 0) {
         bindTo = bindTo.getTreeNext();

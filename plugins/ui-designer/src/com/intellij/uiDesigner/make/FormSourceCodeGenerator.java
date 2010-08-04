@@ -33,6 +33,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -390,7 +391,7 @@ public final class FormSourceCodeGenerator {
       if (oldLexem != newLexem) {
         return false;
       }
-      if (oldLexem != TokenType.WHITE_SPACE && oldLexem != JavaTokenType.DOC_COMMENT) {
+      if (oldLexem != TokenType.WHITE_SPACE && oldLexem != JavaDocElementType.DOC_COMMENT) {
         int oldStart = oldTextLexer.getTokenStart();
         int newStart = newTextLexer.getTokenStart();
         int oldLength = oldTextLexer.getTokenEnd() - oldTextLexer.getTokenStart();

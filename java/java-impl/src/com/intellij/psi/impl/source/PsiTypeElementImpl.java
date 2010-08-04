@@ -97,7 +97,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       else if (elementType == JavaTokenType.QUEST) {
         cachedType = createWildcardType();
       }
-      else if (JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(elementType)) {
+      else if (ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(elementType)) {
         element = element.getTreeNext();
         continue;
       }
@@ -257,7 +257,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     List<PsiAnnotation> result = null;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() != JavaElementType.ANNOTATION) continue;
-      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET);
       if (next != null && next.getElementType() == JavaTokenType.LBRACKET) continue; //annotation on array dimension
       if (result == null) result = new SmartList<PsiAnnotation>();
       PsiElement element = child.getPsi();

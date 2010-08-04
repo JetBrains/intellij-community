@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -63,7 +64,7 @@ public class SemicolonFixer implements Fixer {
 
       int tailLength = 0;
       ASTNode leaf = TreeUtil.findLastLeaf(psiElement.getNode());
-      while (JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(leaf.getElementType())) {
+      while (ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(leaf.getElementType())) {
         tailLength += leaf.getTextLength();
         leaf = TreeUtil.prevLeaf(leaf);
       }

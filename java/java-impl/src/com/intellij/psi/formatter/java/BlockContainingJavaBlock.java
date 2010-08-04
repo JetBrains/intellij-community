@@ -17,7 +17,6 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -72,8 +71,8 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
         // We want to have the comment and method as distinct blocks then in order to correctly process indentation for inner method
         // elements. See IDEA-53778 for example of situation when it is significant.
         if (prevChild != null && myNode.getElementType() == ElementType.METHOD
-            && JavaTokenType.COMMENT_BIT_SET.contains(prevChild.getElementType())
-            && !JavaTokenType.COMMENT_BIT_SET.contains(child.getElementType()))
+            && ElementType.JAVA_COMMENT_BIT_SET.contains(prevChild.getElementType())
+            && !ElementType.JAVA_COMMENT_BIT_SET.contains(child.getElementType()))
         {
           prevChild = child;
           child = composeCodeBlock(result, child, Indent.getNoneIndent(), 0, null);
