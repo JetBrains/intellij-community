@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -542,15 +543,29 @@ public class ExtractMethodProcessor implements MatchProvider {
     LogicalPosition pos = new LogicalPosition(0, 0);
     myEditor.getCaretModel().moveToLogicalPosition(pos);
 
-    SearchScope processConflictsScope = myMethodVisibility.equals(PsiModifier.PRIVATE) ?
+    final SearchScope processConflictsScope = myMethodVisibility.equals(PsiModifier.PRIVATE) ?
                                         new LocalSearchScope(myTargetClass) :
                                         GlobalSearchScope.projectScope(myProject);
 
-    final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap =
-      ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
-
-    doExtract();
-    ExtractMethodUtil.decodeOverloadTargets(overloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
+    final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap = new HashMap<PsiMethodCallExpression, PsiMethod>();
+    final Runnable collectOverloads = new Runnable() {
+      public void run() {
+        overloadsResolveMap.putAll(ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember));
+      }
+    };
+    final Runnable extract = new Runnable() {
+      public void run() {
+        doExtract();
+        ExtractMethodUtil.decodeOverloadTargets(overloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
+      }
+    };
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      collectOverloads.run();
+      extract.run();
+    } else {
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(collectOverloads, "Collect overloads...", true, myProject)) return;
+      ApplicationManager.getApplication().runWriteAction(extract);
+    }
 
     LogicalPosition pos1 = new LogicalPosition(line, col);
     myEditor.getCaretModel().moveToLogicalPosition(pos1);
