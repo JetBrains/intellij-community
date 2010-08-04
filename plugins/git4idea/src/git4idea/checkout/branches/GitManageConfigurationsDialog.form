@@ -29,27 +29,9 @@
         </constraints>
         <properties>
           <labelFor value="1ca7c"/>
-          <text value="&amp;Branches"/>
+          <text value="&amp;Branch Configurations"/>
         </properties>
       </component>
-      <grid id="eb1ed" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="87360" class="javax.swing.JButton" binding="myDeleteButton" default-binding="true">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="&amp;Delete"/>
-            </properties>
-          </component>
-        </children>
-      </grid>
       <grid id="f0a1f" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
@@ -112,6 +94,48 @@
             </constraints>
             <properties>
               <text value=""/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="e0ed5" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="fe707" class="javax.swing.JButton" binding="myDetectConfigurationsButton" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Dete&amp;ct Configurations"/>
+              <toolTipText value="Detect configurations"/>
+            </properties>
+          </component>
+          <component id="87360" class="javax.swing.JButton" binding="myDeleteButton" default-binding="true">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Delete"/>
+              <toolTipText value="Delete selected configurations"/>
+            </properties>
+          </component>
+          <hspacer id="b475">
+            <constraints>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+          <component id="afcc2" class="javax.swing.JCheckBox" binding="myIncludeIncompleteCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Include incomplete"/>
+              <toolTipText value="If selected, the incomplete configurations are also detected"/>
             </properties>
           </component>
         </children>
