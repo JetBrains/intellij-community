@@ -150,7 +150,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static RareLogger.LogFilter[] ourLogFilters;
 
   static {
-    SVNJNAUtil.setJNAEnabled(true);
+    // todo rmeove
+    SVNJNAUtil.setJNAEnabled(false);
     SvnHttpAuthMethodsDefaultChecker.check();
 
     //noinspection UseOfArchaicSystemPropertyAccessors
