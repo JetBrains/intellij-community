@@ -31,6 +31,7 @@ import org.apache.tools.ant.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -182,8 +183,26 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       if (genericInfo.getAttributeChildDescription(attribName) == null) { // if not defined yet 
         final String _attribName = attribName.toLowerCase(Locale.US);
         final Pair<Type, Class> types = registeredAttribs.get(_attribName);
-        final Type type = types != null? types.getFirst() : String.class;
-        final Class converterClass = types != null ? types.getSecond() : null;
+        Type type = types != null? types.getFirst() : null;
+        Class converterClass = types != null ? types.getSecond() : null;
+        if (type == null) {
+          type = String.class; // use String by default
+          final Class attributeType = parentElementIntrospector.getAttributeType(attribName);
+          if (attributeType != null) {
+            // handle well-known types
+            if (File.class.isAssignableFrom(attributeType)) {
+              type = PsiFileSystemItem.class;
+              converterClass = AntPathConverter.class;
+            }
+            else if (Boolean.class.isAssignableFrom(attributeType)){
+              type = Boolean.class;
+              converterClass = AntBooleanConverter.class;
+            }
+          }
+        }
+        
+        LOG.assertTrue(type != null);
+        
         registerAttribute(registrar, attribName, type, converterClass);
         if (types == null) { // augment the map if this was a newly added attribute
           registeredAttribs.put(_attribName, new Pair<Type, Class>(type, converterClass));
