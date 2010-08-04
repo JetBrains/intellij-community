@@ -15,10 +15,13 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -30,7 +33,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider");
@@ -161,14 +163,12 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     }
 
     if (command != null) {
-      try {
-        GuiUtils.runOrInvokeAndWait(command);
-      }
-      catch (InterruptedException e) {
-        //
-      }
-      catch (InvocationTargetException e) {
-        //
+      final Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread()) {
+        command.run();
+      } else {
+        final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+        application.invokeAndWait(command, pi == null ? ModalityState.defaultModalityState() : pi.getModalityState());
       }
       log("3 authentication result: " + result[0]);
     }
