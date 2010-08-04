@@ -40,6 +40,8 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -51,6 +53,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -87,6 +90,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
   private final Map<VirtualFile, List<XmlFile>> myExternalAnotations = new ConcurrentWeakHashMap<VirtualFile, List<XmlFile>>();
+  private final Ref<Boolean> myHasAnyAnnotationsRoots = new Ref<Boolean>();
   private static final List<XmlFile> NULL = new ArrayList<XmlFile>();
   private final PsiManager myPsiManager;
 
@@ -99,8 +103,30 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
       public void rootsChanged(ModuleRootEvent event) {
         myExternalAnotations.clear();
+        synchronized (myHasAnyAnnotationsRoots) {
+          myHasAnyAnnotationsRoots.set(null);
+        }
       }
     });
+  }
+
+  private boolean hasAnyAnnotationsRoots() {
+    if (myHasAnyAnnotationsRoots.get() == null) {
+      synchronized (myHasAnyAnnotationsRoots) {
+        final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
+        for (Module module : modules) {
+          for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+            final String[] urls = AnnotationOrderRootType.getUrls(entry);
+            if (urls.length > 0) {
+              myHasAnyAnnotationsRoots.set(Boolean.TRUE);
+              return true;
+            }
+          }
+        }
+        myHasAnyAnnotationsRoots.set(Boolean.FALSE);
+      }
+    }
+    return myHasAnyAnnotationsRoots.get();
   }
 
   @Nullable
@@ -114,8 +140,10 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     return result.isEmpty() ? null : result.values().toArray(new PsiAnnotation[result.size()]);
   }
 
+  @NotNull
   private Map<String, PsiAnnotation> collectExternalAnnotations(final PsiModifierListOwner listOwner) {
     final Map<String, PsiAnnotation> result = new HashMap<String, PsiAnnotation>();
+    if (!hasAnyAnnotationsRoots()) return result;
     final List<XmlFile> files = findExternalAnnotationsFile(listOwner);
     if (files != null) {
       for (XmlFile file : files) {
