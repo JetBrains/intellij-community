@@ -41,15 +41,15 @@ public abstract class AntDomAnt extends AntDomElement {
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getOutputtFileName();
 
-  @Attribute("inheritAll")
+  @Attribute("inheritall")
   @Convert(value = AntBooleanConverterDefaultTrue.class)
   public abstract GenericAttributeValue<Boolean> isInheritAllProperties();
 
-  @Attribute("inheritRefs")
+  @Attribute("inheritrefs")
   @Convert(value = AntBooleanConverterDefaultFalse.class)
   public abstract GenericAttributeValue<Boolean> isInheritRefsProperties();
 
-  @Attribute("useNativeBasedir")
+  @Attribute("usenativebasedir")
   @Convert(value = AntBooleanConverterDefaultFalse.class)
   public abstract GenericAttributeValue<Boolean> isUseNativeBasedir();
 }
