@@ -15,10 +15,12 @@ package org.zmlx.hg4idea.test;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.Test;
 
+import static org.zmlx.hg4idea.test.HgTestOutputParser.added;
+
 /**
  * Tests adding files to the Mercurial repository.
  */
-public class HgAddTestCase extends HgAbstractTestCase {
+public class HgAddTestCase extends HgSingleUserTestCase {
 
   /**
    * 1. Create a file in the file system.
@@ -27,7 +29,7 @@ public class HgAddTestCase extends HgAbstractTestCase {
    */
   @Test
   public void fileAddedViaChangeListShouldBeAddedToHg() throws Exception {
-    final VirtualFile vf = myTempDirTestFixture.createFile(AFILE);
+    final VirtualFile vf = myRepo.getDirFixture().createFile(AFILE);
     myChangeListManager.addUnversionedFilesToVcs(vf);
     verifyStatus(added(AFILE));
     myChangeListManager.checkFilesAreInList(true, vf);
@@ -51,9 +53,9 @@ public class HgAddTestCase extends HgAbstractTestCase {
    */
   @Test
   public void filesInDirsAddedViaChangeListShouldBeAddedToHg() throws Exception {
-    final VirtualFile afile = myTempDirTestFixture.createFile(AFILE);
-    final VirtualFile bdir = myTempDirTestFixture.findOrCreateDir(BDIR);
-    final VirtualFile bfile = myTempDirTestFixture.createFile(BFILE_PATH);
+    final VirtualFile afile = myRepo.getDirFixture().createFile(AFILE);
+    final VirtualFile bdir = myRepo.getDirFixture().findOrCreateDir(BDIR);
+    final VirtualFile bfile = myRepo.getDirFixture().createFile(BFILE_PATH);
     myChangeListManager.addUnversionedFilesToVcs(afile, bdir, bfile);
     verifyStatus(added(AFILE), added(BFILE_PATH));
     myChangeListManager.checkFilesAreInList(true, afile, bfile);

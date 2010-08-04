@@ -429,6 +429,23 @@ File bar() { <warning descr="Cannot assign 'Map' to 'File'">[:]</warning> }
     myFixture.checkHighlighting(true, false, false)
   }
 
+  public void testNestedLiteralConstructors() throws Exception {
+    configureGppScript """
+class Foo {
+  def Foo(Bar b) { }
+}
+
+class Bar {
+  def Bar(int i) { }
+}
+
+Foo x = [[2]]
+println x
+"""
+    myFixture.enableInspections new GroovyAssignabilityCheckInspection()
+    myFixture.checkHighlighting(true, false, false)
+  }
+
 }
 
 class GppProjectDescriptor extends DefaultLightProjectDescriptor {

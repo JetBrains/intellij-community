@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
-public class HgMoveTestCase extends HgAbstractTestCase {
+public class HgMoveTestCase extends HgSingleUserTestCase {
 
   @Test
   public void testMoveNewFile() throws Exception {
@@ -27,7 +27,7 @@ public class HgMoveTestCase extends HgAbstractTestCase {
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
 
-    verify(runHgOnProjectRepo("status"), added("org", "a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"));
   }
 
   @Test
@@ -39,7 +39,7 @@ public class HgMoveTestCase extends HgAbstractTestCase {
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
 
-    verify(runHgOnProjectRepo("status"), added("org", "a.txt"), removed("com", "a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"), HgTestOutputParser.removed("com", "a.txt"));
   }
 
   @Test
@@ -52,7 +52,7 @@ public class HgMoveTestCase extends HgAbstractTestCase {
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(dir, parent2);
 
-    verify(runHgOnProjectRepo("status"), added("org", "zzz", "a.txt"), removed("com", "zzz", "a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "zzz", "a.txt"), HgTestOutputParser.removed("com", "zzz", "a.txt"));
   }
 
   @Test
@@ -62,12 +62,12 @@ public class HgMoveTestCase extends HgAbstractTestCase {
     File unversionedFile = new File(parent1.getPath(), "a.txt");
     VirtualFile file = makeFile(unversionedFile);
 
-    verify(runHgOnProjectRepo("status"), unknown("com", "a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("com", "a.txt"));
 
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
 
-    verify(runHgOnProjectRepo("status"), unknown("org", "a.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("org", "a.txt"));
   }
 
 }

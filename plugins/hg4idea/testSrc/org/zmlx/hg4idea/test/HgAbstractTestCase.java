@@ -23,6 +23,7 @@ import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
@@ -38,10 +39,6 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
 
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
 
-  protected File myProjectRepo;
-  protected TempDirTestFixture myTempDirTestFixture;
-  protected TestChangeListManager myChangeListManager;
-
   // some shortcuts to use in tests
   protected static final String AFILE = "a.txt";
   protected static final String BDIR = "b";
@@ -50,83 +47,92 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
   protected static final String FILE_CONTENT = "Sample file content.";
   protected static final String FILE_CONTENT_2 = "some other file content";
 
+  protected File myProjectDir; // location of the project repository. Initialized differently in each test: by init or by clone.
+  protected HgTestChangeListManager myChangeListManager;
+
   @BeforeMethod
   protected void setUp() throws Exception {
-    setHGExecutablePath();
-
-    myTempDirTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-    myTempDirTestFixture.setUp();
-    myProjectRepo = new File(myTempDirTestFixture.getTempDirPath());
-
-    ProcessOutput processOutput = runHg(myProjectRepo, "init");
-    verify(processOutput);
-    initProject(myProjectRepo);
-    activateVCS(HgVcs.VCS_NAME);
-
-    myChangeListManager = new TestChangeListManager(myProject);
-
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-  }
-
-  protected void setHGExecutablePath() {
     // setting hg executable
     String exec = System.getenv(HG_EXECUTABLE_PATH);
-    System.out.println("exec: " + exec);
     if (exec != null) {
-      System.out.println("Using external");
       myClientBinaryPath = new File(exec);
     }
     if (exec == null || !myClientBinaryPath.exists()) {
-      System.out.println("Using checked in");
-      File pluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
+      final File pluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
       myClientBinaryPath = new File(pluginRoot, "testData/bin");
     }
-
     HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
+
+    myTraceClient = true;
+  }
+
+  /**
+   * Creates a new Mercurial repository in a temporary test directory.
+   * @return created repository
+   */
+  protected HgTestRepository createRepository() throws Exception {
+    final TempDirTestFixture dirFixture = createFixtureDir();
+    final File repo = new File(dirFixture.getTempDirPath());
+    ProcessOutput processOutput = runHg(repo, "init");
+    verify(processOutput);
+    return new HgTestRepository(this, dirFixture);
+  }
+
+  protected static TempDirTestFixture createFixtureDir() throws Exception {
+    final TempDirTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
+    fixture.setUp();
+    return fixture;
+  }
+
+  protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
+    setStandardConfirmation(HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+  }
+
+  protected void disableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
+    setStandardConfirmation(HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
   }
 
   /**
    * Runs the hg command.
+   *
    * @param commandLine the name of the command and its arguments.
    */
   protected ProcessOutput runHgOnProjectRepo(String... commandLine) throws IOException {
-    return runHg(myProjectRepo, commandLine);
+    return runHg(myProjectDir, commandLine);
   }
 
+  /**
+   * Verifies the status of the file calling native 'hg status' command.
+   *
+   * @param status status as returned by {@link #added(java.lang.String)} and other methods.
+   * @throws IOException
+   */
+  protected void verifyStatus(String... status) throws IOException {
+    verify(runHg(myProjectDir, "status"), status);
+}
   /**
    * Calls "hg add ." to add everything to the index.
    */
   protected ProcessOutput addAll() throws IOException {
-    return runHgOnProjectRepo("add", ".");
+    return runHg(myProjectDir, "add", ".");
   }
 
   /**
    * Calls "hg commit -m &lt;commitMessage&gt;" to commit the index.
    */
   protected ProcessOutput commitAll(String commitMessage) throws IOException {
-    return runHgOnProjectRepo("commit", "-m", commitMessage);
+    return runHg(myProjectDir, "commit", "-m", commitMessage);
   }
 
   protected HgFile getHgFile(String... filepath) {
-    File fileToInclude = myProjectRepo;
+    File fileToInclude = myProjectDir;
     for (String path : filepath) {
       fileToInclude = new File(fileToInclude, path);
     }
     return new HgFile(myWorkingCopyDir, fileToInclude);
   }
+                       
 
-  protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
-    setStandardConfirmation(
-      HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
-    );
-  }
-
-  protected void disableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
-    setStandardConfirmation(
-      HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
-    );
-  }
 
   protected VirtualFile makeFile(File file) throws IOException {
     file.createNewFile();
@@ -135,8 +141,13 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
     return VcsUtil.getVirtualFile(file);
   }
 
-  protected ProcessOutput runHg(File aHgRepository, String... commandLine) throws IOException {
-    return runClient(HgVcs.HG_EXECUTABLE_FILE_NAME, null, aHgRepository, commandLine);
+  /**
+   * Executes the given native Mercurial command with parameters in the given working directory.
+   * @param workingDir  working directory where the command will be executed. May be null.
+   * @param commandLine command and parameters (e.g. 'status, -m').
+   */
+  protected ProcessOutput runHg(@Nullable File workingDir, String... commandLine) throws IOException {
+    return runClient(HgVcs.HG_EXECUTABLE_FILE_NAME, null, workingDir, commandLine);
   }
 
   protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws FileNotFoundException {
@@ -157,49 +168,4 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
     return outputFile;
   }
 
-  /**
-   * Verifies the status of the file calling native 'hg status' command.
-   * @param status status as returned by {@link #added(java.lang.String)} and other methods.
-   * @throws IOException
-   */
-  protected void verifyStatus(String... status) throws IOException {
-    verify(runHgOnProjectRepo("status"), status);
-  }
-
-  public static String added(String... path) {
-    return "A " + path(path);
-  }
-
-  public static String removed(String... path) {
-    return "R " + path(path);
-  }
-
-  public static String unknown(String... path) {
-    return "? " + path(path);
-  }
-
-  public static String modified(String... path) {
-    return "M " + path(path);
-  }
-
-  public static String missing(String... path) {
-    return "! " + path(path);
-  }
-
-  public static String path(String... line) {
-    StringBuilder builder = new StringBuilder();
-
-    int linePartCount = line.length;
-
-    for (int i = 0; i < linePartCount; i++) {
-      String linePart = line[i];
-      builder.append(linePart);
-
-      if (i < linePartCount - 1) {
-        builder.append(File.separator);
-      }
-    }
-
-    return builder.toString();
-  }
 }

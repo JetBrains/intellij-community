@@ -7,7 +7,7 @@ PsiJavaFile:MultiLineUnclosed.java
     PsiKeyword:int('int')
   PsiErrorElement:Identifier expected
     <empty list>
-  PsiWhiteSpace(' \n  ')
+  PsiWhiteSpace(' \n ')
   PsiField:o
     PsiModifierList:
       <empty list>

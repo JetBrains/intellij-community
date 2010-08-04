@@ -21,6 +21,7 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -109,6 +110,7 @@ public class JUnitUtil {
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
+      ProgressManager.checkCanceled();
       if (isSuiteMethod(method)) return true;
       if (isTestAnnotated(method)) return true;
     }
@@ -131,6 +133,7 @@ public class JUnitUtil {
     if (modifierList == null) return false;
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
     for (final PsiMethod method : psiClass.getAllMethods()) {
+      ProgressManager.checkCanceled();
       if (isTestAnnotated(method)) return true;
     }
 

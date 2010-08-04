@@ -35,6 +35,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,10 @@ import java.util.List;
  * The switch branches dialog
  */
 public class GitSwitchBranchesDialog extends DialogWrapper {
+  /**
+   * The prefix for remote references
+   */
+  public static final String REMOTES_PREFIX = "remotes/";
   /**
    * The branch configuration name text field
    */
@@ -168,6 +173,12 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     else {
       myBranches = prepareBranchDescriptors(target, roots);
     }
+    Collections.sort(myBranches, new Comparator<BranchDescriptor>() {
+      @Override
+      public int compare(BranchDescriptor o1, BranchDescriptor o2) {
+        return o1.getRoot().compareTo(o2.getRoot());
+      }
+    });
     if (target == null) {
       myNameTextField.setText(generateNewConfigurationName());
     }
@@ -205,6 +216,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
         verify();
       }
     });
+    verify();
     init();
   }
 
@@ -218,7 +230,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
    * @param remoteBranch the remote branch
    * @param config       the configuration
    * @param isModify     the modify mode flag
-   * @return the pair of selected changes and
+   * @return the dialog result object
    * @throws VcsException if there is a problem with accessing git
    */
   @Nullable
@@ -256,7 +268,11 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     for (BranchDescriptor d : myBranches) {
       if (d.root != null) {
         if (!StringUtil.isEmpty(d.newBranchName)) {
-          rc.referencesToUse.put(d.root, d.referenceToCheckout.trim());
+          String ref = d.referenceToCheckout.trim();
+          if (!d.existingBranches.contains(ref)) {
+            ref = myConfig.detectTag(d.root, ref);
+          }
+          rc.referencesToUse.put(d.root, ref);
           rc.target.setBranch(d.root.getPath(), d.newBranchName.trim());
           rc.checkoutNeeded.add(d.root);
         }
@@ -334,11 +350,11 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
       }
     }
     if (name == null) {
-      name = "Unnamed";
+      name = "untitled";
     }
     if (myExistingConfigNames.contains(name)) {
       for (int i = 2; i < Integer.MAX_VALUE; i++) {
-        String t = name + " " + i;
+        String t = name + i;
         if (!myExistingConfigNames.contains(t)) {
           name = t;
           break;
@@ -361,19 +377,31 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     assert roots.size() > 0;
     List<BranchDescriptor> rc = new ArrayList<BranchDescriptor>();
     HashSet<String> allBranches = new HashSet<String>();
+    allBranches.addAll(myConfig.getConfigurationNames());
+    final String qualifiedBranch = "remotes/" + remoteBranch;
+    String firstRemote = remoteBranch.endsWith("/HEAD") ? null : qualifiedBranch;
     for (VirtualFile root : roots) {
       BranchDescriptor d = new BranchDescriptor();
       d.root = root;
       d.currentReference = myConfig.describeRoot(root);
-      d.referenceToCheckout = "remotes/" + remoteBranch;
+      if (firstRemote == null) {
+        firstRemote = resolveHead(qualifiedBranch, d.root.getPath());
+      }
+      d.referenceToCheckout = qualifiedBranch;
       GitBranch.listAsStrings(myProject, root, false, true, d.existingBranches, null);
       GitBranch.listAsStrings(myProject, root, true, true, d.referencesToSelect, null);
       allBranches.addAll(d.existingBranches);
       rc.add(d);
     }
-    int p = remoteBranch.indexOf('/');
-    assert p > 0 && p < remoteBranch.length() - 1 : "Unexpected format for remote branch: " + remoteBranch;
-    String candidate = remoteBranch.substring(p + 1);
+    String candidate;
+    if (firstRemote == null) {
+      candidate = "untitled";
+    }
+    else {
+      int p = firstRemote.indexOf('/', REMOTES_PREFIX.length() + 1);
+      assert p > 0 && p < firstRemote.length() - 1 : "Unexpected format for remote branch: " + firstRemote;
+      candidate = firstRemote.substring(p + 1);
+    }
     String actual = null;
     if (!allBranches.contains(candidate)) {
       actual = candidate;
@@ -393,6 +421,73 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
       d.updateStatus();
     }
     return rc;
+  }
+
+  /**
+   * Get candidate new branch name from remote branch
+   *
+   * @param value the value used to guess new reference
+   * @param d     a description to use
+   * @return the candidate branch name
+   */
+  @Nullable
+  private String getCandidateLocal(String value, BranchDescriptor d) {
+    if (StringUtil.isEmpty(value) || !value.startsWith(REMOTES_PREFIX)) {
+      return null;
+    }
+    int p = value.indexOf('/', REMOTES_PREFIX.length() + 1);
+    String candidate = null;
+    if (p != -1) {
+      String c = value.substring(p + 1);
+      if (!d.existingBranches.contains(c)) {
+        candidate = c;
+      }
+      else {
+        for (int i = 2; i < Integer.MAX_VALUE; i++) {
+          String cn = c + i;
+          if (!d.existingBranches.contains(cn)) {
+            candidate = cn;
+            break;
+          }
+        }
+      }
+      if ("HEAD".equals(candidate)) {
+        final String rootPath = d.root.getPath();
+        String newRef = resolveHead(value, rootPath);
+        candidate = newRef == null ? null : getCandidateLocal(newRef, d);
+      }
+    }
+    return candidate;
+  }
+
+  /**
+   * Resolve remote had reference
+   *
+   * @param value    the reference to resolve
+   * @param rootPath the root path
+   * @return the resolved reference or null
+   */
+  @Nullable
+  private static String resolveHead(String value, String rootPath) {
+    if (!value.startsWith("remotes/")) {
+      return null;
+    }
+    String newRef;
+    try {
+      final String refText =
+        new String(FileUtil.loadFileText(new File(rootPath, ".git/refs/" + value), GitUtil.UTF8_ENCODING)).trim();
+      String refsPrefix = "ref: refs/";
+      if (refText.endsWith("/HEAD") || !refText.startsWith(refsPrefix)) {
+        newRef = null;
+      }
+      else {
+        newRef = refText.substring(refsPrefix.length());
+      }
+    }
+    catch (Exception e) {
+      newRef = null;
+    }
+    return newRef;
   }
 
   /**
@@ -441,7 +536,9 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     return rc;
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   protected JComponent createCenterPanel() {
     return myRoot;
@@ -472,16 +569,25 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
      */
     static final int COLUMNS = STATUS_COLUMN + 1;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getRowCount() {
       return myBranches.size();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getColumnCount() {
       return COLUMNS;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       BranchDescriptor d = myBranches.get(rowIndex);
@@ -491,6 +597,9 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
       return columnIndex == REVISION_COLUMN || columnIndex == NEW_BRANCH_COLUMN;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       String t = (String)aValue;
@@ -499,24 +608,15 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
         return;
       }
       if (columnIndex == REVISION_COLUMN) {
+        String currentCandidate = getCandidateLocal(d.referenceToCheckout, d);
+        boolean isCurrentMatchCandidate = currentCandidate != null && currentCandidate.equals(d.newBranchName);
         d.referenceToCheckout = t;
-        String remotesPrefix = "remotes/";
-        if (StringUtil.isEmpty(d.newBranchName) && t.startsWith(remotesPrefix) && d.referencesToSelect.contains(t)) {
-          int p = t.indexOf(t.indexOf('/'), remotesPrefix.length() + 1);
-          if (p != -1) {
-            String c = t.substring(p);
-            if (!d.existingBranches.contains(c)) {
-              d.newBranchName = c;
-            }
-            else {
-              for (int i = 2; i < Integer.MAX_VALUE; i++) {
-                String candidate = c + i;
-                if (!d.existingBranches.contains(c)) {
-                  d.newBranchName = candidate;
-                  break;
-                }
-              }
-            }
+        if ((StringUtil.isEmpty(d.newBranchName) || isCurrentMatchCandidate) &&
+            t.startsWith(REMOTES_PREFIX) &&
+            d.referencesToSelect.contains(t)) {
+          String candidate = getCandidateLocal(t, d);
+          if (candidate != null) {
+            d.newBranchName = candidate;
           }
         }
       }
@@ -527,6 +627,10 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
       fireTableRowsUpdated(rowIndex, rowIndex);
     }
 
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       BranchDescriptor d = myBranches.get(rowIndex);
@@ -561,6 +665,9 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getColumnName(int column) {
       switch (column) {
@@ -819,8 +926,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
         @Override
         protected void textChanged(DocumentEvent e) {
           String s = myTextField.getText();
-          if (s.length() == 0 &&
-              (myInvalidValues == null || !myInvalidValues.contains(s)) &&
+          if ((myInvalidValues == null || !myInvalidValues.contains(s)) &&
               (s.length() == 0 || GitBranchNameValidator.INSTANCE.checkInput(s))) {
             myTextField.setForeground(myDefaultForeground);
           }

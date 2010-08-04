@@ -38,6 +38,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -49,6 +50,7 @@ import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -107,11 +109,13 @@ public class GroovyToJavaGenerator {
 
   private static final CharSequence PREFIX_SEPARATOR = "/";
   private final CompileContext myContext;
+  private final List<VirtualFile> myAllToCompile;
   private final Project myProject;
 
-  public GroovyToJavaGenerator(Project project, CompileContext context) {
+  public GroovyToJavaGenerator(Project project, CompileContext context, List<VirtualFile> allToCompile) {
     myProject = project;
     myContext = context;
+    myAllToCompile = allToCompile;
   }
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
@@ -420,7 +424,7 @@ public class GroovyToJavaGenerator {
     text.append("}");
   }
 
-  private static void writeAllMethods(StringBuffer text, List<PsiMethod> methods, PsiClass aClass) {
+  private void writeAllMethods(StringBuffer text, List<PsiMethod> methods, PsiClass aClass) {
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
     for (PsiMethod method : methods) {
       if (LightMethodBuilder.isLightMethod(method, GrClassImplUtil.SYNTHETIC_METHOD_IMPLEMENTATION)) {
@@ -508,7 +512,7 @@ public class GroovyToJavaGenerator {
     return psiClass != null && GrClassSubstitutor.getSubstitutedClass(psiClass).isInterface();
   }
 
-  private static void appendTypeParameters(StringBuffer text, PsiTypeParameterListOwner typeParameterListOwner) {
+  private void appendTypeParameters(StringBuffer text, PsiTypeParameterListOwner typeParameterListOwner) {
     if (typeParameterListOwner.hasTypeParameters()) {
       text.append("<");
       PsiTypeParameter[] parameters = typeParameterListOwner.getTypeParameters();
@@ -529,7 +533,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static void writeEnumConstants(StringBuffer text, GrEnumTypeDefinition enumDefinition) {
+  private void writeEnumConstants(StringBuffer text, GrEnumTypeDefinition enumDefinition) {
     text.append("\n  ");
     GrEnumConstant[] enumConstants = enumDefinition.getEnumConstants();
     for (int i = 0; i < enumConstants.length; i++) {
@@ -555,7 +559,7 @@ public class GroovyToJavaGenerator {
     text.append(";");
   }
 
-  private static void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor, PsiSubstitutor substitutor) {
+  private void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor, PsiSubstitutor substitutor) {
     final PsiParameter[] superParams = constructor.getParameterList().getParameters();
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
@@ -574,7 +578,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static void writeConstructor(final StringBuffer text, final GrConstructor constructor, boolean isEnum) {
+  private void writeConstructor(final StringBuffer text, final GrConstructor constructor, boolean isEnum) {
     text.append("\n");
     text.append("  ");
     if (!isEnum) {
@@ -613,7 +617,7 @@ public class GroovyToJavaGenerator {
     text.append("\n  }\n");
   }
 
-  private static Set<String> collectThrowsTypes(GrConstructor constructor, Set<PsiMethod> visited) {
+  private Set<String> collectThrowsTypes(GrConstructor constructor, Set<PsiMethod> visited) {
     final GroovyResolveResult resolveResult = resolveChainingConstructor(constructor);
     if (resolveResult == null) {
       return Collections.emptySet();
@@ -673,7 +677,7 @@ public class GroovyToJavaGenerator {
     return result;
   }
 
-  private static void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
+  private void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
     GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
     final String type = typeElement == null ? CommonClassNames.JAVA_LANG_OBJECT : getTypeText(typeElement.getType(), typeElement, false);
     final String initializer = getDefaultValueText(type);
@@ -694,7 +698,23 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
+  public static String generateMethodStub(@NotNull PsiMethod method) {
+    if (!(method instanceof GroovyPsiElement)) {
+      return method.getText();
+    }
+
+    final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(method.getProject(), null, Collections.<VirtualFile>emptyList());
+    final StringBuffer buffer = new StringBuffer();
+    if (method instanceof GrConstructor) {
+      generator.writeConstructor(buffer, (GrConstructor)method, false);
+    }
+    else {
+      generator.writeMethod(buffer, method, method.getParameterList().getParameters());
+    }
+    return buffer.toString();
+  }
+
+  private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
     if (method == null) return;
     String name = method.getName();
     if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name))
@@ -739,7 +759,7 @@ public class GroovyToJavaGenerator {
     text.append("\n");
   }
 
-  private static void writeParameterList(StringBuffer text, PsiParameter[] parameters) {
+  private void writeParameterList(StringBuffer text, PsiParameter[] parameters) {
     text.append("(");
 
     //writes myParameters
@@ -805,14 +825,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static String getTypeText(@Nullable PsiType type, @Nullable PsiElement context, boolean allowVarargs) {
-    if (context != null && type instanceof PsiClassType) {
-      final String accessible = findAccessibleSuperClass(context, ((PsiClassType)type).resolve());
-      if (accessible != null) {
-        return accessible;
-      }
-    }
-
+  private String getTypeText(@Nullable PsiType type, @Nullable final PsiElement context, boolean allowVarargs) {
     if (type instanceof PsiArrayType) {
       String componentText = getTypeText(((PsiArrayType)type).getComponentType(), context, false);
       if (allowVarargs && type instanceof PsiEllipsisType) {
@@ -825,28 +838,57 @@ public class GroovyToJavaGenerator {
       return CommonClassNames.JAVA_LANG_OBJECT;
     }
 
+    if (type instanceof PsiClassType) {
+      final PsiClass raw = ((PsiClassType)type).resolve();
+      if (raw != null) {
+        final String qname = getClassQualifiedName(raw, context);
+        if (qname != null) {
+          final PsiType[] parameters = ((PsiClassType)type).getParameters();
+          if (parameters.length > 0) {
+            return qname + "<" + StringUtil.join(parameters, new Function<PsiType, String>() {
+              @Override
+              public String fun(PsiType type) {
+                return getTypeText(type, context, false);
+              }
+            }, ", ") + ">";
+          }
+          return qname;
+        }
+      }
+    }
+
     String canonicalText = type.getCanonicalText();
     return canonicalText != null ? canonicalText : type.getPresentableText();
   }
 
   @Nullable
-  private static String findAccessibleSuperClass(PsiElement context, @Nullable PsiClass initialClass) {
-    if (initialClass == null) {
+  private String getClassQualifiedName(PsiClass psiClass, @Nullable PsiElement context) {
+    if (context != null) {
+      psiClass = findAccessibleSuperClass(context, psiClass);
+    }
+    if (psiClass == null) {
       return null;
     }
 
+    if (psiClass instanceof GrTypeDefinition) {
+      if (!myAllToCompile.contains(psiClass.getContainingFile().getVirtualFile())) {
+        final PsiClass container = psiClass.getContainingClass();
+        if (container != null) {
+          return getClassQualifiedName(container, null) + "$" + psiClass.getName();
+        }
+      }
+    }
+    return psiClass.getQualifiedName();
+  }
+
+  @Nullable
+  private static PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
     PsiClass curClass = initialClass;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     while (curClass != null && !resolveHelper.isAccessible(curClass, context, null)) {
       curClass = curClass.getSuperClass();
     }
-    if (curClass != null && !initialClass.isEquivalentTo(curClass)) {
-      final String qname = curClass.getQualifiedName();
-      if (qname != null) {
-        return qname;
-      }
-    }
-    return null;
+    return curClass;
   }
 
   CharTrie myTrie = new CharTrie();

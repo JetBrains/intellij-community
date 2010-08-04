@@ -16,22 +16,20 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.mock.MockProgressIndicator;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -44,7 +42,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.util.ArrayUtil;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import junit.framework.TestCase;
 import org.intellij.plugins.relaxNG.inspections.RngDomInspection;
 import org.intellij.plugins.testUtil.IdeaCodeInsightTestCase;
@@ -54,10 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.delete;
 
@@ -196,44 +191,23 @@ public abstract class HighlightingTestBase extends TestCase implements IdeaCodeI
   }
 
   @NotNull
-  private Collection<HighlightInfo> doHighlighting(final Boolean includeExternalToolPass) {
+  private Collection<HighlightInfo> doHighlighting(final Boolean externalToolPass) {
     final Project project = myTestFixture.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    final Editor editor = myTestFixture.getEditor();
 
-    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<HighlightInfo>>() {
-              public Collection<HighlightInfo> compute() {
-                final Editor editor = myTestFixture.getEditor();
-                final List<TextEditorHighlightingPass> passes =
-                        TextEditorHighlightingPassRegistrarEx.getInstanceEx(project).instantiatePasses(myTestFixture.getFile(), editor, ArrayUtil.EMPTY_INT_ARRAY);
-                final MockProgressIndicator progress = new MyMockProgressIndicator();
-
-                Runnable runnable = new Runnable() {
-                  public void run() {
-                    for (TextEditorHighlightingPass pass : passes) {
-                      if (includeExternalToolPass == null) {
-                        pass.collectInformation(progress);
-                      } else {
-                        if (includeExternalToolPass == pass instanceof ExternalToolPass) {
-                          pass.collectInformation(progress);
-                        }
-                      }
-                    }
-                    for (TextEditorHighlightingPass pass : passes) {
-                      if (includeExternalToolPass == null) {
-                        pass.applyInformationToEditor();
-                      } else {
-                        if (includeExternalToolPass == pass instanceof ExternalToolPass) {
-                          pass.applyInformationToEditor();
-                        }
-                      }
-                    }
-                  }
-                };
-                ProgressManager.getInstance().runProcess(runnable, progress);
-                List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), project);
-                return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
-              }
-            });
+    int[] ignore = externalToolPass == null || externalToolPass ? new int[]{
+      com.intellij.codeHighlighting.Pass.LINE_MARKERS,
+      com.intellij.codeHighlighting.Pass.LOCAL_INSPECTIONS,
+      com.intellij.codeHighlighting.Pass.POPUP_HINTS,
+      com.intellij.codeHighlighting.Pass.POST_UPDATE_ALL,
+      com.intellij.codeHighlighting.Pass.UPDATE_ALL,
+      com.intellij.codeHighlighting.Pass.UPDATE_FOLDING,
+      com.intellij.codeHighlighting.Pass.UPDATE_OVERRIDEN_MARKERS,
+      com.intellij.codeHighlighting.Pass.UPDATE_VISIBLE,
+      com.intellij.codeHighlighting.Pass.VISIBLE_LINE_MARKERS,
+    } : new int[]{com.intellij.codeHighlighting.Pass.EXTERNAL_TOOLS};
+    return CodeInsightTestFixtureImpl.instantiateAndRun(myTestFixture.getFile(), editor, ignore, false);
   }
 
   protected void doTestCompletion(String name, String ext) throws Throwable {

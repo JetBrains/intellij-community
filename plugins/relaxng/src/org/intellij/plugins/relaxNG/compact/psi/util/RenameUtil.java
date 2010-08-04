@@ -17,21 +17,20 @@
 package org.intellij.plugins.relaxNG.compact.psi.util;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.Lexer;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
+import com.sun.org.apache.xerces.internal.util.XML11Char;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
-import org.intellij.plugins.relaxNG.compact.RngCompactLanguage;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,11 +38,23 @@ import org.jetbrains.annotations.NotNull;
  * Date: 14.08.2007
  */
 public class RenameUtil {
+
+  private static Set<String> ourRncKeywords = new HashSet<String>();
+
+  static {
+    Collections.addAll(ourRncKeywords, "attribute", "default", "datatypes", "div", "element", "empty", "external",
+                       "grammar", "include", "inherit", "list", "mixed", "namespace", "notAllowed", "parent", "start",
+                       "string", "text", "token");
+  }
+
+  private RenameUtil() {
+  }
+
   @NotNull
   public static ASTNode createIdentifierNode(PsiManager manager, String name) throws IncorrectOperationException {
-    if (isKeyword(manager, name)) {
+    if (isKeyword(name)) {
       name = "\\" + name;
-    } else if (!isIdentifier(manager, name)) {
+    } else if (!isIdentifier(name)) {
       throw new IncorrectOperationException("Illegal identifier: " + name);
     }
 
@@ -55,15 +66,23 @@ public class RenameUtil {
     return newNode;
   }
 
-  public static boolean isIdentifier(PsiManager manager, String name) {
-    return isTokenOfType(manager, name, RncTokenTypes.IDENTIFIER_OR_KEYWORD);
+  public static boolean isIdentifier(String name) {
+    //return isTokenOfType(manager, name, RncTokenTypes.IDENTIFIER_OR_KEYWORD);
+    if (name == null) {
+      return false;
+    }
+    if (XML11Char.isXML11ValidNCName(name)) {
+      return true;
+    }
+    return name.length() >= 2 && name.startsWith("\\") && XML11Char.isXML11ValidNCName(name.substring(1));
   }
 
-  public static boolean isKeyword(PsiManager manager, String name) {
-    return isTokenOfType(manager, name, RncTokenTypes.KEYWORDS);
+  public static boolean isKeyword(String name) {
+    //return isTokenOfType(manager, name, RncTokenTypes.KEYWORDS);
+    return ourRncKeywords.contains(name);
   }
 
-  private static boolean isTokenOfType(PsiManager manager, String name, TokenSet set) {
+  /*private static boolean isTokenOfType(PsiManager manager, String name, TokenSet set) {
     final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(RngCompactLanguage.INSTANCE);
     assert definition != null;
     final Lexer lexer = definition.createLexer(manager.getProject());
@@ -72,7 +91,7 @@ public class RenameUtil {
     final IElementType t = lexer.getTokenType();
     lexer.advance();
     return lexer.getTokenType() == null && set.contains(t);
-  }
+  }*/
 
   public static ASTNode createPrefixedNode(PsiManager manager, String prefix, String localPart) {
     final PsiFileFactory f = PsiFileFactory.getInstance(manager.getProject());

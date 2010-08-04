@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import org.testng.Assert;
@@ -29,15 +30,17 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static org.testng.Assert.assertNotNull;
+
 /**
  * The ChangeListManagerImpl extension with some useful helper methods for tests.
  * @author Kirill Likhodedov
  */
-public class TestChangeListManager {
+public class HgTestChangeListManager {
 
   private ChangeListManagerImpl peer;
 
-  public TestChangeListManager(Project project) {
+  public HgTestChangeListManager(Project project) {
     peer = ChangeListManagerImpl.getInstanceImpl(project);
   }
 
@@ -79,7 +82,10 @@ public class TestChangeListManager {
     for (VirtualFile f : files) {
       changes.addAll(peer.getChangesIn(f));
     }
-    Assert.assertTrue(peer.commitChangesSynchronouslyWithResult(peer.getDefaultChangeList(), changes));
+    final LocalChangeList list = peer.getDefaultChangeList();
+    assertNotNull(list);
+    list.setComment("A comment to a commit");
+    Assert.assertTrue(peer.commitChangesSynchronouslyWithResult(list, changes));
   }
 
   public void removeFiles(final VirtualFile file) {

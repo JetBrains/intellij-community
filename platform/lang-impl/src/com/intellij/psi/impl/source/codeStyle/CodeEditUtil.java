@@ -40,9 +40,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CodeEditUtil {
-  private static final Key<Boolean> GENERATED_FLAG = new Key<Boolean>("CREATED BY IDEA");
-  private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENTATION");
-  private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT BEFORE THIS ELEMENT");
+  private static final Key<Boolean> GENERATED_FLAG = new Key<Boolean>("GENERATED_FLAG");
+  private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENT_INFO");
+  private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT_KEY");
 
   public static final Key<Boolean> OUTER_OK = new Key<Boolean>("OUTER_OK");
 
@@ -247,9 +247,15 @@ public class CodeEditUtil {
       final int leftBlankLines = getBlankLines(left.getText());
       final int rightBlankLines = getBlankLines(right.getText());
       final boolean leaveRightText = leftBlankLines < rightBlankLines;
-      if (leftBlankLines == 0 && rightBlankLines == 0) text = left.getText() + right.getText();
-      else if (leaveRightText) text = right.getText();
-      else text = left.getText();
+      if (leftBlankLines == 0 && rightBlankLines == 0) {
+        text = left.getText() + right.getText();
+      }
+      else if (leaveRightText) {
+        text = right.getText();
+      }
+      else {
+        text = left.getText();
+      }
       if(leaveRightText || forceReformat){
         final LeafElement merged = ASTFactory.whitespace(text);
         if(!leaveRightText){
@@ -373,9 +379,13 @@ public class CodeEditUtil {
   }
 
   public static void setNodeGenerated(final ASTNode next, final boolean value) {
-    if(next == null) return;
-    if(value) next.putCopyableUserData(GENERATED_FLAG, true);
-    else next.putCopyableUserData(GENERATED_FLAG, null);
+    if (next == null) return;
+    if (value) {
+      next.putCopyableUserData(GENERATED_FLAG, true);
+    }
+    else {
+      next.putCopyableUserData(GENERATED_FLAG, null);
+    }
   }
 
   public static void setOldIndentation(final TreeElement treeElement, final int oldIndentation) {

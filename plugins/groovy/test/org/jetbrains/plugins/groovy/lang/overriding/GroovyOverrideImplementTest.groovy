@@ -24,7 +24,7 @@ class Test {<caret>}
 class Test {
   @Override
   boolean equals(Object obj) {
-    return super.equals(obj);    //To change body of overridden methods use File | Settings | File Templates.
+    return super.equals(obj)    //To change body of overridden methods use File | Settings | File Templates.
   }
 }
 """
@@ -38,7 +38,7 @@ class Test {<caret>}
     myFixture.checkResult """
 class Test {
   def Test() {
-    super();    //To change body of overridden methods use File | Settings | File Templates.
+    super()    //To change body of overridden methods use File | Settings | File Templates.
   }
 }
 """
@@ -59,7 +59,7 @@ class Test {<caret>}
     myFixture.checkResult """
 class Test {
   @Override def foo() {
-    return super.foo();    //To change body of overridden methods use File | Settings | File Templates.
+    return super.foo()    //To change body of overridden methods use File | Settings | File Templates.
   }
 }
 """

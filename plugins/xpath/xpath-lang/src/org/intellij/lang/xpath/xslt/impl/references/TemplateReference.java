@@ -83,7 +83,7 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
     }
 
     public void registerQuickfix(HighlightInfo highlightInfo, TemplateReference psiReference) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateTemplateFix(myAttribute.getParent(), myName), null, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateTemplateFix(myAttribute.getParent(), myName));
     }
 
     public String getUnresolvedMessagePattern() {
