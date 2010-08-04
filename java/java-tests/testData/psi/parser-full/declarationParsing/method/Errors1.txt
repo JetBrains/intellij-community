@@ -1,0 +1,118 @@
+PsiJavaFile:Errors1.java
+  PsiImportList
+    <empty list>
+  PsiModifierList:
+    <empty list>
+  PsiErrorElement:'class' or 'interface' expected
+    <empty list>
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiTypeParameter:error
+      PsiIdentifier:error('error')
+      PsiElement(EXTENDS_BOUND_LIST)
+        <empty list>
+    PsiErrorElement:'>' expected.
+      <empty list>
+  PsiWhiteSpace(' ')
+  PsiErrorElement:'class' or 'interface' expected
+    PsiIdentifier:descr('descr')
+    PsiJavaToken:EQ('=')
+    PsiJavaToken:STRING_LITERAL('"Modifier 'private' not allowed here"')
+    PsiJavaToken:GT('>')
+  PsiModifierList:private
+    PsiKeyword:private('private')
+  PsiErrorElement:'class' or 'interface' expected
+    <empty list>
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiErrorElement:Type parameter expected
+      <empty list>
+    PsiErrorElement:'>' expected.
+      <empty list>
+  PsiErrorElement:'class' or 'interface' expected
+    PsiJavaToken:DIV('/')
+    PsiIdentifier:error('error')
+    PsiJavaToken:GT('>')
+  PsiWhiteSpace(' \n')
+  PsiModifierList:
+    <empty list>
+  PsiErrorElement:'class' or 'interface' expected
+    <empty list>
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiTypeParameter:error
+      PsiIdentifier:error('error')
+      PsiElement(EXTENDS_BOUND_LIST)
+        <empty list>
+    PsiErrorElement:'>' expected.
+      <empty list>
+  PsiWhiteSpace(' ')
+  PsiErrorElement:'class' or 'interface' expected
+    PsiIdentifier:descr('descr')
+    PsiJavaToken:EQ('=')
+    PsiJavaToken:STRING_LITERAL('"Modifier 'static' not allowed here"')
+    PsiJavaToken:GT('>')
+  PsiModifierList:static
+    PsiKeyword:static('static')
+  PsiErrorElement:'class' or 'interface' expected
+    <empty list>
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiErrorElement:Type parameter expected
+      <empty list>
+    PsiErrorElement:'>' expected.
+      <empty list>
+  PsiErrorElement:'class' or 'interface' expected
+    PsiJavaToken:DIV('/')
+    PsiIdentifier:error('error')
+    PsiJavaToken:GT('>')
+  PsiWhiteSpace('\n')
+  PsiModifierList:
+    <empty list>
+  PsiErrorElement:'class' or 'interface' expected
+    <empty list>
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiTypeParameter:error
+      PsiIdentifier:error('error')
+      PsiElement(EXTENDS_BOUND_LIST)
+        <empty list>
+    PsiErrorElement:'>' expected.
+      <empty list>
+  PsiWhiteSpace(' ')
+  PsiErrorElement:'class' or 'interface' expected
+    PsiIdentifier:descr('descr')
+    PsiJavaToken:EQ('=')
+    PsiJavaToken:STRING_LITERAL('"Modifier 'volatile' not allowed here"')
+    PsiJavaToken:GT('>')
+  PsiModifierList:volatile
+    PsiKeyword:volatile('volatile')
+  PsiErrorElement:'class' or 'interface' expected
+    <empty list>
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiErrorElement:Type parameter expected
+      <empty list>
+    PsiErrorElement:'>' expected.
+      <empty list>
+  PsiErrorElement:'class' or 'interface' expected
+    PsiJavaToken:DIV('/')
+    PsiIdentifier:error('error')
+    PsiJavaToken:GT('>')
+  PsiWhiteSpace('\n')
+  PsiClass:a
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:a('a')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

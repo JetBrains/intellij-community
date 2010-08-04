@@ -1,0 +1,34 @@
+PsiJavaFile:ArrayInitializer0.java
+  PsiImportList
+    <empty list>
+  PsiClass:A
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:A('A')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n  ')
+    PsiField:a
+      PsiModifierList:
+        <empty list>
+      PsiTypeElement:int
+        PsiKeyword:int('int')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:a('a')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:EQ('=')
+      PsiWhiteSpace(' ')
+      PsiArrayInitializerExpression:{ }
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:RBRACE('}')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')
