@@ -411,11 +411,6 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
         tooltip = "No valid vcs roots are configuration for the project.";
         text = "Non-Git project";
         break;
-      case SUBMODULES:
-        tooltip =
-          "<html>The submodules are unsupported in the current version.<br/>It is possible to disable widget in Git Vcs settings.</html>";
-        text = "Submodules unsupported";
-        break;
       case NORMAL:
         GitBranchConfiguration current;
         try {

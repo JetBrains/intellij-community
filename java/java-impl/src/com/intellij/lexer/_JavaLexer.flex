@@ -1,6 +1,7 @@
 /* It's an automatically generated code. Do not modify it. */
 package com.intellij.lexer;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 
 %%
@@ -70,7 +71,7 @@ ESCAPE_SEQUENCE=\\[^\r\n]
 
 <YYINITIAL> {C_STYLE_COMMENT} { return JavaTokenType.C_STYLE_COMMENT; }
 <YYINITIAL> {END_OF_LINE_COMMENT} { return JavaTokenType.END_OF_LINE_COMMENT; }
-<YYINITIAL> {DOC_COMMENT} { return JavaTokenType.DOC_COMMENT; }
+<YYINITIAL> {DOC_COMMENT} { return JavaDocElementType.DOC_COMMENT; }
 
 <YYINITIAL> {LONG_LITERAL} { return JavaTokenType.LONG_LITERAL; }
 <YYINITIAL> {INTEGER_LITERAL} { return JavaTokenType.INTEGER_LITERAL; }

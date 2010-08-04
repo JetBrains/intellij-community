@@ -27,7 +27,9 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
+import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -44,6 +46,10 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   public JavaParsingTestCase(@NonNls final String dataPath) {
     super(dataPath, "java");
     IdeaTestCase.initPlatformPrefix();
+  }
+
+  public static JavaPsiFacadeEx getJavaFacade() {
+    return JavaPsiFacadeEx.getInstanceEx(ourProject);
   }
 
   protected static void withLevel(final LanguageLevel level, final Runnable r) {
@@ -78,13 +84,15 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
         }
         root.done(this);
 
-        return builder.getTreeBuilt().getFirstChildNode();
+        final ASTNode rootNode = builder.getTreeBuilt();
+        ParseUtil.bindComments(rootNode);
+        return rootNode.getFirstChildNode();
       }
     };
 
     final LightVirtualFile virtualFile = new LightVirtualFile(name + '.' + myFileExt, StdFileTypes.JAVA, source, -1);
     final FileViewProvider viewProvider = new SingleRootFileViewProvider(PsiManager.getInstance(getProject()), virtualFile, true);
-    final PsiJavaFileImpl psiFile = new PsiJavaFileImpl(viewProvider) {
+    myFile = new PsiJavaFileImpl(viewProvider) {
       @Override
       protected FileElement createFileElement(final CharSequence text) {
         return new FileElement(fileElementType, text);
@@ -92,7 +100,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     };
 
     try {
-      checkResult(name + ".txt", DebugUtil.psiToString(psiFile, false));
+      checkResult(name + ".txt", DebugUtil.psiToString(myFile, false));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -102,7 +110,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   private static PsiBuilder createBuilder(final ASTNode chameleon) {
     final Project project = chameleon.getPsi().getProject();
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final PsiBuilder builder = factory.createBuilder(project, chameleon, null, chameleon.getElementType().getLanguage(), chameleon.getChars());
+    final PsiBuilder builder = factory.createBuilder(project, chameleon, chameleon.getElementType().getLanguage(), chameleon.getChars());
 
     builder.setDebugMode(true);
 
@@ -110,5 +118,26 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     JavaParserUtil.setLanguageLevel(builder, level);
 
     return builder;
+  }
+
+  @Override
+  protected void doTest(final boolean checkResult) {
+    super.doTest(checkResult);
+
+    // todo: drop after switching to new parser
+    final String name = getTestName(false);
+    final String text;
+    try {
+      text = loadFile(name + "." + myFileExt);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    doParserTest(text, new TestParser() {
+      public void parse(final PsiBuilder builder) {
+        FileParser.parse(builder);
+      }
+    });
   }
 }

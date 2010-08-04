@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.TokenType;
@@ -115,7 +114,7 @@ public class MethodElement extends CompositeElement implements Constants {
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == JavaTokenType.DOC_COMMENT || i == JavaDocElementType.DOC_COMMENT) {
+    if (i == JavaDocElementType.DOC_COMMENT) {
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
     else if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {

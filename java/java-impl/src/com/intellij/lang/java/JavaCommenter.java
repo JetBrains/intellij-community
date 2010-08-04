@@ -18,6 +18,7 @@ package com.intellij.lang.java;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class JavaCommenter implements CodeDocumentationAwareCommenter {
 
   @Nullable
   public IElementType getDocumentationCommentTokenType() {
-    return JavaTokenType.DOC_COMMENT;
+    return JavaDocElementType.DOC_COMMENT;
   }
 
   public String getDocumentationCommentPrefix() {

@@ -18,6 +18,7 @@ package com.intellij.lexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 
 
@@ -39,11 +40,8 @@ public class JavaHighlightingLexer extends LayeredLexer {
 
     HtmlHighlightingLexer lexer = new HtmlHighlightingLexer();
     lexer.setHasNoEmbeddments(true);
-    docLexer.registerLayer(lexer,
-                           new IElementType[]{JavaDocTokenType.DOC_COMMENT_DATA});
+    docLexer.registerLayer(lexer, JavaDocTokenType.DOC_COMMENT_DATA);
 
-    registerSelfStoppingLayer(docLexer,
-                              new IElementType[]{JavaTokenType.DOC_COMMENT},
-                              new IElementType[]{JavaDocTokenType.DOC_COMMENT_END});
+    registerSelfStoppingLayer(docLexer, new IElementType[]{JavaDocElementType.DOC_COMMENT}, IElementType.EMPTY_ARRAY);
   }
 }

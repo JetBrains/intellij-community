@@ -51,8 +51,7 @@ public class ClassElement extends CompositeElement implements Constants {
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     PsiClass psiClass = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(this);
     if (anchor == null) {
-      if (first.getElementType() != JavaDocElementType.DOC_COMMENT &&
-          first.getElementType() != JavaTokenType.DOC_COMMENT) {
+      if (first.getElementType() != JavaDocElementType.DOC_COMMENT) {
         if (before == null) {
           if (first == last) {
             PsiElement firstPsi = SourceTreeToPsiMap.treeElementToPsi(first);

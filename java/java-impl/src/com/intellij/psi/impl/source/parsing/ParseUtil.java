@@ -15,11 +15,9 @@
  */
 package com.intellij.psi.impl.source.parsing;
 
-import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
@@ -29,31 +27,13 @@ import com.intellij.psi.impl.source.tree.java.ModifierListElement;
 import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.CharTable;
 import com.intellij.util.SmartList;
 
 import java.util.Iterator;
 import java.util.List;
 
-public class ParseUtil {
-  public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
-    IElementType tokenType = lexer.getTokenType();
-    if (tokenType == null) return null;
-    if (tokenType == JavaTokenType.DOC_COMMENT) {
-      return ASTFactory.lazy(JavaDocElementType.DOC_COMMENT, LexerUtil.internToken(lexer, table));
-    }
-    else {
-      return ASTFactory.leaf(tokenType, LexerUtil.internToken(lexer, table));
-    }
-  }
-
-  /*public static void insertMissingTokens(CompositeElement root,
-                                         Lexer lexer,
-                                         int startOffset,
-                                         int endOffset,
-                                         final int state, TokenProcessor processor, ParsingContext context) {
-    insertMissingTokens(root, lexer, startOffset, endOffset, -1, processor, context);
-  }*/
+public class ParseUtil extends ParseUtilBase {
+  private ParseUtil() { }
 
   public static void insertMissingTokens(CompositeElement root,
                                          Lexer lexer,
@@ -72,6 +52,9 @@ public class ParseUtil {
     inserter.invoke();
   }
 
+  public static void bindComments(final ASTNode root) {
+    JavaMissingTokenInserter.bindComments(root);
+  }
 
   private static class JavaMissingTokenInserter extends MissingTokenInserter {
 
@@ -135,7 +118,7 @@ public class ParseUtil {
         }
       }
 
-      //pass 2: bind preceding comments (like "// comment \n void f();")
+      // pass 2: bind preceding comments (like "// comment \n void f();")
       if (!docCommentBound) {
         for (ASTNode child : comments) {
           if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
@@ -146,50 +129,13 @@ public class ParseUtil {
       }
     }
 
-    /*
-    private static void bindComments(ASTNode root) {
-      TreeElement child = (TreeElement)root.getFirstChildNode();
-      while (child != null) {
-        if (child.getElementType() == JavaDocElementType.DOC_COMMENT) {
-          if (bindDocComment(child)) {
-            child = child.getTreeParent();
-            continue;
-          }
-        }
-
-        // bind "trailing comments" (like "int a; // comment")
-        if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
-          if (bindTrailingComment(child)) {
-            child = child.getTreeParent();
-            continue;
-          }
-        }
-
-        bindComments(child);
-        child = child.getTreeNext();
-      }
-
-      //pass 2: bind preceding comments (like "// comment \n void f();")
-      child = (TreeElement)root.getFirstChildNode();
-      while(child != null) {
-        if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
-          TreeElement next = (TreeElement)TreeUtil.skipElements(child, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
-          bindPrecedingComment(child, next);
-          child = next;
-        } else {
-          child = child.getTreeNext();
-        }
-      }
-    }
-    */
-
     private static boolean bindDocComment(TreeElement docComment) {
       TreeElement element = docComment.getTreeNext();
       if (element == null) return false;
       TreeElement startSpaces = null;
 
       TreeElement importList = null;
-      // Bypass meaningless tokens and hold'em in hands
+      // bypass meaningless tokens and hold'em in hands
       while (element.getElementType() == TokenType.WHITE_SPACE ||
              element.getElementType() == JavaTokenType.C_STYLE_COMMENT ||
              element.getElementType() == JavaTokenType.END_OF_LINE_COMMENT ||
@@ -263,7 +209,7 @@ public class ParseUtil {
                                                                                        TokenType.WHITE_SPACE);
 
     private static void bindPrecedingComment(TreeElement comment, ASTNode bindTo) {
-      if (bindTo == null || bindTo.getFirstChildNode() != null && bindTo.getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT) return;
+      if (bindTo == null || bindTo.getFirstChildNode() != null && bindTo.getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT) return;
 
       if (bindTo.getElementType() == JavaElementType.IMPORT_LIST && bindTo.getTextLength() == 0) {
         bindTo = bindTo.getTreeNext();

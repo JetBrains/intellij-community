@@ -39,11 +39,6 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   @Override
-  public int toVisualColumnSymbolsNumber(int width) {
-    return EditorUtil.columnsNumber(width, EditorUtil.getSpaceWidth(Font.PLAIN, myEditor));
-  }
-
-  @Override
   public int textWidth(@NotNull CharSequence text, int start, int end, int x) {
     return EditorUtil.textWidth(myEditor, text, start, end, Font.PLAIN, x);
   }

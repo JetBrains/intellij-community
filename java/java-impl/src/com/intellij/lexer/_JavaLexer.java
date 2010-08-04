@@ -19,6 +19,7 @@
 /* It's an automatically generated code. Do not modify it. */
 package com.intellij.lexer;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 
 
@@ -1049,7 +1050,7 @@ class _JavaLexer implements FlexLexer {
           }
         case 116: break;
         case 55: 
-          { return JavaTokenType.DOC_COMMENT;
+          { return JavaDocElementType.DOC_COMMENT;
           }
         case 117: break;
         case 64: 

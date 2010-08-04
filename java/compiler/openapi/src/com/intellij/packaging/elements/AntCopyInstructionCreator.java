@@ -38,5 +38,5 @@ public interface AntCopyInstructionCreator {
   Generator createSubFolderCommand(@NotNull String directoryName);
 
   @NotNull
-  Generator createExtractedDirectoryInstruction(@NotNull String jarPath, @NotNull String pathInJar);
+  Generator createExtractedDirectoryInstruction(@NotNull String jarPath);
 }

@@ -15,7 +15,12 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
+import com.intellij.compiler.ant.taskdefs.Include;
+import com.intellij.compiler.ant.taskdefs.Mkdir;
+import com.intellij.compiler.ant.taskdefs.PatternSet;
+import com.intellij.compiler.ant.taskdefs.Unzip;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -25,6 +30,7 @@ import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ExtractedDirectoryPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +79,23 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
                                                           @NotNull ArtifactAntGenerationContext generationContext,
                                                           @NotNull ArtifactType artifactType) {
     final String jarPath = generationContext.getSubstitutedPath(myFilePath);
-    return Collections.singletonList(creator.createExtractedDirectoryInstruction(jarPath, StringUtil.trimStart(myPathInJar, "/")));
+    final String pathInJar = StringUtil.trimStart(myPathInJar, "/");
+    if (pathInJar.length() == 0) {
+      return Collections.singletonList(creator.createExtractedDirectoryInstruction(jarPath));
+    }
+
+    final String archiveName = PathUtil.getFileName(myFilePath);
+    final String tempDirProperty = generationContext.createNewTempFileProperty("temp.unpacked.path." + archiveName, archiveName);
+    final String tempDirPath = BuildProperties.propertyRef(tempDirProperty);
+    generationContext.runBeforeCurrentArtifact(new Mkdir(tempDirPath));
+
+    final Unzip unzip = new Unzip(jarPath, tempDirPath);
+    final PatternSet patterns = new PatternSet(null);
+    patterns.add(new Include(pathInJar + "**"));
+    unzip.add(patterns);
+    generationContext.runBeforeCurrentArtifact(unzip);
+
+    return Collections.singletonList(creator.createDirectoryContentCopyInstruction(tempDirPath + "/" + pathInJar));
   }
 
 

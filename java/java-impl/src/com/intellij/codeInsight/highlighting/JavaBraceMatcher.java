@@ -20,6 +20,7 @@ import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
   }
 
   private static boolean isPairedBracesAllowedBeforeTypeInJava(final IElementType tokenType) {
-    return TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
+    return ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(tokenType)
             || tokenType == JavaTokenType.SEMICOLON
             || tokenType == JavaTokenType.COMMA
             || tokenType == JavaTokenType.RPARENTH

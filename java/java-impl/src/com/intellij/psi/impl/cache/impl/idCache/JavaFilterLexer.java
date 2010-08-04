@@ -18,6 +18,7 @@ package com.intellij.psi.impl.cache.impl.idCache;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 
@@ -41,8 +42,7 @@ public class JavaFilterLexer extends BaseFilterLexer {
     else if (tokenType == JavaTokenType.STRING_LITERAL) {
       scanWordsInToken(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, true);
     }
-    else if (tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT ||
-             tokenType == JavaTokenType.DOC_COMMENT) {
+    else if (ElementType.JAVA_COMMENT_BIT_SET.contains(tokenType)) {
       scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
       advanceTodoItemCountsInToken();
     }
