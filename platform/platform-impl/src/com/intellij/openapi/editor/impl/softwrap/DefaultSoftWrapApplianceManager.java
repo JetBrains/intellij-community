@@ -144,13 +144,13 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     document.addDocumentListener(new LineOrientedDocumentChangeAdapter() {
       @Override
       public void beforeDocumentChange(int startLine, int endLine, int symbolsDifference) {
+        for (int i = startLine; i <= endLine; i++) {
+          myProcessedLogicalLines.remove(i);
+        }
       }
 
       @Override
       public void afterDocumentChange(int startLine, int endLine, int symbolsDifference) {
-        for (int i = startLine; i <= endLine; i++) {
-          myProcessedLogicalLines.remove(i);
-        }
       }
     });
   }

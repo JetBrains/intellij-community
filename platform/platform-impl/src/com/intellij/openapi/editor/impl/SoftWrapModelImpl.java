@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -347,17 +346,21 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   public void beforeDocumentChangeAtCaret() {
-    int offset = myEditor.getCaretModel().getOffset();
+    CaretModel caretModel = myEditor.getCaretModel();
+    VisualPosition visualCaretPosition = caretModel.getVisualPosition();
+    if (!isInsideSoftWrap(visualCaretPosition)) {
+      return;
+    }
+    int offset = caretModel.getOffset();
     TextChangeImpl softWrap = myStorage.getSoftWrap(offset);
     if (softWrap == null) {
       return;
     }
 
-    VisualPosition visualCaretPosition = myEditor.getCaretModel().getVisualPosition();
     myDocumentChangeManager.makeHardWrap(softWrap);
 
     // Restore caret position.
-    myEditor.getCaretModel().moveToVisualPosition(visualCaretPosition);
+    caretModel.moveToVisualPosition(visualCaretPosition);
   }
 
   @Override
