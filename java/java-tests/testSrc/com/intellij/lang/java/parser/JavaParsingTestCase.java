@@ -28,6 +28,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
+import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -78,7 +79,9 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
         }
         root.done(this);
 
-        return builder.getTreeBuilt().getFirstChildNode();
+        final ASTNode rootNode = builder.getTreeBuilt();
+        ParseUtil.bindComments(rootNode);
+        return rootNode.getFirstChildNode();
       }
     };
 
@@ -102,7 +105,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   private static PsiBuilder createBuilder(final ASTNode chameleon) {
     final Project project = chameleon.getPsi().getProject();
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final PsiBuilder builder = factory.createBuilder(project, chameleon, null, chameleon.getElementType().getLanguage(), chameleon.getChars());
+    final PsiBuilder builder = factory.createBuilder(project, chameleon, chameleon.getElementType().getLanguage(), chameleon.getChars());
 
     builder.setDebugMode(true);
 

@@ -52,6 +52,9 @@ public class ParseUtil extends ParseUtilBase {
     inserter.invoke();
   }
 
+  public static void bindComments(final ASTNode root) {
+    JavaMissingTokenInserter.bindComments(root);
+  }
 
   private static class JavaMissingTokenInserter extends MissingTokenInserter {
 
