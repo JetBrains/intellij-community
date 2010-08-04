@@ -181,24 +181,28 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private void optimizeImportsOnTheFly() {
     if (myHasRedundantImports || myHasMissortedImports) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      invokeOnTheFlyImportOptimizer(new Runnable() {
         public void run() {
-          CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  OptimizeImportsFix optimizeImportsFix = new OptimizeImportsFix();
-                  if (optimizeImportsFix.isAvailable(myProject, myEditor, myFile) && myFile.isWritable()) {
-                    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                    optimizeImportsFix.invoke(myProject, myEditor, myFile);
-                  }
-                }
-              });
-            }
-          });
+          OptimizeImportsFix optimizeImportsFix = new OptimizeImportsFix();
+          if (optimizeImportsFix.isAvailable(myProject, myEditor, myFile) && myFile.isWritable()) {
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+            optimizeImportsFix.invoke(myProject, myEditor, myFile);
+          }
         }
       });
     }
+  }
+
+  public static void invokeOnTheFlyImportOptimizer(final Runnable runnable) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(runnable);
+          }
+        });
+      }
+    });
   }
 
   @TestOnly
