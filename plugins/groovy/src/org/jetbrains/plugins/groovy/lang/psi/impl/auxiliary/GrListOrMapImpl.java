@@ -92,6 +92,17 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     return findChildrenByClass(GrNamedArgument.class);
   }
 
+  @Override
+  public GrNamedArgument findNamedArgument(@NotNull String labelName) {
+    for (GrNamedArgument argument : getNamedArguments()) {
+      final GrArgumentLabel label = argument.getLabel();
+      if (label != null && labelName.equals(label.getName())) {
+        return argument;
+      }
+    }
+    return null;
+  }
+
   private static class MyTypesCalculator implements Function<GrListOrMapImpl, PsiType> {
     @Nullable
     public PsiType fun(GrListOrMapImpl listOrMap) {

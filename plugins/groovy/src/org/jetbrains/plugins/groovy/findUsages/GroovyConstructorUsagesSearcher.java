@@ -80,10 +80,10 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
 
   @Override
   public void processQuery(MethodReferencesSearch.SearchParameters p, Processor<PsiReference> consumer) {
-    processConstructorUsages(p.getMethod(), p.getScope(), consumer, p.getOptimizer(), true);
+    processConstructorUsages(p.getMethod(), p.getScope(), consumer, p.getOptimizer(), true, !p.isStrictSignatureSearch());
   }
 
-  static void processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector, final boolean searchGppCalls) {
+  static void processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector, final boolean searchGppCalls, final boolean includeOverloads) {
     if (!constructor.isConstructor()) return;
 
     SearchScope onlyGroovy = PsiUtil.restrictScopeToGroovyFiles(searchScope);
@@ -103,7 +103,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       }
     }
 
-    final LiteralConstructorSearcher literalProcessor = new LiteralConstructorSearcher(constructor, consumer);
+    final LiteralConstructorSearcher literalProcessor = new LiteralConstructorSearcher(constructor, consumer, includeOverloads);
 
     final Processor<GrNewExpression> newExpressionProcessor = new Processor<GrNewExpression>() {
       @Override
@@ -230,7 +230,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       }
     };
     if (currentTarget.isConstructor()) {
-      processConstructorUsages(currentTarget, gppScope, gppCallProcessor, originalCollector, false);
+      processConstructorUsages(currentTarget, gppScope, gppCallProcessor, originalCollector, false, false);
     }
     else {
       MethodReferencesSearch.searchOptimized(currentTarget, gppScope, true, originalCollector, gppCallProcessor);
