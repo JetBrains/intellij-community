@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
-import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
+import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
@@ -183,8 +183,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(true, false);
   }
   public void testUnusedNonPrivateMembers2() throws Exception {
-    ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    UnusedCodeExtension extension = new UnusedCodeExtension() {
+    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    EntryPoint extension = new EntryPoint() {
       @NotNull
       @Override
       public String getDisplayName() {
@@ -192,7 +192,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       }
 
       @Override
-      public boolean isEntryPoint(RefElement refElement) {
+      public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) {
         return false;
       }
 

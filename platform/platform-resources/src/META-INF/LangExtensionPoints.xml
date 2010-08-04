@@ -14,9 +14,6 @@
   <extensionPoint name="refGraphAnnotator"
                   interface="com.intellij.codeInspection.reference.RefGraphAnnotator"/>
 
-  <extensionPoint name="entryPoint"
-                  interface="com.intellij.codeInspection.reference.EntryPoint"/>
-
   <!-- Code Insight -->
   <extensionPoint name="highlightVisitor"
                   interface="com.intellij.codeInsight.daemon.impl.HighlightVisitor"

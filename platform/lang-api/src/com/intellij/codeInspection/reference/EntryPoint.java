@@ -16,14 +16,25 @@
 
 package com.intellij.codeInspection.reference;
 
-/**
- * Additional entry points can be declared via {@link com.intellij.ExtensionPoints#INSPECTION_ENRTY_POINT}
- */
-public interface EntryPoint {
-  /**
-   * @param refElement to be examined
-   * @return true if refElement is entry point
-   *         false otherwise
-   */
-  boolean accept(RefElement refElement);
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public abstract class EntryPoint implements JDOMExternalizable {
+  @NotNull
+  public abstract String getDisplayName();
+  public abstract boolean isEntryPoint(RefElement refElement, PsiElement psiElement);
+  public abstract boolean isEntryPoint(PsiElement psiElement);
+  public abstract boolean isSelected();
+  public abstract void setSelected(boolean selected);
+
+  public boolean showUI() {
+    return true;
+  }
+
+  @Nullable
+  public String [] getIgnoreAnnotations() {
+    return null;
+  }
 }
