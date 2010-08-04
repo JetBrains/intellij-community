@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -695,6 +696,22 @@ public class GroovyToJavaGenerator {
       //type
       text.append(type).append(" ").append(name).append(" = ").append(initializer).append(";\n");
     }
+  }
+
+  public static String generateMethodStub(@NotNull PsiMethod method) {
+    if (!(method instanceof GroovyPsiElement)) {
+      return method.getText();
+    }
+
+    final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(method.getProject(), null, Collections.<VirtualFile>emptyList());
+    final StringBuffer buffer = new StringBuffer();
+    if (method instanceof GrConstructor) {
+      generator.writeConstructor(buffer, (GrConstructor)method, false);
+    }
+    else {
+      generator.writeMethod(buffer, method, method.getParameterList().getParameters());
+    }
+    return buffer.toString();
   }
 
   private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {

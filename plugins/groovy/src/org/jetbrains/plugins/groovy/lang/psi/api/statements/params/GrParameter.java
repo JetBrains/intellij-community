@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.params;
 
+import com.intellij.psi.PsiModifierList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -34,6 +36,9 @@ public interface GrParameter extends PsiParameter, GrVariable {
 
   @Nullable
   GrExpression getDefaultInitializer();
+
+  @NotNull
+  PsiModifierList getModifierList();
 
   boolean isOptional();
 }

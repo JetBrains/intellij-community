@@ -528,12 +528,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     builder.append("(");
 
     for (int i = 0; i < paramNames.length; i++) {
-      String paramType = paramTypes == null ? "" : paramTypes[i];
+      String paramType = paramTypes == null ? null : paramTypes[i];
 
       if (i > 0) builder.append(", ");
 
-      builder.append(paramType);
-      builder.append(" ");
+      if (paramType != null) {
+        builder.append(paramType);
+        builder.append(" ");
+      }
       builder.append(paramNames[i]);
     }
 
