@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -241,7 +242,7 @@ public class HighlightNamesUtil {
       do {
         node = TreeUtil.nextLeaf(node);
       }
-      while (node != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(node.getElementType()));
+      while (node != null && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(node.getElementType()));
     }
     if (node != null) return node.getTextRange().getStartOffset();
     return textRange.getStartOffset();

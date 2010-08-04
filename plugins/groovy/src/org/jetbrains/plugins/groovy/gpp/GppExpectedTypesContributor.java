@@ -47,9 +47,9 @@ public class GppExpectedTypesContributor extends GroovyExpectedTypesContributor 
     assert argIndex >= 0;
 
     final ArrayList<TypeConstraint> result = new ArrayList<TypeConstraint>();
-    for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
+    for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
       if (type instanceof PsiClassType) {
-        for (GroovyResolveResult resolveResult : PsiUtil.getConstructorCandidates((PsiClassType)type, argTypes, expression)) {
+        for (GroovyResolveResult resolveResult : PsiUtil.getConstructorCandidates((PsiClassType)type, argTypes, list)) {
           final PsiElement method = resolveResult.getElement();
           if (method instanceof PsiMethod && ((PsiMethod)method).isConstructor()) {
             final PsiParameter[] constructorParameters = ((PsiMethod)method).getParameterList().getParameters();

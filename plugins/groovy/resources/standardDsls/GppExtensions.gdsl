@@ -1,0 +1,43 @@
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package standardDsls
+
+import com.intellij.util.Function
+import org.jetbrains.plugins.groovy.gpp.GppGdkMethod
+
+/**
+ * @author Maxim.Medvedev
+ */
+
+def gppCategory(def className, def isStatic = false) {
+  def staticConverter = new Function() {def fun(def m) {new GppGdkMethod(m, true)}};
+  def nonStaticConverter = new Function() {def fun(def m) {new GppGdkMethod(m, false)}};
+  category className, isStatic ? staticConverter : nonStaticConverter
+}
+
+gppCategory "groovy.util.Conversions"
+gppCategory "groovy.util.Files"
+gppCategory "groovy.util.Filters"
+gppCategory "groovy.util.Iterations"
+gppCategory "groovy.util.Mappers"
+gppCategory "groovy.util.Sort"
+gppCategory "groovy.util.Strings"
+gppCategory "groovy.util.With"
+gppCategory "groovy.util.concurrent.Atomics"
+gppCategory "org.mbte.groovypp.runtime.ArraysMethods"
+gppCategory "org.mbte.groovypp.runtime.DefaultGroovyPPMethods"
+
+gppCategory "org.mbte.groovypp.runtime.DefaultGroovyPPStaticMethods", true

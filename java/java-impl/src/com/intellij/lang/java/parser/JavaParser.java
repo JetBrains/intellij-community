@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +41,8 @@ public class JavaParser implements PsiParser {
     FileParser.parse(builder);
     root.done(rootType);
 
-    return builder.getTreeBuilt();
+    final ASTNode rootNode = builder.getTreeBuilt();
+    ParseUtil.bindComments(rootNode);
+    return rootNode;
   }
 }

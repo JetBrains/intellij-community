@@ -1,0 +1,103 @@
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package standardDsls
+
+/**
+ * @author Maxim.Medvedev
+ */
+
+contributor(ctype: "groovy.swing.SwingBuilder") {
+  method name: "action", type: "groovy.swing.impl.DefaultAction"
+  method name: "actions", type: "java.util.List"
+  method name: "map", type: "java.util.Map"
+  method name: "buttonGroup", type: "javax.swing.ButtonGroup"
+  method name: "bind", type: "org.codehaus.groovy.binding.BindingUpdatable"
+  method name: "model", type: "org.codehaus.groovy.binding.ModelBinding"
+  method name: "widget", type: "java.awt.Component"
+  method name: "container", type: "java.awt.Container"
+  method name: "bean", type: "java.lang.Object"
+  method name: "dialog", type: "javax.swing.JDialog"
+  method name: "fileChooser", type: "javax.swing.JFileChooser"
+  method name: "frame", type: "javax.swing.JFrame"
+  method name: "optionPane", type: "javax.swing.JOptionPane"
+  method name: "window", type: "javax.swing.JWindow"
+  method name: "button", type: "javax.swing.JButton"
+  method name: "checkBox", type: "javax.swing.JCheckBox"
+  method name: "checkBoxMenuItem", type: "javax.swing.JCheckBoxMenuItem"
+  method name: "menuItem", type: "javax.swing.JMenuItem"
+  method name: "radioButton", type: "javax.swing.JRadioButton"
+  method name: "radioButtonMenuItem", type: "javax.swing.JRadioButtonMenuItem"
+  method name: "toggleButton", type: "javax.swing.JToggleButton"
+  method name: "editorPane", type: "javax.swing.JEditorPane"
+  method name: "label", type: "javax.swing.JLabel"
+  method name: "passwordField", type: "javax.swing.JPasswordField"
+  method name: "textArea", type: "javax.swing.JTextArea"
+  method name: "textField", type: "javax.swing.JTextField"
+  method name: "textPane", type: "javax.swing.JTextPane"
+  method name: "colorChooser", type: "javax.swing.JColorChooser"
+  method name: "comboBox", type: "javax.swing.JComboBox"
+  method name: "desktopPane", type: "javax.swing.JDesktopPane"
+  method name: "formattedTextField", type: "javax.swing.JFormattedTextField"
+  method name: "internalFrame", type: "javax.swing.JInternalFrame"
+  method name: "layeredPane", type: "javax.swing.JLayeredPane"
+  method name: "list", type: "javax.swing.JList"
+  method name: "menu", type: "javax.swing.JMenu"
+  method name: "menuBar", type: "javax.swing.JMenuBar"
+  method name: "panel", type: "javax.swing.JPanel"
+  method name: "popupMenum", type: "javax.swing.JPopupMenu"
+  method name: "progressBar", type: "javax.swing.JProgressBar"
+  method name: "scrollBar", type: "javax.swing.JScrollBar"
+  method name: "scrollPane", type: "javax.swing.JScrollPane"
+  method name: "separator", type: "javax.swing.JSeparator"
+  method name: "slider", type: "javax.swing.JSlider"
+  method name: "spinner", type: "javax.swing.JSpinner"
+  method name: "splitPane", type: "javax.swing.JSplitPane"
+  method name: "tabbedPane", type: "javax.swing.JTabbedPane"
+  method name: "table", type: "javax.swing.JTable"
+  method name: "tableColumn", type: "javax.swing.table.TableColumn"
+  method name: "toolbar", type: "javax.swing.JToolbar"
+  method name: "tree", type: "javax.swing.JTree"
+  method name: "viewport", type: "javax.swing.JViewport"
+  method name: "boundedRangeModel", type: "javax.swing.DefaultBoundedRangeModel"
+  method name: "spinnerDateModel", type: "javax.swing.SpinnerDateModel"
+  method name: "spinnerListModel", type: "javax.swing.SpinnerListModel"
+  method name: "spinnerNumberModel", type: "javax.swing.SpinnerNumberModel"
+  method name: "tableModel", type: "javax.swing.table.TableModel"
+  method name: "propertyColumn", type: "javax.swing.table.TableColumn"
+  method name: "closureColumn", type: "javax.swing.table.TableColumn"
+  method name: "borderLayout", type: "java.awt.BorderLayout"
+  method name: "cardLayout", type: "java.awt.CardLayout"
+  method name: "flowLayout", type: "java.awt.FlowLayout"
+  method name: "gridBagLayout", type: "java.awt.GridBagLayout"
+  method name: "gridLayout", type: "java.awt.GridLayout"
+  method name: "overlayLayout", type: "java.swing.OverlayLayout"
+  method name: "springLayout", type: "java.swing.SpringLayout"
+  method name: "gridBagConstraints", type: "java.awt.GridBagConstraints"
+  method name: "gbc", type: "java.awt.GridBagConstraints"
+  method name: "boxLayout", type: "javax.swing.BoxLayout"
+  method name: "box", type: "javax.swing.Box"
+  method name: "hbox", type: "javax.swing.Box"
+  method name: "hglue", type: "java.awt.Component"
+  method name: "hstrut", type: "java.awt.Component"
+  method name: "vbox", type: "javax.swing.Box"
+  method name: "vglue", type: "java.awt.Component"
+  method name: "vstrut", type: "java.awt.Component"
+  method name: "glue", type: "java.awt.Component"
+  method name: "rigidArea", type: "java.awt.Component"
+  method name: "tableLayout", type: "groovy.swing.impl.TableLayoutRow"
+  method name: "tr", type: "groovy.swing.impl.TableLayoutRow"
+  method name: "td", type: "groovy.swing.impl.TableLayoutCell"
+}

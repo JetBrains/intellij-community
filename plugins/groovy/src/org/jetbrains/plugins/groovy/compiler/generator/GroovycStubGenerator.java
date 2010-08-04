@@ -111,7 +111,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     if (GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
       runGroovycCompiler(compileContext, module, toCompile, true, tempOutput, sink, tests);
     } else {
-      final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, compileContext);
+      final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, compileContext, toCompile);
       for (VirtualFile file : toCompile) {
         final String outPath = tempOutput.getPath();
         final List<String> relPaths = generator.generateItems(file, tempOutput);

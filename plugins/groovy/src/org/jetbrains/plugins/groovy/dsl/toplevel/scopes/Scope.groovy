@@ -108,7 +108,7 @@ class ScriptScope extends Scope {
 
     // Process unqualified references only
     if (!args.ctype) {
-      result << new ClassContextFilter(PsiJavaPatterns.psiClass().and(StandardPatterns.instanceOf(SyntheticElement)))
+      result << new ClassContextFilter(TypeToClassPattern.create(PsiJavaPatterns.psiClass().and(StandardPatterns.instanceOf(SyntheticElement))))
     }
 
     return result

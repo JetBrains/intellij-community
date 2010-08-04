@@ -1,5 +1,5 @@
 contributor(ctype:hasField(hasAnnotation("groovy.beans.Vetoable"))) {
-  if (classType?.fields?.find {it.hasAnnotation("groovy.beans.Vetoable")}) {
+  if (psiClass?.fields?.find {it.hasAnnotation("groovy.beans.Vetoable")}) {
     method name: "addVetoableChangeListener", type: "void", params: [s: "java.lang.String", l: "java.beans.VetoableChangeListener"]
     method name: "addVetoableChangeListener", type: "void", params: [l: "java.beans.VetoableChangeListener"]
 

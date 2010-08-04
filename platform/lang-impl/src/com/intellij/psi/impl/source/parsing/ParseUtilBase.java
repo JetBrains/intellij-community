@@ -21,16 +21,25 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
  */
 public class ParseUtilBase {
+  @Nullable
   public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
     IElementType tokenType = lexer.getTokenType();
-    if (tokenType == null) return null;
-
-    return ASTFactory.leaf(tokenType, LexerUtil.internToken(lexer, table));
+    if (tokenType == null) {
+      return null;
+    }
+    else if (tokenType instanceof ILazyParseableElementType) {
+      return ASTFactory.lazy((ILazyParseableElementType)tokenType, LexerUtil.internToken(lexer, table));
+    }
+    else {
+      return ASTFactory.leaf(tokenType, LexerUtil.internToken(lexer, table));
+    }
   }
 }

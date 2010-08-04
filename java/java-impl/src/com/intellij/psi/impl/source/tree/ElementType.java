@@ -15,22 +15,20 @@
  */
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.TokenSet;
 
-public interface ElementType extends
-                             TokenTypeEx,
-                             JavaElementType,
-                             JavaDocElementType {
+public interface ElementType extends JavaTokenType, JavaDocTokenType,
+                                     JavaElementType, JavaDocElementType {
   TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(WHITE_SPACE,
                                                  JspElementType.JSP_TEMPLATE_EXPRESSION);
 
   TokenSet JAVA_WHITESPACE_BIT_SET = TokenSet.create(WHITE_SPACE);
-  TokenSet JAVA_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT, JavaTokenType.DOC_COMMENT, JavaDocElementType.DOC_COMMENT);
+  TokenSet JAVA_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT, JavaDocElementType.DOC_COMMENT);
 
   TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(JAVA_WHITESPACE_BIT_SET, JAVA_COMMENT_BIT_SET);
 

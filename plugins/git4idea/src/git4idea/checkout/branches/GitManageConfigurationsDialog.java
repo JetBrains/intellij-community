@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -73,6 +74,14 @@ public class GitManageConfigurationsDialog extends DialogWrapper {
    */
   private JLabel myShelveNameLabel;
   /**
+   * Detect branch configurations button
+   */
+  private JButton myDetectConfigurationsButton;
+  /**
+   * The include incomplete checkbox
+   */
+  private JCheckBox myIncludeIncompleteCheckBox;
+  /**
    * The project to use
    */
   private final Project myProject;
@@ -117,10 +126,7 @@ public class GitManageConfigurationsDialog extends DialogWrapper {
       }
     });
     myNamesModel = new DefaultListModel();
-    myNamesList.setModel(myNamesModel);
-    for (String n : myConfigurations.getConfigurationNames()) {
-      myNamesModel.addElement(n);
-    }
+    refreshNames();
     myDeleteButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -138,11 +144,31 @@ public class GitManageConfigurationsDialog extends DialogWrapper {
         myNamesList.setSelectedIndex(i);
       }
     });
+    myDetectConfigurationsButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        try {
+          myConfigurations.detectLocalConfigurations(myIncludeIncompleteCheckBox.isSelected());
+          refreshNames();
+        }
+        catch (VcsException e1) {
+          GitUIUtil.showOperationError(myProject, "Branch configuration detection failed", e1.getMessage());
+        }
+      }
+    });
     init();
     if (myNamesModel.size() > 0) {
       myNamesList.setSelectedIndex(0);
     }
     updateOnSelection();
+  }
+
+  private void refreshNames() {
+    myNamesModel.clear();
+    myNamesList.setModel(myNamesModel);
+    for (String n : myConfigurations.getConfigurationNames()) {
+      myNamesModel.addElement(n);
+    }
   }
 
   /**

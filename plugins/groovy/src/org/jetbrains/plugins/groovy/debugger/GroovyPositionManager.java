@@ -148,7 +148,7 @@ public class GroovyPositionManager implements PositionManager {
       public String compute() {
         GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
         if (typeDefinition != null) {
-          return typeDefinition.getQualifiedName();
+          return getClassNameForJvm(typeDefinition);
         }
         return getScriptQualifiedName(position);
       }
@@ -171,6 +171,7 @@ public class GroovyPositionManager implements PositionManager {
     });
   }
 
+  @Nullable
   private static String getClassNameForJvm(final PsiClass typeDefinition) {
     final PsiClass psiClass = typeDefinition.getContainingClass();
     if (psiClass != null) {
@@ -311,21 +312,15 @@ public class GroovyPositionManager implements PositionManager {
     List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       public List<ReferenceType> compute() {
         GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
-        final String scriptName = getScriptQualifiedName(position);
 
         if (sourceImage instanceof GrTypeDefinition && !((GrTypeDefinition)sourceImage).isAnonymous()) {
           String qName = getClassNameForJvm((GrTypeDefinition)sourceImage);
           if (qName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
         } else if (sourceImage == null) {
+          final String scriptName = getScriptQualifiedName(position);
           if (scriptName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(scriptName);
         } else {
-          final GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
-          String enclosingName;
-          if (typeDefinition != null) {
-            enclosingName = typeDefinition.getQualifiedName();
-          } else {
-            enclosingName = scriptName;
-          }
+          String enclosingName = findEnclosingName(position);
           if (enclosingName == null) return Collections.emptyList();
 
           final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);

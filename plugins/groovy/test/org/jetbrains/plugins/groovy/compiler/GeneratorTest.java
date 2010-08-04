@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -131,7 +132,7 @@ public void testArrayType1() throws Throwable { doTest(); }
     private final String myFileContent;
 
     public GroovyToJavaGeneratorTester(String relTestPath, String fileContent, Project project) {
-      super(project, null);
+      super(project, null, Collections.<VirtualFile>emptyList());
       myRelTestPath = relTestPath;
       myFileContent = fileContent;
     }

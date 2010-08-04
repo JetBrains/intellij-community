@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -109,11 +111,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     public void visitReturnStatement(GrReturnStatement returnStatement) {
       super.visitReturnStatement(returnStatement);
 
-      final PsiElement parent = returnStatement.getParent();
-      if (!(parent instanceof GrOpenBlock)) return;
-      final PsiElement element = parent.getParent();
-      if (!(element instanceof GrMethod)) return;
-      GrMethod method = (GrMethod)element;
+      final GrMethod method = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, true, GrClosableBlock.class);
+      if (method == null) return;
 
       final GrExpression value = returnStatement.getReturnValue();
       final PsiType expectedType = method.getReturnType();

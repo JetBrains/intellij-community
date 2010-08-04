@@ -77,7 +77,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     ASTNode prev = child;
     do {
       prev = prev.getTreePrev();
-    } while (prev != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(prev.getElementType()));
+    } while (prev != null && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(prev.getElementType()));
     if (prev != null && prev.getElementType() == JavaTokenType.COMMA) deleteChildInternal(prev);
   }
 

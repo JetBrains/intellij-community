@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +89,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   }
 
   public static boolean isAppropriateElementTypeForLiteralStatic(final IElementType tokenType) {
-    return TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
+    return ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(tokenType)
               || tokenType == JavaTokenType.SEMICOLON
               || tokenType == JavaTokenType.COMMA
               || tokenType == JavaTokenType.RPARENTH

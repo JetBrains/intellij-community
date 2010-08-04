@@ -1,5 +1,5 @@
 int idx
-idx = <warning descr="Assignment is not used">2</warning>
+<warning descr="Assignment is not used">idx</warning> = 2
 idx = 3
 if (++idx == 8) {  //Assignment is used here
   idx = 33
