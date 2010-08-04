@@ -29,7 +29,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.CharArrayCharSequence;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,26 +40,27 @@ import java.util.List;
 
 
 public class JavaUtil {
+  private JavaUtil() { }
 
   public static List<Pair<File,String>> suggestRoots(File dir) {
     ArrayList<Pair<File,String>> foundDirectories = new ArrayList<Pair<File, String>>();
     try{
       suggestRootsImpl(dir, dir, foundDirectories);
     }
-    catch(PathFound found){
+    catch(PathFoundException ignore){
     }
     return foundDirectories;
   }
 
-  private static class PathFound extends Exception {
+  private static class PathFoundException extends Exception {
     public File myDirectory;
 
-    public PathFound(File directory) {
+    public PathFoundException(File directory) {
       myDirectory = directory;
     }
   }
 
-  private static void suggestRootsImpl(File base, File dir, ArrayList<? super Pair<File, String>> foundDirectories) throws PathFound {
+  private static void suggestRootsImpl(File base, File dir, ArrayList<? super Pair<File, String>> foundDirectories) throws PathFoundException {
     if (!dir.isDirectory()) {
       return;
     }
@@ -93,7 +96,7 @@ public class JavaUtil {
             else {
               foundDirectories.add(Pair.create(base, packagePrefix));
             }
-            throw new PathFound(root.getFirst());
+            throw new PathFoundException(root.getFirst());
           }
           else {
             return;
@@ -107,7 +110,7 @@ public class JavaUtil {
         try {
           suggestRootsImpl(base, child, foundDirectories);
         }
-        catch (PathFound found) {
+        catch (PathFoundException found) {
           if (!found.myDirectory.equals(child)) {
             throw found;
           }
@@ -116,6 +119,7 @@ public class JavaUtil {
     }
   }
 
+  @Nullable
   private static String getPackagePrefix(File base, Pair<File,String> root) {
     String result = "";
     for (File parent = base; parent != null; parent = parent.getParentFile()) {
@@ -128,67 +132,74 @@ public class JavaUtil {
   }
 
 
+  @Nullable
   private static Pair<File,String> suggestRootForJavaFile(File javaFile) {
-    if (!javaFile.isFile()) {
-      return null;
-    }
+    if (!javaFile.isFile()) return null;
 
+    final CharSequence chars;
     try {
-      final CharSequence chars = new CharArrayCharSequence(FileUtil.loadFileText(javaFile));
-
-      String packageName = getPackageStatement(chars);
-      if (packageName != null) {
-        File root = javaFile.getParentFile();
-        int index = packageName.length();
-        while (index > 0) {
-          int index1 = packageName.lastIndexOf('.', index - 1);
-          String token = packageName.substring(index1 + 1, index);
-          String dirName = root.getName();
-          final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
-          if (!equalsToToken) {
-            return Pair.create(root, packageName.substring(0, index));
-          }
-          String parent = root.getParent();
-          if (parent == null) {
-            return null;
-          }
-          root = new File(parent);
-          index = index1;
-        }
-        return Pair.create(root, "");
-      }
+      chars = new CharArrayCharSequence(FileUtil.loadFileText(javaFile));
     }
     catch(IOException e){
       return null;
     }
 
+    String packageName = getPackageStatement(chars);
+    if (packageName != null) {
+      File root = javaFile.getParentFile();
+      int index = packageName.length();
+      while (index > 0) {
+        int index1 = packageName.lastIndexOf('.', index - 1);
+        String token = packageName.substring(index1 + 1, index);
+        String dirName = root.getName();
+        final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
+        if (!equalsToToken) {
+          return Pair.create(root, packageName.substring(0, index));
+        }
+        String parent = root.getParent();
+        if (parent == null) {
+          return null;
+        }
+        root = new File(parent);
+        index = index1;
+      }
+      return Pair.create(root, "");
+    }
+
     return null;
   }
 
-  private static String getPackageStatement(CharSequence text){
+  @Nullable
+  public static String getPackageStatement(CharSequence text){
     Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
     lexer.start(text);
     skipWhiteSpaceAndComments(lexer);
-    if (lexer.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) return "";
+    if (lexer.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) return null;
     lexer.advance();
     skipWhiteSpaceAndComments(lexer);
-    StringBuilder buffer = new StringBuilder();
-    while(true){
-      if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) break;
-      buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
-      lexer.advance();
-      skipWhiteSpaceAndComments(lexer);
-      if (lexer.getTokenType() != JavaTokenType.DOT) break;
-      buffer.append('.');
-      lexer.advance();
-      skipWhiteSpaceAndComments(lexer);
+
+    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      while(true){
+        if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) break;
+        buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
+        lexer.advance();
+        skipWhiteSpaceAndComments(lexer);
+        if (lexer.getTokenType() != JavaTokenType.DOT) break;
+        buffer.append('.');
+        lexer.advance();
+        skipWhiteSpaceAndComments(lexer);
+      }
+      String packageName = buffer.toString();
+      if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
+      return packageName;
     }
-    String packageName = buffer.toString();
-    if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
-    return packageName;
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
   }
 
-  private static void skipWhiteSpaceAndComments(Lexer lexer){
+  public static void skipWhiteSpaceAndComments(Lexer lexer){
     while(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(lexer.getTokenType())) {
       lexer.advance();
     }

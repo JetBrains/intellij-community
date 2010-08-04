@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -26,9 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.tree.ElementType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -52,8 +47,7 @@ public class JavaUtilForVfs {
     try{
       suggestRootsImpl(dir, foundDirectories);
     }
-    catch(PathFoundException found){
-      // OK
+    catch(PathFoundException ignore){
     }
     return foundDirectories;
   }
@@ -128,7 +122,7 @@ public class JavaUtilForVfs {
 
     CharSequence chars = LoadTextUtil.loadText(javaFile);
 
-    String packageName = getPackageStatement(chars);
+    String packageName = JavaUtil.getPackageStatement(chars);
     if (packageName != null){
       VirtualFile root = javaFile.getParent();
       int index = packageName.length();
@@ -150,35 +144,5 @@ public class JavaUtilForVfs {
     }
 
     return null;
-  }
-
-  private static String getPackageStatement(CharSequence text){
-    Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
-    lexer.start(text);
-
-    skipWhiteSpaceAndComments(lexer);
-    if (lexer.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) return null;
-    lexer.advance();
-    skipWhiteSpaceAndComments(lexer);
-    StringBuffer buffer = new StringBuffer();
-    while(true){
-      if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) break;
-      buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
-      lexer.advance();
-      skipWhiteSpaceAndComments(lexer);
-      if (lexer.getTokenType() != JavaTokenType.DOT) break;
-      buffer.append('.');
-      lexer.advance();
-      skipWhiteSpaceAndComments(lexer);
-    }
-    String packageName = buffer.toString();
-    if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
-    return packageName;
-  }
-
-  private static void skipWhiteSpaceAndComments(Lexer lexer){
-    while(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(lexer.getTokenType())) {
-      lexer.advance();
-    }
   }
 }
