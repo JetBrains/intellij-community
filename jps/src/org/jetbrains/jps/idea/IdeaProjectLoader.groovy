@@ -400,6 +400,9 @@ public class IdeaProjectLoader implements MacroExpansion {
           else {
             currentModule.outputPath = expandMacro(pathFromUrl(componentTag.output[0]?.@url), moduleBasePath)
             currentModule.testOutputPath = expandMacro(pathFromUrl(componentTag."output-test"[0]?.'@url'), moduleBasePath)
+            if (currentModule.testOutputPath == null) {
+              currentModule.testOutputPath = currentModule.outputPath
+            }
           }
         }
       }
