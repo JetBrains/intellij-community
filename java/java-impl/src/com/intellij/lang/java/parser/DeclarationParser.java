@@ -64,7 +64,7 @@ public class DeclarationParser {
 
   @Nullable
   private static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker declaration,
-                                                         final boolean isAnnotation) {
+                                                         final boolean isAnnotation, final Context context) {
     final IElementType keywordTokenType = builder.getTokenType();
     assert ElementType.CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
     builder.advanceLexer();
@@ -89,6 +89,30 @@ public class DeclarationParser {
     }
 
     parseClassBodyWithBraces(builder, isAnnotation, isEnum);
+
+    if (context == Context.FILE) {
+      boolean declarationsAfterEnd = false;
+
+      while (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.RBRACE) {
+        final PsiBuilder.Marker position = builder.mark();
+        final PsiBuilder.Marker extra = parse(builder, Context.CLASS);
+        if (extra != null && AFTER_END_DECLARATION_SET.contains(exprType(extra))) {
+          if (!declarationsAfterEnd) {
+            error(builder, JavaErrorMessages.message("expected.class.or.interface"), extra);
+          }
+          declarationsAfterEnd = true;
+          position.drop();
+        }
+        else {
+          position.rollbackTo();
+          break;
+        }
+      }
+
+      if (declarationsAfterEnd) {
+        expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
+      }
+    }
 
     declaration.done(JavaElementType.CLASS);
     return declaration;
@@ -220,7 +244,7 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.AT)) {
       if (builder.getTokenType() == JavaTokenType.INTERFACE_KEYWORD) {
-        return parseClassFromKeyword(builder, declaration, true);
+        return parseClassFromKeyword(builder, declaration, true, context);
       }
       else {
         declaration.rollbackTo();
@@ -228,32 +252,7 @@ public class DeclarationParser {
       }
     }
     else if (ElementType.CLASS_KEYWORD_BIT_SET.contains(builder.getTokenType())) {
-      final PsiBuilder.Marker root = parseClassFromKeyword(builder, declaration, false);
-      if (context == Context.FILE) {
-        // todo: append following declarations to root (?)
-        boolean declarationsAfterEnd = false;
-
-        while (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.RBRACE) {
-          final PsiBuilder.Marker position = builder.mark();
-          final PsiBuilder.Marker element = parse(builder, Context.CLASS);
-          if (element != null && AFTER_END_DECLARATION_SET.contains(exprType(element))) {
-            if (!declarationsAfterEnd) {
-              element.precede().error(JavaErrorMessages.message("expected.class.or.interface"));
-            }
-            declarationsAfterEnd = true;
-            position.drop();
-          }
-          else {
-            position.rollbackTo();
-            break;
-          }
-        }
-
-        if (declarationsAfterEnd) {
-          expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
-        }
-      }
-      return root;
+      return parseClassFromKeyword(builder, declaration, false, context);
     }
 
     PsiBuilder.Marker typeParams = null;
