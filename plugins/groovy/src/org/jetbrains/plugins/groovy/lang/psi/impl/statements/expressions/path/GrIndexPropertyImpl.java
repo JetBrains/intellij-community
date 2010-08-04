@@ -75,7 +75,12 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
           argTypes[i] = argType;
         }
 
-        if (thisType instanceof GrTupleType &&
+        if (thisType instanceof PsiArrayType &&
+            argTypes.length == 1 &&
+            TypesUtil.isAssignable(PsiType.INT, argTypes[0], getManager(), getResolveScope())) {
+          return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), getManager(), getResolveScope());
+        }
+        else if (thisType instanceof GrTupleType &&
             argTypes.length == 1 &&
             TypesUtil.isAssignable(PsiType.INT, argTypes[0], getManager(), getResolveScope())) {
           PsiType[] types = ((GrTupleType)thisType).getParameters();
@@ -96,12 +101,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         }
 
         PsiType componentType = null;
-        if (thisType instanceof PsiArrayType &&
-            argTypes.length == 1 &&
-            TypesUtil.isAssignable(PsiType.INT, argTypes[0], getManager(), getResolveScope())) {
-          componentType = TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), getManager(), getResolveScope());
-        }
-        else if (InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP) && argTypes.length == 1) {
+        if (InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP) && argTypes.length == 1) {
           componentType = TypesUtil
             .boxPrimitiveType(substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true), getManager(), getResolveScope());
         }

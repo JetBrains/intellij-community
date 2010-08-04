@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -56,12 +57,12 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @NotNull
   public TokenSet getWhitespaceTokens() {
-    return JavaTokenType.WHITESPACE_BIT_SET;
+    return ElementType.JAVA_WHITESPACE_BIT_SET;
   }
 
   @NotNull
   public TokenSet getCommentTokens() {
-    return JavaTokenType.COMMENT_BIT_SET;
+    return ElementType.JAVA_COMMENT_BIT_SET;
   }
 
   @NotNull

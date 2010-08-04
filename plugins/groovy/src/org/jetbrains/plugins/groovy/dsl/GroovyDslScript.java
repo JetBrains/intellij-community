@@ -7,9 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -52,7 +52,7 @@ public class GroovyDslScript {
 
 
   public boolean processExecutor(PsiScopeProcessor processor,
-                                 final PsiClass psiClass,
+                                 final PsiType psiType,
                                  final PsiElement place,
                                  final PsiFile placeFile,
                                  final String qname) {
@@ -61,7 +61,7 @@ public class GroovyDslScript {
     boolean firstTime = !specificities.containsKey(qname);
 
     final boolean placeDependent = firstTime || specificities.get(qname);
-    GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiClass, place, placeDependent, placeFile);
+    GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeDependent, placeFile);
 
     final ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder> members = maps.second;
     CustomMembersHolder holder = members.get(descriptor);
@@ -71,7 +71,7 @@ public class GroovyDslScript {
       if (firstTime) {
         final boolean placeAccessed = descriptor.placeAccessed();
         specificities.put(qname, placeAccessed);
-        final GroovyClassDescriptor newDescriptor = new GroovyClassDescriptor(psiClass, place, placeAccessed, placeFile);
+        final GroovyClassDescriptor newDescriptor = new GroovyClassDescriptor(psiType, place, placeAccessed, placeFile);
         members.putIfAbsent(newDescriptor, holder);
       }
       else {
@@ -84,7 +84,7 @@ public class GroovyDslScript {
 
   private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, String qname) {
     final ProcessingContext ctx = new ProcessingContext();
-    ctx.put(ClassContextFilter.getClassKey(qname), descriptor.getPsiClass());
+    ctx.put(ClassContextFilter.getClassKey(qname), descriptor.getPsiType());
     try {
       if (!isApplicable(executor, descriptor, ctx)) {
         return CustomMembersHolder.EMPTY;
@@ -126,8 +126,8 @@ public class GroovyDslScript {
   }
 
   private boolean handleDslError(Throwable e) {
+    LOG.error(e);
     if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.error(e);
       return true;
     }
     GroovyDslFileIndex.invokeDslErrorPopup(e, project, file);

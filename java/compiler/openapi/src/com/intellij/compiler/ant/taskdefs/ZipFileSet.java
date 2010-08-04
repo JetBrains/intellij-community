@@ -43,11 +43,10 @@ public class ZipFileSet extends Tag{
           pair("prefix", prefix(isDir, relativePath)));
   }
 
-  public static ZipFileSet createUnpackedSet(@NonNls String zipFilePath, @NotNull String relativePath, final boolean isDir, String pattern) {
+  public static ZipFileSet createUnpackedSet(@NonNls String zipFilePath, @NotNull String relativePath, final boolean isDir) {
     return new ZipFileSet("zipfileset",
                           pair("src", zipFilePath),
-                          pair("prefix", prefix(isDir, relativePath)),
-                          pair("includes", pattern));
+                          pair("prefix", prefix(isDir, relativePath)));
   }
 
   @Nullable

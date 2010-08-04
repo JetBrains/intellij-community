@@ -348,5 +348,46 @@ class Foo extends Bar {
     assertEmpty make()
   }
 
+  public void testDollarGroovyInnerClassUsagesInStubs() throws Exception {
+    def javaFile = myFixture.addClass("""
+      public class JavaClass {
+        public static class InnerJavaClass {}
+      }
+""")
+    myFixture.addFileToProject("WithInner.groovy", """
+class WithInner {
+  static class Inner {}
+}
+""")
+    assertEmpty make()
+
+    myFixture.addFileToProject("Usage.groovy", """
+class Usage {
+  def foo(WithInner.Inner i) {}
+  def foo(JavaClass.InnerJavaClass i) {}
+}
+""")
+
+    touch(javaFile.containingFile.virtualFile)
+    assertEmpty make()
+  }
+
+  public void testDollarGroovyInnerClassUsagesInStubs2() throws Exception {
+    myFixture.addClass(""" public class JavaClass { } """)
+    myFixture.addFileToProject("WithInner.groovy", """
+class WithInner {
+  static class Inner {}
+}
+""")
+
+    myFixture.addFileToProject("Usage.groovy", """
+class Usage {
+  def foo(WithInner.Inner i) {}
+}
+""")
+
+    assertEmpty make()
+  }
+
 
 }

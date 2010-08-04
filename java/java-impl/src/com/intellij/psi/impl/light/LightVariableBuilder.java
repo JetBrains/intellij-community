@@ -48,6 +48,7 @@ public class LightVariableBuilder extends LightElement implements PsiVariable {
   }
 
   @Override
+  @NotNull
   public PsiModifierList getModifierList() {
     return myModifierList;
   }

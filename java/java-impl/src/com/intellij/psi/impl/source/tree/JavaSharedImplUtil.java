@@ -50,7 +50,6 @@ public class JavaSharedImplUtil {
       else if (i != JavaTokenType.RBRACKET && i != TokenType.WHITE_SPACE &&
                i != JavaTokenType.C_STYLE_COMMENT &&
                i != JavaDocElementType.DOC_COMMENT &&
-               i != JavaTokenType.DOC_COMMENT &&
                i != JavaTokenType.END_OF_LINE_COMMENT) {
         break;
       }
@@ -79,7 +78,6 @@ public class JavaSharedImplUtil {
       else if (i != JavaTokenType.RBRACKET && i != TokenType.WHITE_SPACE &&
                i != JavaTokenType.C_STYLE_COMMENT &&
                i != JavaDocElementType.DOC_COMMENT &&
-               i != JavaTokenType.DOC_COMMENT &&
                i != JavaTokenType.END_OF_LINE_COMMENT) {
         break;
       }

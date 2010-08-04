@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import gnu.trove.THashSet;
 
@@ -254,7 +255,7 @@ public class JavaLexer extends LexerBase {
               myTokenEndOffset = getClosingComment(myBufferIndex + 2);
             }
             else {
-              myTokenType = JavaTokenType.DOC_COMMENT;
+              myTokenType = JavaDocElementType.DOC_COMMENT;
               myTokenEndOffset = getDocClosingComment(myBufferIndex + 3);
             }
           }

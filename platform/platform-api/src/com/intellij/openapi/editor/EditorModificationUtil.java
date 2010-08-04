@@ -244,6 +244,19 @@ public class EditorModificationUtil {
     int anchorLineEndOffset = document.getLineEndOffset(lineNumber);
     List<? extends TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logicalPosition.line);
     for (TextChange softWrap : softWraps) {
+      if (!editor.getSoftWrapModel().isVisible(softWrap)) {
+        continue;
+      }
+      if (softWrap.getStart() == caretOffset) {
+        // There are two possible situations:
+        //     *) caret is located on a visual line before soft wrap-introduced line feed;
+        //     *) caret is located on a visual line after soft wrap-introduced line feed;
+        VisualPosition position = editor.offsetToVisualPosition(caretOffset - 1);
+        VisualPosition visualCaret = caretModel.getVisualPosition();
+        if (position.line == visualCaret.line) {
+          return visualCaret.column - position.column - 1;
+        }
+      }
       if (softWrap.getStart() > caretOffset) {
         anchorLineEndOffset = softWrap.getStart();
         break;

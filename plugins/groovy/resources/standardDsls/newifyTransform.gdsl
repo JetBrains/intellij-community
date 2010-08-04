@@ -25,8 +25,8 @@ contributor(context(scope:annotatedScope(ctype: "groovy.lang.Newify"))) {
 
       // For Ruby-like style
       if (!auto || auto.eval()) {
-        for (cons in classType?.getConstructors()) {
-          method name: 'new', isStatic: true, params: cons.paramStringVector, type: classType?.qualName ?: "java.lang.Object"
+        for (cons in psiClass?.getConstructors()) {
+          method name: 'new', isStatic: true, params: cons.paramStringVector, type: psiClass?.qualName ?: "java.lang.Object"
         }
       }
     }

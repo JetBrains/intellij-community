@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -87,7 +88,7 @@ public abstract class RParenthTailType extends TailType {
     for(HighlighterIterator iterator = highlighter.createIterator(tailOffset); !iterator.atEnd(); iterator.advance()){
       final IElementType tokenType = iterator.getTokenType();
 
-      if ((!(tokenType instanceof IJavaElementType) || !JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)) &&
+      if ((!(tokenType instanceof IJavaElementType) || !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(tokenType)) &&
           tokenType != TokenType.WHITE_SPACE) {
         final int start = iterator.getStart();
         if (iterator.getEnd() == start + 1 &&  ')' == charsSequence.charAt(start)) {

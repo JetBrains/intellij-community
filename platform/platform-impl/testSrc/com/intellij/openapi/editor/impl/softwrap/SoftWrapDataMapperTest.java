@@ -859,15 +859,6 @@ public class SoftWrapDataMapperTest {
     }
 
     @Override
-    public int toVisualColumnSymbolsNumber(int width) {
-      int result = width / SPACE_SIZE;
-      if (width % SPACE_SIZE > 0) {
-        result++;
-      }
-      return result;
-    }
-
-    @Override
     public int textWidth(@NotNull CharSequence text, int start, int end, int x) {
       int result = 0;
       for (int i = start; i < end; i++) {

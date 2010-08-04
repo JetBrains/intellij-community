@@ -17,24 +17,23 @@
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -42,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -50,20 +50,22 @@ import java.util.Set;
  * @author ilyas
  */
 public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
-  private final PsiFile myFile;
+  private final GroovyFile myFile;
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass");
   private volatile Set<GrImportStatement> myUnusedImports = Collections.emptySet();
+  private volatile Runnable myOptimizeRunnable;
 
-  public GroovyUnusedImportPass(PsiFile file, Editor editor) {
+  public GroovyUnusedImportPass(GroovyFile file, Editor editor) {
     super(file.getProject(), editor.getDocument(), true);
     myFile = file;
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    if (!(myFile instanceof GroovyFile)) return;
-    GroovyFile groovyFile = (GroovyFile) myFile;
-    GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(groovyFile.getProject());
-    myUnusedImports = importsTracker.getUnusedImportStatements(groovyFile);
+    GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(myFile.getProject());
+    myUnusedImports = importsTracker.getUnusedImportStatements(myFile);
+    if (!myUnusedImports.isEmpty() && CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
+      myOptimizeRunnable = new GroovyImportOptimizer().processFile(myFile);
+    }
   }
 
   private IntentionAction createUnusedImportIntention() {
@@ -101,21 +103,62 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
 
   public void doApplyInformationToEditor() {
     AnnotationHolder annotationHolder = new AnnotationHolderImpl();
-    Annotation[] annotations = new Annotation[myUnusedImports.size()];
-    int i = 0;
+    List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myUnusedImports.size());
     for (GrImportStatement unusedImport : myUnusedImports) {
-      IntentionAction action = createUnusedImportIntention();
       Annotation annotation = annotationHolder.createWarningAnnotation(unusedImport, GroovyInspectionBundle.message("unused.import"));
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-      annotation.registerFix(action);
-      annotations[i++] = annotation;
+      annotation.registerFix(createUnusedImportIntention());
+      infos.add(HighlightInfo.fromAnnotation(annotation));
     }
 
-    List<HighlightInfo> infos = ContainerUtil.map(annotations, new Function<Annotation, HighlightInfo>() {
-      public HighlightInfo fun(Annotation annotation) {
-        return HighlightInfo.fromAnnotation(annotation);
-      }
-    });
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getId());
+
+    final Runnable optimize = myOptimizeRunnable;
+    if (optimize != null && timeToOptimizeImports()) {
+      PostHighlightingPass.invokeOnTheFlyImportOptimizer(new Runnable() {
+        @Override
+        public void run() {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          optimize.run();
+        }
+      });
+    }
   }
+
+  private boolean timeToOptimizeImports() {
+    if (!CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) return false;
+
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    if (!codeAnalyzer.isHighlightingAvailable(myFile)) return false;
+
+    if (!codeAnalyzer.isErrorAnalyzingFinished(myFile)) return false;
+    boolean errors = containsErrorsPreventingOptimize();
+
+    return !errors && codeAnalyzer.canChangeFileSilently(myFile);
+  }
+
+  private boolean containsErrorsPreventingOptimize() {
+    List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
+
+    // ignore unresolved imports errors
+    final TextRange ignoreRange;
+    final GrImportStatement[] imports = myFile.getImportStatements();
+    if (imports.length != 0) {
+      final int start = imports[0].getTextRange().getStartOffset();
+      final int end = imports[imports.length - 1].getTextRange().getEndOffset();
+      ignoreRange = new TextRange(start, end);
+    } else {
+      ignoreRange = new TextRange(0, 0);
+    }
+
+    for (HighlightInfo error : errors) {
+      if (!error.type.equals(HighlightInfoType.WRONG_REF)) return true;
+      if (!ignoreRange.contains(error.getActualStartOffset()) || !ignoreRange.contains(error.getActualEndOffset())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
 }

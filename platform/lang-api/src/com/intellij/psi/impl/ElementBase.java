@@ -18,13 +18,13 @@ package com.intellij.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.IconDeferrer;
@@ -33,19 +33,18 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.update.ComparableObject;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
 
   public static final int FLAGS_LOCKED = 0x800;
-  private Map<Integer, Icon> myBaseIcon;
+  private TIntObjectHashMap<Icon> myBaseIcon;
 
   private static final Icon VISIBILITY_ICON_PLACHOLDER = new EmptyIcon(Icons.PUBLIC_ICON);
   private static final Icon ICON_PLACHOLDER = IconLoader.getIcon("/nodes/nodePlaceholder.png");
@@ -56,7 +55,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
     try {
       Icon icon = computeIcon(flags);
-      Iconable.LastComputedIcon.put(this, icon, flags);
+      LastComputedIcon.put(this, icon, flags);
       return icon;
     }
     catch (ProcessCanceledException e) {
@@ -76,7 +75,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     Icon baseIcon = LastComputedIcon.get(psiElement, flags);
     if (baseIcon == null) {
       if (myBaseIcon == null) {
-        myBaseIcon = new HashMap<Integer, Icon>(3);
+        myBaseIcon = new TIntObjectHashMap<Icon>(3);
       }
       if (!myBaseIcon.containsKey(flags)) {
         myBaseIcon.put(flags, computeBaseIcon(flags));
@@ -118,7 +117,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   protected Icon getAdjustedBaseIcon(Icon icon, int flags) {
     Icon result = icon;
-    if ((flags & Iconable.ICON_FLAG_VISIBILITY) > 0) {
+    if ((flags & ICON_FLAG_VISIBILITY) > 0) {
       RowIcon rowIcon = new RowIcon(2);
       rowIcon.setIcon(icon, 0);
       rowIcon.setIcon(VISIBILITY_ICON_PLACHOLDER, 1);
@@ -219,7 +218,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   public static int transformFlags(PsiElement element, int _flags) {
-    int flags = _flags & ~(ICON_FLAG_READ_STATUS);
+    int flags = _flags & ~ICON_FLAG_READ_STATUS;
     final boolean isLocked = (_flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     if (isLocked) flags |= FLAGS_LOCKED;
     return flags;

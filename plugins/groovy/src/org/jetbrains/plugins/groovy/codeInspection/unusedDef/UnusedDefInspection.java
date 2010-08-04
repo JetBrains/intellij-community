@@ -123,15 +123,14 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
           if (element instanceof GrReferenceExpression) {
             PsiElement parent = element.getParent();
             if (parent instanceof GrAssignmentExpression) {
-              toHighlight = ((GrAssignmentExpression)parent).getRValue();
+              toHighlight = ((GrAssignmentExpression)parent).getLValue();
             }
             if (parent instanceof GrPostfixExpression) {
               toHighlight = parent;
             }
           }
           else if (element instanceof GrVariable) {
-            toHighlight = ((GrVariable)element).getInitializerGroovy();
-            if (toHighlight == null) toHighlight = ((GrVariable)element).getNameIdentifierGroovy();
+            toHighlight = ((GrVariable)element).getNameIdentifierGroovy();
           }
           if (toHighlight == null) toHighlight = element;
           problemsHolder.registerProblem(toHighlight, GroovyInspectionBundle.message("unused.assignment.tooltip"),

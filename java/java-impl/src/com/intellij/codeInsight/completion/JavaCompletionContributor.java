@@ -46,6 +46,7 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -530,14 +531,14 @@ public class JavaCompletionContributor extends CompletionContributor {
       return true;
     }
 
-    while (!iterator.atEnd() && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(iterator.getTokenType())) {
+    while (!iterator.atEnd() && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(iterator.getTokenType())) {
       iterator.advance();
     }
 
     if (iterator.atEnd() || iterator.getTokenType() != JavaTokenType.IDENTIFIER) return false;
     iterator.advance();
 
-    while (!iterator.atEnd() && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(iterator.getTokenType())) {
+    while (!iterator.atEnd() && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(iterator.getTokenType())) {
       iterator.advance();
     }
     if (iterator.atEnd()) return false;

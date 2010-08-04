@@ -215,7 +215,7 @@ public class EditorActionUtil {
 
     if (currentVisCaret.line > caretLogLineStartVis.line) {
       // Caret is located not at the first visual line of soft-wrapped logical line.
-      moveCaretToStartOfSoftWrappedLine(editor, currentVisCaret);
+      moveCaretToStartOfSoftWrappedLine(editor, currentVisCaret, currentVisCaret.line - caretLogLineStartVis.line);
       setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       return;
@@ -249,7 +249,7 @@ public class EditorActionUtil {
       LogicalPosition logLineEndLog = editor.offsetToLogicalPosition(document.getLineEndOffset(logLineToUse));
       VisualPosition logLineEndVis = editor.logicalToVisualPosition(logLineEndLog);
       if (logLineEndLog.softWrapLinesOnCurrentLogicalLine > 0) {
-        moveCaretToStartOfSoftWrappedLine(editor, logLineEndVis);
+        moveCaretToStartOfSoftWrappedLine(editor, logLineEndVis, logLineEndLog.softWrapLinesOnCurrentLogicalLine);
       }
       else {
         int line = logLineEndVis.line;
@@ -265,7 +265,7 @@ public class EditorActionUtil {
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  private static void moveCaretToStartOfSoftWrappedLine(Editor editor, VisualPosition currentVisual) {
+  private static void moveCaretToStartOfSoftWrappedLine(Editor editor, VisualPosition currentVisual, int softWrappedLines) {
     CaretModel caretModel = editor.getCaretModel();
     int line = currentVisual.line;
 
@@ -275,8 +275,17 @@ public class EditorActionUtil {
 
     if (currentVisual.column <= 1) {
       line--;
+      softWrappedLines--;
+      // There is a possible case that caret is located at the start of the second visual line of soft-wrapped line.
+      // Hence, it should be moved to the start of the previous visual line which anchor column is not '1'
+      // (after soft wrap drawing) but '0'.
       int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, line);
-      column = nonSpaceColumn >= 1 ? nonSpaceColumn : 1;
+      if (softWrappedLines <= 0) {
+        column = nonSpaceColumn >= 0 ? nonSpaceColumn : 0;
+      }
+      else {
+        column = nonSpaceColumn >= 1 ? nonSpaceColumn : 1;
+      }
     }
     else {
       int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, currentVisual.line);

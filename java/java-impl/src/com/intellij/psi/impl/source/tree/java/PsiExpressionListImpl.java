@@ -130,7 +130,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
       for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
         final IElementType t = child.getElementType();
         if (t == JavaTokenType.COMMA) break;
-        if (ElementType.EXPRESSION_BIT_SET.contains(t) || ElementType.COMMENT_BIT_SET.contains(t)) {
+        if (ElementType.EXPRESSION_BIT_SET.contains(t) || ElementType.JAVA_COMMENT_BIT_SET.contains(t)) {
           TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;

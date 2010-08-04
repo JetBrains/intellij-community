@@ -185,9 +185,9 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     return getNameIdentifierGroovy().getTextRange().getStartOffset();
   }
 
-  @Nullable
+  @NotNull
   public GrModifierList getModifierList() {
-    return findChildByClass(GrModifierList.class);
+    return findNotNullChildByClass(GrModifierList.class);
   }
 
   @NotNull

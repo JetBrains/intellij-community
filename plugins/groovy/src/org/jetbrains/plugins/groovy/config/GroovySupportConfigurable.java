@@ -18,16 +18,27 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
+import org.jetbrains.plugins.groovy.config.ui.ManagedLibrariesEditor;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
 * @author peter
@@ -48,11 +59,72 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
     addGroovySupport(module, rootModel);
   }
 
+  private boolean cleanDuplicates(List<LibraryManager> managers, ModifiableRootModel rootModel, final LibrariesContainer container) {
+    if (managers.isEmpty()) return true;
+
+    for (OrderEntry entry : rootModel.getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        final Library library = ((LibraryOrderEntry)entry).getLibrary();
+        if (library == null) {
+          cleanUndefinedGroovyLibrary(rootModel, (LibraryOrderEntry)entry);
+        } else {
+          final LibraryManager manager = ManagedLibrariesEditor.findManagerFor(library, managers.toArray(new LibraryManager[managers.size()]), container);
+          if (manager != null) {
+            @SuppressWarnings({"NonConstantStringShouldBeStringBuffer"})
+            String message = "There is already a " + manager.getLibraryCategoryName() + " library";
+            final String version = manager.getLibraryVersion(library, container);
+            if (StringUtil.isNotEmpty(version)) {
+              message += " of version " + version;
+            }
+            message += ".\n Do you want to replace the existing one?";
+            final String replace = "&Replace";
+            final int result =
+              Messages
+                .showDialog(facetEditor.getComponent(), message, "Library already exists", new String[]{replace, "&Add", "&Cancel"}, 0,
+                            null);
+            if (result == 2 || result < 0) {
+              return false; //cancel or escape
+            }
+
+            if (result == 0) {
+              rootModel.removeOrderEntry(entry);
+            }
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  private static void cleanUndefinedGroovyLibrary(ModifiableRootModel rootModel, LibraryOrderEntry entry) {
+    final String libraryName = entry.getLibraryName();
+    if (libraryName == null) {
+      return;
+    }
+
+    for (AbstractGroovyLibraryManager each : AbstractGroovyLibraryManager.EP_NAME.getExtensions()) {
+      if (each.managesName(libraryName)) {
+        rootModel.removeOrderEntry(entry);
+        return;
+      }
+    }
+  }
+
   public void addGroovySupport(final Module module, ModifiableRootModel rootModel) {
+    final LibrariesContainer container = LibrariesContainerFactory.createContainer(rootModel);
+
     if (!facetEditor.addNewSdk()) {
       final Library selectedLibrary = facetEditor.getSelectedLibrary();
       if (selectedLibrary != null) {
-        LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(selectedLibrary));
+        List<LibraryManager> suitable = CollectionFactory.arrayList();
+        for (final LibraryManager manager : AbstractGroovyLibraryManager.EP_NAME.getExtensions()) {
+          if (manager.managesLibrary(selectedLibrary, container)) {
+            suitable.add(manager);
+          }
+        }
+        if (cleanDuplicates(suitable, rootModel, container)) {
+          LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(selectedLibrary));
+        }
       }
       return;
     }
@@ -60,6 +132,18 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
     final String path = facetEditor.getNewSdkPath();
     final AbstractGroovyLibraryManager libraryManager = facetEditor.getChosenManager();
     if (path != null && libraryManager != null) {
+      List<LibraryManager> suitable = CollectionFactory.arrayList();
+      suitable.add(libraryManager);
+      final VirtualFile vfile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
+      if (vfile != null) {
+        for (final LibraryManager manager : AbstractGroovyLibraryManager.EP_NAME.getExtensions()) {
+          if (manager != libraryManager && manager.isSDKHome(vfile)) {
+            suitable.add(manager);
+          }
+        }
+      }
+
+      if (!cleanDuplicates(suitable, rootModel, container)) return;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           if (module.isDisposed()) {

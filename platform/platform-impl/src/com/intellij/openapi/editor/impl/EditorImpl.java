@@ -195,7 +195,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final EditorSizeContainer mySizeContainer = new EditorSizeContainer();
 
-  private Runnable myCursorUpdater;
+  private boolean myUpdateCursor;
   private int myCaretUpdateVShift;
   private final Project myProject;
   private long myMouseSelectionChangeTimestamp;
@@ -916,9 +916,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         charWidth = charToVisibleWidth(c, fontType, x);
         if (charWidth == 0) {
           break;
-        } else {
-          x += charWidth;
         }
+        x += charWidth;
 
         if (x >= px) {
           break;
@@ -995,6 +994,33 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new LogicalPosition(line, column);
   }
 
+  public int offsetToVisualLine(int offset) {
+    int line = calcLogicalLineNumber(offset);
+    return logicalToVisualLine(line);
+  }
+
+  private int logicalToVisualLine(int line) {
+    assertReadAccess();
+    if (!myFoldingModel.isFoldingEnabled()) return line;
+
+
+    int offset = line >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(line);
+
+    FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
+    if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
+      if (offset < getDocument().getTextLength()) {
+        offset = outermostCollapsed.getStartOffset();
+        return offsetToVisualLine(offset);
+      }
+      else {
+        offset = outermostCollapsed.getEndOffset() + 3;  // WTF?
+      }
+    }
+
+    line -= myFoldingModel.getFoldedLinesCountBefore(offset);
+    return line;
+  }
+
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull Point p) {
     final Point pp;
@@ -1033,7 +1059,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int linesToSkip = logical.softWrapLinesOnCurrentLogicalLine;
       List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForLine(logLine);
       for (TextChange softWrap : softWraps) {
-        if (myFoldingModel.isOffsetCollapsed(softWrap.getStart())) {
+        if (myFoldingModel.isOffsetCollapsed(softWrap.getStart()) && myFoldingModel.isOffsetCollapsed(softWrap.getStart() - 1)) {
           continue;
         }
         int lineFeeds = StringUtil.countNewLines(softWrap.getText());
@@ -1061,7 +1087,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    if (logLine <= 0) {
+    if (logLine < 0) {
       lineStartOffset = 0;
     }
     else if (lineStartOffset < 0) {
@@ -1321,9 +1347,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   void paint(Graphics g) {
     startOptimizedScrolling();
 
-    if (myCursorUpdater != null) {
-      myCursorUpdater.run();
-      myCursorUpdater = null;
+    if (myUpdateCursor) {
+      setCursorPosition();
+      myUpdateCursor = false;
     }
 
     Rectangle clip = getClipBounds(g);
@@ -1500,7 +1526,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (segmentHighlighter.isAfterEndOfLine()) {
       int startOffset = segmentHighlighter.getStartOffset();
-      int visibleStartLine = offsetToVisualPosition(startOffset).line;
+      int visibleStartLine = offsetToVisualLine(startOffset);
 
       if (!getFoldingModel().isOffsetCollapsed(startOffset)) {
         if (visibleStartLine >= startLineNumber && visibleStartLine <= endLineNumber) {
@@ -1531,10 +1557,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     int width = 0;
-    VisualPosition start = offsetToVisualPosition(startOffset);
-    VisualPosition end = offsetToVisualPosition(endOffset);
+    int start = offsetToVisualLine(startOffset);
+    int end = offsetToVisualLine(endOffset);
 
-    for (int i = start.line; i <= end.line; i++) {
+    for (int i = start; i <= end; i++) {
       int lastColumn = EditorUtil.getLastVisualLineColumnNumber(this, i) + 1;
       int lineWidth = visualPositionToXY(new VisualPosition(i, lastColumn)).x;
 
@@ -2477,6 +2503,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myCharHeight;
   }
 
+  public int getPreferredHeight() {
+    if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
+      return 1;
+    }
+
+    return getHeightWithoutCaret();
+  }
+
   public Dimension getPreferredSize() {
     if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return new Dimension(1, 1);
@@ -2504,6 +2538,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     return getContentSize();
+  }
+
+  private int getHeightWithoutCaret() {
+    if (isOneLineMode()) return getLineHeight();
+    int size = mySizeContainer.getContentHeight();
+    if (mySettings.isAdditionalPageAtBottom()) {
+      int lineHeight = getLineHeight();
+      return size + Math.max(getScrollingModel().getVisibleArea().height - 2 * lineHeight, lineHeight);
+    }
+
+    return size + mySettings.getAdditionalLinesCount() * getLineHeight();
   }
 
   public Dimension getContentSize() {
@@ -3141,18 +3186,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       stopOptimizedScrolling();
     }
 
-    if (myCursorUpdater == null) {
-      myCursorUpdater = new Runnable() {
-        public void run() {
-          if (myCursorUpdater == null) return;
-          myCursorUpdater = null;
-          VisualPosition caretPosition = getCaretModel().getVisualPosition();
-          Point pos1 = visualPositionToXY(caretPosition);
-          Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, caretPosition.column + 1));
-          myCaretCursor.setPosition(pos1, pos2.x - pos1.x);
-        }
-      };
-    }
+    myUpdateCursor = true;
+  }
+
+  private void setCursorPosition() {
+    VisualPosition caretPosition = getCaretModel().getVisualPosition();
+    Point pos1 = visualPositionToXY(caretPosition);
+    Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, caretPosition.column + 1));
+    myCaretCursor.setPosition(pos1, pos2.x - pos1.x);
   }
 
   public boolean setCaretVisible(boolean b) {
@@ -3429,9 +3470,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private static final Field decrButtonField;
+  private static final Field incrButtonField;
+  static {
+    try {
+      decrButtonField = BasicScrollBarUI.class.getDeclaredField("decrButton");
+      decrButtonField.setAccessible(true);
+
+      incrButtonField = BasicScrollBarUI.class.getDeclaredField("incrButton");
+      incrButtonField.setAccessible(true);
+    }
+    catch (NoSuchFieldException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   class MyScrollBar extends JBScrollBar {
-    @NonNls private static final String DECREASE_BUTTON_FIELD = "decrButton";
-    @NonNls private static final String INCREASE_BUTTON_FIELD = "incrButton";
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
 
@@ -3439,7 +3493,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super(orientation);
     }
 
-    public void setPersistendUI(ScrollBarUI ui) {
+    void setPersistendUI(ScrollBarUI ui) {
       myPersistentUI = ui;
       setUI(ui);
     }
@@ -3461,14 +3515,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Insets insets = getInsets();
       if (barUI instanceof BasicScrollBarUI) {
         try {
-          Field decreaseButtonField = BasicScrollBarUI.class.getDeclaredField(DECREASE_BUTTON_FIELD);
-          decreaseButtonField.setAccessible(true);
-          JButton decreaseButtonValue = (JButton)decreaseButtonField.get(barUI);
-          LOG.assertTrue(decreaseButtonValue != null);
-          return insets.top + decreaseButtonValue.getHeight();
+          JButton decrButtonValue = (JButton)decrButtonField.get(barUI);
+          LOG.assertTrue(decrButtonValue != null);
+          return insets.top + decrButtonValue.getHeight();
         }
         catch (Exception exc) {
-          throw new IllegalStateException(exc.getMessage());
+          throw new IllegalStateException(exc);
         }
       }
       else {
@@ -3487,11 +3539,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Insets insets = getInsets();
       if (barUI instanceof BasicScrollBarUI) {
         try {
-          Field increaseButtonField = BasicScrollBarUI.class.getDeclaredField(INCREASE_BUTTON_FIELD);
-          increaseButtonField.setAccessible(true);
-          JButton increaseButtonValue = (JButton)increaseButtonField.get(barUI);
-          LOG.assertTrue(increaseButtonValue != null);
-          return insets.bottom + increaseButtonValue.getHeight();
+          JButton incrButtonValue = (JButton)incrButtonField.get(barUI);
+          LOG.assertTrue(incrButtonValue != null);
+          return insets.bottom + incrButtonValue.getHeight();
         }
         catch (Exception exc) {
           throw new IllegalStateException(exc.getMessage());
@@ -3916,7 +3966,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
       else {
-        committed = getText(beginIndex + (composedEndIndex - composedStartIndex), endIndex - beginIndex);
+        committed = getText(beginIndex + composedEndIndex - composedStartIndex, endIndex - beginIndex);
       }
 
       return new AttributedString(committed).getIterator();
@@ -4305,7 +4355,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       final int foldStart = fold.getStartOffset();
       if (group != null) {
         final int endOffset = myFoldingModel.getEndOffset(group);
-        if (offsetToVisualPosition(endOffset).line == offsetToVisualPosition(foldStart).line) {
+        if (offsetToVisualLine(endOffset) == offsetToVisualLine(foldStart)) {
           return new DocumentFragment(myDocument, foldStart, endOffset);
         }
       }
@@ -4660,8 +4710,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private int getVisualPositionLine(int offset) {
       // Do round up of offset to the nearest line start (valid since we need only line)
       // This is needed for preventing access to lexer editor highlighter regions [that are reset] during bulk mode operation
-      final int startLineOffset = myDocument.getLineStartOffset(calcLogicalLineNumber(offset));
-      return offsetToVisualPosition(startLineOffset).line;
+
+      int line = calcLogicalLineNumber(offset);
+      return logicalToVisualLine(line);
     }
 
     public synchronized void update(int startLine, int newEndLine, int oldEndLine) {
@@ -4831,9 +4882,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    public Dimension getContentSize() {
+    private Dimension getContentSize() {
       validateSizes();
       return mySize;
+    }
+
+    private int getContentHeight() {
+      return myLineWidths.size() * getLineHeight();
     }
   }
 

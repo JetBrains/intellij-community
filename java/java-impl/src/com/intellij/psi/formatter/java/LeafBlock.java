@@ -18,7 +18,7 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.formatter.common.JavaBlockUtil;
+import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -90,7 +90,7 @@ public class LeafBlock implements ASTBlock{
   }
 
   public boolean isLeaf() {
-    return JavaBlockUtil.mayShiftIndentInside(myNode);
+    return ShiftIndentInsideHelper.mayShiftIndentInside(myNode);
   }
 
   public void setStartOffset(final int startOffset) {

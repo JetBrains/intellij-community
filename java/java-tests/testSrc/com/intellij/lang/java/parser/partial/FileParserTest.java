@@ -20,7 +20,6 @@ import com.intellij.lang.java.parser.FileParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
 
-// todo: fix comment binding, uncomment tests
 public class FileParserTest extends JavaParsingTestCase {
   public FileParserTest() {
     super("parser-partial/files");
@@ -46,13 +45,17 @@ public class FileParserTest extends JavaParsingTestCase {
                                                  "public class C { }\n" +
                                                  "class D { }"); }
 
-  //public void testBindBefore0() { doParserTest("class A{\n  // comment\n  int field;\n}"); }
+  public void testBindBefore0() { doParserTest("class A{\n  // comment\n  int field;\n}"); }
   public void testBindBefore1() { doParserTest("class A{\n  // comment\n\n  int field;\n}"); }
   public void testBindBefore2() { doParserTest("class A{ // comment\n  int field;\n}"); }
   public void testBindBefore3() { doParserTest("class A{// comment\n  int field;\n}"); }
-  //public void testBindBefore4() { doParserTest("class A{\n  // comment 1\n  // comment 2\n  // comment 3\n  int field;\n}"); }
+  public void testBindBefore4() { doParserTest("class A{\n  // comment 1\n  // comment 2\n  // comment 3\n  int field;\n}"); }
 
-  // todo: doc comment binding tests
+  public void testBindDocComment0() { doParserTest("/** class comment */\nclass A { }"); }
+  public void testBindDocComment1() { doParserTest("/** file comment */\npackage a;\nclass A { }"); }
+  public void testBindDocComment2() { doParserTest("/** file comment */\nimport a;\nclass A { }"); }
+  public void testBindDocComment3() { doParserTest("class A {\n /** field comment */\n int f;\n}"); }
+  public void testBindDocComment4() { doParserTest("class A {\n /** field comment */\n// field comment\n int f;\n}"); }
 
   private void doParserTest(final String text) {
     doParserTest(text, new TestParser() {

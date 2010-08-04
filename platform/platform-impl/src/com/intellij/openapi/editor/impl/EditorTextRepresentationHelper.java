@@ -42,14 +42,6 @@ public interface EditorTextRepresentationHelper {
   int toVisualColumnSymbolsNumber(@NotNull CharSequence text, int start, int end, int x);
 
   /**
-   * Allows to answer how many visual columns is necessary for representing text of the given width.
-   *
-   * @param width   target width
-   * @return        number of visual columns necessary for representation of the text with the given width
-   */
-  int toVisualColumnSymbolsNumber(int width);
-
-  /**
    * Allows to retrieve width (in pixels) necessary to represent given region (<code>[start; end)</code>) starting
    * at the given <code>'x'</code> offset from visual line start using given font type.
    * <p/>

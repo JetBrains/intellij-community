@@ -1305,8 +1305,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
     boolean isStatic = member.hasModifierProperty(GrModifier.STATIC);
-    final PsiElement refNameElement = refExpr.getReferenceNameElement();
-    if (refNameElement == null) return;
+    final PsiElement refNameElement = getElementToHighlight(refExpr);
     Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
 
     if (member instanceof PsiField || member instanceof GrAccessorMethod) {

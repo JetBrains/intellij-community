@@ -1,9 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import groovy.lang.Closure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
@@ -22,14 +20,24 @@ import java.util.Set;
 public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   private final Set<Map> myMethods = new HashSet<Map>();
   private final Project myProject;
-  private final String myQualifiedName;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
   private final GroovyClassDescriptor myDescriptor;
+  private final String myQualifiedName;
 
   public CustomMembersGenerator(GroovyClassDescriptor descriptor) {
     myDescriptor = descriptor;
     myProject = descriptor.getProject();
-    myQualifiedName = descriptor.getQualifiedName();
+    final PsiType type = descriptor.getPsiType();
+    if (type instanceof PsiClassType) {
+      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass != null) {
+        myQualifiedName = psiClass.getQualifiedName();
+      } else {
+        myQualifiedName = null;
+      }
+    } else {
+      myQualifiedName = null;
+    }
   }
 
   public PsiElement getPlace() {
@@ -38,6 +46,17 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
 
   @Nullable
   public PsiClass getClassType() {
+    return getPsiClass();
+  }
+
+  public PsiType getPsiType() {
+    return myDescriptor.getPsiType();
+  }
+
+  @Nullable
+  @Override
+  public PsiClass getPsiClass() {
+    if (myQualifiedName==null) return null;
     return JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, myDescriptor.getResolveScope());
   }
 

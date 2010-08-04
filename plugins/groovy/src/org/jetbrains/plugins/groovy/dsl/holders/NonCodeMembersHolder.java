@@ -70,6 +70,11 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
         method.addModifier(PsiModifier.STATIC);
       }
 
+      final Object bindsTo = prop.get("bindsTo");
+      if (bindsTo instanceof PsiElement) {
+        method.setNavigationElement((PsiElement)bindsTo);
+      }
+
       myMethods.add(method);
     }
   }

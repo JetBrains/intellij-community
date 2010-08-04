@@ -23,11 +23,9 @@ import com.intellij.psi.tree.java.IKeywordElementType;
 
 @SuppressWarnings({"JavaDoc"})
 public interface JavaTokenType extends TokenType{
-  //IElementType WHITE_SPACE = new IJavaElementType("WHITE_SPACE");
   IElementType IDENTIFIER = new IJavaElementType("IDENTIFIER");
   IElementType C_STYLE_COMMENT = new IJavaElementType("C_STYLE_COMMENT");
   IElementType END_OF_LINE_COMMENT = new IJavaElementType("END_OF_LINE_COMMENT");
-  IElementType DOC_COMMENT = new IJavaElementType("DOC_COMMENT");
 
   IElementType INTEGER_LITERAL = new IJavaElementType("INTEGER_LITERAL");
   IElementType LONG_LITERAL = new IJavaElementType("LONG_LITERAL");
@@ -36,8 +34,8 @@ public interface JavaTokenType extends TokenType{
   IElementType CHARACTER_LITERAL = new IJavaElementType("CHARACTER_LITERAL");
   IElementType STRING_LITERAL = new IJavaElementType("STRING_LITERAL");
 
-
   IElementType TRUE_KEYWORD = new IKeywordElementType("TRUE_KEYWORD");
+  IElementType FALSE_KEYWORD = new IKeywordElementType("FALSE_KEYWORD");
   IElementType NULL_KEYWORD = new IKeywordElementType("NULL_KEYWORD");
 
   IElementType ABSTRACT_KEYWORD = new IKeywordElementType("ABSTRACT_KEYWORD");
@@ -142,8 +140,6 @@ public interface JavaTokenType extends TokenType{
   IElementType GTGTEQ = new IJavaElementType("GTGTEQ");
   IElementType GTGTGTEQ = new IJavaElementType("GTGTGTEQ");
 
-  IElementType FALSE_KEYWORD = new IKeywordElementType("FALSE_KEYWORD");
-
   TokenSet OPERATION_BIT_SET = TokenSet.create(
     EQ, GT, LT, EXCL, TILDE, QUEST, COLON, PLUS, MINUS, ASTERISK, DIV, AND, OR, XOR,
     PERC, EQEQ, LE, GE, NE, ANDAND, OROR, PLUSPLUS, MINUSMINUS, LTLT, GTGT, GTGTGT,
@@ -167,17 +163,5 @@ public interface JavaTokenType extends TokenType{
     PUBLIC_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD, STATIC_KEYWORD,
     ABSTRACT_KEYWORD, FINAL_KEYWORD, NATIVE_KEYWORD, STRICTFP_KEYWORD,
     SYNCHRONIZED_KEYWORD, TRANSIENT_KEYWORD, VOLATILE_KEYWORD
-  );
-
-  TokenSet WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.create(
-    WHITE_SPACE, END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT
-  );
-
-  TokenSet WHITESPACE_BIT_SET = TokenSet.create(
-    WHITE_SPACE
-  );
-
-  TokenSet COMMENT_BIT_SET = TokenSet.create(
-    END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT, JavaDocTokenType.DOC_COMMENT_DATA
   );
 }

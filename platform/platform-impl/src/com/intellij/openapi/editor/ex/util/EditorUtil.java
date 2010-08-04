@@ -317,7 +317,7 @@ public class EditorUtil {
     if (column == columnNumber) {
       return offset;
     }
-    if (column > columnNumber && text.charAt(offset) == '\t') {
+    if (column > columnNumber && offset > 0 && text.charAt(offset - 1) == '\t') {
       return offset - 1;
     }
     currentColumn.set(column);
@@ -419,15 +419,18 @@ public class EditorUtil {
   public static int textWidthInColumns(@NotNull Editor editor, CharSequence text, int start, int end, int x) {
     int result = 0;
     int prevX;
+    int spaceSize = getSpaceWidth(Font.PLAIN, editor);
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
       prevX = x;
       switch (c) {
-        case '\t': x = nextTabStop(x, editor); break;
+        case '\t': 
+          x = nextTabStop(x, editor);
+          result += columnsNumber(x - prevX, spaceSize);
+          break;
         case '\n': x = result = 0; break;
-        default: x += charWidth(c, Font.PLAIN, editor);
+        default: x += charWidth(c, Font.PLAIN, editor); result++;
       }
-      result += columnsNumber(c, x, prevX, getSpaceWidth(Font.PLAIN, editor));
     }
     return result;
   }

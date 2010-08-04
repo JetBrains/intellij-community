@@ -16,7 +16,7 @@ public class DynamicMembersContributor extends NonCodeMembersContributor {
                                      PsiElement place,
                                      ResolveState state) {
     final DynamicManager manager = DynamicManager.getInstance(place.getProject());
-    for (String qName : ResolveUtil.getAllSuperTypes(qualifierType, place).keySet()) {
+    for (String qName : ResolveUtil.getAllSuperTypes(qualifierType, place.getProject()).keySet()) {
       for (PsiMethod method : manager.getMethods(qName)) {
         if (!ResolveUtil.processElement(processor, method, state)) return;
       }

@@ -42,6 +42,6 @@ public abstract class PatternConditionPlus<Target, Value> extends PatternConditi
   }
 
   public final boolean process(Value p, ProcessingContext context) {
-    return !myValuePattern.getCondition().accepts(p, context);
+    return !myValuePattern.accepts(p, context);
   }
 }

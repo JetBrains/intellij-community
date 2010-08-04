@@ -274,13 +274,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void testCollectionAssignments() throws Exception {
-    doTest(new GroovyAssignabilityCheckInspection());
-  }
+  public void testCollectionAssignments() {doTest(new GroovyAssignabilityCheckInspection()); }
+  public void testReturnAssignability() {doTest(new GroovyAssignabilityCheckInspection()); }
 
   public void testNumberDuplicatesInMaps() throws Exception {doTest();}
 
-  public void testMapNotAcceptedAsStringParameter()  {
-    doTest();
-  }
+  public void testMapNotAcceptedAsStringParameter()  {doTest();}
 }

@@ -17,12 +17,16 @@ package org.jetbrains.plugins.groovy.actions.generate.constructors;
 
 import com.intellij.codeInsight.generation.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -35,46 +39,42 @@ import java.util.List;
  */
 public class ConstructorGenerateHandler extends GenerateConstructorHandler {
 
+  private static final String DEF_PSEUDO_ANNO = "_____intellij_idea_rulez_def_";
+
   @Nullable
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
-    final ClassMember[] classMembers = super.chooseOriginalMembers(aClass, project);
-
+    final ClassMember[] classMembers = chooseOriginalMembersImpl(aClass, project);
     if (classMembers == null) return null;
 
     List<ClassMember> res = new ArrayList<ClassMember>();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-    String text;
-
     for (ClassMember classMember : classMembers) {
-
       if (classMember instanceof PsiMethodMember) {
-        PsiMethod constructorImpl;
-        final PsiMethod method = ((PsiMethodMember) classMember).getElement();
-
-        //TODO: rewrite it like fine java method
-        text = method.getText();
-        try {
-          constructorImpl = factory.createMethodFromText(text, aClass);
-          res.add(new PsiMethodMember(constructorImpl));
-        } catch (IncorrectOperationException e) {
-          e.printStackTrace();
+        final PsiMethod method = ((PsiMethodMember)classMember).getElement();
+        final PsiMethod copy = (PsiMethod)method.copy();
+        if (copy instanceof GrMethod) {
+          for (GrParameter parameter : ((GrMethod)copy).getParameterList().getParameters()) {
+            if (parameter.getTypeElementGroovy() == null) {
+              parameter.setName(DEF_PSEUDO_ANNO + parameter.getName());
+            }
+          }
         }
 
+        res.add(new PsiMethodMember(factory.createMethodFromText(GroovyToJavaGenerator.generateMethodStub(copy), aClass)));
       } else if (classMember instanceof PsiFieldMember) {
-        final PsiFieldMember fieldMember = (PsiFieldMember) classMember;
-        PsiField fieldImpl;
+        final PsiField field = ((PsiFieldMember) classMember).getElement();
 
-        final PsiField field = fieldMember.getElement();
-        try {
-          fieldImpl = factory.createFieldFromText(field.getType().getCanonicalText() + " " + field.getName(), aClass);
-          res.add(new PsiFieldMember(fieldImpl));
-        } catch (IncorrectOperationException e) {
-          e.printStackTrace();
-        }
+        String prefix = field instanceof GrField && ((GrField)field).getTypeElementGroovy() == null ? DEF_PSEUDO_ANNO : "";
+        res.add(new PsiFieldMember(factory.createFieldFromText(field.getType().getCanonicalText() + " " + prefix + field.getName(), aClass)));
       }
     }
 
     return res.toArray(new ClassMember[res.size()]);
+  }
+
+  @Nullable
+  protected ClassMember[] chooseOriginalMembersImpl(PsiClass aClass, Project project) {
+    return super.chooseOriginalMembers(aClass, project);
   }
 
   @NotNull
@@ -83,7 +83,6 @@ public class ConstructorGenerateHandler extends GenerateConstructorHandler {
 
     List<PsiGenerationInfo<GrMethod>> grConstructors = new ArrayList<PsiGenerationInfo<GrMethod>>();
 
-    GrMethod grConstructor;
     for (GenerationInfo generationInfo : list) {
       final PsiMember constructorMember = generationInfo.getPsiMember();
       assert constructorMember instanceof PsiMethod;
@@ -93,22 +92,26 @@ public class ConstructorGenerateHandler extends GenerateConstructorHandler {
       assert block != null;
 
       final String constructorName = aClass.getName();
-      final String body = block.getText();
+      final String body = StringUtil.replace(StringUtil.replace(block.getText(), DEF_PSEUDO_ANNO, ""), ";", "");
       final PsiParameterList list1 = constructor.getParameterList();
 
       List<String> parametersNames = new ArrayList<String>();
+      List<String> parametersTypes = new ArrayList<String>();
       for (PsiParameter parameter : list1.getParameters()) {
-        parametersNames.add(parameter.getName());
+        final String fullName = parameter.getName();
+        parametersNames.add(StringUtil.trimStart(fullName, DEF_PSEUDO_ANNO));
+        parametersTypes.add(fullName.startsWith(DEF_PSEUDO_ANNO) ? null : parameter.getType().getCanonicalText());
       }
 
       final String[] paramNames = ArrayUtil.toStringArray(parametersNames);
+      final String[] paramTypes = ArrayUtil.toStringArray(parametersTypes);
       assert constructorName != null;
-      grConstructor = GroovyPsiElementFactory.getInstance(aClass.getProject()).createConstructorFromText(constructorName, null, paramNames, body);
+      GrMethod grConstructor =
+        GroovyPsiElementFactory.getInstance(aClass.getProject()).createConstructorFromText(constructorName, paramTypes, paramNames, body);
 
       PsiUtil.shortenReferences(grConstructor);
 
-      final PsiGenerationInfo<GrMethod> psiGenerationInfo = new GroovyGenerationInfo<GrMethod>(grConstructor);
-      grConstructors.add(psiGenerationInfo);
+      grConstructors.add(new GroovyGenerationInfo<GrMethod>(grConstructor));
     }
 
     return grConstructors;
