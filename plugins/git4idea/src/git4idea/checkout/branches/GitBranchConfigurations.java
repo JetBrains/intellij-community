@@ -374,7 +374,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
         GitBranchConfiguration n = new GitBranchConfiguration(this, bc.NAME);
         myConfigurations.put(n.getName(), n);
         for (BranchInfo bi : bc.BRANCHES) {
-          n.setBranch(bi.ROOT, bi.REFERENCE);
+          n.setReference(bi.ROOT, bi.REFERENCE);
         }
         myConfigurations.put(bc.NAME, n);
         n.setAutoDetected(bc.IS_AUTO_DETECTED);
@@ -534,7 +534,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
           }
           GitBranchConfiguration c = createConfiguration(name);
           for (VirtualFile root : myGitRoots) {
-            c.setBranch(root.getPath(), describeRoot(root));
+            c.setReference(root.getPath(), describeRoot(root));
           }
         }
       }
@@ -562,7 +562,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
           GitBranchConfiguration c = createConfiguration(localName);
           c.setAutoDetected(true);
           for (VirtualFile root : myGitRoots) {
-            c.setBranch(root.getPath(), localName);
+            c.setReference(root.getPath(), localName);
           }
         }
       }
@@ -585,7 +585,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
             else {
               continue;
             }
-            c.setBranch(root.getPath(), b);
+            c.setReference(root.getPath(), b);
           }
         }
       }

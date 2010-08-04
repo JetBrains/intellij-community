@@ -270,7 +270,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
         if (!StringUtil.isEmpty(d.newBranchName)) {
           final String ref = d.referenceToCheckout.trim();
           rc.referencesToUse.put(d.root, Pair.create(ref, d.referencesToSelect.contains(ref)));
-          rc.target.setBranch(d.root.getPath(), d.newBranchName.trim());
+          rc.target.setReference(d.root.getPath(), d.newBranchName.trim());
           rc.checkoutNeeded.add(d.root);
         }
         else {
@@ -278,7 +278,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
           if (!d.referencesToSelect.contains(ref)) {
             ref = myConfig.detectTag(d.root, ref);
           }
-          rc.target.setBranch(d.root.getPath(), ref);
+          rc.target.setReference(d.root.getPath(), ref);
           if (!d.referenceToCheckout.equals(d.currentReference)) {
             rc.checkoutNeeded.add(d.root);
           }

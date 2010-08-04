@@ -97,7 +97,7 @@ public class GitBranchConfiguration {
    * @param root      the root
    * @param reference the reference
    */
-  public void setBranch(@NotNull String root, @NotNull String reference) {
+  public void setReference(@NotNull String root, @NotNull String reference) {
     synchronized (myConfig.getStateLock()) {
       myReferences.put(root, reference);
     }
