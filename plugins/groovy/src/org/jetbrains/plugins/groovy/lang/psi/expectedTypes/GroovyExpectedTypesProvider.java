@@ -21,6 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -37,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -142,20 +145,36 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitOpenBlock(GrOpenBlock block) {
-      if (block.getParent() instanceof PsiMethod) {
-        final GrStatement[] statements = block.getStatements();
-        if (statements.length > 0 && myExpression.equals(statements[statements.length - 1])) {
-          final PsiType type = ((PsiMethod)block.getParent()).getReturnType();
-          if (type != null) {
-            myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
-          }
-        }
+      final GrStatement[] statements = block.getStatements();
+      if (statements.length > 0 && myExpression.equals(statements[statements.length - 1])) {
+        checkExitPoint();
       }
     }
 
     public void visitIfStatement(GrIfStatement ifStatement) {
       if (myExpression.equals(ifStatement.getCondition())) {
         myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(ifStatement), PsiType.BOOLEAN)};
+      }
+      else if (myExpression.equals(ifStatement.getThenBranch()) || myExpression.equals(ifStatement.getElseBranch())) {
+        checkExitPoint();
+      }
+    }
+
+    private void checkExitPoint() {
+      final PsiElement element = PsiTreeUtil.getParentOfType(myExpression, PsiMethod.class, GrClosableBlock.class);
+      if (element instanceof GrMethod) {
+        final GrMethod method = (GrMethod)element;
+        ControlFlowUtils.visitAllExitPoints(method.getBlock(), new ControlFlowUtils.ExitPointVisitor() {
+          @Override
+          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+            if (returnValue == myExpression) {
+              final PsiType returnType = method.getReturnType();
+              myResult = new TypeConstraint[]{new SubtypeConstraint(returnType, returnType)};
+              return false;
+            }
+            return true;
+          }
+        });
       }
     }
 

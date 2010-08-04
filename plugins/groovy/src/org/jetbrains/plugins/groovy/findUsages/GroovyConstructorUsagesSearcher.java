@@ -109,7 +109,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       @Override
       public boolean process(GrNewExpression grNewExpression) {
         final PsiMethod resolvedConstructor = grNewExpression.resolveConstructor();
-        if (constructor.getManager().areElementsEquivalent(resolvedConstructor, constructor)) {
+        if (includeOverloads || constructor.getManager().areElementsEquivalent(resolvedConstructor, constructor)) {
           return consumer.process(grNewExpression.getReferenceElement());
         }
         return true;
@@ -217,7 +217,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
                   for (PsiType psiType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(argument)) {
                     if (psiType instanceof PsiClassType &&
                         targetClass.getManager().areElementsEquivalent(targetClass, ((PsiClassType)psiType).resolve()) &&
-                        !literalProcessor.processLiteral((GrListOrMap)argument, (PsiClassType)psiType)) {
+                        !literalProcessor.processLiteral((GrListOrMap)argument)) {
                       return false;
                     }
                   }
@@ -271,7 +271,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
         final GrVariable[] vars = ((GrVariableDeclaration)grandpa).getVariables();
         if (vars.length == 1) {
           final GrVariable variable = vars[0];
-          if (!checkLiteralInstantiation(variable.getInitializerGroovy(), typeElement, literalProcessor)) {
+          if (!checkLiteralInstantiation(variable.getInitializerGroovy(), literalProcessor)) {
             return false;
           }
         }
@@ -282,7 +282,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
           ControlFlowUtils.visitAllExitPoints(method.getBlock(), new ControlFlowUtils.ExitPointVisitor() {
             @Override
             public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-              if (!checkLiteralInstantiation(returnValue, typeElement, literalProcessor)) {
+              if (!checkLiteralInstantiation(returnValue, literalProcessor)) {
                 return false;
               }
               return true;
@@ -293,14 +293,14 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       else if (grandpa instanceof GrTypeCastExpression) {
         final GrTypeCastExpression cast = (GrTypeCastExpression)grandpa;
         if (cast.getCastTypeElement() == typeElement &&
-            !checkLiteralInstantiation(cast.getOperand(), typeElement, literalProcessor)) {
+            !checkLiteralInstantiation(cast.getOperand(), literalProcessor)) {
           return false;
         }
       }
       else if (grandpa instanceof GrSafeCastExpression) {
         final GrSafeCastExpression cast = (GrSafeCastExpression)grandpa;
         if (cast.getCastTypeElement() == typeElement &&
-            !checkLiteralInstantiation(cast.getOperand(), typeElement, literalProcessor)) {
+            !checkLiteralInstantiation(cast.getOperand(), literalProcessor)) {
           return false;
         }
       }
@@ -336,14 +336,10 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   }
 
   private static boolean checkLiteralInstantiation(GrExpression expression,
-                                                   final GrTypeElement typeElement,
                                                    final LiteralConstructorSearcher literalProcessor) {
 
     if (expression instanceof GrListOrMap) {
-      final PsiType expectedType = typeElement.getType();
-      if (expectedType instanceof PsiClassType) {
-        return literalProcessor.processLiteral((GrListOrMap)expression, (PsiClassType)expectedType);
-      }
+      return literalProcessor.processLiteral((GrListOrMap)expression);
     }
     return true;
   }

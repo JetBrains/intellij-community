@@ -27,8 +27,14 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
     Foo() {}
     }
 """)
-    myFixture.addFileToProject "a.groovy", "Foo foo() { if (true) [] else return [] }"
-    assertEquals(2, ReferencesSearch.search(foo.constructors[0]).findAll().size())
+    myFixture.addFileToProject "a.groovy", """
+Foo foo() {
+  if (true) []
+  else return []
+}
+Foo bar() { [] }
+"""
+    assertEquals(3, ReferencesSearch.search(foo.constructors[0]).findAll().size())
   }
 
   public void testList_Cast() throws Exception {

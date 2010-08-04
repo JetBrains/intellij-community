@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ObjectUtils;
@@ -23,7 +22,7 @@ public class LiteralConstructorSearcher {
     myIncludeOverloads = includeOverloads;
   }
 
-  public boolean processLiteral(GrListOrMap literal, PsiClassType expectedType) {
+  public boolean processLiteral(GrListOrMap literal) {
     if (literal.isMap()) {
       final GrNamedArgument argument = literal.findNamedArgument("super");
       if (argument != null) {
@@ -31,13 +30,13 @@ public class LiteralConstructorSearcher {
       }
     }
 
-    return processConstructorReference(new LiteralConstructorReference(literal, expectedType));
+    return processConstructorReference(literal.getReference());
   }
 
   private boolean processConstructorReference(@Nullable PsiReference reference) {
     if (reference != null && (myIncludeOverloads || reference.isReferenceTo(myConstructor))) {
-    return myConsumer.process(reference);
-  }
+      return myConsumer.process(reference);
+    }
     return true;
   }
 }

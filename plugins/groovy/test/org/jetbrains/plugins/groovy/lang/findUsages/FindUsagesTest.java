@@ -71,7 +71,13 @@ public class FindUsagesTest extends LightGroovyTestCase {
   }
 
   public void testConstructorUsageInNewExpression() throws Throwable {
-    doTestImpl("ConstructorUsageInNewExpression.groovy", 2);
+    myFixture.configureByFile("ConstructorUsageInNewExpression.groovy");
+    final PsiElement resolved = TargetElementUtilBase.findTargetElement(myFixture.getEditor(),
+                                                                        TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+    assertNotNull("Could not resolve reference", resolved);
+    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
+    assertEquals(2, MethodReferencesSearch.search((PsiMethod)resolved, projectScope, true).findAll().size());
+    assertEquals(4, MethodReferencesSearch.search((PsiMethod)resolved, projectScope, false).findAll().size());
   }
 
   public void testGotoConstructor() throws Throwable {

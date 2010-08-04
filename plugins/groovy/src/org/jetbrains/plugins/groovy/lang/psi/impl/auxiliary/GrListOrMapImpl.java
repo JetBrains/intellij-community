@@ -24,6 +24,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -100,6 +101,16 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         return argument;
       }
     }
+    return null;
+  }
+
+  @Override
+  public PsiReference getReference() {
+    final PsiClassType conversionType = LiteralConstructorReference.getTargetConversionType(this);
+    if (conversionType != null) {
+      return new LiteralConstructorReference(this, conversionType);
+    }
+
     return null;
   }
 
