@@ -87,8 +87,8 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
   }
 
   private void updateSelection(JTable table) {
-    int row = table.getSelectedRow();
-    int column = table.getSelectedColumn();
+    int row = table.getSelectedRowCount() == 1 ? table.getSelectedRow() : -1;
+    int column = table.getSelectedColumnCount() == 1 ? table.getSelectedColumn() : -1;
     handleSelectionChange((row == -1  || column == -1) ? null : new TableCell(row, column));
   }
 
@@ -125,21 +125,6 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     columnVisibleRect.width = Math.max(0, visibleRight - columnVisibleRect.x);
     return columnVisibleRect;
   }
-
-  //private Rectangle getColumnRectangle(int columnIndex) {
-  //  TableColumnModel cm = getColumnModel();
-  //  if (getComponentOrientation().isLeftToRight()) {
-  //    for (int i = 0; i < column; i++) {
-  //      r.x += cm.getColumn(i).getWidth();
-  //    }
-  //  }
-  //  else {
-  //    for (int i = cm.getColumnCount() - 1; i > column; i--) {
-  //      r.x += cm.getColumn(i).getWidth();
-  //    }
-  //  }
-  //  r.width = cm.getColumn(column).getWidth();
-  //}
 
   public TableCell getCellKeyForPoint(Point point) {
     int rowIndex = myComponent.rowAtPoint(point);

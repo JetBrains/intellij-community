@@ -85,7 +85,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         }
 
         public void focusGained(FocusEvent e) {
-          handleSelectionChange(myKey);
+          updateCurrentSelection();
         }
       }
     );
@@ -97,12 +97,12 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         }
 
         public void componentMoved(ComponentEvent e) {
-          handleSelectionChange(myKey);
+          updateCurrentSelection();
         }
 
         @Override
         public void componentResized(ComponentEvent e) {
-          handleSelectionChange(myKey);
+          updateCurrentSelection();
         }
       }
     );
@@ -110,12 +110,12 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
       @Override
       public void ancestorMoved(HierarchyEvent e) {
-        handleSelectionChange(myKey);
+        updateCurrentSelection();
       }
 
       @Override
       public void ancestorResized(HierarchyEvent e) {
-        handleSelectionChange(myKey);
+        updateCurrentSelection();
       }
     });
 
@@ -129,10 +129,10 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private class TipComponent extends JComponent {
+
     public Dimension getMaximumSize() {
       return getPreferredSize();
     }
-
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
@@ -144,8 +144,8 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     public void paint(Graphics g) {
       g.drawImage(myImage, 0, 0, null);
     }
-  }
 
+  }
   protected abstract KeyType getCellKeyForPoint(Point point);
 
   @NotNull
@@ -159,6 +159,11 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       myHint.hide();
       myHint = null;
     }
+    myKey = null;
+  }
+
+  protected void updateCurrentSelection() {
+    handleSelectionChange(myKey, true);
   }
 
   private void handleMouseEvent(MouseEvent e) {
