@@ -48,6 +48,7 @@ import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,6 @@ import java.util.List;
  */
 public class AddSupportForFrameworksPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep");
-  @NonNls private static final String UNCHECKED_CARD = "unchecked";
   @NonNls private static final String EMPTY_CARD = "empty";
   private JPanel myMainPanel;
   private JPanel myFrameworksPanel;
@@ -78,7 +78,6 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private final FrameworksTree myFrameworksTree;
   private final Set<String> myInitializedOptionsPanelIds = new HashSet<String>();
   private FrameworkSupportNode myLastSelectedNode;
-  private final JLabel myTickCheckboxLabel;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final @NotNull LibrariesContainer librariesContainer,
                                       @Nullable ModuleBuilder builder, Computable<String> baseDirForLibrariesGetter) {
@@ -100,6 +99,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
         updateOptionsPanel();
         frameworkSupportNode.getConfigurable().onFrameworkSelectionChanged(node.isChecked());
         myModel.onFrameworkSelectionChanged(frameworkSupportNode);
+        onFrameworkStateChanged();
       }
     };
     myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
@@ -107,16 +107,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
         onSelectionChanged();
       }
     });
+
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myFrameworksTree));
     myOptionsPanel = new JPanel(new CardLayout());
     myOptionsPanel.add(EMPTY_CARD, new JPanel());
-    final JPanel uncheckedLabelPanel = new JPanel(new BorderLayout());
-    myTickCheckboxLabel = new JLabel("Tick checkbox");
-    uncheckedLabelPanel.add(BorderLayout.NORTH, myTickCheckboxLabel);
-    myOptionsPanel.add(UNCHECKED_CARD, uncheckedLabelPanel);
+
     splitter.setSecondComponent(myOptionsPanel);
     myFrameworksPanel.add(splitter, BorderLayout.CENTER);
+
+    myFrameworksTree.setSelectionRow(0);    
   }
+
+  protected void onFrameworkStateChanged() {}
 
   private void onSelectionChanged() {
     if (!myFrameworksTree.isProcessingMouseEventOnCheckbox()) {
@@ -154,14 +156,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private void updateOptionsPanel() {
     final FrameworkSupportNode node = getSelectedNode();
     if (node != null) {
-      if (node.isChecked()) {
-        initializeOptionsPanel(node);
-        showCard(node.getProvider().getId());
-      }
-      else {
-        myTickCheckboxLabel.setText("Select check box to add '" + node.getTitle() + "' support");
-        showCard(UNCHECKED_CARD);
-      }
+      initializeOptionsPanel(node);
+      showCard(node.getProvider().getId());
+      UIUtil.setEnabled(myOptionsPanel, node.isChecked(), true);
     }
     else {
       showCard(EMPTY_CARD);
@@ -314,7 +311,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return myMainPanel;
   }
 
-  public boolean haveSelectedFrameworks() {
+  public FrameworksTree getFrameworksTree() {
+    return myFrameworksTree;
+  }
+
+  public boolean hasSelectedFrameworks() {
     return !getFrameworkNodes(true).isEmpty();
   }
 
