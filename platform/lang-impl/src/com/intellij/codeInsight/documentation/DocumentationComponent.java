@@ -33,8 +33,10 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.ui.EdgeBorder;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -169,7 +171,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
 
     setLayout(new BorderLayout());
     add(myScrollPane, BorderLayout.CENTER);
-    myScrollPane.setBorder(BorderFactory.createEmptyBorder(0, 2, 2, 2));
+    myScrollPane.setViewportBorder(JBScrollPane.createIndentBorder());
 
     final DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(new BackAction());
@@ -186,7 +188,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
 
     myControlPanel = new JPanel();
     myControlPanel.setLayout(new BorderLayout());
-    myControlPanel.setBorder(new EdgeBorder(EdgeBorder.EDGE_BOTTOM));
+    myControlPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     JPanel dummyPanel = new JPanel();
 
     myElementLabel = new JLabel();
