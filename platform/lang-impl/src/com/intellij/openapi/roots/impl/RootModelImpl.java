@@ -325,11 +325,18 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   public String[] getSourceRootUrls() {
+    return getSourceRootUrls(true);
+  }
+
+  @NotNull
+  public String[] getSourceRootUrls(boolean includingTests) {
     List<String> result = new SmartList<String>();
     for (ContentEntry contentEntry : myContent) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
-        result.add(sourceFolder.getUrl());
+        if (includingTests || !sourceFolder.isTestSource()) {
+          result.add(sourceFolder.getUrl());
+        }
       }
     }
     return ContainerUtil.toArray(result, new String[result.size()]);
@@ -337,12 +344,17 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   public VirtualFile[] getSourceRoots() {
+    return getSourceRoots(true);
+  }
+
+  @NotNull
+  public VirtualFile[] getSourceRoots(final boolean includingTests) {
     List<VirtualFile> result = new SmartList<VirtualFile>();
     for (ContentEntry contentEntry : myContent) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
         final VirtualFile file = sourceFolder.getFile();
-        if (file != null) {
+        if (file != null && (includingTests || !sourceFolder.isTestSource())) {
           result.add(file);
         }
       }
@@ -1061,4 +1073,3 @@ public class RootModelImpl implements ModifiableRootModel {
     Disposer.register(myDisposable, disposable);
   }
 }
-
