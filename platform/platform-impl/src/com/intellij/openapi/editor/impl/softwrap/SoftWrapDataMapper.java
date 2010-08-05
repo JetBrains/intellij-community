@@ -345,11 +345,10 @@ public class SoftWrapDataMapper {
       // Update state to the offset that corresponds to the same logical line that was used last time.
       if (currentLogicalLine == lastUsedLogicalLine) {
         int columnDiff = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, result.offset, newOffset, result.x);
-        int width = myTextRepresentationHelper.textWidth(text, result.offset, newOffset, Font.PLAIN, result.x);
         result.logicalColumn += columnDiff;
         result.visualColumn += columnDiff;
         if (strategy.recalculateX(result)) {
-          result.x += width;
+          result.x += myTextRepresentationHelper.textWidth(text, result.offset, newOffset, Font.PLAIN, result.x);
         }
       }
       // Update state to offset that doesn't correspond to the same logical line that was used last time.
@@ -410,7 +409,7 @@ public class SoftWrapDataMapper {
 
     @Override
     public boolean recalculateX(Context context) {
-      return context.visualLine >= myTargetVisual.line;
+      return context.visualLine == myTargetVisual.line;
     }
 
     @NotNull
