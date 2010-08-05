@@ -46,7 +46,7 @@ X ints = [239, 4.2d]
   public void testCastListToAnything() throws Exception {
     testAssignability """
 File f1 = ['path']
-File f2 = <warning descr="Cannot assign 'List<Serializable>' to 'File'">['path', 2, true, 42]</warning>
+File f2 = <warning descr="Cannot find constructor of 'File'">['path', 2, true, 42]</warning>
 """
   }
 
@@ -61,7 +61,7 @@ public class Y extends java.util.HashMap<String, String> {
 
     testAssignability """
 HashMap<String, File> m1 = ['a':['b']]
-Y y = <warning descr="Cannot assign 'Map<String, String>' to 'Y'">[a:'b']</warning>
+Y y = <warning descr="Cannot find constructor of 'Y'">[a:'b']</warning>
 """
   }
 
@@ -85,7 +85,7 @@ Foo f = [name: 'aaa', foo: { println 'hi' }, anotherProperty: 42 ]
 
   void testAssignability(String text) {
     myFixture.enableInspections new GroovyAssignabilityCheckInspection()
-    PsiFile file = configureScript(text)
+    PsiFile file = configureGppScript(text)
     myFixture.testHighlighting(true, false, false, file.virtualFile)
   }
 
@@ -333,7 +333,7 @@ a.fol<caret>dLeft(2, { a, b -> a+b })
   }
 
   private PsiElement resolveReference() {
-    return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
+    return findReference().resolve()
   }
 
   public void testMethodTypeParameterInference() throws Exception {
@@ -428,6 +428,42 @@ class Point {
 
     configureGppScript "Point p = <caret>[239, 42]"
     assertEquals 2, multiResolveReference().size()
+
+    configureGppScript """
+def foo(Point p) {}
+foo(<caret>[2, 3])
+"""
+    assertEquals 2, multiResolveReference().size()
+  }
+
+  public void testGotoClassFromLiteralOnsetsWhenNoConstructorsPresent() throws Exception {
+    PsiClass point = myFixture.addClass(""" class Point { }""") 
+    configureGppScript "Point p = <caret>[super: 2]"
+    assertEquals point, resolveReference()
+
+    configureGppScript "Point p = <caret>[]"
+    assertEquals point, resolveReference()
+  }
+
+  public void testNoGotoObjectFromLiteral() throws Exception {
+    myFixture.addClass(""" class Point { }""")
+
+    configureGppScript "def p = <caret>[]"
+    assertNull findReference()
+  }
+
+  public void testHighlightInapplicableLiteralConstructor() throws Exception {
+    myFixture.addClass("""
+class Point {
+  Point() {}
+}""")
+
+    configureGppScript """
+def foo(Point p) {}
+Point p = [:]
+Point p2 = [super:warning descr="Cannot find constructor of 'Point'">[4, 2]</warning>]
+foo(<warning descr="Cannot find constructor of 'Point'">[4, 2]</warning>)
+"""
   }
 
   public void testResolveTraitMethod() throws Exception {
@@ -445,7 +481,7 @@ s.do<caret>Smth()
   public void testBaseConstructorCallInMapLiteras() throws Exception {
     configureScript """
 @Typed File foo() { ['super':['a']] }
-@Typed File goo() { <warning descr="Cannot assign 'Map' to 'File'">[:]</warning> }
+@Typed File goo() { <warning descr="Cannot find constructor of 'File'">[:]</warning> }
 File bar() { <warning descr="Cannot assign 'Map' to 'File'">[:]</warning> }
 """
     myFixture.enableInspections new GroovyAssignabilityCheckInspection()

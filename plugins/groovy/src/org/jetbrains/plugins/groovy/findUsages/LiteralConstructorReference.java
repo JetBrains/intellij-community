@@ -2,10 +2,12 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -18,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,11 +28,15 @@ import java.util.List;
  * @author peter
  */
 public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrMap> {
-  private final PsiClassType myConstructedClass;
+  private final PsiClassType myExpectedType;
 
   public LiteralConstructorReference(@NotNull GrListOrMap element, @NotNull PsiClassType constructedClassType) {
     super(element, TextRange.from(0, 0), false);
-    myConstructedClass = constructedClassType;
+    myExpectedType = constructedClassType;
+  }
+
+  public PsiClassType getConstructedClassType() {
+    return myExpectedType;
   }
 
   private static boolean isConstructorCall(PsiClassType expectedType,
@@ -45,20 +52,26 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   }
 
   public static List<ResolveResult> getConstructorCandidates(PsiClassType classType,
-                                                             @NotNull GroovyPsiElement context, @Nullable PsiType[] argTypes) {
+                                                             @NotNull GroovyPsiElement context, @Nullable PsiType[] argTypes, boolean exactMatchesOnly) {
     PsiClass psiClass = classType.resolve();
     if (psiClass == null) return Collections.emptyList();
 
+    final PsiMethod[] constructors = psiClass.getConstructors();
+    if (constructors.length == 0) {
+      return Arrays.<ResolveResult>asList(new PsiElementResolveResult(psiClass));
+    }
+
     List<ResolveResult> applicable = CollectionFactory.arrayList();
     final List<ResolveResult> byName = CollectionFactory.arrayList();
-    for (PsiMethod constructor : psiClass.getConstructors()) {
+    for (PsiMethod constructor : constructors) {
       final ResolveResult resolveResult = new PsiElementResolveResult(constructor);
       byName.add(resolveResult);
       if (argTypes != null && isConstructorCall(classType, argTypes, constructor, context)) {
         applicable.add(resolveResult);
       }
     }
-    if (applicable.isEmpty()) {
+
+    if (!exactMatchesOnly && applicable.isEmpty()) {
       applicable.addAll(byName);
     }
     return applicable;
@@ -82,7 +95,11 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
 
     for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
       if (type instanceof PsiClassType) {
-        return (PsiClassType)type;
+        final String text = type.getCanonicalText();
+        if (!CommonClassNames.JAVA_LANG_OBJECT.equals(text) &&
+            !CommonClassNames.JAVA_LANG_STRING.equals(text)) {
+          return (PsiClassType)type;
+        }
       }
     }
     return null;
@@ -113,7 +130,8 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
       }
     }
 
-    final List<ResolveResult> candidates = getConstructorCandidates(myConstructedClass, literal, argTypes());
+    final boolean exactMatchesOnly = false;
+    final List<ResolveResult> candidates = getConstructorCandidates(myExpectedType, literal, argTypes(), exactMatchesOnly);
     return candidates.toArray(new ResolveResult[candidates.size()]);
   }
 
@@ -121,5 +139,15 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   @Override
   public Object[] getVariants() {
     return EMPTY_ARRAY;
+  }
+
+  public boolean isConstructorCallCorrect() {
+    final boolean isMap = getElement().isMap();
+    if (!isMap && InheritanceUtil.isInheritor(myExpectedType, CommonClassNames.JAVA_LANG_ITERABLE) ||
+        isMap && InheritanceUtil.isInheritor(myExpectedType, CommonClassNames.JAVA_UTIL_MAP)) {
+      return GppTypeConverter.hasDefaultConstructor(myExpectedType);
+    }
+
+    return resolve() != null;
   }
 }
