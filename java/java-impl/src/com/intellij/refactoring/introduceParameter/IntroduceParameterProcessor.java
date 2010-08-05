@@ -382,7 +382,16 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       }
 
       if (myGenerateDelegate) {
-        generateDelegate();
+        generateDelegate(myMethodToReplaceIn);
+        if (myMethodToReplaceIn != myMethodToSearchFor) {
+          final PsiMethod method = generateDelegate(myMethodToSearchFor);
+          if (method.getContainingClass().isInterface()) {
+            final PsiCodeBlock block = method.getBody();
+            if (block != null) {
+              block.delete();
+            }
+          }
+        }
       }
 
       // Changing signature of initial method
@@ -428,16 +437,16 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
   }
 
-  private void generateDelegate() throws IncorrectOperationException {
-    final PsiMethod delegate = (PsiMethod)myMethodToReplaceIn.copy();
+  private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {
+    final PsiMethod delegate = (PsiMethod)methodToReplaceIn.copy();
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     ChangeSignatureProcessor.makeEmptyBody(elementFactory, delegate);
     final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, delegate.getName());
     final PsiExpressionList argumentList = callExpression.getArgumentList();
     assert argumentList != null;
-    final PsiParameter[] psiParameters = myMethodToReplaceIn.getParameterList().getParameters();
+    final PsiParameter[] psiParameters = methodToReplaceIn.getParameterList().getParameters();
 
-    final PsiParameter anchorParameter = getAnchorParameter(myMethodToReplaceIn);
+    final PsiParameter anchorParameter = getAnchorParameter(methodToReplaceIn);
     if (psiParameters.length == 0) {
       argumentList.add(myParameterInitializer);
     }
@@ -454,7 +463,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       }
     }
 
-    myMethodToReplaceIn.getContainingClass().addBefore(delegate, myMethodToReplaceIn);
+    return (PsiMethod)methodToReplaceIn.getContainingClass().addBefore(delegate, methodToReplaceIn);
   }
 
   private void addDefaultConstructor(UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {

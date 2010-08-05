@@ -245,6 +245,14 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
   }
 
+  public void testGenerateDelegateInSuperClass() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, true, true, true);
+  }
+
+  public void testGenerateDelegateInSuperInterface() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, true, true, true);
+  }
+
   private void doTestThroughHandler() throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, new DataContext() {
