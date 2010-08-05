@@ -269,7 +269,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     final SVNRevision pegRevision = info.getRevision();
     SVNLogClient client = myVcs.createLogClient();
 
-    final boolean supports15 = SvnUtil.checkRepositoryVersion15(myVcs, root);
+    final boolean supports15 = SvnUtil.checkRepositoryVersion15(myVcs, url);
     supports15Ref.set(supports15);
     client.doLog(new File[]{new File(file.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), SVNRevision.UNDEFINED,
                  false, true, supports15, 0, null,

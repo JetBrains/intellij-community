@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -72,7 +73,7 @@ public class QuickMerge {
   private final Project myProject;
   private final String myBranchName;
   private final VirtualFile myRoot;
-  private final WCInfo myWcInfo;
+  private WCInfo myWcInfo;
   private String mySourceUrl;
   private SvnVcs myVcs;
   private final String myTitle;
@@ -130,18 +131,36 @@ public class QuickMerge {
     }
   }
 
+  private class CheckRepositorySupportsMergeinfo extends TaskDescriptor {
+    private CheckRepositorySupportsMergeinfo() {
+      super("Checking repository capabilities", Where.POOLED);
+    }
+
+    @Override
+    public void run(ContinuationContext context) {
+      try {
+        final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
+        final boolean supportsMergeinfo = myWcInfo.getFormat().supportsMergeInfo() &&
+                                          SvnUtil.doesRepositorySupportMergeinfo(myVcs, SVNURL.parseURIEncoded(mySourceUrl));
+        if (! supportsMergeinfo) {
+          insertMergeAll(tasks);
+        } else {
+          tasks.add(new MergeAllOrSelectedChooser());
+        }
+        context.next(tasks);
+      }
+      catch (SVNException e) {
+        finishWithError(context, e.getMessage(), true);
+      }
+    }
+  }
+
   @CalledInAwt
   public void execute() {
     final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
     tasks.add(new MyInitChecks());
     tasks.add(new SourceUrlCorrection());
-
-    final boolean supportsMergeinfo = myWcInfo.getFormat().supportsMergeInfo() && myWcInfo.isRepoSupportsMergeInfo();
-    if (! supportsMergeinfo) {
-      insertMergeAll(tasks);
-    } else {
-      tasks.add(new MergeAllOrSelectedChooser());
-    }
+    tasks.add(new CheckRepositorySupportsMergeinfo());
 
     myContinuation.run(tasks);
   }
