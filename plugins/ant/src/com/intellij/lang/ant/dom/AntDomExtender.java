@@ -61,6 +61,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     TAG_MAPPING.put("scriptdef", AntDomScriptDef.class);
     TAG_MAPPING.put("antlib", AntDomAntlib.class);
     TAG_MAPPING.put("ant", AntDomAnt.class);
+    TAG_MAPPING.put("classpath", AntDomClasspath.class);
   }
 
   public void registerExtensions(@NotNull final AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
@@ -119,18 +120,19 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         parentIntrospector = new ClassIntrospectorAdapter(classBasedIntrospector);
       }
       else {
-        DomElement declaringElement = null;
         if (antDomElement instanceof AntDomCustomElement) {
           final String name = antDomElement.getXmlElementName();
           final String nsKey = antDomElement.getXmlElementNamespace();
-          declaringElement = CustomAntElementsRegistry.getInstance(antProject).getDeclaringElement(new XmlName(name, nsKey));
-        }
-        
-        if (declaringElement instanceof AntDomMacroDef) {
-          parentIntrospector = new MacrodefIntrospectorAdapter((AntDomMacroDef)declaringElement);
-        }
-        else if (declaringElement instanceof AntDomMacrodefElement){
-          parentIntrospector = ContainerElementIntrospector.INSTANCE;
+          final DomElement declaringElement = CustomAntElementsRegistry.getInstance(antProject).getDeclaringElement(new XmlName(name, nsKey));
+          if (declaringElement instanceof AntDomMacroDef) {
+            parentIntrospector = new MacrodefIntrospectorAdapter((AntDomMacroDef)declaringElement);
+          }
+          else if (declaringElement instanceof AntDomMacrodefElement){
+            parentIntrospector = ContainerElementIntrospector.INSTANCE;
+          }
+          else if (declaringElement instanceof AntDomScriptDef) {
+            parentIntrospector = new ScriptdefIntrospectorAdapter((AntDomScriptDef)declaringElement);
+          }
         }
       }
       
@@ -467,6 +469,31 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
           return true;
         }
       }
+      return false;
+    }
+  }
+
+  private static class ScriptdefIntrospectorAdapter extends AbstractIntrospector {
+    private final AntDomScriptDef myScriptDef;
+
+    private ScriptdefIntrospectorAdapter(AntDomScriptDef scriptDef) {
+      myScriptDef = scriptDef;
+    }
+    
+    @NotNull 
+    public Iterator<String> getAttributesIterator() {
+      final List<AntDomScriptdefAttribute> macrodefAttributes = myScriptDef.getScriptdefAttributes();
+      final List<String> attribs = new ArrayList<String>(macrodefAttributes.size());
+      for (AntDomScriptdefAttribute attribute : macrodefAttributes) {
+        final GenericAttributeValue<String> nameAttrib = attribute.getName();
+        if (nameAttrib != null) {
+          attribs.add(nameAttrib.getRawText());
+        }
+      }
+      return attribs.iterator();
+    }
+    
+    public boolean isContainer() {
       return false;
     }
   }
