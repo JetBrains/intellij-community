@@ -18,6 +18,7 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
@@ -204,6 +205,24 @@ public class XmlTagBlock extends AbstractXmlBlock{
   protected Spacing getSpacing(final AbstractSyntheticBlock syntheticBlock1, final AbstractSyntheticBlock syntheticBlock2) {
     if (syntheticBlock2.startsWithCDATA() || syntheticBlock1.endsWithCDATA()) {
       return Spacing.getReadOnlySpacing();
+    }
+
+    if (syntheticBlock1.containsCDATA() && syntheticBlock2.isTagDescription()
+        || syntheticBlock1.isTagDescription() && syntheticBlock2.containsCDATA()) {
+      int lineFeeds = 0;
+      switch(myXmlFormattingPolicy.getWhiteSpaceAroundCDATAOption()) {
+        case CodeStyleSettings.WS_AROUND_CDATA_NONE:
+          break;
+        case CodeStyleSettings.WS_AROUND_CDATA_NEW_LINES:
+          lineFeeds = 1;
+          break;
+        case CodeStyleSettings.WS_AROUND_CDATA_PRESERVE:
+          return Spacing.getReadOnlySpacing();
+        default:
+          assert false : "Unexpected whitespace around CDATA code style option.";
+      }
+      return Spacing.createSpacing(0, 0, lineFeeds, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                   myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (syntheticBlock2.isJspTextBlock() || syntheticBlock1.isJspTextBlock()) {

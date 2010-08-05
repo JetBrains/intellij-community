@@ -102,6 +102,16 @@ public class XmlPolicy extends XmlFormattingPolicy{
     return mySettings.XML_KEEP_LINE_BREAKS_IN_TEXT;
   }
 
+  @Override
+  public boolean getKeepWhiteSpacesInsideCDATA() {
+    return mySettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA;
+  }
+
+  @Override
+  public int getWhiteSpaceAroundCDATAOption() {
+    return mySettings.XML_WHITE_SPACE_AROUND_CDATA;
+  }
+
   public CodeStyleSettings getSettings() {
     return mySettings;
   }

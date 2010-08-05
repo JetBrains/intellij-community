@@ -211,6 +211,16 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return mySettings.HTML_KEEP_LINE_BREAKS_IN_TEXT;
   }
 
+  @Override
+  public boolean getKeepWhiteSpacesInsideCDATA() {
+    return true;
+  }
+
+  @Override
+  public int getWhiteSpaceAroundCDATAOption() {
+    return CodeStyleSettings.WS_AROUND_CDATA_PRESERVE;
+  }
+
   public CodeStyleSettings getSettings() {
     return mySettings;
   }
