@@ -15,27 +15,15 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diff.*;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.DiffToolbar;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableFactory;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeRequestChain;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,12 +42,14 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   private final AnAction myPrevChangeAction;
   private final AnAction myNextChangeAction;
   private final Project myProject;
+  private final DiffChainContext myContext;
 
   public ChangeDiffRequest(final Project project, final List<DiffRequestPresentable> steps, final ShowDiffAction.DiffExtendUIFactory actionsFactory,
                            final boolean showFrame) {
     myProject = project;
     mySteps = steps;
     myShowFrame = showFrame;
+    myContext = new DiffChainContext();
 
     myIndex = 0;
     myActionsFactory = actionsFactory;
@@ -122,7 +112,7 @@ public class ChangeDiffRequest implements ChangeRequestChain {
       final int nextIdx = myIndex + moveDirection.direction();
 
       final DiffRequestPresentable diffRequestPresentable = mySteps.get(nextIdx);
-      final DiffRequestPresentable.MyResult result = diffRequestPresentable.step();
+      final DiffRequestPresentable.MyResult result = diffRequestPresentable.step(myContext);
       final DiffPresentationReturnValue returnValue = result.getReturnValue();
       if (DiffPresentationReturnValue.quit.equals(returnValue)) {
         return null;
