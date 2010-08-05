@@ -189,7 +189,7 @@ public class NewProjectUtil {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) {
       int exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
-                                         new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe")}, 1,
+                                         new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe")}, 1, 0,
                                          Messages.getQuestionIcon());
       if (exitCode == 1) { // "No" option
         ProjectUtil.closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);

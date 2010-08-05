@@ -74,6 +74,8 @@ public abstract class DialogWrapper {
    */
   @NonNls public static final String DEFAULT_ACTION = "DefaultAction";
 
+  @NonNls public static final String FOCUSED_ACTION = "FocusedAction";
+
   private final DialogWrapperPeer myPeer;
   private int myExitCode = CANCEL_EXIT_CODE;
 
@@ -106,6 +108,8 @@ public abstract class DialogWrapper {
   protected JCheckBox myCheckBoxDoNotShowDialog;
   @Nullable
   private DoNotAskOption myDoNotAsk;
+
+  private JComponent myPreferredFocusedComponent;
 
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
@@ -368,6 +372,10 @@ public abstract class DialogWrapper {
           myNoAction = action;
         }
         button.setMnemonic(mnemonic);
+      }
+
+      if (action.getValue(FOCUSED_ACTION) != null) {
+        myPreferredFocusedComponent = button;
       }
 
       buttons.add(button);
@@ -706,7 +714,7 @@ public abstract class DialogWrapper {
    */
   @Nullable
   public JComponent getPreferredFocusedComponent() {
-    return null;
+    return SystemInfo.isMac ? myPreferredFocusedComponent : null;
   }
 
   /**
