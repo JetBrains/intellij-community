@@ -75,6 +75,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       removeAll();
       myEditor = createEditor(psiFile, document);
       if (myEditor == null) return;
+      myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
       revalidate();

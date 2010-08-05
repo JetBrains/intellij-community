@@ -997,7 +997,7 @@ public class UIUtil {
   }
 
   public static Color getBoundsColor() {
-    return getBorderSeparatorColor();
+    return getBorderColor();
   }
 
   public static Color getBoundsColor(boolean focused) {

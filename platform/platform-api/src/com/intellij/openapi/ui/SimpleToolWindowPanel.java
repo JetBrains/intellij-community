@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -48,6 +49,29 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     myBorderless = borderless;
     myVertical = vertical;
     setProvideQuickActions(true);
+
+    addContainerListener(new ContainerAdapter() {
+      @Override
+      public void componentAdded(ContainerEvent e) {
+        Component child = e.getChild();
+
+        if (child instanceof Container) {
+          ((Container)child).addContainerListener(this);
+        }
+        if (myBorderless) {
+          UIUtil.removeScrollBorder(SimpleToolWindowPanel.this);
+        }
+      }
+
+      @Override
+      public void componentRemoved(ContainerEvent e) {
+        Component child = e.getChild();
+        
+        if (child instanceof Container) {
+          ((Container)child).removeContainerListener(this);
+        }
+      }
+    });
   }
 
   public void setToolbar(JComponent c) {
@@ -57,10 +81,6 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
       add(c, BorderLayout.NORTH);
     } else {
       add(c, BorderLayout.WEST);
-    }
-
-    if (myBorderless) {
-      UIUtil.removeScrollBorder(c);
     }
 
     revalidate();

@@ -350,8 +350,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
-    myScrollPane.setBorder(null);
-    
     myPanel = new JPanel();
 
     myHeaderPanel = new MyHeaderPanel();
@@ -2560,7 +2558,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void setBorder(Border border) {
-    myPanel.setBorder(border);
+    myScrollPane.setBorder(border);
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
