@@ -434,6 +434,12 @@ def foo(Point p) {}
 foo(<caret>[2, 3])
 """
     assertEquals 2, multiResolveReference().size()
+
+    configureGppScript """
+def foo(Point... p) {}
+foo(<caret>['super':[2, 3]])
+"""
+    assertEquals 2, multiResolveReference().size()
   }
 
   public void testGotoClassFromLiteralOnsetsWhenNoConstructorsPresent() throws Exception {
