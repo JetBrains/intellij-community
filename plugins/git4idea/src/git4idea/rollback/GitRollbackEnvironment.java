@@ -20,8 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
@@ -31,10 +33,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Git rollback/revert environment
@@ -158,6 +157,19 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
         exceptions.add(e);
       }
     }
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    HashSet<File> filesToRefresh = new HashSet<File>();
+    for (Change c : changes) {
+      ContentRevision before = c.getBeforeRevision();
+      if (before != null) {
+        filesToRefresh.add(new File(before.getFile().getPath()));
+      }
+      ContentRevision after = c.getAfterRevision();
+      if (after != null) {
+        filesToRefresh.add(new File(after.getFile().getPath()));
+      }
+    }
+    lfs.refreshIoFiles(filesToRefresh);
   }
 
   /**
