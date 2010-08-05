@@ -19,8 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
 /**
  * @author Denis Zhdanov
  * @since Jul 27, 2010 4:06:27 PM
@@ -39,7 +37,7 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   @Override
-  public int textWidth(@NotNull CharSequence text, int start, int end, int x) {
-    return EditorUtil.textWidth(myEditor, text, start, end, Font.PLAIN, x);
+  public int textWidth(@NotNull CharSequence text, int start, int end, int fontType, int x) {
+    return EditorUtil.textWidth(myEditor, text, start, end, fontType, x);
   }
 }
