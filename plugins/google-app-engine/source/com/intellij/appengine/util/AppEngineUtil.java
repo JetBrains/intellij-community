@@ -7,9 +7,7 @@ import com.intellij.javaee.web.artifact.WebArtifactUtil;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -87,12 +85,8 @@ public class AppEngineUtil {
 
   public static List<String> getDefaultSourceRootsToEnhance(ModuleRootModel rootModel) {
     List<String> paths = new ArrayList<String>();
-    for (ContentEntry contentEntry : rootModel.getContentEntries()) {
-      for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-        if (!sourceFolder.isTestSource()) {
-          paths.add(VfsUtil.urlToPath(sourceFolder.getUrl()));
-        }
-      }
+    for (String url : rootModel.getSourceRootUrls(false)) {
+      paths.add(VfsUtil.urlToPath(url));
     }
     return paths;
   }
