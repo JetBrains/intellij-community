@@ -119,9 +119,16 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         parentIntrospector = new ClassIntrospectorAdapter(classBasedIntrospector);
       }
       else {
-        final String name = antDomElement.getXmlElementName();
-        final String nsKey = antDomElement.getXmlElementNamespace();
-        final AntDomNamedElement declaringElement = CustomAntElementsRegistry.getInstance(antProject).getDeclaringElement(new XmlName(name, nsKey));
+        DomElement declaringElement = null;
+        if (antDomElement instanceof AntDomCustomElement) {
+          final String name = antDomElement.getXmlElementName();
+          final String nsKey = antDomElement.getXmlElementNamespace();
+          declaringElement = CustomAntElementsRegistry.getInstance(antProject).getDeclaringElement(new XmlName(name, nsKey));
+        }
+        else {
+          declaringElement = antDomElement.getChildDescription().getUserData(DomExtension.KEY_DECLARATION);
+        }
+        
         if (declaringElement instanceof AntDomMacroDef) {
           parentIntrospector = new MacrodefIntrospectorAdapter((AntDomMacroDef)declaringElement);
         }
@@ -167,6 +174,10 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
             final String nestedElementName = nested.next();
             final DomExtension extension = registerChild(registrar, genericInfo, nestedElementName);
             if (extension != null) {
+              final AntDomNamedElement childDeclaration = CustomAntElementsRegistry.getInstance(antProject).getDeclaringElement(new XmlName(nestedElementName, antDomElement.getXmlElementNamespace()));
+              if (childDeclaration != null) {
+                extension.setDeclaringElement(childDeclaration);
+              }
               final Class type = parentIntrospector.getNestedElementType(nestedElementName);
               if (type != null) {
                 extension.putUserData(ELEMENT_IMPL_CLASS_KEY, type);
