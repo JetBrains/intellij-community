@@ -41,6 +41,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox myInEmptyTag;
   private JCheckBox myWrapText;
   private JCheckBox myKeepLineBreaksInText;
+  private JComboBox myWhiteSpaceAroundCDATA;
+  private JCheckBox myKeepWhitespaceInsideCDATACheckBox;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -70,7 +72,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = mySpacesAroundEquality.isSelected();
     settings.XML_SPACE_AFTER_TAG_NAME = mySpacesAfterTagName.isSelected();
     settings.XML_SPACE_INSIDE_EMPTY_TAG = myInEmptyTag.isSelected();
-
+    settings.XML_WHITE_SPACE_AROUND_CDATA = myWhiteSpaceAroundCDATA.getSelectedIndex();
+    settings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA = myKeepWhitespaceInsideCDATACheckBox.isSelected();
   }
 
   private int getIntValue(JTextField keepBlankLines) {
@@ -93,6 +96,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     myKeepLineBreaksInText.setSelected(settings.XML_KEEP_LINE_BREAKS_IN_TEXT);
     myInEmptyTag.setSelected(settings.XML_SPACE_INSIDE_EMPTY_TAG);
     myWrapText.setSelected(wrapText(settings));
+    myWhiteSpaceAroundCDATA.setSelectedIndex(settings.XML_WHITE_SPACE_AROUND_CDATA);
+    myKeepWhitespaceInsideCDATACheckBox.setSelected(settings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA);
   }
 
   public boolean isModified(CodeStyleSettings settings) {
@@ -129,6 +134,12 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     }
 
     if (settings.XML_SPACE_INSIDE_EMPTY_TAG != myInEmptyTag.isSelected()){
+      return true;
+    }
+    if (settings.XML_WHITE_SPACE_AROUND_CDATA != myWhiteSpaceAroundCDATA.getSelectedIndex()) {
+      return true;
+    }
+    if (settings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA != this.myKeepWhitespaceInsideCDATACheckBox.isSelected()) {
       return true;
     }
 
