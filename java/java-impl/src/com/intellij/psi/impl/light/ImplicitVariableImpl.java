@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ImplicitVariableImpl extends LightVariableBase implements ImplicitVariable {
 
-  public ImplicitVariableImpl(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
+  public ImplicitVariableImpl(PsiManager manager, PsiIdentifier nameIdentifier, PsiType type, boolean writable, PsiElement scope) {
     super(manager, nameIdentifier, type, writable, scope);
   }
 
