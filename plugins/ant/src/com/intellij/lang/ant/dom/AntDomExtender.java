@@ -125,9 +125,6 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
           final String nsKey = antDomElement.getXmlElementNamespace();
           declaringElement = CustomAntElementsRegistry.getInstance(antProject).getDeclaringElement(new XmlName(name, nsKey));
         }
-        else {
-          declaringElement = antDomElement.getChildDescription().getUserData(DomExtension.KEY_DECLARATION);
-        }
         
         if (declaringElement instanceof AntDomMacroDef) {
           parentIntrospector = new MacrodefIntrospectorAdapter((AntDomMacroDef)declaringElement);
@@ -138,7 +135,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       }
       
       if (parentIntrospector != null) {
-
+        
         defineAttributes(xmlTag, registrar, genericInfo, parentIntrospector);
 
         if ("project".equals(tagName) || parentIntrospector.isContainer()) { // can contain any task or/and type definition
@@ -197,6 +194,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
               }
             }
           }
+          registrar.registerCustomChildrenExtension(AntDomCustomElement.class, new AntCustomTagNameDescriptor());
         }
       }
     }
@@ -207,7 +205,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     // define attributes discovered by introspector and not yet defined statically
     final Iterator<String> introspectedAttributes = parentIntrospector.getAttributesIterator();
     while (introspectedAttributes.hasNext()) {
-      final String attribName = (String)introspectedAttributes.next();
+      final String attribName = introspectedAttributes.next();
       if (genericInfo.getAttributeChildDescription(attribName) == null) { // if not defined yet 
         final String _attribName = attribName.toLowerCase(Locale.US);
         final Pair<Type, Class> types = registeredAttribs.get(_attribName);
@@ -474,18 +472,6 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         }
       }
       return false;
-    }
-
-    @NotNull 
-    public Iterator<String> getNestedElementsIterator() {
-      final List<String> elements = new ArrayList<String>();
-      for (AntDomMacrodefElement element : myMacrodef.getMacroElements()) {
-        final GenericAttributeValue<String> nameAttrib = element.getName();
-        if (nameAttrib != null) {
-          elements.add(nameAttrib.getRawText());
-        }
-      }
-      return elements.iterator();
     }
   }
   

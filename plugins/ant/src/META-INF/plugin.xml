@@ -43,6 +43,20 @@
     <dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>
     <pom.declarationSearcher implementation="com.intellij.lang.ant.dom.AntDomIdDeclarationSearcher"/>
     <inspectionToolProvider implementation="com.intellij.lang.ant.dom.AntDomModelInspection"/>
+    
+    <!--Type Presentation-->
+    <typeName className="com.intellij.lang.ant.dom.AntDomMacroDef" name="macro definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomMacrodefElement" name="macrodef nested element"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTypeDef" name="type definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTaskdef" name="task definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPresetDef" name="preset definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomScriptDef" name="script definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomProperty" name="property"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomDirSet" name="directory set"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomFileSet" name="file set"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomFileList" name="file list"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPath" name="path"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="target"/>
 
   </extensions>
 
