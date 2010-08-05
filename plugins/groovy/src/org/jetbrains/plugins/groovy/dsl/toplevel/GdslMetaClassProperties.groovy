@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import com.intellij.psi.PsiMethod
 import com.intellij.util.Function
+import org.jetbrains.plugins.groovy.gpp.GppGdkMethod
 
 /**
  * @author ilyas
@@ -58,6 +59,16 @@ class GdslMetaClassProperties {
       }
     }
     else throw new IllegalArgumentException("Incorrect aruments in method 'category': $params")
+  }
+
+  Closure gppCategory = {def className, def isStatic = false ->
+    def staticConverter = new Function() {
+      def fun(def m) {new GppGdkMethod(m, true)}
+    };
+    def nonStaticConverter = new Function() {
+      def fun(def m) {new GppGdkMethod(m, false)}
+    };
+    category className, isStatic ? staticConverter : nonStaticConverter
   }
 
   private def processCategoryMethods (def className, Function<PsiMethod, PsiMethod> converter) {
