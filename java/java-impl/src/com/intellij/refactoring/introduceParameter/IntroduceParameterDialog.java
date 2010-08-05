@@ -353,7 +353,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private JPanel createReplaceFieldsWithGettersPanel() {
     JPanel radioButtonPanel = new JPanel(new GridBagLayout());
 
-    radioButtonPanel.setBorder(IdeBorderFactory.createBorder());
+    radioButtonPanel.setBorder(IdeBorderFactory.createRoundedBorder());
 
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.insets = new Insets(4, 8, 4, 8);

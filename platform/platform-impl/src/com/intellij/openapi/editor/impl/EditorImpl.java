@@ -59,6 +59,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -78,6 +79,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
@@ -348,12 +350,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
-    myPanel = new JPanel() {
-      public void addNotify() {
-        super.addNotify();
-        if (((JComponent)getParent()).getBorder() != null) myScrollPane.setBorder(null);
-      }
-    };
+    myPanel = new JPanel();
 
     myHeaderPanel = new MyHeaderPanel();
     myVerticalScrollBar = new MyScrollBar(Adjustable.VERTICAL);
@@ -2558,6 +2555,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public JScrollPane getScrollPane() {
     return myScrollPane;
+  }
+
+  public void setBorder(Border border) {
+    myScrollPane.setBorder(border);
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {

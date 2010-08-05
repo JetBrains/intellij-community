@@ -23,6 +23,7 @@ import com.intellij.history.core.changes.ContentChange;
 import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -50,11 +51,12 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   }
 
   public FileUndoProvider(Project project) {
-    myProject = project;
+     myProject = project;
     if (myProject == null) return;
 
     myLocalHistory = LocalHistoryImpl.getInstanceImpl().getFacade();
     myGateway = LocalHistoryImpl.getInstanceImpl().getGateway();
+    if (myLocalHistory == null || myGateway == null) return; // local history was not initialized (e.g. in headless environment)
 
     getFileManager().addVirtualFileListener(this, project);
     myLocalHistory.addListener(new LocalHistoryFacade.Listener() {

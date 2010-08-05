@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -427,6 +428,11 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
 
   public JScrollPane getScrollPane() {
     return myDelegate.getScrollPane();
+  }
+
+  @Override
+  public void setBorder(Border border) {
+    myDelegate.setBorder(border);
   }
 
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {

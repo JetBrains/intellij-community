@@ -651,7 +651,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     };
     commentGroup.add(commentLabel, BorderLayout.NORTH);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
-    pane.setBorder(IdeBorderFactory.createSimpleBorder(1, 1, myAdditionalDetails == null ? 0 : 1, 0));
+    pane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | (myAdditionalDetails == null ? 0 : SideBorder.BOTTOM)));
 
     commentGroup.add(pane, BorderLayout.CENTER);
     detailsSplitter.setFirstComponent(commentGroup);
@@ -663,7 +663,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     myLoadingLabel.setBackground(UIUtil.getToolTipBackground());
     wrapper.add(myLoadingLabel, BorderLayout.NORTH);
 
-    myDualView.setViewBorder(IdeBorderFactory.createSimpleBorder(0, 1, 1, 0));
+    myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
     wrapper.add(myDualView, BorderLayout.CENTER);
 
     mySplitter.setFirstComponent(wrapper);

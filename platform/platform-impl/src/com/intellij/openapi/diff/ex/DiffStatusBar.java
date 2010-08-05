@@ -117,7 +117,7 @@ public class DiffStatusBar extends JPanel {
       }
     };
     setLayout(new BorderLayout());
-    setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createSimpleBorder(),
+    setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(),
                                                  BorderFactory.createEmptyBorder(3, 20, 3, 20)));
 
     add(myTextLabel, BorderLayout.WEST);

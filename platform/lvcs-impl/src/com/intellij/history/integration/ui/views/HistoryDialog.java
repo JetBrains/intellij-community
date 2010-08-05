@@ -46,10 +46,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ExcludingTraversalPolicy;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ImageLoader;
@@ -165,10 +162,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       restoreSplitterProportion();
 
       root.add(mySplitter);
-      setDiffBorder(IdeBorderFactory.createSimpleBorder(1, 1, 0, 0));
+      setDiffBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT));
     }
     else {
-      setDiffBorder(IdeBorderFactory.createSimpleBorder(1, 0, 1, 0));
+      setDiffBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
       root.add(myDiffView);
     }
 
@@ -209,7 +206,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
     result.add(toolBarPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myRevisionsList.getComponent());
-    scrollPane.setBorder(IdeBorderFactory.createSimpleBorder(1, 0, 0, 1));
+    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT));
     result.add(scrollPane, BorderLayout.CENTER);
 
     return result;

@@ -59,11 +59,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myEmptyTextHelper = new EmptyTextHelper(this) {
       @Override
       protected boolean isEmpty() {
-        return getRowCount() == 0;
+        return JBTable.this.isEmpty();
       }
     };
 
     myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+
+    setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {
@@ -80,6 +82,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     getTableHeader().setDefaultRenderer(new MyTableHeaderRenderer());
     //noinspection UnusedDeclaration
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
+  }
+
+  public boolean isEmpty() {
+    return getRowCount() == 0;
   }
 
   @Override

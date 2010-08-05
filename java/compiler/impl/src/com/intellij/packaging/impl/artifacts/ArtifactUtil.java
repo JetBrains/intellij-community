@@ -19,9 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
@@ -365,12 +363,9 @@ public class ArtifactUtil {
     final Module module = moduleElement.findModule(context);
     if (module != null) {
       final ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
-      for (ContentEntry entry : rootModel.getContentEntries()) {
-        for (SourceFolder folder : entry.getSourceFolders()) {
-          final VirtualFile sourceRoot = folder.getFile();
-          if (!folder.isTestSource() && sourceRoot != null && VfsUtil.isAncestor(sourceRoot, file, true)) {
-            return VfsUtil.getRelativePath(file, sourceRoot, '/');
-          }
+      for (VirtualFile sourceRoot : rootModel.getSourceRoots(false)) {
+        if (VfsUtil.isAncestor(sourceRoot, file, true)) {
+          return VfsUtil.getRelativePath(file, sourceRoot, '/');
         }
       }
     }
@@ -428,16 +423,11 @@ public class ArtifactUtil {
           final Module module = ((ModuleOutputPackagingElement)element).findModule(context);
           if (module != null) {
             final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(context.getProject());
-            final ContentEntry[] contentEntries = context.getModulesProvider().getRootModel(module).getContentEntries();
-            for (ContentEntry contentEntry : contentEntries) {
-              for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-                final VirtualFile sourceRoot = sourceFolder.getFile();
-                if (!sourceFolder.isTestSource() && sourceRoot != null) {
-                  final VirtualFile sourceFile = sourceRoot.findFileByRelativePath(path);
-                  if (sourceFile != null && compilerConfiguration.isResourceFile(sourceFile)) {
-                    result.add(sourceFile);
-                  }
-                }
+            final ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
+            for (VirtualFile sourceRoot : rootModel.getSourceRoots(false)) {
+              final VirtualFile sourceFile = sourceRoot.findFileByRelativePath(path);
+              if (sourceFile != null && compilerConfiguration.isResourceFile(sourceFile)) {
+                result.add(sourceFile);
               }
             }
           }

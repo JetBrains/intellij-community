@@ -75,7 +75,7 @@ public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createBorder());
+    panel.setBorder(IdeBorderFactory.createRoundedBorder());
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
     gbConstraints.weighty = 1;

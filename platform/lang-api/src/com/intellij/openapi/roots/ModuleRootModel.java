@@ -110,16 +110,40 @@ public interface ModuleRootModel {
    *
    * @return the array of source roots.
    * @see #getContentEntries()
+   * @see #getSourceRoots(boolean)
    */
-  @NotNull VirtualFile[] getSourceRoots();
+  @NotNull
+  VirtualFile[] getSourceRoots();
+
+  /**
+   * Returns an array of source roots from all content entries. A helper method.
+   *
+   * @param includingTests determines whether test source roots should be included in the result
+   * @return the array of source roots.
+   * @see #getContentEntries()
+   * @since 10.0
+   */
+  @NotNull
+  VirtualFile[] getSourceRoots(boolean includingTests);
 
   /**
    * Returns an array of source root urls from all content entries. A helper method.
    *
    * @return the array of source root URLs.
    * @see #getContentEntries()
+   * @see #getSourceRootUrls(boolean)
    */
   @NotNull String[] getSourceRootUrls();
+
+  /**
+   * Returns an array of source root urls from all content entries. A helper method.
+   *
+   * @param includingTests determines whether test source root urls should be included in the result
+   * @return the array of source root URLs.
+   * @see #getContentEntries()
+   * @since 10.0
+   */
+  @NotNull String[] getSourceRootUrls(boolean includingTests);
 
   /**
    * Returns an exploded directory path of the module, if it is valid.

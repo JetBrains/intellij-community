@@ -202,7 +202,7 @@ public class ImplementationViewComponent extends JPanel {
         label.setIcon(file.getIcon());
         label.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
         label.setText(file.getPresentableName());
-        label.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+        label.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
       }
       toolbarPanel.add(label);
     }

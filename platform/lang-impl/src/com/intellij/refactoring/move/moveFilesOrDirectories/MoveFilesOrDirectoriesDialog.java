@@ -83,7 +83,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
 
-    panel.setBorder(IdeBorderFactory.createBorder());
+    panel.setBorder(IdeBorderFactory.createRoundedBorder());
 
     myNameLabel = new JLabel();
     panel.add(myNameLabel, new GridBagConstraints(0,0,2,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));

@@ -130,7 +130,7 @@ public class EditMigrationDialog extends DialogWrapper{
 
   protected JComponent createCenterPanel() {
     JPanel tablePanel = new JPanel(new BorderLayout());
-    tablePanel.setBorder(IdeBorderFactory.createBorder());
+    tablePanel.setBorder(IdeBorderFactory.createRoundedBorder());
     tablePanel.add(createTable(), BorderLayout.CENTER);
 
     JPanel tableButtonsPanel = new JPanel();

@@ -75,7 +75,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       int exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.open.project"),
                                          new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe"),
-                                           CommonBundle.getCancelButtonText()}, 1, Messages.getQuestionIcon());
+                                           CommonBundle.getCancelButtonText()}, 1, 0, Messages.getQuestionIcon());
       if (exitCode == 1) { // "No" option
         if (!ProjectUtil.closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
       }

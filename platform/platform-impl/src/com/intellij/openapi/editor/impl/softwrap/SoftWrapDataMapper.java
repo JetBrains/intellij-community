@@ -23,6 +23,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -264,7 +265,7 @@ public class SoftWrapDataMapper {
       int i = CharArrayUtil.shiftBackwardUntil(text, region.getEndOffset() - 1, "\n");
       // Process multi-line folding.
       if (i >= region.getStartOffset()) {
-        afterFolding.x = myTextRepresentationHelper.textWidth(text, i + 1, region.getEndOffset(), 0);
+        afterFolding.x = myTextRepresentationHelper.textWidth(text, i + 1, region.getEndOffset(), Font.PLAIN, 0);
         afterFolding.logicalColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, i + 1, region.getEndOffset(), 0);
         afterFolding.softWrapLinesBefore += afterFolding.softWrapLinesCurrent;
         afterFolding.softWrapLinesCurrent = 0;
@@ -274,7 +275,7 @@ public class SoftWrapDataMapper {
       }
       // Process single-line folding
       else {
-        int width = myTextRepresentationHelper.textWidth(text, region.getStartOffset(), region.getEndOffset(), context.x);
+        int width = myTextRepresentationHelper.textWidth(text, region.getStartOffset(), region.getEndOffset(), Font.PLAIN, context.x);
         int logicalColumnInc = myTextRepresentationHelper.toVisualColumnSymbolsNumber(
           text, region.getStartOffset(), region.getEndOffset(), context.x
         );
@@ -342,7 +343,7 @@ public class SoftWrapDataMapper {
 
       // Update state to the offset that corresponds to the same logical line that was used last time.
       if (currentLogicalLine == lastUsedLogicalLine) {
-        int width = myTextRepresentationHelper.textWidth(text, result.offset, newOffset, result.x);
+        int width = myTextRepresentationHelper.textWidth(text, result.offset, newOffset, Font.PLAIN, result.x);
         int columnDiff = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, result.offset, newOffset, result.x);
         result.x += width;
         result.logicalColumn += columnDiff;
@@ -354,7 +355,7 @@ public class SoftWrapDataMapper {
         result.logicalLine += lineDiff;
         result.visualLine += lineDiff;
         int startLineOffset = document.getLineStartOffset(currentLogicalLine);
-        int newX = myTextRepresentationHelper.textWidth(text, startLineOffset, newOffset, result.x);
+        int newX = myTextRepresentationHelper.textWidth(text, startLineOffset, newOffset, Font.PLAIN, result.x);
         result.visualColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, startLineOffset, newOffset, 0);
         result.x = newX;
         result.logicalColumn = result.visualColumn;

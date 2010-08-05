@@ -13,24 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.jetbrains.annotations.NotNull;
 
-package com.intellij.history.core;
+public enum EnumConstructorSecondParam {
+    Value("1", "2");
 
-import com.intellij.history.core.changes.ChangeSet;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.Nullable;
-
-public interface ChangeListStorage {
-  void close();
-
-  long nextId();
-
-  @Nullable
-  ChangeSetHolder readPrevious(int id);
-
-  void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor);
-
-  void writeNextSet(ChangeSet changeSet);
-
-  void flush();
+    EnumConstructorSecondParam(String s1, @NotNull String s2) {
+    }
 }

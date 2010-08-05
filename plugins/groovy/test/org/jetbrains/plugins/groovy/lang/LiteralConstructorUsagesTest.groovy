@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author peter
@@ -26,8 +27,14 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
     Foo() {}
     }
 """)
-    myFixture.addFileToProject "a.groovy", "Foo foo() { if (true) [] else return [] }"
-    assertEquals(2, ReferencesSearch.search(foo.constructors[0]).findAll().size())
+    myFixture.addFileToProject "a.groovy", """
+Foo foo() {
+  if (true) []
+  else return []
+}
+Foo bar() { [] }
+"""
+    assertEquals(3, ReferencesSearch.search(foo.constructors[0]).findAll().size())
   }
 
   public void testList_Cast() throws Exception {
@@ -158,6 +165,22 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
       """
     assertEquals(2, ReferencesSearch.search(foo.constructors[0]).findAll().size())
     assertEquals(2, ReferencesSearch.search(foo.constructors[1]).findAll().size())
+  }
+
+  public void testOverloadedConstructorUsages() throws Exception {
+    def foo = myFixture.addClass("""
+      class Foo {
+          Foo() {}
+          Foo(int a) {}
+      }
+      """)
+
+    myFixture.addFileToProject "a.gpp", """
+      Foo b = []
+      Foo b1 = [2]
+      """
+    assertEquals(2, MethodReferencesSearch.search(foo.constructors[0], false).findAll().size())
+    assertEquals(2, MethodReferencesSearch.search(foo.constructors[1], false).findAll().size())
   }
 
 }

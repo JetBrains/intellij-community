@@ -90,7 +90,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       }
 
       public void stateChanged() {
-        if (project.isDisposed()) return;
+        if (!project.isOpen()) return;
         if (toolWindow.getAnchor() != myAnchor) {
           myAnchor = myToolWindow.getAnchor();
           layoutPanel();
@@ -135,17 +135,24 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       Disposer.dispose(myUsagePreviewPanel);
     }
     removeAll();
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+
     if (isPreview()) {
+      pane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.RIGHT));
+
       boolean vertical = myToolWindow.getAnchor() == ToolWindowAnchor.LEFT || myToolWindow.getAnchor() == ToolWindowAnchor.RIGHT;
       Splitter splitter = new Splitter(vertical, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
-      splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+      splitter.setFirstComponent(pane);
       myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+      myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
+
       Disposer.register(this, myUsagePreviewPanel);
       splitter.setSecondComponent(myUsagePreviewPanel);
       add(splitter, BorderLayout.CENTER);
     }
     else {
-      add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+      pane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
+      add(pane, BorderLayout.CENTER);
     }
 
     add(createToolbar().getComponent(), BorderLayout.WEST);

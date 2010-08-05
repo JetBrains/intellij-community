@@ -59,7 +59,7 @@ class Foo extends Super {
   Object d
   final e
 
-  def Foo(a, int b, int c, Object d, e) {
+  Foo(a, int b, int c, Object d, e) {
     super(a, b)
     this.c = c
     this.d = d

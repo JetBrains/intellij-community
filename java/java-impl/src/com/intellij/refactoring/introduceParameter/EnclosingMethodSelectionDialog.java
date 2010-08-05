@@ -72,7 +72,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createBorder());
+    panel.setBorder(IdeBorderFactory.createRoundedBorder());
 
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();

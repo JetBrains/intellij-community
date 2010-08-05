@@ -359,7 +359,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     editor.setOneLineMode(true);
     editor.getCaretModel().moveToOffset(myDocument.getTextLength());
     if (!shouldHaveBorder()) {
-      editor.getScrollPane().setBorder(null);
+      editor.setBorder(null);
     }
 
     if (myIsViewer) {

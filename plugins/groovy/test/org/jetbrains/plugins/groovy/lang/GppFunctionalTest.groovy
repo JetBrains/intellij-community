@@ -407,6 +407,29 @@ class Point {
     assertEquals 2, multiResolveReference().size()
   }
 
+  public void testGotoSuperConstructorFromLiteralOnsets() throws Exception {
+    PsiClass point = myFixture.addClass("""
+class Point {
+  Point() {}
+  Point(int y) {}
+}""")
+
+    configureGppScript "Point p = <caret>[super: 2]"
+    assertEquals point.constructors[1], resolveReference()
+
+    configureGppScript "Point p = <caret>[2]"
+    assertEquals point.constructors[1], resolveReference()
+
+    configureGppScript "Point p = <caret>[]"
+    assertEquals point.constructors[0], resolveReference()
+
+    configureGppScript "Point p = <caret>[:]"
+    assertEquals point.constructors[0], resolveReference()
+
+    configureGppScript "Point p = <caret>[239, 42]"
+    assertEquals 2, multiResolveReference().size()
+  }
+
   public void testResolveTraitMethod() throws Exception {
     configureScript """
 @Trait

@@ -54,7 +54,7 @@ public class SelectIgnorePatternsToRemoveOnDeleteDialog extends DialogWrapper {
 
     myPanel = new JPanel(new GridBagLayout());
     myTree = new CheckboxTree(new MyRenderer(), createTree(data), new CheckboxTreeBase.CheckPolicy(false, false, true, true));
-    myTree.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderActiveColor(), 1));
+    myTree.setBorder(BorderFactory.createLineBorder(UIUtil.getHeaderActiveColor(), 1));
 
     final JLabel prompt = new JLabel(SvnBundle.message("svn.dialog.select.ignore.patterns.to.remove.prompt"));
     prompt.setUI(new MultiLineLabelUI());
