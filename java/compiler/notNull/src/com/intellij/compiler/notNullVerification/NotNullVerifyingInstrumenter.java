@@ -122,8 +122,8 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
         }
         for (int p = 0; p < myNotNullParams.size(); ++p) {
           int var = ((access & ACC_STATIC) == 0) ? 1 : 0;
-          int param = ((Integer)myNotNullParams.get(p)).intValue() - mySyntheticCount;
-          for (int i = 0; i < param + startParameter; ++i) {
+          int param = ((Integer)myNotNullParams.get(p)).intValue();
+          for (int i = 0; i < startParameter + param; ++i) {
             var += args[i].getSize();
           }
           mv.visitVarInsn(ALOAD, var);
@@ -132,7 +132,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
           mv.visitJumpInsn(IFNONNULL, end);
 
           generateThrow(IAE_CLASS_NAME,
-                        "Argument " + param + " for @NotNull parameter of " + myClassName + "." + name + " must not be null", end);
+                        "Argument " + (param - mySyntheticCount) + " for @NotNull parameter of " + myClassName + "." + name + " must not be null", end);
         }
       }
 
