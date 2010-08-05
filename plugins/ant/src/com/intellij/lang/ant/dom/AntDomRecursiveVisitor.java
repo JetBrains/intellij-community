@@ -31,6 +31,7 @@ public class AntDomRecursiveVisitor implements DomElementVisitor{
       child.accept(this);
     }
   }
+  
 
   public void visitTypeDef(AntDomTypeDef typedef) {
     visitAntDomElement(typedef);

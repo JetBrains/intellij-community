@@ -59,7 +59,7 @@ public class CustomAntElementsRegistry {
 
   private final Map<XmlName, Class> myCustomElements = new HashMap<XmlName, Class>();
   private final Map<XmlName, String> myErrors = new HashMap<XmlName, String>();
-  private final Map<XmlName, AntDomElement> myDeclarations = new HashMap<XmlName, AntDomElement>();
+  private final Map<XmlName, AntDomNamedElement> myDeclarations = new HashMap<XmlName, AntDomNamedElement>();
   private final Map<String, ClassLoader> myNamedLoaders = new HashMap<String, ClassLoader>();
 
   private CustomAntElementsRegistry(final AntDomProject antProject) {
@@ -77,6 +77,7 @@ public class CustomAntElementsRegistry {
 
   @NotNull
   public Set<XmlName> getCompletionVariants(AntDomElement parentElement) {
+    // todo: filter out not applicable stuff
     return Collections.unmodifiableSet(myCustomElements.keySet());
   }
 
@@ -86,6 +87,10 @@ public class CustomAntElementsRegistry {
     return declaration != null? declaration : null;
   }
 
+  public AntDomNamedElement getDeclaringElement(XmlName customElementName) {
+    return myDeclarations.get(customElementName);
+  }
+  
   @Nullable
   public Class lookupClass(XmlName xmlName) {
     return myCustomElements.get(xmlName);
@@ -162,13 +167,17 @@ public class CustomAntElementsRegistry {
       error = e.getMessage();
       clazz = null;
     }
+    addCustomDefinition(typedef, customTagName, nsUri, clazz, error);
+  }
+
+  private void addCustomDefinition(@NotNull AntDomNamedElement declaringTag, String customTagName, String nsUri, Class clazz, String error) {
     final XmlName xmlName = new XmlName(customTagName, nsUri == null? "" : nsUri);
-    if (clazz != null) {
-      myCustomElements.put(xmlName, clazz);
-      myDeclarations.put(xmlName, typedef);
+    if (error != null) {
+      myErrors.put(xmlName, customTagName);
     }
     else {
-      myErrors.put(xmlName, error);
+      myCustomElements.put(xmlName, clazz);
+      myDeclarations.put(xmlName, declaringTag);
     }
   }
 
@@ -277,6 +286,18 @@ public class CustomAntElementsRegistry {
         }
       }
       super.visitAntDomElement(element);
+    }
+
+    public void visitMacroDef(AntDomMacroDef macrodef) {
+      final String customTagName = macrodef.getName().getStringValue();
+      if (customTagName != null) {
+        final String nsUri = macrodef.getUri().getStringValue();
+        addCustomDefinition(macrodef, customTagName, nsUri, null, null);
+        for (AntDomMacrodefElement element : macrodef.getMacroElements()) {
+          final String customSubTagName = element.getName().getStringValue();
+          addCustomDefinition(element, customSubTagName, nsUri, null, null);
+        }
+      }
     }
 
     public void visitTypeDef(AntDomTypeDef typedef) {

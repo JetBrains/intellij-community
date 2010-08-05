@@ -27,7 +27,7 @@
     <!--<lang.psiStructureViewFactory language="ANT" implementationClass="com.intellij.lang.ant.AntStructureViewBuilderFactory"/>-->
     <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>
     <vetoRenameCondition implementation="com.intellij.lang.ant.refactoring.AntVetoRenameCondition"/>
-    <xml.fileNSInfoProvider implementation="com.intellij.lang.ant.AntDefaultNSProvider"/>
+    <!--<xml.fileNSInfoProvider implementation="com.intellij.lang.ant.AntDefaultNSProvider"/>-->
     <lang.documentationProvider language="XML" implementationClass="com.intellij.lang.ant.doc.AntDomDocumentationProvider"/>
 
     <breadcrumbsInfoProvider implementation="com.intellij.lang.ant.config.impl.AntBreadcrumbsInfoProvider"/>

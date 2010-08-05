@@ -17,25 +17,14 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.SubTag;
-import com.intellij.util.xml.SubTagList;
-
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 8, 2010
+ *         Date: Aug 4, 2010
  */
-public abstract class AntDomMacroDef extends AntDomNamedElement{
-  @Attribute("uri")
-  public abstract GenericAttributeValue<String> getUri();
+public abstract class AntDomMacrodefAttribute extends AntDomNamedElement {
   
-  @SubTagList("attribute")
-  public abstract List<AntDomMacrodefAttribute> getMacroAttributes();
+  @Attribute("default")
+  public abstract GenericAttributeValue<String> getDefaultValue();
 
-  @SubTagList("element")
-  public abstract List<AntDomMacrodefElement> getMacroElements();
-  
-  @SubTag("text")
-  public abstract AntDomMacrodefText getTextElement();
 }
