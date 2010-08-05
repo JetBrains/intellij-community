@@ -31,6 +31,7 @@ public class HgWorkingCopyRevisionsCommand {
     this.project = project;
   }
 
+  @NotNull
   public List<HgRevisionNumber> parents(@NotNull VirtualFile repo) {
     return getRevisions(repo, "parents");
   }
