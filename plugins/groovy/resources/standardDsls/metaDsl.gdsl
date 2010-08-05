@@ -22,8 +22,8 @@ contributor([gdslScriptContext]) {
   method name: "contributor", params: [contexts: "java.util.Map", body: {}], type: void
   method name: "contributor", params: [contexts: "java.lang.Object", body: {}], type: void
 
-  method name: "category", params: [categoryClass: "java.lang.String", isStatic:"java.lang.Boolean", body: {}], type: void
-  method name: "category", params: [categoryClass: "java.lang.String", body: {}], type: void
+  method name: "category", params: [categoryClass: "java.lang.String", isStatic:"java.lang.Boolean"], type: void
+  method name: "category", params: [categoryClass: "java.lang.String"], type: void
 
   method name: "supportsVersion", params: [version: "java.lang.String"], type: boolean
 
