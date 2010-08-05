@@ -171,10 +171,6 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
             final String nestedElementName = nested.next();
             final DomExtension extension = registerChild(registrar, genericInfo, nestedElementName);
             if (extension != null) {
-              final AntDomNamedElement childDeclaration = CustomAntElementsRegistry.getInstance(antProject).getDeclaringElement(new XmlName(nestedElementName, antDomElement.getXmlElementNamespace()));
-              if (childDeclaration != null) {
-                extension.setDeclaringElement(childDeclaration);
-              }
               final Class type = parentIntrospector.getNestedElementType(nestedElementName);
               if (type != null) {
                 extension.putUserData(ELEMENT_IMPL_CLASS_KEY, type);
