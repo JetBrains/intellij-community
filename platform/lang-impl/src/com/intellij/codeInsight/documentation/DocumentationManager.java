@@ -818,9 +818,18 @@ public class DocumentationManager {
     }
     else {
       final DocumentationProvider provider = getProviderFromElement(psiElement);
-      if (!(provider instanceof ExternalDocumentationHandler) ||
-          !((ExternalDocumentationHandler)provider).handleExternalLink(manager, url, psiElement)) {
-      final String docUrl = url;
+      boolean processed = false;
+      if (provider instanceof CompositeDocumentationProvider) {
+        for (DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
+          if (documentationProvider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)documentationProvider).handleExternalLink(manager, url, psiElement)) {
+            processed = true;
+            break;
+          }
+        }
+      }
+
+      if (!processed) {
+        final String docUrl = url;
 
         fetchDocInfo
           (new DocumentationCollector() {
