@@ -37,9 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SmartExpander;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
@@ -234,16 +232,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       Disposer.dispose(myUsagePreviewPanel);
       myUsagePreviewPanel = null;
     }
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+
     if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
       Splitter splitter = new Splitter(false, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
-      splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+      pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
+
+      splitter.setFirstComponent(pane);
       myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+      myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
       Disposer.register(this, myUsagePreviewPanel);
       splitter.setSecondComponent(myUsagePreviewPanel);
       myCentralPanel.add(splitter, BorderLayout.CENTER);
     }
     else {
-      myCentralPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+      myCentralPanel.add(pane, BorderLayout.CENTER);
     }
     myCentralPanel.add(myButtonPanel, BorderLayout.SOUTH);
 
@@ -1212,6 +1215,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
 
     public void add(int index, final Runnable runnable, String text) {
+      if (getBorder() == null) setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+
       final JButton button = new JButton(UIUtil.replaceMnemonicAmpersand(text));
       DialogUtil.registerMnemonic(button);
 

@@ -228,7 +228,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     editor.setHorizontalScrollbarVisible(false);
     editor.setVerticalScrollbarVisible(true);
     editor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, null);
-    editor.getScrollPane().setBorder(null);
+    editor.setBorder(null);
     editor.getContentComponent().setFocusCycleRoot(false);
 
     final EditorSettings editorSettings = editor.getSettings();

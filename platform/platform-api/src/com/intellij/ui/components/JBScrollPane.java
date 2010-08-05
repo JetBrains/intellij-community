@@ -20,7 +20,6 @@ import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollPaneUI;
 import java.awt.*;
 
@@ -45,7 +44,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private void init() {
-    setBorder(IdeBorderFactory.createSimpleBorder());
+    setBorder(IdeBorderFactory.createBorder());
     setCorner(UPPER_RIGHT_CORNER, new Corner(UPPER_RIGHT_CORNER));
     setCorner(UPPER_LEFT_CORNER, new Corner(UPPER_LEFT_CORNER));
     setCorner(LOWER_RIGHT_CORNER, new Corner(LOWER_RIGHT_CORNER));

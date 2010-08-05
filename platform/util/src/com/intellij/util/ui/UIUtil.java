@@ -63,9 +63,11 @@ public class UIUtil {
 
   private static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
 
-  private static final Color ACTIVE_COLOR = new Color(160, 186, 213);
-  private static final Color INACTIVE_COLOR = new Color(128, 128, 128);
-  private static final Color SEPARATOR_COLOR = INACTIVE_COLOR.brighter();
+  private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
+  private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
+
+  private static final Color BORDER_COLOR = new Color(170, 170, 170);
+
   public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
   @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
@@ -97,7 +99,7 @@ public class UIUtil {
     final FontRenderContext frc = g.getFontRenderContext();
     final Rectangle stringBounds = font.getStringBounds(string, frc).getBounds();
 
-    return (int) (centerY - stringBounds.height / 2.0 - stringBounds.y);
+    return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
   }
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {
@@ -118,12 +120,12 @@ public class UIUtil {
     g.drawLine(x1, y1, x2, y2);
   }
 
-  public static String[] splitText(String text, FontMetrics fontMetrics, int widthLimit, char separator){
+  public static String[] splitText(String text, FontMetrics fontMetrics, int widthLimit, char separator) {
     ArrayList<String> lines = new ArrayList<String>();
     String currentLine = "";
     StringBuffer currentAtom = new StringBuffer();
 
-    for (int i=0; i < text.length(); i++) {
+    for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
       currentAtom.append(ch);
 
@@ -679,13 +681,14 @@ public class UIUtil {
 
   /**
    * Should be invoked only in EDT.
-   * @param g Graphics surface
-   * @param startX Line start X coordinate
-   * @param endX Line end X coordinate
-   * @param lineY Line Y coordinate
+   *
+   * @param g       Graphics surface
+   * @param startX  Line start X coordinate
+   * @param endX    Line end X coordinate
+   * @param lineY   Line Y coordinate
    * @param bgColor Background color (optional)
    * @param fgColor Foreground color (optional)
-   * @param opaque If opaque the image will be dr
+   * @param opaque  If opaque the image will be dr
    */
   public static void drawBoldDottedLine(final Graphics2D g,
                                         final int startX,
@@ -694,11 +697,12 @@ public class UIUtil {
                                         final Color bgColor,
                                         final Color fgColor,
                                         final boolean opaque) {
-     if (SystemInfo.isMac || SystemInfo.isLinux) {
-       drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
-     } else {
-       drawBoringDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
-     }
+    if (SystemInfo.isMac || SystemInfo.isLinux) {
+      drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
+    }
+    else {
+      drawBoringDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
+    }
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
@@ -715,7 +719,7 @@ public class UIUtil {
       g.setColor(bgColor);
 
       drawLine(g, startX, lineY, endX, lineY);
-      drawLine(g, startX, lineY+1, endX, lineY+1);
+      drawLine(g, startX, lineY + 1, endX, lineY + 1);
     }
 
     // Draw dotted line:
@@ -753,8 +757,8 @@ public class UIUtil {
       g.setColor(bgColor);
 
       drawLine(g, startX, lineY, endX, lineY);
-      drawLine(g, startX, lineY+1, endX, lineY+1);
-      drawLine(g, startX, lineY+2, endX, lineY+2);
+      drawLine(g, startX, lineY + 1, endX, lineY + 1);
+      drawLine(g, startX, lineY + 2, endX, lineY + 2);
     }
 
     // Draw apple like dotted line:
@@ -781,7 +785,7 @@ public class UIUtil {
     final BufferedImage image = getAppleDotStamp(fgColor, oldColor);
 
     // Now copy our dot several times
-    final int dotX0  = (startX / step + startPosCorrection) * step;
+    final int dotX0 = (startX / step + startPosCorrection) * step;
     for (int dotXi = dotX0; dotXi < endX; dotXi += step) {
       g.drawImage(image, dotXi, lineY, null);
     }
@@ -831,7 +835,7 @@ public class UIUtil {
 
     // dispose graphics
     g.dispose();
-    
+
     return image;
   }
 
@@ -953,15 +957,13 @@ public class UIUtil {
   }
 
   @NotNull
-  public static
-  Color getBgFillColor(@NotNull JComponent c) {
+  public static Color getBgFillColor(@NotNull JComponent c) {
     final Component parent = findNearestOpaque(c);
     return parent == null ? c.getBackground() : parent.getBackground();
   }
 
   @Nullable
-  public static
-  Component findNearestOpaque(JComponent c) {
+  public static Component findNearestOpaque(JComponent c) {
     Component eachParent = c;
     while (eachParent != null) {
       if (eachParent.isOpaque()) return eachParent;
@@ -981,7 +983,9 @@ public class UIUtil {
   }
 
   public static boolean isStandardMenuLAF() {
-    return isWinLafOnVista() || "Nimbus".equals(UIManager.getLookAndFeel().getName()) || "GTK look and feel".equals(UIManager.getLookAndFeel().getName());
+    return isWinLafOnVista() ||
+           "Nimbus".equals(UIManager.getLookAndFeel().getName()) ||
+           "GTK look and feel".equals(UIManager.getLookAndFeel().getName());
   }
 
   public static Color getFocusedFillColor() {
@@ -993,7 +997,7 @@ public class UIUtil {
   }
 
   public static Color getBoundsColor() {
-    return new Color(128, 128, 128);
+    return getBorderSeparatorColor();
   }
 
   public static Color getBoundsColor(boolean focused) {
@@ -1019,6 +1023,7 @@ public class UIUtil {
   }
 
   //todo maybe should do for all kind of listeners via the AWTEventMulticaster class
+
   public static void dispose(final Component c) {
     if (c == null) return;
 
@@ -1051,7 +1056,7 @@ public class UIUtil {
     });
   }
 
-  private static boolean isToDispose(final JProgressBar progress)  {
+  private static boolean isToDispose(final JProgressBar progress) {
     final ProgressBarUI ui = progress.getUI();
 
     if (ui == null) return false;
@@ -1115,16 +1120,37 @@ public class UIUtil {
     return true;
   }
 
-  public static Color getBorderActiveColor() {
-    return ACTIVE_COLOR;
+  public static Color getHeaderActiveColor() {
+    return ACTIVE_HEADER_COLOR;
   }
 
+  public static Color getHeaderInactiveColor() {
+    return INACTIVE_HEADER_COLOR;
+  }
+
+  public static Color getBorderColor() {
+    return BORDER_COLOR;
+  }
+
+  /**
+   * @deprecated use getBorderColor instead
+   */
   public static Color getBorderInactiveColor() {
-    return INACTIVE_COLOR;
+    return getBorderColor();
   }
 
+  /**
+   * @deprecated use getBorderColor instead
+   */
+  public static Color getBorderActiveColor() {
+    return getBorderColor();
+  }
+
+  /**
+   * @deprecated use getBorderColor instead
+   */
   public static Color getBorderSeparatorColor() {
-    return SEPARATOR_COLOR;
+    return getBorderColor();
   }
 
   public static HTMLEditorKit getHTMLEditorKit() {
@@ -1147,10 +1173,10 @@ public class UIUtil {
         if (component instanceof JScrollPane) {
           if (!hasNonPrimitiveParents(c, component)) {
             final JScrollPane scrollPane = (JScrollPane)component;
-            Integer keepBorderSides = (Integer) scrollPane.getClientProperty(KEEP_BORDER_SIDES);
+            Integer keepBorderSides = (Integer)scrollPane.getClientProperty(KEEP_BORDER_SIDES);
             if (keepBorderSides != null) {
               if (scrollPane.getBorder() instanceof LineBorder) {
-                Color color = ((LineBorder) scrollPane.getBorder()).getLineColor();
+                Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
                 scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
               }
               else {
@@ -1219,7 +1245,8 @@ public class UIUtil {
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
     if (SwingUtilities.isEventDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       SwingUtilities.invokeLater(runnable);
     }
   }
@@ -1234,7 +1261,8 @@ public class UIUtil {
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
     if (SwingUtilities.isEventDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       try {
         SwingUtilities.invokeAndWait(runnable);
       }
@@ -1261,14 +1289,15 @@ public class UIUtil {
   public static class MacTreeUI extends BasicTreeUI {
     public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 
-    private static final Icon TREE_COLLAPSED_ICON = (Icon) UIManager.get("Tree.collapsedIcon");
-    private static final Icon TREE_EXPANDED_ICON = (Icon) UIManager.get("Tree.expandedIcon");
+    private static final Icon TREE_COLLAPSED_ICON = (Icon)UIManager.get("Tree.collapsedIcon");
+    private static final Icon TREE_EXPANDED_ICON = (Icon)UIManager.get("Tree.expandedIcon");
     private static final Icon TREE_SELECTED_COLLAPSED_ICON = IconLoader.getIcon("/mac/tree_white_right_arrow.png");
     private static final Icon TREE_SELECTED_EXPANDED_ICON = IconLoader.getIcon("/mac/tree_white_down_arrow.png");
 
-    private static final Border LIST_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListBackgroundPainter");
-    private static final Border LIST_SELECTION_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListSelectionBackgroundPainter");
-    private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListFocusedSelectionBackgroundPainter");
+    private static final Border LIST_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListBackgroundPainter");
+    private static final Border LIST_SELECTION_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListSelectionBackgroundPainter");
+    private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER =
+      (Border)UIManager.get("List.sourceListFocusedSelectionBackgroundPainter");
 
     private boolean myWideSelection;
     private boolean myOldRepaintAllRowValue;
@@ -1285,22 +1314,22 @@ public class UIUtil {
     private MouseListener mySelectionListener = new MouseAdapter() {
       @Override
       public void mousePressed(@NotNull final MouseEvent e) {
-        final JTree tree = (JTree) e.getSource();
+        final JTree tree = (JTree)e.getSource();
         if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
           // if we can't stop any ongoing editing, do nothing
           if (isEditing(tree) && tree.getInvokesStopCellEditing()
-                              && !stopEditing(tree)) {
-              return;
+              && !stopEditing(tree)) {
+            return;
           }
-          
+
           final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
           if (tree.isPathSelected(pressedPath)) return;
 
           if (pressedPath != null) {
             Rectangle bounds = getPathBounds(tree, pressedPath);
 
-            if(e.getY() >= (bounds.y + bounds.height)) {
-                return;
+            if (e.getY() >= (bounds.y + bounds.height)) {
+              return;
             }
 
             if (isLocationInExpandControl(pressedPath, e.getX(), e.getY())) {
@@ -1308,7 +1337,7 @@ public class UIUtil {
             }
 
             if (tree.getDragEnabled() || !startEditing(pressedPath, e)) {
-               selectPathForEvent(pressedPath, e);
+              selectPathForEvent(pressedPath, e);
             }
           }
 
@@ -1425,11 +1454,13 @@ public class UIUtil {
             else {
               LIST_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
             }
-          } else {
+          }
+          else {
             rowGraphics.setColor(tree.getBackground());
             rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }
-        } else {
+        }
+        else {
           Color bg = tree.hasFocus() ? getTreeSelectionBackground() : getListUnfocusedSelectionBackground();
           if (!selected) {
             bg = tree.getBackground();
@@ -1445,7 +1476,8 @@ public class UIUtil {
 
         super.paintRow(rowGraphics, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
         rowGraphics.dispose();
-      } else {
+      }
+      else {
         super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
       }
     }
@@ -1497,9 +1529,9 @@ public class UIUtil {
       boolean isPathSelected = tree.getSelectionModel().isPathSelected(path);
 
       Icon expandIcon = isPathSelected && tree.hasFocus() ? TREE_SELECTED_EXPANDED_ICON
-                                       : TREE_EXPANDED_ICON;
+                                                          : TREE_EXPANDED_ICON;
       Icon collapseIcon = isPathSelected && tree.hasFocus() ? TREE_SELECTED_COLLAPSED_ICON
-                                         : TREE_COLLAPSED_ICON;
+                                                            : TREE_COLLAPSED_ICON;
 
 
       if (!isLeaf(row)) {
