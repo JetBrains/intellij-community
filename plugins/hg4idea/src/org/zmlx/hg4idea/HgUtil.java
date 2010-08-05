@@ -24,6 +24,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -222,6 +223,28 @@ public abstract class HgUtil {
       throw new VcsException(HgVcsMessages.message("hg4idea.exception.file.not.under.hg", filePath.getPresentableUrl()));
     }
     return vf;
+  }
+
+  /**
+   * Gets the Mercurial root for the given file or throws a VcsException if non exists:
+   * the root should not only be in directory mappings, but also the .hg repository folder should exist.
+   * @see #getHgRootOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
+   */
+  @NotNull
+  public static VirtualFile getHgRootOrThrow(Project project, VirtualFile vf) throws VcsException {
+    return getHgRootOrThrow(project, VcsUtil.getFilePath(vf.getPath()));
+  }
+
+  /**
+   * Checks is a merge operation is in progress on the given repository.
+   * Actually gets the number of parents of the current revision. If there are 2 parents, then a merge is going on. Otherwise there is
+   * only one parent. 
+   * @param project    project to work on.
+   * @param repository repository which is checked on merge.
+   * @return True if merge operation is in progress, false if there is no merge operation.
+   */
+  public static boolean isMergeInProgress(@NotNull Project project, VirtualFile repository) {
+    return new HgWorkingCopyRevisionsCommand(project).parents(repository).size() > 1;
   }
 
 }

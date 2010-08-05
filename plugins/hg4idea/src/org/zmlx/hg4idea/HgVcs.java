@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -107,6 +108,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private boolean started = false;
   private HgVFSListener myVFSListener;
   private VirtualFileListener myDirStateChangeListener;
+  private final HgMergeProvider myMergeProvider;
 
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings,
@@ -126,6 +128,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     integrateEnvironment = new HgIntegrateEnvironment(project);
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project);
     myDirStateChangeListener = new HgDirStateChangeListener(myProject);
+    myMergeProvider = new HgMergeProvider(myProject);
   }
 
   public String getDisplayName() {
@@ -193,6 +196,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     return annotationProvider;
+  }
+
+  @Override
+  public MergeProvider getMergeProvider() {
+    return myMergeProvider;
   }
 
   @Override
@@ -396,6 +404,5 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public void showMessageInConsole(String message, final TextAttributes style) {
     myVcsManager.addMessageToConsoleWindow(message, style);
   }
-
 
 }
