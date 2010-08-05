@@ -1095,6 +1095,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 
   // ---------------------------------- XML formatting options -------------------------
+
+  public final static int WS_AROUND_CDATA_PRESERVE = 0;
+  public final static int WS_AROUND_CDATA_NONE = 1;
+  public final static int WS_AROUND_CDATA_NEW_LINES = 2;
+
   public boolean XML_KEEP_WHITESPACES = false;
   public int XML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
   public int XML_TEXT_WRAP = WRAP_AS_NEEDED;
@@ -1109,6 +1114,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = false;
   public boolean XML_SPACE_AFTER_TAG_NAME = false;
   public boolean XML_SPACE_INSIDE_EMPTY_TAG = false;
+
+  public boolean XML_KEEP_WHITE_SPACES_INSIDE_CDATA = false;
+  public int XML_WHITE_SPACE_AROUND_CDATA = WS_AROUND_CDATA_PRESERVE;
 
   // ---------------------------------------------------------------------------------------
 

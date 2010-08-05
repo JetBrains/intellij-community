@@ -335,6 +335,13 @@ public class FileUtil {
     return file;
   }
 
+  public static File createTempDirectory(File dir, @NonNls String prefix, @NonNls String suffix) throws IOException{
+    File file = doCreateTempFile(prefix, suffix, dir);
+    file.delete();
+    file.mkdir();
+    return file;
+  }
+
   public static File createTempFile(@NonNls final File dir, @NonNls String prefix, @NonNls String suffix, final boolean create) throws IOException{
     File file = doCreateTempFile(prefix, suffix, dir);
     file.delete();

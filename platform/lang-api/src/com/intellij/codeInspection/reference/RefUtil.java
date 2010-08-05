@@ -35,14 +35,13 @@ public abstract class RefUtil {
   }
 
   public static boolean isEntryPoint(final RefElement refElement) {
-    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INSPECTION_ENRTY_POINT);
-    final EntryPoint[] addins = point.getExtensions();
-    for (EntryPoint entryPoint : addins) {
-      if (entryPoint.accept(refElement)) {
+    final PsiElement element = refElement.getElement();
+    final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    for (EntryPoint entryPoint : point.getExtensions()) {
+      if (entryPoint.isEntryPoint(refElement, element)) {
         return true;
       }
     }
-    final PsiElement element = refElement.getElement();
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitUsage(element)) return true;

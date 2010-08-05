@@ -677,13 +677,7 @@ public class AnalysisScope {
   }
 
   private static boolean isTestOnly(Module module) {
-    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-    for (ContentEntry contentEntry : contentEntries) {
-      for (SourceFolder folder : contentEntry.getSourceFolders()) {
-        if (!folder.isTestSource()) return false;
-      }
-    }
-    return true;
+    return ModuleRootManager.getInstance(module).getSourceRootUrls(false).length == 0;
   }
 
   public boolean isIncludeTestSource() {

@@ -116,7 +116,7 @@ public class GenericsHighlightUtil {
 
     final PsiTypeParameter[] typeParameters = typeParameterListOwner.getTypeParameters();
     final int targetParametersNum = typeParameters.length;
-    final int refParametersNum = referenceParameterList == null ? 0 : referenceParameterList.getTypeParameterElements().length;
+    final int refParametersNum = referenceParameterList == null ? 0 : referenceParameterList.getTypeArguments().length;
     if (targetParametersNum != refParametersNum && refParametersNum != 0) {
       final String description;
       if (targetParametersNum == 0) {
@@ -148,40 +148,58 @@ public class GenericsHighlightUtil {
     // bounds check
     if (targetParametersNum > 0 && refParametersNum != 0) {
       final PsiTypeElement[] referenceElements = referenceParameterList.getTypeParameterElements();
-      for (int i = 0; i < typeParameters.length; i++) {
-        PsiTypeParameter classParameter = typeParameters[i];
-        final PsiTypeElement typeElement = referenceElements[i];
-        final PsiType type = typeElement.getType();
-        if (!(type instanceof PsiClassType)) continue;
-        final PsiClass referenceClass = ((PsiClassType)type).resolve();
-        if (referenceClass == null) continue;
-        final PsiClassType[] bounds = classParameter.getSuperTypes();
-        for (PsiClassType type1 : bounds) {
-          PsiType bound = substitutor.substitute(type1);
-          if (!TypeConversionUtil.isAssignable(bound, type, false)) {
-            PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
-
-            @NonNls final String messageKey = boundClass == null || referenceClass.isInterface() == boundClass.isInterface()
-                                              ? "generics.type.parameter.is.not.within.its.bound.extend"
-                                              : "generics.type.parameter.is.not.within.its.bound.implement";
-
-            String description = JavaErrorMessages.message(messageKey,
-                                                           HighlightUtil.formatClass(referenceClass),
-                                                           HighlightUtil.formatType(bound));
-
-            final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                                  typeElement,
-                                                                                  description);
-            if (bound instanceof PsiClassType) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(referenceClass, (PsiClassType)bound, true),
-                                                    null);
-            }
-            return highlightInfo;
-          }
+      if (referenceElements.length == 1 && referenceElements[0].getType() instanceof PsiDiamondType) {
+        final PsiType[] types = ((PsiDiamondType)referenceElements[0].getType()).getInferredTypes();
+        for (int i = 0; i < typeParameters.length; i++) {
+          final PsiType type = types[i];
+          final HighlightInfo highlightInfo = checkTypeParameterWithinItsBound(typeParameters[i], substitutor,  type, referenceElements[0]);
+          if (highlightInfo != null) return highlightInfo;
+        }
+      } else {
+        for (int i = 0; i < typeParameters.length; i++) {
+          final PsiTypeElement typeElement = referenceElements[i];
+          final HighlightInfo highlightInfo = checkTypeParameterWithinItsBound(typeParameters[i], substitutor, typeElement.getType(), typeElement);
+          if (highlightInfo != null) return highlightInfo;
         }
       }
     }
 
+    return null;
+  }
+
+  @Nullable
+  private static HighlightInfo checkTypeParameterWithinItsBound(final PsiTypeParameter classParameter,
+                                                                final PsiSubstitutor substitutor,
+                                                                final PsiType type,
+                                                                final PsiElement typeElement2Highlight) {
+    if (!(type instanceof PsiClassType)) return null;
+    final PsiClass referenceClass = ((PsiClassType)type).resolve();
+    if (referenceClass == null) return null;
+    final PsiClassType[] bounds = classParameter.getSuperTypes();
+    for (PsiClassType type1 : bounds) {
+      PsiType bound = substitutor.substitute(type1);
+      if (!TypeConversionUtil.isAssignable(bound, type, false)) {
+        PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
+
+        @NonNls final String messageKey = boundClass == null || referenceClass.isInterface() == boundClass.isInterface()
+                                          ? "generics.type.parameter.is.not.within.its.bound.extend"
+                                          : "generics.type.parameter.is.not.within.its.bound.implement";
+
+        String description = JavaErrorMessages.message(messageKey,
+                                                       HighlightUtil.formatClass(referenceClass),
+                                                       HighlightUtil.formatType(bound));
+
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                                              typeElement2Highlight,
+                                                                              description);
+        if (bound instanceof PsiClassType) {
+          QuickFixAction
+            .registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(referenceClass, (PsiClassType)bound, true),
+                                    null);
+        }
+        return highlightInfo;
+      }
+    }
     return null;
   }
 
@@ -417,7 +435,7 @@ public class GenericsHighlightUtil {
 
   public static HighlightInfo checkReferenceTypeUsedAsTypeArgument(PsiTypeElement typeElement) {
     final PsiType type = typeElement.getType();
-    if (type instanceof PsiPrimitiveType ||
+    if (type != PsiType.NULL && type instanceof PsiPrimitiveType ||
         type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType) {
       final PsiElement element = new PsiMatcherImpl(typeElement)
         .parent(PsiMatchers.hasClass(PsiReferenceParameterList.class))

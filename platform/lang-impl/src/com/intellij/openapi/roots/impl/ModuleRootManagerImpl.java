@@ -359,14 +359,25 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   @NotNull
   public String[] getSourceRootUrls() {
+    return getSourceRootUrls(true);
+  }
+
+  @NotNull
+  @Override
+  public String[] getSourceRootUrls(boolean includingTests) {
     LOG.assertTrue(!myIsDisposed);
-    return myRootModel.getSourceRootUrls();
+    return myRootModel.getSourceRootUrls(includingTests);
   }
 
   @NotNull
   public VirtualFile[] getSourceRoots() {
+    return getSourceRoots(true);
+  }
+
+  @NotNull
+  public VirtualFile[] getSourceRoots(final boolean includingTests) {
     LOG.assertTrue(!myIsDisposed);
-    return myRootModel.getSourceRoots();
+    return myRootModel.getSourceRoots(includingTests);
   }
 
   public void projectOpened() {

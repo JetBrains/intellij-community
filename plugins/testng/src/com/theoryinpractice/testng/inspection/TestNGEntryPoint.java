@@ -16,57 +16,51 @@
 
 /*
  * User: anna
- * Date: 28-May-2007
+ * Date: 14-May-2007
  */
-package com.intellij.execution.junit2.inspection;
+package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
+import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
-  public boolean ADD_JUNIT_TO_ENTRIES = true;
+public class TestNGEntryPoint extends EntryPoint {
+   public boolean ADD_TESTNG_TO_ENTRIES = true;
+
+  public boolean isSelected() {
+    return ADD_TESTNG_TO_ENTRIES;
+  }
+
+  public void setSelected(boolean selected) {
+    ADD_TESTNG_TO_ENTRIES = selected;
+  }
 
   @NotNull
   public String getDisplayName() {
-    return InspectionsBundle.message("inspection.dead.code.option2");
+    return "Automatically add all TestNG classes/methods/etc. to entry points";
   }
 
-  public boolean isEntryPoint(RefElement refElement) {
-    return isEntryPoint(refElement.getElement());
+  public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) {
+    return isEntryPoint(psiElement);
   }
 
   @Override
   public boolean isEntryPoint(PsiElement psiElement) {
-    if (ADD_JUNIT_TO_ENTRIES) {
-      if (psiElement instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)psiElement;
-        if (JUnitUtil.isTestClass(aClass)) {
-          return true;
-        }
-      }
-      else if (psiElement instanceof PsiMethod) {
-        if (JUnitUtil.isTestMethodOrConfig((PsiMethod)psiElement)) return true;
+    if (ADD_TESTNG_TO_ENTRIES) {
+      if (psiElement instanceof PsiModifierListOwner) {
+        return TestNGUtil.hasTest((PsiModifierListOwner)psiElement, false) || (psiElement instanceof PsiMethod && TestNGUtil.hasConfig((PsiModifierListOwner)psiElement));
       }
     }
     return false;
-  }
-
-  public boolean isSelected() {
-    return ADD_JUNIT_TO_ENTRIES;
-  }
-
-  public void setSelected(boolean selected) {
-    ADD_JUNIT_TO_ENTRIES = selected;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -74,8 +68,13 @@ public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    if (!ADD_JUNIT_TO_ENTRIES) {
+    if (!ADD_TESTNG_TO_ENTRIES) {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
+  }
+
+  @Nullable
+  public String[] getIgnoreAnnotations() {
+    return TestNGUtil.CONFIG_ANNOTATIONS_FQN;
   }
 }

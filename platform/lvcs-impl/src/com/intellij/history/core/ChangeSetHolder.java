@@ -20,37 +20,12 @@ import com.intellij.history.core.changes.ChangeSet;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChangeSetBlock {
-  private static final int BLOCK_SIZE = 1000;
-  public int id;
-  public final List<ChangeSet> changes;
+public class ChangeSetHolder {
+  public final int id;
+  public final ChangeSet changeSet;
 
-  public ChangeSetBlock(int id) {
+  public ChangeSetHolder(int id, ChangeSet changeSet) {
     this.id = id;
-    this.changes = new ArrayList<ChangeSet>(BLOCK_SIZE);
-  }
-
-  ChangeSetBlock(int id, List<ChangeSet> changes) {
-    this.id = id;
-    this.changes = changes;
-  }
-
-  public void add(ChangeSet changeSet) {
-    changes.add(changeSet);
-  }
-
-  public void removeLast() {
-    changes.remove(changes.size() - 1);
-  }
-
-  public boolean shouldFlush(boolean force) {
-    int count = 0;
-    for (ChangeSet each : changes) {
-      count += each.getChanges().size();
-
-      if (count >= BLOCK_SIZE) return true;
-      if (force && count > 0) return true;
-    }
-    return false;
+    this.changeSet = changeSet;
   }
 }

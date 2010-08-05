@@ -1260,6 +1260,23 @@ public class StringUtil {
     return -1;
   }
 
+  /**
+   * Allows to retrieve index of last occurrence of the given symbols at <code>[start; end)</code> sub-sequence of the given text. 
+   *
+   * @param s       target text
+   * @param c       target symbol which last occurrence we want to check
+   * @param start   start offset of the target text (inclusive)
+   * @param end     end offset of the target text (exclusive)
+   * @return        index of the last occurrence of the given symbol at the target sub-sequence of the given text if any;
+   *                <code>-1</code> otherwise
+   */
+  public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
+    for (int i = end - 1; i >= start; i--) {
+      if (s.charAt(i) == c) return i;
+    }
+    return -1;
+  }
+
   @NotNull
   public static String first(@NotNull String text, final int length, final boolean appendEllipsis) {
     return text.length() > length ? text.substring(0, length) + (appendEllipsis ? "..." : "") : text;

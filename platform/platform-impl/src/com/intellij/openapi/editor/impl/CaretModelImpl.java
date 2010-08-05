@@ -36,10 +36,12 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
@@ -471,24 +473,19 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   private VerticalInfo createVerticalInfo(LogicalPosition position) {
     Document document = myEditor.getDocument();
     int logicalLine = position.line;
+    int startOffset = document.getLineStartOffset(logicalLine);
+    int endOffset = document.getLineEndOffset(logicalLine);
 
     // There is a possible case that active logical line is represented on multiple lines due to soft wraps processing.
     // We want to highlight those visual lines as 'active' then, so, we calculate 'y' position for the logical line start
     // and height in accordance with the number of occupied visual lines.
-    LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(document.getLineStartOffset(logicalLine));
-    VisualPosition visualPosition = myEditor.logicalToVisualPosition(logicalPosition);
+    VisualPosition visualPosition = myEditor.offsetToVisualPosition(document.getLineStartOffset(logicalLine));
     int y = myEditor.visualPositionToXY(visualPosition).y;
-    int height = myEditor.getLineHeight();
-    int visualLine = visualPosition.line + 1;
-    int lastVisualLine = myEditor.offsetToVisualPosition(document.getTextLength() - 1).line;
-    for (; visualLine <= lastVisualLine; visualLine++) {
-      LogicalPosition logical = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
-      if (logical.line == logicalLine) {
-        height += myEditor.getLineHeight();
-      }
-      else {
-        break;
-      }
+    int lineHeight = myEditor.getLineHeight();
+    int height = lineHeight;
+    List<? extends TextChange> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
+    for (TextChange softWrap : softWraps) {
+      height += StringUtil.countNewLines(softWrap.getText()) * lineHeight;
     }
 
     return new VerticalInfo(y, height);

@@ -58,10 +58,14 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
+    this(editor, storage, painter, new DefaultEditorTextRepresentationHelper(editor));
+  }
+
+  public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
+                           EditorTextRepresentationHelper representationHelper) {
     this(
-      editor, storage, painter, new DefaultSoftWrapApplianceManager(storage, editor, painter),
-      new SoftWrapDataMapper(editor, storage, new DefaultEditorTextRepresentationHelper(editor)),
-      new SoftWrapDocumentChangeManager(editor, storage)
+      editor, storage, painter, new DefaultSoftWrapApplianceManager(storage, editor, painter, representationHelper),
+      new SoftWrapDataMapper(editor, storage, representationHelper), new SoftWrapDocumentChangeManager(editor, storage)
     );
   }
 

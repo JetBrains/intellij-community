@@ -7,19 +7,10 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.AnnotatedScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
-import com.intellij.psi.util.TypeConversionUtil
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.openapi.util.Key
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValueProvider.Result
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
-import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiMethod
 import com.intellij.util.Function
+import org.jetbrains.plugins.groovy.gpp.GppGdkMethod
 
 /**
  * @author ilyas
@@ -70,43 +61,24 @@ class GdslMetaClassProperties {
     else throw new IllegalArgumentException("Incorrect aruments in method 'category': $params")
   }
 
+  Closure gppCategory = {def className, def isStatic = false ->
+    def staticConverter = new Function() {
+      def fun(def m) {new GppGdkMethod(m, true)}
+    };
+    def nonStaticConverter = new Function() {
+      def fun(def m) {new GppGdkMethod(m, false)}
+    };
+    category className, isStatic ? staticConverter : nonStaticConverter
+  }
+
   private def processCategoryMethods (def className, Function<PsiMethod, PsiMethod> converter) {
     contributor(context()) {
       if (!psiType) return;
-
-      def categoryClass = findClass(className)
-      if (!categoryClass) return;
-      categoryClass.methods.each {m ->
-        def params = m.parameterList.parameters
-        if (!params) return;
-        def targetType = TypeConversionUtil.erasure(params[0].type)
-        if (!ResolveUtil.isInheritor(psiType, targetType.getCanonicalText(), project)) return;
-
-        add CachedValuesManager.getManager(project).
-            getCachedValue(m, CategoryMethodProvider.CATEGORY_METHOD, new CategoryMethodProvider(m, converter), false)
-      }
+      List methods = CategoryMethodProvider.provideMethods(psiType, project, className, resolveScope, converter)
+      for (m in methods) add m
     }
   }
 
-
-  static class CategoryMethodProvider implements CachedValueProvider<GrGdkMethod> {
-    static final Key<CachedValue<GrGdkMethod>> CATEGORY_METHOD = Key.create("category method");
-
-    def method
-    def converter
-
-    def CategoryMethodProvider(def method, def converter) {
-      this.method = method;
-      this.converter = converter
-    }
-
-    Result<GrGdkMethod> compute() {
-      return Result.create(
-              converter.fun(method),
-              PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT,
-              ProjectRootManager.getInstance(method.project));
-    }
-  }
 
   /**
    * Auxiliary methods for context definition

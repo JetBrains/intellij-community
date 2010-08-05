@@ -5,11 +5,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -21,6 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -207,7 +206,7 @@ public class SoftWrapDataMapperTest {
       allowing(painter).getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP); will(returnValue(SOFT_WRAP_DRAWING_WIDTH));
     }});
 
-    myRepresentationHelper = new MockEditorTextRepresentationHelper();
+    myRepresentationHelper = new MockEditorTextRepresentationHelper(SPACE_SIZE, TAB_SIZE);
 
     myAdjuster = new SoftWrapDataMapper(myEditor, myStorage, myRepresentationHelper/*, new MockFontTypeProvider()*/);
   }
@@ -398,7 +397,7 @@ public class SoftWrapDataMapperTest {
       if (text.charAt(i) == '\n') {
         break;
       }
-      result += myRepresentationHelper.textWidth(text, i, i + 1, 0);
+      result += myRepresentationHelper.textWidth(text, i, i + 1, Font.PLAIN, 0);
     }
     result += SOFT_WRAP_DRAWING_WIDTH;
     return result;
@@ -493,8 +492,6 @@ public class SoftWrapDataMapperTest {
       // We don't want to perform the check for logical positions that correspond to the folded space because all of them relate to
       // the same logical position of the folding start.
       if (!data.foldedSpace && !data.insideTab && !equals(data.logical, actualLogicalByVisual)) {
-        //TODO den remove
-        myAdjuster.visualToLogical(data.visual);
         throw new AssertionError(
           String.format("Detected unmatched logical position by visual (%s). Expected: '%s', actual: '%s'. Calculation was performed "
                         + "against soft wrap-unaware logical: '%s'",
@@ -507,8 +504,6 @@ public class SoftWrapDataMapperTest {
       // We don't to perform the check for the data that points to soft wrap location here. The reason is that it shares offset
       // with the first document symbol after soft wrap, hence, examination always fails.
       if (!data.virtualSpace && !data.insideTab && !equals(data.logical, actualLogicalByOffset)) {
-        //TODO den remove
-        myAdjuster.offsetToLogicalPosition(data.offset);
         throw new AssertionError(
           String.format("Detected unmatched logical position by offset. Expected: '%s', actual: '%s'. Calculation was performed "
                         + "against offset: '%d' and soft wrap-unaware logical: '%s'",
@@ -698,7 +693,7 @@ public class SoftWrapDataMapperTest {
         }
         else if (c == '\t') {
           int tabWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(c, x);
-          x += MockEditorTextRepresentationHelper.charWidth(c, x);
+          x += myRepresentationHelper.charWidth(c, x);
 
           // There is a possible case that single tabulation symbols is shown in more than one visual column at IntelliJ editor.
           // We store data entry only for the first tab column without 'inside tab' flag then.
@@ -715,7 +710,7 @@ public class SoftWrapDataMapperTest {
         } else {
           logicalColumn++;
           offset++;
-          x += MockEditorTextRepresentationHelper.charWidth(c, x);
+          x += myRepresentationHelper.charWidth(c, x);
           foldingColumnDiff--;
         }
         return;
@@ -748,7 +743,7 @@ public class SoftWrapDataMapperTest {
           visualColumn++;
           softWrapColumnDiff++;
           softWrapSymbolsOnCurrentVisualLine++;
-          x += MockEditorTextRepresentationHelper.charWidth(c, x);
+          x += myRepresentationHelper.charWidth(c, x);
         }
         return;
       }
@@ -769,7 +764,7 @@ public class SoftWrapDataMapperTest {
       }
       else if (c == '\t') {
         int tabWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(c, x);
-        x += MockEditorTextRepresentationHelper.charWidth(c, x);
+        x += myRepresentationHelper.charWidth(c, x);
 
         // There is a possible case that single tabulation symbols is shown in more than one visual column at IntelliJ editor.
         // We store data entry only for the first tab column without 'inside tab' flag then.
@@ -789,7 +784,7 @@ public class SoftWrapDataMapperTest {
         visualColumn++;
         logicalColumn++;
         offset++;
-        x += MockEditorTextRepresentationHelper.charWidth(c, x);
+        x += myRepresentationHelper.charWidth(c, x);
       }
     }
 
@@ -835,51 +830,6 @@ public class SoftWrapDataMapperTest {
 
     private VisualPosition buildVisualPosition() {
       return new VisualPosition(visualLine, visualColumn);
-    }
-  }
-
-  private static class MockEditorTextRepresentationHelper implements EditorTextRepresentationHelper {
-
-    public int toVisualColumnSymbolsNumber(char c, int x) {
-      return toVisualColumnSymbolsNumber(new String(new char[] {c}), 0, 1, x);
-    }
-
-    @Override
-    public int toVisualColumnSymbolsNumber(@NotNull CharSequence text, int start, int end, int x) {
-      int result = 0;
-      for (int i = start; i < end; i++) {
-        int width = charWidth(text.charAt(i), x);
-        result += width / SPACE_SIZE;
-        if (width % SPACE_SIZE > 0) {
-          result++;
-        }
-        x += width;
-      }
-      return result;
-    }
-
-    @Override
-    public int textWidth(@NotNull CharSequence text, int start, int end, int x) {
-      int result = 0;
-      for (int i = start; i < end; i++) {
-        char c = text.charAt(i);
-        switch (c) {
-          case '\n': result = 0; break;
-          default: result += charWidth(c, result);
-        }
-      }
-      return result;
-    }
-
-    public static int charWidth(char c, int x) {
-      if (c == '\t') {
-        int tabWidth = SPACE_SIZE * TAB_SIZE;
-        int tabsNumber = x / tabWidth;
-        return (tabsNumber + 1) * tabWidth - x;
-      }
-      else {
-        return SPACE_SIZE;
-      }
     }
   }
 

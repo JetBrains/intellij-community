@@ -23,7 +23,7 @@ import java.util.List;
 
 public class InMemoryChangeListStorage implements ChangeListStorage {
   private int myCurrentId;
-  private List<ChangeSetBlock> myBlocks = new ArrayList<ChangeSetBlock>();
+  private List<ChangeSet> mySets = new ArrayList<ChangeSet>();
 
   public void close() {
   }
@@ -32,20 +32,14 @@ public class InMemoryChangeListStorage implements ChangeListStorage {
     return myCurrentId++;
   }
 
-  public ChangeSetBlock createNewBlock() {
-    return new ChangeSetBlock(-1);
+  public ChangeSetHolder readPrevious(int id) {
+    if (mySets.isEmpty()) return null;
+    if (id == -1) return new ChangeSetHolder(mySets.size() - 1, mySets.get(mySets.size() - 1));
+    return id == 0 ? null : new ChangeSetHolder(id -1, mySets.get(id - 1));
   }
 
-  public ChangeSetBlock readPrevious(ChangeSetBlock block) {
-    if (myBlocks.isEmpty()) return null;
-    if (block.id == 0) return null;
-    if (block.id == -1) return myBlocks.get(myBlocks.size() - 1);
-    return myBlocks.get(block.id - 1);
-  }
-
-  public void writeNextBlock(ChangeSetBlock block) {
-    myBlocks.add(block);
-    block.id = myBlocks.size() - 1;
+  public void writeNextSet(ChangeSet changeSet) {
+    mySets.add(changeSet);
   }
 
   public void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {

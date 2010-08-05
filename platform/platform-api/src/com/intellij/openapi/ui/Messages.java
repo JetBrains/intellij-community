@@ -90,11 +90,15 @@ public class Messages {
   }
 
   public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+    return showDialog(project, message, title, options, defaultOptionIndex, -1, icon);
+  }
+
+  public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
-      MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, icon);
+      MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, focusedOptionIndex, icon);
       dialog.show();
       return dialog.getExitCode();
     }
@@ -106,11 +110,27 @@ public class Messages {
   }
 
   public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+    return showDialog(parent, message, title, options, defaultOptionIndex, defaultOptionIndex, icon);
+  }
+
+  public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
-      MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, icon);
+      MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon);
+      dialog.show();
+      return dialog.getExitCode();
+    }
+  }
+
+  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon, DialogWrapper.DoNotAskOption doNotAskOption) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return ourTestImplementation.show(message);
+    }
+    else {
+      //what's it? if (application.isUnitTestMode()) throw new RuntimeException(message);
+      MessageDialog dialog = new MessageDialog(message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
       dialog.show();
       return dialog.getExitCode();
     }
@@ -123,19 +143,15 @@ public class Messages {
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
   public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon, DialogWrapper.DoNotAskOption doNotAskOption) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      //what's it? if (application.isUnitTestMode()) throw new RuntimeException(message);
-      MessageDialog dialog = new MessageDialog(message, title, options, defaultOptionIndex, icon, doNotAskOption);
-      dialog.show();
-      return dialog.getExitCode();
-    }
+    return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
   }
 
   public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
-    return showDialog(message, title, options, defaultOptionIndex, icon, null);
+    return showDialog(message, title, options, defaultOptionIndex, -1, icon);
+  }
+
+  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+    return showDialog(message, title, options, defaultOptionIndex, focusedOptionIndex, icon, null);
   }
 
   /**
@@ -486,33 +502,47 @@ public class Messages {
     protected String myMessage;
     protected String[] myOptions;
     protected int myDefaultOptionIndex;
+    protected int myFocusedOptionIndex;
     protected Icon myIcon;
 
     public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+      this(project, message, title, options, defaultOptionIndex, -1, icon);
+    }
+
+    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
       super(project, false);
-      _init(title, message, options, defaultOptionIndex, icon, null);
+      _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
     }
 
     public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+      this(parent, message, title, options, defaultOptionIndex, -1, icon);
+    }
+
+    public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
       super(parent, false);
-      _init(title, message, options, defaultOptionIndex, icon, null);
+      _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
     }
 
     public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
       super(false);
-      _init(title, message, options, defaultOptionIndex, icon, null);
+      _init(title, message, options, defaultOptionIndex, -1, icon, null);
+    }
+
+    public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
+      super(false);
+      _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
     }
 
     public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
-      super(false);
-      _init(title, message, options, defaultOptionIndex, icon, doNotAskOption);
+      this(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
     }
 
-    private void _init(String title, String message, String[] options, int defaultOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
+    private void _init(String title, String message, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
       setTitle(title);
       myMessage = message;
       myOptions = options;
       myDefaultOptionIndex = defaultOptionIndex;
+      myFocusedOptionIndex = focusedOptionIndex;
       myIcon = icon;
       setButtonsAlignment(SwingUtilities.CENTER);
       setDoNotAskOption(doNotAskOption);
@@ -529,9 +559,15 @@ public class Messages {
             close(exitCode, true);
           }
         };
+
         if (i == myDefaultOptionIndex) {
           actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
         }
+
+        if (i == myFocusedOptionIndex) {
+          actions[i].putValue(FOCUSED_ACTION, Boolean.TRUE);
+        }
+
         assignMnemonic(option, actions[i]);
 
       }

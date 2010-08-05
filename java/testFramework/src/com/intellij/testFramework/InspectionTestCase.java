@@ -29,7 +29,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
+import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -60,7 +60,7 @@ import java.io.File;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class InspectionTestCase extends PsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.InspectionTestCase");
-  private UnusedCodeExtension myUnusedCodeExtension;
+  private EntryPoint myUnusedCodeExtension;
   private VirtualFile ext_src;
 
   public InspectionManagerEx getManager() {
@@ -180,8 +180,8 @@ public abstract class InspectionTestCase extends PsiTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    myUnusedCodeExtension = new UnusedCodeExtension() {
+    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    myUnusedCodeExtension = new EntryPoint() {
       @NotNull
       @Override
       public String getDisplayName() {
@@ -189,8 +189,8 @@ public abstract class InspectionTestCase extends PsiTestCase {
       }
 
       @Override
-      public boolean isEntryPoint(RefElement refElement) {
-        return isEntryPoint(refElement.getElement());
+      public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) {
+        return isEntryPoint(psiElement);
       }
 
       @Override
@@ -222,7 +222,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
     point.unregisterExtension(myUnusedCodeExtension);
     myUnusedCodeExtension = null;
     ext_src = null;

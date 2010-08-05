@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import groovy.lang.Closure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
@@ -58,6 +59,11 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   public PsiClass getPsiClass() {
     if (myQualifiedName==null) return null;
     return JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, myDescriptor.getResolveScope());
+  }
+
+  @Override
+  public GlobalSearchScope getResolveScope() {
+    return myDescriptor.getResolveScope();
   }
 
   public Project getProject() {

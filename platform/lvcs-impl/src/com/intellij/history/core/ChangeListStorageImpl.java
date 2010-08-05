@@ -27,21 +27,16 @@ import com.intellij.util.io.storage.AbstractStorage;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ChangeListStorageImpl implements ChangeListStorage {
-  private static final int VERSION = 3;
-
+  private static final int VERSION = 4;
   private static final String STORAGE_FILE = "changes";
-
-  private final File myStorageDir;
+  
   private final LinkedStorage myStorage;
 
   public ChangeListStorageImpl(File storageDir) {
-    myStorageDir = storageDir;
     try {
-      myStorage = createStorage(myStorageDir);
+      myStorage = createStorage(storageDir);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -90,27 +85,18 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     return myStorage.nextId();
   }
 
-  public synchronized ChangeSetBlock createNewBlock() {
-    return new ChangeSetBlock(0);
-  }
-
-  public synchronized ChangeSetBlock readPrevious(ChangeSetBlock block) {
-    int prevId = block.id == 0 ? myStorage.getLastRecord() : myStorage.getPrevRecord(block.id);
+  public synchronized ChangeSetHolder readPrevious(int id) {
+    int prevId = id == -1 ? myStorage.getLastRecord() : myStorage.getPrevRecord(id);
     if (prevId == 0) return null;
-    assert prevId != block.id;
+
     return doReadBlock(prevId);
   }
 
-  private ChangeSetBlock doReadBlock(int id) {
+  private ChangeSetHolder doReadBlock(int id) {
     try {
       DataInputStream in = myStorage.readStream(id);
       try {
-        int size = in.readInt();
-        List<ChangeSet> changes = new ArrayList<ChangeSet>(size);
-        while (size-- > 0) {
-          changes.add(new ChangeSet(in));
-        }
-        return new ChangeSetBlock(id, changes);
+        return new ChangeSetHolder(id, new ChangeSet(in));
       }
       finally {
         in.close();
@@ -121,15 +107,12 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     }
   }
 
-  public synchronized void writeNextBlock(ChangeSetBlock block) {
+  public synchronized void writeNextSet(ChangeSet changeSet) {
     try {
-      block.id = myStorage.createNextRecord();
-      AbstractStorage.StorageDataOutput out = myStorage.writeStream(block.id);
+      int id = myStorage.createNextRecord();
+      AbstractStorage.StorageDataOutput out = myStorage.writeStream(id);
       try {
-        out.writeInt(block.changes.size());
-        for (ChangeSet each : block.changes) {
-          each.write(out);
-        }
+        changeSet.write(out);
       }
       finally {
         out.close();
@@ -143,10 +126,8 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   public synchronized void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {
     int eachBlockId = findFirstObsoleteBlock(period, intervalBetweenActivities);
     try {
-      while(eachBlockId != 0) {
-        for (ChangeSet eachChangeSet : doReadBlock(eachBlockId).changes) {
-          processor.consume(eachChangeSet);
-        }
+      while (eachBlockId != 0) {
+        processor.consume(doReadBlock(eachBlockId).changeSet);
         myStorage.deleteRecord(eachBlockId);
         eachBlockId = myStorage.getPrevRecord(eachBlockId);
       }

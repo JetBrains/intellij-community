@@ -51,7 +51,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
@@ -219,6 +221,7 @@ public class FileStructureDialog extends DialogWrapper {
       addFilterCheckbox(panel, filter);
     }
 
+    myCommanderPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     panel.add(myCommanderPanel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 

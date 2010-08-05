@@ -62,6 +62,19 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     boolean firstIsText = isTextFragment(node1);
     boolean secondIsText = isTextFragment(node2);
 
+    if (type1 == XmlElementType.XML_CDATA_START || type2 == XmlElementType.XML_CDATA_END) {
+      if (myXmlFormattingPolicy.getKeepWhiteSpacesInsideCDATA()) {
+        return Spacing.getReadOnlySpacing();
+      }
+      if (type1 == XmlElementType.XML_CDATA_START && type2 == XmlElementType.XML_CDATA_END) {
+        return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), 0); 
+      }
+      if (type1 == XmlElementType.XML_CDATA_START && child2 instanceof AnotherLanguageBlockWrapper ||
+          type2 == XmlElementType.XML_CDATA_END && child1 instanceof AnotherLanguageBlockWrapper) {
+        return Spacing.createSpacing(0, 0, 1, myXmlFormattingPolicy.getShouldKeepLineBreaks(), 0);
+      }
+    }
+
     boolean firstIsTag = node1.getPsi() instanceof XmlTag && !firstIsText;
     boolean secondIsTag = node2.getPsi() instanceof XmlTag && !secondIsText;
 

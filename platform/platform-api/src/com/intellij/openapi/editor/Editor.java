@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -68,6 +69,8 @@ public interface Editor extends UserDataHolder {
    * @return the component instance.
    */
   @NotNull JComponent getContentComponent();
+
+  void setBorder(@Nullable Border border);
 
   /**
    * Returns the selection model for the editor, which can be used to select ranges of text in

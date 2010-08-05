@@ -21,10 +21,9 @@ import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.storage.Content;
-import com.intellij.openapi.application.Application;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -34,24 +33,23 @@ import java.util.List;
 public class ChangeList {
   private final ChangeListStorage myStorage;
 
-  private ChangeSetBlock myCurrentBlock;
-
-  private ChangeSet myCurrentChangeSet;
   private int myChangeSetDepth;
+  private ChangeSet myCurrentChangeSet;
 
   private int myIntervalBetweenActivities = 12 * 60 * 60 * 1000; // one day
 
   public ChangeList(ChangeListStorage storage) {
     myStorage = storage;
-    myCurrentBlock = storage.createNewBlock();
   }
 
   public synchronized void save() {
-    flushChanges(true);
+    myStorage.flush();
   }
 
   public synchronized void close() {
-    flushChanges(true);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      LocalHistoryLog.LOG.assertTrue(myCurrentChangeSet == null, "current changes won't be saved: " + myCurrentChangeSet);
+    }
     myStorage.close();
   }
 
@@ -73,7 +71,6 @@ public class ChangeList {
 
   private void doBeginChangeSet() {
     myCurrentChangeSet = new ChangeSet(myStorage.nextId(), Clock.getCurrentTimestamp());
-    myCurrentBlock.add(myCurrentChangeSet);
   }
 
   public synchronized boolean forceBeginChangeSet() {
@@ -86,7 +83,7 @@ public class ChangeList {
   }
 
   public synchronized boolean endChangeSet(String name) {
-    assert myChangeSetDepth > 0;
+    LocalHistoryLog.LOG.assertTrue(myChangeSetDepth > 0, "not balanced 'begin/end-change set' calls");
 
     myChangeSetDepth--;
     if (myChangeSetDepth > 0) return false;
@@ -96,14 +93,14 @@ public class ChangeList {
 
   private boolean doEndChangeSet(String name) {
     if (myCurrentChangeSet.getChanges().isEmpty()) {
-      myCurrentBlock.removeLast();
+      myCurrentChangeSet = null;
       return false;
     }
 
     myCurrentChangeSet.setName(name);
+    myStorage.writeNextSet(myCurrentChangeSet);
     myCurrentChangeSet = null;
 
-    flushChanges(false);
     return true;
   }
 
@@ -116,13 +113,12 @@ public class ChangeList {
     return result;
   }
 
+  // todo synchronization issue: changeset may me modified while being iterated
   public synchronized Iterable<ChangeSet> iterChanges() {
     return new Iterable<ChangeSet>() {
       public Iterator<ChangeSet> iterator() {
         return new Iterator<ChangeSet>() {
-          private ChangeSetBlock currentBlock;
-          private Iterator<ChangeSet> currentIter;
-
+          private ChangeSetHolder currentBlock;
           private ChangeSet next = fetchNext();
 
           public boolean hasNext() {
@@ -138,19 +134,21 @@ public class ChangeList {
           private ChangeSet fetchNext() {
             if (currentBlock == null) {
               synchronized (ChangeList.this) {
-                currentBlock = myCurrentBlock;
-                List<ChangeSet> copy = new ArrayList<ChangeSet>(currentBlock.changes);
-                currentIter = ContainerUtil.iterateBackward(copy).iterator();
+                if (myCurrentChangeSet != null) {
+                  currentBlock = new ChangeSetHolder(-1, myCurrentChangeSet);
+                }
+                else {
+                  currentBlock = myStorage.readPrevious(-1);
+                }
               }
             }
-            while (!currentIter.hasNext()) {
+            else {
               synchronized (ChangeList.this) {
-                currentBlock = myStorage.readPrevious(currentBlock);
+                currentBlock = myStorage.readPrevious(currentBlock.id);
               }
-              if (currentBlock == null) return null;
-              currentIter = ContainerUtil.iterateBackward(currentBlock.changes).iterator();
             }
-            return currentIter.next();
+            if (currentBlock == null) return null;
+            return currentBlock.changeSet;
           }
 
           public void remove() {
@@ -159,20 +157,6 @@ public class ChangeList {
         };
       }
     };
-  }
-
-  private void flushChanges(boolean force) {
-    if (myChangeSetDepth > 0) return;
-    if (myCurrentBlock.shouldFlush(force) || flushEveryChangeSetInTests()) {
-      myStorage.writeNextBlock(myCurrentBlock);
-      myCurrentBlock = myStorage.createNewBlock();
-    }
-    myStorage.flush();
-  }
-
-  private boolean flushEveryChangeSetInTests() {
-    Application app = ApplicationManager.getApplication();
-    return app == null || app.isUnitTestMode();
   }
 
   public void accept(ChangeVisitor v) {

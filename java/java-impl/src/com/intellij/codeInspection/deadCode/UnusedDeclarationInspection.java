@@ -103,15 +103,15 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   @NonNls private static final String COMMENT = "comment";
   @NonNls private static final String [] HINTS = {COMMENT, DELETE};
 
-  public final UnusedCodeExtension[] myExtensions;
+  public final EntryPoint[] myExtensions;
 
   public UnusedDeclarationInspection() {
     ContainerUtil.addAll(ADDITIONAL_ANNOTATIONS, ADDITIONAL_ANNOS);
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
-    ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    final UnusedCodeExtension[] deadCodeAddins = point.getExtensions();
-    Arrays.sort(deadCodeAddins, new Comparator<UnusedCodeExtension>() {
-      public int compare(final UnusedCodeExtension o1, final UnusedCodeExtension o2) {
+    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    final EntryPoint[] deadCodeAddins = point.getExtensions();
+    Arrays.sort(deadCodeAddins, new Comparator<EntryPoint>() {
+      public int compare(final EntryPoint o1, final EntryPoint o2) {
         return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
       }
     });
@@ -168,7 +168,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       gc.gridy++;
       add(myServletToEntries, gc);
 
-      for (final UnusedCodeExtension extension : myExtensions) {
+      for (final EntryPoint extension : myExtensions) {
         if (extension.showUI()) {
           final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
           extCheckbox.setSelected(extension.isSelected());
@@ -242,14 +242,14 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
   public void readSettings(Element node) throws InvalidDataException {
     super.readSettings(node);
-    for (UnusedCodeExtension extension : myExtensions) {
+    for (EntryPoint extension : myExtensions) {
       extension.readExternal(node);
     }
   }
 
   public void writeSettings(Element node) throws WriteExternalException {
     super.writeSettings(node);
-    for (UnusedCodeExtension extension : myExtensions) {
+    for (EntryPoint extension : myExtensions) {
       extension.writeExternal(node);
     }
   }
@@ -416,8 +416,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
         && AnnotationUtil.isAnnotated((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
       return true;
     }
-    for (UnusedCodeExtension extension : myExtensions) {
-      if (extension.isEntryPoint(owner)) {
+    for (EntryPoint extension : myExtensions) {
+      if (extension.isEntryPoint(owner, element)) {
         return true;
       }
     }
@@ -454,7 +454,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
         && AnnotationUtil.checkAnnotatedUsingPatterns((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
       return true;
     }
-    for (UnusedCodeExtension extension : myExtensions) {
+    for (EntryPoint extension : myExtensions) {
       if (extension.isEntryPoint(element)) {
         return true;
       }

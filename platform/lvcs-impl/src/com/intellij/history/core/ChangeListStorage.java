@@ -20,21 +20,17 @@ import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public interface ChangeListStorage {
   void close();
 
   long nextId();
 
-  ChangeSetBlock createNewBlock();
-
   @Nullable
-  ChangeSetBlock readPrevious(ChangeSetBlock block);
+  ChangeSetHolder readPrevious(int id);
 
   void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor);
 
-  void writeNextBlock(ChangeSetBlock block);
+  void writeNextSet(ChangeSet changeSet);
 
   void flush();
 }

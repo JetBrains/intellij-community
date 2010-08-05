@@ -186,7 +186,7 @@ public class RenameDialog extends RefactoringDialog {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    panel.setBorder(IdeBorderFactory.createBorder());
+    panel.setBorder(IdeBorderFactory.createRoundedBorder());
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
     gbConstraints.weighty = 0;

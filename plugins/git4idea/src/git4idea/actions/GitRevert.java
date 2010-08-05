@@ -25,10 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.Consumer;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -86,41 +83,17 @@ public class GitRevert extends BasicAction {
         else {
           pi.setText2(GitBundle.message("revert.reverting.mulitple", changes.size()));
         }
-        LocalFileSystem lfs = LocalFileSystem.getInstance();
+        final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
         for (Change c : changes) {
           ContentRevision before = c.getBeforeRevision();
           if (before != null) {
-            VirtualFile f = lfs.refreshAndFindFileByPath(before.getFile().getPath());
-            if (f != null) {
-              files.add(f);
-            }
+            mgr.fileDirty(before.getFile());
           }
           ContentRevision after = c.getAfterRevision();
           if (after != null) {
-            VirtualFile f = lfs.refreshAndFindFileByPath(after.getFile().getPath());
-            if (f != null) {
-              files.add(f);
-            }
+            mgr.fileDirty(after.getFile());
           }
         }
-
-        final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
-          public void run() {
-            final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-            for (Change c : changes) {
-              ContentRevision before = c.getBeforeRevision();
-              if (before != null) {
-                mgr.fileDirty(before.getFile());
-              }
-              ContentRevision after = c.getAfterRevision();
-              if (after != null) {
-                mgr.fileDirty(after.getFile());
-              }
-            }
-          }
-        });
-        session.addAllFiles(files);
-        session.launch();
       }
     });
   }

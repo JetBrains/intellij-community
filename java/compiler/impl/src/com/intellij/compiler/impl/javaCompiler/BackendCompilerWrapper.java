@@ -176,7 +176,7 @@ public class BackendCompilerWrapper {
       }
     }
     finally {
-      if (fileToDelete != null) {
+      if (fileToDelete != null && myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
         FileUtil.asyncDelete(fileToDelete);
       }
     }

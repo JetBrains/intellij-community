@@ -588,7 +588,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     };
 
     if (element instanceof PsiMethod) {
-      final boolean strictSignatureSearch = !((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages;
+      final boolean strictSignatureSearch = !(options instanceof JavaMethodFindUsagesOptions) || // field with getter
+                                            !((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages;
       MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters((PsiMethod)element, searchScope, strictSignatureSearch, options.fastTrack)).forEach(consumer);
     } else {
       ReferencesSearch.search(new ReferencesSearch.SearchParameters(element, searchScope, false, options.fastTrack)).forEach(consumer);

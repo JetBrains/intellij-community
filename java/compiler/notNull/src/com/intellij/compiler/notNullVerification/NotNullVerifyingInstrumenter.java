@@ -25,12 +25,9 @@ import java.util.ArrayList;
  */
 public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcodes {
   private boolean myIsModification = false;
-  private boolean myIsNotStaticInner = false;
   private String myClassName;
-  private String mySuperName;
   public static final String NOT_NULL = "org/jetbrains/annotations/NotNull";
   public static final String NOT_NULL_ANNO = "L"+ NOT_NULL + ";";
-  private static final String ENUM_CLASS_NAME = "java/lang/Enum";
   public static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
   public static final String ISE_CLASS_NAME = "java/lang/IllegalStateException";
   private static final String CONSTRUCTOR_NAME = "<init>";
@@ -51,14 +48,6 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
                     final String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     myClassName = name;
-    mySuperName = superName;
-  }
-
-  public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
-    super.visitInnerClass(name, outerName, innerName, access);
-    if (myClassName.equals(name)) {
-      myIsNotStaticInner = (access & ACC_STATIC) == 0;
-    }
   }
 
   public MethodVisitor visitMethod(
@@ -69,7 +58,6 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
     final String[] exceptions) {
     final Type[] args = Type.getArgumentTypes(desc);
     final Type returnType = Type.getReturnType(desc);
-    final int startParameter = getStartParameterIndex(name);
     MethodVisitor v = cv.visitMethod(access,
                                      name,
                                      desc,
@@ -123,7 +111,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
         for (int p = 0; p < myNotNullParams.size(); ++p) {
           int var = ((access & ACC_STATIC) == 0) ? 1 : 0;
           int param = ((Integer)myNotNullParams.get(p)).intValue();
-          for (int i = 0; i < startParameter + param; ++i) {
+          for (int i = 0; i < param; ++i) {
             var += args[i].getSize();
           }
           mv.visitVarInsn(ALOAD, var);
@@ -190,16 +178,6 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
         }
       }
     };
-  }
-
-  private int getStartParameterIndex(final String name) {
-    int result = 0;
-    if (CONSTRUCTOR_NAME.equals(name)) {
-      if (myIsNotStaticInner) {
-        result += 1;
-      }
-    }
-    return result;
   }
 
   private static boolean isReferenceType(final Type type) {

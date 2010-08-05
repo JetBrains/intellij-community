@@ -23,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
  * The main idea of this interface is to encapsulate that logic in order to allow relief unit testing.
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
+ * <p/>
+ * <b>Note:</b> it's assumed that values provided by this service are not cached for further use because it's not guaranteed
+ * that the same values are returned on subsequent calls (due to document change, editor config change etc).
  *
  * @author Denis Zhdanov
  * @since Jul 27, 2010 3:56:54 PM
@@ -48,11 +51,12 @@ public interface EditorTextRepresentationHelper {
    * <b>Note:</b> target region is allows to contain line feeds, the width is calculated as a difference between <code>'x'</code>
    * coordinates of the last and first symbols.
    *
-   * @param text    target text holder
-   * @param start   start offset of the target text sub-sequence (inclusive)
-   * @param end     end offset of the target text sub-sequence (exclusive)
-   * @param x       <code>'x'</code> offset from the visual line start
-   * @return        width in pixels necessary for the target text sub-sequence representation
+   * @param text        target text holder
+   * @param start       start offset of the target text sub-sequence (inclusive)
+   * @param end         end offset of the target text sub-sequence (exclusive)
+   * @param fontType    font type used for the given substring representation
+   * @param x           <code>'x'</code> offset from the visual line start
+   * @return            width in pixels necessary for the target text sub-sequence representation
    */
-  int textWidth(@NotNull CharSequence text, int start, int end, int x);
+  int textWidth(@NotNull CharSequence text, int start, int end, int fontType, int x);
 }

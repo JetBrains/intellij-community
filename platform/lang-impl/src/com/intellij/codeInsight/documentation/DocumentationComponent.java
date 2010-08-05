@@ -21,6 +21,7 @@ import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.actions.ExternalJavaDocAction;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
@@ -407,7 +408,17 @@ public class DocumentationComponent extends JPanel implements Disposable {
         final PsiElement element = myElement.getElement();
         final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
         final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-        if (!(provider instanceof ExternalDocumentationHandler) || !((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
+        boolean processed = false;
+        if (provider instanceof CompositeDocumentationProvider) {
+          for (final DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
+            if (documentationProvider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)documentationProvider).handleExternal(element, originalElement)) {
+              processed = true;
+              break;
+            }
+          }
+        }
+
+        if (!processed) {
           final List<String> urls = provider.getUrlFor(element, originalElement);
           assert urls != null;
           assert !urls.isEmpty();

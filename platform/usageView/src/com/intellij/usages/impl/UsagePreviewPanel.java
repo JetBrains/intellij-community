@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ui.UIUtil;
@@ -45,13 +47,12 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
   private Editor myEditor;
   private final Project myProject;
-  private String myTitle;
   private volatile boolean isDisposed = false;
 
   public UsagePreviewPanel(final Project project) {
     myProject = project;
-
     setLayout(new BorderLayout());
+    setBorder(IdeBorderFactory.createBorder());
   }
 
   private void resetEditor(@NotNull final List<UsageInfo> infos) {
@@ -69,15 +70,12 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
     final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) return;
-    final String title = UsageViewBundle.message("preview.title", psiFile.getName());
-    if (myEditor == null || document != myEditor.getDocument() || !Comparing.strEqual(title, myTitle)) {
+    if (myEditor == null || document != myEditor.getDocument()) {
       releaseEditor();
       removeAll();
       myEditor = createEditor(psiFile, document);
       if (myEditor == null) return;
-      myTitle = title;
-      JComponent titleComp = new JLabel(myTitle);
-      add(titleComp, BorderLayout.NORTH);
+      myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
       revalidate();
@@ -178,7 +176,6 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
         if (myProject.isDisposed()) return;
         if (infos == null) {
           releaseEditor();
-          myTitle = null;
           removeAll();
           JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"));
           add(titleComp, BorderLayout.CENTER);

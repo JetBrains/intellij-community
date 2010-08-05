@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.lifecycle.AtomicSectionsAware;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
@@ -302,8 +301,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
           } else {
             myRepositoryRoots.register(repoRoot);
             myTopRoots.add(new RootUrlInfo(repoRoot, foundRoot.getInfo().getURL(),
-                                       SvnFormatSelector.getWorkingCopyFormat(foundRoot.getInfo().getFile()), foundRoot.getFile(), vcsRoot,
-                                       SvnUtil.doesRepositorySupportMergeinfo(myVcs, repoRoot)));
+                                       SvnFormatSelector.getWorkingCopyFormat(foundRoot.getInfo().getFile()), foundRoot.getFile(), vcsRoot));
           }
         }
       }
@@ -359,10 +357,9 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
             }
             for (RootUrlInfo topRoot : myTopRoots) {
               if (VfsUtil.isAncestor(topRoot.getVirtualFile(), info.getFile(), true)) {
-                final RepoInfo repoRoot = myRepositoryRoots.ask(info.getUrl());
+                final SVNURL repoRoot = myRepositoryRoots.ask(info.getUrl());
                 if (repoRoot != null) {
-                  final RootUrlInfo rootInfo = new RootUrlInfo(repoRoot.getUrl(), info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot(),
-                                                               repoRoot.isRepoSupportsMergeinfo());
+                  final RootUrlInfo rootInfo = new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot());
                   rootInfo.setType(info.getType());
                   nestedRoots.add(rootInfo);
                 }
@@ -419,28 +416,27 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
 
   private static class RepositoryRoots {
     private final SvnVcs myVcs;
-    private final Set<RepoInfo> myRoots;
+    private final Set<SVNURL> myRoots;
 
     private RepositoryRoots(final SvnVcs vcs) {
       myVcs = vcs;
-      myRoots = new HashSet<RepoInfo>();
+      myRoots = new HashSet<SVNURL>();
     }
 
     public void register(final SVNURL url) {
-      myRoots.add(new RepoInfo(url, SvnUtil.doesRepositorySupportMergeinfo(myVcs, url)));
+      myRoots.add(url);
     }
 
-    public RepoInfo ask(final SVNURL url) {
-      for (RepoInfo root : myRoots) {
-        if (root.getUrl().equals(SVNURLUtil.getCommonURLAncestor(root.getUrl(), url))) {
+    public SVNURL ask(final SVNURL url) {
+      for (SVNURL root : myRoots) {
+        if (root.equals(SVNURLUtil.getCommonURLAncestor(root, url))) {
           return root;
         }
       }
       final SVNURL newUrl = SvnUtil.getRepositoryRoot(myVcs, url);
       if (newUrl != null) {
-        final RepoInfo newRoot = new RepoInfo(newUrl, SvnUtil.doesRepositorySupportMergeinfo(myVcs, url));
-        myRoots.add(newRoot);
-        return newRoot;
+        myRoots.add(newUrl);
+        return newUrl;
       }
       return null;
     }
@@ -539,8 +535,6 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
           try {
             fillMapping(mapping, state.getMappingRoots());
             fillMapping(realMapping, state.getMoreRealMappingRoots());
-
-            submitSupportsMergeinfoQuery(mapping, realMapping);
           } catch (ProcessCanceledException e) {
             throw e;
           } catch (Throwable t) {
@@ -553,31 +547,6 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
             myMoreRealMapping.copyFrom(realMapping);
           }
         }
-    });
-  }
-
-  private void submitSupportsMergeinfoQuery(SvnMapping mapping, SvnMapping realMapping) {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final Map<String, SVNURL> supportingMergeinfo = new HashMap<String, SVNURL>();
-    for (String path : mapping.getFileRoots()) {
-      supportingMergeinfo.put(path, mapping.byFile(path).getAbsoluteUrlAsUrl());
-    }
-    for (String path : realMapping.getFileRoots()) {
-      supportingMergeinfo.put(path, realMapping.byFile(path).getAbsoluteUrlAsUrl());
-    }
-
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        for (Iterator<String> iterator = supportingMergeinfo.keySet().iterator(); iterator.hasNext();) {
-          final String path = iterator.next();
-          final SVNURL url = supportingMergeinfo.get(path);
-          final boolean value = SvnUtil.doesRepositorySupportMergeinfo(vcs, url);
-          if (! value) iterator.remove();
-        }
-        for (String path : supportingMergeinfo.keySet()) {
-          setSupportsMergeinfo(path, true);
-        }
-      }
     });
   }
 
@@ -595,23 +564,8 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
       if ((svnInfo == null) || (svnInfo.getRepositoryRootURL() == null)) continue;
 
       final RootUrlInfo info = new RootUrlInfo(svnInfo.getRepositoryRootURL(), svnInfo.getURL(),
-                                               SvnFormatSelector.getWorkingCopyFormat(svnInfo.getFile()), copyRoot, vcsRoot, false);
+                                               SvnFormatSelector.getWorkingCopyFormat(svnInfo.getFile()), copyRoot, vcsRoot);
       mapping.add(info);
-    }
-  }
-
-  // does not support by default
-  private void setSupportsMergeinfo(final String path, final boolean supportsMergeinfo) {
-    synchronized (myMonitor) {
-      final RootUrlInfo urlInfo = myMapping.byFile(path);
-      final RootUrlInfo moreRealInfo = myMoreRealMapping.byFile(path);
-
-      if (urlInfo != null) {
-        urlInfo.setRepoSupportsMergeInfo(supportsMergeinfo);
-      }
-      if (moreRealInfo != null) {
-        moreRealInfo.setRepoSupportsMergeInfo(supportsMergeinfo);
-      }
     }
   }
 

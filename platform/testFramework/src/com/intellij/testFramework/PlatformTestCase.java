@@ -299,7 +299,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  private static Set<VirtualFile> eternallyLivingFiles() {
+  public static Set<VirtualFile> eternallyLivingFiles() {
     if (ourEternallyLivingFiles != null) {
       return ourEternallyLivingFiles;
     }
@@ -308,15 +308,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     for (IndexedRootsProvider provider : IndexableSetContributor.EP_NAME.getExtensions()) {
       for (VirtualFile file : IndexableSetContributor.getRootsToIndex(provider)) {
-        addSubTree(file, survivors);
-        while (file != null && survivors.add(file)) {
-          file = file.getParent();
-        }
+        registerSurvivor(survivors, file);
       }
     }
 
     ourEternallyLivingFiles = survivors;
     return survivors;
+  }
+
+  public static void registerSurvivor(Set<VirtualFile> survivors, VirtualFile file) {
+    addSubTree(file, survivors);
+    while (file != null && survivors.add(file)) {
+      file = file.getParent();
+    }
   }
 
   protected void tearDown() throws Exception {

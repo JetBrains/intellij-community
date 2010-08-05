@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -60,6 +61,11 @@ class LazyEditor extends UserDataHolderBase implements Editor {
   @NotNull
   public JComponent getContentComponent() {
     return getEditor().getContentComponent();
+  }
+
+  @Override
+  public void setBorder(@Nullable Border border) {
+    getEditor().setBorder(border);
   }
 
   @NotNull

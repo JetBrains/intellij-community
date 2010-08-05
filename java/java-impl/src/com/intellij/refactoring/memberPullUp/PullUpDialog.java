@@ -27,7 +27,6 @@ package com.intellij.refactoring.memberPullUp;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -118,7 +117,7 @@ public class PullUpDialog extends RefactoringDialog {
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel();
 
-    panel.setBorder(IdeBorderFactory.createBorder());
+    panel.setBorder(IdeBorderFactory.createRoundedBorder());
 
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();

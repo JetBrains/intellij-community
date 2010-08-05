@@ -171,19 +171,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private void collectModuleRoots(ModuleRootModel rootModel, Collection<VirtualFile> result) {
     if (myRootType.equals(OrderRootType.SOURCES)) {
-      if (myOrderEnumerator.isProductionOnly()) {
-        for (ContentEntry contentEntry : rootModel.getContentEntries()) {
-          for (SourceFolder folder : contentEntry.getSourceFolders()) {
-            VirtualFile root = folder.getFile();
-            if (root != null && !folder.isTestSource()) {
-              result.add(root);
-            }
-          }
-        }
-      }
-      else {
-        Collections.addAll(result, rootModel.getSourceRoots());
-      }
+      Collections.addAll(result, rootModel.getSourceRoots(!myOrderEnumerator.isProductionOnly()));
     }
     else if (myRootType.equals(OrderRootType.CLASSES)) {
       final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
@@ -195,18 +183,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private void collectModuleRootsUrls(ModuleRootModel rootModel, Collection<String> result) {
     if (myRootType.equals(OrderRootType.SOURCES)) {
-      if (myOrderEnumerator.isProductionOnly()) {
-        for (ContentEntry contentEntry : rootModel.getContentEntries()) {
-          for (SourceFolder folder : contentEntry.getSourceFolders()) {
-            if (!folder.isTestSource()) {
-              result.add(folder.getUrl());
-            }
-          }
-        }
-      }
-      else {
-        Collections.addAll(result, rootModel.getSourceRootUrls());
-      }
+      Collections.addAll(result, rootModel.getSourceRootUrls(!myOrderEnumerator.isProductionOnly()));
     }
     else if (myRootType.equals(OrderRootType.CLASSES)) {
       final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);

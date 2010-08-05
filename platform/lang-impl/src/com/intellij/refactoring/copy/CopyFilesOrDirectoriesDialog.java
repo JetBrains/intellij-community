@@ -130,7 +130,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
-    panel.setBorder(IdeBorderFactory.createBorder());
+    panel.setBorder(IdeBorderFactory.createRoundedBorder());
 
     myInformationLabel = new JLabel();
 

@@ -71,6 +71,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   @Override
+  public void installUI(JComponent c) {
+    super.installUI(c);
+    scrollbar.setFocusable(false);
+  }
+
+  @Override
   protected void installListeners() {
     super.installListeners();
     scrollbar.addAdjustmentListener(myAdjustmentListener);
@@ -195,6 +201,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private static class EmptyButton extends JButton {
     private EmptyButton() {
       setFocusable(false);
+      setRequestFocusEnabled(false);
     }
 
     @Override

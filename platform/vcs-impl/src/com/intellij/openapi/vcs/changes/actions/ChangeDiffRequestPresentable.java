@@ -27,9 +27,11 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
@@ -48,14 +50,14 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     myProject = project;
   }
 
-  public MyResult step() {
+  public MyResult step(DiffChainContext context) {
     final SimpleDiffRequest request = new SimpleDiffRequest(myProject, null);
-    return new MyResult(request, getRequestForChange(request));
+    return new MyResult(request, getRequestForChange(request, context));
   }
 
   @Nullable
-  private DiffPresentationReturnValue getRequestForChange(final SimpleDiffRequest request) {
-    if (! canShowChange()) return DiffPresentationReturnValue.removeFromList;
+  private DiffPresentationReturnValue getRequestForChange(final SimpleDiffRequest request, final DiffChainContext context) {
+    if (! canShowChange(context)) return DiffPresentationReturnValue.removeFromList;
     if (! loadCurrentContents(request, myChange)) return DiffPresentationReturnValue.quit;
     return DiffPresentationReturnValue.useRequest;
   }
@@ -138,7 +140,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return content;
   }
 
-  private boolean canShowChange() {
+  private boolean canShowChange(DiffChainContext context) {
     final ContentRevision bRev = myChange.getBeforeRevision();
     final ContentRevision aRev = myChange.getAfterRevision();
 
@@ -146,11 +148,11 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
         (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {
       if (bRev != null && bRev.getFile().getFileType() == FileTypes.UNKNOWN && !bRev.getFile().isDirectory()) {
         if (! checkContentsAvailable(bRev, aRev)) return false;
-        if (!checkAssociate(myProject, bRev.getFile())) return false;
+        if (!checkAssociate(myProject, bRev.getFile(), context)) return false;
       }
       else if (aRev != null && aRev.getFile().getFileType() == FileTypes.UNKNOWN && !aRev.getFile().isDirectory()) {
         if (! checkContentsAvailable(bRev, aRev)) return false;
-        if (!checkAssociate(myProject, aRev.getFile())) return false;
+        if (!checkAssociate(myProject, aRev.getFile(), context)) return false;
       }
       else {
         return false;
@@ -159,27 +161,28 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return true;
   }
 
-  private static boolean checkContentsAvailable(@Nullable final ContentRevision bRev, @Nullable final ContentRevision aRev) {
-    String bContents = null;
-    if (bRev != null) {
+  private static boolean hasContents(@Nullable final ContentRevision rev) {
+    if (rev == null) return false;
       try {
-        bContents = bRev.getContent();
-      } catch (VcsException e) {
-        //
+        if (rev instanceof BinaryContentRevision) {
+        return ((BinaryContentRevision) rev).getBinaryContent() != null;
+        } else {
+          return rev.getContent() != null;
+        }
       }
-    }
-    String aContents = null;
-    if (aRev != null) {
-      try {
-        aContents = aRev.getContent();
-      } catch (VcsException e) {
-        //
+      catch (VcsException e) {
+        return false;
       }
-    }
-    return (bContents != null) || (aContents != null);
   }
 
-  private static boolean checkAssociate(final Project project, final FilePath file) {
+  private static boolean checkContentsAvailable(@Nullable final ContentRevision bRev, @Nullable final ContentRevision aRev) {
+    if (hasContents(bRev)) return true;
+    return hasContents(aRev);
+  }
+
+  private static boolean checkAssociate(final Project project, final FilePath file, DiffChainContext context) {
+    final String pattern = FileUtil.getExtension(file.getName());
+    if (context.contains(pattern)) return false;
     int rc = Messages.showDialog(project,
                                  VcsBundle.message("diff.unknown.file.type.prompt", file.getName()),
                                  VcsBundle.message("diff.unknown.file.type.title"),
@@ -190,6 +193,8 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     if (rc == 0) {
       FileType fileType = FileTypeChooser.associateFileType(file.getName());
       return fileType != null && !fileType.isBinary();
+    } else {
+      context.add(pattern);
     }
     return false;
   }
