@@ -417,10 +417,26 @@ public class EditorUtil {
   }
 
   public static int textWidthInColumns(@NotNull Editor editor, CharSequence text, int start, int end, int x) {
+    int startToUse = start;
+
+    // Skip all lines except the last.
+    for (int i = StringUtil.lastIndexOf(text, '\n', start, end); i >= 0; i = StringUtil.lastIndexOf(text, '\n', start, end)) {
+      startToUse = i + 1;
+    }
+
+    // Tabulation is assumed to be the only symbol which representation may take various number of visual columns, hence,
+    // we return eagerly if no such symbol is found.
+    int lastTabSymbolIndex = StringUtil.lastIndexOf(text, '\t', startToUse, end);
+    if (lastTabSymbolIndex < 0) {
+      return end - startToUse;
+    }
+
     int result = 0;
     int prevX;
     int spaceSize = getSpaceWidth(Font.PLAIN, editor);
-    for (int i = start; i < end; i++) {
+
+    // Calculate number of columns up to the latest tabulation symbol.
+    for (int i = startToUse; i <= lastTabSymbolIndex; i++) {
       char c = text.charAt(i);
       prevX = x;
       switch (c) {
@@ -432,6 +448,9 @@ public class EditorUtil {
         default: x += charWidth(c, Font.PLAIN, editor); result++;
       }
     }
+
+    // Add remaining tabulation-free columns.
+    result += end - lastTabSymbolIndex - 1;
     return result;
   }
 
