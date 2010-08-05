@@ -63,6 +63,12 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     assertNotNull(field);
   }
 
+  public void testEnumConstructorSecondParam() throws Exception {
+    Class testClass = prepareTest();
+    Object field = testClass.getField("Value");
+    assertNotNull(field);
+  }
+
   private static void verifyCallThrowsException(final String expectedError, final Object instance, final Method method, final Object... args) throws IllegalAccessException {
     String exceptionText = null;
     try {
