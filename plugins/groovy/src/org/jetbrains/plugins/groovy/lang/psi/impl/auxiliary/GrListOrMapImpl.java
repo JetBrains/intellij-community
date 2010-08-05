@@ -114,6 +114,11 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
     final PsiClassType conversionType = LiteralConstructorReference.getTargetConversionType(this);
     if (conversionType != null) {
+      final PsiType ownType = getType();
+      if (ownType != null && conversionType.isAssignableFrom(ownType)) {
+        return null;
+      }
+
       return new LiteralConstructorReference(this, conversionType);
     }
 
