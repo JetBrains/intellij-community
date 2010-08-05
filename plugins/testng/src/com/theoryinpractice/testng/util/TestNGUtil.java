@@ -38,6 +38,8 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiElementFilter;
@@ -143,7 +145,12 @@ public class TestNGUtil
   }
 
   public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled) {
-    return hasTest(element, checkDisabled, true);
+    return hasTest(element, checkDisabled, !element.getManager().getSearchHelper().processElementsWithWord(new TextOccurenceProcessor() {
+      @Override
+      public boolean execute(PsiElement element, int offsetInElement) {
+        return false;
+      }
+    }, GlobalSearchScope.projectScope(element.getProject()), "testng.test", UsageSearchContext.IN_COMMENTS , true));
   }
 
   public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled, boolean checkJavadoc) {
