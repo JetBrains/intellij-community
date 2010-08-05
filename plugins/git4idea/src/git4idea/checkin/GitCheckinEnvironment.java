@@ -70,11 +70,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * The project
    */
   private final GitVcsSettings mySettings;
-
   /**
    * The author for the next commit
    */
   private String myNextCommitAuthor = null;
+  /**
+   * If true, the next commit is amended
+   */
+  private boolean myNextCommitAmend;
   /**
    * The push option of the next commit
    */
@@ -117,6 +120,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   /**
    * {@inheritDoc}
+   *
    * @param panel
    * @param additionalDataConsumer
    */
@@ -216,7 +220,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                 try {
                   files.addAll(added);
                   files.addAll(removed);
-                  commit(myProject, root, files, messageFile, myNextCommitAuthor);
+                  commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend);
                 }
                 catch (VcsException ex) {
                   if (!isMergeCommit(ex)) {
@@ -256,6 +260,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    //noinspection unchecked
     return commit(changes, preparedComment, NullableFunction.NULL);
   }
 
@@ -484,6 +489,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param files            a files to commit
    * @param message          a message file to use
    * @param nextCommitAuthor a author for the next commit
+   * @param nextCommitAmend  true, if the commit should be amended
    * @return a simple handler that does the task
    * @throws VcsException in case of git problem
    */
@@ -491,16 +497,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                              VirtualFile root,
                              Collection<FilePath> files,
                              File message,
-                             final String nextCommitAuthor) throws VcsException {
-    boolean isFirst = true;
+                             final String nextCommitAuthor,
+                             boolean nextCommitAmend)
+    throws VcsException {
+    boolean amend = nextCommitAmend;
     for (List<String> paths : GitFileUtils.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
       handler.setNoSSH(true);
-      if (isFirst) {
-        isFirst = false;
+      if (amend) {
+        handler.addParameters("--amend");
       }
       else {
-        handler.addParameters("--amend");
+        amend = true;
       }
       handler.addParameters("--only", "-F", message.getAbsolutePath());
       if (nextCommitAuthor != null) {
@@ -599,15 +607,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      * The author ComboBox, the combobox contains previously selected authors.
      */
     private final JComboBox myAuthor;
+    /**
+     * The amend checkbox
+     */
+    private final JCheckBox myAmend;
 
     /**
      * A constructor
+     *
      * @param project
      * @param roots
      */
     GitCheckinOptions(Project project, Collection<VirtualFile> roots) {
       myPanel = new JPanel(new GridBagLayout());
       final Insets insets = new Insets(2, 2, 2, 2);
+      // add authors drop down
       GridBagConstraints c = new GridBagConstraints();
       c.gridx = 0;
       c.gridy = 0;
@@ -615,11 +629,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.insets = insets;
       final JLabel authorLabel = new JLabel(GitBundle.message("commit.author"));
       myPanel.add(authorLabel, c);
+
       c = new GridBagConstraints();
       c.anchor = GridBagConstraints.CENTER;
       c.insets = insets;
-      c.gridx = 0;
-      c.gridy = 1;
+      c.gridx = 1;
+      c.gridy = 0;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
       final Set<String> authors = getUsersList(project, roots);
@@ -633,6 +648,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       authorLabel.setLabelFor(myAuthor);
       myAuthor.setToolTipText(GitBundle.getString("commit.author.tooltip"));
       myPanel.add(myAuthor, c);
+      // add amend checkbox
+      c = new GridBagConstraints();
+      c.gridx = 0;
+      c.gridy = 1;
+      c.gridwidth = 2;
+      c.anchor = GridBagConstraints.CENTER;
+      c.insets = insets;
+      c.weightx = 1;
+      c.fill = GridBagConstraints.HORIZONTAL;
+      myAmend = new JCheckBox(GitBundle.getString("commit.amend"));
+      myAmend.setMnemonic('m');
+      myAmend.setSelected(false);
+      myAmend.setToolTipText(GitBundle.getString("commit.amend.tooltip"));
+      myPanel.add(myAmend, c);
     }
 
     private Set<String> getUsersList(final Project project, final Collection<VirtualFile> roots) {
@@ -659,6 +688,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     public void refresh() {
       myAuthor.setSelectedItem("");
       myNextCommitAuthor = null;
+      myAmend.setSelected(false);
       myNextCommitIsPushed = null;
     }
 
@@ -675,6 +705,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         myNextCommitAuthor = author;
         mySettings.saveCommitAuthor(author);
       }
+      myNextCommitAmend = myAmend.isSelected();
     }
 
     /**
