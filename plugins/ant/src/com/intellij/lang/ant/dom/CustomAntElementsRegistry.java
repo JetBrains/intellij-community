@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -289,7 +290,8 @@ public class CustomAntElementsRegistry {
     }
 
     public void visitMacroDef(AntDomMacroDef macrodef) {
-      final String customTagName = macrodef.getName().getStringValue();
+      final GenericAttributeValue<String> name = macrodef.getName();
+      final String customTagName = name != null? name.getStringValue() : null;
       if (customTagName != null) {
         final String nsUri = macrodef.getUri().getStringValue();
         addCustomDefinition(macrodef, customTagName, nsUri, null, null);
@@ -297,6 +299,15 @@ public class CustomAntElementsRegistry {
           final String customSubTagName = element.getName().getStringValue();
           addCustomDefinition(element, customSubTagName, nsUri, null, null);
         }
+      }
+    }
+
+    public void visitPresetDef(AntDomPresetDef presetdef) {
+      final GenericAttributeValue<String> name = presetdef.getName();
+      final String customTagName = name != null? name.getStringValue() : null;
+      if (customTagName != null) {
+        final String nsUri = presetdef.getUri().getStringValue();
+        addCustomDefinition(presetdef, customTagName, nsUri, null, null);
       }
     }
 
