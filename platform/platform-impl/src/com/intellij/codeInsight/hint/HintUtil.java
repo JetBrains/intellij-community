@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.SideBorder2;
+import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.ui.UIUtil;
@@ -56,7 +56,7 @@ public class HintUtil {
 
   public static CompoundBorder createHintBorder() {
     return BorderFactory.createCompoundBorder(
-      new SideBorder2(Color.white, Color.white, Color.gray, Color.gray, 1),
+      new ColoredSideBorder(Color.white, Color.white, Color.gray, Color.gray, 1),
       BorderFactory.createEmptyBorder(2, 2, 2, 2)
     );
   }
@@ -88,9 +88,7 @@ public class HintUtil {
     text.appendToComponent(highlighted);
 
     Box box = Box.createHorizontalBox();
-    box.setBorder(
-      new SideBorder2(Color.white, Color.white, Color.gray, Color.gray, 1)
-    );
+    box.setBorder(new ColoredSideBorder(Color.white, Color.white, Color.gray, Color.gray, 1));
     box.setForeground(Color.black);
     box.setBackground(INFORMATION_COLOR);
     box.add(highlighted);

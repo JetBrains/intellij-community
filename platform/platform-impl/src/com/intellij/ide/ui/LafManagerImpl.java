@@ -24,9 +24,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SideBorder2;
 import com.intellij.ui.plaf.beg.*;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jdom.Element;
@@ -592,7 +592,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
       defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
       defaults.put("ToolTip.background", new ColorUIResource(255, 255, 231));
-      defaults.put("ToolTip.border", new SideBorder2(Color.gray, Color.gray, Color.black, Color.black, 1));
+      defaults.put("ToolTip.border", new ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1));
       defaults.put("Tree.ancestorInputMap", null);
       defaults.put("FileView.directoryIcon", IconLoader.getIcon("/nodes/folder.png"));
       defaults.put("FileChooser.upFolderIcon", IconLoader.getIcon("/nodes/upFolder.png"));
