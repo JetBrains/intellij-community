@@ -45,11 +45,7 @@ public class HgWorkingCopyRevisionsCommand {
    */
   @NotNull
   public List<HgRevisionNumber> parents(@NotNull VirtualFile repo) {
-    final Pair<HgRevisionNumber, HgRevisionNumber> parents = parents(repo, null);
-    final List<HgRevisionNumber> result = new ArrayList<HgRevisionNumber>(2);
-    result.add(parents.first);
-    result.add(parents.second);
-    return result;
+    return getRevisions(repo, "parents", null, null);
   }
 
   /**
@@ -73,7 +69,7 @@ public class HgWorkingCopyRevisionsCommand {
     final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision);
     switch (revisions.size()) {
       case 1: return Pair.create(revisions.get(0), null);
-      case 2: return Pair.create(revisions.get(1), null);
+      case 2: return Pair.create(revisions.get(0), revisions.get(1));
       default: return Pair.create(null, null);
     }
   }
