@@ -27,6 +27,7 @@ import com.intellij.psi.search.NonClasspathDirectoryScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -158,12 +159,12 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         final VirtualFile dir = classRoot.findFileByRelativePath(qname.replace('.', '/'));
         if (dir != null && dir.isDirectory()) {
           final PsiDirectory psiDirectory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+            @Nullable
             public PsiDirectory compute() {
-              return psiManager.findDirectory(dir);
+              return dir.isValid() ? psiManager.findDirectory(dir) : null;
             }
           });
-          assert psiDirectory != null;
-          if (!consumer.process(psiDirectory)) {
+          if (psiDirectory != null && !consumer.process(psiDirectory)) {
             return false;
           }
         }
