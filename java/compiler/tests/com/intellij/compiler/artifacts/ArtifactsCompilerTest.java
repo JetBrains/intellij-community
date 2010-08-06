@@ -1,7 +1,9 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
@@ -12,6 +14,11 @@ import com.intellij.packaging.artifacts.Artifact;
  * @author nik
  */
 public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
+  @Override
+  protected void setUpProject() throws Exception {
+    super.setUpProject();
+    CompilerTestUtil.setupJavacForTests(getProject());
+  }
 
   public void testFileCopy() throws Exception {
     final Artifact a = addArtifact(
@@ -157,6 +164,17 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       );
   }
 
+  public void testModuleOutput() throws Exception {
+    final VirtualFile file = createFile("src/A.java", "public class A {}");
+    final Module module = addModule("a", file.getParent());
+    CompilerTestUtil.scanSourceRootsToRecompile(getProject());
+    final Artifact artifact = addArtifact(root().module(module));
+
+    compile(module);
+    compile(artifact);
+    assertOutput(artifact, fs().file("A.class"));
+  }
+
   public void testIgnoredFile() throws Exception {
     final VirtualFile file = createFile("a/.svn/a.txt");
     createFile("a/svn/b.txt");
@@ -165,10 +183,33 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().dir("svn").file("b.txt"));
   }
 
+  public void testCopyExcludedFolder() throws Exception {
+    //explicitly added excluded files should be copied (e.g. compile output)
+    final VirtualFile file = createFile("xxx/excluded/a.txt");
+    createFile("xxx/excluded/CVS");
+    final VirtualFile excluded = file.getParent();
+    final VirtualFile dir = excluded.getParent();
+
+    new WriteAction() {
+      protected void run(final Result result) {
+        myModule = createModule("myModule");
+        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        model.addContentEntry(dir).addExcludeFolder(excluded);
+        model.commit();
+      }
+    }.execute();
+
+    final Artifact a = addArtifact(root().dirCopy(excluded));
+    compileProject();
+    assertOutput(a, fs()
+                     .file("a.txt"));
+  }
+
   public void testCopyExcludedFile() throws Exception {
-    //excluded files should be copied (e.g. compile output)
+    //excluded files under non-excluded directory should not be copied
     final VirtualFile file = createFile("xxx/excluded/a.txt");
     createFile("xxx/b.txt");
+    createFile("xxx/CVS");
     final VirtualFile dir = file.getParent().getParent();
 
     new WriteAction() {
@@ -183,9 +224,6 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     final Artifact a = addArtifact(root().dirCopy(dir));
     compileProject();
     assertOutput(a, fs()
-                     .dir("excluded")
-                       .file("a.txt")
-                       .end()
                      .file("b.txt"));
   }
 
