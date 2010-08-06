@@ -27,8 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -50,6 +48,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
 /**
  * @author peter
@@ -387,7 +388,7 @@ public class ReferenceExpressionCompletionContributor {
     final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
     final PsiElement secondChild = block.getChildren()[1];
     if (!(secondChild instanceof PsiExpressionStatement)) {
-      LOG.error(typeText);
+      LOG.error(typeText + "; item.object=" + qualifierItem.getObject());
     }
     final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)secondChild;
     final PsiReferenceExpression mockRef = (PsiReferenceExpression) expressionStatement.getExpression();
