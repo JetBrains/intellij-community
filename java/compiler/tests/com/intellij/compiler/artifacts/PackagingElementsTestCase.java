@@ -4,6 +4,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -36,11 +37,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     return addArtifact(name, builder.build());
   }
 
-  protected void assertLayout(Artifact artifact, String expected) {
+  protected static void assertLayout(Artifact artifact, String expected) {
     assertLayout(artifact.getRootElement(), expected);
   }
 
-  protected void assertLayout(PackagingElement element, String expected) {
+  protected static void assertLayout(PackagingElement element, String expected) {
     ArtifactsTestUtil.assertLayout(element, expected);
   }
 
@@ -75,6 +76,14 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected VirtualFile createFile(final String path, final String text) throws IOException {
+    return createFile(path, text, false);
+  }
+
+  protected VirtualFile createDir(final String path) throws IOException {
+    return createFile(path, null, true);
+  }
+
+  private VirtualFile createFile(final String path, final String text, final boolean dir) throws IOException {
     return new WriteAction<VirtualFile>() {
       protected void run(final Result<VirtualFile> result) {
         try {
@@ -84,13 +93,19 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
           while (parents.hasMoreTokens()) {
             final String name = parents.nextToken();
             VirtualFile child = parent.findChild(name);
-            if (child == null) {
+            if (child == null || !child.isValid()) {
               child = parent.createChildDirectory(this, name);
             }
             parent = child;
           }
-          final VirtualFile file = parent.createChildData(this, PathUtil.getFileName(path));
-          VfsUtil.saveText(file, text);
+          final VirtualFile file;
+          if (dir) {
+            file = parent.createChildDirectory(this, PathUtil.getFileName(path));
+          }
+          else {
+            file = parent.createChildData(this, PathUtil.getFileName(path));
+            VfsUtil.saveText(file, text);
+          }
           result.setResult(file);
         }
         catch (IOException e) {
@@ -100,16 +115,19 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     }.execute().getResultObject();
   }
 
-  protected VirtualFile getJDomJar() {
+  protected static VirtualFile getJDomJar() {
     return getJarFromLibDirectory("jdom.jar");
   }
 
-  protected String getJUnitJarPath() {
-    final VirtualFile jar = getJarFromLibDirectory("junit.jar");
-    return JarFileSystem.getInstance().getVirtualFileForJar(jar).getPath();
+  protected static String getLocalJarPath(VirtualFile jarEntry) {
+    return PathUtil.getLocalFile(jarEntry).getPath();
   }
 
-  private VirtualFile getJarFromLibDirectory(final String relativePath) {
+  protected static String getJUnitJarPath() {
+    return getLocalJarPath(getJarFromLibDirectory("junit.jar"));
+  }
+
+  private static VirtualFile getJarFromLibDirectory(final String relativePath) {
     final File file = PathManager.findFileInLibDirectory(relativePath);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     assertNotNull(file.getAbsolutePath() + " not found", virtualFile);
@@ -119,6 +137,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected Library addProjectLibrary(final @Nullable Module module, final String name, final VirtualFile... jars) {
+    return addProjectLibrary(module, name, DependencyScope.COMPILE, jars);
+  }
+
+  protected Library addProjectLibrary(final @Nullable Module module, final String name, final DependencyScope scope,
+                                      final VirtualFile... jars) {
     return new WriteAction<Library>() {
       protected void run(final Result<Library> result) {
         final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(name);
@@ -129,7 +152,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
         libraryModel.commit();
         if (module != null) {
           final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-          rootModel.addLibraryEntry(library);
+          rootModel.addLibraryEntry(library).setScope(scope);
           rootModel.commit();
         }
         result.setResult(library);
@@ -137,7 +160,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     }.execute().getResultObject();
   }
 
-  protected Library addModuleLibrary(final Module module, final VirtualFile... jars) {
+  protected static Library addModuleLibrary(final Module module, final VirtualFile... jars) {
     return new WriteAction<Library>() {
       protected void run(final Result<Library> result) {
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -153,7 +176,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     }.execute().getResultObject();
   }
 
-  protected void addModuleDependency(final Module module, final Module dependency) {
+  protected static void addModuleDependency(final Module module, final Module dependency) {
     new WriteAction() {
       protected void run(final Result result) {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();

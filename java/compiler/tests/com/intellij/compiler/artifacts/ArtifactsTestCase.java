@@ -115,7 +115,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     }.execute().getResultObject();
   }
 
-  public class MockPackagingEditorContext extends ArtifactEditorContextImpl {
+  public static class MockPackagingEditorContext extends ArtifactEditorContextImpl {
     public MockPackagingEditorContext(ArtifactsStructureConfigurableContext parent, final ArtifactEditorEx editor) {
       super(parent, editor);
     }

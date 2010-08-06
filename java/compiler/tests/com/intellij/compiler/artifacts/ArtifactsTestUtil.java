@@ -4,18 +4,26 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
+import com.intellij.packaging.impl.elements.ManifestFileUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 
 /**
  * @author nik
@@ -90,4 +98,22 @@ public class ArtifactsTestUtil {
     assertNotNull("'" + artifactName + "' artifact not found", artifact);
     return artifact;
   }
+
+  public static void assertManifest(Artifact artifact, PackagingElementResolvingContext context, @Nullable String mainClass, @Nullable String classpath) {
+    final CompositePackagingElement<?> rootElement = artifact.getRootElement();
+    final ArtifactType type = artifact.getArtifactType();
+    assertManifest(rootElement, context, type, mainClass, classpath);
+  }
+
+  public static void assertManifest(CompositePackagingElement<?> rootElement,
+                                     PackagingElementResolvingContext context,
+                                     ArtifactType type,
+                                     @Nullable String mainClass, @Nullable String classpath) {
+    final VirtualFile file = ManifestFileUtil.findManifestFile(rootElement, context, type);
+    assertNotNull(file);
+    final Manifest manifest = ManifestFileUtil.readManifest(file);
+    assertEquals(mainClass, manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS));
+    assertEquals(classpath, manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH));
+  }
+
 }
