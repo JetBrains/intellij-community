@@ -62,38 +62,43 @@ public class GantScriptType extends GroovyScriptType {
   }
 
   @Override
-  public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
-    final PsiElement element = location.getPsiElement();
-    PsiElement pp = element.getParent();
-    PsiElement parent = element;
-    while (!(pp instanceof PsiFile) && pp != null) {
-      pp = pp.getParent();
-      parent = parent.getParent();
-    }
-    if (pp != null && parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "target")) {
-      String target = getFoundTargetName(((GrMethodCallExpression)parent));
-      if (target != null) {
-        configuration.scriptParams = target;
-        configuration.setName(configuration.getName() + "." + target);
-      }
-    }
-    final CompileStepBeforeRun.MakeBeforeRunTask runTask =
-      RunManagerEx.getInstanceEx(element.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
-    if (runTask != null) {
-      runTask.setEnabled(false);
-    }
+  public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location place) {
+    final String params = existing.scriptParams;
+    final String s = getTargetName(place);
+    return s != null && params != null && (params.startsWith(s + " ") || params.equals(s));
   }
 
   @Nullable
-  private static String getFoundTargetName(final GrMethodCallExpression call) {
-    final GrNamedArgument[] args = call.getNamedArguments();
-    if (args.length == 1) {
-      final GrArgumentLabel label = args[0].getLabel();
-      if (label != null && GantUtils.isPlainIdentifier(label)) {
-        return label.getName();
+  private static String getTargetName(Location location) {
+    PsiElement parent = location.getPsiElement();
+    while (!(parent.getParent() instanceof PsiFile) && parent.getParent() != null) {
+      parent = parent.getParent();
+    }
+    if (parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "target")) {
+      final GrNamedArgument[] args = ((GrMethodCallExpression)parent).getNamedArguments();
+      if (args.length == 1) {
+        final GrArgumentLabel label = args[0].getLabel();
+        if (label != null && GantUtils.isPlainIdentifier(label)) {
+          return label.getName();
+        }
       }
+      return null;
     }
     return null;
+  }
+
+  @Override
+  public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
+    String target = getTargetName(location);
+    if (target != null) {
+      configuration.scriptParams = target;
+      configuration.setName(configuration.getName() + "." + target);
+    }
+    final CompileStepBeforeRun.MakeBeforeRunTask runTask =
+      RunManagerEx.getInstanceEx(file.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
+    if (runTask != null) {
+      runTask.setEnabled(false);
+    }
   }
 
   public static List<VirtualFile> additionalScopeFiles(@NotNull GroovyFile file) {
