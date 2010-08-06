@@ -43,6 +43,10 @@ public class IdeBorderFactory {
     return new EmptyBorder(insets);
   }
 
+  public static Border createEmptyBorder(int thickness) {
+    return new EmptyBorder(thickness, thickness, thickness, thickness);
+  }
+
   public static Border createEmptyBorder(int top, int left, int bottom, int right) {
     return new EmptyBorder(top, left, bottom, right);
   }

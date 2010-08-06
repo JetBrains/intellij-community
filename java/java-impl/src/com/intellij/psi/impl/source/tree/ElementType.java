@@ -84,5 +84,7 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType,
   TokenSet IMPORT_STATIC_STATEMENT_BIT_SET = TokenSet.create(IMPORT_STATIC_STATEMENT);
   TokenSet IMPORT_STATEMENT_BASE_BIT_SET = TokenSet.create(IMPORT_STATEMENT, IMPORT_STATIC_STATEMENT);
   TokenSet CLASS_KEYWORD_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD);
-  TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, CLASS_INITIALIZER, METHOD);
+  TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, ENUM_CONSTANT, METHOD, ANNOTATION_METHOD);
+  TokenSet FULL_MEMBER_BIT_SET = TokenSet.orSet(MEMBER_BIT_SET,
+                                                TokenSet.create(CLASS_INITIALIZER));
 }

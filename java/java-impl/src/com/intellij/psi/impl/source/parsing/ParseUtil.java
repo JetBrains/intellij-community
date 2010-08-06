@@ -58,7 +58,11 @@ public class ParseUtil extends ParseUtilBase {
 
   private static class JavaMissingTokenInserter extends MissingTokenInserter {
 
-    public JavaMissingTokenInserter(final CompositeElement root, final Lexer lexer, final int startOffset, final int endOffset, final int state,
+    public JavaMissingTokenInserter(final CompositeElement root,
+                                    final Lexer lexer,
+                                    final int startOffset,
+                                    final int endOffset,
+                                    final int state,
                                     final TokenProcessor processor,
                                     final ParsingContext context) {
       super(root, lexer, startOffset, endOffset, state, processor, context);
@@ -146,11 +150,7 @@ public class ParseUtil extends ParseUtilBase {
         if (element == null) return false;
       }
 
-      if (element.getElementType() == JavaElementType.CLASS ||
-          element.getElementType() == JavaElementType.FIELD ||
-          element.getElementType() == JavaElementType.METHOD ||
-          element.getElementType() == JavaElementType.ENUM_CONSTANT ||
-          element.getElementType() == JavaElementType.ANNOTATION_METHOD) {
+      if (ElementType.MEMBER_BIT_SET.contains(element.getElementType())) {
         TreeElement first = element.getFirstChildNode();
         if (startSpaces != null) {
           docComment.rawRemoveUpTo(element);
@@ -172,9 +172,8 @@ public class ParseUtil extends ParseUtilBase {
     }
 
     private static final TokenSet BIND_TRAILING_COMMENT_BIT_SET = TokenSet.orSet(
-      TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS, JavaElementType.CLASS_INITIALIZER,
-                      JavaElementType.IMPORT_STATEMENT, JavaElementType.IMPORT_STATIC_STATEMENT, JavaElementType.PACKAGE_STATEMENT),
-      ElementType.JAVA_STATEMENT_BIT_SET);
+      TokenSet.create(JavaElementType.PACKAGE_STATEMENT),
+      ElementType.IMPORT_STATEMENT_BASE_BIT_SET, ElementType.FULL_MEMBER_BIT_SET, ElementType.JAVA_STATEMENT_BIT_SET);
 
     private static boolean bindTrailingComment(TreeElement comment) {
       TreeElement element = comment.getTreePrev();
@@ -203,10 +202,7 @@ public class ParseUtil extends ParseUtilBase {
     private static final TokenSet BIND_PRECEDING_COMMENT_BIT_SET = TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD,
                                                                                    JavaElementType.CLASS, JavaElementType.CLASS_INITIALIZER);
 
-    private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(JavaTokenType.C_STYLE_COMMENT,
-                                                                                       JavaTokenType.END_OF_LINE_COMMENT,
-                                                                                       JavaDocElementType.DOC_COMMENT,
-                                                                                       TokenType.WHITE_SPACE);
+    private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
 
     private static void bindPrecedingComment(TreeElement comment, ASTNode bindTo) {
       if (bindTo == null || bindTo.getFirstChildNode() != null && bindTo.getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT) return;

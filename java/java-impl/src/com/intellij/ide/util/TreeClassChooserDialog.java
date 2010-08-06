@@ -84,20 +84,20 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     this(title, project, null);
   }
 
-  public TreeClassChooserDialog(String title, Project project, PsiClass initialClass) {
+  public TreeClassChooserDialog(String title, Project project, @Nullable PsiClass initialClass) {
     this(title, project, GlobalSearchScope.projectScope(project), null, initialClass);
   }
 
-  public TreeClassChooserDialog(String title, Project project, GlobalSearchScope scope, ClassFilter classFilter, PsiClass initialClass) {
+  public TreeClassChooserDialog(String title, Project project, GlobalSearchScope scope, @Nullable ClassFilter classFilter, @Nullable PsiClass initialClass) {
     this(title, project, scope, classFilter, null, initialClass, PsiClassChildrenSource.NONE);
   }
 
   public TreeClassChooserDialog(String title,
                                 Project project,
                                 GlobalSearchScope scope,
-                                ClassFilter classFilter,
+                                @Nullable ClassFilter classFilter,
                                 PsiClass baseClass,
-                                PsiClass initialClass,
+                                @Nullable PsiClass initialClass,
                                 PsiClassChildrenSource classChildrens) {
     super(project, true);
     myScope = scope;
@@ -119,7 +119,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
                                                         Project project,
                                                         GlobalSearchScope scope,
                                                         final ClassFilter classFilter,
-                                                        PsiClass initialClass) {
+                                                        @Nullable PsiClass initialClass) {
     return new TreeClassChooserDialog(title, project, scope, classFilter, null, initialClass, new PsiClassChildrenSource() {
       public void addChildren(PsiClass psiClass, List<PsiElement> children) {
         ArrayList<PsiElement> innerClasses = new ArrayList<PsiElement>();

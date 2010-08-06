@@ -356,9 +356,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           try {
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
 
             commonScheme(url, false, null);
-            Assert.assertEquals(2, listener.getCnt());
+            Assert.assertEquals(3, listener.getCnt());
             Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
             myTestInteraction.reset();
             savedOnceListener.assertForAwt();
@@ -367,8 +368,9 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
             commonScheme(url, false, null);
-            Assert.assertEquals(4, listener.getCnt());
+            Assert.assertEquals(6, listener.getCnt());
             Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
           }
           catch (SVNException e) {
@@ -380,10 +382,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       Assert.assertTrue(result[0]);
       Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
-      Assert.assertEquals(4, listener.getCnt());
+      Assert.assertEquals(6, listener.getCnt());
       listener.assertForAwt();
       savedOnceListener.assertForAwt();
-      savedOnceListener.assertNotSaved(url, ISVNAuthenticationManager.PASSWORD);
+      savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
 
       if (exception[0] != null) {
         throw exception[0];
@@ -417,9 +419,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           try {
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
 
             commonScheme(url, false, null);
-            Assert.assertEquals(2, listener.getCnt());
+            Assert.assertEquals(3, listener.getCnt());
             Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
             myTestInteraction.reset();
             savedOnceListener.assertForAwt();
@@ -428,8 +431,9 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
             commonScheme(url, false, null);
-            Assert.assertEquals(4, listener.getCnt());
+            Assert.assertEquals(6, listener.getCnt());
             Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
           }
           catch (SVNException e) {
@@ -441,10 +445,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       Assert.assertTrue(result[0]);
       Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
-      Assert.assertEquals(4, listener.getCnt());
+      Assert.assertEquals(6, listener.getCnt());
       listener.assertForAwt();
       savedOnceListener.assertForAwt();
-      savedOnceListener.assertNotSaved(url, ISVNAuthenticationManager.PASSWORD);
+      savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
 
       if (exception[0] != null) {
         throw exception[0];
@@ -486,9 +490,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           try {
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
 
             commonScheme(url, false, null);
-            Assert.assertEquals(2, listener.getCnt());
+            Assert.assertEquals(3, listener.getCnt());
             Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
             myTestInteraction.reset();
             savedOnceListener.assertForAwt();
@@ -497,8 +502,9 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
             commonScheme(url, false, null);
-            Assert.assertEquals(4, listener.getCnt());
+            Assert.assertEquals(6, listener.getCnt());
             Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
           }
           catch (SVNException e) {
@@ -510,10 +516,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       Assert.assertTrue(result[0]);
       Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
-      Assert.assertEquals(4, listener.getCnt());
+      Assert.assertEquals(6, listener.getCnt());
       listener.assertForAwt();
       savedOnceListener.assertForAwt();
-      savedOnceListener.assertNotSaved(url, ISVNAuthenticationManager.PASSWORD);
+      savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
 
       if (exception[0] != null) {
         throw exception[0];
@@ -547,9 +553,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           try {
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
 
             commonScheme(url, false, null);
-            Assert.assertEquals(2, listener.getCnt());
+            Assert.assertEquals(3, listener.getCnt());
             Assert.assertEquals(1, myTestInteraction.getNumSSLWarn());
             myTestInteraction.reset();
             savedOnceListener.assertForAwt();
@@ -558,8 +565,9 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
             commonScheme(url, false, null);
-            Assert.assertEquals(4, listener.getCnt());
+            Assert.assertEquals(6, listener.getCnt());
             Assert.assertEquals(1, myTestInteraction.getNumSSLWarn());
           }
           catch (SVNException e) {
@@ -571,10 +579,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       Assert.assertTrue(result[0]);
       Assert.assertEquals(1, myTestInteraction.getNumSSLWarn());
-      Assert.assertEquals(4, listener.getCnt());
+      Assert.assertEquals(6, listener.getCnt());
       listener.assertForAwt();
       savedOnceListener.assertForAwt();
-      savedOnceListener.assertNotSaved(url, ISVNAuthenticationManager.PASSWORD);
+      savedOnceListener.assertSaved(url, ISVNAuthenticationManager.SSL);
 
       if (exception[0] != null) {
         throw exception[0];

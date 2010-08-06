@@ -18,7 +18,7 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
     Foo() {}
     }
 """)
-    myFixture.addFileToProject "a.groovy", "Foo x = []"
+    myFixture.addFileToProject "a.gpp", "Foo x = []"
     assertOneElement(ReferencesSearch.search(foo.constructors[0]).findAll())
   }
   
@@ -28,11 +28,12 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
     }
 """)
     myFixture.addFileToProject "a.groovy", """
-Foo foo() {
+@Typed Foo foo() {
   if (true) []
   else return []
 }
-Foo bar() { [] }
+Foo untyped() { [] }
+@Typed Foo bar() { [] }
 """
     assertEquals(3, ReferencesSearch.search(foo.constructors[0]).findAll().size())
   }
@@ -42,7 +43,7 @@ Foo bar() { [] }
     Foo() {}
     }
 """)
-    myFixture.addFileToProject "a.groovy", "def x = (Foo) []"
+    myFixture.addFileToProject "a.gpp", "def x = (Foo) []"
     assertOneElement(ReferencesSearch.search(foo.constructors[0]).findAll())
   }
 

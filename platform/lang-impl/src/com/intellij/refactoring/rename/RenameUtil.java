@@ -56,7 +56,7 @@ public class RenameUtil {
   public static UsageInfo[] findUsages(final PsiElement element,
                                        String newName,
                                        boolean searchInStringsAndComments,
-                                       boolean searchForTextOccurences,
+                                       boolean searchForTextOccurrences,
                                        Map<? extends PsiElement, String> allRenames) {
     final List<UsageInfo> result = Collections.synchronizedList(new ArrayList<UsageInfo>());
 
@@ -75,6 +75,7 @@ public class RenameUtil {
     processor.findCollisions(element, newName, allRenames, result);
 
     final PsiElement searchForInComments = processor.getElementToSearchInStringsAndComments(element);
+
     if (searchInStringsAndComments && searchForInComments != null) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
       if (stringToSearch.length() > 0) {
@@ -84,27 +85,24 @@ public class RenameUtil {
       }
     }
 
-
-    if (searchForTextOccurences && searchForInComments != null) {
+    if (searchForTextOccurrences && searchForInComments != null) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.NON_JAVA);
-
       if (stringToSearch.length() > 0) {
         final String stringToReplace = getStringToReplace(element, newName, true, processor);
-        addTextOccurence(searchForInComments, result, projectScope, stringToSearch, stringToReplace);
+        addTextOccurrence(searchForInComments, result, projectScope, stringToSearch, stringToReplace);
       }
 
       final Pair<String, String> additionalStringToSearch = processor.getTextOccurrenceSearchStrings(searchForInComments, newName);
       if (additionalStringToSearch != null && additionalStringToSearch.first.length() > 0) {
-        addTextOccurence(searchForInComments, result, projectScope, additionalStringToSearch.first, additionalStringToSearch.second);
+        addTextOccurrence(searchForInComments, result, projectScope, additionalStringToSearch.first, additionalStringToSearch.second);
       }
     }
 
     return result.toArray(new UsageInfo[result.size()]);
   }
 
-  private static void addTextOccurence(final PsiElement element, final List<UsageInfo> result, final GlobalSearchScope projectScope,
-                                       final String stringToSearch,
-                                       final String stringToReplace) {
+  private static void addTextOccurrence(final PsiElement element, final List<UsageInfo> result, final GlobalSearchScope projectScope,
+                                        final String stringToSearch, final String stringToReplace) {
     TextOccurrencesUtil.UsageInfoFactory factory = new TextOccurrencesUtil.UsageInfoFactory() {
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         TextRange textRange = usage.getTextRange();

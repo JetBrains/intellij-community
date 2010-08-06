@@ -51,10 +51,7 @@ import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.HintListener;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.SideBorder2;
+import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -805,7 +802,7 @@ public class LineStatusTracker {
     final Color foreground = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
     toolbar.setBackground(background);
 
-    toolbar.setBorder(new SideBorder2(foreground, foreground, range.getType() != Range.INSERTED ? null : foreground, foreground, 1));
+    toolbar.setBorder(new ColoredSideBorder(foreground, foreground, range.getType() != Range.INSERTED ? null : foreground, foreground, 1));
 
     JPanel component = new JPanel(new BorderLayout());
     component.setOpaque(false);

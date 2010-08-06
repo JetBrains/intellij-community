@@ -16,16 +16,20 @@
 
 package com.intellij.codeInsight;
 
-import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.lang.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class CommentUtil {
-  private CommentUtil() {
-  }
+  private CommentUtil() { }
 
   public static Indent getMinLineIndent(Project project, Document document, int line1, int line2, FileType fileType) {
     CharSequence chars = document.getCharsSequence();
@@ -52,5 +56,27 @@ public class CommentUtil {
     //  minIndent = 0;
     //}
     return minIndent;
+  }
+
+  public static boolean isComment(@Nullable final PsiElement element) {
+    return element != null && isComment(element.getNode());
+  }
+
+  public static boolean isComment(@Nullable final ASTNode node) {
+    if (node == null) return false;
+    final IElementType type = node.getElementType();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(type.getLanguage());
+    return parserDefinition != null && parserDefinition.getCommentTokens().contains(type);
+  }
+
+  public static boolean isCommentTextElement(final PsiElement element) {
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(element.getLanguage());
+    if (commenter instanceof CodeDocumentationAwareCommenterEx) {
+      final CodeDocumentationAwareCommenterEx commenterEx = (CodeDocumentationAwareCommenterEx)commenter;
+      if (commenterEx.isDocumentationCommentText(element)) return true;
+      if (element instanceof PsiComment && commenterEx.isDocumentationComment((PsiComment)element)) return false;
+    }
+
+    return isComment(element);
   }
 }

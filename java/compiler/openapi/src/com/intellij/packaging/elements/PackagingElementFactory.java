@@ -17,8 +17,9 @@ package com.intellij.packaging.elements;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import org.jetbrains.annotations.NonNls;
@@ -70,6 +71,9 @@ public abstract class PackagingElementFactory {
   @NotNull
   public abstract PackagingElement<?> createExtractedDirectoryWithParentDirectories(@NotNull String jarPath, @NotNull String pathInJar,
                                                                                     @NotNull String relativeOutputPath);
+
+  @NotNull
+  public abstract PackagingElement<?> createExtractedDirectory(@NotNull VirtualFile jarEntry);
 
   @NotNull
   public abstract PackagingElement<?> createFileCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath,

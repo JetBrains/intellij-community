@@ -15,9 +15,12 @@
  */
 package com.intellij.lang.java;
 
-import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.CodeDocumentationAwareCommenterEx;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
@@ -26,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class JavaCommenter implements CodeDocumentationAwareCommenter {
+public class JavaCommenter implements CodeDocumentationAwareCommenterEx {
 
   public String getLineCommentPrefix() {
     return "//";
@@ -77,5 +80,11 @@ public class JavaCommenter implements CodeDocumentationAwareCommenter {
 
   public boolean isDocumentationComment(final PsiComment element) {
     return element instanceof PsiDocComment;
+  }
+
+  public boolean isDocumentationCommentText(final PsiElement element) {
+    if (element == null) return false;
+    final ASTNode node = element.getNode();
+    return node != null && node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA;
   }
 }

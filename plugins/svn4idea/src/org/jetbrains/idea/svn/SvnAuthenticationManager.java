@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.Nullable;
@@ -163,15 +164,15 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       }
 
       final String actualKind = auth.getKind();
-      final Runnable actualSave = new Runnable() {
+      final Consumer<Boolean> actualSave = new Consumer<Boolean>() {
         @Override
-        public void run() {
+        public void consume(final Boolean withCredentials) {
           File dir = new File(myAuthDir, actualKind);
           String fileName = SVNFileUtil.computeChecksum(realm);
           File authFile = new File(dir, fileName);
 
-          myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, actualKind, 
-                                                            ! Boolean.FALSE.equals(myPlainTextAllowed.get(Thread.currentThread())));
+          myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, actualKind,
+                                                            Boolean.TRUE.equals(withCredentials));
           try {
             ((IPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, actualKind, realm);
           }
@@ -189,7 +190,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         }
       };
       if (USERNAME.equals(actualKind)) {
-        actualSave.run();
+        actualSave.consume(true);
         return;
       }
       if (!auth.isStorageAllowed()) return;
@@ -448,7 +449,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   public void saveCredentialsIfAllowed(final SVNAuthentication auth, final String kind, final String realm,
-                                                    final Runnable saveRunnable) {
+                                                    final Consumer<Boolean> saveRunnable) {
     final SVNURL url = auth.getURL();
 
     final String storeCredentials = getConfigFile().getPropertyValue("auth", "store-auth-creds");
@@ -500,7 +501,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         return;
       }
     }
-    saveRunnable.run();
+    saveRunnable.consume(passwordWillBeSaved);
   }
 
   @Override
@@ -525,7 +526,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   private void promptAndSaveWhenWeLackEncryption(
-    final Runnable saveRunnable,
+    final Consumer<Boolean> saveRunnable,
     final Getter<Boolean> prompt) {
 
     final Boolean[] saveOnce = new Boolean[1];
@@ -535,7 +536,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         final Thread currentThread = Thread.currentThread();
         myPlainTextAllowed.put(currentThread, Boolean.TRUE.equals(saveOnce[0]));
         try {
-          saveRunnable.run();
+          saveRunnable.consume(saveOnce[0]);
         }
         finally {
           myPlainTextAllowed.remove(currentThread);

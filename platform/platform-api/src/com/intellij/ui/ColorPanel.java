@@ -97,9 +97,8 @@ public class ColorPanel extends JPanel {
     }
 
     JPanel customColorsPanel = new JPanel(myCustomGridLayout);
-    EdgeBorder edgeborder = new EdgeBorder(EdgeBorder.EDGE_LEFT);
-    Border border = BorderFactory.createEmptyBorder(0, 2, 0, 0);
-    customColorsPanel.setBorder(BorderFactory.createCompoundBorder(edgeborder, border));
+    customColorsPanel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.LEFT),
+                                                                   BorderFactory.createEmptyBorder(0, 2, 0, 0)));
     for(int k = 0; k < myFgCustomColorBoxes.length; k++){
       JPanel jpanel4 = new JPanel(new BorderLayout());
       jpanel4.setBorder(BorderFactory.createEtchedBorder());

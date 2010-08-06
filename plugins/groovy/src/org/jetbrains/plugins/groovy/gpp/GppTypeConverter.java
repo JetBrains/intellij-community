@@ -53,7 +53,7 @@ public class GppTypeConverter extends GrTypeConverter {
         return true;
       }
 
-      if (lType instanceof PsiClassType && hasConstructor((PsiClassType)lType, tupleType.getComponentTypes(), context)) {
+      if (lType instanceof PsiClassType && hasTypedContext(context)) {
         return true;
       }
     }
@@ -67,11 +67,7 @@ public class GppTypeConverter extends GrTypeConverter {
         return null;
       }
 
-      if (((GrMapType)rType).getValueType("super") != null) {
-        return true;
-      }
-
-      if ((!isMethodCallConversion(context) || hasTypedContext(context)) && hasDefaultConstructor(lType)) {
+      if (hasTypedContext(context)) {
         return true;
       }
     }
@@ -91,14 +87,10 @@ public class GppTypeConverter extends GrTypeConverter {
     return false;
   }
 
-  private static boolean hasDefaultConstructor(PsiType type) {
+  public static boolean hasDefaultConstructor(PsiType type) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true, false);
 
-  }
-
-  private static boolean hasConstructor(PsiClassType lType, PsiType[] argTypes, GroovyPsiElement context) {
-    return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates(lType, argTypes, context).length == 1;
   }
 
 }

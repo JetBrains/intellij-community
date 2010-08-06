@@ -1431,7 +1431,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myForcedBackground = null;
       return;
     }
-
     myForcedBackground = color;
   }
 
@@ -1620,7 +1619,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (hEnd >= lEnd) {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
-          position.x = drawBackground(g, backColor, text.subSequence(start, lEnd - lIterator.getSeparatorLength()), position, fontType,
+          position.x = drawSoftWrapAwareBackground(g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
                                       defaultBackground, clip);
 
           if (lIterator.getLineNumber() < lastLineIndex) {
@@ -1651,59 +1650,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(), position, fontType, defaultBackground, clip);
         }
         else {
-          List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, hEnd);
-          int startToUse = start;
-          for (TextChange softWrap : softWraps) {
-            // Draw background for token text before the wrap.
-            if (softWrap.getStart() > startToUse) {
-              position.x = drawBackground(
-                g, backColor, text.subSequence(startToUse, softWrap.getStart()), position, fontType, defaultBackground, clip
-              );
-            }
-
-            startToUse = softWrap.getStart();
-
-            // Draw soft wrap text background if any.
-            CharSequence softWrapText = softWrap.getText();
-            int softWrapStart = 0;
-            int softWrapEnd = 0;
-            while (softWrapEnd < softWrapText.length()) {
-              for (; softWrapEnd < softWrapText.length() && softWrapText.charAt(softWrapEnd) != '\n'; softWrapEnd++) ;
-              if (softWrapEnd >= softWrapText.length()) {
-                position.x = drawBackground(
-                  g, backColor, softWrapText.subSequence(softWrapStart, softWrapText.length()), position, fontType, defaultBackground, clip
-                );
-              }
-              else {
-                if (softWrapEnd > softWrapStart) {
-                  drawBackground(
-                    g, backColor, softWrapText.subSequence(softWrapStart, softWrapEnd - 1), position, fontType, defaultBackground, clip
-                  );
-                  if (backColor != null && !backColor.equals(defaultBackground)) {
-                    g.setColor(backColor);
-                    g.fillRect(position.x, position.y, clip.x + clip.width - position.x, lineHeight);
-                  }
-                }
-                if (position.y > clip.y + clip.height) break outer;
-                position.x = 0;
-                position.y += lineHeight;
-                softWrapStart = softWrapEnd + 1;
-                softWrapEnd = softWrapStart;
-              }
-            }
+          if (hEnd > lEnd - lIterator.getSeparatorLength()) {
+            position.x = drawSoftWrapAwareBackground(
+              g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
+              defaultBackground, clip
+            );
           }
-
-          // Draw background for remaining document text if any.
-          if (startToUse < hEnd) {
-            if (hEnd > lEnd - lIterator.getSeparatorLength()) {
-              position.x = drawBackground(
-                g, backColor, text.subSequence(startToUse, lEnd - lIterator.getSeparatorLength()), position, fontType,
-                defaultBackground, clip
-              );
-            }
-            else {
-              position.x = drawBackground(g, backColor, text.subSequence(startToUse, hEnd), position, fontType, defaultBackground, clip);
-            }
+          else {
+            position.x = drawSoftWrapAwareBackground(g, backColor, text, start, hEnd, position, fontType, defaultBackground, clip);
           }
         }
 
@@ -1761,29 +1715,87 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private int drawSoftWrapAwareBackground(Graphics g, Color backColor, CharSequence text, int start, int end, Point position,
+                                          int fontType, Color defaultBackground, Rectangle clip)
+  {
+    int startToUse = start;
+    List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, end);
+    for (TextChange softWrap : softWraps) {
+      int softWrapStart = softWrap.getStart();
+      if (startToUse < softWrapStart) {
+        position.x = drawBackground(g, backColor, text.subSequence(startToUse, softWrapStart), position, fontType, defaultBackground, clip);
+      }
+      drawSoftWrap(g, backColor, softWrap, position, fontType, defaultBackground, clip);
+      startToUse = softWrapStart;
+    }
+
+    if (startToUse < end) {
+      position.x = drawBackground(g, backColor, text.subSequence(startToUse, end), position, fontType, defaultBackground, clip);
+    }
+    return position.x;
+  }
+
+  private void drawSoftWrap(Graphics g, Color backColor, TextChange softWrap, Point position,
+                            int fontType, Color defaultBackground, Rectangle clip)
+  {
+    position.x = drawBackground(
+      g, backColor, getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED), position, fontType,
+      defaultBackground, clip
+    );
+
+    CharSequence softWrapText = softWrap.getText();
+    int start = 0;
+    for (
+      int end = CharArrayUtil.shiftForwardUntil(softWrapText, start, "\n");
+      start < softWrapText.length() && end < softWrapText.length();
+      end = CharArrayUtil.shiftForwardUntil(softWrapText, start, "\n"))
+    {
+      drawBackground(g, backColor, softWrapText.subSequence(start, end), position, fontType, defaultBackground, clip);
+      start = end + 1;
+      position.x = 0;
+      position.y += getLineHeight();
+    }
+
+    if (start < softWrapText.length()) {
+      position.x = drawBackground(
+        g, backColor, softWrapText.subSequence(start, softWrapText.length()), position, fontType, defaultBackground, clip
+      );
+    }
+
+    position.x = drawBackground(
+      g, backColor, getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP), position, fontType,
+      defaultBackground, clip
+    );
+  }
+
+  private int drawBackground(Graphics g, Color backColor, CharSequence text, Point position, int fontType, Color defaultBackground,
+                             Rectangle clip)
+  {
+    int width = getTextSegmentWidth(text, position.x, fontType, clip);
+    return drawBackground(g, backColor, width, position, fontType, defaultBackground, clip);
+  }
+
   private int drawBackground(Graphics g,
                              Color backColor,
-                             CharSequence text,
+                             int width,
                              Point position,
                              int fontType,
                              Color defaultBackground,
                              Rectangle clip) {
-    int w = getTextSegmentWidth(text, position.x, fontType, clip);
-
-    if (backColor != null && !backColor.equals(defaultBackground) && clip.intersects(position.x, position.y, w, getLineHeight())) {
+    if (backColor != null && !backColor.equals(defaultBackground) && clip.intersects(position.x, position.y, width, getLineHeight())) {
       if (backColor.equals(myLastBackgroundColor) && myLastBackgroundPosition.y == position.y &&
         myLastBackgroundPosition.x + myLastBackgroundWidth == position.x) {
-        myLastBackgroundWidth += w;
+        myLastBackgroundWidth += width;
       }
       else {
         flushBackground(g, clip);
         myLastBackgroundColor = backColor;
         myLastBackgroundPosition = new Point(position);
-        myLastBackgroundWidth = w;
+        myLastBackgroundWidth = width;
       }
     }
 
-    return position.x + w;
+    return position.x + width;
   }
 
   private void flushBackground(Graphics g, final Rectangle clip) {
@@ -4874,7 +4886,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         int maxWidth = 0;
         for (int i = startToUse; i < endToUse; i++) {
-          maxWidth = Math.max(maxWidth, myLineWidths.getQuick(i));
+          // TODO den unwrap
+          try {
+            maxWidth = Math.max(maxWidth, myLineWidths.getQuick(i));
+          }
+          catch (Exception e) {
+            e.printStackTrace();
+          }
         }
 
         mySize = new Dimension(maxWidth, getLineHeight() * getVisibleLineCount());

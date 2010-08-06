@@ -126,15 +126,16 @@ public class GroovyExpectedTypesProvider {
         return;
       }
 
-      final List<GrClosableBlock> closureArgs = Arrays.asList(methodCall.getClosureArguments());
+      final GrClosableBlock[] closureArgs = methodCall.getClosureArguments();
       //noinspection SuspiciousMethodCalls
-      final int closureIndex = closureArgs.indexOf(myExpression);
+      final int closureIndex = Arrays.asList(closureArgs).indexOf(myExpression);
       if (closureIndex >= 0) {
         List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
         for (GroovyResolveResult variant : ResolveUtil.getCallVariants(myExpression)) {
+          final GrArgumentList argumentList = methodCall.getArgumentList();
           addConstraintsFromMap(constraints,
-                                GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall.getArgumentList(), methodCall, methodCall.getClosureArguments(),
-                                                                                true));
+                                GrClosureSignatureUtil.mapArgumentsToParameters(variant, argumentList, methodCall, closureArgs, true),
+                                closureIndex == closureArgs.length - 1);
         }
         if (!constraints.isEmpty()) {
           myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
@@ -193,8 +194,10 @@ public class GroovyExpectedTypesProvider {
     public void visitArgumentList(GrArgumentList list) {
       List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
       for (GroovyResolveResult variant : ResolveUtil.getCallVariants(list)) {
+        final GrExpression[] arguments = list.getExpressionArguments();
         addConstraintsFromMap(constraints,
-                              GrClosureSignatureUtil.mapArgumentsToParameters(variant, list, list, GrClosableBlock.EMPTY_ARRAY, true));
+                              GrClosureSignatureUtil.mapArgumentsToParameters(variant, list, list, GrClosableBlock.EMPTY_ARRAY, true),
+                              Arrays.asList(arguments).indexOf(myExpression) == arguments.length - 1);
       }
       if (!constraints.isEmpty()) {
         myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
@@ -202,11 +205,15 @@ public class GroovyExpectedTypesProvider {
     }
 
     private void addConstraintsFromMap(List<TypeConstraint> constraints,
-                                       Map<GrExpression, Pair<PsiParameter, PsiType>> map) {
+                                       Map<GrExpression, Pair<PsiParameter, PsiType>> map, boolean isLast) {
       if (map != null) {
         final Pair<PsiParameter, PsiType> pair = map.get(myExpression);
         if (pair != null) {
-          constraints.add(SubtypeConstraint.create(pair.second));
+          final PsiType type = pair.second;
+          constraints.add(SubtypeConstraint.create(type));
+          if (type instanceof PsiArrayType && isLast) {
+            constraints.add(SubtypeConstraint.create(((PsiArrayType)type).getComponentType()));
+          }
         }
       }
     }

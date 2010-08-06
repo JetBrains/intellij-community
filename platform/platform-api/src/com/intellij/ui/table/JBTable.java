@@ -16,6 +16,7 @@
 package com.intellij.ui.table;
 
 import com.intellij.Patches;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.*;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
@@ -49,6 +50,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 
   private MyCellEditorRemover myEditorRemover;
+  private boolean myEnableAntialiasing;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -90,8 +92,15 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   protected void paintComponent(Graphics g) {
+    if (myEnableAntialiasing) {
+      UISettings.setupAntialiasing(g);
+    }
     super.paintComponent(g);
     myEmptyTextHelper.paint(g);
+  }
+
+  public void setEnableAntialiasing(boolean flag) {
+    myEnableAntialiasing = flag;
   }
 
   public static DefaultCellEditor createBooleanEditor() {

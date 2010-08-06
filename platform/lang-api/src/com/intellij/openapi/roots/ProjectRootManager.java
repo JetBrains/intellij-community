@@ -17,12 +17,15 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * Allows to query and modify the list of root directories belonging to a project.
@@ -83,6 +86,14 @@ public abstract class ProjectRootManager implements ModificationTracker {
    */
   @NotNull
   public abstract OrderEnumerator orderEntries();
+
+  /**
+   * Creates new enumerator instance to process dependencies of several modules in the project. Caching is not supported for this enumerator
+   * @param modules modules to process
+   * @return new enumerator instance
+   */
+  @NotNull
+  public abstract OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules);
 
   /**
    * Unlike getContentRoots(), this includes the project base dir. Is this really necessary?
