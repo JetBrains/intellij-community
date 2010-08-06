@@ -49,7 +49,7 @@ public class PackIntoArchiveInstructionCreator extends IncrementalCompilerInstru
     return myPathInJar.length() == 0 ? fileName : myPathInJar + "/" + fileName;
   }
 
-  public IncrementalCompilerInstructionCreator subFolder(@NotNull String directoryName) {
+  public PackIntoArchiveInstructionCreator subFolder(@NotNull String directoryName) {
     return new PackIntoArchiveInstructionCreator(myContext, myJarInfo, childPathInJar(directoryName), myJarDestination);
   }
 

@@ -15,11 +15,13 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.packaging.elements.PackagingFileFilter;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.IncrementalCompilerInstructionCreator;
+import com.intellij.packaging.elements.PackagingFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,22 +42,40 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
   }
 
   public void addDirectoryCopyInstructions(@NotNull VirtualFile directory, @Nullable PackagingFileFilter filter) {
+    ProjectFileIndex index = ProjectRootManager.getInstance(myContext.getCompileContext().getProject()).getFileIndex();
+    final boolean copyExcluded = index.isIgnored(directory);
+    collectInstructionsRecursively(directory, filter, index, FileTypeManager.getInstance(), copyExcluded);
+  }
+
+  private void collectInstructionsRecursively(VirtualFile directory,
+                                              PackagingFileFilter filter,
+                                              ProjectFileIndex index,
+                                              final FileTypeManager fileTypeManager,
+                                              boolean copyExcluded) {
     final VirtualFile[] children = directory.getChildren();
     if (children != null) {
-      final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
       for (VirtualFile child : children) {
-        if (!fileTypeManager.isFileIgnored(child.getName())
-            && (filter == null || filter.accept(child, myContext.getCompileContext()))) {
+        if (copyExcluded) {
+          if (fileTypeManager.isFileIgnored(child.getName())) continue;
+        }
+        else {
+          if (index.isIgnored(child)) continue;
+        }
+
+        if ((filter == null || filter.accept(child, myContext.getCompileContext()))) {
           if (!child.isDirectory()) {
             addFileCopyInstruction(child, child.getName());
           }
           else {
-            subFolder(child.getName()).addDirectoryCopyInstructions(child, filter);
+            subFolder(child.getName()).collectInstructionsRecursively(child, filter, index, fileTypeManager, copyExcluded);
           }
         }
       }
     }
   }
+
+  @Override
+  public abstract IncrementalCompilerInstructionCreatorBase subFolder(@NotNull String directoryName);
 
   public IncrementalCompilerInstructionCreator subFolderByRelativePath(@NotNull String relativeDirectoryPath) {
     final List<String> folders = StringUtil.split(relativeDirectoryPath, "/");
