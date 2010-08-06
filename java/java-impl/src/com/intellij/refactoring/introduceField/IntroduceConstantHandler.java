@@ -161,7 +161,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
   @Nullable
   private PsiElement isStaticFinalInitializer(PsiExpression expr) {
-    PsiClass parentClass = getParentClass(expr);
+    PsiClass parentClass = expr != null ? getParentClass(expr) : null;
     if (parentClass == null) return null;
     IsStaticFinalInitializerExpression visitor = new IsStaticFinalInitializerExpression(parentClass, expr);
     expr.accept(visitor);
@@ -212,7 +212,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     }
   }
 
-  public PsiClass getParentClass(PsiExpression initializerExpression) {
+  public PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
     final PsiType type = initializerExpression.getType();
 
     if (type != null && PsiUtil.isConstantExpression(initializerExpression)) {

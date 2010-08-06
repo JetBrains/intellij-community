@@ -400,7 +400,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
   }
 
-  public PsiClass getParentClass(PsiExpression initializerExpression) {
+  public PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
     PsiElement element = initializerExpression.getUserData(ElementToWorkOn.PARENT);
     if (element == null) element = initializerExpression.getParent();
     PsiElement parent = element;
