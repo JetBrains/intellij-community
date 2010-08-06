@@ -44,7 +44,9 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
 
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
-    LOG.assertTrue(accept(project, file));
+    if (!accept(project, file)) {
+      LOG.error("Cannot open text editor for " + file);
+    }
     return new PsiAwareTextEditorImpl(project, file, this);
   }
 
