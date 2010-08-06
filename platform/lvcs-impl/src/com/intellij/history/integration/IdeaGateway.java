@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,7 +130,7 @@ public class IdeaGateway {
 
   private List<VirtualFile> collectFiles(VirtualFile f, List<VirtualFile> result) {
     if (f.isDirectory()) {
-      for (VirtualFile child : ((NewVirtualFile)f).iterInDbChildren()) {
+      for (VirtualFile child : iterateDBChildren(f)) {
         collectFiles(child, result);
       }
     }
@@ -137,6 +138,11 @@ public class IdeaGateway {
       result.add(f);
     }
     return result;
+  }
+
+  public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
+    if (!(f instanceof NewVirtualFile)) return ContainerUtil.emptyIterable();
+    return ((NewVirtualFile)f).iterInDbChildren();
   }
 
   public RootEntry createTransientRootEntry() {
@@ -176,7 +182,7 @@ public class IdeaGateway {
       return new FileEntry(file.getName(), c, file.getTimeStamp(), !file.isWritable());
     }
     DirectoryEntry newDir = new DirectoryEntry(file.getName());
-    doCreateChildren(newDir, ((NewVirtualFile)file).iterInDbChildren(), forDeletion);
+    doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
     if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
     return newDir;
   }
