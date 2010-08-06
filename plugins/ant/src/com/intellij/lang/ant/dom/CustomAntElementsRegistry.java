@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,14 +80,71 @@ public class CustomAntElementsRegistry {
 
   @NotNull
   public Set<XmlName> getCompletionVariants(AntDomElement parentElement) {
-    // todo: filter out not applicable stuff
-    return Collections.unmodifiableSet(myCustomElements.keySet());
+    final Set<XmlName> result = new HashSet<XmlName>();
+    
+    final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
+    final AntDomMacroDef restrictToMacroDef = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getFirst() : null;
+    final AntDomScriptDef restrictToScriptDef = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getSecond() : null;
+    
+    for (XmlName xmlName : myCustomElements.keySet()) {
+      final AntDomNamedElement declaringElement = myDeclarations.get(xmlName);
+      if (declaringElement instanceof AntDomMacrodefElement) {
+        if (restrictToMacroDef == null || !restrictToMacroDef.equals(declaringElement.getParentOfType(AntDomMacroDef.class, true))) {
+          continue;
+        }
+      }
+      else if (declaringElement instanceof AntDomScriptdefElement) {
+        if (restrictToScriptDef == null || !restrictToScriptDef.equals(declaringElement.getParentOfType(AntDomScriptDef.class, true))) {
+          continue;
+        }
+      }
+      
+      result.add(xmlName);
+    }
+    return result;
+  }
+
+  @Nullable
+  private Pair<AntDomMacroDef, AntDomScriptDef> getContextMacroOrScriptDef(AntDomElement element) {
+    final AntDomMacroDef macrodef = element.getParentOfType(AntDomMacroDef.class, false);
+    if (macrodef != null) {
+      return new Pair<AntDomMacroDef, AntDomScriptDef>(macrodef, null);
+    }
+    for (AntDomCustomElement custom = element.getParentOfType(AntDomCustomElement.class, false); custom != null; custom = custom.getParentOfType(AntDomCustomElement.class, true)) {
+      final AntDomNamedElement declaring = getDeclaringElement(custom.getXmlName());
+      if (declaring instanceof AntDomMacroDef) {
+        return new Pair<AntDomMacroDef, AntDomScriptDef>((AntDomMacroDef)declaring, null);
+      }
+      else if (declaring instanceof AntDomScriptDef) {
+        return new Pair<AntDomMacroDef, AntDomScriptDef>(null, (AntDomScriptDef)declaring);
+      }
+    }
+    return null;
   }
 
   @Nullable
   public AntDomElement findDeclaringElement(final AntDomElement parentElement, final XmlName customElementName) {
     final AntDomElement declaration = myDeclarations.get(customElementName);
-    return declaration != null? declaration : null;
+    if (declaration == null) {
+      return null;
+    }
+    
+    if (declaration instanceof AntDomMacrodefElement) {
+      final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
+      final AntDomMacroDef macrodefUsed = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getFirst() : null;
+      if (macrodefUsed == null || !macrodefUsed.equals(declaration.getParentOfType(AntDomMacroDef.class, true))) {
+        return null;
+      }
+    }
+    else if (declaration instanceof AntDomScriptdefElement) {
+      final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
+      final AntDomScriptDef scriptDefUsed = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getSecond() : null;
+      if (scriptDefUsed == null || !scriptDefUsed.equals(declaration.getParentOfType(AntDomScriptDef.class, true))) {
+        return null;
+      }
+    }
+    
+    return declaration;
   }
 
   public AntDomNamedElement getDeclaringElement(XmlName customElementName) {

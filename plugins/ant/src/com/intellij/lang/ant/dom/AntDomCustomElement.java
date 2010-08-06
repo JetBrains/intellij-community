@@ -24,10 +24,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AntDomCustomElement extends AntDomElement{
 
+  private XmlName myXmlName;
+
   @Nullable
   public final Class getDefinitionClass() {
-    final String name = getXmlElementName();
-    final String nsKey = getXmlElementNamespace();
-    return CustomAntElementsRegistry.getInstance(getAntProject()).lookupClass(new XmlName(name, nsKey));
+    return CustomAntElementsRegistry.getInstance(getAntProject()).lookupClass(getXmlName());
+  }
+
+  public final  XmlName getXmlName() {
+    if (myXmlName == null) {
+      myXmlName = new XmlName(getXmlElementName(), getXmlElementNamespace());
+    }
+    return myXmlName;
   }
 }
