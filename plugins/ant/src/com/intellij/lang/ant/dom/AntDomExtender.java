@@ -453,11 +453,14 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     @NotNull 
     public Iterator<String> getAttributesIterator() {
       final List<AntDomMacrodefAttribute> macrodefAttributes = myMacrodef.getMacroAttributes();
+      if (macrodefAttributes.size() == 0) {
+        return Collections.<String>emptyList().iterator();
+      }
       final List<String> attribs = new ArrayList<String>(macrodefAttributes.size());
       for (AntDomMacrodefAttribute attribute : macrodefAttributes) {
-        final GenericAttributeValue<String> nameAttrib = attribute.getName();
-        if (nameAttrib != null) {
-          attribs.add(nameAttrib.getRawText());
+        final String attribName = attribute.getName().getRawText();
+        if (attribName != null) {
+          attribs.add(attribName);
         }
       }
       return attribs.iterator();
@@ -486,9 +489,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       final List<AntDomScriptdefAttribute> macrodefAttributes = myScriptDef.getScriptdefAttributes();
       final List<String> attribs = new ArrayList<String>(macrodefAttributes.size());
       for (AntDomScriptdefAttribute attribute : macrodefAttributes) {
-        final GenericAttributeValue<String> nameAttrib = attribute.getName();
+        final String nameAttrib = attribute.getName().getRawText();
         if (nameAttrib != null) {
-          attribs.add(nameAttrib.getRawText());
+          attribs.add(nameAttrib);
         }
       }
       return attribs.iterator();

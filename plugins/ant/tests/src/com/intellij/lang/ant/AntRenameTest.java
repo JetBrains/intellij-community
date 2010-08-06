@@ -16,7 +16,6 @@
 package com.intellij.lang.ant;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -140,9 +139,7 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     final int off = text.indexOf("<ren>");
     text = text.replace("<ren>", "");
     configureFromFileText(filename, text);
-    myFile = AntSupport.getAntFile(myFile);
     assertNotNull(myFile);
-    assertTrue(myFile instanceof AntFile);
     PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(
       getEditor(), 
       TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED,
