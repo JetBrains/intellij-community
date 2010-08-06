@@ -99,6 +99,8 @@ public abstract class AbstractTestProxy extends CompositePrintable {
       final List<? extends AbstractTestProxy> children = parent.getChildren();
       if (!testProxy.isInProgress() && testProxy.equals(children.get(children.size() - 1))) {
         parent.flush();
+      } else {
+        break;
       }
       testProxy = parent;
       parent = parent.getParent();
