@@ -84,7 +84,7 @@ public class GppReferenceContributor extends PsiReferenceContributor {
 
           final String memberName = getValue();
           if ("super".equals(memberName) && GppTypeConverter.hasTypedContext(myElement)) {
-            applicable.addAll(LiteralConstructorReference.getConstructorCandidates(classType, context, getSuperConstructorArguments(value)));
+            applicable.addAll(LiteralConstructorReference.getConstructorCandidates(classType, context, getSuperConstructorArguments(value), false));
           }
 
           if (value == null || applicable.isEmpty()) {

@@ -23,7 +23,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
+import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.extensions.Extensions;
@@ -170,7 +170,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     if (annotations == null) {
       annotations = new ArrayList<String>();
       for (Object extension : Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL)) {
-        final String[] ignoredAnnotations = ((UnusedCodeExtension)extension).getIgnoreAnnotations();
+        final String[] ignoredAnnotations = ((EntryPoint)extension).getIgnoreAnnotations();
         if (ignoredAnnotations != null) {
           ContainerUtil.addAll(annotations, ignoredAnnotations);
         }

@@ -35,7 +35,10 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.*;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseUtils;
@@ -190,6 +193,8 @@ public abstract class GitBaseRebaseProcess {
                   //noinspection ThrowableInstanceNeverThrown
                   myExceptions.add(new VcsException("The update process was cancelled for " + root.getPresentableUrl()));
                   doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
+                  progressIndicator.setText2("Refreshing files for the root " + root.getPath());
+                  root.refresh(false, true);
                 }
               }
               finally {
@@ -377,7 +382,7 @@ public abstract class GitBaseRebaseProcess {
       if (changes.size() > 0) {
         myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
         myShelvedChangeList = GitStashUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, myExceptions);
-        if(myShelvedChangeList == null) {
+        if (myShelvedChangeList == null) {
           return false;
         }
       }

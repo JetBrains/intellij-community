@@ -35,7 +35,7 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
         updateSelection(list);
       }
     };
-    list.getSelectionModel().addListSelectionListener( selectionListener );
+    list.getSelectionModel().addListSelectionListener(selectionListener);
 
     list.addPropertyChangeListener("selectionModel", new PropertyChangeListener() {
       @Override
@@ -83,14 +83,10 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   }
 
   private void updateSelection(JList list) {
-    int selection = list.getSelectedIndex();
+    int selection = list.getSelectedIndices().length == 1 ? list.getSelectedIndex() : -1;
     handleSelectionChange(selection == -1 ? null : new Integer(selection));
   }
 
-  /**
-   * @return java.lang.Integer which rpresent index of the row under the
-   * specified point
-   */
   protected Integer getCellKeyForPoint(Point point) {
     int rowIndex = myComponent.locationToIndex(point);
     return rowIndex != -1 ? new Integer(rowIndex) : null;

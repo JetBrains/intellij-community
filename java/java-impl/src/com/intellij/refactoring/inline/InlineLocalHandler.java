@@ -90,10 +90,14 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     query.forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference psiReference) {
         final PsiElement element = psiReference.getElement();
-        final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-        if (psiClass != containingClass) {
-          innerClassesWithUsages.add(psiClass);
-          innerClassUsages.add(element);
+        PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+        while (psiClass != containingClass && psiClass != null) {
+          final PsiClass parentPsiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class, true);
+          if (parentPsiClass == containingClass) {
+            innerClassesWithUsages.add(psiClass);
+            innerClassUsages.add(element);
+          }
+          psiClass = parentPsiClass;
         }
         return true;
       }

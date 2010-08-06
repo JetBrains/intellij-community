@@ -37,7 +37,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   protected final PsiModifierList myModifierList;
   protected boolean myWritable;
 
-  public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
+  public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, PsiType type, boolean writable, PsiElement scope) {
     super(manager, StdFileTypes.JAVA.getLanguage());
     myModifierList = new LightModifierList(myManager);
     myNameIdentifier = nameIdentifier;

@@ -177,21 +177,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   public static GlobalSearchScope notScope(@NotNull final GlobalSearchScope scope) {
-    return new GlobalSearchScope() {
+    return new DelegatingGlobalSearchScope(scope) {
       public boolean contains(final VirtualFile file) {
-        return !scope.contains(file);
-      }
-
-      public int compare(final VirtualFile file1, final VirtualFile file2) {
-        return scope.compare(file1, file2);
-      }
-
-      public boolean isSearchInModuleContent(@NotNull final Module aModule) {
-        return scope.isSearchInLibraries();
-      }
-
-      public boolean isSearchInLibraries() {
-        return scope.isSearchInLibraries();
+        return !myBaseScope.contains(file);
       }
     };
   }

@@ -37,13 +37,7 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
     super(tree);
     final TreeSelectionListener selectionListener = new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
-        try {
-          updateSelection(tree);
-        }
-        catch (Exception e1) {
-          // Workaround for some race conditions in Swing, see
-          // http://www.intellij.net/tracker/idea/viewSCR?publicId=53961
-        }
+        updateSelection(tree);
       }
     };
     tree.getSelectionModel().addTreeSelectionListener(selectionListener);
@@ -64,7 +58,7 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
     final TreeModelListener modelListener = new TreeModelListener() {
       @Override
       public void treeNodesChanged(TreeModelEvent e) {
-        updateSelection(tree);
+        updateCurrentSelection();
       }
 
       @Override
@@ -100,7 +94,7 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   }
 
   private void updateSelection(JTree tree) {
-    int selection = tree.getSelectionModel().getLeadSelectionRow();
+    int selection = tree.getSelectionCount() == 1 ? tree.getSelectionModel().getLeadSelectionRow() : -1;
     handleSelectionChange(selection == -1 ? null : new Integer(selection));
   }
 

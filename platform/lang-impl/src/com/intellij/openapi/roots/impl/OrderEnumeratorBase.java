@@ -48,11 +48,11 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   protected boolean myWithoutDepModules;
   private boolean myWithoutThisModuleContent;
   protected boolean myRecursively;
-  private boolean myRecursivelyExportedOnly;
+  protected boolean myRecursivelyExportedOnly;
   private boolean myExportedOnly;
   private Condition<OrderEntry> myCondition;
   private List<OrderEnumerationHandler> myCustomHandlers;
-  private ModulesProvider myModulesProvider;
+  protected ModulesProvider myModulesProvider;
   private OrderRootsCache myCache;
 
   public OrderEnumeratorBase(@Nullable Module module, @NotNull Project project, @Nullable OrderRootsCache cache) {

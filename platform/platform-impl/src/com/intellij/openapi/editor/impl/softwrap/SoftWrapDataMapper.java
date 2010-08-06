@@ -186,6 +186,7 @@ public class SoftWrapDataMapper {
       softWrapLinesCurrent = 0;
       softWrapColumnDiff = 0;
       foldingColumnDiff = 0;
+      x = 0;
     }
   }
 
@@ -343,11 +344,12 @@ public class SoftWrapDataMapper {
 
       // Update state to the offset that corresponds to the same logical line that was used last time.
       if (currentLogicalLine == lastUsedLogicalLine) {
-        int width = myTextRepresentationHelper.textWidth(text, result.offset, newOffset, Font.PLAIN, result.x);
         int columnDiff = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, result.offset, newOffset, result.x);
-        result.x += width;
         result.logicalColumn += columnDiff;
         result.visualColumn += columnDiff;
+        if (strategy.recalculateX(result)) {
+          result.x += myTextRepresentationHelper.textWidth(text, result.offset, newOffset, Font.PLAIN, result.x);
+        }
       }
       // Update state to offset that doesn't correspond to the same logical line that was used last time.
       else {
@@ -355,19 +357,37 @@ public class SoftWrapDataMapper {
         result.logicalLine += lineDiff;
         result.visualLine += lineDiff;
         int startLineOffset = document.getLineStartOffset(currentLogicalLine);
-        int newX = myTextRepresentationHelper.textWidth(text, startLineOffset, newOffset, Font.PLAIN, result.x);
         result.visualColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, startLineOffset, newOffset, 0);
-        result.x = newX;
         result.logicalColumn = result.visualColumn;
         result.onNewLine();
+        if (strategy.recalculateX(result)) {
+          result.x = myTextRepresentationHelper.textWidth(text, startLineOffset, newOffset, Font.PLAIN, 0);
+        }
       }
       result.offset = newOffset;
       return result;
     }
   }
 
+  /**
+   * Strategy interface for performing logical position calculation.
+   */
   private interface LogicalPositionCalculatorStrategy {
     boolean exceeds(Context context);
+
+    /**
+     * Profiling shows that visual symbol width calculation (necessary for <code>'x'</code> coordinate update) is quite expensive.
+     * However, the whole logical position calculation algorithm contains many iterations and there is a big chance that many of them
+     * don't require <code>'x'</code> recalculation (e.g. we may map visual position to logical and see that current context visual
+     * line is less than the target, hence, we understand that 'x' coordinate will be reset to zero).
+     * <p/>
+     * This method allows to answer if we need to perform <code>'x'</code> recalculation for the given context (assuming that all
+     * its another parameters are up-to-date).
+     *
+     * @param context
+     * @return
+     */
+    boolean recalculateX(Context context);
     @NotNull LogicalPosition build(Context context);
     @NotNull LogicalPosition build(Context context, FoldRegion region);
     @NotNull LogicalPosition build(Context context, TextChange softWrap);
@@ -385,6 +405,11 @@ public class SoftWrapDataMapper {
     public boolean exceeds(Context context) {
       return context.visualLine > myTargetVisual.line
         || (context.visualLine == myTargetVisual.line && context.visualColumn > myTargetVisual.column);
+    }
+
+    @Override
+    public boolean recalculateX(Context context) {
+      return context.visualLine == myTargetVisual.line;
     }
 
     @NotNull
@@ -438,6 +463,11 @@ public class SoftWrapDataMapper {
     @Override
     public boolean exceeds(Context context) {
       return context.offset > myOffset;
+    }
+
+    @Override
+    public boolean recalculateX(Context context) {
+      return true;
     }
 
     @NotNull

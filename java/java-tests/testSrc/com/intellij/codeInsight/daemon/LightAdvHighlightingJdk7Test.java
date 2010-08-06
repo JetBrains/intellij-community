@@ -16,4 +16,40 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testSwitchByString() throws Exception {
     doTest(true, false);
   }
+
+  public void testDiamondPos1() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondPos2() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondPos3() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondPos4() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg1() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg2() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg3() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg4() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg5() throws Exception {
+    doTest(false, false);
+  }
 }

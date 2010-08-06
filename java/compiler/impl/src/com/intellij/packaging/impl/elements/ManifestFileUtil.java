@@ -16,6 +16,9 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
@@ -24,9 +27,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,10 +48,16 @@ import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -111,7 +123,18 @@ public class ManifestFileUtil {
   }
 
   @Nullable
-  private static VirtualFile suggestBaseDir(Project project, final @Nullable VirtualFile file) {
+  public static VirtualFile suggestManifestFileDirectory(@NotNull Project project, @Nullable Module module) {
+    OrderEnumerator enumerator = module != null ? OrderEnumerator.orderEntries(module) : OrderEnumerator.orderEntries(project);
+    final VirtualFile[] files = enumerator.withoutDepModules().withoutLibraries().withoutSdk().productionOnly().sources().getRoots();
+    if (files.length > 0) {
+      return files[0];
+    }
+    return suggestBaseDir(project, null);
+  }
+
+
+  @Nullable
+  private static VirtualFile suggestBaseDir(@NotNull Project project, final @Nullable VirtualFile file) {
     final VirtualFile[] contentRoots = ProjectRootManager.getInstance(project).getContentRoots();
     if (file == null && contentRoots.length > 0) {
       return contentRoots[0];
@@ -145,7 +168,7 @@ public class ManifestFileUtil {
     }
   }
 
-  public static void updateManifest(VirtualFile file, final String mainClass, final List<String> classpath, final boolean replaceValues) {
+  public static void updateManifest(@NotNull VirtualFile file, final @Nullable String mainClass, final @Nullable List<String> classpath, final boolean replaceValues) {
     final Manifest manifest = readManifest(file);
     final Attributes mainAttributes = manifest.getMainAttributes();
 
@@ -235,18 +258,23 @@ public class ManifestFileUtil {
 
   @Nullable
   public static VirtualFile showDialogAndCreateManifest(final ArtifactEditorContext context, final CompositePackagingElement<?> element) {
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle("Select Directory for META-INF/MANIFEST.MF file");
+    FileChooserDescriptor descriptor = createDescriptorForManifestDirectory();
     final VirtualFile directory = suggestManifestFileDirectory(element, context, context.getArtifactType());
     final VirtualFile[] files = FileChooser.chooseFiles(context.getProject(), descriptor, directory);
     if (files.length != 1) {
       return null;
     }
 
+    return createManifestFile(files[0], context.getProject());
+  }
+
+  @Nullable
+  public static VirtualFile createManifestFile(final @NotNull VirtualFile directory, final @NotNull Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Ref<IOException> exc = Ref.create(null);
     final VirtualFile file = new WriteAction<VirtualFile>() {
       protected void run(final Result<VirtualFile> result) {
-        VirtualFile dir = files[0];
+        VirtualFile dir = directory;
         try {
           if (!dir.getName().equals(MANIFEST_DIR_NAME)) {
             dir = VfsUtil.createDirectoryIfMissing(dir, MANIFEST_DIR_NAME);
@@ -272,10 +300,16 @@ public class ManifestFileUtil {
     final IOException exception = exc.get();
     if (exception != null) {
       LOG.info(exception);
-      Messages.showErrorDialog(context.getProject(), exception.getMessage(), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(project, exception.getMessage(), CommonBundle.getErrorTitle());
       return null;
     }
     return file;
+  }
+
+  public static FileChooserDescriptor createDescriptorForManifestDirectory() {
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    descriptor.setTitle("Select Directory for META-INF/MANIFEST.MF file");
+    return descriptor;
   }
 
   public static void addManifestFileToLayout(final @NotNull String path, final @NotNull ArtifactEditorContext context,
@@ -288,5 +322,33 @@ public class ManifestFileUtil {
         }
       }
     });
+  }
+
+  @Nullable
+  public static PsiClass selectMainClass(Project project, final @Nullable String initialClassName) {
+    final TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(project);
+    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
+    final PsiClass aClass = initialClassName != null ? JavaPsiFacade.getInstance(project).findClass(initialClassName, searchScope) : null;
+    final TreeClassChooser chooser =
+        chooserFactory.createWithInnerClassesScopeChooser("Select Main Class", searchScope, new MainClassFilter(), aClass);
+    chooser.showDialog();
+    return chooser.getSelectedClass();
+  }
+
+  public static void setupMainClassField(final Project project, final TextFieldWithBrowseButton field) {
+    field.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final PsiClass selected = selectMainClass(project, field.getText());
+        if (selected != null) {
+          field.setText(selected.getQualifiedName());
+        }
+      }
+    });
+  }
+
+  private static class MainClassFilter implements TreeClassChooser.ClassFilter {
+    public boolean isAccepted(PsiClass aClass) {
+      return PsiMethodUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.hasMainMethod(aClass);
+    }
   }
 }

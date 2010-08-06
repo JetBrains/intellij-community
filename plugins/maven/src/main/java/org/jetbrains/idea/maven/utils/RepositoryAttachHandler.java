@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.ide.mavenService.MavenService;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
@@ -78,6 +79,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
 
   public ActionCallback performAttach(final Project project, final NullableComputable<Library.ModifiableModel> modelProvider) {
 
+    MavenService.getInstance(project);
     final RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, false);
     dialog.setTitle(getLongName());
     dialog.show();

@@ -245,7 +245,8 @@ public class GitRootTracker implements VcsListener {
             path = baseDir.getPath();
           }
           VirtualFile root = lookupFile(path);
-          if (root == null || rootSet.contains(root)) {
+          VirtualFile actual = GitUtil.gitRootOrNull(root);
+          if (root == null || rootSet.contains(root) || actual != root) {
             return true;
           }
           rootSet.add(root);
@@ -368,8 +369,13 @@ public class GitRootTracker implements VcsListener {
             i.remove();
             continue;
           }
-          if (file == null || GitUtil.gitRootOrNull(file) == null) {
+          final VirtualFile actual = GitUtil.gitRootOrNull(file);
+          if (file == null || actual == null) {
             removed.add(path);
+          }
+          else if (actual != file) {
+            removed.add(path);
+            added.add(actual.getPath());
           }
         }
         for (String m : mapped) {

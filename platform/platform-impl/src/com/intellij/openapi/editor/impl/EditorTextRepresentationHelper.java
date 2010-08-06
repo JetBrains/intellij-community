@@ -23,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
  * The main idea of this interface is to encapsulate that logic in order to allow relief unit testing.
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
+ * <p/>
+ * <b>Note:</b> it's assumed that values provided by this service are not cached for further use because it's not guaranteed
+ * that the same values are returned on subsequent calls (due to document change, editor config change etc).
  *
  * @author Denis Zhdanov
  * @since Jul 27, 2010 3:56:54 PM

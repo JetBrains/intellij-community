@@ -16,11 +16,10 @@
 
 package com.intellij.psi.impl.search;
 
+import com.intellij.codeInsight.CommentUtil;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -162,19 +161,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public boolean processCommentsContainingIdentifier(@NotNull String identifier,
                                                      @NotNull SearchScope searchScope,
                                                      @NotNull final Processor<PsiElement> processor) {
-    TextOccurenceProcessor occurenceProcessor = new TextOccurenceProcessor() {
+    TextOccurenceProcessor occurrenceProcessor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
-        if (parserDefinition == null) return true;
-
-        if (element.getNode() != null && !parserDefinition.getCommentTokens().contains(element.getNode().getElementType())) return true;
-        if (element.findReferenceAt(offsetInElement) == null) {
-          return processor.process(element);
+        if (CommentUtil.isCommentTextElement(element)) {
+          if (element.findReferenceAt(offsetInElement) == null) {
+            return processor.process(element);
+          }
         }
         return true;
       }
     };
-    return processElementsWithWord(occurenceProcessor, searchScope, identifier, UsageSearchContext.IN_COMMENTS, true);
+    return processElementsWithWord(occurrenceProcessor, searchScope, identifier, UsageSearchContext.IN_COMMENTS, true);
   }
 
   public boolean processElementsWithWord(@NotNull final TextOccurenceProcessor processor,

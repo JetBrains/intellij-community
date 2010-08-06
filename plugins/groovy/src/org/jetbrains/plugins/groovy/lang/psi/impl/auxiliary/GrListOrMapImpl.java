@@ -25,6 +25,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
@@ -106,8 +108,17 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
   @Override
   public PsiReference getReference() {
+    if (!(getParent() instanceof GrSafeCastExpression) && !GppTypeConverter.hasTypedContext(this)) {
+      return null;
+    }
+
     final PsiClassType conversionType = LiteralConstructorReference.getTargetConversionType(this);
     if (conversionType != null) {
+      final PsiType ownType = getType();
+      if (ownType != null && conversionType.isAssignableFrom(ownType)) {
+        return null;
+      }
+
       return new LiteralConstructorReference(this, conversionType);
     }
 

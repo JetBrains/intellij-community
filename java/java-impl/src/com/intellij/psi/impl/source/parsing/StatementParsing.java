@@ -358,7 +358,7 @@ public class StatementParsing extends Parsing {
           declStatement.rawAddChildren(decl);
         }
         else {
-          final CompositeElement type = parseType(lexer, false, false);
+          final CompositeElement type = parseType(lexer, false, false, false);
           if (type != null) declStatement.rawAddChildren(type);
           final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
           declStatement.rawAddChildren(errorElement);

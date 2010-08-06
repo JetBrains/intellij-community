@@ -172,7 +172,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
 
-  private String[] getSignature() {
+  public String[] getSignature() {
     PsiElement element = getNameElement().getNextSibling();
 
     while (element != null && !(element instanceof PsiDocTagValue)) {
@@ -223,7 +223,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return JavaResolveUtil.getContextClass(this);
   }
 
-  private class MyReference implements PsiJavaReference {
+  public class MyReference implements PsiJavaReference {
     private final PsiElement myReferencee;
 
     public MyReference(PsiElement referencee) {
@@ -345,14 +345,18 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         }
         newText.append("*/");
 
-        PsiComment comment =
-          JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory().createCommentFromText(newText.toString(), null);
-        PsiElement tag = PsiTreeUtil.getChildOfType(comment, PsiDocTag.class);
-        PsiElement ref = PsiTreeUtil.getChildOfType(tag, PsiDocMethodOrFieldRef.class);
-        return replace(ref);
+        return bindToText(containingClass, newText);
       }
 
       return PsiDocMethodOrFieldRef.this;
+    }
+
+    public PsiElement bindToText(PsiClass containingClass, StringBuffer newText) {
+      PsiComment comment =
+        JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory().createCommentFromText(newText.toString(), null);
+      PsiElement tag = PsiTreeUtil.getChildOfType(comment, PsiDocTag.class);
+      PsiElement ref = PsiTreeUtil.getChildOfType(tag, PsiDocMethodOrFieldRef.class);
+      return replace(ref);
     }
 
     public boolean isReferenceTo(PsiElement element) {

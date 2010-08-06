@@ -490,7 +490,7 @@ public class DeclarationParsing extends Parsing {
 
     annotation.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
-    TreeElement classReference = parseJavaCodeReference(lexer, true, false, false);
+    TreeElement classReference = parseJavaCodeReference(lexer, true, false, false, false);
     if (classReference != null) {
       annotation.rawAddChildren(classReference);
     }
@@ -1004,7 +1004,7 @@ public class DeclarationParsing extends Parsing {
       }
 
       // adding a reference, not simple tokens allows "Browse .." to work well
-      CompositeElement ref = parseJavaCodeReference(lexer, true, true, false);
+      CompositeElement ref = parseJavaCodeReference(lexer, true, true, false, false);
       if (ref != null){
         invalidElementsGroup.rawAddChildren(ref);
       }
@@ -1043,7 +1043,7 @@ public class DeclarationParsing extends Parsing {
     lexer.advance();
 
     while (true) {
-      TreeElement classReference = parseJavaCodeReference(lexer, true, true, true);
+      TreeElement classReference = parseJavaCodeReference(lexer, true, true, true, false);
       if (classReference == null) {
         classReference = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
       }

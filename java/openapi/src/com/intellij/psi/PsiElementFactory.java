@@ -185,7 +185,10 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
   @Nullable PsiPrimitiveType createPrimitiveType(@NotNull String text);
 
   /**
-   * @deprecated use {@link #createTypeByFQClassName(String, GlobalSearchScope)}
+   * The same as {@link #createTypeByFQClassName(String, GlobalSearchScope)} with {@link GlobalSearchScope#allScope()}
+   *
+   * @param qName        the full-qualified name of the class to create the reference to.
+   * @return the class type instance.
    */
   @NotNull PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName);
 

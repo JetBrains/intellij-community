@@ -257,7 +257,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public Icon getIcon() {
-    if (isDirectory()) {
+    if (isDirectory() && isInLocalFileSystem()) {
       return Icons.FOLDER_ICON;
     }
     return getFileType().getIcon();

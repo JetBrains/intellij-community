@@ -48,8 +48,21 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       }
     }
     myChildren.add(child);
-    myUnmodifiableChildren = null;
     return child;
+  }
+
+  public void addFirstChild(@NotNull PackagingElement<?> child) {
+    myChildren.add(0, child);
+    for (int i = 1; i < myChildren.size(); i++) {
+      PackagingElement<?> element = myChildren.get(i);
+      if (element.isEqualTo(child)) {
+        if (element instanceof CompositePackagingElement<?>) {
+          ((CompositePackagingElement<?>)child).addOrFindChildren(((CompositePackagingElement<?>)element).getChildren());
+        }
+        myChildren.remove(i);
+        break;
+      }
+    }
   }
 
   public List<? extends PackagingElement<?>> addOrFindChildren(Collection<? extends PackagingElement<?>> children) {
@@ -57,7 +70,6 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     for (PackagingElement<?> child : children) {
       added.add(addOrFindChild(child));
     }
-    myUnmodifiableChildren = null;
     return added;
   }
 
@@ -69,7 +81,6 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       final PackagingElement<?> element2 = myChildren.get(target);
       myChildren.set(index, element2);
       myChildren.set(target, element1);
-      myUnmodifiableChildren = null;
       return element1;
     }
     return null;
@@ -77,12 +88,10 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
 
   public void removeChild(@NotNull PackagingElement<?> child) {
     myChildren.remove(child);
-    myUnmodifiableChildren = null;
   }
 
   public void removeChildren(@NotNull Collection<? extends PackagingElement<?>> children) {
     myChildren.removeAll(children);
-    myUnmodifiableChildren = null;
   }
 
   @NotNull
@@ -117,6 +126,5 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
 
   public void removeAllChildren() {
     myChildren.clear();
-    myUnmodifiableChildren = null;
   }
 }

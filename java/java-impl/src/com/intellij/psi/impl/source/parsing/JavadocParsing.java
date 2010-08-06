@@ -67,7 +67,7 @@ public class JavadocParsing extends Parsing {
       element = parseTypeWithEllipsis(lexer, true, false);
     }
     else{
-      element = myContext.getStatementParsing().parseJavaCodeReference(lexer, true, true, false);
+      element = myContext.getStatementParsing().parseJavaCodeReference(lexer, true, true, false, false);
     }
 
     if (element != null){
