@@ -379,23 +379,31 @@ public class ReferenceExpressionCompletionContributor {
     return qualifier == null ? "" : qualifier.getText() + ".";
   }
 
-  private static void addChainedCallVariants(final PsiElement place, final LookupElement qualifierItem,
+  private static void addChainedCallVariants(final PsiElement place, LookupElement qualifierItem,
                                              final CompletionResultSet result,
                                              PsiType qualifierType,
                                              final PsiType expectedType, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
-    final String typeText = qualifierType instanceof PsiEllipsisType ? ((PsiEllipsisType)qualifierType).getComponentType().getCanonicalText() + "[]" : qualifierType.getCanonicalText();
+    PsiType varType = qualifierType;
+    if (varType instanceof PsiEllipsisType) {
+      varType = ((PsiEllipsisType)varType).getComponentType();
+    }
+    if (varType instanceof PsiWildcardType) {
+      varType = TypeConversionUtil.erasure(expectedType);
+    }
+
+    final String typeText = varType.getCanonicalText();
     final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
     final PsiElement secondChild = block.getChildren()[1];
     if (!(secondChild instanceof PsiExpressionStatement)) {
-      LOG.error(typeText + "; item.object=" + qualifierItem.getObject());
+      LOG.error(typeText);
     }
     final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)secondChild;
     final PsiReferenceExpression mockRef = (PsiReferenceExpression) expressionStatement.getExpression();
 
     final ElementFilter filter = getReferenceFilter(place, true);
     for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
-      if (shoudChain(place, qualifierType, expectedType, item)) {
+      if (shoudChain(place, varType, expectedType, item)) {
         result.addElement(JavaChainLookupElement.chainElements(qualifierItem, item));
       }
     }
