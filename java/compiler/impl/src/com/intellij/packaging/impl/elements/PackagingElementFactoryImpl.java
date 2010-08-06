@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
@@ -27,6 +28,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
@@ -47,6 +49,7 @@ import java.util.List;
  * @author nik
  */
 public class PackagingElementFactoryImpl extends PackagingElementFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.elements.PackagingElementFactoryImpl");
   public static final PackagingElementType<DirectoryPackagingElement> DIRECTORY_ELEMENT_TYPE = new DirectoryElementType();
   public static final PackagingElementType<ArchivePackagingElement> ARCHIVE_ELEMENT_TYPE = new ArchiveElementType();
   public static final PackagingElementType<FileCopyPackagingElement> FILE_COPY_ELEMENT_TYPE = new FileCopyElementType();
@@ -259,6 +262,15 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   public PackagingElement<?> createExtractedDirectoryWithParentDirectories(@NotNull String jarPath, @NotNull String pathInJar,
                                                                            @NotNull String relativeOutputPath) {
     return createParentDirectories(relativeOutputPath, new ExtractedDirectoryPackagingElement(jarPath, pathInJar));
+  }
+
+  @NotNull
+  @Override
+  public PackagingElement<?> createExtractedDirectory(@NotNull VirtualFile jarEntry) {
+    LOG.assertTrue(jarEntry.getFileSystem() instanceof JarFileSystem, "Expected file from jar but file from " + jarEntry.getFileSystem() + " found");
+    final String fullPath = jarEntry.getPath();
+    final int jarEnd = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
+    return new ExtractedDirectoryPackagingElement(fullPath.substring(0, jarEnd), fullPath.substring(jarEnd + 1));
   }
 
   @NotNull

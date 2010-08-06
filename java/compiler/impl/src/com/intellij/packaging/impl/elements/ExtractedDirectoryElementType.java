@@ -20,10 +20,11 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ public class ExtractedDirectoryElementType extends PackagingElementType<Extracte
   }
 
   @NotNull
-  public List<? extends ExtractedDirectoryPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
+  public List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, true, false, true, true) {
       @Override
@@ -64,11 +65,10 @@ public class ExtractedDirectoryElementType extends PackagingElementType<Extracte
     };
     final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, context.getProject());
     final VirtualFile[] files = chooser.choose(null, context.getProject());
-    final List<ExtractedDirectoryPackagingElement> list = new ArrayList<ExtractedDirectoryPackagingElement>();
+    final List<PackagingElement<?>> list = new ArrayList<PackagingElement<?>>();
+    final PackagingElementFactory factory = PackagingElementFactory.getInstance();
     for (VirtualFile file : files) {
-      final String fullPath = file.getPath();
-      final int jarEnd = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
-      list.add(new ExtractedDirectoryPackagingElement(fullPath.substring(0, jarEnd), fullPath.substring(jarEnd + 1)));
+      list.add(factory.createExtractedDirectory(file));
     }
     return list;
   }

@@ -16,13 +16,17 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.packaging.artifacts.ArtifactTemplate;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -30,6 +34,10 @@ import javax.swing.*;
 public class JarArtifactType extends ArtifactType {
   public JarArtifactType() {
     super("jar", "Jar");
+  }
+
+  public static JarArtifactType getInstance() {
+    return EP_NAME.findExtension(JarArtifactType.class);
   }
 
   @NotNull
@@ -47,5 +55,11 @@ public class JarArtifactType extends ArtifactType {
   @Override
   public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
     return new ArchivePackagingElement(FileUtil.sanitizeFileName(artifactName) + ".jar");
+  }
+
+  @NotNull
+  @Override
+  public List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
+    return Collections.singletonList(new JarFromModulesTemplate(context));
   }
 }
