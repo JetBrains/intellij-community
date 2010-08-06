@@ -72,7 +72,7 @@ public class GitManageConfigurationsDialog extends DialogWrapper {
   /**
    * The name label
    */
-  private JLabel myShelveNameLabel;
+  private JLabel myShelfNameLabel;
   /**
    * Detect branch configurations button
    */
@@ -90,9 +90,9 @@ public class GitManageConfigurationsDialog extends DialogWrapper {
    */
   private final GitBranchConfigurations myConfigurations;
   /**
-   * Map from shelve path to shelve name
+   * Map from shelf path to shelf name
    */
-  private final HashMap<String, String> myShelveNames = new HashMap<String, String>();
+  private final HashMap<String, String> myShelfNames = new HashMap<String, String>();
   /**
    * The table model
    */
@@ -117,7 +117,7 @@ public class GitManageConfigurationsDialog extends DialogWrapper {
     myBranchMappingModel = new MyBranchMappingModel();
     myBranchesTable.setModel(myBranchMappingModel);
     for (ShelvedChangeList shelvedChangeList : configurations.getShelveManager().getShelvedChangeLists()) {
-      myShelveNames.put(shelvedChangeList.PATH, shelvedChangeList.DESCRIPTION);
+      myShelfNames.put(shelvedChangeList.PATH, shelvedChangeList.DESCRIPTION);
     }
     myNamesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -180,23 +180,23 @@ public class GitManageConfigurationsDialog extends DialogWrapper {
     myBranchMappingModel.set(selected);
     if (selected == null) {
       myNameLabel.setText("");
-      myShelveNameLabel.setText("");
+      myShelfNameLabel.setText("");
     }
     else {
       myNameLabel.setText(selected.getName());
       GitBranchConfigurations.BranchChanges ch = selected.getChanges();
       if (ch == null) {
-        myShelveNameLabel.setText("<html><i>No associated shelve</i></html>");
-        myShelveNameLabel.setToolTipText("<html><i>This configuration has no associated shelve</i></html>");
+        myShelfNameLabel.setText("<html><i>No associated shelf</i></html>");
+        myShelfNameLabel.setToolTipText("<html><i>This configuration has no associated shelf</i></html>");
       }
       else {
-        String d = myShelveNames.get(ch.SHELVE_PATH);
-        myShelveNameLabel.setText(d);
-        myShelveNameLabel.setToolTipText("<html><table><tr><td>Shelve Path:</td><td>" +
-                                         StringUtil.escapeXml(ch.SHELVE_PATH) +
-                                         "</td></tr><tr><td>Shelve Name:</td><td>" +
-                                         StringUtil.escapeXml(d) +
-                                         "</td></tr></html>");
+        String d = myShelfNames.get(ch.SHELVE_PATH);
+        myShelfNameLabel.setText(d);
+        myShelfNameLabel.setToolTipText("<html><table><tr><td>Shelf Path:</td><td>" +
+                                        StringUtil.escapeXml(ch.SHELVE_PATH) +
+                                        "</td></tr><tr><td>Shelf Name:</td><td>" +
+                                        StringUtil.escapeXml(d) +
+                                        "</td></tr></html>");
       }
     }
     boolean isNonCurrent = selected != null && selected != current;
