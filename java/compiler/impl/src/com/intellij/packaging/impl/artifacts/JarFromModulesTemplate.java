@@ -174,6 +174,6 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
 
   @Override
   public String getPresentableName() {
-    return "Jar from Modules...";
+    return "From modules with dependencies...";
   }
 }

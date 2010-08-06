@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author nik
@@ -42,6 +44,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myManifestDirField;
   private JLabel myManifestDirLabel;
   private JRadioButton myExtractJarsRadioButton;
+  private JRadioButton myCopyJarsRadioButton;
   private PackagingElementResolvingContext myContext;
 
   public JarArtifactFromModulesDialog(PackagingElementResolvingContext context) {
@@ -59,6 +62,14 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
         updateManifestDirField();
       }
     });
+    final ActionListener actionListener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateManifestDirField();
+      }
+    };
+    myExtractJarsRadioButton.addActionListener(actionListener);
+    myCopyJarsRadioButton.addActionListener(actionListener);
 
     updateManifestDirField();
     myManifestDirField.addBrowseFolderListener(null, null, project, ManifestFileUtil.createDescriptorForManifestDirectory());
