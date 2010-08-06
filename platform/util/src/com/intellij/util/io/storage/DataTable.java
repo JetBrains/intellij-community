@@ -91,8 +91,10 @@ class DataTable implements Disposable, Forceable {
   }
 
   public void dispose() {
-    markClean();
-    myFile.dispose();
+    if (!myFile.isDisposed()) {
+      markClean();
+      myFile.dispose();
+    }
   }
 
   public void force() {
