@@ -62,6 +62,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     TAG_MAPPING.put("antlib", AntDomAntlib.class);
     TAG_MAPPING.put("ant", AntDomAnt.class);
     TAG_MAPPING.put("classpath", AntDomClasspath.class);
+    TAG_MAPPING.put("available", AntDomAvailableTask.class);
   }
 
   public void registerExtensions(@NotNull final AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {

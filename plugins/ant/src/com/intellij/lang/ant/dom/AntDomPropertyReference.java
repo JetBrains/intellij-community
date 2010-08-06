@@ -38,7 +38,7 @@ public class AntDomPropertyReference extends AntDomReference{
 
   @Override
   public boolean isSoft() {
-    return false;
+    return true;
   }
 
   @Override
