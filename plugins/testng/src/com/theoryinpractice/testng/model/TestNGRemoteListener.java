@@ -46,6 +46,7 @@ public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestLi
   }
 
   public void onFinish(SuiteMessage suiteMessage) {
+    unboundOutputRoot.flush();
     console.finish();
     final TestNGResults view = console.getResultsView();
     if (view != null) {

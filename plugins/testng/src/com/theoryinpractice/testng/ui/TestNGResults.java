@@ -56,7 +56,6 @@ import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class TestNGResults extends TestResultsPanel implements TestFrameworkRunningModel {
   @NonNls private static final String TESTNG_SPLITTER_PROPERTY = "TestNG.Splitter.Proportion";
@@ -246,6 +245,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
 
     testCase.setExceptionMark(exceptionMark);
+    AbstractTestProxy.flushOutput(testCase);
 
     if (result.getResult() == MessageHelper.FAILED_TEST) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
