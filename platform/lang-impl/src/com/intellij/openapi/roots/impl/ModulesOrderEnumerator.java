@@ -16,31 +16,30 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author nik
  */
-public class ProjectOrderEnumerator extends OrderEnumeratorBase {
-  private Project myProject;
+public class ModulesOrderEnumerator extends OrderEnumeratorBase {
+  private Collection<? extends Module> myModules;
 
-  public ProjectOrderEnumerator(Project project, OrderRootsCache rootsCache) {
-    super(null, project, rootsCache);
-    myProject = project;
+  public ModulesOrderEnumerator(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
+    super(null, project, null);
+    myModules = modules;
   }
 
   @Override
   public void forEach(@NotNull Processor<OrderEntry> processor) {
-    myRecursively = false;
-    myWithoutDepModules = true;
+    myRecursivelyExportedOnly = false;
     final THashSet<Module> processed = new THashSet<Module>();
-    final Module[] modules = myModulesProvider != null ? myModulesProvider.getModules() : ModuleManager.getInstance(myProject).getSortedModules();
-    for (Module module : modules) {
+    for (Module module : myModules) {
       processEntries(getRootModel(module), processor, processed, true);
     }
   }
