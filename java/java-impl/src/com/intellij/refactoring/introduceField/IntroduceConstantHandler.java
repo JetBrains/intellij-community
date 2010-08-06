@@ -71,7 +71,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
                                                PsiLocalVariable local,
                                                PsiExpression[] occurences,
                                                boolean isStatic) {
-        return IntroduceConstantHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurences, null, null);
+        return IntroduceConstantHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurences, local, null);
       }
     };
     return localToFieldHandler.convertLocalToField(localVariable, editor);
@@ -86,6 +86,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
                                            PsiExpression[] occurences,
                                            PsiElement anchorElement,
                                            PsiElement anchorElementIfAll) {
+    final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
     for (PsiExpression occurrence : occurences) {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         String message =
@@ -133,7 +134,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
     final IntroduceConstantDialog dialog =
       new IntroduceConstantDialog(project, parentClass, expr, localVariable, false, occurences, getParentClass(),
-                                  new TypeSelectorManagerImpl(project, type, expr, occurences));
+                                  new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences));
     dialog.show();
     if (!dialog.isOK()) {
       if (occurences.length > 1) {
