@@ -55,12 +55,10 @@ public class CompositePrintable implements Printable, Disposable {
     if (myWrapper != null) {
       myWrapper.printOn(printer);
     }
-    else {
-      synchronized (myNestedPrintables) {
-        for (int i = 0; i < myNestedPrintables.size(); i++) {
-          if (i == getExceptionMark() && i > 0) printer.mark();
-          myNestedPrintables.get(i).printOn(printer);
-        }
+    synchronized (myNestedPrintables) {
+      for (int i = 0; i < myNestedPrintables.size(); i++) {
+        if (i == getExceptionMark() && i > 0) printer.mark();
+        myNestedPrintables.get(i).printOn(printer);
       }
     }
   }
