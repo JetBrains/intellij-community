@@ -11,17 +11,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author yole
@@ -34,13 +30,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
 
   protected PythonRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
-    addDefaultEnvs();
-  }
-
-  private void addDefaultEnvs() {
-    Map<String, String> envs = getEnvs();
-    // unbuffered I/O is easier for IDE to handle
-    envs.put("PYTHONUNBUFFERED", "1");
+    setUnbufferedEnv();
   }
 
   protected ModuleBasedConfiguration createInstance() {

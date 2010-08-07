@@ -10,6 +10,9 @@ import java.util.List;
  * @author traff
  */
 public class InstructionBuilder {
+  private InstructionBuilder() {
+  }
+
   public static List<Instruction> buildInstructions(ControlFlowBuilder builder, List<PyTypeAssertionEvaluator.Assertion> assertions) {
     List<Instruction> result = Lists.newArrayList();
     for (PyTypeAssertionEvaluator.Assertion def: assertions) {

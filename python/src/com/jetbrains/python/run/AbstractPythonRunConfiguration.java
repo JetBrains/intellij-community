@@ -18,6 +18,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.buildout.BuildoutFacetType;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.FP;
@@ -250,5 +251,11 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     if (cmd_env != null) new_env = new com.intellij.util.containers.HashMap<String, String>(cmd_env);
     else new_env = new com.intellij.util.containers.HashMap<String, String>();
     return new_env;
+  }
+
+  protected void setUnbufferedEnv() {
+    Map<String, String> envs = getEnvs();
+    // unbuffered I/O is easier for IDE to handle
+    PythonEnvUtil.setPythonUnbuffered(envs);
   }
 }

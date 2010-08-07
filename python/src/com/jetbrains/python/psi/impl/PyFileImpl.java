@@ -67,7 +67,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     String fname;
     VirtualFile vfile = getVirtualFile();
     if (vfile != null) fname = vfile.getUrl();
-    else fname = "(null)://" + ((Object)this).toString();
+    else fname = "(null)://" + this.toString();
     return fname;
   }
 

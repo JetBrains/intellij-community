@@ -63,7 +63,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     myStack.push(o);
   }
 
-  class Assertion {
+  static class Assertion {
     private final String name;
     private final PyElement element;
 

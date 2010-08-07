@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class PyPsiUtils {
   }
 
   protected static <T extends PyElement> T[] nodesToPsi(ASTNode[] nodes, T[] array) {
-    T[] psiElements = (T[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
+    T[] psiElements = (T[])Array.newInstance(array.getClass().getComponentType(), nodes.length);
     for (int i = 0; i < nodes.length; i++) {
       //noinspection unchecked
       psiElements[i] = (T)nodes[i].getPsi();
@@ -155,7 +156,6 @@ public class PyPsiUtils {
       }
       // stop
       if (node == node2){
-        insideRange = false;
         break;
       }
     }

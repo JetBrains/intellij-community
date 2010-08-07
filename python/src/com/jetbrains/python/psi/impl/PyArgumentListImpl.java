@@ -209,6 +209,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode node) {
+    //noinspection SuspiciousMethodCalls
     if (Arrays.asList(getArguments()).contains(node.getPsi())) {
       ASTNode next = PyPsiUtils.getNextComma(node);
       if (next == null) {

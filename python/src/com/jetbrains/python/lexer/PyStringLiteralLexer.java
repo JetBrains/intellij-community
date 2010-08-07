@@ -42,7 +42,7 @@ public class PyStringLiteralLexer extends LexerBase {
   private final IElementType myOriginalLiteralToken;
   private boolean mySeenEscapedSpacesOnly;
 
-  private final boolean myFlagsNeedToBeSet = true;
+  private static final boolean myFlagsNeedToBeSet = true;
 
   /**
    * @param originalLiteralToken the AST node we're layering over.

@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -108,8 +109,8 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       PyExpression[] constituents = PsiTreeUtil.getChildrenOfType(this, PyExpression.class); // "a = b = c" -> [a, b, c]
       if (constituents != null && constituents.length > 1) {
         PyExpression rhs = constituents[constituents.length - 1]; // last
-        List<PyExpression> lhses = new ArrayList<PyExpression>(constituents.length - 1);
-        for (int i = 0; i < constituents.length - 1; i += 1) lhses.add(constituents[i]); // copy all but last; most often it's one element.
+        List<PyExpression> lhses = Lists.newArrayList(constituents);
+        if (lhses.size()>0) lhses.remove(lhses.size()-1); // copy all but last; most often it's one element.
         for (PyExpression lhs : lhses) mapToValues(lhs, rhs, ret);
       }
     }

@@ -17,6 +17,9 @@ import java.io.File;
  * @author traff
  */
 public class JythonUnitTestUtil {
+  private JythonUnitTestUtil() {
+  }
+
   public static ProcessOutput runJython(String workDir, String pythonPath, String... args) throws ExecutionException {
     final SimpleJavaSdkType sdkType = new SimpleJavaSdkType();
     final Sdk ideaJdk = sdkType.createJdk("tmp", SystemProperties.getJavaHome());

@@ -43,6 +43,9 @@ public class PyExtractMethodUtil {
 
   public static final String NAME = "extract.method.name";
 
+  private PyExtractMethodUtil() {
+  }
+
   public static void extractFromStatements(final Project project,
                                            final Editor editor,
                                            final CodeFragment fragment,

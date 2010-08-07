@@ -7,5 +7,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyLambdaExpression extends PyExpression, Callable {
   @Nullable
-  public PyExpression getBody();
+  PyExpression getBody();
 }

@@ -66,7 +66,8 @@ public class PyDemorganIntention extends BaseIntentionAction {
 
   private static String convertConjunctionExpression(PyBinaryExpression exp, PyElementType tokenType) {
     PyExpression lhs = exp.getLeftExpression();
-    String lhsText, rhsText;
+    String lhsText;
+    String rhsText;
     if (isConjunctionExpression(lhs, tokenType)) {
       lhsText = convertConjunctionExpression((PyBinaryExpression)lhs, tokenType);
     }

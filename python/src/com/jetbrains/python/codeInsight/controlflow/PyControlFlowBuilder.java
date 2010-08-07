@@ -269,8 +269,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (condition != null) {
       condition.accept(this);
     }
-    final Instruction head = getPrevInstruction(condition);
-    myBuilder.prevInstruction = head;
+    myBuilder.prevInstruction = getPrevInstruction(condition);
 
     // if condition was false
     final PyElsePart elsePart = node.getElsePart();

@@ -32,6 +32,9 @@ public class PyConsoleHighlightingUtil {
   static final ConsoleViewContentType NUMBER_ATTRIBUTES = new ConsoleViewContentType(NUMBER_KEY.toString(),
                                                         ColoredProcessHandler.getByKey(PyHighlighter.PY_NUMBER));
 
+  private PyConsoleHighlightingUtil() {
+  }
+
   public static void processOutput(final LanguageConsoleImpl console, String string, final Key attributes) {
     final ConsoleViewContentType type =
       attributes == ProcessOutputTypes.STDERR ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT;

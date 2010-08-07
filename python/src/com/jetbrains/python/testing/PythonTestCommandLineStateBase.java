@@ -21,6 +21,7 @@ import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +36,6 @@ import java.util.Map;
  */
 public abstract class PythonTestCommandLineStateBase extends PythonCommandLineState {
   protected final AbstractPythonRunConfiguration myConfiguration;
-
-  private static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
 
   public PythonTestCommandLineStateBase(AbstractPythonRunConfiguration configuration, ExecutionEnvironment env) {
     super(configuration, env, Collections.<Filter>emptyList());
@@ -80,7 +79,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   @Override
   protected void addPredefinedEnvironmentVariables(Map<String, String> envs) {
     super.addPredefinedEnvironmentVariables(envs);
-    envs.put(PYTHONUNBUFFERED, "1");
+    PythonEnvUtil.setPythonUnbuffered(envs);
   }
 
   protected Collection<String> buildPythonPath() {
