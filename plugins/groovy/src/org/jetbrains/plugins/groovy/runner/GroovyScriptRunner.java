@@ -120,9 +120,9 @@ public abstract class GroovyScriptRunner {
 
     PathsList nonCore = new PathsList();
     for (VirtualFile virtualFile : tmp.getClassPath().getVirtualFiles()) {
-      if (!core.contains(virtualFile)) {
+      //if (!core.contains(virtualFile)) {
         nonCore.add(virtualFile);
-      }
+      //}
     }
 
     params.getProgramParametersList().add("--classpath");
