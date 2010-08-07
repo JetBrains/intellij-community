@@ -19,7 +19,7 @@ all this too.
 """
 
 from datetime import datetime
-OUR_OWN_DATETIME = datetime(2010, 7, 13, 4, 43, 5) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 8, 7, 18, 10, 45) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -258,7 +258,7 @@ else:
 # grammar to parse parameter lists
 
 # // snatched from parsePythonValue.py, from pyparsing samples, copyright 2006 by Paul McGuire but under BSD license.
-# we don't suppress lots of punctuation because we want it back when we reconstuct the lists
+# we don't suppress lots of punctuation because we want it back when we reconstruct the lists
 
 lparen,rparen,lbrack,rbrack,lbrace,rbrace,colon = map(Literal,"()[]{}:")
 
@@ -524,7 +524,6 @@ class ModuleRedeclarator(object):
   PREDEFINED_BUILTIN_SIGS = {
     ("object", "__init__"): "(self)",
     ("object", "__new__"): "(cls, *more)", # only for the sake of parameter names readability
-    ("str", "__init__"): "(self, x)", # overrides a fake
     ("type", "__init__"): "(self, name, bases=None, dict=None)", # overrides a fake
     ("int", "__init__"): "(self, x, base=10)", # overrides a fake
     ("list", "__init__"): "(self, seq=())",
@@ -532,6 +531,7 @@ class ModuleRedeclarator(object):
     ("set", "__init__"): "(self, seq=())",
     ("dict", "__init__"): "(self, seq=None, **kwargs)",
     ("property", "__init__"): "(self, fget=None, fset=None, fdel=None, doc=None)", # TODO: infer, doc comments have it
+    ("dict", "update"): "(self, E=None, **F)", # docstring nearly lies
     (None, "zip"): "(seq1, seq2, *more_seqs)",
     (None, "range"): "(start=None, stop=None, step=None)", # suboptimal: allows empty arglist
     (None, "filter"): "(function_or_none, sequence)",
@@ -543,11 +543,13 @@ class ModuleRedeclarator(object):
     PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1, type2=None)"
     PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, **kwargs)" # too permissive, but py2.x won't allow a better sig
     PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, **kwargs)"
+    PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, x)" # overrides a fake
   else:
     PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1=None, type2=None)"
-    PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, key)"
-    PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, key)"
+    PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, key=None)"
+    PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, key=None)"
     PREDEFINED_BUILTIN_SIGS[(None, "open")] = "(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True)"
+    PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, value, encoding=None, errors='strict')" # overrides a fake
 
   if version == (2, 5):
     PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there
@@ -555,6 +557,8 @@ class ModuleRedeclarator(object):
   # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
   PREDEFINED_MOD_CLASS_SIGS = {
     ("datetime", "timedelta", "__new__") : "(cls, days=None, seconds=None, microseconds=None, milliseconds=None, minutes=None, hours=None, weeks=None)",
+    ("binascii", None, "hexlify") : "(data)",
+    ("binascii", None, "unhexlify") : "(hexstr)",
   }
   
   # known properties of modules
@@ -707,6 +711,10 @@ class ModuleRedeclarator(object):
   if version[0] < 3:
     import __builtin__ as b2
     FAKE_BUILTIN_INITS = FAKE_BUILTIN_INITS + (getattr(b2, "unicode"),)
+    del b2
+  else:
+    import builtins as b2
+    FAKE_BUILTIN_INITS = FAKE_BUILTIN_INITS + (getattr(b2, "str"),)
     del b2
 
   # Some builtin methods are decorated, but this is hard to detect.
@@ -908,6 +916,7 @@ class ModuleRedeclarator(object):
     return self.doing_builtins and module_name == BUILTIN_MOD_NAME and (class_name, func_name) in self.PREDEFINED_BUILTIN_SIGS
 
   def restorePredefinedBuiltin(self, class_name, func_name):
+    print(self.PREDEFINED_BUILTIN_SIGS[(class_name, func_name)], class_name, func_name) # XXX 
     spec = func_name + self.PREDEFINED_BUILTIN_SIGS[(class_name, func_name)]
     note = "known special case of " + (class_name and class_name+"." or "") + func_name
     return (spec, note)
@@ -1037,7 +1046,11 @@ class ModuleRedeclarator(object):
         self.outDocAttr(p_func, indent+1, p_class)
     elif mod_class_method_tuple in self.PREDEFINED_MOD_CLASS_SIGS:
       sig = self.PREDEFINED_MOD_CLASS_SIGS[mod_class_method_tuple]
-      self.out("def " + p_name + sig + (": # known case of %s.%s.%s" % mod_class_method_tuple), indent)
+      if classname:
+        ofwhat = "%s.%s.%s" % mod_class_method_tuple
+      else:
+        ofwhat = "%s.%s" % (p_modname, p_name)
+      self.out("def " + p_name + sig + (": # known case of %s" % ofwhat), indent)
     else:
       # __doc__ is our best source of arglist
       sig_note = "real signature unknown"
