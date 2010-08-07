@@ -632,6 +632,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
     final MultiMap<VirtualFile, RequestWithProcessor> result = new MultiMap<VirtualFile, RequestWithProcessor>();
     for (Set<IdIndexEntry> key : singles.keySet()) {
+      if (key.isEmpty()) {
+        continue;
+      }
+
       final Collection<RequestWithProcessor> data = singles.get(key);
       GlobalSearchScope commonScope = uniteScopes(data);
 
@@ -643,7 +647,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (first) {
           intersection = local;
           first = false;
-        } else {
+        }
+        else {
           for (VirtualFile file : local.keySet()) {
             if (intersection.containsKey(file)) {
               intersection.putValues(file, local.get(file));
