@@ -916,7 +916,6 @@ class ModuleRedeclarator(object):
     return self.doing_builtins and module_name == BUILTIN_MOD_NAME and (class_name, func_name) in self.PREDEFINED_BUILTIN_SIGS
 
   def restorePredefinedBuiltin(self, class_name, func_name):
-    print(self.PREDEFINED_BUILTIN_SIGS[(class_name, func_name)], class_name, func_name) # XXX 
     spec = func_name + self.PREDEFINED_BUILTIN_SIGS[(class_name, func_name)]
     note = "known special case of " + (class_name and class_name+"." or "") + func_name
     return (spec, note)
