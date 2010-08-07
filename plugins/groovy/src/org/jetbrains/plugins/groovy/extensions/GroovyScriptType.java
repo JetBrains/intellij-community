@@ -95,4 +95,8 @@ public abstract class GroovyScriptType {
   public boolean shouldBeCompiled(GroovyFile script) {
     return false;
   }
+
+  public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location location) {
+    return true;
+  }
 }

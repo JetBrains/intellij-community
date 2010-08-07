@@ -23,9 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -81,32 +79,35 @@ public class GradleScriptType extends GroovyScriptType {
   }
 
   @Override
+   public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location location) {
+    final String params = existing.scriptParams;
+    final String s = getTaskTarget(location);
+    return s != null && params != null && (params.startsWith(s + " ") || params.equals(s));
+  }
+
+  @Override
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
-    final PsiElement element = location.getPsiElement();
-    PsiElement pp = element.getParent();
-    PsiElement parent = element;
-    while (!(pp instanceof PsiFile) && pp != null) {
-      pp = pp.getParent();
-      parent = parent.getParent();
-    }
-    if (pp != null) {
-      String target = getTaskTarget(parent);
-      if (target != null) {
-        configuration.scriptParams = target;
-        configuration.setName(configuration.getName() + "." + target);
-      }
+    String target = getTaskTarget(location);
+    if (target != null) {
+      configuration.scriptParams = target;
+      configuration.setName(configuration.getName() + "." + target);
     }
 
     
     final CompileStepBeforeRun.MakeBeforeRunTask runTask =
-      RunManagerEx.getInstanceEx(element.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
+      RunManagerEx.getInstanceEx(file.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
     if (runTask != null) {
       runTask.setEnabled(false);
     }
   }
 
   @Nullable
-  private static String getTaskTarget(PsiElement parent) {
+  private static String getTaskTarget(Location location) {
+    PsiElement parent = location.getPsiElement();
+    while (parent.getParent() != null && !(parent.getParent() instanceof PsiFile)) {
+      parent = parent.getParent();
+    }
+
     if (isCreateTaskMethod(parent)) {
       final GrExpression[] arguments = ((GrMethodCallExpression)parent).getExpressionArguments();
       if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {

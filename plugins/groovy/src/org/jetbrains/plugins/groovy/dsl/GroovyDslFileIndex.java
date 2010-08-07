@@ -221,8 +221,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
           final long stamp = vfile.getModificationStamp();
           final GroovyDslExecutor cached = getCachedExecutor(vfile, stamp);
           if (cached == null) {
-            count++;
-            scheduleParsing(queue, project, vfile, stamp, psiFile.getText());
+            if (scheduleParsing(queue, project, vfile, stamp, psiFile.getText())) {
+              count++;
+            }
           }
           else {
             result.add(new GroovyDslScript(project, vfile, cached));
@@ -264,7 +265,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  private static void scheduleParsing(final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue,
+  private static boolean scheduleParsing(final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue,
                                       final Project project,
                                       final VirtualFile vfile,
                                       final long stamp,
@@ -302,8 +303,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       if (isNewRequest) {
         ourPool.execute(parseScript); //todo bring back multithreading when Groovy team fixes http://jira.codehaus.org/browse/GROOVY-4292
         //ApplicationManager.getApplication().executeOnPooledThread(parseScript);
+        return true;
       }
     }
+    return false;
   }
 
   private static boolean stopGdsl = false;

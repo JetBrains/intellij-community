@@ -27,8 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -50,6 +48,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
 /**
  * @author peter
@@ -378,12 +379,20 @@ public class ReferenceExpressionCompletionContributor {
     return qualifier == null ? "" : qualifier.getText() + ".";
   }
 
-  private static void addChainedCallVariants(final PsiElement place, final LookupElement qualifierItem,
+  private static void addChainedCallVariants(final PsiElement place, LookupElement qualifierItem,
                                              final CompletionResultSet result,
                                              PsiType qualifierType,
                                              final PsiType expectedType, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
-    final String typeText = qualifierType instanceof PsiEllipsisType ? ((PsiEllipsisType)qualifierType).getComponentType().getCanonicalText() + "[]" : qualifierType.getCanonicalText();
+    PsiType varType = qualifierType;
+    if (varType instanceof PsiEllipsisType) {
+      varType = ((PsiEllipsisType)varType).getComponentType();
+    }
+    if (varType instanceof PsiWildcardType) {
+      varType = TypeConversionUtil.erasure(expectedType);
+    }
+
+    final String typeText = varType.getCanonicalText();
     final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
     final PsiElement secondChild = block.getChildren()[1];
     if (!(secondChild instanceof PsiExpressionStatement)) {
@@ -394,7 +403,7 @@ public class ReferenceExpressionCompletionContributor {
 
     final ElementFilter filter = getReferenceFilter(place, true);
     for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
-      if (shoudChain(place, qualifierType, expectedType, item)) {
+      if (shoudChain(place, varType, expectedType, item)) {
         result.addElement(JavaChainLookupElement.chainElements(qualifierItem, item));
       }
     }

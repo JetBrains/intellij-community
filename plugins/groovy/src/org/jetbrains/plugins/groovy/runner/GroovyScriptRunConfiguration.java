@@ -59,7 +59,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   public String vmParams;
   public String workDir;
   public boolean isDebugEnabled;
-  public String scriptParams;
+  @Nullable public String scriptParams;
   @Nullable public String scriptPath;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
