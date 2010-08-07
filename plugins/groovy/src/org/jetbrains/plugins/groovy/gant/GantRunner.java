@@ -107,7 +107,7 @@ public class GantRunner extends GroovyScriptRunner {
       params.getClassPath().addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(gantHome + "/lib", ".*\\.jar"));
     }
 
-    addClasspathFromRootModel(module, tests, params);
+    addClasspathFromRootModel(module, tests, params, false);
 
     String antHome = System.getenv("ANT_HOME");
     if (StringUtil.isEmpty(antHome)) {

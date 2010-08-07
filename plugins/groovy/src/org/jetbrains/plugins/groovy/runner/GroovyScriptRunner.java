@@ -106,7 +106,7 @@ public abstract class GroovyScriptRunner {
     return null;
   }
 
-  protected static void addClasspathFromRootModel(@Nullable Module module, boolean isTests, JavaParameters params) throws CantRunException {
+  protected static void addClasspathFromRootModel(@Nullable Module module, boolean isTests, JavaParameters params, boolean allowDuplication) throws CantRunException {
     if (module == null) {
       return;
     }
@@ -121,7 +121,7 @@ public abstract class GroovyScriptRunner {
 
     PathsList nonCore = new PathsList();
     for (VirtualFile virtualFile : tmp.getClassPath().getVirtualFiles()) {
-      if (!core.contains(virtualFile)) {
+      if (allowDuplication || !core.contains(virtualFile)) {
         nonCore.add(virtualFile);
       }
     }
