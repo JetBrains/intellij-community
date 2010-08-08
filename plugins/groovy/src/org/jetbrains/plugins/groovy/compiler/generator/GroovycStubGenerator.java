@@ -47,6 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -114,7 +115,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, compileContext, toCompile);
       for (VirtualFile file : toCompile) {
         final String outPath = tempOutput.getPath();
-        final List<String> relPaths = generator.generateItems(file, tempOutput);
+        final Collection<String> relPaths = generator.generateItems(file, tempOutput);
         final List<String> fullPaths = new ArrayList<String>();
         for (String relPath : relPaths) {
           fullPaths.add(outPath + "/" + relPath);
