@@ -1570,7 +1570,16 @@ public class StringUtil {
     try {
       return Integer.parseInt(string);
     }
-    catch (NumberFormatException e) {
+    catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
+  public static double parseDouble(final String string, final double defaultValue) {
+    try {
+      return Double.parseDouble(string);
+    }
+    catch (Exception e) {
       return defaultValue;
     }
   }
