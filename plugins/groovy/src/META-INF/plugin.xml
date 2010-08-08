@@ -171,7 +171,6 @@
                                     implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
     <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
-    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyBasicToClassNameDelegator" order="before groovyBasic"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor" id="groovyBasic"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>
     <classNameInsertHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyClassNameInsertHandler"/>

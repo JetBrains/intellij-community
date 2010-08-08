@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.AllClassesGetter;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -43,6 +44,10 @@ public class GroovyClassNameInsertHandler implements AllClassesGetter.ClassNameI
       return AllClassesGetter.ClassNameInsertHandlerResult.INSERT_FQN;
     }
     PsiElement position = file.findElementAt(endOffset - 1);
+
+    if (position != null && GroovyCompletionContributor.isReferenceInNewExpression(position.getParent())) {
+      PsiMethodInsertHandler.insertParentheses(context, item, false, GroovyCompletionUtil.hasConstructorParameters(item.getObject()));
+    }
 
     if (isInVariable(position)) {
       Project project = context.getProject();

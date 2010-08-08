@@ -232,6 +232,11 @@ public class GroovyCompletionUtil {
         result[i] = setupLookupBuilder(method, candidates[i].getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element));
         continue;
       }
+      if (element instanceof PsiClass) {
+        result[i] = AllClassesGetter.createLookupItem((PsiClass)element);
+        continue;
+      }
+
       if (element instanceof PsiNamedElement) {
         result[i] = setupLookupBuilder(element, candidates[i].getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element));
         continue;
