@@ -19,16 +19,18 @@ package standardDsls
  * @author Maxim.Medvedev
  */
 
-gppCategory "groovy.util.Conversions"
-gppCategory "groovy.util.Files"
-gppCategory "groovy.util.Filters"
-gppCategory "groovy.util.Iterations"
-gppCategory "groovy.util.Mappers"
-gppCategory "groovy.util.Sort"
-gppCategory "groovy.util.Strings"
-gppCategory "groovy.util.With"
-gppCategory "groovy.util.concurrent.Atomics"
-gppCategory "org.mbte.groovypp.runtime.ArraysMethods"
-gppCategory "org.mbte.groovypp.runtime.DefaultGroovyPPMethods"
+contributor([:]) {
+  gppCategory "groovy.util.Conversions"
+  gppCategory "groovy.util.Files"
+  gppCategory "groovy.util.Filters"
+  gppCategory "groovy.util.Iterations"
+  gppCategory "groovy.util.Mappers"
+  gppCategory "groovy.util.Sort"
+  gppCategory "groovy.util.Strings"
+  gppCategory "groovy.util.With"
+  gppCategory "groovy.util.concurrent.Atomics"
+  gppCategory "org.mbte.groovypp.runtime.ArraysMethods"
+  gppCategory "org.mbte.groovypp.runtime.DefaultGroovyPPMethods"
 
-gppCategory "org.mbte.groovypp.runtime.DefaultGroovyPPStaticMethods", true
+  gppCategory "org.mbte.groovypp.runtime.DefaultGroovyPPStaticMethods", true
+}
