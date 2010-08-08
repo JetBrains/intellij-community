@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.compiler.generator;
 
+import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -114,13 +115,8 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     } else {
       final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, compileContext, toCompile);
       for (VirtualFile file : toCompile) {
-        final String outPath = tempOutput.getPath();
-        final Collection<String> relPaths = generator.generateItems(file, tempOutput);
-        final List<String> fullPaths = new ArrayList<String>();
-        for (String relPath : relPaths) {
-          fullPaths.add(outPath + "/" + relPath);
-        }
-        addStubsToCompileScope(fullPaths, compileContext, module);
+        final Collection<VirtualFile> stubFiles = generator.generateItems(file, tempOutput);
+        ((CompileContextEx)compileContext).addScope(new FileSetCompileScope(stubFiles, new Module[]{module}));
       }
     }
   }

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.compiler.generator;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -56,7 +58,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrCo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -108,7 +109,7 @@ public class GroovyToJavaGenerator {
     myAllToCompile = allToCompile;
   }
 
-  public Collection<String> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
+  public Collection<VirtualFile> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
     ProgressIndicator indicator = getProcessIndicator();
     if (indicator != null) indicator.setText("Generating stubs for " + item.getName() + "...");
 
@@ -116,14 +117,12 @@ public class GroovyToJavaGenerator {
       LOG.debug("Generating stubs for " + item.getName() + "...");
     }
 
-    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<String>>() {
-      public Collection<String> compute() {
-        final GroovyFile file = (GroovyFile)PsiManager.getInstance(myProject).findFile(item);
-        final Map<String, String> output = generateStubs(file);
-        writeStubs(outputRootDirectory, output);
-        return output.keySet();
+    final Map<String, String> output = ApplicationManager.getApplication().runReadAction(new Computable<Map<String, String>>() {
+      public Map<String, String> compute() {
+        return generateStubs((GroovyFile)PsiManager.getInstance(myProject).findFile(item));
       }
     });
+    return writeStubs(outputRootDirectory, output);
   }
 
   protected ProgressIndicator getProcessIndicator() {
@@ -164,7 +163,8 @@ public class GroovyToJavaGenerator {
     return output;
   }
 
-  private static void writeStubs(VirtualFile outputRootDirectory, Map<String, String> output) {
+  private static List<VirtualFile> writeStubs(VirtualFile outputRootDirectory, Map<String, String> output) {
+    final ArrayList<VirtualFile> stubs = CollectionFactory.arrayList();
     for (String relativePath : output.keySet()) {
       final File stubFile = new File(outputRootDirectory.getPath(), relativePath);
       FileUtil.createIfDoesntExist(stubFile);
@@ -174,7 +174,10 @@ public class GroovyToJavaGenerator {
       catch (IOException e) {
         LOG.error(e);
       }
+      CompilerUtil.refreshIOFile(stubFile);
+      ContainerUtil.addIfNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(stubFile), stubs);
     }
+    return stubs;
   }
 
   private static String getPackageDirectory(@Nullable GrPackageDefinition packageDefinition) {
