@@ -19,6 +19,7 @@ import com.intellij.Patches;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.MenuKeyEvent;
 import javax.swing.event.MenuKeyListener;
 import javax.swing.plaf.ComponentUI;
@@ -42,6 +43,9 @@ public class IdeaMenuUI extends BasicMenuUI{
   private static final Rectangle ourCheckIconRect = new Rectangle();
   private static final Rectangle ourIconRect = new Rectangle();
   private static final Rectangle ourViewRect = new Rectangle(32767, 32767);
+
+  private static final Border SELECTED_BACKGROUND_PAINTER = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
+  private static final Icon INVERTED_ARROW_ICON = (Icon) UIManager.get("Menu.invertedArrowIcon");
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -109,12 +113,17 @@ public class IdeaMenuUI extends BasicMenuUI{
       g.setColor(jMenu.getBackground());
       g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
-        g.setColor(selectionBackground);
-        if (allowedIcon != null){
-          g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
-        }else{
-          g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+        if (UIUtil.isUnderAquaLookAndFeel()) {
+           SELECTED_BACKGROUND_PAINTER.paintBorder(comp, g, 0, 0, jMenu.getWidth(), jMenu.getHeight());
+        } else {
           g.setColor(selectionBackground);
+          if (allowedIcon != null) {
+            g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
+          }
+          else {
+            g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+            g.setColor(selectionBackground);
+          }
         }
       }
       g.setColor(color2);
@@ -179,7 +188,9 @@ public class IdeaMenuUI extends BasicMenuUI{
       }
       if (useCheckAndArrow()){
         try {
-          arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
+          if (UIUtil.isUnderAquaLookAndFeel() && buttonmodel.isSelected() && INVERTED_ARROW_ICON != null) {
+            INVERTED_ARROW_ICON.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
+          } else arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
         }
         catch (NullPointerException npe) {
           // GTKIconFactory$MenuArrowIcon.paintIcon since it doesn't expect to be given a null instead of SynthContext

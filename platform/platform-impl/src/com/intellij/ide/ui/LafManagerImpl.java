@@ -27,11 +27,14 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.plaf.beg.*;
+import com.intellij.util.ui.UIUtil;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -43,6 +46,8 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -307,6 +312,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     PopupFactory popupFactory;
 
+    final PopupFactory oldFactory = PopupFactory.getSharedInstance();
     if(HEAVY_WEIGHT_POPUP.equals(popupWeight)){
       popupFactory=new PopupFactory(){
         public Popup getPopup(
@@ -316,7 +322,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
           int y
         ) throws IllegalArgumentException{
           final Point point = fixPopupLocation(contents, x, y);
-          return new Popup(owner,contents,point.x,point.y){};
+          return oldFactory.getPopup(owner, contents, point.x, point.y);
         }
       };
     }else if(MEDIUM_WEIGHT_POPUP.equals(popupWeight)){
@@ -328,14 +334,49 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
         private Popup createPopup(final Component owner, final Component contents, final int x, final int y) {
           final Point point = fixPopupLocation(contents, x, y);
-          final Popup popup = super.getPopup(owner, contents, point.x, point.y);
-          return popup;
+          return oldFactory.getPopup(owner, contents, point.x, point.y);
         }
       };
     }else{
       throw new IllegalStateException("unknown value of property -Didea.popup.weight: "+popupWeight);
     }
     PopupFactory.setSharedInstance(popupFactory);
+
+    // update ui for popup menu to get round corners
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+      uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
+      final Icon icon = getAquaMenuInvertedIcon();
+      if (icon != null) {
+        uiDefaults.put("Menu.invertedArrowIcon", icon);
+      }
+    }
+  }
+
+  @Nullable
+  private static Icon getAquaMenuInvertedIcon() {
+    if (!UIUtil.isUnderAquaLookAndFeel()) return null;
+    final Icon arrow = (Icon) UIManager.get("Menu.arrowIcon");
+    if (arrow == null) return null;
+
+    try {
+      final Method method = arrow.getClass().getMethod("getInvertedIcon");
+      if (method != null) {
+        method.setAccessible(true);
+        return (Icon) method.invoke(arrow);
+      }
+
+      return null;
+    }
+    catch (NoSuchMethodException e1) {
+      return null;
+    }
+    catch (InvocationTargetException e1) {
+      return null;
+    }
+    catch (IllegalAccessException e1) {
+      return null;
+    }
   }
 
   private Point fixPopupLocation(final Component contents, final int x, final int y) {
