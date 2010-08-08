@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -39,7 +38,6 @@ public class HeavyNormalCompletionTest extends CompletionTestCase{
     createClass("package foo.bar; public class AxBxCxDxEx {}");
 
     configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    ((LookupImpl)LookupManager.getActiveLookup(myEditor)).finishLookup(Lookup.NORMAL_SELECT_CHAR);
     checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
   }
   

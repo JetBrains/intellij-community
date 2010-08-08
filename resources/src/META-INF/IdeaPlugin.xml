@@ -226,9 +226,9 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.BasicToClassNameDelegator" id="basic2ClassName"
-                            order="first, before javaMemberName"/>
+                            order="first, before javaMemberName, after xml"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor" id="javaLegacy"
-                            order="last, before legacy, before default"/>
+                            order="last, before legacy, before default, before javaClassName"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor" id="javaClassReference"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaMethodMergingContributor" id="methodMerger"
