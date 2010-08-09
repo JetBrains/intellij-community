@@ -31,11 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.DateFormat;
 import java.util.*;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1606,6 +1603,19 @@ public class StringUtil {
       return "an" + Character.toUpperCase(c) + name.substring(1);
     }
     return "a" + Character.toUpperCase(c) + name.substring(1);
+  }
+
+  public static String sanitizeJavaIdentifier(String name) {
+    final StringBuilder result = new StringBuilder();
+
+    for (int i = 0; i < name.length(); i++) {
+      final char ch = name.charAt(i);
+      if (Character.isLetterOrDigit(ch)) {
+        result.append(ch);
+      }
+    }
+
+    return result.toString();
   }
 
   public static void assertValidSeparators(@NotNull CharSequence s) {

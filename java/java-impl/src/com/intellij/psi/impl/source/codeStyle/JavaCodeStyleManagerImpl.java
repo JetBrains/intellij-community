@@ -38,7 +38,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -589,7 +588,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               String[] names = getSuggestionsByName(propertyName, variableKind, false);
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
               if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiVariable) {
-                names = ArrayUtil.append(names, changeIfNotIdentifier(qualifierExpression.getText() + StringUtil.capitalize(propertyName)));
+                names = ArrayUtil.append(names, StringUtil.sanitizeJavaIdentifier(changeIfNotIdentifier(qualifierExpression.getText() + StringUtil.capitalize(propertyName))));
               }
               return new NamesByExprInfo(propertyName, names);
             }
@@ -945,7 +944,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   public SuggestedNameInfo suggestUniqueVariableName(@NotNull final SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward) {
     final String[] names = baseNameInfo.names;
-    Set<String> uniqueNames = new HashSet<String>(names.length);
+    final LinkedHashSet<String> uniqueNames = new LinkedHashSet<String>(names.length);
     for (String name : names) {
       uniqueNames.add(suggestUniqueVariableName(name, place, lookForward));
     }
