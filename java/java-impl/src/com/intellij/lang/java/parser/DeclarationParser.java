@@ -454,7 +454,14 @@ public class DeclarationParser {
         if (noLastParam) {
           error(builder, JavaErrorMessages.message("expected.identifier.or.type"));
         }
-        if (!expect(builder, JavaTokenType.RPARENTH)) {
+        if (builder.getTokenType() == JavaTokenType.RPARENTH) {
+          if (invalidElements != null) {
+            invalidElements.error(commaExpected ? JavaErrorMessages.message("expected.comma") : JavaErrorMessages.message("expected.parameter"));
+          }
+          invalidElements = null;
+          builder.advanceLexer();
+        }
+        else {
           if (!noLastParam) {
             error(builder, JavaErrorMessages.message("expected.rparen"));
           }

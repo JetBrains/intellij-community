@@ -1,4 +1,4 @@
-PsiJavaFile:Errors.java
+PsiJavaFile:Errors0.java
   PsiImportList
     <empty list>
   PsiComment(END_OF_LINE_COMMENT)('// illegal modifier combinations')
