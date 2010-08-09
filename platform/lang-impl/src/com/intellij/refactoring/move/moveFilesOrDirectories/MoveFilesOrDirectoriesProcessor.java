@@ -125,7 +125,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, myNewParent, oldToNewMap);
           FileReferenceContextUtil.encodeFileReferences(element);
 
-          MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, myNewParent);
+          if (myNewParent.findFile(movedFile.getName()) == null) {
+            MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, myNewParent);
+          }
           movedFiles.add(movedFile);
         }
 
