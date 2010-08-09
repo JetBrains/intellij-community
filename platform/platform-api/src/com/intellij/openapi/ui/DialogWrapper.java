@@ -23,14 +23,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
@@ -110,6 +108,7 @@ public abstract class DialogWrapper {
   private DoNotAskOption myDoNotAsk;
 
   private JComponent myPreferredFocusedComponent;
+  private Computable<Point> myInitialLocationCallback;
 
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
@@ -335,7 +334,7 @@ public abstract class DialogWrapper {
     }
 
     panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
-    
+
     return panel;
   }
 
@@ -1063,7 +1062,11 @@ public abstract class DialogWrapper {
    */
   @Nullable
   public Point getInitialLocation() {
-    return null;
+    return myInitialLocationCallback == null ? null : myInitialLocationCallback.compute();
+  }
+
+  public void setInitialLocationCallback(Computable<Point> callback) {
+    myInitialLocationCallback = callback;
   }
 
   private void registerKeyboardShortcuts() {
