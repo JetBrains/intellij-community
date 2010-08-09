@@ -1,4 +1,4 @@
-PsiJavaFile:GE.java
+PsiJavaFile:GE0.java
   PsiAssignmentExpression:x >>>= 8 >> 2
     PsiReferenceExpression:x
       PsiReferenceParameterList

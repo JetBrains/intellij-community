@@ -216,7 +216,7 @@ public class ExpressionParser {
       }
 
       final PsiBuilder.Marker expression = left.precede();
-      builder.advanceLexer();
+      advanceGtToken(builder, tokenType);
 
       final PsiBuilder.Marker right = parseExpression(builder, toParse);
       if (right == null) {
@@ -801,6 +801,9 @@ public class ExpressionParser {
           tokenType = JavaTokenType.GTGT;
         }
       }
+      else if (builder.getTokenType() == JavaTokenType.EQ) {
+        tokenType = JavaTokenType.GE;
+      }
     }
 
     sp.rollbackTo();
@@ -820,6 +823,9 @@ public class ExpressionParser {
       PsiBuilderUtil.advance(builder, 3);
     }
     else if (type == JavaTokenType.GTGT) {
+      PsiBuilderUtil.advance(builder, 2);
+    }
+    else if (type == JavaTokenType.GE) {
       PsiBuilderUtil.advance(builder, 2);
     }
     else {
