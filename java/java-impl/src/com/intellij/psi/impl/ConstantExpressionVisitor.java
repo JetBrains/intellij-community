@@ -47,9 +47,6 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     myResult = null;
     element.accept(this);
     store(element, myResult);
-    //for (PsiElement child : element.getChildren()) {
-    //  store(child, null); //erase garbage
-    //}
     return myResult;
   }
   private static final Key<Object> VALUE = Key.create("VALUE");

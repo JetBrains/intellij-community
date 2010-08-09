@@ -19,10 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
@@ -73,10 +70,6 @@ public abstract class Language extends UserDataHolderBase {
     if (prev != null) {
       LOG.error("Language with ID '" + ID + "' is already registered: "+prev.getClass());
     }
-  }
-
-  protected ConcurrentMap<Key, Object> createDataMap() {
-    return new ConcurrentHashMap<Key, Object>();
   }
 
   /**
