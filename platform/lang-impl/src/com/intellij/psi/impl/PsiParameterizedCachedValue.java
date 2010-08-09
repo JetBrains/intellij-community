@@ -24,15 +24,14 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.ObjectUtils.*;
+import static com.intellij.util.ObjectUtils.NULL;
 
 public abstract class PsiParameterizedCachedValue<T,P> extends PsiCachedValue<T> implements ParameterizedCachedValue<T,P> {
 
@@ -45,16 +44,9 @@ public abstract class PsiParameterizedCachedValue<T,P> extends PsiCachedValue<T>
 
   @Nullable
   public T getValue(P param) {
-    r.lock();
-
-    T value;
-    try {
-      value = getUpToDateOrNull();
-      if (value != null) {
-        return value == NULL ? null : value;
-      }
-    } finally {
-      r.unlock();
+    T value = getUpToDateOrNull();
+    if (value != null) {
+      return value == NULL ? null : value;
     }
 
     w.lock();
