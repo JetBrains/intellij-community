@@ -87,8 +87,9 @@ public class DeclarationParser {
       }
       error.error(JavaErrorMessages.message("expected.lbrace"));
     }
-
-    parseClassBodyWithBraces(builder, isAnnotation, isEnum);
+    else {
+      parseClassBodyWithBraces(builder, isAnnotation, isEnum);
+    }
 
     if (context == Context.FILE) {
       boolean declarationsAfterEnd = false;
@@ -252,7 +253,8 @@ public class DeclarationParser {
       }
     }
     else if (ElementType.CLASS_KEYWORD_BIT_SET.contains(builder.getTokenType())) {
-      return parseClassFromKeyword(builder, declaration, false, context);
+      final PsiBuilder.Marker result = parseClassFromKeyword(builder, declaration, false, context);
+      return result != null ? result : modList;
     }
 
     PsiBuilder.Marker typeParams = null;
