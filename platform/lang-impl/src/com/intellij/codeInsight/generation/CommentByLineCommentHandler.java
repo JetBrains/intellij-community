@@ -71,7 +71,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     myEditor = editor;
 
     PsiElement context = myFile.getContext();
-    
+
     if (context != null && (context.textContains('\'') || context.textContains('\"'))) {
       String s = context.getText();
       if (StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'")) {
@@ -79,7 +79,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         myEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
       }
     }
-    
+
     myDocument = myEditor.getDocument();
     if (!FileDocumentManager.getInstance().requestWriting(myDocument, project)) {
       return;
@@ -133,7 +133,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
             myCommenterStateMap.get((SelfManagingCommenter)commenter)
           );
           if (prefix == null) prefix = ""; // TODO
-        } else {
+        }
+        else {
           prefix = commenter.getLineCommentPrefix();
           if (prefix == null) prefix = commenter.getBlockCommentPrefix();
         }
@@ -190,14 +191,16 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     boolean singleline = myStartLine == myEndLine;
     int offset = myDocument.getLineStartOffset(myStartLine);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-    
+
     final Language languageSuitableForCompleteFragment = PsiUtilBase.reallyEvaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
       myDocument.getCharsSequence(), myDocument.getLineEndOffset(myEndLine), " \t\n"), myFile);
 
-    Commenter blockSuitableCommenter = languageSuitableForCompleteFragment == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage()) : null;
+    Commenter blockSuitableCommenter =
+      languageSuitableForCompleteFragment == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage()) : null;
     if (blockSuitableCommenter == null && myFile.getFileType() instanceof AbstractFileType) {
       blockSuitableCommenter = new Commenter() {
         final SyntaxTable mySyntaxTable = ((AbstractFileType)myFile.getFileType()).getSyntaxTable();
+
         @Nullable
         public String getLineCommentPrefix() {
           return mySyntaxTable.getLineComment();
@@ -233,8 +236,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
           (commenter.getBlockCommentPrefix() == null || commenter.getBlockCommentSuffix() == null)) {
         return;
       }
-      
-      if (commenter instanceof SelfManagingCommenter && 
+
+      if (commenter instanceof SelfManagingCommenter &&
           myCommenterStateMap.get(commenter) == null) {
         final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
         CommenterDataHolder state =
@@ -242,13 +245,13 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         if (state == null) state = SelfManagingCommenter.EMPTY_STATE;
         myCommenterStateMap.put(selfManagingCommenter, state);
       }
-      
+
       myCommenters[line - myStartLine] = commenter;
       if (!isLineCommented(line, chars, commenter) && (singleline || !isLineEmpty(line))) {
         allLineCommented = false;
-        if (commenter instanceof IndentedCommenter){
+        if (commenter instanceof IndentedCommenter) {
           final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
-          if (value != null){
+          if (value != null) {
             commentWithIndent = value;
           }
         }
@@ -312,12 +315,13 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     if (commenter instanceof SelfManagingCommenter) {
       final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
       commented = selfManagingCommenter.isLineCommented(line, lineStart, myDocument, myCommenterStateMap.get(selfManagingCommenter));
-    } else {
+    }
+    else {
       String prefix = commenter.getLineCommentPrefix();
-      
+
       if (prefix != null) {
         commented = CharArrayUtil.regionMatches(chars, lineStart, prefix) ||
-                    prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, lineStart, prefix.trim()+"\n");
+                    prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, lineStart, prefix.trim() + "\n");
       }
       else {
         prefix = commenter.getBlockCommentPrefix();
@@ -333,15 +337,15 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         }
         commented = lineStart == lineEndForBlockCommenting && myStartLine != myEndLine ||
                     CharArrayUtil.regionMatches(chars, lineStart, prefix)
-                      && CharArrayUtil.regionMatches(chars, lineEndForBlockCommenting - suffix.length(), suffix);
+                    && CharArrayUtil.regionMatches(chars, lineEndForBlockCommenting - suffix.length(), suffix);
       }
     }
-    
+
     if (commented) {
       myStartOffsets[line - myStartLine] = lineStart;
-      myEndOffsets[line - myStartLine] = lineEndForBlockCommenting; 
+      myEndOffsets[line - myStartLine] = lineEndForBlockCommenting;
     }
-    
+
     return commented;
   }
 
@@ -426,7 +430,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       finally {
         StringBuilderSpinAllocator.dispose(buffer);
       }
-      commentLine(line, offset,commenter);
+      commentLine(line, offset, commenter);
     }
   }
 
@@ -453,13 +457,13 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     if (commenter == null) return;
 
     final int startOffset = myStartOffsets[line - myStartLine];
-    
+
     if (commenter instanceof SelfManagingCommenter) {
       final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
       selfManagingCommenter.uncommentLine(line, startOffset, myDocument, myCommenterStateMap.get(selfManagingCommenter));
       return;
     }
-    
+
     final int endOffset = myEndOffsets[line - myStartLine];
     if (startOffset == endOffset) {
       return;
@@ -467,6 +471,20 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
       CharSequence chars = myDocument.getCharsSequence();
+
+      if (commenter instanceof CommenterWithLineSuffix) {
+        CommenterWithLineSuffix commenterWithLineSuffix = (CommenterWithLineSuffix)commenter;
+        String suffix = commenterWithLineSuffix.getLineCommentSuffix();
+        int theEnd = endOffset > 0 ? endOffset : myDocument.getLineEndOffset(line);
+        while (theEnd > startOffset && Character.isWhitespace(chars.charAt(theEnd))) {
+          theEnd--;
+        }
+
+        if (CharArrayUtil.regionMatches(chars, theEnd - suffix.length() + 1, suffix)) {
+          myDocument.deleteString(theEnd - suffix.length() + 1, theEnd + 1);
+        }
+      }
+
       boolean skipNewLine = false;
       boolean commented = CharArrayUtil.regionMatches(chars, startOffset, prefix) ||
                           (skipNewLine = prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, startOffset, prefix.trim() + "\n"));
@@ -475,8 +493,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       int charsToDelete = skipNewLine ? prefix.trim().length() : prefix.length();
       int theEnd = endOffset > 0 ? endOffset : chars.length();
       // if there's exactly one space after line comment prefix and before the text that follows in the same line, delete the space too
-      if (startOffset + charsToDelete < theEnd-2 && chars.charAt(startOffset+charsToDelete) == ' ' &&
-          chars.charAt(startOffset+charsToDelete+1) != ' ') {
+      if (startOffset + charsToDelete < theEnd - 2 && chars.charAt(startOffset + charsToDelete) == ' ' &&
+          chars.charAt(startOffset + charsToDelete + 1) != ' ') {
         charsToDelete++;
       }
       myDocument.deleteString(startOffset, startOffset + charsToDelete);
@@ -522,9 +540,13 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       selfManagingCommenter.commentLine(line, offset, myDocument, myCommenterStateMap.get(selfManagingCommenter));
       return;
     }
-    
+
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
+      if (commenter instanceof CommenterWithLineSuffix) {
+        int endOffset = myDocument.getLineEndOffset(line);
+        myDocument.insertString(endOffset, ((CommenterWithLineSuffix)commenter).getLineCommentSuffix());
+      }
       myDocument.insertString(offset, prefix);
     }
     else {
