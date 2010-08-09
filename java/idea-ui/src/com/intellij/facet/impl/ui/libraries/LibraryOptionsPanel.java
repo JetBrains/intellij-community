@@ -18,6 +18,10 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -56,32 +60,40 @@ public class LibraryOptionsPanel {
 
     myConfigureButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final Point point = myConfigureButton.getLocationOnScreen();
         if (myLocateOnDiskButton.isSelected()) {
-          EditLibraryDialog dialog = new EditLibraryDialog(myConfigureButton) {
-            @Override
-            public Point getInitialLocation() {
-              point.translate(- 50, - getSize().height);
-              return point;
+          EditLibraryDialog dialog = new EditLibraryDialog(myConfigureButton, myLibraryCompositionSettings);
+          if (myLibraryCompositionSettings.getAddedJars().isEmpty()) {
+            VirtualFile[] files = showFileChooser();
+            Library.ModifiableModel modifiableModel = dialog.getLibrary().getModifiableModel();
+            for (VirtualFile file : files) {
+              modifiableModel.addRoot(file, OrderRootType.CLASSES);
             }
-          };
-          dialog.show();
+            modifiableModel.commit();
+          }
+          showDialog(dialog);
         }
         else {
-          new DownloadingOptionsDialog(myConfigureButton, myLibraryCompositionSettings) {
-            @Override
-            public Point getInitialLocation() {
-              point.translate(- 50, - getSize().height);
-              return point;
-            }
-          }.show();
+          DownloadingOptionsDialog dialog = new DownloadingOptionsDialog(myConfigureButton, myLibraryCompositionSettings);
+          showDialog(dialog);
         }
+        updateState();
       }
     });
 
     updateState();
   }
 
+  private void showDialog(final DialogWrapper dialog) {
+    dialog.setInitialLocationCallback(new Computable<Point>() {
+      @Override
+      public Point compute() {
+        Point point = myConfigureButton.getLocationOnScreen();
+        point.translate(- 50, - dialog.getSize().height);
+        return point;
+      }
+    });
+    dialog.show();
+  }
 
   private VirtualFile[] showFileChooser() {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, false, false, true);
@@ -109,7 +121,7 @@ public class LibraryOptionsPanel {
     if (myDownloadFromMavenButton.isSelected()) {
       String path = myLibraryCompositionSettings.getDirectoryForDownloadedLibrariesPath().substring(myLibraryCompositionSettings.getBaseDirectoryForDownloadedFiles().length());
       String message = MessageFormat.format("<html>{0} jar(s) will be downloaded into <b>{1}</b> directory<br> " +
-                                            "{2} level library <b>{3}</b> will be created</html>",
+                                            "{2} library <b>{3}</b> will be created</html>",
                                             myLibraryCompositionSettings.getLibraryInfos().length,
                                             path,
                                             myLibraryCompositionSettings.getLibraryLevel(),

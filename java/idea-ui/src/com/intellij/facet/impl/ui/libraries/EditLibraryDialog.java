@@ -34,13 +34,15 @@ public class EditLibraryDialog extends DialogWrapper {
 
   private ApplicationLibraryTable myLibraryTable = new ApplicationLibraryTable();
   private Library myLibrary;
-  private JTextField myTextField1;
-  private JComboBox myComboBox1;
   private JPanel myEditorPanel;
   private JPanel myPanel;
+  private JPanel myNameAndLevelPanelWrapper;
+  private final LibraryNameAndLevelPanel myNameAndLevelPanel;
+  private LibraryCompositionSettings mySettings;
 
-  protected EditLibraryDialog(Component parent) {
+  public EditLibraryDialog(Component parent, LibraryCompositionSettings settings) {
     super(parent, true);
+    mySettings = settings;
     setTitle("Edit Library");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -48,8 +50,15 @@ public class EditLibraryDialog extends DialogWrapper {
         myLibrary = myLibraryTable.createLibrary("xxx");
       }
     });
+
+    myNameAndLevelPanel = new LibraryNameAndLevelPanel();
+    myNameAndLevelPanel.reset(mySettings);
     init();
 
+  }
+
+  public Library getLibrary() {
+    return myLibrary;
   }
 
   @Override
@@ -78,7 +87,14 @@ public class EditLibraryDialog extends DialogWrapper {
       }
     }, myLibrary).getComponent();
 
-    myEditorPanel.add(editor, BorderLayout.CENTER);
+    myEditorPanel.add(editor);
+    myNameAndLevelPanelWrapper.add(myNameAndLevelPanel.getPanel());
     return myPanel;
+  }
+
+  @Override
+  protected void doOKAction() {
+    myNameAndLevelPanel.apply(mySettings);
+    super.doOKAction();
   }
 }
