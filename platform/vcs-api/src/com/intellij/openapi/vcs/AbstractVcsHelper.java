@@ -72,7 +72,7 @@ public abstract class AbstractVcsHelper {
     showErrors(Arrays.asList(e), s);
   }
 
-  public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file);
+  public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs);
 
   public abstract void showDifferences(final VcsFileRevision cvsVersionOn, final VcsFileRevision cvsVersionOn1, final File file);
 

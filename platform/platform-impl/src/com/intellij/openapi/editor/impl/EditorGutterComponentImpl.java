@@ -1176,8 +1176,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
       actionGroup.add(new CloseAnnotationsAction());
       final List<AnAction> addActions = new ArrayList<AnAction>();
+      final Point p = e.getPoint();
+      int line = myEditor.xyToLogicalPosition(new Point(0, (int)p.getY())).line;
+      if (line >= myEditor.getDocument().getLineCount()) return;
+
       for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
-        final List<AnAction> list = gutterProvider.getPopupActions(myEditor);
+        final List<AnAction> list = gutterProvider.getPopupActions(line, myEditor);
         if (list != null) {
           for (AnAction action : list) {
             if (! addActions.contains(action)) {
