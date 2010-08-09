@@ -19,10 +19,9 @@ package com.intellij.psi.impl;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.ObjectUtils.*;
+import static com.intellij.util.ObjectUtils.NULL;
 
 /**
  * @author Dmitry Avdeev
@@ -37,16 +36,9 @@ public class PsiCachedValueImpl<T> extends PsiCachedValue<T> implements CachedVa
   @Nullable
   public T getValue() {
 
-    r.lock();
-
-    T value;
-    try {
-      value = getUpToDateOrNull();
-      if (value != null) {
-        return value == NULL ? null : value;
-      }
-    } finally {
-      r.unlock();
+    T value = getUpToDateOrNull();
+    if (value != null) {
+      return value == NULL ? null : value;
     }
 
     w.lock();
