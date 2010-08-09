@@ -65,7 +65,7 @@ public interface TextAnnotationGutterProvider {
   /***
    * enables annotation view modifications
    */
-  List<AnAction> getPopupActions(final Editor editor);
+  List<AnAction> getPopupActions(final int line, final Editor editor);
 
   /**
    * Called when the annotations are removed from the editor gutter.

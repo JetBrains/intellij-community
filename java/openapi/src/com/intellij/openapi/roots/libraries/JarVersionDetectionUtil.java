@@ -43,10 +43,19 @@ public class JarVersionDetectionUtil {
   @Nullable
   public static String detectJarVersion(@NotNull final String detectionClass, @NotNull Module module) {
     try {
-      final ZipFile zipFile = getDetectionJar(detectionClass, module);
-      if (zipFile == null) {
-        return null;
-      }
+      return detectJarVersion(getDetectionJar(detectionClass, module));
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static String detectJarVersion(ZipFile zipFile) {
+    if (zipFile == null) {
+      return null;
+    }
+    try {
       final ZipEntry zipEntry = zipFile.getEntry(JarFile.MANIFEST_NAME);
       if (zipEntry == null) {
         return null;

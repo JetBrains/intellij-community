@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -148,6 +149,11 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   }
 
   public int getUnlimitedCountValue() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public CommittedChangeList getOneList(RepositoryLocation location, VcsRevisionNumber number) {
     throw new UnsupportedOperationException();
   }
 

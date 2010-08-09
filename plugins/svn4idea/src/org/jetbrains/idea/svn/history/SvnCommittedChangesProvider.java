@@ -39,17 +39,17 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -488,6 +488,106 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public int getUnlimitedCountValue() {
     return 0;
+  }
+
+  @Override
+  public SvnChangeList getOneList(final RepositoryLocation location, VcsRevisionNumber number) throws VcsException {
+    final String url = ((SvnRepositoryLocation)location).getURL();
+    final long revision;
+    try {
+      revision = Long.parseLong(number.asString());
+    } catch (NumberFormatException e) {
+      throw new VcsException(e);
+    }
+
+    final SvnChangeList[] result = new SvnChangeList[1];
+    final SVNLogClient logger;
+    final SVNRevision revisionBefore;
+    final SVNURL repositoryUrl;
+    final SVNURL svnurl;
+    try {
+      logger = myVcs.createLogClient();
+      revisionBefore = SVNRevision.create(revision);
+
+      svnurl = SVNURL.parseURIEncoded(url);
+      final SVNWCClient client = myVcs.createWCClient();
+      SVNInfo info = client.doInfo(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+      if (info == null) {
+        throw new VcsException("Can not get repository URL");
+      }
+      repositoryUrl = info.getRepositoryRootURL();
+    }
+    catch (SVNException e) {
+      throw new VcsException(e);
+    }
+
+    tryExactHit((SvnRepositoryLocation)location, result, logger, revisionBefore, repositoryUrl, svnurl);
+    if (result[0] == null) {
+      tryByRoot(result, logger, revisionBefore, repositoryUrl);
+      if (result[0] == null) {
+        tryStepByStep((SvnRepositoryLocation)location, result, logger, revisionBefore, repositoryUrl, svnurl);
+      }
+    }
+    return result[0];
+  }
+
+  private void tryByRoot(SvnChangeList[] result, SVNLogClient logger, SVNRevision revisionBefore, SVNURL repositoryUrl) throws VcsException {
+    final boolean authorized = SvnAuthenticationNotifier.passiveValidation(myProject, repositoryUrl);
+    if (! authorized) return;
+    tryExactHit(new SvnRepositoryLocation(repositoryUrl.toString()), result, logger, revisionBefore, repositoryUrl, repositoryUrl);
+  }
+
+  private void tryStepByStep(final SvnRepositoryLocation svnRepositoryLocation,
+                             final SvnChangeList[] result,
+                             SVNLogClient logger,
+                             final SVNRevision revisionBefore, final SVNURL repositoryUrl, SVNURL svnurl) throws VcsException {
+    try {
+      logger.doLog(svnurl, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, revisionBefore,
+                   false, true, true, 0, null,
+                   new ISVNLogEntryHandler() {
+                     public void handleLogEntry(SVNLogEntry logEntry) {
+                       if (myProject.isDisposed()) throw new ProcessCanceledException();
+                       if (logEntry.getDate() == null) {
+                         // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
+                         return;
+                       }
+                       if (logEntry.getRevision() == revisionBefore.getNumber()) {
+                         result[0] = new SvnChangeList(myVcs, svnRepositoryLocation, logEntry, repositoryUrl.toString());
+                       }
+                     }
+                   });
+    }
+    catch (SVNException e) {
+      throw new VcsException(e);
+    }
+  }
+
+  private void tryExactHit(final SvnRepositoryLocation location,
+                           final SvnChangeList[] result,
+                           SVNLogClient logger,
+                           SVNRevision revisionBefore,
+                           final SVNURL repositoryUrl, SVNURL svnurl) throws VcsException {
+    try {
+      logger.doLog(svnurl, null, SVNRevision.UNDEFINED, revisionBefore, revisionBefore,
+                   false, true, false, 1, null,
+                   new ISVNLogEntryHandler() {
+                     public void handleLogEntry(SVNLogEntry logEntry) {
+                       if (myProject.isDisposed()) throw new ProcessCanceledException();
+                       if (logEntry.getDate() == null) {
+                         // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
+                         return;
+                       }
+                       result[0] = new SvnChangeList(myVcs, (SvnRepositoryLocation) location, logEntry, repositoryUrl.toString());
+                     }
+                   });
+    }
+    catch (SVNException e) {
+      if (SVNErrorCode.FS_CATEGORY == e.getErrorMessage().getErrorCode().getCategory()) {
+        // pass to step by step looking for revision
+        return;
+      }
+      throw new VcsException(e);
+    }
   }
 
   public int getFormatVersion() {

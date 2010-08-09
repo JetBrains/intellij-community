@@ -31,11 +31,14 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,8 +62,14 @@ public class ImportHelper{
   }
 
   public PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
+    // Java parser works in a way that comments may be included to the import list, e.g.:
+    //     import a;
+    //     /* comment */
+    //     import b;
+    // We want to preserve those comments then.
+    List<String> comments = new ArrayList<String>();
     // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
-    List<Pair<String, Boolean>> names = new ArrayList<Pair<String, Boolean>>(collectNamesToImport(file));
+    List<Pair<String, Boolean>> names = new ArrayList<Pair<String, Boolean>>(collectNamesToImport(file, comments));
     Collections.sort(names, new Comparator<Pair<String, Boolean>>() {
       public int compare(Pair<String, Boolean> o1, Pair<String, Boolean> o2) {
         return o1.getFirst().compareTo(o2.getFirst());
@@ -131,15 +140,29 @@ public class ImportHelper{
 
     try {
       StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand, classesToUseSingle);
+      for (String comment : comments) {
+        text.append("\n").append(comment);
+      }
       String ext = StdFileTypes.JAVA.getDefaultExtension();
       PsiFileFactory factory = PsiFileFactory.getInstance(file.getProject());
       final PsiJavaFile dummyFile = (PsiJavaFile)factory.createFileFromText("_Dummy_." + ext, StdFileTypes.JAVA, text);
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(file.getProject());
       codeStyleManager.reformat(dummyFile);
 
-      PsiImportList result = dummyFile.getImportList();
+      PsiImportList newImportList = dummyFile.getImportList();
+      PsiImportList result = (PsiImportList)newImportList.copy();
       PsiImportList oldList = file.getImportList();
       if (oldList.isReplaceEquivalent(result)) return null;
+      PsiElement firstPrevious = newImportList.getPrevSibling();
+      while (firstPrevious != null && firstPrevious.getPrevSibling() != null) {
+        firstPrevious = firstPrevious.getPrevSibling();
+      }
+      for (PsiElement element = firstPrevious; element != null && element != newImportList; element = element.getNextSibling()) {
+        result.add(element.copy());
+      }
+      for (PsiElement element = newImportList.getNextSibling(); element != null; element = element.getNextSibling()) {
+        result.add(element.copy());
+      }
       return result;
     }
     catch(IncorrectOperationException e) {
@@ -603,17 +626,17 @@ public class ImportHelper{
 
   @NotNull
   // returns list of (name, isImportStatic) pairs
-  private static Collection<Pair<String,Boolean>> collectNamesToImport(@NotNull PsiJavaFile file){
+  private static Collection<Pair<String,Boolean>> collectNamesToImport(@NotNull PsiJavaFile file, List<String> comments){
     Set<Pair<String,Boolean>> names = new THashSet<Pair<String,Boolean>>();
 
     final JspFile jspFile = JspPsiUtil.getJspFile(file);
-    collectNamesToImport(names, file, jspFile);
+    collectNamesToImport(names, comments, file, jspFile);
     if (jspFile != null) {
       PsiFile[] files = ArrayUtil.mergeArrays(JspSpiUtil.getIncludingFiles(jspFile), JspSpiUtil.getIncludedFiles(jspFile), PsiFile.class);
       for (PsiFile includingFile : files) {
         final PsiFile javaRoot = includingFile.getViewProvider().getPsi(StdLanguages.JAVA);
         if (javaRoot instanceof PsiJavaFile && file != javaRoot) {
-          collectNamesToImport(names, (PsiJavaFile)javaRoot, jspFile);
+          collectNamesToImport(names, comments, (PsiJavaFile)javaRoot, jspFile);
         }
       }
     }
@@ -624,17 +647,19 @@ public class ImportHelper{
   }
 
   private static void collectNamesToImport(@NotNull final Set<Pair<String, Boolean>> names,
+                                           @NotNull List<String> comments,
                                            @NotNull final PsiJavaFile file,
                                            PsiFile context) {
     String packageName = file.getPackageName();
 
     final PsiElement[] roots = file.getPsiRoots();
     for (PsiElement root : roots) {
-      addNamesToImport(names, root, packageName, context);
+      addNamesToImport(names, comments, root, packageName, context);
     }
   }
 
   private static void addNamesToImport(@NotNull Set<Pair<String, Boolean>> names,
+                                       @NotNull List<String> comments,
                                        @NotNull PsiElement scope,
                                        @NotNull String thisPackageName,
                                        PsiFile context){
@@ -644,7 +669,15 @@ public class ImportHelper{
     stack.add(scope);
     while (!stack.isEmpty()) {
       final PsiElement child = stack.removeFirst();
-      if (child instanceof PsiImportList) continue;
+      if (child instanceof PsiImportList) {
+        for (PsiElement element : child.getChildren()) {
+          IElementType elementType = element.getNode().getElementType();
+          if (!JavaElementType.IMPORT_STATEMENT.equals(elementType) && !ElementType.WHITE_SPACE_BIT_SET.contains(elementType)) {
+            comments.add(element.getText());
+          }
+        }
+        continue;
+      }
       if (child instanceof PsiLiteralExpression) continue;
       ContainerUtil.addAll(stack, child.getChildren());
 

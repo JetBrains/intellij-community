@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsType;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,7 @@ public class CommittedChangesVisibilityPredicate implements NotNullFunction<Proj
   public Boolean fun(final Project project) {
     final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
     for(AbstractVcs vcs: abstractVcses) {
-      if (vcs.getCommittedChangesProvider() != null) {
+      if (vcs.getCommittedChangesProvider() != null && VcsType.centralized.equals(vcs.getType())) {
         return Boolean.TRUE;
       }
     }

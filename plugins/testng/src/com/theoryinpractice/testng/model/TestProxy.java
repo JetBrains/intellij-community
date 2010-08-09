@@ -17,26 +17,18 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import org.jetbrains.annotations.Nullable;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -49,7 +41,6 @@ public class TestProxy extends AbstractTestProxy {
   private TestProxy parent;
   private SmartPsiElementPointer psiElement;
   private boolean inProgress;
-  private int myExceptionMark;
   private boolean myTearDownFailure;
 
   public TestProxy() {}
@@ -220,24 +211,6 @@ public class TestProxy extends AbstractTestProxy {
     return null;
   }
 
-  public int getExceptionMark() {//todo
-    if (myExceptionMark == 0 && getChildCount() > 0) {
-      return getChildAt(0).getExceptionMark();
-    }
-    return myExceptionMark;
-  }
-
-  public void setExceptionMark(int exceptionMark) {
-    myExceptionMark = exceptionMark;
-  }
-
-  @Override
-  public void printOn(Printer printer) {
-    for (int i = 0; i < myNestedPrintables.size(); i++) {
-      if (i == myExceptionMark && i > 0) printer.mark();
-      myNestedPrintables.get(i).printOn(printer);
-    }
-  }
 
   public boolean isInterrupted() {
     return !isInProgress() && inProgress;

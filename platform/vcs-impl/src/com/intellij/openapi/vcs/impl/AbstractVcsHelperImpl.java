@@ -27,7 +27,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -41,7 +44,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.Annotater;
+import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -160,7 +163,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private FileHistoryPanelImpl ensureHistoryPanelCreated() {
       if (myFileHistoryPanel == null) {
         ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-        myFileHistoryPanel = new FileHistoryPanelImpl(myVcs.getProject(), myPath, myRepositoryPath, mySession, myVcsHistoryProvider,
+        myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, mySession, myVcsHistoryProvider,
                                                       myAnnotationProvider, contentManager, myRefresher);
       }
       return myFileHistoryPanel;
@@ -436,8 +439,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return exceptions;
   }
 
-  public void showAnnotation(FileAnnotation annotation, VirtualFile file) {
-    new Annotater(annotation, myProject, file).showAnnotation();
+  public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs) {
+    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file);
+    Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
+    if (editor == null) {
+      Messages.showMessageDialog(VcsBundle.message("message.text.cannot.open.editor", file.getPresentableUrl()),
+                                 VcsBundle.message("message.title.cannot.open.editor"), Messages.getInformationIcon());
+      return;
+    }
+
+    AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs);
   }
 
   public void showDifferences(final VcsFileRevision version1, final VcsFileRevision version2, final File file) {

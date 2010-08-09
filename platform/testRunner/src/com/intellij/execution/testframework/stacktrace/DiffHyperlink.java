@@ -38,11 +38,7 @@ public class DiffHyperlink implements Printable {
   protected final String myExpected;
   protected final String myActual;
   protected final String myFilePath;
-  private final HyperlinkInfo myDiffHyperlink = new HyperlinkInfo() {
-    public void navigate(final Project project) {
-      openDiff(project);
-    }
-  };
+  private final HyperlinkInfo myDiffHyperlink = new DiffHyperlinkInfo();
 
 
   public DiffHyperlink(final String expected, final String actual, final String filePath) {
@@ -80,6 +76,10 @@ public class DiffHyperlink implements Printable {
     return myActual;
   }
 
+  public String getFilePath() {
+    return myFilePath;
+  }
+
   public void printOn(final Printer printer) {
     if (hasMoreThanOneLine(myActual) || hasMoreThanOneLine(myExpected)) {
       printer.print(" ", ConsoleViewContentType.ERROR_OUTPUT);
@@ -97,5 +97,15 @@ public class DiffHyperlink implements Printable {
 
   private static boolean hasMoreThanOneLine(final String string) {
     return string.indexOf('\n') != -1 || string.indexOf('\r') != -1;
+  }
+
+  public class DiffHyperlinkInfo implements HyperlinkInfo {
+    public void navigate(final Project project) {
+      openDiff(project);
+    }
+
+    public DiffHyperlink getPrintable() {
+      return DiffHyperlink.this;
+    }
   }
 }

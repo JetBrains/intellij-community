@@ -366,7 +366,7 @@ public class JavaDocUtil {
       String s = fixupMatcher.group(1);
 
       //[db] that's workaround to avoid internal bug
-      if (!s.equals("\\")) {
+      if (!s.equals("\\") && !secondSymbols.contains(s)) {
         secondSymbols.addFirst(s);
       }
     }

@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -28,7 +27,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurences.*;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
@@ -96,13 +94,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
     final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && anchorElement instanceof PsiStatement;
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
-    type = checkIfTypeAccessible(type, project, parentClass, containingMethod);
     IntroduceFieldDialog dialog = new IntroduceFieldDialog(
       project, parentClass, expr, localVariable,
       currentMethodConstructor,
       false, declareStatic, occurencesNumber,
       allowInitInMethod, allowInitInMethodIfAll,
-      new TypeSelectorManagerImpl(project, type, expr, occurences)
+      new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences)
     );
     dialog.show();
 
@@ -123,23 +120,6 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                         dialog.getInitializerPlace(), dialog.getFieldVisibility(),
                         localVariable,
                         dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
-  }
-
-  private static PsiType checkIfTypeAccessible(PsiType type, Project project, PsiClass parentClass, PsiMethod containingMethod) {
-    final PsiClass typeClass = PsiUtil.resolveClassInType(type);
-    if (typeClass != null) {
-      if (typeClass instanceof PsiTypeParameter) {
-        if (ArrayUtil.find(parentClass.getTypeParameters(), typeClass) == -1) { //unknown type parameter
-          type = PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
-        }
-      } else if (PsiTreeUtil.isAncestor(containingMethod, typeClass, true)) { //local class type
-        final PsiClassType[] superTypes = typeClass.getSuperTypes();
-        if (superTypes.length > 0) {
-          return checkIfTypeAccessible(superTypes[0], project, parentClass, containingMethod);
-        }
-      }
-    }
-    return type;
   }
 
   private static boolean isInSuperOrThis(PsiExpression occurence) {

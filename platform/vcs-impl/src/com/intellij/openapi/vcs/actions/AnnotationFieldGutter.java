@@ -99,8 +99,8 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
     return myPresentation.getColor(line);
   }
 
-  public List<AnAction> getPopupActions(final Editor editor) {
-    return myPresentation.getActions();
+  public List<AnAction> getPopupActions(int line, final Editor editor) {
+    return myPresentation.getActions(line);
   }
 
   public void gutterClosed() {
