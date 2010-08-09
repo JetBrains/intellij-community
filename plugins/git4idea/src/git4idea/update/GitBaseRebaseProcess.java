@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
@@ -508,9 +509,11 @@ public abstract class GitBaseRebaseProcess {
               .showMergeDialog(affectedFiles, reverse ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider());
             affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
             if (affectedFiles.size() != 0) {
-              int result = Messages
-                .showYesNoDialog(myProject, GitBundle.message("update.rebase.unmerged", affectedFiles.size(), root.getPresentableUrl()),
-                                 GitBundle.getString("update.rebase.unmerged.title"), Messages.getErrorIcon());
+              int result = Messages.showYesNoDialog(myProject,
+                                                    GitBundle.message("update.rebase.unmerged",
+                                                                      StringUtil.escapeXml(root.getPresentableUrl())),
+                                                    GitBundle.getString("update.rebase.unmerged.title"),
+                                                    Messages.getErrorIcon());
               if (result != 0) {
                 cancelled.set(true);
                 return;

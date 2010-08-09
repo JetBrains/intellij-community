@@ -376,6 +376,9 @@ public class GrClosureSignatureUtil {
     for (int i = 0; i < argInfos.length; i++) {
       ArgInfo<PsiElement> info = argInfos[i];
       for (PsiElement arg : info.args) {
+        if (arg instanceof GrNamedArgument) {
+          arg = ((GrNamedArgument)arg).getExpression();
+        }
         final GrExpression expression = (GrExpression)arg;
         PsiType type = parameters[i].getType();
         if (info.isMultiArg && type instanceof PsiArrayType) {

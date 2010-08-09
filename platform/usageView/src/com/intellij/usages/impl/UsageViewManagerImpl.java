@@ -103,7 +103,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   public UsageView searchAndShowUsages(@NotNull final UsageTarget[] searchFor,
-                                       final Factory<UsageSearcher> searcherFactory,
+                                       @NotNull final Factory<UsageSearcher> searcherFactory,
                                        final boolean showPanelIfOnlyOneUsage,
                                        final boolean showNotFoundMessage, @NotNull final UsageViewPresentation presentation,
                                        final UsageViewStateListener listener) {

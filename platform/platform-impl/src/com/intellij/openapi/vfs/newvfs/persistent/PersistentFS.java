@@ -31,14 +31,11 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -689,50 +686,24 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   //guarded by dirCacheReadLock/dirCacheWriteLock
-  private final TIntObjectHashMap<NewVirtualFile> myIdToDirCache = new TIntObjectHashMap<NewVirtualFile>();
-  private final JBLock dirCacheReadLock;
-  private final JBLock dirCacheWriteLock;
-
-  {
-    JBReentrantReadWriteLock lock = LockFactory.createReadWriteLock();
-    dirCacheReadLock = lock.readLock();
-    dirCacheWriteLock = lock.writeLock();
-  }
-
+  private final StripedLockIntObjectConcurrentHashMap<NewVirtualFile> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<NewVirtualFile>();
 
   public void clearIdCache() {
-    try {
-      dirCacheWriteLock.lock();
-      myIdToDirCache.clear();
-    }
-    finally {
-      dirCacheWriteLock.unlock();
-    }
+    myIdToDirCache.clear();
   }
 
   @Nullable
   public NewVirtualFile findFileById(final int id) {
-    try {
-      dirCacheReadLock.lock();
-      final NewVirtualFile cached = myIdToDirCache.get(id);
-      if (cached != null) {
-        return cached;
-      }
-    }
-    finally {
-      dirCacheReadLock.unlock();
+    final NewVirtualFile cached = myIdToDirCache.get(id);
+    if (cached != null) {
+      return cached;
     }
 
-    final NewVirtualFile result = doFindFile(id);
+    NewVirtualFile result = doFindFile(id);
 
     if (result != null && result.isDirectory()) {
-      try {
-        dirCacheWriteLock.lock();
-        myIdToDirCache.put(id, result);
-      }
-      finally {
-        dirCacheWriteLock.unlock();
-      }
+      NewVirtualFile old = myIdToDirCache.putIfAbsent(id, result);
+      if (old != null) result = old;
     }
     return result;
   }

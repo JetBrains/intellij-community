@@ -22,7 +22,6 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import gnu.trove.THashMap;
 
 import java.util.Collection;
@@ -31,21 +30,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements ConcurrentMap<K, V> {
-  private static final int NUM_LOCKS = 256;
-  private static final JBReentrantReadWriteLock[] ourLocks = new JBReentrantReadWriteLock[NUM_LOCKS];
-  private static int ourLockAllocationCounter = 0;
-
   private final JBLock r;
   private final JBLock w;
 
-  static {
-    for (int i = 0; i < ourLocks.length; i++) {
-      ourLocks[i] = LockFactory.createReadWriteLock();
-    }
-  }
-
   {
-    final JBReentrantReadWriteLock mutex = allocateLock();
+    final JBReentrantReadWriteLock mutex = StripedJBReentrantReadWriteLocks.getInstance().allocateLock();
     r = mutex.readLock();
     w = mutex.writeLock();
   }
@@ -58,11 +47,6 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
 
   public LockPoolSynchronizedMap(final int initialCapacity, final float loadFactor) {
     super(initialCapacity, loadFactor);
-  }
-
-  private static JBReentrantReadWriteLock allocateLock() {
-    ourLockAllocationCounter = (ourLockAllocationCounter + 1) % NUM_LOCKS;
-    return ourLocks[ourLockAllocationCounter];
   }
 
   public int size() {

@@ -20,6 +20,7 @@ import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.plaf.ScrollPaneUI;
 import java.awt.*;
 
@@ -53,7 +54,11 @@ public class JBScrollPane extends JScrollPane {
 
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
-    setViewportBorder(new MyVewportBorder());
+    setViewportBorder(new ViewportBorder(1));
+  }
+
+  public static ViewportBorder createIndentBorder() {
+    return new ViewportBorder(2);
   }
 
   @Override
@@ -111,33 +116,27 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  private class MyVewportBorder implements Border {
+  private static class ViewportBorder extends LineBorder {
+    public ViewportBorder(int thickness) {
+      super(null, thickness);
+    }
+
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      JViewport vp = getViewport();
-      if (vp == null)  return;
+      updateColor(c);
+      super.paintBorder(c, g, x, y, width, height);
+    }
+
+    private void updateColor(Component c) {
+      if (!(c instanceof JScrollPane)) return;
+
+      JViewport vp = ((JScrollPane)c).getViewport();
+      if (vp == null) return;
 
       Component view = vp.getView();
       if (view == null) return;
 
-      Color bg = view.getBackground();
-      if (bg == null)  return;
-
-      g.setColor(bg);
-      g.drawLine(0, 0, width - 1, 0);
-      g.drawLine(0, height - 1, width - 1, height - 1);
-      g.drawLine(0, 0, 0, height - 1);
-      g.drawLine(width - 1, 0, width - 1, height - 1);
-    }
-
-    @Override
-    public Insets getBorderInsets(Component c) {
-      return new Insets(1, 1, 1, 1);
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return true;
+      lineColor = view.getBackground();
     }
   }
 }

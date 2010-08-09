@@ -21,11 +21,14 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +38,7 @@ import java.util.*;
  * @author dsl
  */
 public class TypeSelectorManagerImpl implements TypeSelectorManager {
-  private final PsiType myDefaultType;
+  private PsiType myDefaultType;
   private final PsiExpression myMainOccurence;
   private final PsiExpression[] myOccurrences;
   private final PsiType[] myTypesForMain;
@@ -47,27 +50,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private ExpectedTypesProvider myExpectedTypesProvider;
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression mainOccurence, PsiExpression[] occurrences) {
-    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    myDefaultType = type;
-    myMainOccurence = mainOccurence;
-    myOccurrences = occurrences;
-    myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
-
-    myOccurrenceClassProvider = createOccurrenceClassProvider();
-    myTypesForMain = getTypesForMain();
-    myTypesForAll = getTypesForAll(true);
-
-    myIsOneSuggestion =
-        myTypesForMain.length == 1 && myTypesForAll.length == 1 &&
-        myTypesForAll[0].equals(myTypesForMain[0]);
-    if (myIsOneSuggestion) {
-      myTypeSelector = new TypeSelector(myTypesForAll[0]);
-    }
-    else {
-      myTypeSelector = new TypeSelector();
-    }
-
-
+    this(project, type, null, mainOccurence, occurrences);
   }
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences) {
@@ -94,8 +77,62 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
   }
 
+  public TypeSelectorManagerImpl(Project project,
+                                 PsiType type,
+                                 PsiMethod containingMethod,
+                                 PsiExpression mainOccurence,
+                                 PsiExpression[] occurrences) {
+    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myDefaultType = type;
+    myMainOccurence = mainOccurence;
+    myOccurrences = occurrences;
+    myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
+
+    myOccurrenceClassProvider = createOccurrenceClassProvider();
+    myTypesForMain = getTypesForMain();
+    myTypesForAll = getTypesForAll(true);
+
+    if (containingMethod != null) {
+      if (PsiUtil.resolveClassInType(type) != null) {
+        myDefaultType = checkIfTypeAccessible(type, project, containingMethod);
+      }
+    }
+
+    myIsOneSuggestion =
+      myTypesForMain.length == 1 && myTypesForAll.length == 1 &&
+      myTypesForAll[0].equals(myTypesForMain[0]);
+    if (myIsOneSuggestion) {
+      myTypeSelector = new TypeSelector(myTypesForAll[0]);
+    }
+    else {
+      myTypeSelector = new TypeSelector();
+    }
+  }
+
+  private PsiType checkIfTypeAccessible(PsiType type, Project project, PsiMethod containingMethod) {
+    PsiClass parentClass = containingMethod.getContainingClass();
+    final PsiClass typeClass = PsiUtil.resolveClassInType(type);
+    if (typeClass != null) {
+      if (typeClass instanceof PsiTypeParameter) {
+        if (ArrayUtil.find(parentClass.getTypeParameters(), typeClass) == -1) { //unknown type parameter
+          return PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
+        }
+      } else if (PsiTreeUtil.isAncestor(containingMethod, typeClass, true)) { //local class type
+        final int nextTypeIdx = ArrayUtil.find(myTypesForAll, type) + 1;
+        if (nextTypeIdx < myTypesForAll.length) {
+          return checkIfTypeAccessible(myTypesForAll[nextTypeIdx], project, containingMethod);
+        }
+      }
+    }
+    return type;
+  }
+
   public PsiType[] getTypesForAll() {
     return myTypesForAll;
+  }
+
+  public PsiType getDefaultType() {
+    return myDefaultType;
   }
 
   private ExpectedTypesProvider.ExpectedClassProvider createOccurrenceClassProvider() {

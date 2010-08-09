@@ -122,9 +122,16 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
 
   @Override
   protected void doTest(final boolean checkResult) {
-    super.doTest(checkResult);
+    doTestDefaultParser(checkResult);
+    doTestNewParser();
+  }
 
-    // todo: drop after switching to new parser
+  protected void doTestDefaultParser(final boolean checkResult) {
+    super.doTest(checkResult);
+  }
+
+  // todo: drop after switching to new parser
+  protected void doTestNewParser() {
     final String name = getTestName(false);
     final String text;
     try {

@@ -15,9 +15,9 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.compiler.impl.newApi.VirtualFileStateExternalizer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 
 import java.io.DataInput;
@@ -27,12 +27,11 @@ import java.io.IOException;
 /**
 * @author nik
 */
-public class ArtifactPackagingItemExternalizer
-  extends VirtualFileStateExternalizer<ArtifactPackagingItemOutputState> {
+public class ArtifactPackagingItemExternalizer implements DataExternalizer<ArtifactPackagingItemOutputState> {
   private byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
 
   @Override
-  protected void doSave(DataOutput out, ArtifactPackagingItemOutputState value) throws IOException {
+  public void save(DataOutput out, ArtifactPackagingItemOutputState value) throws IOException {
     out.writeInt(value.myDestinations.size());
     for (Pair<String, Long> pair : value.myDestinations) {
       IOUtil.writeUTFFast(myBuffer, out, pair.getFirst());
@@ -41,7 +40,7 @@ public class ArtifactPackagingItemExternalizer
   }
 
   @Override
-  protected ArtifactPackagingItemOutputState doRead(DataInput in, long sourceTimestamp) throws IOException {
+  public ArtifactPackagingItemOutputState read(DataInput in) throws IOException {
     int size = in.readInt();
     SmartList<Pair<String, Long>> destinations = new SmartList<Pair<String, Long>>();
     while (size-- > 0) {
@@ -49,6 +48,6 @@ public class ArtifactPackagingItemExternalizer
       long outputTimestamp = in.readLong();
       destinations.add(Pair.create(path, outputTimestamp));
     }
-    return new ArtifactPackagingItemOutputState(sourceTimestamp, destinations);
+    return new ArtifactPackagingItemOutputState(destinations);
   }
 }

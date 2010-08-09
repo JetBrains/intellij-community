@@ -232,6 +232,7 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     }
 
     static void complete(TestProxy testProxy) {
+      testProxy.flush();
       final int magnitude = testProxy.getState().getMagnitude();
 
       TestProxy parent = testProxy.getParent();
@@ -240,8 +241,9 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
         final List<TestProxy> children = parent.getChildren();
         final TestState parentState = parent.getState();
         LOG.assertTrue(parentState instanceof SuiteState);
-        if (child.equals(children.get(children.size() - 1))) {
+        if (!child.isInProgress() && child.equals(children.get(children.size() - 1))) {
           ((SuiteState)parentState).setRunning(false);
+          parent.flush();
         }
         ((SuiteState)parentState).updateMagnitude(magnitude);
         child = parent;

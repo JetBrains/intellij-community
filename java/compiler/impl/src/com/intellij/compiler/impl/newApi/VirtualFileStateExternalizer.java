@@ -24,21 +24,17 @@ import java.io.IOException;
 /**
 * @author nik
 */
-public abstract class VirtualFileStateExternalizer<State extends VirtualFilePersistentState> implements DataExternalizer<State> {
-  protected abstract void doSave(DataOutput out, State value) throws IOException;
-
-  protected abstract State doRead(DataInput in, long sourceTimestamp) throws IOException;
+public class VirtualFileStateExternalizer implements DataExternalizer<VirtualFilePersistentState> {
+  public static VirtualFileStateExternalizer INSTANCE = new VirtualFileStateExternalizer();
 
   @Override
-  public final void save(DataOutput out, State value) throws IOException {
+  public void save(DataOutput out, VirtualFilePersistentState value) throws IOException {
     out.writeLong(value.getSourceTimestamp());
-    doSave(out, value);
   }
 
   @Override
-  public final State read(DataInput in) throws IOException {
-    final long sourceTimestamp = in.readLong();
-    return doRead(in, sourceTimestamp);
+  public VirtualFilePersistentState read(DataInput in) throws IOException {
+    return new VirtualFilePersistentState(in.readLong());
   }
 
 }

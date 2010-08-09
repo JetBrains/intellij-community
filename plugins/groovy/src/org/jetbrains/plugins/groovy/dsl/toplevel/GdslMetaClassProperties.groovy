@@ -46,40 +46,6 @@ class GdslMetaClassProperties {
     }
   }
 
-  Closure category = {Object[] params ->
-    if (params.length == 1) {
-      processCategoryMethods(params[0], new Function() {def fun(def param) {new GrGdkMethodImpl(param, false)}})
-    }
-    else if (params.length == 2) {
-      if (params[1] instanceof Boolean) {
-        processCategoryMethods(params[0], new Function() {def fun(def param) {new GrGdkMethodImpl(param, params[1])}})
-      }
-      else {
-        processCategoryMethods(params[0], params[1])
-      }
-    }
-    else throw new IllegalArgumentException("Incorrect aruments in method 'category': $params")
-  }
-
-  Closure gppCategory = {def className, def isStatic = false ->
-    def staticConverter = new Function() {
-      def fun(def m) {new GppGdkMethod(m, true)}
-    };
-    def nonStaticConverter = new Function() {
-      def fun(def m) {new GppGdkMethod(m, false)}
-    };
-    category className, isStatic ? staticConverter : nonStaticConverter
-  }
-
-  private def processCategoryMethods (def className, Function<PsiMethod, PsiMethod> converter) {
-    contributor(context()) {
-      if (!psiType) return;
-      List methods = CategoryMethodProvider.provideMethods(psiType, project, className, resolveScope, converter)
-      for (m in methods) add m
-    }
-  }
-
-
   /**
    * Auxiliary methods for context definition
    */

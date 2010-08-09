@@ -168,6 +168,7 @@ public class MavenFacadeManager {
           }
         }
         params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
+        //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009");
         return params;
       }
 
@@ -345,6 +346,10 @@ public class MavenFacadeManager {
 
     public void error(Throwable e) {
       MavenLog.LOG.error(e);
+    }
+
+    public void print(String s) {
+      System.out.println(s);
     }
   }
 

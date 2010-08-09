@@ -43,16 +43,9 @@ public abstract class ParameterizedCachedValueImpl<T,P> extends CachedValueBase<
 
   @Nullable
   public T getValue(P param) {
-    r.lock();
-
-    T value;
-    try {
-      value = getUpToDateOrNull();
-      if (value != null) {
-        return value == NULL ? null : value;
-      }
-    } finally {
-      r.unlock();
+    T value = getUpToDateOrNull();
+    if (value != null) {
+      return value == NULL ? null : value;
     }
 
     w.lock();

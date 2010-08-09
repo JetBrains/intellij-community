@@ -283,7 +283,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     if (myCustomHandlers != null) {
       for (OrderEnumerationHandler handler : myCustomHandlers) {
         final List<String> urls = new ArrayList<String>();
-        final boolean added = handler.addCustomOutput(moduleOrderEntry, myProductionOnly, urls);
+        final boolean added = handler.addCustomOutput(moduleOrderEntry, myProductionOnly, myRuntimeOnly, myCompileOnly, urls);
         for (String url : urls) {
           ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
         }
@@ -298,7 +298,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   boolean addCustomOutputUrls(ModuleOrderEntry moduleOrderEntry, Collection<String> result) {
     if (myCustomHandlers != null) {
       for (OrderEnumerationHandler handler : myCustomHandlers) {
-        if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, result)) {
+        if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, myRuntimeOnly, myCompileOnly, result)) {
           return true;
         }
       }

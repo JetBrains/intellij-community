@@ -749,8 +749,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     final int endOffset = getEndOffset(foldRange);
     VisualPosition foldEnd = offsetToLineStartPosition(endOffset);
-    final Document document = myEditor.getDocument();
-    if (document.getLineNumber(foldRange.getStartOffset()) == document.getLineNumber(endOffset)) {
+    if (!isFoldingPossible(foldRange.getStartOffset(), endOffset)) {
       return;
     }
 
@@ -957,8 +956,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
       final int endOffset = getEndOffset(foldRange);
       VisualPosition foldEnd = offsetToLineStartPosition(endOffset);
-      final Document document = myEditor.getDocument();
-      if (document.getLineNumber(foldRange.getStartOffset()) == document.getLineNumber(endOffset)) {
+      if (!isFoldingPossible(foldRange.getStartOffset(), endOffset)) {
         continue;
       }
 
@@ -967,6 +965,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     return null;
+  }
+
+  /**
+   * Allows to answer if there may be folding for the given offsets.
+   * <p/>
+   * The rule is that we can fold range that occupies multiple logical or visual lines.
+   *
+   * @param startOffset   start offset of the target region to check
+   * @param endOffset     end offset of the target region to check
+   * @return
+   */
+  private boolean isFoldingPossible(int startOffset, int endOffset) {
+    Document document = myEditor.getDocument();
+    if (document.getLineNumber(startOffset) != document.getLineNumber(endOffset)) {
+      return true;
+    }
+    return !myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).isEmpty();
   }
 
   private Rectangle rectangleByFoldOffset(VisualPosition foldStart, int anchorWidth, int anchorX) {

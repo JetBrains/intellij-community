@@ -53,4 +53,13 @@ public class MavenFacadeLoggerWrapper {
       throw new RuntimeException(e1);
     }
   }
+
+  public void print(String o) {
+    try {
+      myWrappee.print(o);
+    }
+    catch (RemoteException e1) {
+      throw new RuntimeException(e1);
+    }
+  }
 }

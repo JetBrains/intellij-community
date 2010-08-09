@@ -21,5 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 public interface TestCreator {
+  boolean isAvailable(Project project, Editor editor, PsiFile file);
   void createTest(Project project, Editor editor, PsiFile file);
 }

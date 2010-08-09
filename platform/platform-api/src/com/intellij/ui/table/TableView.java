@@ -46,7 +46,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     if (header != null) {
       header.setDefaultRenderer(new TableHeaderRenderer(model));
     }
-    setSizes();
+    updateColumnSizes();
   }
 
   @Override
@@ -77,28 +77,26 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     }
   }
 
-  private void setSizes() {
+  public void updateColumnSizes() {
     ColumnInfo[] columns = getListTableModel().getColumnInfos();
     for (int i = 0; i < columns.length; i++) {
       ColumnInfo columnInfo = columns[i];
       TableColumn column = getColumnModel().getColumn(i);
+      final String maxStringValue;
+      final String preferredValue;
       if (columnInfo.getWidth(this) > 0) {
         int wight = columnInfo.getWidth(this);
         column.setMaxWidth(wight);
         column.setMinWidth(wight);
       }
-      else if (columnInfo.getMaxStringValue() != null) {
-        String maxStringValue = columnInfo.getMaxStringValue();
+      else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
         int width = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
         column.setPreferredWidth(width);
         column.setMaxWidth(width);
       }
-      else {
-        final String preferredValue = columnInfo.getPreferredStringValue();
-        if (preferredValue != null) {
-          int width = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
-          column.setPreferredWidth(width);
-        }
+      else if ((preferredValue = columnInfo.getPreferredStringValue()) != null) {
+        int width = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
+        column.setPreferredWidth(width);
       }
     }
   }

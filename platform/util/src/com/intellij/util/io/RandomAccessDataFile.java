@@ -20,11 +20,14 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 
 public class RandomAccessDataFile implements Forceable {
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.RandomAccessDataFile");
+
   private final static OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
   private static int ourFilesCount = 0;
 
@@ -39,6 +42,8 @@ public class RandomAccessDataFile implements Forceable {
 
   private volatile long mySize;
   private volatile boolean myIsDirty = false;
+  private volatile boolean myIsDisposed = false;
+
   private static final boolean DEBUG = false;
 
   public RandomAccessDataFile(final File file) throws IOException {
@@ -62,6 +67,8 @@ public class RandomAccessDataFile implements Forceable {
   }
 
   public void put(long addr, byte[] bytes, int off, int len) {
+    assertNotDisposed();
+
     myIsDirty = true;
     mySize = Math.max(mySize, addr + len);
 
@@ -75,6 +82,8 @@ public class RandomAccessDataFile implements Forceable {
   }
 
   public void get(long addr, byte[] bytes, int off, int len) {
+    assertNotDisposed();
+
     while (len > 0) {
       final Page page = myPool.alloc(this, addr);
       int read = page.get(addr, bytes, off, len);
@@ -147,10 +156,13 @@ public class RandomAccessDataFile implements Forceable {
   }
 
   public long length() {
+    assertNotDisposed();
     return mySize;
   }
 
   public long physicalLength() {
+    assertNotDisposed();
+
     long res;
 
     try {
@@ -165,11 +177,15 @@ public class RandomAccessDataFile implements Forceable {
   }
 
   public void dispose() {
+    if (myIsDisposed) return;
     myPool.flushPages(this);
     ourCache.closeChannel(myFile);
+    
+    myIsDisposed = true;
   }
 
   public void force() {
+    assertNotDisposed();
     if (isDirty()) {
       myPool.flushPages(this);
       myIsDirty = false;
@@ -177,13 +193,23 @@ public class RandomAccessDataFile implements Forceable {
   }
 
   public void flushSomePages(int maxPagesToFlush) {
+    assertNotDisposed();
     if (isDirty()) {
       myIsDirty = !myPool.flushPages(this, maxPagesToFlush);
     }
   }
 
   public boolean isDirty() {
+    assertNotDisposed();
     return myIsDirty;
+  }
+
+  public boolean isDisposed() {
+    return myIsDisposed;
+  }
+
+  private void assertNotDisposed() {
+    LOG.assertTrue(!myIsDisposed, "storage file is disposed: " + myFile);
   }
 
   public static int totalReads = 0;
@@ -193,7 +219,7 @@ public class RandomAccessDataFile implements Forceable {
   public static int totalWrites = 0;
   public static long totalWriteBytes = 0;
 
-  public void loadPage(final Page page) {
+  void loadPage(final Page page) {
     try {
       final RandomAccessFile file = getFile();
       try {
@@ -220,7 +246,7 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
-  public void flushPage(final Page page, int start, int end) {
+  void flushPage(final Page page, int start, int end) {
     try {
       flush(page.getBuf(), page.getOffset() + start, start, end - start);
     }

@@ -24,18 +24,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author peter
@@ -105,7 +106,7 @@ public abstract class GroovyScriptRunner {
     return null;
   }
 
-  protected static void addClasspathFromRootModel(@Nullable Module module, boolean isTests, JavaParameters params) throws CantRunException {
+  protected static void addClasspathFromRootModel(@Nullable Module module, boolean isTests, JavaParameters params, boolean allowDuplication) throws CantRunException {
     if (module == null) {
       return;
     }
@@ -116,8 +117,17 @@ public abstract class GroovyScriptRunner {
       return;
     }
 
+    Set<VirtualFile> core = new HashSet<VirtualFile>(params.getClassPath().getVirtualFiles());
+
+    PathsList nonCore = new PathsList();
+    for (VirtualFile virtualFile : tmp.getClassPath().getVirtualFiles()) {
+      if (allowDuplication || !core.contains(virtualFile)) {
+        nonCore.add(virtualFile);
+      }
+    }
+
     params.getProgramParametersList().add("--classpath");
-    params.getProgramParametersList().add(tmp.getClassPath().getPathsString());
+    params.getProgramParametersList().add(nonCore.getPathsString());
   }
 
 }

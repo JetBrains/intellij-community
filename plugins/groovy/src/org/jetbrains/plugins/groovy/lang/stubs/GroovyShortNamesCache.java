@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.stubs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -27,8 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -95,18 +93,11 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   private Collection<PsiClass> getAllScriptClasses(String shortName, GlobalSearchScope scope) {
-    Collection<GroovyFile> files = StubIndex.getInstance().get(GrScriptClassNameIndex.KEY, shortName, myProject, new GrSourceFilterScope(scope));
-    files = ContainerUtil.findAll(files, new Condition<GroovyFile>() {
-      public boolean value(GroovyFile groovyFile) {
-        return groovyFile.isScript();
-      }
-    });
-    return ContainerUtil.map(files, new Function<GroovyFile, PsiClass>() {
-      public PsiClass fun(GroovyFile groovyFile) {
-        assert groovyFile.isScript();
-        return ObjectUtils.assertNotNull(groovyFile.getScriptClass());
-      }
-    });
+    final ArrayList<PsiClass> result = CollectionFactory.arrayList();
+    for (GroovyFile file : StubIndex.getInstance().get(GrScriptClassNameIndex.KEY, shortName, myProject, new GrSourceFilterScope(scope))) {
+      ContainerUtil.addIfNotNull(file.getScriptClass(), result);
+    }
+    return result;
   }
 
   @NotNull

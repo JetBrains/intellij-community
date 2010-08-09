@@ -57,15 +57,6 @@ public abstract class BaseTableView extends Table {
           }
         }
       });
-
-      model.addTableModelListener(new TableModelListener(){
-        public void tableChanged(final TableModelEvent e) {
-          JTableHeader header = getTableHeader();
-          if (header != null) {
-            header.repaint();
-          }
-        }
-      });
     }
   }
 
@@ -78,6 +69,14 @@ public abstract class BaseTableView extends Table {
   public void setModel(final TableModel dataModel) {
     LOG.assertTrue(dataModel instanceof SortableColumnModel);
     super.setModel(dataModel);
+    dataModel.addTableModelListener(new TableModelListener() {
+      public void tableChanged(final TableModelEvent e) {
+        JTableHeader header = getTableHeader();
+        if (header != null) {
+          header.repaint();
+        }
+      }
+    });
   }
 
   @NonNls

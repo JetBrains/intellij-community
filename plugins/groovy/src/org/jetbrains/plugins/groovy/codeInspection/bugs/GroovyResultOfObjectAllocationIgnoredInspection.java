@@ -65,14 +65,10 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
       if (refElement == null) return;      //new expression is not correct so we shouldn't check it
       
       final PsiElement parent = newExpression.getParent();
-      if (parent instanceof GrClosableBlock) {
-        return;
-      }
 
       if (parent instanceof GrCodeBlock || parent instanceof GroovyFile) {
-        if (parent instanceof GrOpenBlock) {
-          final GrOpenBlock openBlock = (GrOpenBlock)parent;
-          if (ControlFlowUtils.openBlockCompletesWithStatement(openBlock, newExpression)) {
+        if (parent instanceof GrOpenBlock || parent instanceof GrClosableBlock) {
+          if (ControlFlowUtils.openBlockCompletesWithStatement(((GrCodeBlock)parent), newExpression)) {
             return;
           }
         }

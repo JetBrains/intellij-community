@@ -330,22 +330,16 @@ public class ControlFlowUtils {
     }
   }
 
-  public static boolean openBlockCompletesWithStatement(
-      @NotNull GrOpenBlock body,
-      @NotNull GrStatement statement) {
+  public static boolean openBlockCompletesWithStatement(@NotNull GrCodeBlock body, @NotNull GrStatement statement) {
     GroovyPsiElement elementToCheck = statement;
     while (true) {
-      if (elementToCheck == null) {
-        return false;
-      }
-      final GroovyPsiElement container =
-          getContainingStatementOrBlock(elementToCheck);
-      if (container == null) {
-        return false;
-      }
-      if (isLoop(container)) {
-        return false;
-      }
+      if (elementToCheck == null) return false;
+
+      final GroovyPsiElement container = getContainingStatementOrBlock(elementToCheck);
+      if (container == null) return false;
+
+      if (isLoop(container)) return false;
+
       if (container instanceof GrCodeBlock) {
         if (elementToCheck instanceof GrStatement) {
           final GrCodeBlock codeBlock = (GrCodeBlock) container;
@@ -353,7 +347,7 @@ public class ControlFlowUtils {
             return false;
           }
         }
-        if (container instanceof GrOpenBlock) {
+        if (container instanceof GrOpenBlock || container instanceof GrClosableBlock) {
           if (container.equals(body)) {
             return true;
           }

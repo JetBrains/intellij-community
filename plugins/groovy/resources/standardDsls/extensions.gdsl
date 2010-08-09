@@ -21,12 +21,12 @@ package standardDsls
  * @author Maxim.Medvedev
  */
 
-category "org.codehaus.groovy.runtime.DefaultGroovyMethods"
-category "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods", true
-category "org.codehaus.groovy.runtime.DateGroovyMethods"
-category "org.codehaus.groovy.runtime.EncodingGroovyMethods"
-category "org.codehaus.groovy.runtime.SqlGroovyMethods"
-category "org.codehaus.groovy.runtime.SwingGroovyMethods"
-category "org.codehaus.groovy.runtime.XmlGroovyMethods"
-
-
+contributor([:]) {
+  category "org.codehaus.groovy.runtime.DefaultGroovyMethods"
+  category "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods", true
+  category "org.codehaus.groovy.runtime.DateGroovyMethods"
+  category "org.codehaus.groovy.runtime.EncodingGroovyMethods"
+  category "org.codehaus.groovy.runtime.SqlGroovyMethods"
+  category "org.codehaus.groovy.runtime.SwingGroovyMethods"
+  category "org.codehaus.groovy.runtime.XmlGroovyMethods"
+}

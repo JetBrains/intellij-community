@@ -15,18 +15,16 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.compiler.impl.newApi.VirtualFilePersistentState;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 
 /**
 * @author nik
 */
-public class ArtifactPackagingItemOutputState extends VirtualFilePersistentState {
+public class ArtifactPackagingItemOutputState {
   public final SmartList<Pair<String, Long>> myDestinations;
 
-  public ArtifactPackagingItemOutputState(long timestamp, SmartList<Pair<String, Long>> destinations) {
-    super(timestamp);
+  public ArtifactPackagingItemOutputState(SmartList<Pair<String, Long>> destinations) {
     myDestinations = destinations;
   }
 }

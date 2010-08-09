@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.MenuDragMouseEvent;
 import javax.swing.event.MenuDragMouseListener;
 import javax.swing.event.MouseInputListener;
@@ -56,6 +57,8 @@ public class BegMenuItemUI extends BasicMenuItemUI {
   @NonNls public static final String PLAY_SOUND_METHOD = "playSound";
   @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
   @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
+
+  private static final Border SELECTED_BACKGROUND_PAINTER = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -108,18 +111,22 @@ public class BegMenuItemUI extends BasicMenuItemUI {
       g.setColor(jmenuitem.getBackground());
       g.fillRect(0, 0, j1, k1);
       if (buttonmodel.isArmed() || (comp instanceof JMenu) && buttonmodel.isSelected()){
-        g.setColor(selectionBackground);
-        if (icon2 != null){
-          g.fillRect(k, 0, j1 - k, k1);
-        }
-        else{
-          g.fillRect(0, 0, j1, k1);
-          //graphics.setColor(BegResources.q);
-          //graphics.drawLine(0, 0, 0, k1);
+        if (UIUtil.isUnderAquaLookAndFeel()) {
+          SELECTED_BACKGROUND_PAINTER.paintBorder(comp, g, 0, 0, j1, k1);
+        } else {
           g.setColor(selectionBackground);
+          if (icon2 != null){
+            g.fillRect(k, 0, j1 - k, k1);
+          }
+          else{
+            g.fillRect(0, 0, j1, k1);
+            //graphics.setColor(BegResources.q);
+            //graphics.drawLine(0, 0, 0, k1);
+            g.setColor(selectionBackground);
+          }
+          //graphics.setColor(BegResources.r);
+          //graphics.drawLine(j1 - 1, 0, j1 - 1, k1);
         }
-        //graphics.setColor(BegResources.r);
-        //graphics.drawLine(j1 - 1, 0, j1 - 1, k1);
       }
       g.setColor(color2);
     }
@@ -180,11 +187,16 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     if (keyStrokeText != null && !keyStrokeText.equals("")){
       g.setFont(acceleratorFont);
       if (buttonmodel.isEnabled()){
-        if (buttonmodel.isArmed() || (comp instanceof JMenu) && buttonmodel.isSelected()){
-          g.setColor(acceleratorSelectionForeground);
+        if (UIUtil.isUnderAquaLookAndFeel() && (buttonmodel.isArmed() || (comp instanceof JMenu) && buttonmodel.isSelected())) {
+          g.setColor(selectionForeground);
         }
-        else{
-          g.setColor(acceleratorForeground);
+        else {
+          if (buttonmodel.isArmed() || (comp instanceof JMenu) && buttonmodel.isSelected()) {
+            g.setColor(acceleratorSelectionForeground);
+          }
+          else {
+            g.setColor(acceleratorForeground);
+          }
         }
         BasicGraphicsUtils.drawString(g, keyStrokeText, 0, c.x, c.y + fontmetrics.getAscent());
       }

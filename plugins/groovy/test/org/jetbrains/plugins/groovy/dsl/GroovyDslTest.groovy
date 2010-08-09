@@ -131,7 +131,7 @@ public class MyCategory {
 }""")
     def foo = category.getMethods()[0]
     final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", """
-category 'MyCategory'""");
+contributor([:]){category 'MyCategory'}""");
     GroovyDslFileIndex.activateUntilModification(file.virtualFile)
     myFixture.renameElement foo, "bar", false, false
 
