@@ -33,7 +33,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,14 +73,15 @@ public class LibraryCompositionOptionsPanel {
   private final LibraryDownloadingMirrorsMap myMirrorsMap;
   private List<RemoteRepositoryMirrorPanel> myMirrorPanelsList;
 
-  public LibraryCompositionOptionsPanel(final @NotNull LibrariesContainer librariesContainer, final @NotNull LibraryCompositionSettings libraryCompositionSettings,
+  public LibraryCompositionOptionsPanel(final @NotNull LibrariesContainer librariesContainer, 
+                                        final @NotNull LibraryCompositionSettings libraryCompositionSettings,
                                         final @NotNull LibraryDownloadingMirrorsMap mirrorsMap) {
+
     myLibrariesContainer = librariesContainer;
     myLibraryCompositionSettings = libraryCompositionSettings;
     myMirrorsMap = mirrorsMap;
     addMirrorsPanels();
 
-    myMainPanel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(libraryCompositionSettings.getTitle()), IdeBorderFactory.createEmptyBorder(5,5,5,5)));
     myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
                                              ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());

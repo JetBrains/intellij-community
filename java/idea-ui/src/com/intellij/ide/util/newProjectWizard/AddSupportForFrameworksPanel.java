@@ -16,9 +16,9 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.facet.impl.ui.libraries.LibraryCompositionOptionsPanel;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
+import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
@@ -131,10 +131,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
       myLastSelectedNode = selectedNode;
       if (selectedNode != null) {
-        final LibraryCompositionOptionsPanel newOptionsPanel = selectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
-        if (newOptionsPanel != null) {
-          newOptionsPanel.updateRepositoriesMirrors(myMirrorsMap);
-        }
+        selectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
       }
     }
   }
@@ -145,9 +142,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void applyLibraryOptionsForSelected() {
     if (myLastSelectedNode != null) {
-      final LibraryCompositionOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
+      final LibraryOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
       if (optionsPanel != null) {
-        optionsPanel.saveSelectedRepositoriesMirrors(myMirrorsMap);
         optionsPanel.apply();
       }
     }
@@ -174,13 +170,17 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private void initializeOptionsPanel(final FrameworkSupportNode node) {
     final String id = node.getProvider().getId();
     if (!myInitializedOptionsPanelIds.contains(id)) {
-      final JPanel optionsPanel = new JPanel(new VerticalFlowLayout());
+      VerticalFlowLayout layout = new VerticalFlowLayout();
+      layout.setVerticalFill(true);
+      final JPanel optionsPanel = new JPanel(layout);
+
       JComponent separator = SeparatorFactory.createSeparator(node.getTitle() + " Settings", null);
       separator.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 5, 5));
-
       optionsPanel.add(separator);
+
       final FrameworkSupportConfigurable configurable = node.getConfigurable();
       optionsPanel.add(configurable.getComponent());
+
       final JPanel librariesOptionsPanelWrapper = new JPanel(new BorderLayout());
       optionsPanel.add(librariesOptionsPanelWrapper);
       configurable.addListener(new FrameworkSupportConfigurableListener() {
@@ -197,8 +197,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   private void addLibrariesOptionsPanel(FrameworkSupportNode node, JPanel librariesOptionsPanelWrapper) {
-    final LibraryCompositionOptionsPanel libraryOptionsPanel = node.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
+    final LibraryOptionsPanel libraryOptionsPanel = node.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
     if (libraryOptionsPanel != null) {
+      JComponent separator = SeparatorFactory.createSeparator("Libraries", null);
+      separator.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
+      librariesOptionsPanelWrapper.add(BorderLayout.NORTH, separator);
       librariesOptionsPanelWrapper.add(BorderLayout.CENTER, libraryOptionsPanel.getMainPanel());
     }
   }

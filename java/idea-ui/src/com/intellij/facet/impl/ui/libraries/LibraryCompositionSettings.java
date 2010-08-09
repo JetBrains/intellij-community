@@ -47,6 +47,8 @@ public class LibraryCompositionSettings {
   private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
   private String myLibraryName;
   private final Icon myIcon;
+  private boolean myDownloadSources = true;
+  private boolean myDownloadJavadocs = true;
 
   public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
                                     final @NotNull String defaultLibraryName,
@@ -190,5 +192,21 @@ public class LibraryCompositionSettings {
       rootModel.addLibraryEntry(usedLibrary);
     }
     return library;
+  }
+
+  public boolean isDownloadSources() {
+    return myDownloadSources;
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    myDownloadSources = downloadSources;
+  }
+
+  public boolean isDownloadJavadocs() {
+    return myDownloadJavadocs;
+  }
+
+  public void setDownloadJavadocs(boolean downloadJavadocs) {
+    myDownloadJavadocs = downloadJavadocs;
   }
 }
