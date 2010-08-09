@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class NewCompiler<Key, State> implements Compiler {
+public abstract class NewCompiler<Key, SourceState, OutputState> implements Compiler {
   private final String myId;
   private final int myVersion;
   private final CompileOrderPlace myOrderPlace;
@@ -38,10 +38,12 @@ public abstract class NewCompiler<Key, State> implements Compiler {
   @NotNull
   public abstract KeyDescriptor<Key> getItemKeyDescriptor();
   @NotNull
-  public abstract DataExternalizer<State> getItemStateExternalizer();
+  public abstract DataExternalizer<SourceState> getSourceStateExternalizer();
+  @NotNull
+  public abstract DataExternalizer<OutputState> getOutputStateExternalizer();
 
   @NotNull
-  public abstract CompilerInstance<?, ? extends CompileItem<Key, State>, Key, State> createInstance(@NotNull CompileContext context);
+  public abstract CompilerInstance<?, ? extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState> createInstance(@NotNull CompileContext context);
 
   public final String getId() {
     return myId;

@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class NewCompilerPersistentData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.newApi.NewCompilerPersistentData");
-  private static final int VERSION = 0;
+  private static final int VERSION = 1;
   private File myFile;
   private Map<String, Integer> myTarget2Id = new HashMap<String, Integer>();
   private TIntHashSet myUsedIds = new TIntHashSet();

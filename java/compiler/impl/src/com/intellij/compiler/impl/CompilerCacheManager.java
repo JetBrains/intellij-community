@@ -44,7 +44,7 @@ import java.util.Map;
 public class CompilerCacheManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerCacheManager");
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<Compiler, Object>();
-  private final Map<NewCompiler<?,?>, NewCompilerCache<?,?>> myNewCachesMap = new HashMap<NewCompiler<?,?>, NewCompilerCache<?,?>>();
+  private final Map<NewCompiler<?,?,?>, NewCompilerCache<?,?,?>> myNewCachesMap = new HashMap<NewCompiler<?,?,?>, NewCompilerCache<?,?,?>>();
   private final List<Disposable> myCacheDisposables = new ArrayList<Disposable>();
   private final File myCachesRoot;
   private final Runnable myShutdownTask = new Runnable() {
@@ -90,10 +90,11 @@ public class CompilerCacheManager implements ProjectComponent {
     return dir;
   }
 
-  public synchronized <Key, State> NewCompilerCache<Key, State> getNewCompilerCache(NewCompiler<Key, State> compiler) throws IOException {
-    NewCompilerCache<?, ?> cache = myNewCachesMap.get(compiler);
+  public synchronized <Key, SourceState, OutputState> NewCompilerCache<Key, SourceState, OutputState>
+                             getNewCompilerCache(NewCompiler<Key, SourceState, OutputState> compiler) throws IOException {
+    NewCompilerCache<?,?,?> cache = myNewCachesMap.get(compiler);
     if (cache == null) {
-      final NewCompilerCache<?, ?> newCache = new NewCompilerCache<Key, State>(compiler, NewCompilerRunner.getNewCompilerCacheDir(myProject, compiler));
+      final NewCompilerCache<?,?,?> newCache = new NewCompilerCache<Key, SourceState, OutputState>(compiler, NewCompilerRunner.getNewCompilerCacheDir(myProject, compiler));
       myNewCachesMap.put(compiler, newCache);
       myCacheDisposables.add(new Disposable() {
         @Override
@@ -104,7 +105,7 @@ public class CompilerCacheManager implements ProjectComponent {
       cache = newCache;
     }
     //noinspection unchecked
-    return (NewCompilerCache<Key, State>)cache;
+    return (NewCompilerCache<Key, SourceState, OutputState>)cache;
   }
 
   public synchronized FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) throws IOException {

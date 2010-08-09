@@ -15,14 +15,17 @@
  */
 package com.intellij.compiler.impl;
 
+import com.google.common.base.Throwables;
 import com.intellij.compiler.impl.newApi.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -43,7 +46,7 @@ public class NewCompilerRunner {
   private CompileContext myContext;
   private final boolean myForceCompile;
   private final boolean myOnlyCheckStatus;
-  private final NewCompiler<?,?>[] myCompilers;
+  private final NewCompiler<?,?,?>[] myCompilers;
   private final Project myProject;
 
   public NewCompilerRunner(CompileContext context, CompilerManager compilerManager, boolean forceCompile, boolean onlyCheckStatus) {
@@ -57,7 +60,7 @@ public class NewCompilerRunner {
   public boolean invokeCompilers(NewCompiler.CompileOrderPlace place) throws CompileDriver.ExitException {
     boolean didSomething = false;
     try {
-      for (NewCompiler<?, ?> compiler : myCompilers) {
+      for (NewCompiler<?,?,?> compiler : myCompilers) {
         if (compiler.getOrderPlace().equals(place)) {
           didSomething = invokeCompiler(compiler);
         }
@@ -81,13 +84,13 @@ public class NewCompilerRunner {
     return didSomething;
   }
 
-  private <T extends BuildTarget, Key, State> boolean invokeCompiler(NewCompiler<Key, State> compiler) throws IOException, CompileDriver.ExitException {
+  private <Key, SourceState, OutputState> boolean invokeCompiler(NewCompiler<Key, SourceState, OutputState> compiler) throws IOException, CompileDriver.ExitException {
     return invokeCompiler(compiler, compiler.createInstance(myContext));
   }
 
-  private <T extends BuildTarget, Item extends CompileItem<Key, State>, Key, State>
-  boolean invokeCompiler(NewCompiler<Key, State> compiler, CompilerInstance<T, Item, Key, State> instance) throws IOException, CompileDriver.ExitException {
-    NewCompilerCache<Key, State> cache = CompilerCacheManager.getInstance(myProject).getNewCompilerCache(compiler);
+  private <T extends BuildTarget, Item extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState>
+  boolean invokeCompiler(NewCompiler<Key, SourceState, OutputState> compiler, CompilerInstance<T, Item, Key, SourceState, OutputState> instance) throws IOException, CompileDriver.ExitException {
+    NewCompilerCache<Key, SourceState, OutputState> cache = CompilerCacheManager.getInstance(myProject).getNewCompilerCache(compiler);
     NewCompilerPersistentData data = new NewCompilerPersistentData(getNewCompilerCacheDir(myProject, compiler), compiler.getVersion());
     if (data.isVersionChanged()) {
       LOG.info("Clearing cache for " + compiler.getDescription());
@@ -106,10 +109,10 @@ public class NewCompilerRunner {
         }
         List<Key> keys = new ArrayList<Key>();
         cache.processSources(id, new CommonProcessors.CollectProcessor<Key>(keys));
-        List<Pair<Key, State>> obsoleteSources = new ArrayList<Pair<Key, State>>();
+        List<NewCompilerItemState<Key, SourceState, OutputState>> obsoleteSources = new ArrayList<NewCompilerItemState<Key,SourceState,OutputState>>();
         for (Key key : keys) {
-          final State state = cache.getState(id, key);
-          obsoleteSources.add(Pair.create(key, state));
+          final NewCompilerCache.PersistentStateData<SourceState, OutputState> state = cache.getState(id, key);
+          obsoleteSources.add(new NewCompilerItemState<Key,SourceState,OutputState>(key, state.mySourceState, state.myOutputState));
         }
         instance.processObsoleteTarget(target, obsoleteSources);
         if (myContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
@@ -131,23 +134,24 @@ public class NewCompilerRunner {
     return didSomething;
   }
 
-  public static File getNewCompilerCacheDir(Project project, NewCompiler<?, ?> compiler) {
+  public static File getNewCompilerCacheDir(Project project, NewCompiler<?,?,?> compiler) {
     return new File(CompilerPaths.getCacheStoreDirectory(project), compiler.getId());
   }
 
-  private <T extends BuildTarget, Item extends CompileItem<Key, State>, Key, State>
-  boolean processTarget(T target, final int targetId, final NewCompiler<Key, State> compiler, final CompilerInstance<T, Item, Key, State> instance,
-                        final NewCompilerCache<Key, State> cache) throws IOException, CompileDriver.ExitException {
+  private <T extends BuildTarget, Item extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState>
+  boolean processTarget(T target, final int targetId, final NewCompiler<Key, SourceState, OutputState> compiler, final CompilerInstance<T, Item, Key, SourceState, OutputState> instance,
+                        final NewCompilerCache<Key, SourceState, OutputState> cache) throws IOException, CompileDriver.ExitException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing target '" + target + "' (id=" + targetId + ")");
     }
     final List<Item> items = instance.getItems(target);
     if (myContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) return true;
 
-    final List<Pair<Item, State>> toProcess = new ArrayList<Pair<Item, State>>();
+    final List<NewCompilerItemState<Item, SourceState, OutputState>> toProcess = new ArrayList<NewCompilerItemState<Item,SourceState,OutputState>>();
     final THashSet<Key> keySet = new THashSet<Key>(new SourceItemHashingStrategy<Key>(compiler));
     final Ref<IOException> exception = Ref.create(null);
     DumbService.getInstance(myProject).waitForSmartMode();
+    final Map<Item, SourceState> sourceStates = new HashMap<Item,SourceState>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
@@ -155,9 +159,13 @@ public class NewCompilerRunner {
           for (Item item : items) {
             final Key key = item.getKey();
             keySet.add(key);
-            State output = cache.getState(targetId, key);
-            if (myForceCompile || output == null || !item.isUpToDate(output)) {
-              toProcess.add(Pair.create(item, output));
+            final NewCompilerCache.PersistentStateData<SourceState, OutputState> data = cache.getState(targetId, key);
+            SourceState sourceState = data != null ? data.mySourceState : null;
+            final OutputState outputState = data != null ? data.myOutputState : null;
+            if (myForceCompile || sourceState == null || !item.isSourceUpToDate(sourceState)
+                               || outputState == null || !item.isOutputUpToDate(outputState)) {
+              sourceStates.put(item, item.computeSourceState());
+              toProcess.add(new NewCompilerItemState<Item, SourceState, OutputState>(item, sourceState, outputState));
             }
           }
         }
@@ -193,9 +201,10 @@ public class NewCompilerRunner {
       throw new CompileDriver.ExitException(CompileDriver.ExitStatus.CANCELLED);
     }
 
-    List<Pair<Key, State>> obsoleteItems = new ArrayList<Pair<Key, State>>();
+    List<NewCompilerItemState<Key, SourceState, OutputState>> obsoleteItems = new ArrayList<NewCompilerItemState<Key,SourceState,OutputState>>();
     for (Key key : toRemove) {
-      obsoleteItems.add(Pair.create(key, cache.getState(targetId, key)));
+      final NewCompilerCache.PersistentStateData<SourceState, OutputState> data = cache.getState(targetId, key);
+      obsoleteItems.add(new NewCompilerItemState<Key,SourceState,OutputState>(key, data.mySourceState, data.myOutputState));
     }
 
     final List<Item> processedItems = new ArrayList<Item>();
@@ -218,9 +227,19 @@ public class NewCompilerRunner {
       cache.remove(targetId, key);
     }
     CompilerUtil.refreshIOFiles(toRefresh);
-    for (Item item : processedItems) {
-      cache.putOutput(targetId, item.getKey(), item.computeState());
-    }
+
+    final RunResult runResult = new ReadAction() {
+      protected void run(final Result result) throws Throwable {
+        for (Item item : processedItems) {
+          SourceState sourceState = sourceStates.get(item);
+          if (sourceState == null) {
+            sourceState = item.computeSourceState();
+          }
+          cache.putState(targetId, item.getKey(), sourceState, item.computeOutputState());
+        }
+      }
+    }.executeSilently();
+    Throwables.propagateIfPossible(runResult.getThrowable(), IOException.class);
 
     return true;
 
@@ -229,7 +248,7 @@ public class NewCompilerRunner {
   private class SourceItemHashingStrategy<S> implements TObjectHashingStrategy<S> {
     private KeyDescriptor<S> myKeyDescriptor;
 
-    public SourceItemHashingStrategy(NewCompiler<S, ?> compiler) {
+    public SourceItemHashingStrategy(NewCompiler<S, ?, ?> compiler) {
       myKeyDescriptor = compiler.getItemKeyDescriptor();
     }
 

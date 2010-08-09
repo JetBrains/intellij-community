@@ -15,26 +15,29 @@
  */
 package com.intellij.compiler.impl.newApi;
 
-import com.intellij.util.io.DataExternalizer;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 /**
-* @author nik
-*/
-public class VirtualFileStateExternalizer implements DataExternalizer<VirtualFilePersistentState> {
-  public static VirtualFileStateExternalizer INSTANCE = new VirtualFileStateExternalizer();
+ * @author nik
+ */
+public class NewCompilerItemState<Item, SourceState, OutputState> {
+  private final Item myItem;
+  private final SourceState mySourceState;
+  private final OutputState myOutputState;
 
-  @Override
-  public void save(DataOutput out, VirtualFilePersistentState value) throws IOException {
-    out.writeLong(value.getSourceTimestamp());
+  public NewCompilerItemState(Item item, SourceState sourceState, OutputState outputState) {
+    myItem = item;
+    mySourceState = sourceState;
+    myOutputState = outputState;
   }
 
-  @Override
-  public VirtualFilePersistentState read(DataInput in) throws IOException {
-    return new VirtualFilePersistentState(in.readLong());
+  public Item getItem() {
+    return myItem;
   }
 
+  public SourceState getSourceState() {
+    return mySourceState;
+  }
+
+  public OutputState getOutputState() {
+    return myOutputState;
+  }
 }
