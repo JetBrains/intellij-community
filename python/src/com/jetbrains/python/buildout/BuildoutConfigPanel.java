@@ -16,6 +16,7 @@ import java.awt.*;
 public class BuildoutConfigPanel extends JPanel {
   private TextFieldWithBrowseButton myScript;
   private JPanel myPanel;
+  private JTextArea myNoticeTextArea;
   private BuildoutFacetConfiguration myConfiguration;
 
   public BuildoutConfigPanel(BuildoutFacetConfiguration config) {
@@ -53,4 +54,9 @@ public class BuildoutConfigPanel extends JPanel {
   BuildoutFacetConfiguration getConfiguration() {
     return myConfiguration;
   }
+
+  void showNoticeText(boolean show) {
+    myNoticeTextArea.setVisible(show);
+  }
+
 }

@@ -185,9 +185,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     else if (!processor.getDefiners().isEmpty()) {
       ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW-1, processor.getDefiners()));
     }
+    PyBuiltinCache builtins_cache = PyBuiltinCache.getInstance(realContext);
     if (uexpr == null) {
       // ...as a part of current module
-      PyType otype = PyBuiltinCache.getInstance(realContext).getObjectType(); // "object" as a closest kin to "module"
+      PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
       if (otype != null) {
         final List<? extends PsiElement> members = otype.resolveMember(myElement.getName(), AccessDirection.READ);
         if (members != null) {
@@ -201,9 +202,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     if (uexpr == null) {
       // ...as a builtin symbol
-      PyFile bfile = PyBuiltinCache.getInstance(realContext).getBuiltinsFile();
+      PyFile bfile = builtins_cache.getBuiltinsFile();
       if (bfile != null) {
         uexpr = bfile.getElementNamed(referencedName);
+        if (uexpr == null && "__builtins__".equals(referencedName)) {
+          uexpr = bfile; // resolve __builtins__ reference
+        }
       }
     }
     if (uexpr == null && !(myElement instanceof PyTargetExpression)) {

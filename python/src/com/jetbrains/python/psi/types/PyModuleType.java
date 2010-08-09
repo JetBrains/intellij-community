@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.toolbox.Maybe;
@@ -24,7 +25,7 @@ import static com.jetbrains.python.psi.resolve.ResolveImportUtil.ROLE_IN_IMPORT.
 /**
  * @author yole
  */
-public class PyModuleType implements PyType { // Maybe make it a PyClassType referring to builtins.___module or suchlike.
+public class PyModuleType implements PyType { // Modules don't descend from object
   private final PsiFile myModule;
 
   protected static Set<String> ourPossibleFields;
@@ -35,6 +36,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     ourPossibleFields.add("__file__");
     ourPossibleFields.add("__path__");
     ourPossibleFields.add("__doc__");
+    ourPossibleFields.add("__dict__");
     ourPossibleFields = Collections.unmodifiableSet(ourPossibleFields);
   }
 

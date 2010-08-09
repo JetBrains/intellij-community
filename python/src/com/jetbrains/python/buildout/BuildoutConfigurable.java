@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.django.facet.DjangoFacet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.List;
 
 /**
@@ -36,7 +39,6 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   private JCheckBox myEnabledCheckbox;
   private JPanel myPlaceholder;
   private JPanel myMainPanel;
-  private JTextArea myMessageTextArea;
   private BuildoutConfigPanel mySettingsPanel;
   private Module myModule;
 
@@ -57,6 +59,17 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
         UIUtil.setEnabled(mySettingsPanel, myEnabledCheckbox.isSelected(), true);
       }
     });
+    mySettingsPanel.addFocusListener(
+      new FocusListener() {
+        @Override
+        public void focusGained(FocusEvent focusEvent) {
+          switchNoticeText();
+        }
+
+        @Override
+        public void focusLost(FocusEvent focusEvent) { }
+      }
+    );
   }
 
   @Nls
@@ -77,6 +90,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
 
   @Override
   public JComponent createComponent() {
+    switchNoticeText();
     return myMainPanel;
   }
 
@@ -211,6 +225,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     }
     else {
       myEnabledCheckbox.setEnabled(true);
+      switchNoticeText();
       final BuildoutFacet instance = BuildoutFacet.getInstance(myModule);
       if (instance != null) {
         boolean selected = ! StringUtil.isEmptyOrSpaces(instance.getConfiguration().getScriptName());
@@ -223,6 +238,10 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
         mySettingsPanel.setEnabled(false);
       }
     }
+  }
+
+  private void switchNoticeText() {
+    mySettingsPanel.showNoticeText(DjangoFacet.getInstance(myModule) != null);
   }
 
   @Override

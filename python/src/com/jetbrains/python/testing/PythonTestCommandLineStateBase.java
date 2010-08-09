@@ -26,10 +26,7 @@ import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -94,7 +91,8 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
       final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
       for (Facet facet : facets) {
         if (facet instanceof PythonPathContributingFacet) {
-          pythonPathList.addAll(((PythonPathContributingFacet) facet).getAdditionalPythonPath());
+          List<String> more_paths = ((PythonPathContributingFacet)facet).getAdditionalPythonPath();
+          if (more_paths != null) pythonPathList.addAll(more_paths);
         }
       }
     }
