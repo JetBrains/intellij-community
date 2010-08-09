@@ -31,6 +31,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
@@ -196,11 +197,10 @@ public class GenerateMembersUtil {
     return null;
   }
 
-  public static PsiMethod substituteGenericMethod(PsiMethod method, PsiSubstitutor substitutor) {
+  public static PsiMethod substituteGenericMethod(PsiMethod method, final PsiSubstitutor substitutor) {
     Project project = method.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
 
-    PsiTypeParameter[] typeParams = method.getTypeParameters();
     try {
       PsiType returnType = method.getReturnType();
 
@@ -263,8 +263,20 @@ public class GenerateMembersUtil {
         newMethod.getParameterList().add(newParameter);
       }
 
-      for (PsiTypeParameter typeParam : typeParams) {
-        if (substitutor.substitute(typeParam) != null) newMethod.getTypeParameterList().add(typeParam);
+      for (PsiTypeParameter typeParam : method.getTypeParameters()) {
+        final PsiElement copy = typeParam.copy();
+        final Map<PsiElement, PsiElement> replacementMap = new HashMap<PsiElement, PsiElement>();
+        copy.accept(new JavaRecursiveElementWalkingVisitor(){
+          @Override
+          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
+            final PsiElement resolve = reference.resolve();
+            if (resolve instanceof PsiTypeParameter) {
+              replacementMap.put(reference, factory.createReferenceElementByType((PsiClassType)substitutor.substitute((PsiTypeParameter)resolve)));
+            }
+          }
+        });
+        newMethod.getTypeParameterList().add(RefactoringUtil.replaceElementsWithMap(copy, replacementMap));
       }
 
       PsiClassType[] thrownTypes = method.getThrowsList().getReferencedTypes();
