@@ -158,9 +158,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   public void disposeComponent(){}
 
   public void loadState(final Element element) {
-
-    boolean updateUI = myCurrentLaf != null;
-
     String className=null;
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
@@ -176,12 +173,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       laf=getDefaultLaf();
     }
 
-    myCurrentLaf=laf;
-
-    if (updateUI) {
+    if (myCurrentLaf != null && !laf.getClassName().equals(myCurrentLaf.getClassName())) {
       setCurrentLookAndFeel(laf);
       updateUI();
     }
+
+    myCurrentLaf=laf;
   }
 
   public Element getState() {
@@ -313,34 +310,38 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     PopupFactory popupFactory;
 
     final PopupFactory oldFactory = PopupFactory.getSharedInstance();
-    if(HEAVY_WEIGHT_POPUP.equals(popupWeight)){
-      popupFactory=new PopupFactory(){
-        public Popup getPopup(
-          Component owner,
-          Component contents,
-          int x,
-          int y
-        ) throws IllegalArgumentException{
-          final Point point = fixPopupLocation(contents, x, y);
-          return oldFactory.getPopup(owner, contents, point.x, point.y);
-        }
-      };
-    }else if(MEDIUM_WEIGHT_POPUP.equals(popupWeight)){
-      popupFactory=new PopupFactory() {
+    if (!(oldFactory instanceof OurPopupFactory)) {
+      if (HEAVY_WEIGHT_POPUP.equals(popupWeight)) {
+        popupFactory = new OurPopupFactory() {
+          public Popup getPopup(
+            Component owner,
+            Component contents,
+            int x,
+            int y
+          ) throws IllegalArgumentException {
+            final Point point = fixPopupLocation(contents, x, y);
+            return oldFactory.getPopup(owner, contents, point.x, point.y);
+          }
+        };
+      }
+      else if (MEDIUM_WEIGHT_POPUP.equals(popupWeight)) {
+        popupFactory = new OurPopupFactory() {
 
-        public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
-          return createPopup(owner, contents, x, y);
-        }
+          public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
+            return createPopup(owner, contents, x, y);
+          }
 
-        private Popup createPopup(final Component owner, final Component contents, final int x, final int y) {
-          final Point point = fixPopupLocation(contents, x, y);
-          return oldFactory.getPopup(owner, contents, point.x, point.y);
-        }
-      };
-    }else{
-      throw new IllegalStateException("unknown value of property -Didea.popup.weight: "+popupWeight);
+          private Popup createPopup(final Component owner, final Component contents, final int x, final int y) {
+            final Point point = fixPopupLocation(contents, x, y);
+            return oldFactory.getPopup(owner, contents, point.x, point.y);
+          }
+        };
+      }
+      else {
+        throw new IllegalStateException("unknown value of property -Didea.popup.weight: " + popupWeight);
+      }
+      PopupFactory.setSharedInstance(popupFactory);
     }
-    PopupFactory.setSharedInstance(popupFactory);
 
     // update ui for popup menu to get round corners
     if (UIUtil.isUnderAquaLookAndFeel()) {
@@ -700,4 +701,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
            }));
     }
   }
+
+  private static class OurPopupFactory extends PopupFactory {}
 }
