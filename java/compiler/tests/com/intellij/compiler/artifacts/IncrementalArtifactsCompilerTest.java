@@ -14,8 +14,10 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     final VirtualFile file = createFile("file.txt");
     addArtifact(root().dir("dir").file(file));
     compileProject();
+    compileProject().assertUpToDate();
     changeFile(file);
     compileProject().assertRecompiled("file.txt");
+    compileProject().assertUpToDate();
   }
 
   public void testOneFileInTwoArtifacts() throws Exception {
