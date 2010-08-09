@@ -1,7 +1,6 @@
-// "Convert to atomic" "true"
-
 import java.util.concurrent.atomic.AtomicInteger;
 
+// "Convert to atomic" "true"
 class Test {
   final AtomicInteger o;
   int j = o.get();
