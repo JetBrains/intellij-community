@@ -47,6 +47,19 @@ public class LinkedStorageTest extends IntegrationTestCase {
     assertRecord(r1, 0, r2);
   }
 
+  public void testWritingAfterClose() throws Exception {
+    createRecord();
+    myStorage.dispose();
+
+    try {
+      createRecord();
+    }
+    catch (AssertionError e) {
+      return;
+    }
+    fail("should have thrown exception");
+  }
+
   public void testDeletion() throws Exception {
     int r1 = createRecord();
     int r2 = createRecord();

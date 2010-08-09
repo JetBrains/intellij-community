@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
@@ -216,35 +217,36 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
         if (hasBalance) return Result.CONTINUE; 
       }
 
-      boolean insertedCData = false;
+      TextRange cdataReformatRange = null;
       final XmlElementDescriptor descriptor = tag.getDescriptor();
 
       if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
         final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
 
         if (cDataContainer.requiresCdataBracesInContext(tag)) {
-          @NonNls final String cDataStart = "><![CDATA[\n";
+          int rangeStart = offset;
+          @NonNls final String cDataStart = "><![CDATA[";
           final String inserted = cDataStart + "\n]]>";
           editor.getDocument().insertString(offset, inserted);
           final int newoffset = offset + cDataStart.length();
           editor.getCaretModel().moveToOffset(newoffset);
           offset += inserted.length();
-          insertedCData = true;
+          cdataReformatRange = new TextRange(rangeStart, offset + 1);
         }
       }
 
       editor.getDocument().insertString(offset, "</" + name + ">");
 
-      if (insertedCData) {
+      if (cdataReformatRange != null) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-        try {
-          CodeStyleManager.getInstance(project).adjustLineIndent(file, editor.getCaretModel().getOffset());
+        try {          
+          CodeStyleManager.getInstance(project).reformatText(file, cdataReformatRange.getStartOffset(), cdataReformatRange.getEndOffset());
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
-      return insertedCData ? Result.STOP : Result.CONTINUE;
+      return cdataReformatRange != null ? Result.STOP : Result.CONTINUE;
     }
     return Result.CONTINUE;
   }

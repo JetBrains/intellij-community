@@ -53,23 +53,25 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     }
     else {
       candidates = TestFinderHelper.findTestsForClass(selectedElement);
-      actions.add(new AdditionalAction() {
-        @Override
-        public String getText() {
-          return "Create New Test...";
-        }
+      final TestCreator creator = LanguageTestCreators.INSTANCE.forLanguage(file.getLanguage());
+      if (creator != null && creator.isAvailable(file.getProject(), editor, file)) {
+        actions.add(new AdditionalAction() {
+          @Override
+          public String getText() {
+            return "Create New Test...";
+          }
 
-        @Override
-        public Icon getIcon() {
-          return IconLoader.getIcon("/actions/intentionBulb.png");
-        }
+          @Override
+          public Icon getIcon() {
+            return IconLoader.getIcon("/actions/intentionBulb.png");
+          }
 
-        @Override
-        public void execute() {
-          final TestCreator creator = LanguageTestCreators.INSTANCE.forLanguage(file.getLanguage());
-          if (creator != null) creator.createTest(file.getProject(), editor, file);
-        }
-      });
+          @Override
+          public void execute() {
+            creator.createTest(file.getProject(), editor, file);
+          }
+        });
+      }
     }
 
     return new GotoData(sourceElement, candidates.toArray(new PsiElement[candidates.size()]), actions);

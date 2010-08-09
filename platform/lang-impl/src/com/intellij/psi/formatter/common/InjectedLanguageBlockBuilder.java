@@ -22,10 +22,12 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.tree.FileElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,6 +107,17 @@ public abstract class InjectedLanguageBlockBuilder {
 
   public void addInjectedLanguageBlockWrapper(final List<Block> result, final ASTNode injectedNode,
                                               final Indent indent, int offset, @Nullable TextRange range) {
+
+    //
+    // Do not create a block for an empty range
+    //
+    if (range != null) {
+      if (range.getLength() == 0) return;
+      if(StringUtil.isEmptyOrSpaces(range.substring(injectedNode.getText()))) {
+        return;
+      }
+    }
+    
     final PsiElement childPsi = injectedNode.getPsi();
     final Language childLanguage = childPsi.getLanguage();
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, childPsi);

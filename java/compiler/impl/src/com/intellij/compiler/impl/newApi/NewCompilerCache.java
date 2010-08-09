@@ -17,6 +17,7 @@ package com.intellij.compiler.impl.newApi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Processor;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 
@@ -28,28 +29,25 @@ import java.io.IOException;
 /**
  * @author nik
  */
-public class NewCompilerCache<Key, State> {
+public class NewCompilerCache<Key, SourceState, OutputState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.newApi.NewCompilerCache");
-  private PersistentHashMap<KeyAndTargetData<Key>, State> myPersistentMap;
+  private PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState, OutputState>> myPersistentMap;
   private File myCacheFile;
-  private final NewCompiler<Key, State> myCompiler;
+  private final NewCompiler<Key, SourceState, OutputState> myCompiler;
 
-  public NewCompilerCache(NewCompiler<Key, State> compiler, final File compilerCacheDir) throws IOException {
+  public NewCompilerCache(NewCompiler<Key, SourceState, OutputState> compiler, final File compilerCacheDir) throws IOException {
     myCompiler = compiler;
     myCacheFile = new File(compilerCacheDir, "timestamps");
     createMap();
   }
 
   private void createMap() throws IOException {
-    myPersistentMap = new PersistentHashMap<KeyAndTargetData<Key>, State>(myCacheFile, new SourceItemDataDescriptor(myCompiler.getItemKeyDescriptor()),
-                                                                  myCompiler.getItemStateExternalizer());
+    myPersistentMap = new PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState,OutputState>>(myCacheFile, new SourceItemDataDescriptor(myCompiler.getItemKeyDescriptor()),
+                                                                  new PersistentStateDataExternalizer(myCompiler));
   }
 
   private KeyAndTargetData<Key> getKeyAndTargetData(Key key, int target) {
-    KeyAndTargetData<Key> data = new KeyAndTargetData<Key>();
-    data.myTarget = target;
-    data.myKey = key;
-    return data;
+    return new KeyAndTargetData<Key>(target, key);
   }
 
   public void wipe() throws IOException {
@@ -75,7 +73,7 @@ public class NewCompilerCache<Key, State> {
     myPersistentMap.remove(getKeyAndTargetData(key, targetId));
   }
 
-  public State getState(int targetId, Key key) throws IOException {
+  public PersistentStateData<SourceState, OutputState> getState(int targetId, Key key) throws IOException {
     return myPersistentMap.get(getKeyAndTargetData(key, targetId));
   }
 
@@ -88,16 +86,31 @@ public class NewCompilerCache<Key, State> {
     });
   }
 
-  public void putOutput(int targetId, Key key, State outputItem) throws IOException {
-    myPersistentMap.put(getKeyAndTargetData(key, targetId), outputItem);
+  public void putState(int targetId, Key key, SourceState sourceState, OutputState outputState) throws IOException {
+    myPersistentMap.put(getKeyAndTargetData(key, targetId), new PersistentStateData<SourceState,OutputState>(sourceState, outputState));
   }
 
 
   private static class KeyAndTargetData<Key> {
-    public int myTarget;
-    public Key myKey;
+    public final int myTarget;
+    public final Key myKey;
+
+    private KeyAndTargetData(int target, Key key) {
+      myTarget = target;
+      myKey = key;
+    }
   }
 
+  public static class PersistentStateData<SourceState, OutputState> {
+    public final SourceState mySourceState;
+    public final OutputState myOutputState;
+
+    private PersistentStateData(SourceState sourceState, OutputState outputState) {
+      mySourceState = sourceState;
+      myOutputState = outputState;
+    }
+  }
+  
   private class SourceItemDataDescriptor implements KeyDescriptor<KeyAndTargetData<Key>> {
     private final KeyDescriptor<Key> myKeyDescriptor;
 
@@ -127,6 +140,29 @@ public class NewCompilerCache<Key, State> {
       int target = in.readInt();
       final Key item = myKeyDescriptor.read(in);
       return getKeyAndTargetData(item, target);
+    }
+  }
+
+  private class PersistentStateDataExternalizer implements DataExternalizer<PersistentStateData<SourceState, OutputState>> {
+    private DataExternalizer<SourceState> mySourceStateExternalizer;
+    private DataExternalizer<OutputState> myOutputStateExternalizer;
+
+    public PersistentStateDataExternalizer(NewCompiler<Key,SourceState,OutputState> compiler) {
+      mySourceStateExternalizer = compiler.getSourceStateExternalizer();
+      myOutputStateExternalizer = compiler.getOutputStateExternalizer();
+    }
+
+    @Override
+    public void save(DataOutput out, PersistentStateData<SourceState, OutputState> value) throws IOException {
+      mySourceStateExternalizer.save(out, value.mySourceState);
+      myOutputStateExternalizer.save(out, value.myOutputState);
+    }
+
+    @Override
+    public PersistentStateData<SourceState, OutputState> read(DataInput in) throws IOException {
+      SourceState sourceState = mySourceStateExternalizer.read(in);
+      OutputState outputState = myOutputStateExternalizer.read(in);
+      return new PersistentStateData<SourceState,OutputState>(sourceState, outputState);
     }
   }
 }

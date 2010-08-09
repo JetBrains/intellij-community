@@ -36,6 +36,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
   public Set<PsiJavaFile> prepareOperation(final UsageInfo[] usages) {
     Set<PsiJavaFile> javaFiles = new HashSet<PsiJavaFile>();
     for (UsageInfo usage : usages) {
+      if (usage.isNonCodeUsage) continue;
       final PsiElement element = usage.getElement();
       if (element != null) {
         final PsiFile file = element.getContainingFile();

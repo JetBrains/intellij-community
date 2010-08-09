@@ -20,12 +20,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class CompileItem<Key, State> {
+public abstract class CompileItem<Key, SourceState, OutputState> {
   @NotNull
   public abstract Key getKey();
 
-  public abstract boolean isUpToDate(@NotNull State state);
+  public abstract boolean isSourceUpToDate(@NotNull SourceState state);
 
   @NotNull
-  public abstract State computeState();
+  public abstract SourceState computeSourceState();
+
+
+  public abstract boolean isOutputUpToDate(@NotNull OutputState state);
+
+  @NotNull
+  public abstract OutputState computeOutputState();
 }

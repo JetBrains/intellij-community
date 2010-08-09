@@ -66,7 +66,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
     configureGenericGroovyRunner(params, module, tests, "groovy.ui.GroovyMain");
 
-    addClasspathFromRootModel(module, tests, params);
+    addClasspathFromRootModel(module, tests, params, true);
 
     params.getVMParametersList().addParametersString(configuration.vmParams);
 

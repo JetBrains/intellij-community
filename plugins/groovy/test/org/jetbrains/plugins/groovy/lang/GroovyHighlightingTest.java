@@ -149,6 +149,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {doTest();}
 
   public void testSingleAllocationInClosure() throws Throwable {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
+  public void testUnusedAllocationInClosure() throws Throwable {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
 
   public void testUnresolvedLhsAssignment() throws Throwable { doTest(new GroovyUnresolvedAccessInspection()); }
 

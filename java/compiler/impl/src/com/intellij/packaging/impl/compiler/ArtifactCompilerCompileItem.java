@@ -46,7 +46,7 @@ public class ArtifactCompilerCompileItem extends VirtualFileCompileItem<Artifact
 
   @NotNull
   @Override
-  public ArtifactPackagingItemOutputState computeState() {
+  public ArtifactPackagingItemOutputState computeOutputState() {
     final SmartList<Pair<String, Long>> pairs = new SmartList<Pair<String, Long>>();
     for (DestinationInfo destination : myDestinations) {
       destination.update();
@@ -54,11 +54,11 @@ public class ArtifactCompilerCompileItem extends VirtualFileCompileItem<Artifact
       long timestamp = outputFile != null ? outputFile.getTimeStamp() : -1;
       pairs.add(Pair.create(destination.getOutputPath(), timestamp));
     }
-    return new ArtifactPackagingItemOutputState(myFile.getTimeStamp(), pairs);
+    return new ArtifactPackagingItemOutputState(pairs);
   }
 
   @Override
-  public boolean isStateUpToDate(ArtifactPackagingItemOutputState state) {
+  public boolean isOutputUpToDate(@NotNull ArtifactPackagingItemOutputState state) {
     final SmartList<Pair<String, Long>> cachedDestinations = state.myDestinations;
     if (cachedDestinations.size() != myDestinations.size()) {
       return false;

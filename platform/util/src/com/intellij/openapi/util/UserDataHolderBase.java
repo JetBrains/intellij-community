@@ -16,7 +16,7 @@
 package com.intellij.openapi.util;
 
 
-import com.intellij.util.containers.LockPoolSynchronizedMap;
+import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -60,12 +60,13 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   public void copyUserDataTo(UserDataHolderBase other) {
-    if (myUserMap == null) {
+    ConcurrentMap<Key, Object> map = myUserMap;
+    if (map == null) {
       other.myUserMap = null;
     }
     else {
-      ConcurrentMap<Key, Object> fresh = createDataMap();
-      fresh.putAll(myUserMap);
+      ConcurrentMap<Key, Object> fresh = createDataMap(2);
+      fresh.putAll(map);
       other.myUserMap = fresh;
     }
   }
@@ -86,8 +87,8 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
-  protected ConcurrentMap<Key, Object> createDataMap() {
-    return new LockPoolSynchronizedMap<Key, Object>(2, 0.9f);
+  protected ConcurrentMap<Key, Object> createDataMap(int initialCapacity) {
+    return new StripedLockConcurrentHashMap<Key, Object>(initialCapacity);
   }
 
   public <T> T getCopyableUserData(Key<T> key) {
@@ -108,7 +109,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
       Map<Key, Object> copyMap = getUserData(COPYABLE_USER_MAP_KEY);
       if (copyMap == null) {
         if (value == null) return;
-        copyMap = new LockPoolSynchronizedMap<Key, Object>(1, 0.9f);
+        copyMap = createDataMap(1);
         putUserData(COPYABLE_USER_MAP_KEY, copyMap);
       }
 
@@ -130,7 +131,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
       synchronized (MAP_LOCK) {
         map = myUserMap;
         if (map == null) {
-          myUserMap = map = createDataMap();
+          myUserMap = map = createDataMap(2);
         }
       }
     }
@@ -138,18 +139,28 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
-    return getOrCreateMap().replace(key, oldValue, newValue);
+    ConcurrentMap<Key, Object> map = getOrCreateMap();
+    if (oldValue == null) {
+      return newValue == null || map.putIfAbsent(key, newValue) == null;
+    }
+    if (newValue == null) {
+      return map.remove(key, oldValue);
+    }
+    return map.replace(key, oldValue, newValue);
   }
 
   @NotNull
   public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
-    return (T)getOrCreateMap().putIfAbsent(key, value);
+    T prev = (T)getOrCreateMap().putIfAbsent(key, value);
+    return prev == null ? value : prev;
   }
 
   public void copyCopyableDataTo(UserDataHolderBase clone) {
     Map<Key, Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
     if (copyableMap != null) {
-      copyableMap = ((LockPoolSynchronizedMap)copyableMap).clone();
+      ConcurrentMap<Key, Object> copy = createDataMap(copyableMap.size());
+      copy.putAll(copyableMap);
+      copyableMap = copy;
     }
     clone.putUserData(COPYABLE_USER_MAP_KEY, copyableMap);
   }

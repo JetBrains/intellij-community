@@ -21,18 +21,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.containers.LockPoolSynchronizedMap;
+import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * @author nik
  */
 public class OrderRootsCache {
-  private final LockPoolSynchronizedMap<CacheKey, VirtualFilePointerContainer> myRoots = new LockPoolSynchronizedMap<CacheKey, VirtualFilePointerContainer>();
+  private final Map<CacheKey, VirtualFilePointerContainer> myRoots = new StripedLockConcurrentHashMap<CacheKey, VirtualFilePointerContainer>();
   private final Disposable myParentDisposable;
 
   public OrderRootsCache(Disposable parentDisposable) {

@@ -24,6 +24,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class CategoryMethodProvider {
   public static List<PsiMethod> provideMethods(@NotNull PsiType psiType,
                                         final Project project,
                                         String className,
-                                        GlobalSearchScope scope,
+                                        final GlobalSearchScope scope,
                                         final Function<PsiMethod, PsiMethod> converter) {
     final PsiClass categoryClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
     if (categoryClass == null) return Collections.emptyList();
@@ -52,10 +53,11 @@ public class CategoryMethodProvider {
         @Override
         public Result<MultiMap<String, PsiMethod>> compute() {
           MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
+          PsiManager manager = PsiManager.getInstance(project);
           for (PsiMethod m : categoryClass.getMethods()) {
             final PsiParameter[] params = m.getParameterList().getParameters();
             if (params.length == 0) continue;
-            final PsiType parameterType = params[0].getType();
+            final PsiType parameterType = TypesUtil.boxPrimitiveType(params[0].getType(), manager, scope);
             PsiType targetType = TypeConversionUtil.erasure(parameterType);
             map.putValue(targetType.getCanonicalText(), converter.fun(m));
           }

@@ -130,6 +130,41 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return 0;
   }
 
+  @Nullable
+  @Override
+  public CvsChangeList getOneList(RepositoryLocation location, final VcsRevisionNumber number) throws VcsException {
+    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+    final String module = cvsLocation.getModuleName();
+    final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
+    if (connectionSettings.isOffline()) {
+      return null;
+    }
+    final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, cvsLocation.getRootFile());
+
+    final CvsChangeList[] result = new CvsChangeList[1];
+    final CvsResult executionResult = runRLogOperation(connectionSettings, module, new Date(1000), null, new Consumer<LogInformationWrapper>() {
+      public void consume(LogInformationWrapper wrapper) {
+        if (result[0] != null) return;
+        final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
+        if (wrappers != null) {
+          for (RevisionWrapper revisionWrapper : wrappers) {
+            if (Comparing.equal(revisionWrapper.getRevision().getNumber(), number.asString())) {
+              result[0] = builder.addRevision(revisionWrapper);
+            }
+          }
+        }
+      }
+    });
+
+    if (executionResult.isCanceled()) {
+      throw new ProcessCanceledException();
+    }
+    else if (! executionResult.hasNoErrors()) {
+      throw executionResult.composeError();
+    }
+    return result[0];
+  }
+
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) throws VcsException {
     CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
     return loadCommittedChanges(settings, cvsLocation.getModuleName(), cvsLocation.getEnvironment(), cvsLocation.getRootFile());

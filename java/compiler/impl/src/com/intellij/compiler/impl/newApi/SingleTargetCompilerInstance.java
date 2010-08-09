@@ -16,7 +16,6 @@
 package com.intellij.compiler.impl.newApi;
 
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -25,7 +24,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class SingleTargetCompilerInstance<Item extends CompileItem<S,O>, S, O> extends CompilerInstance<BuildTarget, Item, S, O> {
+public abstract class SingleTargetCompilerInstance<Item extends CompileItem<K,S,O>, K,S, O> extends CompilerInstance<BuildTarget, Item, K, S, O> {
   protected SingleTargetCompilerInstance(CompileContext context) {
     super(context);
   }
@@ -43,6 +42,6 @@ public abstract class SingleTargetCompilerInstance<Item extends CompileItem<S,O>
   }
 
   @Override
-  public void processObsoleteTarget(@NotNull String targetId, @NotNull List<Pair<S, O>> obsoleteItems) {
+  public void processObsoleteTarget(@NotNull String targetId, @NotNull List<NewCompilerItemState<K, S, O>> obsoleteItems) {
   }
 }

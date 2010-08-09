@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class VirtualFileCompileItem<State extends VirtualFilePersistentState> extends CompileItem<String, State> {
+public abstract class VirtualFileCompileItem<OutputState> extends CompileItem<String, VirtualFilePersistentState, OutputState> {
   public static final KeyDescriptor<String> KEY_DESCRIPTOR = new EnumeratorStringDescriptor();
   protected final VirtualFile myFile;
 
@@ -36,15 +36,16 @@ public abstract class VirtualFileCompileItem<State extends VirtualFilePersistent
     return myFile;
   }
 
+  @NotNull
   @Override
-  public final boolean isUpToDate(@NotNull State state) {
-    if (myFile.getTimeStamp() != state.getSourceTimestamp()) {
-      return false;
-    }
-    return isStateUpToDate(state);
+  public VirtualFilePersistentState computeSourceState() {
+    return new VirtualFilePersistentState(myFile.getTimeStamp());
   }
 
-  protected abstract boolean isStateUpToDate(State state);
+  @Override
+  public boolean isSourceUpToDate(@NotNull VirtualFilePersistentState state) {
+    return myFile.getTimeStamp() == state.getSourceTimestamp();
+  }
 
   @NotNull
   @Override

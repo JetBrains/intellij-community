@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -55,4 +56,7 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
    * since may be different for different VCSs
    */
   int getUnlimitedCountValue();
+
+  @Nullable
+  T getOneList(final RepositoryLocation location, final VcsRevisionNumber number) throws VcsException;
 }

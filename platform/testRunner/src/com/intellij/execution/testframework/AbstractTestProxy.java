@@ -21,7 +21,6 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -91,4 +90,30 @@ public abstract class AbstractTestProxy extends CompositePrintable {
       Disposer.dispose(proxy);
     }
   }
+
+  public static void flushOutput(AbstractTestProxy testProxy) {
+    testProxy.flush();
+
+    AbstractTestProxy parent = testProxy.getParent();
+    while (parent != null) {
+      final List<? extends AbstractTestProxy> children = parent.getChildren();
+      if (!testProxy.isInProgress() && testProxy.equals(children.get(children.size() - 1))) {
+        parent.flush();
+      } else {
+        break;
+      }
+      testProxy = parent;
+      parent = parent.getParent();
+    }
+  }
+
+  @Override
+  public int getExceptionMark() {
+    if (myExceptionMark == 0 && getChildren().size() > 0) {
+      return getChildren().get(0).getExceptionMark();
+    }
+    return myExceptionMark;
+  }
+
+
 }

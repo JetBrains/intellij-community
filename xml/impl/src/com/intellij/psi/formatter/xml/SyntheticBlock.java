@@ -67,7 +67,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
         return Spacing.getReadOnlySpacing();
       }
       if (type1 == XmlElementType.XML_CDATA_START && type2 == XmlElementType.XML_CDATA_END) {
-        return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), 0); 
+        return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines()); 
       }
       if (type1 == XmlElementType.XML_CDATA_START && child2 instanceof AnotherLanguageBlockWrapper ||
           type2 == XmlElementType.XML_CDATA_END && child1 instanceof AnotherLanguageBlockWrapper) {

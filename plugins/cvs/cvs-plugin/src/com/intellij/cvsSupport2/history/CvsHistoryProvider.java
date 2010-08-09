@@ -171,7 +171,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
     @Nullable
     public VcsRevisionNumber calcCurrentRevisionNumber() {
-      return getCurrentRevision(myFilePath);
+      return myFilePath == null ? null : getCurrentRevision(myFilePath);
     }
 
     @Override
