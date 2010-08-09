@@ -36,6 +36,7 @@ public class TableLinkMouseListener extends AbstractBaseTagMouseListener {
     JTable table = (JTable)e.getSource();
     int row = table.rowAtPoint(e.getPoint());
     int column = table.columnAtPoint(e.getPoint());
+    if (row == -1 || column == -1) return null;
     TableCellRenderer cellRenderer = table.getCellRenderer(row, column);
     if (cellRenderer instanceof DualView.TableCellRendererWrapper) {
       cellRenderer = ((DualView.TableCellRendererWrapper) cellRenderer).getRenderer();
