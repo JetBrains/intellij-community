@@ -885,7 +885,12 @@ public class RefactoringUtil {
         if (substitutedType == null) {
           substitutedType = TypeConversionUtil.erasure(factory.createType(parameter));
         }
-        element.getParent().replace(factory.createTypeElement(substitutedType));
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiTypeElement) {
+          parent.replace(factory.createTypeElement(substitutedType));
+        } else if (element instanceof PsiJavaCodeReferenceElement && substitutedType instanceof PsiClassType) {
+          element.replace(factory.createReferenceElementByType((PsiClassType)substitutedType));
+        }
       }
     }
   }

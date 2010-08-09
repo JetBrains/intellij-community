@@ -105,4 +105,8 @@ public class PushDownTest extends LightCodeInsightTestCase {
   public void testSuperOverHierarchy() throws Exception {
     doTest();
   }
+
+  public void testMethodTypeParametersList() throws Exception {
+    doTest();
+  }
 }
