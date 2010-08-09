@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -492,8 +491,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
                          ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
         final ASTNode childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag);
         if (childByRole != null) {
-          tag.replaceChild(childByRole,
-                           ChangeUtil.copyElement((TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
+          final TreeElement treeElement = (TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag);
+          if (treeElement != null) {
+            tag.replaceChild(childByRole, ChangeUtil.copyElement(treeElement, charTableByTree));
+          }
         }
 
         return XmlTagNameChangedImpl.createXmlTagNameChanged(model, tag, oldName);
