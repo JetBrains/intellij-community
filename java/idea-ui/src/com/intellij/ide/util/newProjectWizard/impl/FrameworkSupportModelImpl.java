@@ -71,10 +71,7 @@ public class FrameworkSupportModelImpl extends UserDataHolderBase implements Fra
 
   public void setFrameworkComponentEnabled(@NotNull @NonNls final String providerId, final boolean enable) {
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
-    if (node == null) {
-      throw new IllegalArgumentException("provider '" + providerId + " not found");
-    }
-    if (enable != node.isChecked()) {
+    if (node != null && enable != node.isChecked()) {
       node.setChecked(enable);
     }
   }
