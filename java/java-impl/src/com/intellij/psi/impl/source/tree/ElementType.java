@@ -28,8 +28,11 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType,
                                                  JspElementType.JSP_TEMPLATE_EXPRESSION);
 
   TokenSet JAVA_WHITESPACE_BIT_SET = TokenSet.create(WHITE_SPACE);
-  TokenSet JAVA_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT);
 
+  TokenSet JAVA_PLAIN_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT);
+  TokenSet JAVA_COMMENT_BIT_SET = TokenSet.orSet(JAVA_PLAIN_COMMENT_BIT_SET, TokenSet.create(DOC_COMMENT));
+
+  TokenSet JAVA_PLAIN_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(JAVA_WHITESPACE_BIT_SET, JAVA_PLAIN_COMMENT_BIT_SET);
   TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(JAVA_WHITESPACE_BIT_SET, JAVA_COMMENT_BIT_SET);
 
   TokenSet KEYWORD_BIT_SET = TokenSet.create(

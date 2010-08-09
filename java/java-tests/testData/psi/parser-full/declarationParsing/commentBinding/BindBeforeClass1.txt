@@ -1,22 +1,18 @@
-PsiJavaFile:BindDocComment1.java
-  PsiDocComment
-    PsiDocToken:DOC_COMMENT_START('/**')
-    PsiWhiteSpace(' ')
-    PsiDocToken:DOC_COMMENT_DATA('file comment ')
-    PsiDocToken:DOC_COMMENT_END('*/')
-  PsiWhiteSpace('\n')
-  PsiPackageStatement:a
+PsiJavaFile:BindBeforeClass1.java
+  PsiPackageStatement:p
     PsiKeyword:package('package')
     PsiWhiteSpace(' ')
-    PsiJavaCodeReferenceElement:a
-      PsiIdentifier:a('a')
+    PsiJavaCodeReferenceElement:p
+      PsiIdentifier:p('p')
       PsiReferenceParameterList
         <empty list>
     PsiJavaToken:SEMICOLON(';')
   PsiImportList
     <empty list>
-  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n\n')
   PsiClass:A
+    PsiComment(END_OF_LINE_COMMENT)('// comment')
+    PsiWhiteSpace('\n')
     PsiModifierList:
       <empty list>
     PsiKeyword:class('class')

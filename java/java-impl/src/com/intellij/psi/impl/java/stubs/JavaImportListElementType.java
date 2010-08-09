@@ -25,15 +25,14 @@ import com.intellij.psi.impl.java.stubs.impl.PsiImportListStubImpl;
 import com.intellij.psi.impl.source.PsiImportListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.psi.stubs.StubOutputStream;
 
 import java.io.IOException;
 
 public class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList> {
   public JavaImportListElementType() {
-    super("IMPORT_LIST");
+    super("IMPORT_LIST", true);
   }
 
   public PsiImportList createPsi(final PsiImportListStub stub) {

@@ -1,9 +1,9 @@
 PsiJavaFile:Anonymous2.java
-  PsiComment(END_OF_LINE_COMMENT)('// "Copy 'a' to temp final variable" "true"')
-  PsiWhiteSpace('\n')
   PsiImportList
     <empty list>
   PsiClass:DoubleTrouble
+    PsiComment(END_OF_LINE_COMMENT)('// "Copy 'a' to temp final variable" "true"')
+    PsiWhiteSpace('\n')
     PsiModifierList:public
       PsiKeyword:public('public')
     PsiWhiteSpace(' ')

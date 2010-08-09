@@ -1,8 +1,8 @@
 PsiJavaFile:Errors.java
-  PsiComment(END_OF_LINE_COMMENT)('// illegal modifier combinations')
-  PsiWhiteSpace('\n\n')
   PsiImportList
     <empty list>
+  PsiComment(END_OF_LINE_COMMENT)('// illegal modifier combinations')
+  PsiWhiteSpace('\n\n')
   PsiClass:a
     PsiModifierList:abstract public
       PsiKeyword:abstract('abstract')

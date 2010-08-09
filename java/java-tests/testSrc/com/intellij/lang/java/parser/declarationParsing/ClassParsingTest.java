@@ -4,7 +4,6 @@ package com.intellij.lang.java.parser.declarationParsing;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
 
-// todo: fix parser or test data and uncomment test
 public class ClassParsingTest extends JavaParsingTestCase {
   public ClassParsingTest() {
     super("parser-full/declarationParsing/class");
@@ -32,9 +31,11 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testEnumWithImport() { doTest(true); }
   public void testEnumWithoutConstants() { doTest(true); }
   public void testEmptyImportList() { doTest(true); }
-  public void testLongClass() {doTest(false);}
-  //public void testIncompleteAnnotation() {doTest(true);}
+  public void testLongClass() { doTest(false); }
+  public void testIncompleteAnnotation() { doTestDefaultParser(true); }  // todo: fix
 
-  //public void testExtraOpeningBraceInMethod() {doTest(true);}
-  public void testExtraClosingBraceInMethod() {doTest(true);}
+  public void testExtraOpeningBraceInMethod() { doTestDefaultParser(true); }  // todo: fix
+  public void testExtraClosingBraceInMethod() { doTest(true);}
+
+  public void testError() { doTestDefaultParser(true);}  // todo: fix
 }
