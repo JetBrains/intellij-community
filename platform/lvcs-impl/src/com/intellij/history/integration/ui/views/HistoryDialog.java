@@ -264,8 +264,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       }
 
       public void run() {
+        if (myProject.isDisposed()) return;
+
         invokeAndWait(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
+
             isUpdating = true;
             updateActions();
             myDiffView.startUpdating();
@@ -283,7 +287,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         final Runnable finalApply = apply;
         invokeAndWait(new Runnable() {
           public void run() {
-            if (isDisposed()) return;
+            if (myProject.isDisposed()) return;
 
             isUpdating = false;
             if (finalApply != null) {
