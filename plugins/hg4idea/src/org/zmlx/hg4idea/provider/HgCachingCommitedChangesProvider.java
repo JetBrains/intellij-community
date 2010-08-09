@@ -268,4 +268,18 @@ public class HgCachingCommitedChangesProvider
   public int getUnlimitedCountValue() {
     return -1;
   }
+
+  @Override
+  public CommittedChangeList getOneList(RepositoryLocation location, VcsRevisionNumber number) throws VcsException {
+    final ChangeBrowserSettings settings = createDefaultSettings();
+    settings.USE_CHANGE_AFTER_FILTER = true;
+    settings.USE_CHANGE_BEFORE_FILTER = true;
+    settings.CHANGE_AFTER = number.asString();
+    settings.CHANGE_BEFORE = number.asString();
+    final List<CommittedChangeList> list = getCommittedChanges(settings, location, 1);
+    if (list.size() == 1) {
+      return list.get(0);
+    }
+    return null;
+  }
 }

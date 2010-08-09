@@ -26,20 +26,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.TextOccurenceProcessor;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiElementFilter;
@@ -56,9 +53,11 @@ import org.testng.TestNG;
 import org.testng.annotations.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipFile;
 
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:37:36 PM
@@ -67,6 +66,31 @@ public class TestNGUtil
 {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   public static final String TESTNG_GROUP_NAME = "TestNG";
+
+  public static boolean hasDocTagsSupport = hasDocTagsSupport();
+
+  private static boolean hasDocTagsSupport() {
+    final String testngJarPath = PathUtil.getJarPathForClass(Test.class);
+    if (testngJarPath != null) {
+      final VirtualFile testngjar = LocalFileSystem.getInstance().findFileByPath(testngJarPath);
+      if (testngjar != null ) {
+        try {
+          final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(testngjar);
+          if (jarRoot != null) {
+            final ZipFile zipFile = JarFileSystem.getInstance().getJarFile(jarRoot);
+            final String version = JarVersionDetectionUtil.detectJarVersion(zipFile);
+            if (version != null && version.compareTo("5.12") > 0) {
+              return false;
+            }
+          }
+        }
+        catch (IOException e) {
+          return true;
+        }
+      }
+    }
+    return true;
+  }
 
   public static final String TEST_ANNOTATION_FQN = Test.class.getName();
   public static final String[] CONFIG_ANNOTATIONS_FQN = {
@@ -145,12 +169,7 @@ public class TestNGUtil
   }
 
   public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled) {
-    return hasTest(element, checkDisabled, !element.getManager().getSearchHelper().processElementsWithWord(new TextOccurenceProcessor() {
-      @Override
-      public boolean execute(PsiElement element, int offsetInElement) {
-        return false;
-      }
-    }, GlobalSearchScope.projectScope(element.getProject()), "testng.test", UsageSearchContext.IN_COMMENTS , true));
+    return hasTest(element, checkDisabled, hasDocTagsSupport);
   }
 
   public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled, boolean checkJavadoc) {

@@ -49,7 +49,7 @@ import java.util.List;
 /**
  * The provider for committed change lists
  */
-public class GitCommittedChangeListProvider implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
+public class GitCommittedChangeListProvider implements CommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
   /**
    * the logger
    */
@@ -222,6 +222,29 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
    */
   public int getUnlimitedCountValue() {
     return -1;
+  }
+
+  @Override
+  public CommittedChangeList getOneList(RepositoryLocation location, final VcsRevisionNumber number) throws VcsException {
+    final GitRepositoryLocation l = (GitRepositoryLocation)location;
+    VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
+    if (root == null) {
+      throw new VcsException("The repository does not exists anymore: " + l.getRoot());
+    }
+
+    final CommittedChangeList[] result = new CommittedChangeList[1];
+    GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
+      public void consume(GitSimpleHandler h) {
+        h.addParameters("-n1");
+        h.addParameters(number.asString());
+      }
+    }, new Consumer<CommittedChangeList>() {
+      @Override
+      public void consume(CommittedChangeList committedChangeList) {
+        result[0] = committedChangeList;
+      }
+    }, false);
+    return result[0];
   }
 
   public int getFormatVersion() {

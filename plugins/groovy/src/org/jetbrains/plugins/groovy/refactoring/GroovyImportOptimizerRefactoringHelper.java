@@ -44,6 +44,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
   public Set<GroovyFile> prepareOperation(UsageInfo[] usages) {
     Set<GroovyFile> files = new HashSet<GroovyFile>();
     for (UsageInfo usage : usages) {
+      if (usage.isNonCodeUsage) continue;
       final PsiElement element = usage.getElement();
       if (element != null) {
         final PsiFile file = element.getContainingFile();

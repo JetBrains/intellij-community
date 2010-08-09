@@ -17,7 +17,6 @@ package com.intellij.compiler.impl.newApi;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -26,7 +25,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class CompilerInstance<T extends BuildTarget, Item extends CompileItem<Key, State>, Key, State> {
+public abstract class CompilerInstance<T extends BuildTarget, Item extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState> {
   protected final CompileContext myContext;
 
   protected CompilerInstance(CompileContext context) {
@@ -43,16 +42,16 @@ public abstract class CompilerInstance<T extends BuildTarget, Item extends Compi
   @NotNull
   public abstract List<T> getSelectedTargets();
 
-  public abstract void processObsoleteTarget(@NotNull String targetId, @NotNull List<Pair<Key, State>> obsoleteItems);
+  public abstract void processObsoleteTarget(@NotNull String targetId, @NotNull List<NewCompilerItemState<Key, SourceState, OutputState>> obsoleteItems);
 
 
   @NotNull
   public abstract List<Item> getItems(@NotNull T target);
 
-  public abstract void processItems(@NotNull T target, @NotNull List<Pair<Item, State>> changedItems, @NotNull List<Pair<Key, State>> obsoleteItems,
+  public abstract void processItems(@NotNull T target, @NotNull List<NewCompilerItemState<Item, SourceState, OutputState>> changedItems, @NotNull List<NewCompilerItemState<Key, SourceState, OutputState>> obsoleteItems,
                                     @NotNull OutputConsumer<Item> consumer);
 
-  public interface OutputConsumer<Item extends CompileItem<?,?>> {
+  public interface OutputConsumer<Item extends CompileItem<?,?,?>> {
     void addFileToRefresh(@NotNull File file);
 
     void addProcessedItem(@NotNull Item sourceItem);

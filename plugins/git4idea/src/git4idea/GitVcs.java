@@ -338,8 +338,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
-    // TODO Temporary disabled: return myCommittedChangeListProvider;
-    return null;
+    return myCommittedChangeListProvider;
   }
 
   /**

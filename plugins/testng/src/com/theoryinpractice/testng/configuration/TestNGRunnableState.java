@@ -49,6 +49,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -131,6 +132,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
                                                             executor);
     console.initUI();
     unboundOutputRoot.setPrinter(console.getPrinter());
+    Disposer.register(console, unboundOutputRoot);
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.handleStartProcess(config, processHandler);
     }

@@ -172,9 +172,10 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     public void actionPerformed(AnActionEvent e) {
       VcsVirtualFile vcsVirtualFile = (VcsVirtualFile)getCvsVirtualFile();
       try {
-        final FileAnnotation annotation = CvsVcs2.getInstance(myProject)
+        final CvsVcs2 vcs = CvsVcs2.getInstance(myProject);
+        final FileAnnotation annotation = vcs
             .createAnnotation(vcsVirtualFile, vcsVirtualFile.getRevision(), myCvsRootConfiguration);
-        AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, vcsVirtualFile);
+        AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, vcsVirtualFile, vcs);
       }
       catch (VcsException e1) {
         AbstractVcsHelper.getInstance(myProject).showError(e1, CvsBundle.message("operation.name.annotate"));

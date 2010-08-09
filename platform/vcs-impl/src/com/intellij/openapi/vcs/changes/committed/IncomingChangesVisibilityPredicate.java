@@ -16,9 +16,10 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsType;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,7 @@ public class IncomingChangesVisibilityPredicate implements NotNullFunction<Proje
   public Boolean fun(final Project project) {
     final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
     for(AbstractVcs vcs: abstractVcses) {
-      if (vcs.getCommittedChangesProvider() instanceof CachingCommittedChangesProvider) {
+      if (vcs.getCommittedChangesProvider() instanceof CachingCommittedChangesProvider && VcsType.centralized.equals(vcs.getType())) {
         return Boolean.TRUE;
       }
     }

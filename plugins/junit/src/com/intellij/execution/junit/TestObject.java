@@ -265,7 +265,7 @@ public abstract class TestObject implements JavaCommandLine {
     consoleView.initUI();
     consoleView.attachToProcess(handler);
     unboundOutputRoot.setPrinter(consoleView.getPrinter());
-
+    Disposer.register(consoleView, unboundOutputRoot);
     final TestsPacketsReceiver packetsReceiver = new TestsPacketsReceiver(consoleView) {
       @Override
       public void notifyStart(TestProxy root) {
