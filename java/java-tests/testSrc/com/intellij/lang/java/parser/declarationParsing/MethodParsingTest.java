@@ -23,6 +23,7 @@ public class MethodParsingTest extends JavaParsingTestCase {
   public void testErrors0() { doTest(true); }
   public void testErrors1() { doTest(true); }
   public void testErrors2() { doTest(true); }
+  public void testErrors3() { doTest(true); }
   public void testCompletionHack() { doTest(true); }
   public void testCompletionHack1() { doTest(true); }
 

@@ -445,6 +445,7 @@ public class DeclarationParser {
     builder.advanceLexer();
 
     PsiBuilder.Marker invalidElements = null;
+    String errorMessage = null;
     boolean commaExpected = false;
     int paramCount = 0;
     while (true) {
@@ -454,15 +455,19 @@ public class DeclarationParser {
         if (noLastParam) {
           error(builder, JavaErrorMessages.message("expected.identifier.or.type"));
         }
-        if (builder.getTokenType() == JavaTokenType.RPARENTH) {
+        if (tokenType == JavaTokenType.RPARENTH) {
           if (invalidElements != null) {
-            invalidElements.error(commaExpected ? JavaErrorMessages.message("expected.comma") : JavaErrorMessages.message("expected.parameter"));
+            invalidElements.error(errorMessage);
           }
           invalidElements = null;
           builder.advanceLexer();
         }
         else {
           if (!noLastParam) {
+            if (invalidElements != null) {
+              invalidElements.error(errorMessage);
+            }
+            invalidElements = null;
             error(builder, JavaErrorMessages.message("expected.rparen"));
           }
         }
@@ -473,7 +478,7 @@ public class DeclarationParser {
         if (builder.getTokenType() == JavaTokenType.COMMA) {
           commaExpected = false;
           if (invalidElements != null) {
-            invalidElements.error(JavaErrorMessages.message("expected.parameter"));
+            invalidElements.error(errorMessage);
             invalidElements = null;
           }
           builder.advanceLexer();
@@ -485,7 +490,7 @@ public class DeclarationParser {
         if (param != null) {
           commaExpected = true;
           if (invalidElements != null) {
-            invalidElements.errorBefore(JavaErrorMessages.message("expected.comma"), param);
+            invalidElements.errorBefore(errorMessage, param);
             invalidElements = null;
           }
           paramCount++;
@@ -501,6 +506,7 @@ public class DeclarationParser {
         }
         else {
           invalidElements = builder.mark();
+          errorMessage = commaExpected ? JavaErrorMessages.message("expected.comma") : JavaErrorMessages.message("expected.parameter");
         }
       }
 
@@ -512,7 +518,7 @@ public class DeclarationParser {
     }
 
     if (invalidElements != null) {
-      invalidElements.error(commaExpected ? JavaErrorMessages.message("expected.comma") : JavaErrorMessages.message("expected.parameter"));
+      invalidElements.error(errorMessage);
     }
 
     paramList.done(JavaElementType.PARAMETER_LIST);
@@ -545,7 +551,7 @@ public class DeclarationParser {
     else {
       error(builder, JavaErrorMessages.message("expected.identifier"));
       param.drop();
-      return type;
+      return modListInfo.first;
     }
   }
 
