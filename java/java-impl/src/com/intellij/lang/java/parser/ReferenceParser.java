@@ -210,6 +210,7 @@ public class ReferenceParser {
         }
         else {
           error(builder, JavaErrorMessages.message("expected.identifier"));
+          emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
           break;
         }
       }
