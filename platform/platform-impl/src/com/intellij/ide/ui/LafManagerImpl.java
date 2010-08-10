@@ -298,7 +298,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }else{ // UNIXes (Linux and MAC) go here
         popupWeight=MEDIUM_WEIGHT_POPUP;
       }
-    } else if (HEAVY_WEIGHT_POPUP.equals(popupWeight) && !MEDIUM_WEIGHT_POPUP.equals(popupWeight)) {
+    } else if (!HEAVY_WEIGHT_POPUP.equals(popupWeight) && !MEDIUM_WEIGHT_POPUP.equals(popupWeight)) {
       throw new IllegalStateException("unknown value of property -Didea.popup.weight: " + popupWeight);
     }
 
