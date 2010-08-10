@@ -246,7 +246,8 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.AT)) {
       if (builder.getTokenType() == JavaTokenType.INTERFACE_KEYWORD) {
-        return parseClassFromKeyword(builder, declaration, true, context);
+        final PsiBuilder.Marker result = parseClassFromKeyword(builder, declaration, true, context);
+        return result != null ? result : modList;
       }
       else {
         declaration.rollbackTo();

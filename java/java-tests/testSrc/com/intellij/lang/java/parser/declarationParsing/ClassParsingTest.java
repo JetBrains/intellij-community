@@ -39,4 +39,5 @@ public class ClassParsingTest extends JavaParsingTestCase {
 
   public void testErrors0() { doTest(true); }
   public void testErrors1() { doTest(true); }
+  public void testErrors2() { doTest(true); }
 }
