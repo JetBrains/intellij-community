@@ -298,6 +298,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }else{ // UNIXes (Linux and MAC) go here
         popupWeight=MEDIUM_WEIGHT_POPUP;
       }
+    } else if (HEAVY_WEIGHT_POPUP.equals(popupWeight) && !MEDIUM_WEIGHT_POPUP.equals(popupWeight)) {
+      throw new IllegalStateException("unknown value of property -Didea.popup.weight: " + popupWeight);
     }
 
     if (SystemInfo.isMacOSLeopard) {
@@ -306,46 +308,34 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
 
     popupWeight = popupWeight.trim();
+    final boolean heavyWeighPopup = HEAVY_WEIGHT_POPUP.equals(popupWeight);
 
     PopupFactory popupFactory;
 
     final PopupFactory oldFactory = PopupFactory.getSharedInstance();
     if (!(oldFactory instanceof OurPopupFactory)) {
-      if (HEAVY_WEIGHT_POPUP.equals(popupWeight)) {
-        popupFactory = new OurPopupFactory() {
-          public Popup getPopup(
-            Component owner,
-            Component contents,
-            int x,
-            int y
-          ) throws IllegalArgumentException {
-            final Point point = fixPopupLocation(contents, x, y);
-            if (SystemInfo.isLinux) {
-              return new Popup(owner, contents, point.x, point.y){};
-            }
-            return oldFactory.getPopup(owner, contents, point.x, point.y);
-          }
-        };
-      }
-      else if (MEDIUM_WEIGHT_POPUP.equals(popupWeight)) {
-        popupFactory = new OurPopupFactory() {
+      popupFactory = new OurPopupFactory() {
+        public Popup getPopup(
+          Component owner,
+          Component contents,
+          int x,
+          int y
+        ) throws IllegalArgumentException {
+          final Point point = fixPopupLocation(contents, x, y);
+          try {
+            final Method method = PopupFactory.class.getDeclaredMethod("setPopupType", int.class);
+            method.setAccessible(true);
+            method.invoke(oldFactory, heavyWeighPopup ? 2 : 1);
 
-          public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
-            return createPopup(owner, contents, x, y);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
           }
 
-          private Popup createPopup(final Component owner, final Component contents, final int x, final int y) {
-            final Point point = fixPopupLocation(contents, x, y);
-            if (SystemInfo.isLinux) {
-              return new Popup(owner, contents, point.x, point.y){};
-            }
-            return oldFactory.getPopup(owner, contents, point.x, point.y);
-          }
-        };
-      }
-      else {
-        throw new IllegalStateException("unknown value of property -Didea.popup.weight: " + popupWeight);
-      }
+          return oldFactory.getPopup(owner, contents, point.x, point.y);
+        }
+      };
+
       PopupFactory.setSharedInstance(popupFactory);
     }
 
