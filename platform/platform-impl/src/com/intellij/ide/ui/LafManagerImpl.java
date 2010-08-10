@@ -21,6 +21,7 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -308,10 +309,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
 
     popupWeight = popupWeight.trim();
-    final boolean heavyWeighPopup = HEAVY_WEIGHT_POPUP.equals(popupWeight);
 
     PopupFactory popupFactory;
-
     final PopupFactory oldFactory = PopupFactory.getSharedInstance();
     if (!(oldFactory instanceof OurPopupFactory)) {
       popupFactory = new OurPopupFactory() {
@@ -322,20 +321,17 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
           int y
         ) throws IllegalArgumentException {
           final Point point = fixPopupLocation(contents, x, y);
-          try {
-            final Method method = PopupFactory.class.getDeclaredMethod("setPopupType", int.class);
-            method.setAccessible(true);
-            method.invoke(oldFactory, heavyWeighPopup ? 2 : 1);
 
-          }
-          catch (Throwable e) {
-            LOG.error(e);
+          final int popupType = PopupUtil.getPopupType(this);
+          if (popupType >= 0) {
+            PopupUtil.setPopupType(oldFactory, popupType);
           }
 
           return oldFactory.getPopup(owner, contents, point.x, point.y);
         }
       };
 
+      PopupUtil.setPopupType(popupFactory, HEAVY_WEIGHT_POPUP.equals(popupWeight) ? 2 : 1);
       PopupFactory.setSharedInstance(popupFactory);
     }
 
