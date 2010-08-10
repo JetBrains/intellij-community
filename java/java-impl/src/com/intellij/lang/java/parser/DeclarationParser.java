@@ -87,7 +87,8 @@ public class DeclarationParser {
       }
       error.error(JavaErrorMessages.message("expected.lbrace"));
     }
-    else {
+
+    if (builder.getTokenType() == JavaTokenType.LBRACE) {
       parseClassBodyWithBraces(builder, isAnnotation, isEnum);
     }
 

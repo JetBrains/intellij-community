@@ -37,5 +37,6 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testExtraOpeningBraceInMethod() { doTestDefaultParser(true); }  // todo: fix
   public void testExtraClosingBraceInMethod() { doTest(true); }
 
-  public void testError() { doTest(true); }
+  public void testErrors0() { doTest(true); }
+  public void testErrors1() { doTest(true); }
 }
