@@ -981,7 +981,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (document.getLineNumber(startOffset) != document.getLineNumber(endOffset)) {
       return true;
     }
-    return !myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).isEmpty();
+    return myEditor.getSettings().isAllowSingleLogicalLineFolding()
+      && !myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).isEmpty();
   }
 
   private Rectangle rectangleByFoldOffset(VisualPosition foldStart, int anchorWidth, int anchorX) {

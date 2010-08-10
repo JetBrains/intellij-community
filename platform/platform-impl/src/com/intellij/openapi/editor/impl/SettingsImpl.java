@@ -42,38 +42,39 @@ public class SettingsImpl implements EditorSettings {
   }
 
   // This group of settings does not have UI
-  private int myAdditionalLinesCount = 5;
-  private int myAdditionalColumnsCount = 3;
-  private int myLineCursorWidth = 2;
-  private boolean myLineMarkerAreaShown = true;
+  private int     myAdditionalLinesCount          = 5;
+  private int     myAdditionalColumnsCount        = 3;
+  private int     myLineCursorWidth               = 2;
+  private boolean myLineMarkerAreaShown           = true;
+  private boolean myAllowSingleLogicalLineFolding = false;
 
   // These comes from CodeStyleSettings
-  private Integer myTabSize = null;
-  private Integer myCachedTabSize;
+  private Integer myTabSize         = null;
+  private Integer myCachedTabSize   = null;
   private Boolean myUseTabCharacter = null;
 
   // These comes from EditorSettingsExternalizable defaults.
-  private Boolean myIsVirtualSpace = null;
-  private Boolean myIsCaretInsideTabs = null;
-  private Boolean myIsCaretBlinking = null;
-  private Integer myCaretBlinkingPeriod = null;
-  private Boolean myIsRightMarginShown = null;
-  private Integer myRightMargin = null;
-  private Boolean myAreLineNumbersShown = null;
-  private Boolean myIsFoldingOutlineShown = null;
-  private Boolean myIsSmartHome = null;
-  private Boolean myIsBlockCursor = null;
-  private Boolean myIsWhitespacesShown = null;
-  private Boolean myIndentGuidesShown = null;
-  private Boolean myIsAnimatedScrolling = null;
-  private Boolean myIsAdditionalPageAtBottom = null;
-  private Boolean myIsDndEnabled = null;
-  private Boolean myIsWheelFontChangeEnabled = null;
+  private Boolean myIsVirtualSpace                        = null;
+  private Boolean myIsCaretInsideTabs                     = null;
+  private Boolean myIsCaretBlinking                       = null;
+  private Integer myCaretBlinkingPeriod                   = null;
+  private Boolean myIsRightMarginShown                    = null;
+  private Integer myRightMargin                           = null;
+  private Boolean myAreLineNumbersShown                   = null;
+  private Boolean myIsFoldingOutlineShown                 = null;
+  private Boolean myIsSmartHome                           = null;
+  private Boolean myIsBlockCursor                         = null;
+  private Boolean myIsWhitespacesShown                    = null;
+  private Boolean myIndentGuidesShown                     = null;
+  private Boolean myIsAnimatedScrolling                   = null;
+  private Boolean myIsAdditionalPageAtBottom              = null;
+  private Boolean myIsDndEnabled                          = null;
+  private Boolean myIsWheelFontChangeEnabled              = null;
   private Boolean myIsMouseClickSelectionHonorsCamelWords = null;
-  private Boolean myIsRenameVariablesInplace = null;
-  private Boolean myIsRefrainFromScrolling = null;
-  private Boolean myUseSoftWraps = null;
-  private Boolean myIsAllSoftWrapsShown = null;
+  private Boolean myIsRenameVariablesInplace              = null;
+  private Boolean myIsRefrainFromScrolling                = null;
+  private Boolean myUseSoftWraps                          = null;
+  private Boolean myIsAllSoftWrapsShown                   = null;
 
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
@@ -406,6 +407,16 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setShowAllSoftWraps(boolean show) {
     myIsAllSoftWrapsShown = Boolean.valueOf(show);
+  }
+
+  @Override
+  public boolean isAllowSingleLogicalLineFolding() {
+    return myAllowSingleLogicalLineFolding;
+  }
+
+  @Override
+  public void setAllowSingleLogicalLineFolding(boolean allow) {
+    myAllowSingleLogicalLineFolding = allow;
   }
 
   private void fireEditorRefresh() {
