@@ -210,7 +210,6 @@
     <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoTemplateTagsMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoFilterMacro"/>
 
-    <annotator language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.DjangoCommentAnnotator"/>
     <colorSettingsPage implementation="com.jetbrains.django.lang.template.highlighting.DjangoTemplateColorsPage"/>
 
     <lang.commenter language="DjangoTemplate" implementationClass="com.jetbrains.django.editor.DjangoTemplateCommenter"/>
