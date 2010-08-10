@@ -15,7 +15,10 @@
  */
 package org.zmlx.hg4idea.test;
 
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.AbstractVcsTestCase;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,9 +50,47 @@ class HgTestRepository {
     myParent = parent;
   }
 
+  /**
+   * Creates a new Mercurial repository in a new temporary test directory.
+   * @param testCase reference to the test case instance.
+   * @return created repository.
+   */
+  public static HgTestRepository create(HgAbstractTestCase testCase) throws Exception {
+    final TempDirTestFixture dirFixture = createFixtureDir();
+    final File repo = new File(dirFixture.getTempDirPath());
+    final ProcessOutput processOutput = testCase.runHg(repo, "init");
+    AbstractVcsTestCase.verify(processOutput);
+    return new HgTestRepository(testCase, dirFixture);
+  }
+
+  private static TempDirTestFixture createFixtureDir() throws Exception {
+    final TempDirTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
+    fixture.setUp();
+    return fixture;
+  }
+
+  /**
+   * Clones a repository from this one. New repository is located in a new temporary test directory.
+   * @return New repository cloned from this one.
+   */
+  HgTestRepository cloneRepository() throws Exception {
+    final TempDirTestFixture dirFixture = createFixtureDir();
+    final ProcessOutput processOutput = myTest.runHg(null, "clone", getDirFixture().getTempDirPath(), dirFixture.getTempDirPath());
+    AbstractVcsTestCase.verify(processOutput);
+    return new HgTestRepository(myTest, dirFixture);
+  }
+
   @NotNull
   TempDirTestFixture getDirFixture() {
     return myDirFixture;
+  }
+
+  public VirtualFile getDir() {
+    return myDirFixture.getFile(".");
+  }
+
+  public VirtualFile createFile(String filename) {
+    return myDirFixture.createFile(filename);
   }
 
   /**
@@ -68,15 +109,20 @@ class HgTestRepository {
     execute("commit", "-m", "Sample commit message");
   }
 
-  void update() throws IOException {
-    execute("update");
+  void merge() throws IOException {
+    execute("merge");
+  }
+
+  void pull() throws IOException {
+    execute("pull");
   }
 
   void push() throws IOException {
     execute("push");
   }
 
-  public VirtualFile getDir() {
-    return myDirFixture.getFile(".");
+  void update() throws IOException {
+    execute("update");
   }
+
 }
