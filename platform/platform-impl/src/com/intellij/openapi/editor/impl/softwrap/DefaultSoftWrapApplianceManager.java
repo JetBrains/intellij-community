@@ -220,12 +220,13 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     TIntArrayList result = new TIntArrayList();
 
     // Find offsets where soft wraps should be applied for the logical line in case of no indent usage.
-    int x = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+    int x = 0;
+    int beforeSoftWrapDrawingWidth = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
     int prevSoftWrapOffset = start;
     CharBuffer buffer = CharBuffer.wrap(text);
     for (int i = start; i < end; i++) {
       int symbolWidth = myTextRepresentationHelper.textWidth(buffer, i, i + 1, fontType, x);
-      if (x + symbolWidth >= myVisibleAreaWidth) {
+      if (x + symbolWidth + beforeSoftWrapDrawingWidth >= myVisibleAreaWidth) {
         int offset = calculateSoftWrapOffset(text, i, prevSoftWrapOffset, end);
         if (offset >= end || offset <= prevSoftWrapOffset) {
           // There is no way to insert soft wrap.

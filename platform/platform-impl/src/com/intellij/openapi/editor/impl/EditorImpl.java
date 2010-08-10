@@ -1124,6 +1124,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         state.advance();
         fontType = state.getMergedAttributes().getFontType();
       }
+      // We need to consider 'before soft wrap drawing'.
+      TextChange softWrap = getSoftWrapModel().getSoftWrap(offset);
+      if (softWrap != null) {
+        column++;
+        x += getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+        if (column >= length) {
+          break;
+        }
+      }
 
       FoldRegion region = state.getCurrentFold();
 
