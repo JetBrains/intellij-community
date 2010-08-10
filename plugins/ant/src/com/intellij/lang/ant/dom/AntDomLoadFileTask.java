@@ -43,10 +43,7 @@ public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask{
   @Attribute("encoding")
   public abstract GenericAttributeValue<String> getEncoding();
   
-  public final String getPropertyValue(String propertyName) {
-    if (!propertyName.equals(getPropertyName().getStringValue())) {
-      return null;
-    }
+  protected String calcPropertyValue() {
     String text = myCachedText;
     if (text != null) {
       return text; 

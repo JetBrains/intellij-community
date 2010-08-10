@@ -63,12 +63,18 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     TAG_MAPPING.put("ant", AntDomAnt.class);
     TAG_MAPPING.put("antcall", AntDomAntCall.class);
     TAG_MAPPING.put("classpath", AntDomClasspath.class);
-    TAG_MAPPING.put("available", AntDomPropertyDefiningTaskImpl.class);
-    TAG_MAPPING.put("condition", AntDomPropertyDefiningTaskImpl.class);
-    TAG_MAPPING.put("uptodate", AntDomPropertyDefiningTaskImpl.class);
+    TAG_MAPPING.put("available", AntDomPropertyDefiningTaskWithDefaultValue.class);
+    TAG_MAPPING.put("condition", AntDomPropertyDefiningTaskWithDefaultValue.class);
+    TAG_MAPPING.put("uptodate", AntDomPropertyDefiningTaskWithDefaultValue.class);
     TAG_MAPPING.put("checksum", AntDomChecksumTask.class);
     TAG_MAPPING.put("loadfile", AntDomLoadFileTask.class);
     TAG_MAPPING.put("whichresource", AntDomWhichResourceTask.class);
+    TAG_MAPPING.put("jarlib-resolve", AntDomPropertyDefiningTask.class);
+    TAG_MAPPING.put("p4counter", AntDomPropertyDefiningTask.class);
+    TAG_MAPPING.put("pathconvert", AntDomPropertyDefiningTask.class);
+    TAG_MAPPING.put("basename", AntDomBasenameTask.class);
+    TAG_MAPPING.put("length", AntDomLengthTask.class);
+    TAG_MAPPING.put("tempfile", AntDomTempFile.class);
   }
 
   public void registerExtensions(@NotNull final AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {

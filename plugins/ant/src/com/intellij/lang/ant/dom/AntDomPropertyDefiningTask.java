@@ -54,4 +54,16 @@ public abstract class AntDomPropertyDefiningTask extends AntDomElement implement
     }
     return null;
   }
+  
+  public String getPropertyValue(String propertyName) {
+    if (!propertyName.equals(getPropertyName().getStringValue())) {
+      return null;
+    }
+    return calcPropertyValue();
+  }
+
+  protected String calcPropertyValue() {
+    return "";
+  }
+
 }

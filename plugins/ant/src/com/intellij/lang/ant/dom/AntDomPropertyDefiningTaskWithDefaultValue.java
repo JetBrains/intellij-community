@@ -22,25 +22,16 @@ import com.intellij.util.xml.GenericAttributeValue;
  * @author Eugene Zhuravlev
  *         Date: Aug 6, 2010
  */
-public abstract class AntDomChecksumTask extends AntDomPropertyDefiningTask {
+public abstract class AntDomPropertyDefiningTaskWithDefaultValue extends AntDomPropertyDefiningTask {
 
-  @Attribute("verifyproperty")
-  public abstract GenericAttributeValue<String> getVerifyProperty();
-  
+  public static final String DEFAULT_PROPERTY_VALUE = "true";
 
-  public final String getPropertyValue(String propertyName) {
-    if (!propertyName.equals(getPropertyNameAttribute().getStringValue())) {
-      return null;
-    }
-    return calcPropertyValue(); // some non-null value; actual value can be determined at runtime only
+  @Attribute("value")
+  public abstract GenericAttributeValue<String> getPropertyValue();
+
+  protected final String calcPropertyValue() {
+    final String value = getPropertyValue().getStringValue();
+    return value != null? value : DEFAULT_PROPERTY_VALUE;
   }
 
-  protected GenericAttributeValue<String> getPropertyNameAttribute() {
-    final GenericAttributeValue<String> verifyProperty = getVerifyProperty();
-    if (verifyProperty.getRawText() != null) {
-      return verifyProperty;
-    }
-    return getPropertyName();
-  }
-  
 }

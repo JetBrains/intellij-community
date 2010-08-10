@@ -15,41 +15,30 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 21, 2010
+ *         Date: Aug 10, 2010
  */
-public abstract class AntDomDirname extends AntDomPropertyDefiningTask{
+public abstract class AntDomBasenameTask extends AntDomPropertyDefiningTask{
   @Attribute("file")
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
-  @Nullable
-  protected final String calcPropertyValue() {
-    final PsiFileSystemItem fsItem = getFile().getValue();
-    if (fsItem != null) {
-      final PsiFileSystemItem parent = fsItem.getParent();
-      if (parent != null) {
-        final VirtualFile vFile = parent.getVirtualFile();
-        if (vFile != null) {
-          return FileUtil.toSystemDependentName(vFile.getPath());
-        }
-      }
-    }
-    // according to the doc, defaulting to project's current dir
-    final String projectBasedirPath = getContextAntProject().getProjectBasedirPath();
-    if (projectBasedirPath == null) {
-      return null;
-    }
-    return FileUtil.toSystemDependentName(projectBasedirPath);
-  }
+  @Attribute("suffix")
+  public abstract GenericAttributeValue<String> getSuffix();
 
+  protected String calcPropertyValue() {
+    final PsiFileSystemItem item = getFile().getValue();
+    if (item != null) {
+      final String name = item.getName();
+      final String suffix = getSuffix().getStringValue();
+      return suffix != null && name.endsWith(suffix)? name.substring(0, name.length() - suffix.length()) : name;
+    }
+    return super.calcPropertyValue();
+  }
 }

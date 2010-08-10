@@ -16,8 +16,11 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
@@ -55,6 +58,19 @@ class AntReferenceInjector implements DomReferenceInjector {
   private static void addPropertyReferences(@NotNull ConvertContext context, final XmlAttributeValue xmlAttributeValue, final List<PsiReference> result) {
     final String value = xmlAttributeValue.getValue();
     final DomElement contextElement = context.getInvocationElement();
+    
+    final XmlAttribute attrib = PsiTreeUtil.getParentOfType(xmlAttributeValue, XmlAttribute.class);
+    if (attrib != null) {
+      final String name = attrib.getName();
+      if ("if".equals(name) || "unless".equals(name)) {
+        // special handling of if/unless attributes
+        result.add(new AntDomPropertyReference(
+          contextElement, xmlAttributeValue, value, ElementManipulators.getValueTextRange(xmlAttributeValue))
+        );
+        return;
+      }
+    }
+    
     if (xmlAttributeValue != null && value.indexOf("@{") < 0) {
       final int valueBeginingOffset = Math.abs(xmlAttributeValue.getTextRange().getStartOffset() - xmlAttributeValue.getValueTextRange().getStartOffset());
       int startIndex;

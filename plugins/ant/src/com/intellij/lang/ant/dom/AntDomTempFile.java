@@ -15,26 +15,24 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 6, 2010
+ *         Date: Aug 10, 2010
  */
-public abstract class AntDomPropertyDefiningTaskImpl extends AntDomPropertyDefiningTask {
+public abstract class AntDomTempFile extends AntDomPropertyDefiningTask{
+  @Attribute("destdir")
+  @Convert(value = AntPathConverter.class)
+  public abstract GenericAttributeValue<PsiFileSystemItem> getDestdir();
 
-  public static final String DEFAULT_PROPERTY_VALUE = "true";
+  @Attribute("prefix")
+  public abstract GenericAttributeValue<String> getPrefix();
 
-  @Attribute("value")
-  public abstract GenericAttributeValue<String> getPropertyValue();
-
-  public final String getPropertyValue(String propertyName) {
-    if (!propertyName.equals(getPropertyName().getStringValue())) {
-      return null;
-    }
-    final String value = getPropertyValue().getStringValue();
-    return value != null? value : DEFAULT_PROPERTY_VALUE;
-  }
+  @Attribute("suffix")
+  public abstract GenericAttributeValue<String> getSuffix();
 
 }
