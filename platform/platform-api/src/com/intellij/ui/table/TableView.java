@@ -24,10 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
@@ -38,7 +37,43 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public TableView(final ListTableModel<Item> model) {
     super(model);
+    final JTableHeader tableHeader = getTableHeader();
+    if (tableHeader != null) {
+      tableHeader.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(final MouseEvent e) {
+          processEvent(e);
+        }
+
+        public void mousePressed(final MouseEvent e) {
+          processEvent(e);
+        }
+
+        public void mouseReleased(final MouseEvent e) {
+          processEvent(e);
+        }
+
+        private void processEvent(MouseEvent e) {
+          final int column = convertColumnIndexToModel(tableHeader.columnAtPoint(e.getPoint()));
+          if (column > -1) {
+            onHeaderClicked(column, e);
+          }
+        }
+      });
+    }
     setModel(model);
+  }
+
+  public void setModel(final TableModel dataModel) {
+    assert dataModel instanceof SortableColumnModel : "SortableColumnModel required";
+    super.setModel(dataModel);
+    dataModel.addTableModelListener(new TableModelListener() {
+      public void tableChanged(final TableModelEvent e) {
+        JTableHeader header = getTableHeader();
+        if (header != null) {
+          header.repaint();
+        }
+      }
+    });
   }
 
   public void setModel(final ListTableModel<Item> model) {
@@ -50,13 +85,12 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     updateColumnSizes();
   }
 
-  @Override
   public ListTableModel<Item> getListTableModel() {
     return (ListTableModel<Item>)super.getModel();
   }
 
   public TableCellRenderer getCellRenderer(int row, int column) {
-    ColumnInfo columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
+    final ColumnInfo<Item, ?> columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
     TableCellRenderer renderer = columnInfo.getRenderer(getListTableModel().getItems().get(row));
     if (renderer == null) {
       return super.getCellRenderer(row, column);
@@ -143,18 +177,13 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   }
 
   public TableCellEditor getCellEditor(int row, int column) {
-    ColumnInfo columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
-    TableCellEditor editor = columnInfo.getEditor(getListTableModel().getItems().get(row));
-    if (editor == null) {
-      return super.getCellEditor(row, column);
-    }
-    else {
-      return editor;
-    }
+    final ColumnInfo<Item, ?> columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
+    final TableCellEditor editor = columnInfo.getEditor(getListTableModel().getItems().get(row));
+    return editor == null ? super.getCellEditor(row, column) : editor;
   }
 
-  public java.util.List<Item> getItems() {
-    return ((ListTableModel<Item>)getModel()).getItems();
+  public List<Item> getItems() {
+    return getListTableModel().getItems();
   }
 
   public void resortKeepSelection() {

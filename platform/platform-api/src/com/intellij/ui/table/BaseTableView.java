@@ -17,78 +17,25 @@ package com.intellij.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.config.Storage;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+
 
 /**
  * Do NOT add code that assumes that table has same number of rows as model. It isn't true!
  */
-public abstract class BaseTableView extends Table {
+public class BaseTableView extends Table {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.table.BaseTableView");
-
-  public BaseTableView() {
-    this(new ListTableModel(ColumnInfo.EMPTY_ARRAY));
-  }
 
   public BaseTableView(final ListTableModel model) {
     super(model);
-    final JTableHeader tableHeader = getTableHeader();
-    if (tableHeader != null) {
-      tableHeader.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(final MouseEvent e) {
-          processEvent(e);
-        }
-
-        public void mousePressed(final MouseEvent e) {
-          processEvent(e);
-        }
-
-        public void mouseReleased(final MouseEvent e) {
-          processEvent(e);
-        }
-
-        private void processEvent(MouseEvent e) {
-          final int column = convertColumnIndexToModel(tableHeader.columnAtPoint(e.getPoint()));
-          if (column > -1) {
-            onHeaderClicked(column, e);
-          }
-        }
-      });
-    }
-  }
-
-  protected abstract void onHeaderClicked(int column, MouseEvent e);
-
-  protected ListTableModel getListTableModel() {
-    return (ListTableModel) getModel();
-  }
-
-  public void setModel(final TableModel dataModel) {
-    LOG.assertTrue(dataModel instanceof SortableColumnModel);
-    super.setModel(dataModel);
-    dataModel.addTableModelListener(new TableModelListener() {
-      public void tableChanged(final TableModelEvent e) {
-        JTableHeader header = getTableHeader();
-        if (header != null) {
-          header.repaint();
-        }
-      }
-    });
   }
 
   @NonNls
