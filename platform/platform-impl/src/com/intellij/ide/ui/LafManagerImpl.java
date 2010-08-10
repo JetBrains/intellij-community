@@ -320,6 +320,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
             int y
           ) throws IllegalArgumentException {
             final Point point = fixPopupLocation(contents, x, y);
+            if (SystemInfo.isLinux) {
+              return new Popup(owner, contents, point.x, point.y){};
+            }
             return oldFactory.getPopup(owner, contents, point.x, point.y);
           }
         };
@@ -333,6 +336,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
           private Popup createPopup(final Component owner, final Component contents, final int x, final int y) {
             final Point point = fixPopupLocation(contents, x, y);
+            if (SystemInfo.isLinux) {
+              return new Popup(owner, contents, point.x, point.y){};
+            }
             return oldFactory.getPopup(owner, contents, point.x, point.y);
           }
         };
