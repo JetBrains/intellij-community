@@ -476,12 +476,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         CommenterWithLineSuffix commenterWithLineSuffix = (CommenterWithLineSuffix)commenter;
         String suffix = commenterWithLineSuffix.getLineCommentSuffix();
         int theEnd = endOffset > 0 ? endOffset : myDocument.getLineEndOffset(line);
-        while (theEnd > startOffset && Character.isWhitespace(chars.charAt(theEnd))) {
+        while (theEnd > startOffset && Character.isWhitespace(chars.charAt(theEnd-1))) {
           theEnd--;
         }
 
-        if (CharArrayUtil.regionMatches(chars, theEnd - suffix.length() + 1, suffix)) {
-          myDocument.deleteString(theEnd - suffix.length() + 1, theEnd + 1);
+        if (CharArrayUtil.regionMatches(chars, theEnd - suffix.length(), suffix)) {
+          myDocument.deleteString(theEnd - suffix.length(), theEnd);
         }
       }
 
