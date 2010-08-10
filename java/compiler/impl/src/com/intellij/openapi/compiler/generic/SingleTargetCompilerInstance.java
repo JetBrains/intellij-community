@@ -43,6 +43,6 @@ public abstract class SingleTargetCompilerInstance<Item extends CompileItem<K,S,
   }
 
   @Override
-  public void processObsoleteTarget(@NotNull String targetId, @NotNull List<GenericCompilerItemState<K, S, O>> obsoleteItems) {
+  public void processObsoleteTarget(@NotNull String targetId, @NotNull List<GenericCompilerCacheState<K, S, O>> obsoleteItems) {
   }
 }

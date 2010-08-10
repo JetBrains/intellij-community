@@ -42,13 +42,13 @@ public abstract class GenericCompilerInstance<T extends BuildTarget, Item extend
   @NotNull
   public abstract List<T> getSelectedTargets();
 
-  public abstract void processObsoleteTarget(@NotNull String targetId, @NotNull List<GenericCompilerItemState<Key, SourceState, OutputState>> obsoleteItems);
+  public abstract void processObsoleteTarget(@NotNull String targetId, @NotNull List<GenericCompilerCacheState<Key, SourceState, OutputState>> obsoleteItems);
 
 
   @NotNull
   public abstract List<Item> getItems(@NotNull T target);
 
-  public abstract void processItems(@NotNull T target, @NotNull List<GenericCompilerItemState<Item, SourceState, OutputState>> changedItems, @NotNull List<GenericCompilerItemState<Key, SourceState, OutputState>> obsoleteItems,
+  public abstract void processItems(@NotNull T target, @NotNull List<GenericCompilerProcessingItem<Item, SourceState, OutputState>> changedItems, @NotNull List<GenericCompilerCacheState<Key, SourceState, OutputState>> obsoleteItems,
                                     @NotNull OutputConsumer<Item> consumer);
 
   public interface OutputConsumer<Item extends CompileItem<?,?,?>> {

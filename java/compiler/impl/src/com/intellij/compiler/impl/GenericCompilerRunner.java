@@ -117,10 +117,10 @@ public class GenericCompilerRunner {
           @Override
           public void run() throws IOException {
             cache.processSources(id, new CommonProcessors.CollectProcessor<Key>(keys));
-            List<GenericCompilerItemState<Key, SourceState, OutputState>> obsoleteSources = new ArrayList<GenericCompilerItemState<Key,SourceState,OutputState>>();
+            List<GenericCompilerCacheState<Key, SourceState, OutputState>> obsoleteSources = new ArrayList<GenericCompilerCacheState<Key,SourceState,OutputState>>();
             for (Key key : keys) {
               final GenericCompilerCache.PersistentStateData<SourceState, OutputState> state = cache.getState(id, key);
-              obsoleteSources.add(new GenericCompilerItemState<Key,SourceState,OutputState>(key, state.mySourceState, state.myOutputState));
+              obsoleteSources.add(new GenericCompilerCacheState<Key,SourceState,OutputState>(key, state.mySourceState, state.myOutputState));
             }
             instance.processObsoleteTarget(target, obsoleteSources);
           }
@@ -164,7 +164,7 @@ public class GenericCompilerRunner {
     final List<Item> items = instance.getItems(target);
     checkForErrorsOrCanceled();
 
-    final List<GenericCompilerItemState<Item, SourceState, OutputState>> toProcess = new ArrayList<GenericCompilerItemState<Item,SourceState,OutputState>>();
+    final List<GenericCompilerProcessingItem<Item, SourceState, OutputState>> toProcess = new ArrayList<GenericCompilerProcessingItem<Item,SourceState,OutputState>>();
     final THashSet<Key> keySet = new THashSet<Key>(new SourceItemHashingStrategy<Key>(compiler));
     final Ref<IOException> exception = Ref.create(null);
     DumbService.getInstance(myProject).waitForSmartMode();
@@ -182,7 +182,7 @@ public class GenericCompilerRunner {
             if (myForceCompile || sourceState == null || !item.isSourceUpToDate(sourceState)
                                || outputState == null || !item.isOutputUpToDate(outputState)) {
               sourceStates.put(item, item.computeSourceState());
-              toProcess.add(new GenericCompilerItemState<Item, SourceState, OutputState>(item, sourceState, outputState));
+              toProcess.add(new GenericCompilerProcessingItem<Item,SourceState,OutputState>(item, sourceState, outputState));
             }
           }
         }
@@ -218,10 +218,10 @@ public class GenericCompilerRunner {
       throw new CompileDriver.ExitException(CompileDriver.ExitStatus.CANCELLED);
     }
 
-    List<GenericCompilerItemState<Key, SourceState, OutputState>> obsoleteItems = new ArrayList<GenericCompilerItemState<Key,SourceState,OutputState>>();
+    List<GenericCompilerCacheState<Key, SourceState, OutputState>> obsoleteItems = new ArrayList<GenericCompilerCacheState<Key,SourceState,OutputState>>();
     for (Key key : toRemove) {
       final GenericCompilerCache.PersistentStateData<SourceState, OutputState> data = cache.getState(targetId, key);
-      obsoleteItems.add(new GenericCompilerItemState<Key,SourceState,OutputState>(key, data.mySourceState, data.myOutputState));
+      obsoleteItems.add(new GenericCompilerCacheState<Key,SourceState,OutputState>(key, data.mySourceState, data.myOutputState));
     }
 
     final List<Item> processedItems = new ArrayList<Item>();
