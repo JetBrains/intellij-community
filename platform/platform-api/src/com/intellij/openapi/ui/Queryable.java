@@ -25,7 +25,7 @@ public interface Queryable {
 
   void putInfo(Map<String, String> info);
 
-  static class PrintInfo {
+  class PrintInfo {
     String[] myIdKeys;
     String[] myInfoKeys;
 
@@ -43,7 +43,7 @@ public interface Queryable {
     }
   }
 
-  static class Util {
+  class Util {
     @Nullable
     public static String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
       PrintInfo print = printInfo != null ? printInfo : new PrintInfo();
@@ -65,7 +65,7 @@ public interface Queryable {
         }
       }
 
-      if (map.size() > 0) {
+      if (!map.isEmpty()) {
         id = map.values().iterator().next();
       }
 
