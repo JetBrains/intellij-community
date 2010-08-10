@@ -17,7 +17,7 @@ class Bazz {
            field2 = Bar("my bar")
        }
 
-       @Newify(Baz)
+       @Newify(Bazz)
        Main() {
            field3 = Foo("my foo")
            field4 = Baz<caret>()
