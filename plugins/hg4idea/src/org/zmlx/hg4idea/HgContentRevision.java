@@ -29,36 +29,42 @@ import java.io.UnsupportedEncodingException;
 
 public class HgContentRevision implements ContentRevision {
 
-  private final Project project;
-  private final HgFile hgFile;
-  @NotNull private final HgRevisionNumber revisionNumber;
+  private final Project myProject;
+  private final HgFile myHgFile;
+  @NotNull private final HgRevisionNumber myRevisionNumber;
 
   private FilePath filePath;
   private String content;
 
-  public HgContentRevision(Project project, HgFile hgFile,
-    @NotNull HgRevisionNumber revisionNumber) {
-    this.project = project;
-    this.hgFile = hgFile;
-    this.revisionNumber = revisionNumber;
+  public HgContentRevision(Project project, HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
+    myProject = project;
+    myHgFile = hgFile;
+    myRevisionNumber = revisionNumber;
   }
 
   @Nullable
   public String getContent() throws VcsException {
     if (StringUtils.isBlank(content)) {
-      content = new HgCatCommand(project).execute(hgFile, revisionNumber, getFile().getCharset());
+      if (myRevisionNumber.isWorkingVersion()) {
+        content = VcsUtil.getFileContent(myHgFile.getFile().getPath());
+      } else {
+        content = new HgCatCommand(myProject).execute(myHgFile, myRevisionNumber, getFile().getCharset());
+      }
     }
     return content;
   }
 
+  /**
+   * A wrapper for getContent(), that just converts String to byte[]
+   */
   @Nullable
   public byte[] getContentAsBytes() throws VcsException {
-    String content = getContent();
+    final String content = getContent();
     if (content == null) {
       return null;
     }
     try {
-      VirtualFile vf = VcsUtil.getVirtualFile(hgFile.getFile());
+      final VirtualFile vf = VcsUtil.getVirtualFile(myHgFile.getFile());
       if (vf == null) {
         return null;
       }
@@ -71,21 +77,21 @@ public class HgContentRevision implements ContentRevision {
   @NotNull
   public FilePath getFile() {
     if (filePath == null) {
-      filePath = hgFile.toFilePath();
+      filePath = myHgFile.toFilePath();
     }
     return filePath;
   }
 
   @NotNull
   public HgRevisionNumber getRevisionNumber() {
-    return revisionNumber;
+    return myRevisionNumber;
   }
 
   @Override
   public int hashCode() {
     return new HashCodeBuilder()
-      .append(hgFile)
-      .append(revisionNumber)
+      .append(myHgFile)
+      .append(myRevisionNumber)
       .toHashCode();
   }
 
@@ -99,8 +105,8 @@ public class HgContentRevision implements ContentRevision {
     }
     HgContentRevision that = (HgContentRevision) object;
     return new EqualsBuilder()
-      .append(hgFile, that.hgFile)
-      .append(revisionNumber, that.revisionNumber)
+      .append(myHgFile, that.myHgFile)
+      .append(myRevisionNumber, that.myRevisionNumber)
       .isEquals();
   }
 
