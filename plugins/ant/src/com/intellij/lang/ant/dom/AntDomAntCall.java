@@ -15,30 +15,28 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.Trinity;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 
-import java.io.File;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 5, 2010
+ *         Date: Aug 3, 2010
  */
-public abstract class AntDomCustomClasspathComponent extends AntDomNamedElement implements AntDomClasspathElement{
-  @Attribute("uri")
-  public abstract GenericAttributeValue<String> getUri();
+public abstract class AntDomAntCall extends AntDomElement {
   
-  @Attribute("classpath")
-  @Convert(value = AntMultiPathStringConverter.class)
-  public abstract GenericAttributeValue<List<File>> getClasspath();
+  @Attribute("target")
+  @Convert(value = AntDomDefaultTargetConverter.class)
+  public abstract GenericAttributeValue<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> getTarget();
 
-  @Attribute("classpathref")
-  @Convert(value = AntDomRefIdConverter.class)
-  public abstract GenericAttributeValue<AntDomElement> getClasspathRef();
+  @Attribute("inheritall")
+  @Convert(value = AntBooleanConverterDefaultTrue.class)
+  public abstract GenericAttributeValue<Boolean> isInheritAllProperties();
 
-  @Attribute("loaderref")
-  public abstract GenericAttributeValue<String> getLoaderRef();
-
+  @Attribute("inheritrefs")
+  @Convert(value = AntBooleanConverterDefaultFalse.class)
+  public abstract GenericAttributeValue<Boolean> isInheritRefsProperties();
 }

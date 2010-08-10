@@ -15,11 +15,9 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.lang.ant.psi.AntProperty;
-import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ResolveTestCase;
@@ -255,19 +253,19 @@ public class AntResolveTest extends ResolveTestCase {
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ref.resolve();
-    assertTrue(target instanceof AntTarget);
+    assertTrue(target instanceof PomTargetPsiElement && ((PomTargetPsiElement)target).getTarget().canNavigateToSource());
   }
 
   private void doPropertyTest() throws Exception {
     PsiReference ref = configure();
-    PsiElement property = ref.resolve();
-    assertTrue(property instanceof AntProperty);
+    PsiElement target = ref.resolve();
+    assertTrue(target instanceof PomTargetPsiElement && ((PomTargetPsiElement)target).getTarget().canNavigateToSource());
   }
 
   private void doTaskTest() throws Exception {
     PsiReference ref = configure();
-    PsiElement property = ref.resolve();
-    assertTrue(property instanceof AntTask);
+    PsiElement target = ref.resolve();
+    assertTrue(target instanceof PomTargetPsiElement && ((PomTargetPsiElement)target).getTarget().canNavigateToSource());
   }
 
   protected String getTestDataPath() {

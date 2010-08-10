@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -27,18 +28,14 @@ import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 6, 2010
+ *         Date: Aug 10, 2010
  */
-public abstract class AntDomAvailableTask extends AntDomElement implements PropertiesProvider{
-
-  public static final String DEFAULT_PROPERTY_VALUE = "true";
+public abstract class AntDomPropertyDefiningTask extends AntDomElement implements PropertiesProvider{
 
   @Attribute("property")
+  @NameValue
   public abstract GenericAttributeValue<String> getPropertyName();
 
-  @Attribute("value")
-  public abstract GenericAttributeValue<String> getPropertyValue();
-  
   @NotNull 
   public final Iterator<String> getNamesIterator() {
     final String name = getPropertyName().getStringValue();
@@ -50,21 +47,10 @@ public abstract class AntDomAvailableTask extends AntDomElement implements Prope
     return Collections.<String>emptyList().iterator();
   }
 
-  public final String getPropertyValue(String propertyName) {
-    if (!propertyName.equals(getPropertyName().getStringValue())) {
-      return null;
-    }
-    final String value = getPropertyValue().getStringValue();
-    return value != null? value : DEFAULT_PROPERTY_VALUE;
-  }
-
   public final PsiElement getNavigationElement(String propertyName) {
-    final GenericAttributeValue<String> propName = getPropertyName();
-    if (propName != null) {
-      final DomTarget domTarget = DomTarget.getTarget(this, propName);
-      if (domTarget != null) {
-        return PomService.convertToPsi(domTarget);
-      }
+    final DomTarget domTarget = DomTarget.getTarget(this, getPropertyName());
+    if (domTarget != null) {
+      return PomService.convertToPsi(domTarget);
     }
     return null;
   }

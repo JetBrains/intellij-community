@@ -16,29 +16,31 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-
-import java.io.File;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 5, 2010
+ *         Date: Aug 6, 2010
  */
-public abstract class AntDomCustomClasspathComponent extends AntDomNamedElement implements AntDomClasspathElement{
-  @Attribute("uri")
-  public abstract GenericAttributeValue<String> getUri();
+public abstract class AntDomChecksumTask extends AntDomPropertyDefiningTask {
+
+  @Attribute("verifyproperty")
+  public abstract GenericAttributeValue<String> getVerifyProperty();
   
-  @Attribute("classpath")
-  @Convert(value = AntMultiPathStringConverter.class)
-  public abstract GenericAttributeValue<List<File>> getClasspath();
 
-  @Attribute("classpathref")
-  @Convert(value = AntDomRefIdConverter.class)
-  public abstract GenericAttributeValue<AntDomElement> getClasspathRef();
+  public final String getPropertyValue(String propertyName) {
+    if (!propertyName.equals(getPropertyNameAttribute().getStringValue())) {
+      return null;
+    }
+    return ""; // some non-null value; actual value can be determined at runtime only
+  }
 
-  @Attribute("loaderref")
-  public abstract GenericAttributeValue<String> getLoaderRef();
-
+  protected GenericAttributeValue<String> getPropertyNameAttribute() {
+    final GenericAttributeValue<String> verifyProperty = getVerifyProperty();
+    if (verifyProperty.getRawText() != null) {
+      return verifyProperty;
+    }
+    return getPropertyName();
+  }
+  
 }

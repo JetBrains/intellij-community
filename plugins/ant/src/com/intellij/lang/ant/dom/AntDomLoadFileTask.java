@@ -15,44 +15,58 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 21, 2010
+ *         Date: Aug 6, 2010
  */
-public abstract class AntDomDirname extends AntDomPropertyDefiningTask{
-  @Attribute("file")
-  @Convert(value = AntPathConverter.class)
-  public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
+public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask{
 
-  @Nullable
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomLoadFileTask");
+  
+  private String myCachedText;
+
+  @Attribute("srcfile")
+  @Convert(value = AntPathConverter.class)
+  public abstract GenericAttributeValue<PsiFileSystemItem> getSrcFile();
+
+  @Attribute("encoding")
+  public abstract GenericAttributeValue<String> getEncoding();
+  
   public final String getPropertyValue(String propertyName) {
     if (!propertyName.equals(getPropertyName().getStringValue())) {
       return null;
     }
-    final PsiFileSystemItem fsItem = getFile().getValue();
-    if (fsItem != null) {
-      final PsiFileSystemItem parent = fsItem.getParent();
-      if (parent != null) {
-        final VirtualFile vFile = parent.getVirtualFile();
-        if (vFile != null) {
-          return FileUtil.toSystemDependentName(vFile.getPath());
-        }
-      }
+    String text = myCachedText;
+    if (text != null) {
+      return text; 
     }
-    // according to the doc, defaulting to project's current dir
-    final String projectBasedirPath = getContextAntProject().getProjectBasedirPath();
-    if (projectBasedirPath == null) {
-      return null;
+    final PsiFileSystemItem file = getSrcFile().getValue();
+    if (!(file instanceof PsiFile)) {
+      return "";
     }
-    return FileUtil.toSystemDependentName(projectBasedirPath);
+    final VirtualFile vFile = ((PsiFile)file).getOriginalFile().getVirtualFile();
+    if (vFile == null) {
+      return "";
+    }
+    try {
+      text = VfsUtil.loadText(vFile);
+      myCachedText = text;
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      text = "";
+    }
+    return text;
   }
-
 }

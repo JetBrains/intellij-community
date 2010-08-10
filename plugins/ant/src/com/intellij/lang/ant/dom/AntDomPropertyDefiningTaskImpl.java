@@ -16,29 +16,25 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-
-import java.io.File;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 5, 2010
+ *         Date: Aug 6, 2010
  */
-public abstract class AntDomCustomClasspathComponent extends AntDomNamedElement implements AntDomClasspathElement{
-  @Attribute("uri")
-  public abstract GenericAttributeValue<String> getUri();
-  
-  @Attribute("classpath")
-  @Convert(value = AntMultiPathStringConverter.class)
-  public abstract GenericAttributeValue<List<File>> getClasspath();
+public abstract class AntDomPropertyDefiningTaskImpl extends AntDomPropertyDefiningTask {
 
-  @Attribute("classpathref")
-  @Convert(value = AntDomRefIdConverter.class)
-  public abstract GenericAttributeValue<AntDomElement> getClasspathRef();
+  public static final String DEFAULT_PROPERTY_VALUE = "true";
 
-  @Attribute("loaderref")
-  public abstract GenericAttributeValue<String> getLoaderRef();
+  @Attribute("value")
+  public abstract GenericAttributeValue<String> getPropertyValue();
+
+  public final String getPropertyValue(String propertyName) {
+    if (!propertyName.equals(getPropertyName().getStringValue())) {
+      return null;
+    }
+    final String value = getPropertyValue().getStringValue();
+    return value != null? value : DEFAULT_PROPERTY_VALUE;
+  }
 
 }

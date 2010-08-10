@@ -36,7 +36,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -263,7 +262,7 @@ public class CustomAntElementsRegistry {
   }
 
   @Nullable
-  private static ClassLoader createClassLoader(final List<URL> urls, final AntDomProject antProject) {
+  public static ClassLoader createClassLoader(final List<URL> urls, final AntDomProject antProject) {
     final ClassLoader parentLoader = antProject.getClassLoader();
     if (urls.size() == 0) {
       return parentLoader;
@@ -271,7 +270,7 @@ public class CustomAntElementsRegistry {
     return new AntResourcesClassLoader(urls, parentLoader, false, false);
   }
 
-  private static List<URL> collectUrls(AntDomCustomClasspathComponent typedef) {
+  public static List<URL> collectUrls(AntDomClasspathElement typedef) {
     final List<URL> urls = new ArrayList<URL>();
     // check classpath attribute
     final List<File> cpFiles = typedef.getClasspath().getValue();
@@ -331,6 +330,10 @@ public class CustomAntElementsRegistry {
     }
 
     public void visitAntDomElement(AntDomElement element) {
+      if (element instanceof AntDomCustomElement) {
+        return; // avoid stack overflow
+      }
+      
       final String uri = element.getXmlElementNamespace();
       if (!processedAntlibs.contains(uri)) {
         processedAntlibs.add(uri);
@@ -358,15 +361,13 @@ public class CustomAntElementsRegistry {
     }
 
     public void visitMacroDef(AntDomMacroDef macrodef) {
-      final GenericAttributeValue<String> name = macrodef.getName();
-      final String customTagName = name != null? name.getStringValue() : null;
+      final String customTagName = macrodef.getName().getStringValue();
       if (customTagName != null) {
         final String nsUri = macrodef.getUri().getStringValue();
         addCustomDefinition(macrodef, customTagName, nsUri, null, null);
         for (AntDomMacrodefElement element : macrodef.getMacroElements()) {
-          final GenericAttributeValue<String> elemName = element.getName();
-          if (elemName != null) {
-            final String customSubTagName = elemName.getStringValue();
+          final String customSubTagName = element.getName().getStringValue();
+          if (customSubTagName != null) {
             addCustomDefinition(element, customSubTagName, nsUri, null, null);
           }
         }
@@ -374,8 +375,7 @@ public class CustomAntElementsRegistry {
     }
 
     public void visitScriptDef(AntDomScriptDef scriptdef) {
-      final GenericAttributeValue<String> name = scriptdef.getName();
-      final String customTagName = name != null? name.getStringValue() : null;
+      final String customTagName = scriptdef.getName().getStringValue();
       if (customTagName != null) {
         final String nsUri = scriptdef.getUri().getStringValue();
         final ClassLoader classLoader = getClassLoader(scriptdef, myAntProject);
@@ -384,19 +384,15 @@ public class CustomAntElementsRegistry {
         // registering nested elements
         ReflectedProject reflectedProject = null;
         for (AntDomScriptdefElement element : scriptdef.getScriptdefElements()) {
-          final GenericAttributeValue<String> elemName = element.getName();
-          if (elemName != null) {
-            final String customSubTagName = elemName.getStringValue();
-
-            final GenericAttributeValue<String> clsName = element.getClassname();
-            final String classname = clsName != null? clsName.getStringValue() : null;
+          final String customSubTagName = element.getName().getStringValue();
+          if (customSubTagName != null) {
+            final String classname = element.getClassname().getStringValue();
             if (classname != null) {
               registerElement(element, customTagName, nsUri, classname, classLoader);
             }
             else {
               Class clazz = null;
-              final GenericAttributeValue<String> elemType = element.getElementType();
-              String typeName = elemType != null? elemType.getStringValue() : null;
+              final String typeName = element.getElementType().getStringValue();
               if (typeName != null) {
                 clazz = myCustomElements.get(new XmlName(typeName));
                 if (clazz == null) {
@@ -423,8 +419,7 @@ public class CustomAntElementsRegistry {
     }
 
     public void visitPresetDef(AntDomPresetDef presetdef) {
-      final GenericAttributeValue<String> name = presetdef.getName();
-      final String customTagName = name != null? name.getStringValue() : null;
+      final String customTagName = presetdef.getName().getStringValue();
       if (customTagName != null) {
         final String nsUri = presetdef.getUri().getStringValue();
         addCustomDefinition(presetdef, customTagName, nsUri, null, null);
