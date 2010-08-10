@@ -1,4 +1,4 @@
-PsiJavaFile:Simple.java
+PsiJavaFile:Simple1.java
   PsiImportList
     <empty list>
   PsiClass:TimeTravel

@@ -741,8 +741,8 @@ public class DeclarationParser {
     PsiBuilder.Marker pair = builder.mark();
 
     if (mayBeSimple) {
-      final PsiBuilder.Marker value = parseAnnotationValue(builder);
-      if (value != null && builder.getTokenType() != JavaTokenType.EQ) {
+      parseAnnotationValue(builder);
+      if (builder.getTokenType() != JavaTokenType.EQ) {
         pair.done(JavaElementType.NAME_VALUE_PAIR);
         return false;
       }
@@ -762,9 +762,9 @@ public class DeclarationParser {
     return hasName;
   }
 
-  @Nullable
+  @NotNull
   private static PsiBuilder.Marker parseAnnotationValue(final PsiBuilder builder) {
-    final PsiBuilder.Marker result;
+    PsiBuilder.Marker result;
 
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.AT) {
@@ -778,8 +778,10 @@ public class DeclarationParser {
     }
 
     if (result == null) {
-      error(builder, JavaErrorMessages.message("expected.value"));
+      result = builder.mark();
+      result.error(JavaErrorMessages.message("expected.value"));
     }
+
     return result;
   }
 
