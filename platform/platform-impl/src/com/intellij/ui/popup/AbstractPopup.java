@@ -32,7 +32,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -711,12 +710,8 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myWindow != null) {
-      //todo[kirillk,nik] SwingUtilities.getWindowAncestor() sometimes returns IdeFrameImpl (at least on Linux) but IDEA shouldn't mark
-      // IdeFrame as 'doNotSuggestAsParent' (otherwise some popups like Ctrl+N won't work)
-      if (!(myWindow instanceof IdeFrame)) {
-        if (!myMayBeParent) {
-          WindowManager.getInstance().doNotSuggestAsParent(myWindow);
-        }
+      if (!myMayBeParent) {
+        WindowManager.getInstance().doNotSuggestAsParent(myWindow);
       }
     }
 
