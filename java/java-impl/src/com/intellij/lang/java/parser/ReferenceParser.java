@@ -172,7 +172,9 @@ public class ReferenceParser {
       parseReferenceParameterList(builder, true);
     }
     else {
-      emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
+      if (!isStaticImport || builder.getTokenType() == JavaTokenType.DOT) {
+        emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
+      }
     }
 
     boolean hasIdentifier;

@@ -39,6 +39,7 @@ public class FileParserTest extends JavaParsingTestCase {
   public void testUnclosedImport0() { doParserTest("import"); }
   public void testUnclosedImport1() { doParserTest("import java.awt.*"); }
   public void testUnclosedImport2() { doParserTest("import java.awt."); }
+  public void testUnclosedImport3() { doParserTest("import static a"); }
 
   public void testFileWithClass() { doParserTest("package a;\n" +
                                                  "import b;\n" +
