@@ -1052,4 +1052,18 @@ public class FileUtil {
 
     return null;
   }
+
+  public static List<File> findFilesByMask(Pattern pattern, File dir) {
+    final ArrayList<File> found = new ArrayList<File>();
+    for (File file : dir.listFiles()) {
+      if (file.isDirectory()) {
+        found.addAll(findFilesByMask(pattern, file));
+      } else {
+        if (pattern.matcher(file.getName()).matches()) {
+          found.add(file);
+        }
+      }
+    }
+    return found;
+  }
 }
