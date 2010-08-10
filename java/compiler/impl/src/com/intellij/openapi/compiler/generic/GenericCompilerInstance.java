@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.newApi;
+package com.intellij.openapi.compiler.generic;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.project.Project;
@@ -25,10 +25,10 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class CompilerInstance<T extends BuildTarget, Item extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState> {
+public abstract class GenericCompilerInstance<T extends BuildTarget, Item extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState> {
   protected final CompileContext myContext;
 
-  protected CompilerInstance(CompileContext context) {
+  protected GenericCompilerInstance(CompileContext context) {
     myContext = context;
   }
 
@@ -42,13 +42,13 @@ public abstract class CompilerInstance<T extends BuildTarget, Item extends Compi
   @NotNull
   public abstract List<T> getSelectedTargets();
 
-  public abstract void processObsoleteTarget(@NotNull String targetId, @NotNull List<NewCompilerItemState<Key, SourceState, OutputState>> obsoleteItems);
+  public abstract void processObsoleteTarget(@NotNull String targetId, @NotNull List<GenericCompilerItemState<Key, SourceState, OutputState>> obsoleteItems);
 
 
   @NotNull
   public abstract List<Item> getItems(@NotNull T target);
 
-  public abstract void processItems(@NotNull T target, @NotNull List<NewCompilerItemState<Item, SourceState, OutputState>> changedItems, @NotNull List<NewCompilerItemState<Key, SourceState, OutputState>> obsoleteItems,
+  public abstract void processItems(@NotNull T target, @NotNull List<GenericCompilerItemState<Item, SourceState, OutputState>> changedItems, @NotNull List<GenericCompilerItemState<Key, SourceState, OutputState>> obsoleteItems,
                                     @NotNull OutputConsumer<Item> consumer);
 
   public interface OutputConsumer<Item extends CompileItem<?,?,?>> {

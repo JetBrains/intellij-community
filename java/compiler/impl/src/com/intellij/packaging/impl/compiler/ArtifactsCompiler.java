@@ -15,7 +15,7 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.compiler.impl.newApi.*;
+import com.intellij.openapi.compiler.generic.*;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -32,12 +32,12 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class ArtifactsCompiler extends NewCompiler<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> {
+public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> {
   static final Key<Set<String>> WRITTEN_PATHS_KEY = Key.create("artifacts_written_paths");
   static final Key<Set<Artifact>> AFFECTED_ARTIFACTS = Key.create("affected_artifacts");
 
   public ArtifactsCompiler() {
-    super("artifacts_compiler", 0, NewCompiler.CompileOrderPlace.PACKAGING);
+    super("artifacts_compiler", 0, GenericCompiler.CompileOrderPlace.PACKAGING);
   }
 
   @Nullable
@@ -55,7 +55,7 @@ public class ArtifactsCompiler extends NewCompiler<String, VirtualFilePersistent
   @NotNull
   @Override
   public DataExternalizer<VirtualFilePersistentState> getSourceStateExternalizer() {
-    return VirtualFileStateExternalizer.INSTANCE;
+    return VirtualFilePersistentState.EXTERNALIZER;
   }
 
   @NotNull
@@ -66,7 +66,7 @@ public class ArtifactsCompiler extends NewCompiler<String, VirtualFilePersistent
 
   @NotNull
   @Override
-  public CompilerInstance<ArtifactBuildTarget, ? extends CompileItem<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>, String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> createInstance(
+  public GenericCompilerInstance<ArtifactBuildTarget, ? extends CompileItem<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>, String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> createInstance(
     @NotNull CompileContext context) {
     return new ArtifactsCompilerInstance(context);
   }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.newApi;
+package com.intellij.openapi.compiler.generic;
 
 import com.intellij.util.io.DataExternalizer;
 
@@ -22,19 +22,23 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
-* @author nik
-*/
-public class VirtualFileStateExternalizer implements DataExternalizer<VirtualFilePersistentState> {
-  public static VirtualFileStateExternalizer INSTANCE = new VirtualFileStateExternalizer();
+ * @author nik
+ */
+public class DummyPersistentState {
+  public static final DummyPersistentState INSTANCE = new DummyPersistentState();
+  public static final DataExternalizer<DummyPersistentState> EXTERNALIZER = new DummyPersistentStateExternalizer();
 
-  @Override
-  public void save(DataOutput out, VirtualFilePersistentState value) throws IOException {
-    out.writeLong(value.getSourceTimestamp());
+  private DummyPersistentState() {
   }
 
-  @Override
-  public VirtualFilePersistentState read(DataInput in) throws IOException {
-    return new VirtualFilePersistentState(in.readLong());
-  }
+  private static class DummyPersistentStateExternalizer implements DataExternalizer<DummyPersistentState> {
+    @Override
+    public void save(DataOutput out, DummyPersistentState value) throws IOException {
+    }
 
+    @Override
+    public DummyPersistentState read(DataInput in) throws IOException {
+      return INSTANCE;
+    }
+  }
 }

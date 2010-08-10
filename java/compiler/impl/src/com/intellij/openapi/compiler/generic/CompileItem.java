@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.newApi;
+package com.intellij.openapi.compiler.generic;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
-* @author nik
-*/
-public class VirtualFilePersistentState {
-  private final long mySourceTimestamp;
+ * @author nik
+ */
+public abstract class CompileItem<Key, SourceState, OutputState> {
+  @NotNull
+  public abstract Key getKey();
 
-  public VirtualFilePersistentState(long sourceTimestamp) {
-    mySourceTimestamp = sourceTimestamp;
-  }
+  public abstract boolean isSourceUpToDate(@NotNull SourceState state);
 
-  public final long getSourceTimestamp() {
-    return mySourceTimestamp;
-  }
+  @NotNull
+  public abstract SourceState computeSourceState();
+
+
+  public abstract boolean isOutputUpToDate(@NotNull OutputState state);
+
+  @NotNull
+  public abstract OutputState computeOutputState();
 }

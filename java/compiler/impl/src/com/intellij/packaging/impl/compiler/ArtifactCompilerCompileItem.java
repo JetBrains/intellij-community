@@ -15,7 +15,7 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.compiler.impl.newApi.VirtualFileCompileItem;
+import com.intellij.openapi.compiler.generic.VirtualFileCompileItem;
 import com.intellij.compiler.impl.packagingCompiler.DestinationInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;

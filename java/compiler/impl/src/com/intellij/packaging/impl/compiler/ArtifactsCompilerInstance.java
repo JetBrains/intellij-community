@@ -17,9 +17,9 @@ package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.compiler.impl.newApi.CompilerInstance;
-import com.intellij.compiler.impl.newApi.NewCompilerItemState;
-import com.intellij.compiler.impl.newApi.VirtualFilePersistentState;
+import com.intellij.openapi.compiler.generic.GenericCompilerInstance;
+import com.intellij.openapi.compiler.generic.GenericCompilerItemState;
+import com.intellij.openapi.compiler.generic.VirtualFilePersistentState;
 import com.intellij.compiler.impl.packagingCompiler.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -61,7 +61,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTarget, ArtifactCompilerCompileItem,
+public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactBuildTarget, ArtifactCompilerCompileItem,
   String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.compiler.ArtifactsCompilerInstance");
   private ArtifactsProcessingItemsBuilderContext myBuilderContext;
@@ -120,8 +120,8 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
 
   @Override
   public void processObsoleteTarget(@NotNull String targetId,
-                                    @NotNull List<NewCompilerItemState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> obsoleteItems) {
-    deleteFiles(obsoleteItems, Collections.<NewCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>>emptyList());
+                                    @NotNull List<GenericCompilerItemState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> obsoleteItems) {
+    deleteFiles(obsoleteItems, Collections.<GenericCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>>emptyList());
   }
 
   @NotNull
@@ -163,7 +163,7 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
     rootElement.computeIncrementalCompilerInstructions(instructionCreator, resolvingContext, myBuilderContext, artifact.getArtifactType());
   }
 
-  private boolean doBuild(final List<NewCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> changedItems,
+  private boolean doBuild(final List<GenericCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> changedItems,
                           final Set<ArtifactCompilerCompileItem> processedItems,
                           final @NotNull Set<String> writtenPaths, final Set<String> deletedJars) {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
@@ -182,7 +182,7 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
       }
 
       int i = 0;
-      for (final NewCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState> item : changedItems) {
+      for (final GenericCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState> item : changedItems) {
         final ArtifactCompilerCompileItem sourceItem = item.getItem();
         myContext.getProgressIndicator().checkCanceled();
 
@@ -308,8 +308,8 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
 
   @Override
   public void processItems(@NotNull ArtifactBuildTarget target,
-                           @NotNull final List<NewCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> changedItems,
-                           @NotNull List<NewCompilerItemState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> obsoleteItems,
+                           @NotNull final List<GenericCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> changedItems,
+                           @NotNull List<GenericCompilerItemState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> obsoleteItems,
                            @NotNull OutputConsumer<ArtifactCompilerCompileItem> consumer) {
 
     final THashSet<String> deletedJars = deleteFiles(obsoleteItems, changedItems);
@@ -337,8 +337,8 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
     myContext.putUserData(ArtifactsCompiler.WRITTEN_PATHS_KEY, writtenPaths);
   }
 
-  private THashSet<String> deleteFiles(List<NewCompilerItemState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> obsoleteItems,
-                                       List<NewCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> changedItems) {
+  private THashSet<String> deleteFiles(List<GenericCompilerItemState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> obsoleteItems,
+                                       List<GenericCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> changedItems) {
     myContext.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.deleting.outdated.files"));
 
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
@@ -349,7 +349,7 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
     }
 
     Set<String> pathToDelete = new THashSet<String>();
-    for (NewCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState> item : changedItems) {
+    for (GenericCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState> item : changedItems) {
       final ArtifactPackagingItemOutputState cached = item.getOutputState();
       if (cached != null) {
         for (Pair<String, Long> destination : cached.myDestinations) {
@@ -357,12 +357,12 @@ public class ArtifactsCompilerInstance extends CompilerInstance<ArtifactBuildTar
         }
       }
     }
-    for (NewCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState> item : changedItems) {
+    for (GenericCompilerItemState<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState> item : changedItems) {
       for (DestinationInfo destination : item.getItem().getDestinations()) {
         pathToDelete.remove(destination.getOutputPath());
       }
     }
-    for (NewCompilerItemState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> item : obsoleteItems) {
+    for (GenericCompilerItemState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> item : obsoleteItems) {
       for (Pair<String, Long> destination : item.getOutputState().myDestinations) {
         pathToDelete.add(destination.getFirst());
       }

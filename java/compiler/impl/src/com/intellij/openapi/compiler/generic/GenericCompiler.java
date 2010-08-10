@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.newApi;
+package com.intellij.openapi.compiler.generic;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.Compiler;
@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class NewCompiler<Key, SourceState, OutputState> implements Compiler {
+public abstract class GenericCompiler<Key, SourceState, OutputState> implements Compiler {
   private final String myId;
   private final int myVersion;
   private final CompileOrderPlace myOrderPlace;
 
-  protected NewCompiler(@NotNull String id, int version, @NotNull CompileOrderPlace orderPlace) {
+  protected GenericCompiler(@NotNull String id, int version, @NotNull CompileOrderPlace orderPlace) {
     myId = id;
     myVersion = version;
     myOrderPlace = orderPlace;
@@ -43,7 +43,7 @@ public abstract class NewCompiler<Key, SourceState, OutputState> implements Comp
   public abstract DataExternalizer<OutputState> getOutputStateExternalizer();
 
   @NotNull
-  public abstract CompilerInstance<?, ? extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState> createInstance(@NotNull CompileContext context);
+  public abstract GenericCompilerInstance<?, ? extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState> createInstance(@NotNull CompileContext context);
 
   public final String getId() {
     return myId;

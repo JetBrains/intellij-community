@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.newApi;
+package com.intellij.compiler.impl.generic;
 
+import com.intellij.openapi.compiler.generic.GenericCompiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Processor;
 import com.intellij.util.io.DataExternalizer;
@@ -29,13 +30,13 @@ import java.io.IOException;
 /**
  * @author nik
  */
-public class NewCompilerCache<Key, SourceState, OutputState> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.newApi.NewCompilerCache");
+public class GenericCompilerCache<Key, SourceState, OutputState> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.GenericCompilerCache");
   private PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState, OutputState>> myPersistentMap;
   private File myCacheFile;
-  private final NewCompiler<Key, SourceState, OutputState> myCompiler;
+  private final GenericCompiler<Key, SourceState, OutputState> myCompiler;
 
-  public NewCompilerCache(NewCompiler<Key, SourceState, OutputState> compiler, final File compilerCacheDir) throws IOException {
+  public GenericCompilerCache(GenericCompiler<Key, SourceState, OutputState> compiler, final File compilerCacheDir) throws IOException {
     myCompiler = compiler;
     myCacheFile = new File(compilerCacheDir, "timestamps");
     createMap();
@@ -147,7 +148,7 @@ public class NewCompilerCache<Key, SourceState, OutputState> {
     private DataExternalizer<SourceState> mySourceStateExternalizer;
     private DataExternalizer<OutputState> myOutputStateExternalizer;
 
-    public PersistentStateDataExternalizer(NewCompiler<Key,SourceState,OutputState> compiler) {
+    public PersistentStateDataExternalizer(GenericCompiler<Key,SourceState,OutputState> compiler) {
       mySourceStateExternalizer = compiler.getSourceStateExternalizer();
       myOutputStateExternalizer = compiler.getOutputStateExternalizer();
     }

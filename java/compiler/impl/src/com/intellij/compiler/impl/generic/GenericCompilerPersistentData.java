@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.newApi;
+package com.intellij.compiler.impl.generic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.IOUtil;
@@ -28,8 +28,8 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class NewCompilerPersistentData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.newApi.NewCompilerPersistentData");
+public class GenericCompilerPersistentData {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.GenericCompilerPersistentData");
   private static final int VERSION = 1;
   private File myFile;
   private Map<String, Integer> myTarget2Id = new HashMap<String, Integer>();
@@ -37,7 +37,7 @@ public class NewCompilerPersistentData {
   private boolean myVersionChanged;
   private final int myCompilerVersion;
 
-  public NewCompilerPersistentData(File cacheStoreDirectory, int compilerVersion) throws IOException {
+  public GenericCompilerPersistentData(File cacheStoreDirectory, int compilerVersion) throws IOException {
     myCompilerVersion = compilerVersion;
     myFile = new File(cacheStoreDirectory, "info");
     if (!myFile.exists()) {
