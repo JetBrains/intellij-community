@@ -32,7 +32,7 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testEnumWithoutConstants() { doTest(true); }
   public void testEmptyImportList() { doTest(true); }
   public void testLongClass() { doTest(false); }
-  public void testIncompleteAnnotation() { doTestDefaultParser(true); }  // todo: fix
+  public void testIncompleteAnnotation() { doTest(true); }
 
   public void testExtraOpeningBraceInMethod() { doTestDefaultParser(true); }  // todo: fix
   public void testExtraClosingBraceInMethod() { doTest(true); }
