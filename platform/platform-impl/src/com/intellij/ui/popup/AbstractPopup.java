@@ -710,7 +710,10 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myWindow != null) {
-      if (!myMayBeParent) {
+      // dialogwrapper-based popups do this internally through peer,
+      // for other popups like jdialog-based we should exclude them manually, but
+      // we still have to be able to use IdeFrame as parent
+      if (!myMayBeParent && !(myWindow instanceof Frame)) {
         WindowManager.getInstance().doNotSuggestAsParent(myWindow);
       }
     }

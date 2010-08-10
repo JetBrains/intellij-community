@@ -1,4 +1,4 @@
-PsiJavaFile:Error.java
+PsiJavaFile:Errors0.java
   PsiImportList
     <empty list>
   PsiModifierList:public

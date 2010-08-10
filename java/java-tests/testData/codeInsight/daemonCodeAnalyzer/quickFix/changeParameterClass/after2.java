@@ -1,5 +1,5 @@
-// "Make 'a' extend 'b'" "true"
-<caret>class a extends b {
+<caret>// "Make 'a' extend 'b'" "true"
+class a extends b {
     void f(b b, Runnable r) {
         f(this, null);
     }

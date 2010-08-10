@@ -47,6 +47,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.HashMap;
@@ -564,7 +565,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
           };
 
           //FavoritesManager.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject.getClass(), draggableObject.getValue());
-          if ((psiElements != null && psiElements.length > 0) || canDragElements(elements)) {
+          if ((psiElements != null && psiElements.length > 0) || canDragElements(elements, dataContext, dge.getDragAction())) {
             dge.startDrag(DragSource.DefaultMoveNoDrop, new MyTransferable(transferableWrapper), myDragSourceListener);
           }
         }
@@ -574,11 +575,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
 
-    private boolean canDragElements(Object[] elements) {
+    private boolean canDragElements(Object[] elements, DataContext dataContext, int dragAction) {
       for (Object element : elements) {
         if (element instanceof Module) {
           return true;
         }
+      }
+      if (dragAction == DnDConstants.ACTION_MOVE) {
+        final MoveAction.MoveProvider provider = MoveAction.MoveProvider.DATA_KEY.getData(dataContext);
+        return provider != null && provider.isEnabledOnDataContext(dataContext);
       }
       return false;
     }
