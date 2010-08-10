@@ -126,6 +126,9 @@ public class ConvertParameterToMapEntryIntention extends Intention {
               String name = getEnteredName();
               MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
               GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
+              if (isClosure) {
+                findClosureConflictUsages((GrClosableBlock)owner, conflicts, occurrences);
+              }
               if (reportConflicts(conflicts, project)) {
                 performRefactoring(element, owner, occurrences, createNewFirst(), name, specifyTypeExplicitly());
               }
@@ -145,6 +148,20 @@ public class ConvertParameterToMapEntryIntention extends Intention {
                              (new GroovyValidationUtil.ParameterNameSuggester("attrs", firstParam)).generateName(), true);
         }
         break;
+      }
+    }
+  }
+
+  private static void findClosureConflictUsages(GrClosableBlock owner,
+                                         MultiMap<PsiElement, String> conflicts,
+                                         Collection<PsiElement> occurrences) {
+    for (PsiElement occurrence : occurrences) {
+      PsiElement origin = occurrence;
+      while (occurrence instanceof GrReferenceExpression) {
+        occurrence = occurrence.getParent();
+      }
+      if (occurrence instanceof GrArgumentList) {
+        conflicts.putValue(origin, GroovyIntentionsBundle.message("closure.used.as.variable"));
       }
     }
   }
