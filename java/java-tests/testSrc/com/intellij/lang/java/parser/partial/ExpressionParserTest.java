@@ -49,6 +49,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   public void testParenth0() { doParserTest("(c)"); }
   public void testParenth1() { doParserTest("(this).f--"); }
+  public void testParenth2() { doParserTest("("); }
 
   public void testNewInExprList() { doParserTest("call(new)"); }
 

@@ -27,6 +27,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
@@ -502,7 +503,11 @@ public class ExpressionParser {
         error(builder, JavaErrorMessages.message("expected.expression"));
       }
 
-      JavaParserUtil.expectOrError(builder, JavaTokenType.RPARENTH, JavaErrorMessages.message("expected.rparen"));
+      if (!expect(builder, JavaTokenType.RPARENTH)) {
+        if (inner != null) {
+          error(builder, JavaErrorMessages.message("expected.rparen"));
+        }
+      }
 
       parenth.done(JavaElementType.PARENTH_EXPRESSION);
       return parenth;
