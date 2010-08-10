@@ -89,7 +89,7 @@ public abstract class CachedValuesManager {
 
   public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
                               @NotNull CachedValueProvider<T> provider) {
-    return getCachedValue(dataHolder, new MemoizationKey<CachedValue<T>>("$CachedValue$" + provider.getClass().getName()), provider, false);
+    return getCachedValue(dataHolder, new MemoizationKey<CachedValue<T>>(provider.getClass().getName()), provider, false);
   }
 
   public static class MemoizationKey<T> extends Key<T> {
