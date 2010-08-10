@@ -21,6 +21,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -87,7 +88,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     });
   }
 
-  public void putState(int targetId, Key key, SourceState sourceState, OutputState outputState) throws IOException {
+  public void putState(int targetId, @NotNull Key key, @NotNull SourceState sourceState, @NotNull OutputState outputState) throws IOException {
     myPersistentMap.put(getKeyAndTargetData(key, targetId), new PersistentStateData<SourceState,OutputState>(sourceState, outputState));
   }
 
@@ -106,7 +107,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     public final SourceState mySourceState;
     public final OutputState myOutputState;
 
-    private PersistentStateData(SourceState sourceState, OutputState outputState) {
+    private PersistentStateData(@NotNull SourceState sourceState, @NotNull OutputState outputState) {
       mySourceState = sourceState;
       myOutputState = outputState;
     }
