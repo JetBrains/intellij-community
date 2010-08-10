@@ -22,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.*;
+
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
@@ -46,7 +48,7 @@ public class Annotation implements GroovyElementTypes {
       return false;
     }
 
-    if (!ReferenceElement.parseReferenceElement(builder)) {
+    if (ReferenceElement.parseReferenceElement(builder) == fail) {
       builder.error("Annotation name expected");
       annMarker.drop();
       return false;

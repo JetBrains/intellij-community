@@ -23,9 +23,12 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -51,7 +54,7 @@ public class Declaration implements GroovyElementTypes {
       TypeParameters.parse(builder);
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-      if (!TypeSpec.parse(builder, true)) { //if type wasn't recognized trying parse VaribleDeclaration
+      if (TypeSpec.parse(builder, true) == fail) { //if type wasn't recognized trying parse VaribleDeclaration
         checkMarker.rollbackTo();
       } else {
         checkMarker.drop();
@@ -69,7 +72,7 @@ public class Declaration implements GroovyElementTypes {
 
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-      if (!TypeSpec.parse(builder, false)) { //if type wasn't recognized trying parse VaribleDeclaration
+      if (TypeSpec.parse(builder, false) == fail) { //if type wasn't recognized trying parse VaribleDeclaration
         checkMarker.rollbackTo();
 
         if (isInAnnotation) {
@@ -133,7 +136,7 @@ public class Declaration implements GroovyElementTypes {
 
       boolean typeParsed = false;
       if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN)) {
-        typeParsed = TypeSpec.parse(builder, true);
+        typeParsed = TypeSpec.parse(builder, true) != fail;
         //type specification starts with upper case letter
         if (!typeParsed) {
           builder.error(GroovyBundle.message("type.specification.expected"));

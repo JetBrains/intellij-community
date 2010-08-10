@@ -21,8 +21,11 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
 
 /**
  * @author ilyas
@@ -32,8 +35,9 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (builder.getTokenType() == mLPAREN) {
-      if (parseTypeCast(builder)) {
-        if (UnaryExpression.parse(builder, parser)) {
+      final ReferenceElement.ReferenceElementResult result = parseTypeCast(builder);
+      if (result != fail) {
+        if (UnaryExpression.parse(builder, parser) || result == ReferenceElement.ReferenceElementResult.mustBeType) {
           marker.done(CAST_EXPRESSION);
           return true;
         } else {
@@ -50,28 +54,29 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
     }
   }
 
-  private static boolean parseTypeCast(PsiBuilder builder) {
+  private static ReferenceElement.ReferenceElementResult parseTypeCast(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.rollbackTo();
-      return false;
+      return fail;
     }
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) ||
-            mIDENT.equals(builder.getTokenType())) {
-      if (!TypeSpec.parseStrict(builder)) {
+        mIDENT.equals(builder.getTokenType())) {
+      final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
+      if (result == fail) {
         marker.rollbackTo();
-        return false;
+        return fail;
       }
       if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
         marker.rollbackTo();
-        return false;
+        return fail;
       }
       marker.drop();
-      return true;
-    } else {
+      return result;
+    }
+    else {
       marker.rollbackTo();
-      return false;
+      return fail;
     }
   }
-
 }

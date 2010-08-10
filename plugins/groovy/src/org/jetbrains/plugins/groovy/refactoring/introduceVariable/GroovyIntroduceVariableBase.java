@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
@@ -146,7 +147,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
     // Find occurrences
-    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
+    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(
+      (GrExpression)PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
     if (occurrences == null || occurrences.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("no.occurences.found"));
       showErrorMessage(project, editor, message);
@@ -169,7 +171,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     final boolean replaceAllOccurrences = settings.isReplaceAllOccurrences();
 
     // Generating varibable declaration
-    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(isFinal ? new String[]{PsiModifier.FINAL} : null, GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, varName
+    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(isFinal ? new String[]{PsiModifier.FINAL} : null,
+                                                                            (GrExpression)PsiUtil.skipParentheses(selectedExpr, false), varType, varName
     );
 
     runRefactoring(selectedExpr, editor, tempContainer, occurrences, varName, varType, replaceAllOccurrences, varDecl);

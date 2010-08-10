@@ -92,12 +92,10 @@ public class PrimaryExpression implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, mLPAREN);
     if (!AssignmentExpression.parse(builder, parser)) {
-      marker.rollbackTo();
-      return WRONGWAY;
+      builder.error(GroovyBundle.message("expression.expected"));
     }
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      builder.error(GroovyBundle.message("rparen.expected"));
       while (!builder.eof() && mNLS != builder.getTokenType() && mSEMI != builder.getTokenType() && mRPAREN != builder.getTokenType()) {
         builder.error(GroovyBundle.message("rparen.expected"));
         builder.advanceLexer();

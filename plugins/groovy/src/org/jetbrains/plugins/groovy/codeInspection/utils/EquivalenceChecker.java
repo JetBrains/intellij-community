@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 @SuppressWarnings({"OverlyComplexMethod",
     "MethodWithMultipleLoops",
@@ -147,8 +148,8 @@ public class EquivalenceChecker {
 
   private static boolean applicationStatementsAreEquivalent(GrApplicationStatement statement1,
                                                             GrApplicationStatement statement2) {
-    final GrExpression funExpression1 = statement1.getFunExpression();
-    final GrExpression funExpression2 = statement2.getFunExpression();
+    final GrExpression funExpression1 = statement1.getInvokedExpression();
+    final GrExpression funExpression2 = statement2.getInvokedExpression();
     if (!expressionsAreEquivalent(funExpression1, funExpression2)) {
       return false;
     }
@@ -413,14 +414,8 @@ public class EquivalenceChecker {
     if (exp1 == null || exp2 == null) {
       return false;
     }
-    GrExpression expToCompare1 = exp1;
-    while (expToCompare1 instanceof GrParenthesizedExpression) {
-      expToCompare1 = ((GrParenthesizedExpression) expToCompare1).getOperand();
-    }
-    GrExpression expToCompare2 = exp2;
-    while (expToCompare2 instanceof GrParenthesizedExpression) {
-      expToCompare2 = ((GrParenthesizedExpression) expToCompare2).getOperand();
-    }
+    GrExpression expToCompare1 = (GrExpression)PsiUtil.skipParentheses(exp1, false);
+    GrExpression expToCompare2 = (GrExpression)PsiUtil.skipParentheses(exp2, false);
     final int type1 = getExpressionType(expToCompare1);
     final int type2 = getExpressionType(expToCompare2);
     if (type1 != type2) {

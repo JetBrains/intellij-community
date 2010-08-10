@@ -16,18 +16,30 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -52,6 +64,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
@@ -330,5 +343,109 @@ public class GroovyCompletionUtil {
 
   public static LookupElement setTailTypeForConstructor(PsiClass clazz, LookupElement lookupElement) {
     return LookupElementDecorator.withInsertHandler(lookupElement, ParenthesesInsertHandler.getInstance(hasConstructorParameters(clazz)));
+  }
+
+  public static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
+    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+
+    Object o = item.getObject();
+    if (o instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)o;
+      if (aClass.getQualifiedName() == null) return;
+      final String lookupString = item.getLookupString();
+      int length = lookupString.length();
+      final int i = lookupString.indexOf('<');
+      if (i >= 0) length = i;
+      final int newOffset = addImportForClass(file, startOffset, startOffset + length, aClass);
+      shortenReference(file, newOffset);
+    }
+    else if (o instanceof PsiType) {
+      PsiType type = ((PsiType)o).getDeepComponentType();
+      if (type instanceof PsiClassType) {
+        PsiClass refClass = ((PsiClassType)type).resolve();
+        if (refClass != null) {
+          int length = refClass.getName().length();
+          addImportForClass(file, startOffset, startOffset + length, refClass);
+        }
+      }
+    }
+  }
+
+  public static int addImportForClass(PsiFile file, int startOffset, int endOffset, PsiClass aClass) throws IncorrectOperationException {
+//    LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
+//    LOG.assertTrue(
+//      ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
+
+    final PsiManager manager = file.getManager();
+
+    final Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
+
+    int newStartOffset = startOffset;
+
+    final PsiReference reference = file.findReferenceAt(startOffset);
+    if (reference != null) {
+      final PsiElement resolved = reference.resolve();
+      if (resolved instanceof PsiClass) {
+        if (((PsiClass)resolved).getQualifiedName() == null || manager.areElementsEquivalent(aClass, resolved)) {
+          return newStartOffset;
+        }
+      }
+    }
+
+    String name = aClass.getName();
+    document.replaceString(startOffset, endOffset, name);
+
+    final RangeMarker toDelete = DefaultInsertHandler.insertSpace(endOffset, document);
+
+    PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
+
+    final PsiReference ref = file.findReferenceAt(startOffset);
+    if (ref instanceof GrCodeReferenceElement && aClass.isValid()) {
+      PsiElement newElement = ref.bindToElement(aClass);
+      RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
+      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
+      newStartOffset = marker.getStartOffset();
+    }
+
+    if (toDelete.isValid()) {
+      document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+    }
+
+    return newStartOffset;
+  }
+
+  //need to shorten references in type argument list
+  public static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+    final Document document = manager.getDocument(file);
+    manager.commitDocument(document);
+    final PsiReference ref = file.findReferenceAt(offset);
+    if (ref instanceof GrCodeReferenceElement) {
+      PsiUtil.shortenReference((GrCodeReferenceElement)ref);
+      PsiUtil.shortenReferences((GroovyPsiElement)ref);
+    }
+  }
+
+  public static int addRParenth(Editor editor, int oldTail, boolean space_within_cast_parentheses) {
+    int offset = -1;
+
+    final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(oldTail);
+    while (!iterator.atEnd()) {
+      final IElementType tokenType = iterator.getTokenType();
+      if (GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS.contains(tokenType)) {
+        iterator.advance();
+        continue;
+      }
+      if (tokenType == GroovyTokenTypes.mRPAREN) {
+        offset = iterator.getEnd();
+      }
+      break;
+    }
+    if (offset != -1) return offset;
+    offset = oldTail;
+    if (space_within_cast_parentheses) {
+      offset = TailType.insertChar(editor, oldTail, ' ');
+    }
+    return TailType.insertChar(editor, offset, ')');
   }
 }

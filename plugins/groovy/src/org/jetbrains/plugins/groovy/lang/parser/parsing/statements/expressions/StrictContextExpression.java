@@ -25,8 +25,11 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.An
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.BranchStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
 
 /**
  * @autor: Dmitry.Krasilschikov, ilyas
@@ -64,7 +67,7 @@ public class StrictContextExpression implements GroovyElementTypes {
       }
       marker.done(VARIABLE_DEFINITION);
     } else {
-      if (TypeSpec.parse(builder)) {
+      if (TypeSpec.parse(builder) != fail) {
         ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
         if (mASSIGN.equals(builder.getTokenType())) {
           VariableInitializer.parse(builder, parser);
