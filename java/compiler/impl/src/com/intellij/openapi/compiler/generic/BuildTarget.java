@@ -13,31 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.newApi;
+package com.intellij.openapi.compiler.generic;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class NewCompilerItemState<Item, SourceState, OutputState> {
-  private final Item myItem;
-  private final SourceState mySourceState;
-  private final OutputState myOutputState;
+public abstract class BuildTarget {
+  public static final BuildTarget DEFAULT = new BuildTarget() {
+    @NotNull
+    @Override
+    public String getId() {
+      return "<default>";
+    }
+  };
 
-  public NewCompilerItemState(Item item, SourceState sourceState, OutputState outputState) {
-    myItem = item;
-    mySourceState = sourceState;
-    myOutputState = outputState;
-  }
+  @NotNull
+  public abstract String getId();
 
-  public Item getItem() {
-    return myItem;
-  }
-
-  public SourceState getSourceState() {
-    return mySourceState;
-  }
-
-  public OutputState getOutputState() {
-    return myOutputState;
+  @Override
+  public String toString() {
+    return "Build Target: " + getId();
   }
 }

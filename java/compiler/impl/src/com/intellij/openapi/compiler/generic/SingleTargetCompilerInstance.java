@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.newApi;
+package com.intellij.openapi.compiler.generic;
 
 import com.intellij.openapi.compiler.CompileContext;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,8 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class SingleTargetCompilerInstance<Item extends CompileItem<K,S,O>, K,S, O> extends CompilerInstance<BuildTarget, Item, K, S, O> {
+public abstract class SingleTargetCompilerInstance<Item extends CompileItem<K,S,O>, K,S, O> extends
+                                                                                            GenericCompilerInstance<BuildTarget, Item, K, S, O> {
   protected SingleTargetCompilerInstance(CompileContext context) {
     super(context);
   }
@@ -42,6 +43,6 @@ public abstract class SingleTargetCompilerInstance<Item extends CompileItem<K,S,
   }
 
   @Override
-  public void processObsoleteTarget(@NotNull String targetId, @NotNull List<NewCompilerItemState<K, S, O>> obsoleteItems) {
+  public void processObsoleteTarget(@NotNull String targetId, @NotNull List<GenericCompilerItemState<K, S, O>> obsoleteItems) {
   }
 }
