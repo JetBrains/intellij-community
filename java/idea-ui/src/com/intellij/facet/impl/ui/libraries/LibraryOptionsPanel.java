@@ -15,15 +15,19 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.RadioButtonEnumModel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,6 +35,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -39,42 +45,67 @@ public class LibraryOptionsPanel {
 
   private JLabel myMessage;
   private JPanel myPanel;
-  private JRadioButton myDownloadFromMavenButton;
-  private JRadioButton myDoNotCreateButton;
   private JButton myConfigureButton;
-  private JRadioButton myLocateOnDiskButton;
+  private JPanel myExistingLibrariesPanel;
+  private JLabel myExistingLibrariesLabel;
+  private ButtonGroup myButtonGroup;
+  private ElementsChooser<Library> myLibrariesChooser;
 
   private LibraryCompositionSettings myLibraryCompositionSettings;
+  private LibrariesContainer myLibrariesContainer;
 
-  public LibraryOptionsPanel(LibraryCompositionSettings libraryCompositionSettings) {
+
+  private enum Choice {
+    DOWNLOAD,
+    PICK_FILES,
+    DO_NOT_CREATE
+  }
+
+  private RadioButtonEnumModel<Choice> myButtonEnumModel;
+
+  public LibraryOptionsPanel(LibraryCompositionSettings libraryCompositionSettings, LibrariesContainer librariesContainer) {
+
     myLibraryCompositionSettings = libraryCompositionSettings;
+    myLibrariesContainer = librariesContainer;
+
+    List<Library> suitableLibraries = calculateSuitableLibraries();
+    if (!suitableLibraries.isEmpty()) {
+      myLibraryCompositionSettings.setUsedLibraries(suitableLibraries);
+    }
+
+    myLibrariesChooser = new ChooseLibrariesDialog.LibraryElementChooser(suitableLibraries);
+    myLibrariesChooser.getComponents()[0].setPreferredSize(new Dimension(10, 10)); // this makes scrollbars to work
+    myExistingLibrariesPanel.add(myLibrariesChooser);
+    myExistingLibrariesLabel.setLabelFor(myLibrariesChooser.getComponent());
+
+    myButtonEnumModel = RadioButtonEnumModel.bindEnum(Choice.class, myButtonGroup);
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         updateState();
       }
     };
-    myDownloadFromMavenButton.addActionListener(listener);
-    myLocateOnDiskButton.addActionListener(listener);
-    myDoNotCreateButton.addActionListener(listener);
+    myButtonEnumModel.addActionListener(listener);
 
     myConfigureButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        if (myLocateOnDiskButton.isSelected()) {
-          EditLibraryDialog dialog = new EditLibraryDialog(myConfigureButton, myLibraryCompositionSettings);
-          if (myLibraryCompositionSettings.getAddedJars().isEmpty()) {
-            VirtualFile[] files = showFileChooser();
-            Library.ModifiableModel modifiableModel = dialog.getLibrary().getModifiableModel();
-            for (VirtualFile file : files) {
-              modifiableModel.addRoot(file, OrderRootType.CLASSES);
+        switch (myButtonEnumModel.getSelected()) {
+          case DOWNLOAD:
+            showDialog(new DownloadingOptionsDialog(myConfigureButton, myLibraryCompositionSettings));
+            break;
+          case PICK_FILES:
+            EditLibraryDialog dialog = new EditLibraryDialog(myConfigureButton, myLibraryCompositionSettings);
+            if (myLibraryCompositionSettings.getAddedJars().isEmpty()) {
+              VirtualFile[] files = showFileChooser();
+              Library.ModifiableModel modifiableModel = dialog.getLibrary().getModifiableModel();
+              for (VirtualFile file : files) {
+                modifiableModel.addRoot(file, OrderRootType.CLASSES);
+              }
             }
-            modifiableModel.commit();
-          }
-          showDialog(dialog);
-        }
-        else {
-          DownloadingOptionsDialog dialog = new DownloadingOptionsDialog(myConfigureButton, myLibraryCompositionSettings);
-          showDialog(dialog);
+            showDialog(dialog);
+            break;
+          case DO_NOT_CREATE:
+            break;
         }
         updateState();
       }
@@ -88,11 +119,26 @@ public class LibraryOptionsPanel {
       @Override
       public Point compute() {
         Point point = myConfigureButton.getLocationOnScreen();
-        point.translate(- 50, - dialog.getSize().height);
+        point.translate(- 50, - dialog.getSize().height - 20);
         return point;
       }
     });
     dialog.show();
+  }
+
+  private List<Library> calculateSuitableLibraries() {
+    LibraryInfo[] libraryInfos = myLibraryCompositionSettings.getLibraryInfos();
+    RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(libraryInfos);
+    List<Library> suitableLibraries = new ArrayList<Library>();
+    Library[] libraries = myLibrariesContainer.getAllLibraries();
+    for (Library library : libraries) {
+      RequiredLibrariesInfo.RequiredClassesNotFoundInfo info =
+        requiredLibraries.checkLibraries(myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES), false);
+      if (info == null || info.getLibraryInfos().length < libraryInfos.length) {
+        suitableLibraries.add(library);
+      }
+    }
+    return suitableLibraries;
   }
 
   private VirtualFile[] showFileChooser() {
@@ -112,41 +158,46 @@ public class LibraryOptionsPanel {
     }
     return dir;
   }
-  
+
   private void updateState() {
     if (myMessage.isEnabled()) {
       myMessage.setForeground(Color.black);
     }
     myConfigureButton.setEnabled(true);
-    if (myDownloadFromMavenButton.isSelected()) {
-      String path = myLibraryCompositionSettings.getDirectoryForDownloadedLibrariesPath().substring(myLibraryCompositionSettings.getBaseDirectoryForDownloadedFiles().length());
-      String message = MessageFormat.format("<html>{0} jar(s) will be downloaded into <b>{1}</b> directory<br> " +
-                                            "{2} library <b>{3}</b> will be created</html>",
-                                            myLibraryCompositionSettings.getLibraryInfos().length,
-                                            path,
-                                            myLibraryCompositionSettings.getLibraryLevel(),
-                                            myLibraryCompositionSettings.getLibraryName());
-      myMessage.setText(message);
+
+    String message = "";
+
+    switch (myButtonEnumModel.getSelected()) {
+      case DOWNLOAD:
+        String path = myLibraryCompositionSettings.getDirectoryForDownloadedLibrariesPath()
+          .substring(myLibraryCompositionSettings.getBaseDirectoryForDownloadedFiles().length());
+        message = MessageFormat.format("{0} jar(s) will be downloaded into <b>{1}</b> directory <br>" +
+                                       "{2} library <b>{3}</b> will be created",
+                                       myLibraryCompositionSettings.getLibraryInfos().length,
+                                       path,
+                                       myLibraryCompositionSettings.getLibraryLevel(),
+                                       myLibraryCompositionSettings.getLibraryName());
+        break;
+      case PICK_FILES:
+        if (myLibraryCompositionSettings.getAddedJars().isEmpty()) {
+          myMessage.setForeground(Color.red);
+          message = "Press Configure button to add classes to the library";
+        }
+        else {
+          message = MessageFormat.format("{0} level library <b>{1}</b>" +
+                                         "with {2} file(s) will be created",
+                                         myLibraryCompositionSettings.getLibraryLevel(),
+                                         myLibraryCompositionSettings.getLibraryName(),
+                                         myLibraryCompositionSettings.getAddedJars().size());
+        }
+        break;
+      case DO_NOT_CREATE:
+        message = "No new library will be created";
+        myConfigureButton.setEnabled(false);
+        break;
     }
-    else if (myLocateOnDiskButton.isSelected()) {
-      if (myLibraryCompositionSettings.getAddedJars().isEmpty()) {
-        myMessage.setForeground(Color.red);
-        myMessage.setText("Press Configure button to add classes to the library");
-      }
-      else {
-        String message = MessageFormat.format("<html>{0} level library <b>{1}</b><br>" +
-                                              "with {2} file(s) will be created</html>",
-                                              myLibraryCompositionSettings.getLibraryLevel(),
-                                              myLibraryCompositionSettings.getLibraryName(),
-                                              myLibraryCompositionSettings.getAddedJars().size());
-        myMessage.setText(message);
-      }
-    }
-    else {
-      myMessage.setText("<html>No library will be created<br>" +
-                        "You can add it later manually</html>");
-      myConfigureButton.setEnabled(false);
-    }
+
+    myMessage.setText("<html>" + message + "</html>");
   }
 
   public LibraryCompositionSettings getLibraryCompositionSettings() {
@@ -155,7 +206,7 @@ public class LibraryOptionsPanel {
 
 
   public void apply() {
-
+    myLibraryCompositionSettings.setUsedLibraries(myLibrariesChooser.getMarkedElements());
   }
 
   public JComponent getMainPanel() {
