@@ -141,7 +141,7 @@ public class ImportHelper{
     try {
       StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand, classesToUseSingle);
       for (PsiElement nonImport : nonImports) {
-        text.append("\n").append(nonImport);
+        text.append("\n").append(nonImport.getText());
       }
       String ext = StdFileTypes.JAVA.getDefaultExtension();
       PsiFileFactory factory = PsiFileFactory.getInstance(file.getProject());
