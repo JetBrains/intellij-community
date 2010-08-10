@@ -20,7 +20,7 @@ public class FoldLinesLikeThis extends DumbAwareAction {
   private final ConsoleViewImpl myConsole;
 
   public FoldLinesLikeThis(Editor editor, ConsoleViewImpl console) {
-    super("Fold lines like this");
+    super("Fold Lines Like This");
     myEditor = editor;
     myConsole = console;
   }
