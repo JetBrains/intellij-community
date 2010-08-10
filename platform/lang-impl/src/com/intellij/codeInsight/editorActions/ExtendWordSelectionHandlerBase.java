@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.google.common.collect.Lists;
 import com.intellij.psi.PsiElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
@@ -39,7 +40,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
       ranges = expandToWholeLine(editorText, originalRange, false);
     }
 
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = Lists.newArrayList();
     result.addAll(ranges);
     return result;
   }

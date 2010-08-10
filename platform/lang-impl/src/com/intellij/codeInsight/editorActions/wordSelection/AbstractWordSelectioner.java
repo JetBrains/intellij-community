@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.editorActions.wordSelection;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -39,7 +40,7 @@ public abstract class AbstractWordSelectioner extends ExtendWordSelectionHandler
       ranges = super.select(e, editorText, cursorOffset, editor);
     }
     else {
-      ranges = new ArrayList<TextRange>();
+      ranges = Lists.newArrayList();
     }
     SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, ranges);
     return ranges;
