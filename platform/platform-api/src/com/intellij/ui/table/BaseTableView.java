@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Do NOT add code wich assumes that table has same number of rows as model. It isn't true!
+ * Do NOT add code that assumes that table has same number of rows as model. It isn't true!
  */
 public abstract class BaseTableView extends Table {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.table.BaseTableView");
@@ -51,16 +51,28 @@ public abstract class BaseTableView extends Table {
     if (tableHeader != null) {
       tableHeader.addMouseListener(new MouseAdapter() {
         public void mouseClicked(final MouseEvent e) {
+          processEvent(e);
+        }
+
+        public void mousePressed(final MouseEvent e) {
+          processEvent(e);
+        }
+
+        public void mouseReleased(final MouseEvent e) {
+          processEvent(e);
+        }
+
+        private void processEvent(MouseEvent e) {
           final int column = convertColumnIndexToModel(tableHeader.columnAtPoint(e.getPoint()));
           if (column > -1) {
-            onHeaderClicked(column);
+            onHeaderClicked(column, e);
           }
         }
       });
     }
   }
 
-  protected abstract void onHeaderClicked(int column);
+  protected abstract void onHeaderClicked(int column, MouseEvent e);
 
   protected ListTableModel getListTableModel() {
     return (ListTableModel) getModel();

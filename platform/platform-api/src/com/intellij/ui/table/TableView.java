@@ -28,6 +28,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
@@ -72,8 +73,8 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public void setSelection(Collection<Item> selection) {
     clearSelection();
-    for (Iterator iterator = selection.iterator(); iterator.hasNext();) {
-      addSelection(iterator.next());
+    for (Object aSelection : selection) {
+      addSelection(aSelection);
     }
   }
 
@@ -160,17 +161,19 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     final int column = getSelectedColumn();
     if (column != -1) {
       SortableColumnModel model = getListTableModel();
-      Collection selection = getSelection();
+      Collection<Item> selection = getSelection();
       model.sortByColumn(column);
       setSelection(selection);
     }
   }
 
-  protected void onHeaderClicked(int column) {
-    SortableColumnModel model = getListTableModel();
-    Collection selection = getSelection();
-    model.sortByColumn(column);
-    setSelection(selection);
+  protected void onHeaderClicked(int column, MouseEvent e) {
+    if (e.getButton() == MouseEvent.BUTTON1 && e.getID() == MouseEvent.MOUSE_CLICKED && e.getClickCount() == 1) {
+      SortableColumnModel model = getListTableModel();
+      Collection<Item> selection = getSelection();
+      model.sortByColumn(column);
+      setSelection(selection);
+    }
   }
 
   public void setMinRowHeight(int i) {
