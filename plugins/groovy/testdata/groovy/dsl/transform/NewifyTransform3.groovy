@@ -2,8 +2,8 @@ class Foo {
   Foo(String st){}
 }
 
-class Baz {
-  Baz(String st){}
+class Bazz {
+  Bazz(String st){}
 }
 
 @Newify(auto=false, value=Foo)
@@ -20,6 +20,6 @@ class Baz {
        @Newify(Baz)
        Main() {
            field3 = Foo("my foo")
-           field4 = Ba<caret>()
+           field4 = Baz<caret>()
        }
    }

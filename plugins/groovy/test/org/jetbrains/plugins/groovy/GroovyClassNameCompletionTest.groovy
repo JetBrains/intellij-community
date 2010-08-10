@@ -100,4 +100,11 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     myFixture.checkResult "a.FooBarGooDoo.<caret>a"
   }
 
+  public void testDelegateBasicToClassNameAutoinsert() throws Exception{
+    addClassToProject("a", "FooBarGooDoo");
+    myFixture.configureByText("a.groovy", "FBGD<caret>")
+    myFixture.completeBasic()
+    myFixture.checkResult "a.FooBarGooDoo<caret>"
+  }
+
 }

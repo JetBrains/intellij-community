@@ -302,13 +302,13 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.BASIC, psiElement().withParent(GrCodeReferenceElement.class), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
-        if (((GrCodeReferenceElement)position.getParent()).getQualifier() != null) return;
+        if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
 
         final String s = result.getPrefixMatcher().getPrefix();
         if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return;
