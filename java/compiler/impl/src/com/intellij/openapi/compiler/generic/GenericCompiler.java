@@ -16,8 +16,10 @@
 package com.intellij.openapi.compiler.generic;
 
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class GenericCompiler<Key, SourceState, OutputState> implements Compiler {
+  protected static final KeyDescriptor<String> STRING_KEY_DESCRIPTOR = new EnumeratorStringDescriptor();
   private final String myId;
   private final int myVersion;
   private final CompileOrderPlace myOrderPlace;
@@ -51,6 +54,11 @@ public abstract class GenericCompiler<Key, SourceState, OutputState> implements 
 
   public final int getVersion() {
     return myVersion;
+  }
+
+  @Override
+  public boolean validateConfiguration(CompileScope scope) {
+    return true;
   }
 
   public CompileOrderPlace getOrderPlace() {

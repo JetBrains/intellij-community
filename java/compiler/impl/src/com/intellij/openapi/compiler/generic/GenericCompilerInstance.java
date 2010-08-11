@@ -54,6 +54,8 @@ public abstract class GenericCompilerInstance<T extends BuildTarget, Item extend
   public interface OutputConsumer<Item extends CompileItem<?,?,?>> {
     void addFileToRefresh(@NotNull File file);
 
+    void addDirectoryToRefresh(@NotNull File dir);
+
     void addProcessedItem(@NotNull Item sourceItem);
   }
 }

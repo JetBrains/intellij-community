@@ -99,12 +99,18 @@ public class GenericCompilerRunner {
     if (data.isVersionChanged()) {
       LOG.info("Clearing cache for " + compiler.getDescription());
       cache.wipe();
+      data.save();
     }
 
-    Set<String> targetsToRemove = new HashSet<String>(data.getAllTargets());
-    for (T target : instance.getAllTargets()) {
-      targetsToRemove.remove(target.getId());
-    }
+    final Set<String> targetsToRemove = new HashSet<String>(data.getAllTargets());
+    new ReadAction() {
+      protected void run(final Result result) {
+        for (T target : instance.getAllTargets()) {
+          targetsToRemove.remove(target.getId());
+        }
+      }
+    }.execute();
+
     if (!myOnlyCheckStatus) {
       for (final String target : targetsToRemove) {
         final int id = data.removeId(target);
@@ -132,8 +138,14 @@ public class GenericCompilerRunner {
       }
     }
 
+    final List<T> selectedTargets = new ReadAction<List<T>>() {
+      protected void run(final Result<List<T>> result) {
+        result.setResult(instance.getSelectedTargets());
+      }
+    }.execute().getResultObject();
+
     boolean didSomething = false;
-    for (T target : instance.getSelectedTargets()) {
+    for (T target : selectedTargets) {
       int id = data.getId(target.getId());
       didSomething |= processTarget(target, id, compiler, instance, cache);
     }
@@ -225,12 +237,19 @@ public class GenericCompilerRunner {
     }
 
     final List<Item> processedItems = new ArrayList<Item>();
-    final List<File> toRefresh = new ArrayList<File>();
+    final List<File> filesToRefresh = new ArrayList<File>();
+    final List<File> dirsToRefresh = new ArrayList<File>();
     instance.processItems(target, toProcess, obsoleteItems, new GenericCompilerInstance.OutputConsumer<Item>() {
       @Override
       public void addFileToRefresh(@NotNull File file) {
-        toRefresh.add(file);
+        filesToRefresh.add(file);
       }
+
+      @Override
+      public void addDirectoryToRefresh(@NotNull File dir) {
+        dirsToRefresh.add(dir);
+      }
+
       @Override
       public void addProcessedItem(@NotNull Item sourceItem) {
         processedItems.add(sourceItem);
@@ -244,7 +263,8 @@ public class GenericCompilerRunner {
         for (Key key : toRemove) {
           cache.remove(targetId, key);
         }
-        CompilerUtil.refreshIOFiles(toRefresh);
+        CompilerUtil.refreshIOFiles(filesToRefresh);
+        CompilerUtil.refreshIODirectories(dirsToRefresh);
 
         final RunResult runResult = new ReadAction() {
           protected void run(final Result result) throws Throwable {

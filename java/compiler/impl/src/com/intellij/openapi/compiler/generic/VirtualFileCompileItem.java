@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class VirtualFileCompileItem<OutputState> extends CompileItem<String, VirtualFilePersistentState, OutputState> {
-  public static final KeyDescriptor<String> KEY_DESCRIPTOR = new EnumeratorStringDescriptor();
   protected final VirtualFile myFile;
 
   public VirtualFileCompileItem(@NotNull VirtualFile file) {
