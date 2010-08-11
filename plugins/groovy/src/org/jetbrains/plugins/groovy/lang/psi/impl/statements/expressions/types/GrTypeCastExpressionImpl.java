@@ -17,16 +17,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ilyas
@@ -47,7 +47,7 @@ public class GrTypeCastExpressionImpl extends GrExpressionImpl implements GrType
 
   public PsiType getType() {
     GrTypeElement typeElement = getCastTypeElement();
-    if (typeElement != null) return typeElement.getType();
+    if (typeElement != null) return TypesUtil.boxPrimitiveType(typeElement.getType(), getManager(), getResolveScope());
     return null;
   }
 
