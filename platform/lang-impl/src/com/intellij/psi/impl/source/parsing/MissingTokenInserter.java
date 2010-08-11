@@ -36,11 +36,13 @@ public class MissingTokenInserter {
   private final TokenProcessor myProcessor;
   private final ParsingContext myContext;
 
-  public MissingTokenInserter(final CompositeElement root, final Lexer lexer,
-                               final int startOffset,
-                               final int endOffset,
-                               final int state,
-                               final TokenProcessor processor, final ParsingContext context) {
+  public MissingTokenInserter(final CompositeElement root,
+                              final Lexer lexer,
+                              final int startOffset,
+                              final int endOffset,
+                              final int state,
+                              final TokenProcessor processor,
+                              final ParsingContext context) {
     myRoot = root;
     myLexer = lexer;
     myStartOffset = startOffset;
@@ -66,8 +68,8 @@ public class MissingTokenInserter {
       }
       return;
     }
-    {
-    // Missing in the begining
+    else {
+      // Missing in the beginning
       final IElementType tokenType = getNextTokenType();
       if (tokenType != leaf.getElementType() && myProcessor.isTokenValid(tokenType)) {
         final TreeElement firstMissing = myProcessor.process(myLexer, myContext);

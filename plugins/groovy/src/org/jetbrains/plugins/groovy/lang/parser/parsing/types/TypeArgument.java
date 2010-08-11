@@ -18,7 +18,10 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -34,7 +37,7 @@ public class TypeArgument implements GroovyElementTypes {
         ParserUtils.getToken(builder, mNLS);
 
         //todo: check for upper case type specification
-        if (!TypeSpec.parse(builder)) {
+        if (TypeSpec.parse(builder) == fail) {
           taMarker.rollbackTo();
           return false;
         }
@@ -46,6 +49,6 @@ public class TypeArgument implements GroovyElementTypes {
       return true;
     }
 
-    return TypeSpec.parse(builder);
+    return TypeSpec.parse(builder) != fail;
   }
 }

@@ -16,11 +16,13 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Method;
 
 public interface PopupComponent {
 
@@ -53,17 +55,12 @@ public interface PopupComponent {
       public PopupComponent getPopup(Component owner, Component content, int x, int y) {
         final PopupFactory factory = PopupFactory.getSharedInstance();
 
-        try {
-          final Method method = PopupFactory.class.getDeclaredMethod("setPopupType", int.class);
-          method.setAccessible(true);
-          method.invoke(factory, 2);
+        final int oldType = PopupUtil.getPopupType(factory);
+        PopupUtil.setPopupType(factory, 2);
+        final Popup popup = factory.getPopup(owner, content, x, y);
+        if (oldType >= 0) PopupUtil.setPopupType(factory, oldType);
 
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-
-        return new AwtPopupWrapper(factory.getPopup(owner, content, x, y));
+        return new AwtPopupWrapper(popup);
       }
 
       public boolean isNativePopup() {
@@ -138,6 +135,11 @@ public interface PopupComponent {
 
     public AwtPopupWrapper(Popup popup) {
       myPopup = popup;
+
+      if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
+        final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
+        c.setBackground(UIUtil.getPanelBackgound());
+      }
     }
 
     public void hide(boolean dispose) {

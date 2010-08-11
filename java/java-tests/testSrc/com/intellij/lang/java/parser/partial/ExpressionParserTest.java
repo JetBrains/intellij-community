@@ -49,6 +49,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   public void testParenth0() { doParserTest("(c)"); }
   public void testParenth1() { doParserTest("(this).f--"); }
+  public void testParenth2() { doParserTest("("); }
 
   public void testNewInExprList() { doParserTest("call(new)"); }
 
@@ -88,7 +89,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testPinesInReferenceExpression0() { doParserTest("Collections.<String>sort(null)"); }
   public void testPinesInReferenceExpression1() { doParserTest("this.<String>sort(null)"); }
 
-  public void testGE() { doParserTest("x >>>= 8 >> 2"); }
+  public void testGE0() { doParserTest("x >>>= 8 >> 2"); }
+  public void testGE1() { doParserTest("x >= 2"); }
 
   public void testIncompleteCast() { doParserTest("f((ArrayList<String>) )"); }
   public void testShiftRight() { doParserTest("x >>= 2"); }

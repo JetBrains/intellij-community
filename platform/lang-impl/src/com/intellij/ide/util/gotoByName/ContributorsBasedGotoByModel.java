@@ -15,23 +15,22 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.concurrency.JobUtil;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Contributor-based goto model
@@ -51,24 +50,41 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     return new NavigationItemListCellRenderer();
   }
 
-  public String[] getNames(boolean checkBoxState) {
-    Set<String> names = new HashSet<String>();
-    for (ChooseByNameContributor contributor : myContributors) {
-      try {
-        ContainerUtil.addAll(names, contributor.getNames(myProject, checkBoxState));
+  public String[] getNames(final boolean checkBoxState) {
+    final Set<String> names = new ConcurrentHashSet<String>();
+
+    JobUtil.invokeConcurrentlyUnderMyProgress(filterDumb(myContributors), new Processor<ChooseByNameContributor>() {
+      @Override
+      public boolean process(ChooseByNameContributor contributor) {
+        try {
+          ContainerUtil.addAll(names, contributor.getNames(myProject, checkBoxState));
+        }
+        catch(ProcessCanceledException ex) {
+          // index corruption detected, ignore
+        }
+        catch(IndexNotReadyException ex) {
+          // index corruption detected, ignore
+        }
+        catch(Exception ex) {
+          LOG.error(ex);
+        }
+        return true;
       }
-      catch(ProcessCanceledException ex) {
-        // index corruption detected, ignore
-      }
-      catch(IndexNotReadyException ex) {
-        // index corruption detected, ignore
-      }
-      catch(Exception ex) {
-        LOG.error(ex);
+    }, false);
+
+    return ArrayUtil.toStringArray(names);
+  }
+
+  private List<ChooseByNameContributor> filterDumb(ChooseByNameContributor[] contributors) {
+    if (!DumbService.getInstance(myProject).isDumb()) return Arrays.asList(contributors);
+    List<ChooseByNameContributor> answer = new ArrayList<ChooseByNameContributor>(contributors.length);
+    for (ChooseByNameContributor contributor : contributors) {
+      if (DumbService.isDumbAware(contributor)) {
+        answer.add(contributor);
       }
     }
 
-    return ArrayUtil.toStringArray(names);
+    return answer;
   }
 
   /**
@@ -81,33 +97,30 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
    *  which {@link #acceptItem(NavigationItem) returns true.
    *
    */
-  public Object[] getElementsByName(String name, boolean checkBoxState, final String pattern) {
-    List<NavigationItem> items = null;
-    final boolean dumb = DumbService.getInstance(myProject).isDumb();
+  public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
+    final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
 
-    for (ChooseByNameContributor contributor : myContributors) {
-      try {
-        if (dumb && !DumbService.isDumbAware(contributor)) {
-          continue;
-        }
-
-        for (NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
-          if (acceptItem(item)) {
-            if (items == null) {
-              items = new ArrayList<NavigationItem>(2);
+    JobUtil.invokeConcurrentlyUnderMyProgress(filterDumb(myContributors), new Processor<ChooseByNameContributor>() {
+      @Override
+      public boolean process(ChooseByNameContributor contributor) {
+        try {
+          for (NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
+            if (acceptItem(item)) {
+              items.add(item);
             }
-            items.add(item);
           }
         }
+        catch (ProcessCanceledException ex) {
+          // index corruption detected, ignore
+        }
+        catch (Exception ex) {
+          LOG.error(ex);
+        }
+        return true;
       }
-      catch(ProcessCanceledException ex) {
-        // index corruption detected, ignore
-      }
-      catch(Exception ex) {
-        LOG.error(ex);
-      }
-    }
-    return items == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : ArrayUtil.toObjectArray(items);
+    }, false);
+    
+    return ArrayUtil.toObjectArray(items);
   }
 
   public String getElementName(Object element) {

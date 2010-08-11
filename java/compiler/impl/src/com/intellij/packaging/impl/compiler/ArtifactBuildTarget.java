@@ -15,7 +15,7 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.compiler.impl.newApi.BuildTarget;
+import com.intellij.openapi.compiler.generic.BuildTarget;
 import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 

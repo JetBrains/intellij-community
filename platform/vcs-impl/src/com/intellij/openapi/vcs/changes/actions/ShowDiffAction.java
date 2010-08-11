@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.DiffManager;
+import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.fileTypes.FileType;
@@ -32,7 +33,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +123,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   }
 
   public static void showDiffForChange(final Change[] changes, final int index, final Project project) {
-    showDiffForChange(changes, index, project, DiffExtendUIFactory.NONE, true);
+    showDiffForChange(changes, index, project, new ShowDiffUIContext(true));
   }
 
   private boolean checkIfThereAreFakeRevisions(final Project project, final Change[] changes) {
@@ -170,7 +170,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   }
 
   public static void showDiffForChange(final Iterable<Change> changes, final Condition<Change> selectionChecker,
-                                       final Project project, @NotNull DiffExtendUIFactory actionsFactory, final boolean showFrame) {
+                                       final Project project, @NotNull ShowDiffUIContext context) {
     int cnt = 0;
     int newIndex = -1;
     final List<Change> changeList = new ArrayList<Change>();
@@ -195,38 +195,30 @@ public class ShowDiffAction extends AnAction implements DumbAware {
               public ChangeDiffRequestPresentable convert(Change o) {
                 return new ChangeDiffRequestPresentable(project, o);
               }
-            }), newIndex, actionsFactory, showFrame);
+            }), newIndex, context);
   }
 
-  public static void showDiffForChange(Change[] changes, int index, final Project project, @NotNull DiffExtendUIFactory actionsFactory,
-                                       final boolean showFrame) {
-    Change selectedChange = changes [index];
-    final List<Change> changeList = filterDirectoryAndBinaryChanges(changes);
-    if (changeList.isEmpty()) {
-      return;
-    }
-    index = 0;
-    for (int i = 0; i < changeList.size(); i++) {
-      if (changeList.get(i) == selectedChange) {
-        index = i;
-        break;
+  public static void showDiffForChange(final Change[] changes, int index, final Project project, @NotNull ShowDiffUIContext context) {
+    final Change selected = index >= 0 ? changes[index] : null;
+    showDiffForChange(Arrays.asList(changes), new Condition<Change>() {
+      @Override
+      public boolean value(final Change change) {
+        return selected == null ? false : selected.equals(change);
       }
-    }
-    showDiffImpl(project, ObjectsConvertor.convert(changeList,
-            new Convertor<Change, DiffRequestPresentable>() {
-              public ChangeDiffRequestPresentable convert(Change o) {
-                return new ChangeDiffRequestPresentable(project, o);
-              }
-            }), index, actionsFactory, showFrame);
+    }, project, context);
   }
 
-  public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, int index, DiffExtendUIFactory actionsFactory, boolean showFrame) {
-    final ChangeDiffRequest request = new ChangeDiffRequest(project, changeList, actionsFactory, showFrame);
-    
+  public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, int index, @NotNull final ShowDiffUIContext context) {
+    final ChangeDiffRequest request = new ChangeDiffRequest(project, changeList, context.getActionsFactory(), context.isShowFrame());
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
     if (! request.quickCheckHaveStuff()) return;
     final DiffRequest simpleRequest = request.init(index);
+
     if (simpleRequest != null) {
+      final DiffNavigationContext navigationContext = context.getDiffNavigationContext();
+      if (navigationContext != null) {
+        simpleRequest.passForDataContext(DiffTool.SCROLL_TO_LINE, navigationContext);
+      }
       tool.show(simpleRequest);
     }
   }

@@ -59,7 +59,7 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
 
   @Override
   protected ModifiableRootModel doGetRootModel(Module module) {
-    return myModulesConfigurator.getEditor(module).getModifiableRootModel();
+    return myModulesConfigurator.getOrCreateModuleEditor(module).getModifiableRootModel();
   }
 
   @Override

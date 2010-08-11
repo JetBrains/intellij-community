@@ -291,7 +291,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testInterSnapshotModuleDependenciesWithVersionRanges() throws Exception {
+  public void testInterSnapshotModuleDependenciesWithSnapshotVersionRanges() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -311,6 +311,39 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "    <groupId>test</groupId>" +
                           "    <artifactId>m2</artifactId>" +
                           "    <version>[, 1-SNAPSHOT]</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1-SNAPSHOT</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleModuleDeps("m1", "m2");
+  }
+
+  public void testInterSnapshotModuleDependenciesWithVersionRanges() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>[, 2]</version>" +
                           "  </dependency>" +
                           "</dependencies>");
 

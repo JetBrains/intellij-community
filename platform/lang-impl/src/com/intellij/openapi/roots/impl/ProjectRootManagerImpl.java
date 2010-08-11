@@ -62,6 +62,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -78,8 +79,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private final ProjectFileIndex myProjectFileIndex;
 
   private final EventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener.class);
-
-  private final MyVirtualFilePointerListener myVirtualFilePointerListener = new MyVirtualFilePointerListener();
 
   private AppListener myApplicationListener;
 
@@ -102,7 +101,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private final MessageBusConnection myConnection;
   private final VirtualFileManagerAdapter myVFSListener;
   private final BatchUpdateListener myHandler;
-  private final StartupManager myStartupManager;
 
   private class BatchSession {
     private int myBatchLevel = 0;
@@ -175,7 +173,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
                                 FileTypeManager fileTypeManager,
                                 DirectoryIndex directoryIndex,
                                 StartupManager startupManager) {
-    myStartupManager = startupManager;
     myProject = (ProjectEx)project;
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
@@ -215,6 +212,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myFileTypesChanged.levelDown();
       }
     };
+
+    myConnection.subscribe(VirtualFilePointerListener.TOPIC, new MyVirtualFilePointerListener());
   }
 
   public void registerRootsChangeUpdater(CacheUpdater updater) {
@@ -246,7 +245,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public VirtualFilePointerListener getVirtualFilePointerListener() {
-    return myVirtualFilePointerListener;
+    return null;
   }
 
   @NotNull
@@ -629,9 +628,20 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void addRootsToWatch() {
-    if (myProject.isDefault()) {
-      return;
-    }
+    final Set<String> rootPaths = getAllRoots();
+    if (rootPaths == null) return;
+
+    final Set<LocalFileSystem.WatchRequest> newRootsToWatch = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
+
+    //remove old requests after adding new ones, helps avoiding unnecessary synchronizations
+    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
+    myRootsToWatch = newRootsToWatch;
+  }
+
+  @Nullable
+  private Set<String> getAllRoots() {
+    if (myProject.isDefault()) return null;
+
     final Set<String> rootPaths = new HashSet<String>();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
@@ -679,11 +689,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
-    final Set<LocalFileSystem.WatchRequest> newRootsToWatch = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
-
-    //remove old requests after adding new ones, helps avoiding unnecessary synchronizations
-    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
-    myRootsToWatch = newRootsToWatch;
+    return rootPaths;
   }
 
   private static Collection<String> getRootsToTrack(final Library library, final OrderRootType rootType) {
@@ -740,12 +746,16 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     public void beforeValidityChanged(VirtualFilePointer[] pointers) {
       if (!myProject.isDisposed()) {
         if (myInsideRefresh == 0) {
-          beforeRootsChange(false);
+          if (affectsRoots(pointers)) {
+            beforeRootsChange(false);
+          }
         }
         else if (!myPointerChangesDetected) {
           //this is the first pointer changing validity
-          myPointerChangesDetected = true;
-          myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
+          if (affectsRoots(pointers)) {
+            myPointerChangesDetected = true;
+            myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
+          }
         }
       }
     }
@@ -756,10 +766,31 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
           clearScopesCaches();
         }
         else {
-          rootsChanged(false);
+          if (affectsRoots(pointers)) {
+            rootsChanged(false);
+          }
         }
       }
     }
+  }
+
+  private boolean affectsRoots(VirtualFilePointer[] pointers) {
+    Set<String> roots = getAllRoots();
+    if (roots == null) return false;
+
+    for (VirtualFilePointer pointer : pointers) {
+      if (roots.contains(url2path(pointer.getUrl()))) return true;
+    }
+
+    return false;
+  }
+
+  private static String url2path(String url) {
+    String path = VfsUtil.urlToPath(url);
+
+    int separatorIndex = path.indexOf(JarFileSystem.JAR_SEPARATOR);
+    if (separatorIndex < 0) return path;
+    return path.substring(0, separatorIndex);
   }
 
   private int myInsideRefresh = 0;

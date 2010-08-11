@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.facet.impl.ui.libraries.LibraryCompositionOptionsPanel;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
+import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
@@ -50,7 +50,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   private final List<FrameworkSupportNode> myChildren = new ArrayList<FrameworkSupportNode>();
   private LibraryCompositionSettings myLibraryCompositionSettings;
   private final Computable<String> myBaseDirForLibrariesGetter;
-  private LibraryCompositionOptionsPanel myLibraryCompositionOptionsPanel;
+  private LibraryOptionsPanel myLibraryCompositionOptionsPanel;
 
   public FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelImpl model,
                              Computable<String> baseDirForLibrariesGetter, Disposable parentDisposable) {
@@ -75,12 +75,12 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   }
 
   @Nullable
-  public LibraryCompositionOptionsPanel getLibraryCompositionOptionsPanel(LibrariesContainer librariesContainer,
+  public LibraryOptionsPanel getLibraryCompositionOptionsPanel(LibrariesContainer librariesContainer,
                                                                           LibraryDownloadingMirrorsMap mirrorsMap) {
     final LibraryCompositionSettings libraryCompositionSettings = getLibraryCompositionSettings();
-    if (myLibraryCompositionOptionsPanel == null || !myLibraryCompositionOptionsPanel.getLibraryCompositionSettings().equals(libraryCompositionSettings)) {
+    if (myLibraryCompositionOptionsPanel == null || !myLibraryCompositionOptionsPanel.getSettings().equals(libraryCompositionSettings)) {
       if (libraryCompositionSettings != null) {
-        myLibraryCompositionOptionsPanel = new LibraryCompositionOptionsPanel(librariesContainer, libraryCompositionSettings, mirrorsMap);
+        myLibraryCompositionOptionsPanel = new LibraryOptionsPanel(libraryCompositionSettings, librariesContainer);
       }
       else {
         myLibraryCompositionOptionsPanel = null;
@@ -126,6 +126,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
       if (libraries.length != 0) {
         myLibraryCompositionSettings = new LibraryCompositionSettings(libraries, myConfigurable.getSelectedVersion().getLibraryName(), myBaseDirForLibrariesGetter.compute(),
                                                                       "Libraries", myProvider.getIcon());
+        Disposer.register(myConfigurable, myLibraryCompositionSettings);
       }
       else {
         myLibraryCompositionSettings = null;

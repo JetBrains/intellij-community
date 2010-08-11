@@ -234,7 +234,12 @@ public class LineStatusTracker {
     }
   }
 
+  @Nullable
   private static Color brighter(final Color color) {
+    if (color == null) {
+      return null;
+    }
+
     final float[] hsbStripeColor = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
 
     if (hsbStripeColor[1] < 0.02f) {

@@ -1,7 +1,6 @@
-// "Annotate parameter 's' as @NonNls" "true"
-
 import org.jetbrains.annotations.NonNls;
 
+// "Annotate parameter 's' as @NonNls" "true"
 class Foo {
   public void doTest() {
     doStringTest("test");

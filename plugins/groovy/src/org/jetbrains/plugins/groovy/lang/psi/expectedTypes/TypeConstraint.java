@@ -23,6 +23,8 @@ import com.intellij.psi.search.GlobalSearchScope;
  * @author ven
  */
 public abstract class TypeConstraint {
+  public static final TypeConstraint[] EMPTY_ARRAY = new TypeConstraint[0];
+
   protected final PsiType myType;
 
   public abstract boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope);

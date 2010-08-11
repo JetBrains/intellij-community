@@ -17,6 +17,7 @@ package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
@@ -225,8 +226,10 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   }
 
   @Override
-  public CommittedChangeList getOneList(RepositoryLocation location, final VcsRevisionNumber number) throws VcsException {
-    final GitRepositoryLocation l = (GitRepositoryLocation)location;
+  public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
+    // todo implement in proper way
+    final FilePathImpl filePath = new FilePathImpl(file);
+    final GitRepositoryLocation l = (GitRepositoryLocation) getLocationFor(filePath);
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
     if (root == null) {
       throw new VcsException("The repository does not exists anymore: " + l.getRoot());
@@ -244,7 +247,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
         result[0] = committedChangeList;
       }
     }, false);
-    return result[0];
+    return new Pair<CommittedChangeList, FilePath>(result[0], filePath);
   }
 
   public int getFormatVersion() {

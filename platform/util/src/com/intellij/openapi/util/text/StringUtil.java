@@ -916,6 +916,27 @@ public class StringUtil {
     return result;
   }
 
+  @NotNull
+  public static List<TextRange> getWordIndicesIn(@NotNull String text) {
+    List<TextRange> result = new SmartList<TextRange>();
+    int start = -1;
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      boolean isIdentifierPart = Character.isJavaIdentifierPart(c);
+      if (isIdentifierPart && start == -1) {
+        start = i;
+      }
+      if (isIdentifierPart && i == text.length() - 1 && start != -1) {
+        result.add(new TextRange(start, i + 1));
+      }
+      else if (!isIdentifierPart && start != -1) {
+        result.add(new TextRange(start, i));
+        start = -1;
+      }
+    }
+    return result;
+  }
+
   @NotNull public static String join(@NotNull final String[] strings, @NotNull final String separator) {
     return join(strings, 0, strings.length, separator);
   }

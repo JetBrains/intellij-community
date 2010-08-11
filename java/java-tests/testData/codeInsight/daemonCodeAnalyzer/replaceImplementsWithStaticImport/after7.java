@@ -1,7 +1,6 @@
-// "Replace Implements with Static Import" "true"
-
 import static I1.BAZZ;
 
+// "Replace Implements with Static Import" "true"
 public class X implements I {
   void bar() {
     System.out.println(FOO);

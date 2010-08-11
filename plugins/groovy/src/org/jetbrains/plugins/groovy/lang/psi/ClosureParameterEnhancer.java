@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -226,10 +225,10 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
     if (InheritanceUtil.isInheritor(iterType, "groovy.lang.ObjectRange")) {
       PsiElement element = qualifier;
-      element = removeBrackets(element);
+      element = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses(element, false);
       if (element instanceof GrReferenceExpression) {
         GrReferenceExpression ref = (GrReferenceExpression)element;
-        element = removeBrackets(ref.resolve());
+        element = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses(ref.resolve(), false);
       }
       if (element instanceof GrRangeExpression) {
         return getRangeElementType((GrRangeExpression)element);
@@ -250,13 +249,6 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return getEntryForMap(iterType, factory, context);
     }
     return null;
-  }
-
-  private static PsiElement removeBrackets(PsiElement element) {
-    while (element instanceof GrParenthesizedExpression) {
-      element = ((GrParenthesizedExpression)element).getOperand();
-    }
-    return element;
   }
 
   @Nullable

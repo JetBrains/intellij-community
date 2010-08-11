@@ -26,9 +26,11 @@ import java.util.Arrays;
  */
 public class LibraryInfo {
   public static final LibraryInfo[] EMPTY_ARRAY = new LibraryInfo[0];
+
   private @Nullable final LibraryDownloadInfo myDownloadInfo;
   private @NonNls final String myPresentableName;
   private @NonNls final String[] myRequiredClasses;
+  private boolean mySelected = true;
 
   public LibraryInfo(final @NonNls String presentableName, final @Nullable @NonNls String version,
                          final @Nullable @NonNls String downloadingUrl,
@@ -86,5 +88,18 @@ public class LibraryInfo {
     result = 31 * result + myPresentableName.hashCode();
     result = 31 * result + Arrays.hashCode(myRequiredClasses);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return getPresentableName();
+  }
+
+  public boolean isSelected() {
+    return mySelected;
+  }
+
+  public void setSelected(boolean selected) {
+    mySelected = selected;
   }
 }

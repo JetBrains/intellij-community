@@ -19,18 +19,23 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
+import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -41,15 +46,20 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.containers.CacheOneStepIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.security.InvalidParameterException;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSidesContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.DiffPanelImpl");
@@ -328,6 +338,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
     final JComponent newBottomComponent = data.getBottomComponent();
     myPanel.setBottomComponent(newBottomComponent);
+    myPanel.requestScrollEditors();
   }
 
   private static void setWindowTitle(Window window, String title) {
@@ -360,8 +371,148 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     public void scrollEditors() {
       getOptions().onNewContent(myCurrentSide);
+      final DiffNavigationContext scrollContext = (DiffNavigationContext) myDiffRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
+      if (scrollContext == null) {
+        scrollCurrentToFirstDiff();
+      } else {
+        final Document document = myRightSide.getEditor().getDocument();
+
+        final FragmentList fragmentList = getFragments();
+
+        final Application application = ApplicationManager.getApplication();
+        application.executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            final ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(fragmentList.iterator(), document, false);
+            final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator =
+              new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator);
+            final NavigationContextChecker checker = new NavigationContextChecker(cacheOneStepIterator, scrollContext);
+            int line = checker.contextMatchCheck();
+            if (line < 0) {
+              // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
+              // just try to find target line  -> +-
+              final ChangedLinesIterator changedLinesIterator2 = new ChangedLinesIterator(fragmentList.iterator(), document, true);
+              final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator2 =
+                new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator2);
+              final NavigationContextChecker checker2 = new NavigationContextChecker(cacheOneStepIterator2, scrollContext);
+              line = checker2.contextMatchCheck();
+            }
+            final int finalLine = line;
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (finalLine >= 0) {
+                  myRightSide.scrollToFirstDiff(finalLine);
+                } else {
+                  scrollCurrentToFirstDiff();
+                }
+              }
+            }, ModalityState.stateForComponent(myOwnerWindow));
+          }
+        });
+      }
+    }
+
+    private void scrollCurrentToFirstDiff() {
       int[] fragments = getFragmentBeginnings();
       if (fragments.length > 0) myCurrentSide.scrollToFirstDiff(fragments[0]);
+    }
+  }
+
+  private static class ChangedLinesIterator implements Iterator<Pair<Integer, String>> {
+    private final Document myDocument;
+    private final boolean myIgnoreFragmentsType;
+    private final Iterator<Fragment> myFragmentsIterator;
+    private java.util.List<Pair<Integer, String>> myBuffer;
+
+    private ChangedLinesIterator(Iterator<Fragment> fragmentsIterator, Document document, final boolean ignoreFragmentsType) {
+      myFragmentsIterator = fragmentsIterator;
+      myDocument = document;
+      myIgnoreFragmentsType = ignoreFragmentsType;
+      myBuffer = new LinkedList<Pair<Integer, String>>();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return (! myBuffer.isEmpty()) || myFragmentsIterator.hasNext();
+    }
+
+    @Override
+    public Pair<Integer, String> next() {
+      if (! myBuffer.isEmpty()) {
+        return myBuffer.remove(0);
+      }
+
+      final TextRange textRange;
+      Fragment fragment = null;
+      while (myFragmentsIterator.hasNext()) {
+        fragment = myFragmentsIterator.next();
+        final TextDiffTypeEnum type = fragment.getType();
+        if ((! myIgnoreFragmentsType) && ((type == null) || TextDiffTypeEnum.DELETED.equals(type) || TextDiffTypeEnum.NONE.equals(type))) continue;
+        break;
+      }
+      if (fragment == null) return null;
+
+      textRange = fragment.getRange(FragmentSide.SIDE2);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          final int startLine = myDocument.getLineNumber(textRange.getStartOffset());
+          final int endLine = myDocument.getLineNumber(textRange.getEndOffset());
+          for (int i = startLine; i <= endLine; i++) {
+            String text = myDocument.getText().substring(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i));
+            myBuffer.add(new Pair<Integer, String>(i, text));
+          }
+        }
+      });
+      if (myBuffer.isEmpty()) return null;
+      return myBuffer.remove(0);
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  private static class NavigationContextChecker {
+    private final Iterator<Pair<Integer, String>> myChangedLinesIterator;
+    private final DiffNavigationContext myContext;
+
+    private NavigationContextChecker(Iterator<Pair<Integer, String>> changedLinesIterator, DiffNavigationContext context) {
+      myChangedLinesIterator = changedLinesIterator;
+      myContext = context;
+    }
+
+    public int contextMatchCheck() {
+      final Iterable<String> contextLines = myContext.getPreviousLinesIterable();
+
+      // we ignore spaces.. at least at start/end, since some version controls could ignore their changes when doing annotate
+      final Iterator<String> iterator = contextLines.iterator();
+      if (iterator.hasNext()) {
+        String contextLine = iterator.next().trim();
+
+        while (myChangedLinesIterator.hasNext()) {
+          final Pair<Integer, String> pair = myChangedLinesIterator.next();
+          if (pair.getSecond().trim().equals(contextLine)) {
+            if (! iterator.hasNext()) break;
+            contextLine = iterator.next().trim();
+          }
+        }
+        if (iterator.hasNext()) {
+          return -1;
+        }
+      }
+      if (! myChangedLinesIterator.hasNext()) return -1;
+
+      final String targetLine = myContext.getTargetString().trim();
+      while (myChangedLinesIterator.hasNext()) {
+        final Pair<Integer, String> pair = myChangedLinesIterator.next();
+        if (pair.getSecond().trim().equals(targetLine)) {
+          return pair.getFirst();
+        }
+      }
+      return -1;
     }
   }
 

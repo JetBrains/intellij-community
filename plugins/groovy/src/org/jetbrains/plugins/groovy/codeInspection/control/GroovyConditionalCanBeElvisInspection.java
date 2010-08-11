@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
@@ -64,7 +64,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
       final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
       final GrExpression thenBranch = expression.getThenBranch();
       final GrExpression elseBranch = expression.getElseBranch();
-      final GrBinaryExpression binaryCondition = (GrBinaryExpression) deparenthesizeExpression(expression.getCondition());
+      final GrBinaryExpression binaryCondition = (GrBinaryExpression)PsiUtil.skipParentheses(expression.getCondition(), false);
       if (isInequality(binaryCondition)) {
         replaceExpression(expression, thenBranch.getText() + "?:" + elseBranch.getText());
       } else {
@@ -90,7 +90,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
       if (SideEffectChecker.mayHaveSideEffects(condition)) {
         return;
       }
-      condition = deparenthesizeExpression(condition);
+      condition = (GrExpression)PsiUtil.skipParentheses(condition, false);
       if (!(condition instanceof GrBinaryExpression)) {
         return;
       }
@@ -121,14 +121,6 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
   private static boolean isInequality(GrBinaryExpression binaryCondition) {
     final IElementType tokenType = binaryCondition.getOperationTokenType();
     return GroovyTokenTypes.mNOT_EQUAL == tokenType;
-  }
-
-  private static GrExpression deparenthesizeExpression(GrExpression expression) {
-    GrExpression expressionToTest = expression;
-    while (expressionToTest instanceof GrParenthesizedExpression) {
-      expressionToTest = ((GrParenthesizedExpression) expressionToTest).getOperand();
-    }
-    return expressionToTest;
   }
 
   private static boolean isNull(GrExpression expression) {

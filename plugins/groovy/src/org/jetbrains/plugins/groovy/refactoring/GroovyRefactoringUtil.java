@@ -33,6 +33,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.refactoring.util.RefactoringUtil.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
+
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
@@ -182,14 +184,6 @@ public abstract class GroovyRefactoringUtil {
     return map;
   }
 
-  public static GrExpression getUnparenthesizedExpr(GrExpression expr) {
-    GrExpression operand = expr;
-    while (operand instanceof GrParenthesizedExpression) {
-      operand = ((GrParenthesizedExpression) operand).getOperand();
-    }
-    return operand;
-  }
-
   public static boolean isAppropriateContainerForIntroduceVariable(PsiElement tempContainer) {
     return tempContainer instanceof GrOpenBlock ||
         tempContainer instanceof GrClosableBlock ||
@@ -304,11 +298,11 @@ public abstract class GroovyRefactoringUtil {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
 
-    if (element1 instanceof PsiWhiteSpace || PsiUtil.isNewLine(element1)) {
+    if (element1 instanceof PsiWhiteSpace || isNewLine(element1)) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.findElementAt(startOffset);
     }
-    if (element2 instanceof PsiWhiteSpace || PsiUtil.isNewLine(element2)) {
+    if (element2 instanceof PsiWhiteSpace || isNewLine(element2)) {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.findElementAt(endOffset - 1);
     }
@@ -526,10 +520,6 @@ public abstract class GroovyRefactoringUtil {
     final String id = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(prefix, context, true);
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
-
-    while (expr instanceof GrParenthesizedExpression) {
-      expr = ((GrParenthesizedExpression)expr).getOperand();
-    }
     String[] modifiers;
     if (declareFinal) {
       modifiers = finalModifiers;
@@ -537,7 +527,8 @@ public abstract class GroovyRefactoringUtil {
     else {
       modifiers = ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    GrVariableDeclaration decl = factory.createVariableDeclaration(modifiers, expr, expr.getType(), id);
+    GrVariableDeclaration decl =
+      factory.createVariableDeclaration(modifiers, (GrExpression)skipParentheses(expr, false), expr.getType(), id);
 /*    if (declareFinal) {
       com.intellij.psi.util.PsiUtil.setModifierProperty((decl.getMembers()[0]), PsiModifier.FINAL, true);
     }*/

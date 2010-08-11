@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class BoolUtils {
 
@@ -54,6 +55,7 @@ public class BoolUtils {
   public static String getNegatedExpressionText(@NotNull GrExpression condition) {
     if (condition instanceof GrParenthesizedExpression) {
       final GrExpression contentExpression = ((GrParenthesizedExpression) condition).getOperand();
+      if (contentExpression == null) return "()";
       return '(' + getNegatedExpressionText(contentExpression) + ')';
     } else if (isNegation(condition)) {
       final GrExpression negated = getNegated(condition);
@@ -77,6 +79,6 @@ public class BoolUtils {
   private static GrExpression getNegated(@NotNull GrExpression exp) {
     final GrUnaryExpression prefixExp = (GrUnaryExpression) exp;
     final GrExpression operand = prefixExp.getOperand();
-    return ParenthesesUtils.stripParentheses(operand);
+    return (GrExpression)PsiUtil.skipParentheses(operand, false);
   }
 }

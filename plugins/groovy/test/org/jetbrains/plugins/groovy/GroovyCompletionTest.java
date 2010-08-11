@@ -233,4 +233,8 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
 
   public void testIntCompletionInPlusMethod() {doBasicTest();}
   public void testIntCompletionInGenericParameter() {doBasicTest();}
+
+  public void testSmartCastCompletion() {doSmartTest();}
+  public void testSmartCastCompletionWithoutRParenth() {doSmartTest();}
+  public void testSmartCastCompletionWithRParenth() {doSmartTest();}
 }

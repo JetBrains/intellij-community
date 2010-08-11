@@ -16,14 +16,13 @@
 
 package com.intellij.psi;
 
-import com.intellij.extapi.psi.StubPath;
-import com.intellij.extapi.psi.StubPathBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
@@ -32,6 +31,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -211,25 +211,29 @@ public abstract class PsiAnchor {
   }
 
   public static class StubIndexReference extends PsiAnchor {
-    private final PsiFile myFile;
+    private final VirtualFile myVirtualFile;
+    private final Project myProject;
     private final int myIndex;
 
-    public StubIndexReference(final PsiFile file, final int index) {
-      myFile = file;
+    public StubIndexReference(@NotNull PsiFile file, final int index) {
+      myVirtualFile = file.getVirtualFile();
+      myProject = file.getProject();
       myIndex = index;
     }
 
     public PsiFile getFile() {
-      return myFile;
+      if (myProject.isDisposed()) return null;
+      return PsiManager.getInstance(myProject).findFile(myVirtualFile);
     }
 
     public PsiElement retrieve() {
       return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
         public PsiElement compute() {
-          PsiFileWithStubSupport fileImpl = (PsiFileWithStubSupport)myFile;
+          PsiFileWithStubSupport fileImpl = (PsiFileWithStubSupport)getFile();
+          if (fileImpl == null) return null;
           StubTree tree = fileImpl.getStubTree();
 
-          boolean foreign = (tree == null);
+          boolean foreign = tree == null;
           if (foreign) {
             if (fileImpl instanceof PsiFileImpl) {
               tree = ((PsiFileImpl)fileImpl).calcStubTree();
@@ -262,12 +266,12 @@ public abstract class PsiAnchor {
 
       final StubIndexReference that = (StubIndexReference)o;
 
-      return myIndex == that.myIndex && myFile.equals(that.myFile);
+      return myIndex == that.myIndex && myVirtualFile.equals(that.myVirtualFile);
     }
 
     @Override
     public int hashCode() {
-      return 31 * myFile.hashCode() + myIndex;
+      return 31 * myVirtualFile.hashCode() + myIndex;
     }
 
     public int getStartOffset() {
@@ -282,56 +286,5 @@ public abstract class PsiAnchor {
       return resolved.getTextRange().getEndOffset();
     }
   }
-
-  private static class StubPathReference extends PsiAnchor {
-    private final PsiFile myFile;
-    private final StubPath myPath;
-
-    public StubPathReference(final PsiFile file, final StubPath path) {
-      myFile = file;
-      myPath = path;
-    }
-
-    public PsiElement retrieve() {
-      return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-        public PsiElement compute() {
-          return StubPathBuilder.resolve(myFile, myPath);
-        }
-      });
-    }
-
-    public PsiFile getFile() {
-      return myFile;
-    }
-
-    public int getStartOffset() {
-      final PsiElement resolved = retrieve();
-      if (resolved == null) throw new PsiInvalidElementAccessException(null);
-      return resolved.getTextRange().getStartOffset();
-    }
-
-    public int getEndOffset() {
-      final PsiElement resolved = retrieve();
-      if (resolved == null) throw new PsiInvalidElementAccessException(null);
-      return resolved.getTextRange().getEndOffset();
-    }
-
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-
-      if (o instanceof StubPathReference) {
-        final StubPathReference that = (StubPathReference)o;
-        return myFile.equals(that.myFile) && myPath.equals(that.myPath);
-      }
-
-      return false;
-    }
-
-    public int hashCode() {
-      return 31 * myFile.hashCode() + myPath.hashCode();
-    }
-  }
-
-  
 }
 

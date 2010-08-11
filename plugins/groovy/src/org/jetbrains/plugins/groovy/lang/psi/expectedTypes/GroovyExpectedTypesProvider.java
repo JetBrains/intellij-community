@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -95,7 +97,7 @@ public class GroovyExpectedTypesProvider {
     private final GrExpression myExpression;
 
     public MyCalculator(GrExpression expression) {
-      myExpression = expression;
+      myExpression = (GrExpression)PsiUtil.skipParentheses(expression, true);
       myResult = new TypeConstraint[]{SubtypeConstraint.create("java.lang.Object", myExpression)};
     }
 
@@ -258,6 +260,11 @@ public class GroovyExpectedTypesProvider {
         }
       };
       myResult = new TypeConstraint[]{constraint};
+    }
+
+    @Override
+    public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
+      ((GroovyPsiElement)expression.getParent()).accept(this);
     }
 
     public TypeConstraint[] getResult() {

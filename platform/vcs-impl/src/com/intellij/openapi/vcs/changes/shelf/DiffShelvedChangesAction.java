@@ -29,10 +29,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.MergedDiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.patch.PatchMergeRequestFactory;
@@ -122,7 +119,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       ChangesViewBalloonProblemNotifier.showMe(project, "Show Diff: Cannot find base for: " + StringUtil.join(missing, ",\n"), MessageType.WARNING);
     }
 
-    ShowDiffAction.showDiffImpl(project, diffRequestPresentables, toSelectIdx, ShowDiffAction.DiffExtendUIFactory.NONE, false);
+    ShowDiffAction.showDiffImpl(project, diffRequestPresentables, toSelectIdx, new ShowDiffUIContext(false));
   }
 
   private static class PatchesPreloader {

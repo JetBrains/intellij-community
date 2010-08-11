@@ -67,6 +67,7 @@ public class RefManagerImpl extends RefManager {
   private THashMap<Module, RefModule> myModules;
   private final ProjectIterator myProjectIterator;
   private boolean myDeclarationsFound;
+  private final PsiManager myPsiManager;
 
   private boolean myIsInProcess = false;
 
@@ -83,6 +84,7 @@ public class RefManagerImpl extends RefManager {
     myProject = project;
     myScope = scope;
     myContext = context;
+    myPsiManager = PsiManager.getInstance(project);
     myRefProject = new RefProjectImpl(this);
     myRefTable = new THashMap<PsiAnchor, RefElement>();
     myProjectIterator = new ProjectIterator();
@@ -298,6 +300,11 @@ public class RefManagerImpl extends RefManager {
     return myRefTable;
   }
 
+  @Override
+  public PsiManager getPsiManager() {
+    return myPsiManager;
+  }
+
   public void removeReference(RefElement refElem) {
     myLock.writeLock().lock();
     try {
@@ -366,6 +373,7 @@ public class RefManagerImpl extends RefManager {
       for (Language language : relevantLanguages) {
         visitElement(viewProvider.getPsi(language));
       }
+      myPsiManager.dropResolveCaches();
     }
   }
 

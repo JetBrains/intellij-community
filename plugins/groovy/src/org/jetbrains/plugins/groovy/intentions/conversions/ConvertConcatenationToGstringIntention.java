@@ -23,6 +23,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -78,7 +79,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     getOperandText(right, builder);
   }
 
-  private static void getOperandText(GrExpression operand, StringBuilder builder) {
+  private static void getOperandText(@Nullable GrExpression operand, StringBuilder builder) {
     if (operand instanceof GrString) {
       builder.append(GrStringUtil.removeQuotes(operand.getText()));
     }
@@ -94,7 +95,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       //nothing to do
     }
     else {
-      builder.append(START_BRACE).append(operand.getText()).append(END_BRACE);
+      builder.append(START_BRACE).append(operand == null ? "" : operand.getText()).append(END_BRACE);
     }
   }
 
@@ -130,6 +131,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     return false;
   }
 
+  @Nullable
   private static PsiElement skipParentheses(PsiElement element, boolean up) {
     if (up) {
       PsiElement parent = element.getParent();

@@ -37,10 +37,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
 /**
  * @author ilyas
@@ -78,10 +81,8 @@ public class GroovyInlineVariableUtil {
         assert variable.getInitializerGroovy() != null;
         GrExpression initializerGroovy = variable.getInitializerGroovy();
         assert initializerGroovy != null;
-        GrExpression tempExpr = initializerGroovy;
-        while (tempExpr instanceof GrParenthesizedExpression) {
-          tempExpr = ((GrParenthesizedExpression)tempExpr).getOperand();
-        }
+        GrExpression tempExpr = (GrExpression)skipParentheses(initializerGroovy, false);
+        if (tempExpr == null) return;
         Project project = variable.getProject();
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
         GrExpression newExpr;

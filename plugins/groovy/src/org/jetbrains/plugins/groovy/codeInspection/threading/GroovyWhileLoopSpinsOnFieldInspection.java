@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
 
@@ -85,7 +86,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
 
     private boolean isSimpleFieldComparison(GrExpression condition) {
-      condition = deparenthesizeExpression(condition);
+      condition = (GrExpression)PsiUtil.skipParentheses(condition, false);
       if (condition == null) {
         return false;
       }
@@ -124,7 +125,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
 
     private boolean isLiteral(GrExpression expression) {
-      expression = deparenthesizeExpression(expression);
+      expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
       if (expression == null) {
         return false;
       }
@@ -132,7 +133,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
 
     private boolean isSimpleFieldAccess(GrExpression expression) {
-      expression = deparenthesizeExpression(expression);
+      expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
       if (expression == null) {
         return false;
       }
@@ -172,13 +173,5 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
       }
       return false;
     }
-  }
-
-  private static GrExpression deparenthesizeExpression(GrExpression expression) {
-    GrExpression expressionToTest = expression;
-    while (expressionToTest instanceof GrParenthesizedExpression) {
-      expressionToTest = ((GrParenthesizedExpression) expressionToTest).getOperand();
-    }
-    return expressionToTest;
   }
 }

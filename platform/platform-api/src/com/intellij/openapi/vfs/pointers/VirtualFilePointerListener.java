@@ -15,7 +15,11 @@
  */
 package com.intellij.openapi.vfs.pointers;
 
+import com.intellij.util.messages.Topic;
+
 public interface VirtualFilePointerListener {
+  Topic<VirtualFilePointerListener> TOPIC = Topic.create("VirtualFilePointer", VirtualFilePointerListener.class);
+
   void beforeValidityChanged(VirtualFilePointer[] pointers);
   void validityChanged(VirtualFilePointer[] pointers);
 }

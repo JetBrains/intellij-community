@@ -104,6 +104,12 @@ public class UIUtil {
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {
     component.setEnabled(enabled);
+    if (component instanceof JLabel) {
+      Color color = UIManager.getColor(enabled ? "Label.foreground" : "Label.disabledForeground");
+      if (color != null) {
+        component.setForeground(color);
+      }
+    }
     if (recursively && enabled == component.isEnabled()) {
       if (component instanceof Container) {
         final Container container = (Container)component;

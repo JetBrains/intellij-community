@@ -595,4 +595,10 @@ class Zoo {
     PsiElement resolved = ref.resolve()
     assertInstanceOf resolved, PsiMethod
   }
+
+  public void testMethodVsLocalVariable() {
+    PsiReference ref = configureByFile("methodVsLocalVariable/A.groovy");
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, GrVariable
+  }
 }

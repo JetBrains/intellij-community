@@ -67,9 +67,9 @@ public class ImportHelper{
     //     /* comment */
     //     import b;
     // We want to preserve those comments then.
-    List<String> comments = new ArrayList<String>();
+    List<PsiElement> nonImports = new ArrayList<PsiElement>();
     // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
-    List<Pair<String, Boolean>> names = new ArrayList<Pair<String, Boolean>>(collectNamesToImport(file, comments));
+    List<Pair<String, Boolean>> names = new ArrayList<Pair<String, Boolean>>(collectNamesToImport(file, nonImports));
     Collections.sort(names, new Comparator<Pair<String, Boolean>>() {
       public int compare(Pair<String, Boolean> o1, Pair<String, Boolean> o2) {
         return o1.getFirst().compareTo(o2.getFirst());
@@ -140,8 +140,8 @@ public class ImportHelper{
 
     try {
       StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand, classesToUseSingle);
-      for (String comment : comments) {
-        text.append("\n").append(comment);
+      for (PsiElement nonImport : nonImports) {
+        text.append("\n").append(nonImport.getText());
       }
       String ext = StdFileTypes.JAVA.getDefaultExtension();
       PsiFileFactory factory = PsiFileFactory.getInstance(file.getProject());
@@ -153,15 +153,17 @@ public class ImportHelper{
       PsiImportList result = (PsiImportList)newImportList.copy();
       PsiImportList oldList = file.getImportList();
       if (oldList.isReplaceEquivalent(result)) return null;
-      PsiElement firstPrevious = newImportList.getPrevSibling();
-      while (firstPrevious != null && firstPrevious.getPrevSibling() != null) {
-        firstPrevious = firstPrevious.getPrevSibling();
-      }
-      for (PsiElement element = firstPrevious; element != null && element != newImportList; element = element.getNextSibling()) {
-        result.add(element.copy());
-      }
-      for (PsiElement element = newImportList.getNextSibling(); element != null; element = element.getNextSibling()) {
-        result.add(element.copy());
+      if (!nonImports.isEmpty()) {
+        PsiElement firstPrevious = newImportList.getPrevSibling();
+        while (firstPrevious != null && firstPrevious.getPrevSibling() != null) {
+          firstPrevious = firstPrevious.getPrevSibling();
+        }
+        for (PsiElement element = firstPrevious; element != null && element != newImportList; element = element.getNextSibling()) {
+          result.add(element.copy());
+        }
+        for (PsiElement element = newImportList.getNextSibling(); element != null; element = element.getNextSibling()) {
+          result.add(element.copy());
+        }
       }
       return result;
     }
@@ -626,7 +628,7 @@ public class ImportHelper{
 
   @NotNull
   // returns list of (name, isImportStatic) pairs
-  private static Collection<Pair<String,Boolean>> collectNamesToImport(@NotNull PsiJavaFile file, List<String> comments){
+  private static Collection<Pair<String,Boolean>> collectNamesToImport(@NotNull PsiJavaFile file, List<PsiElement> comments){
     Set<Pair<String,Boolean>> names = new THashSet<Pair<String,Boolean>>();
 
     final JspFile jspFile = JspPsiUtil.getJspFile(file);
@@ -647,7 +649,7 @@ public class ImportHelper{
   }
 
   private static void collectNamesToImport(@NotNull final Set<Pair<String, Boolean>> names,
-                                           @NotNull List<String> comments,
+                                           @NotNull List<PsiElement> comments,
                                            @NotNull final PsiJavaFile file,
                                            PsiFile context) {
     String packageName = file.getPackageName();
@@ -659,7 +661,7 @@ public class ImportHelper{
   }
 
   private static void addNamesToImport(@NotNull Set<Pair<String, Boolean>> names,
-                                       @NotNull List<String> comments,
+                                       @NotNull List<PsiElement> comments,
                                        @NotNull PsiElement scope,
                                        @NotNull String thisPackageName,
                                        PsiFile context){
@@ -671,9 +673,18 @@ public class ImportHelper{
       final PsiElement child = stack.removeFirst();
       if (child instanceof PsiImportList) {
         for (PsiElement element : child.getChildren()) {
-          IElementType elementType = element.getNode().getElementType();
-          if (!JavaElementType.IMPORT_STATEMENT.equals(elementType) && !ElementType.WHITE_SPACE_BIT_SET.contains(elementType)) {
-            comments.add(element.getText());
+          if (element == null) {
+            continue;
+          }
+          ASTNode node = element.getNode();
+          if (node == null) {
+            continue;
+          }
+          IElementType elementType = node.getElementType();
+          if (elementType != null &&!ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(elementType)
+            && !ElementType.WHITE_SPACE_BIT_SET.contains(elementType))
+          {
+            comments.add(element);
           }
         }
         continue;

@@ -60,7 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -475,7 +475,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     text.append(callExpr.getFunExpression().getText());
     text.append("(");
     for (GrExpression expr : callExpr.getArguments()) {
-      text.append(GroovyRefactoringUtil.getUnparenthesizedExpr(expr).getText()).append(", ");
+      text.append(((GrExpression)PsiUtil.skipParentheses(expr, false)).getText()).append(", ");
     }
     if (callExpr.getArguments().length > 0) {
       text.delete(text.length() - 2, text.length());

@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,7 +198,9 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   protected void showDiffForChanges(Change[] changesArray, final int indexInSelection) {
-    ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, myDiffExtendUIFactory, isInFrame());
+    final ShowDiffUIContext context = new ShowDiffUIContext(isInFrame());
+    context.setActionsFactory(myDiffExtendUIFactory);
+    ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, context);
   }
 
   private void showDiff() {

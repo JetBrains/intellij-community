@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class BoolUtils {
   private BoolUtils() {
@@ -73,7 +74,7 @@ public class BoolUtils {
   public static GrExpression getNegated(GrExpression exp) {
     final GrUnaryExpression prefixExp = (GrUnaryExpression) exp;
     final GrExpression operand = prefixExp.getOperand();
-    return ParenthesesUtils.stripParentheses(operand);
+    return (GrExpression)PsiUtil.skipParentheses(operand, false);
   }
 
   public static boolean isBooleanLiteral(GrExpression exp) {

@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -37,13 +38,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -55,6 +59,7 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.CacheOneStepIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -484,7 +489,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     private final FileAnnotation myFileAnnotation;
     private final AbstractVcs myVcs;
     private final VirtualFile myFile;
-    private RepositoryLocation myLocationFor;
     private int currentLine;
 
     private ShowDiffFromAnnotation(final UpToDateLineNumberProvider lineNumberProvider,
@@ -495,8 +499,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       myVcs = vcs;
       myFile = file;
       final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
-      final VirtualFile root = ProjectLevelVcsManager.getInstance(vcs.getProject()).getVcsRootFor(file);
-      myLocationFor = provider.getLocationFor(new FilePathImpl(root));
       currentLine = -1;
     }
 
@@ -525,13 +527,16 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       if (revisionNumber != null) {
         final VcsException[] exc = new VcsException[1];
         final List<Change> changes = new LinkedList<Change>();
+        final FilePath[] targetPath = new FilePath[1];
         ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
                                                                   "Loading revision " + revisionNumber.asString() + " contents", true, BackgroundFromStartOption.getInstance()) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
             try {
-              final CommittedChangeList cl = provider.getOneList(myLocationFor, revisionNumber);
+              final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(myFile, revisionNumber);
+              targetPath[0] = pair.getSecond() == null ? new FilePathImpl(myFile) : pair.getSecond();
+              final CommittedChangeList cl = pair.getFirst();
               if (cl == null) {
                 ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
                 return;
@@ -549,17 +554,19 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
             if (exc[0] != null) {
               ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "Can not show diff: " + exc[0].getMessage(), MessageType.ERROR);
             } else if (! changes.isEmpty()) {
-              int idx = findSelfInList(changes);
-              ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), idx, myVcs.getProject());
+              int idx = findSelfInList(changes, targetPath[0]);
+              final ShowDiffUIContext context = new ShowDiffUIContext(true);
+              context.setDiffNavigationContext(createDiffNavigationContext(actualNumber));
+              ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), idx, myVcs.getProject(), context);
             }
           }
         });
       }
     }
 
-    private int findSelfInList(List<Change> changes) {
+    private int findSelfInList(List<Change> changes, final FilePath filePath) {
       int idx = -1;
-      final File ioFile = new File(myFile.getPath());
+      final File ioFile = filePath.getIOFile();
       for (int i = 0; i < changes.size(); i++) {
         final Change change = changes.get(i);
         if ((change.getAfterRevision() != null) && (change.getAfterRevision().getFile().getIOFile().equals(ioFile))) {
@@ -580,6 +587,158 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       }
 
       return idx;
+    }
+
+    // for current line number
+    private DiffNavigationContext createDiffNavigationContext(final int actualLine) {
+      final MyContentsLines contentsLines = new MyContentsLines(myFileAnnotation.getAnnotatedContent());
+
+      return new DiffNavigationContext(new Iterable<String>() {
+        @Override
+        public Iterator<String> iterator() {
+          return new CacheOneStepIterator<String>(new ContextLineIterator(contentsLines, myFileAnnotation, actualLine));
+        }
+      }, contentsLines.getLineContents(actualLine));
+    }
+
+    private static class MySplittingIterator implements Iterator<Integer> {
+      private final String myContents;
+      // always at the beginning of the _next_ line
+      private int myOffset;
+
+      private MySplittingIterator(final String contents) {
+        myContents = contents;
+        myOffset = 0;
+      }
+
+      @Override
+      public boolean hasNext() {
+        return myOffset < myContents.length();
+      }
+
+      @Override
+      public Integer next() {
+        final int start = myOffset;
+        while (myOffset < myContents.length()) {
+          // \r, \n, or \r\n
+          final char c = myContents.charAt(myOffset);
+          if ('\n' == c) {
+            ++ myOffset;
+            break;
+          } else if ('\r' == c) {
+            if (myOffset + 1 == myContents.length()) {
+              // at the end
+              ++ myOffset;
+              break;
+            } else {
+              myOffset += (('\n' == myContents.charAt(myOffset + 1)) ? 2 : 1);
+              break;
+            }
+          }
+          ++ myOffset;
+        }
+
+        return start;
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
+    }
+
+    private static class MyContentsLines {
+      private final MySplittingIterator mySplittingIterator;
+      private final List<Integer> myLinesStartOffsets;
+      private final String myContents;
+      private boolean myLineEndsFinished;
+
+      private MyContentsLines(final String contents) {
+        myContents = contents;
+        mySplittingIterator = new MySplittingIterator(contents);
+        myLinesStartOffsets = new LinkedList<Integer>();
+      }
+
+      public String getLineContents(final int number) {
+        assert (! myLineEndsFinished) || (myLineEndsFinished && (myLinesStartOffsets.size() > number));
+
+        // we need to know end
+        if (myLineEndsFinished || (myLinesStartOffsets.size() > (number + 1))) {
+          return extractCalculated(number);
+        }
+        while (((myLinesStartOffsets.size() - 1) < (number + 1)) && (! myLineEndsFinished) && mySplittingIterator.hasNext()) {
+          final Integer nextStart = mySplittingIterator.next();
+          myLinesStartOffsets.add(nextStart);
+        }
+        myLineEndsFinished = myLinesStartOffsets.size() < (number + 1);
+        return extractCalculated(number);
+      }
+
+      private String extractCalculated(int number) {
+        String text = myContents.substring(myLinesStartOffsets.get(number),
+                                                 (number + 1 >= myLinesStartOffsets.size())
+                                                 ? myContents.length()
+                                                 : myLinesStartOffsets.get(number + 1));
+        text = text.endsWith("\r\n") ? text.substring(0, text.length() - 2) : text.substring(0, text.length() - 1);
+        return text;
+      }
+
+      public int getKnownLinesNumber() {
+        return myLineEndsFinished ? myLinesStartOffsets.size() : -1;
+      }
+    }
+
+    /**
+     * Slightly break the contract: can return null from next() while had claimed hasNext()
+     */
+    private static class ContextLineIterator implements Iterator<String> {
+      private final MyContentsLines myContentsLines;
+
+      private final VcsRevisionNumber myRevisionNumber;
+      private final FileAnnotation myAnnotation;
+      private final int myStopAtLine;
+      // we assume file has at least one line ;)
+      private int myCurrentLine;  // to start looking for next line with revision from
+
+      private ContextLineIterator(final MyContentsLines contentLines, final FileAnnotation annotation, final int stopAtLine) {
+        myAnnotation = annotation;
+        myRevisionNumber = myAnnotation.originalRevision(stopAtLine);
+        myStopAtLine = stopAtLine;
+        myContentsLines = contentLines;
+      }
+
+      @Override
+      public boolean hasNext() {
+        return lineNumberInBounds();
+      }
+
+      private boolean lineNumberInBounds() {
+        final int knownLinesNumber = myContentsLines.getKnownLinesNumber();
+        return ((knownLinesNumber == -1) || (myCurrentLine < knownLinesNumber)) && (myCurrentLine < myStopAtLine);
+      }
+
+      @Override
+      public String next() {
+        int nextLine = -1;
+        while (lineNumberInBounds()) {
+          final VcsRevisionNumber vcsRevisionNumber = myAnnotation.originalRevision(myCurrentLine);
+          if (myRevisionNumber.equals(vcsRevisionNumber)) {
+            nextLine = myCurrentLine;
+            final String text = myContentsLines.getLineContents(nextLine);
+            if (! StringUtil.isEmptyOrSpaces(text)) {
+              ++ myCurrentLine;
+              return text;
+            }
+          }
+          ++ myCurrentLine;
+        }
+        return null;
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
     }
   }
 }

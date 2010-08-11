@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -202,5 +203,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     }
 
     return result.toArray(new GroovyResolveResult[result.size()]);
+  }
+
+  @Override
+  public GrTypeElement getTypeElement() {
+    return findChildByClass(GrTypeElement.class);
   }
 }

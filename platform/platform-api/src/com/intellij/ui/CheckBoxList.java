@@ -8,16 +8,26 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author oleg
  */
 public class CheckBoxList extends JBList {
   private static final int DEFAULT_CHECK_BOX_WIDTH = 20;
+  private CheckBoxListListener checkBoxListListener;
 
   public CheckBoxList(final ListModel dataModel, final CheckBoxListListener checkBoxListListener) {
-    super(dataModel);
+    this();
+    setModel(dataModel);
+    setCheckBoxListListener(checkBoxListListener);
+  }
+
+  public CheckBoxList() {
+    super();
     setCellRenderer(new CellRenderer());
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setBorder(BorderFactory.createEtchedBorder());
@@ -29,7 +39,7 @@ public class CheckBoxList extends JBList {
           for (int index : indices) {
             if (index >= 0) {
               JCheckBox checkbox = (JCheckBox)getModel().getElementAt(index);
-              setSelected(checkbox, index, checkBoxListListener);
+              setSelected(checkbox, index);
             }
           }
         }
@@ -50,7 +60,7 @@ public class CheckBoxList extends JBList {
               iconArea = DEFAULT_CHECK_BOX_WIDTH;
             }
             if (e.getX() < iconArea) {
-              setSelected(checkbox, index, checkBoxListListener);
+              setSelected(checkbox, index);
             }
           }
         }
@@ -58,11 +68,21 @@ public class CheckBoxList extends JBList {
     });
   }
 
-  private void setSelected(JCheckBox checkbox, int index, CheckBoxListListener checkBoxListListener) {
+  public boolean isItemSelected(int index) {
+    return ((JCheckBox)getModel().getElementAt(index)).isSelected();  
+  }
+
+  private void setSelected(JCheckBox checkbox, int index) {
     boolean value = !checkbox.isSelected();
     checkbox.setSelected(value);
     repaint();
-    checkBoxListListener.checkBoxSelectionChanged(index, value);
+    if (checkBoxListListener != null) {
+      checkBoxListListener.checkBoxSelectionChanged(index, value);
+    }
+  }
+
+  public void setCheckBoxListListener(CheckBoxListListener checkBoxListListener) {
+    this.checkBoxListListener = checkBoxListListener;
   }
 
   private class CellRenderer implements ListCellRenderer {

@@ -46,9 +46,9 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   private static final List<Map<SoftWrapDrawingType, Character>> SYMBOLS = asList(
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\uE48B',                   '\uE48C')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u2926',                   '\u2925')),
+    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+          asList('\uE48B',                   '\uE48C')),
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u21B2',                   '\u21B3')),
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),

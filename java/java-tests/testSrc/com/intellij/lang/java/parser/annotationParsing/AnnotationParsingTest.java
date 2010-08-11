@@ -14,7 +14,7 @@ public class AnnotationParsingTest extends JavaParsingTestCase {
   }
 
   public void testMarker() { doTest(true); }
-  public void testSimple() { doTest(true); }
+  public void testSimple1() { doTest(true); }
   public void testSimple2() { doTest(true); }
   public void testComplex() { doTest(true); }
   public void testMultiple() { doTest(true); }
@@ -40,4 +40,6 @@ public class AnnotationParsingTest extends JavaParsingTestCase {
       }
     });
   }
+
+  public void testErrors() { doTest(true); }
 }

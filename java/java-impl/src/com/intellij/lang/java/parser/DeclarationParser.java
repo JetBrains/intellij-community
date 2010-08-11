@@ -88,7 +88,9 @@ public class DeclarationParser {
       error.error(JavaErrorMessages.message("expected.lbrace"));
     }
 
-    parseClassBodyWithBraces(builder, isAnnotation, isEnum);
+    if (builder.getTokenType() == JavaTokenType.LBRACE) {
+      parseClassBodyWithBraces(builder, isAnnotation, isEnum);
+    }
 
     if (context == Context.FILE) {
       boolean declarationsAfterEnd = false;
@@ -244,7 +246,8 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.AT)) {
       if (builder.getTokenType() == JavaTokenType.INTERFACE_KEYWORD) {
-        return parseClassFromKeyword(builder, declaration, true, context);
+        final PsiBuilder.Marker result = parseClassFromKeyword(builder, declaration, true, context);
+        return result != null ? result : modList;
       }
       else {
         declaration.rollbackTo();
@@ -252,7 +255,8 @@ public class DeclarationParser {
       }
     }
     else if (ElementType.CLASS_KEYWORD_BIT_SET.contains(builder.getTokenType())) {
-      return parseClassFromKeyword(builder, declaration, false, context);
+      final PsiBuilder.Marker result = parseClassFromKeyword(builder, declaration, false, context);
+      return result != null ? result : modList;
     }
 
     PsiBuilder.Marker typeParams = null;
@@ -443,6 +447,7 @@ public class DeclarationParser {
     builder.advanceLexer();
 
     PsiBuilder.Marker invalidElements = null;
+    String errorMessage = null;
     boolean commaExpected = false;
     int paramCount = 0;
     while (true) {
@@ -452,8 +457,19 @@ public class DeclarationParser {
         if (noLastParam) {
           error(builder, JavaErrorMessages.message("expected.identifier.or.type"));
         }
-        if (!expect(builder, JavaTokenType.RPARENTH)) {
+        if (tokenType == JavaTokenType.RPARENTH) {
+          if (invalidElements != null) {
+            invalidElements.error(errorMessage);
+          }
+          invalidElements = null;
+          builder.advanceLexer();
+        }
+        else {
           if (!noLastParam) {
+            if (invalidElements != null) {
+              invalidElements.error(errorMessage);
+            }
+            invalidElements = null;
             error(builder, JavaErrorMessages.message("expected.rparen"));
           }
         }
@@ -464,7 +480,7 @@ public class DeclarationParser {
         if (builder.getTokenType() == JavaTokenType.COMMA) {
           commaExpected = false;
           if (invalidElements != null) {
-            invalidElements.error(JavaErrorMessages.message("expected.parameter"));
+            invalidElements.error(errorMessage);
             invalidElements = null;
           }
           builder.advanceLexer();
@@ -476,7 +492,7 @@ public class DeclarationParser {
         if (param != null) {
           commaExpected = true;
           if (invalidElements != null) {
-            invalidElements.errorBefore(JavaErrorMessages.message("expected.comma"), param);
+            invalidElements.errorBefore(errorMessage, param);
             invalidElements = null;
           }
           paramCount++;
@@ -492,6 +508,7 @@ public class DeclarationParser {
         }
         else {
           invalidElements = builder.mark();
+          errorMessage = commaExpected ? JavaErrorMessages.message("expected.comma") : JavaErrorMessages.message("expected.parameter");
         }
       }
 
@@ -503,7 +520,7 @@ public class DeclarationParser {
     }
 
     if (invalidElements != null) {
-      invalidElements.error(commaExpected ? JavaErrorMessages.message("expected.comma") : JavaErrorMessages.message("expected.parameter"));
+      invalidElements.error(errorMessage);
     }
 
     paramList.done(JavaElementType.PARAMETER_LIST);
@@ -536,7 +553,7 @@ public class DeclarationParser {
     else {
       error(builder, JavaErrorMessages.message("expected.identifier"));
       param.drop();
-      return type;
+      return modListInfo.first;
     }
   }
 
@@ -725,8 +742,8 @@ public class DeclarationParser {
     PsiBuilder.Marker pair = builder.mark();
 
     if (mayBeSimple) {
-      final PsiBuilder.Marker value = parseAnnotationValue(builder);
-      if (value != null && builder.getTokenType() != JavaTokenType.EQ) {
+      parseAnnotationValue(builder);
+      if (builder.getTokenType() != JavaTokenType.EQ) {
         pair.done(JavaElementType.NAME_VALUE_PAIR);
         return false;
       }
@@ -746,9 +763,9 @@ public class DeclarationParser {
     return hasName;
   }
 
-  @Nullable
+  @NotNull
   private static PsiBuilder.Marker parseAnnotationValue(final PsiBuilder builder) {
-    final PsiBuilder.Marker result;
+    PsiBuilder.Marker result;
 
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.AT) {
@@ -762,8 +779,10 @@ public class DeclarationParser {
     }
 
     if (result == null) {
-      error(builder, JavaErrorMessages.message("expected.value"));
+      result = builder.mark();
+      result.error(JavaErrorMessages.message("expected.value"));
     }
+
     return result;
   }
 

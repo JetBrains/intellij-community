@@ -16,6 +16,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,7 +44,9 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx {
+public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
+
+  private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
 
   private final SoftWrapDataMapper            myDataMapper;
   private final SoftWrapsStorage              myStorage;
@@ -70,6 +75,14 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
+                           @NotNull DefaultSoftWrapApplianceManager applianceManager, @NotNull SoftWrapDataMapper dataMapper,
+                           @NotNull SoftWrapDocumentChangeManager documentChangeManager)
+  {
+    this(editor, storage, painter, (SoftWrapApplianceManager)applianceManager, dataMapper, documentChangeManager);
+    myDocumentListeners.add(applianceManager.getDocumentListener());
+  }
+
+  public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
                            @NotNull SoftWrapApplianceManager applianceManager, @NotNull SoftWrapDataMapper dataMapper,
                            @NotNull SoftWrapDocumentChangeManager documentChangeManager)
   {
@@ -79,6 +92,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     myApplianceManager = applianceManager;
     myDataMapper = dataMapper;
     myDocumentChangeManager = documentChangeManager;
+
+    myDocumentListeners.add(myDocumentChangeManager);
   }
 
   public boolean isSoftWrappingEnabled() {
@@ -349,26 +364,35 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     return result;
   }
 
+  @Override
   public void beforeDocumentChangeAtCaret() {
     CaretModel caretModel = myEditor.getCaretModel();
     VisualPosition visualCaretPosition = caretModel.getVisualPosition();
     if (!isInsideSoftWrap(visualCaretPosition)) {
       return;
     }
-    int offset = caretModel.getOffset();
-    TextChangeImpl softWrap = myStorage.getSoftWrap(offset);
-    if (softWrap == null) {
-      return;
+    if (myDocumentChangeManager.makeHardWrap(caretModel.getOffset())) {
+      // Restore caret position.
+      caretModel.moveToVisualPosition(visualCaretPosition);
     }
-
-    myDocumentChangeManager.makeHardWrap(softWrap);
-
-    // Restore caret position.
-    caretModel.moveToVisualPosition(visualCaretPosition);
   }
 
   @Override
   public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
     return myStorage.addSoftWrapChangeListener(listener);
+  }
+
+  @Override
+  public void beforeDocumentChange(DocumentEvent event) {
+    for (DocumentListener listener : myDocumentListeners) {
+      listener.beforeDocumentChange(event);
+    }
+  }
+
+  @Override
+  public void documentChanged(DocumentEvent event) {
+    for (DocumentListener listener : myDocumentListeners) {
+      listener.documentChanged(event);
+    }
   }
 }

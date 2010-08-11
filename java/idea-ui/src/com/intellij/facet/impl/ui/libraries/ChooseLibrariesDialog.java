@@ -56,8 +56,8 @@ public class ChooseLibrariesDialog extends DialogWrapper {
     return myChooser.getMarkedElements();
   }
 
-  private static class LibraryElementChooser extends ElementsChooser<Library> {
-    private LibraryElementChooser(final List<Library> elements) {
+  static class LibraryElementChooser extends ElementsChooser<Library> {
+    LibraryElementChooser(final List<Library> elements) {
       super(elements, false);
     }
 

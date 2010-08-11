@@ -1,0 +1,14 @@
+a>>2, a > > 3, a >>> 4
+------------------------------
+PsiIdentifier:a
+PsiJavaToken:GTGT
+PsiJavaToken:INTEGER_LITERAL
+PsiJavaToken:COMMA
+PsiIdentifier:a
+PsiJavaToken:GT
+PsiJavaToken:GT
+PsiJavaToken:INTEGER_LITERAL
+PsiJavaToken:COMMA
+PsiIdentifier:a
+PsiJavaToken:GTGTGT
+PsiJavaToken:INTEGER_LITERAL

@@ -207,7 +207,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void launchAction(@NotNull IntentionAction action);
 
-  void configureByFile(@TestDataFile @NonNls String file);
+  PsiFile configureByFile(@TestDataFile @NonNls String file);
 
   void configureByFiles(@NonNls String... files);
 
@@ -305,7 +305,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void performEditorAction(String actionId);
 
-  int configureFromTempProjectFile(String filePath);
+  PsiFile configureFromTempProjectFile(String filePath);
 
   void configureFromExistingVirtualFile(VirtualFile f);
 
