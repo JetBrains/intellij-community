@@ -15,13 +15,17 @@
  */
 package com.intellij.openapi.ui.popup.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Method;
 
 public class PopupUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.popup.util.PopupUtil");
 
   private PopupUtil() {
   }
@@ -44,6 +48,31 @@ public class PopupUtil {
     else {
       return c;
     }
+  }
+
+  public static void setPopupType(@NotNull final PopupFactory factory, final int type) {
+    try {
+      final Method method = PopupFactory.class.getDeclaredMethod("setPopupType", int.class);
+      method.setAccessible(true);
+      method.invoke(factory, type);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+  }
+
+  public static int getPopupType(@NotNull final PopupFactory factory) {
+    try {
+      final Method method = PopupFactory.class.getDeclaredMethod("getPopupType");
+      method.setAccessible(true);
+      final Object result = method.invoke(factory);
+      return result instanceof Integer ? (Integer) result : -1;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+
+    return -1;
   }
 
 }

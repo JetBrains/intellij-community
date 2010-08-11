@@ -19,4 +19,6 @@ public class FieldParsingTest extends JavaParsingTestCase {
   public void testMissingInitializerExpression() { doTest(true); }
 
   public void testMultiLineUnclosed() { doTest(true); }
+
+  public void testComplexInitializer() { doTest(true); }
 }

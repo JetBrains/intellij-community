@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -85,7 +86,7 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
     final PsiElement tempContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
     Assert.assertTrue(tempContainer instanceof GroovyPsiElement);
 
-    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
+    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences((GrExpression)PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
     String varName = "preved";
     GroovyVariableValidator validator = new GroovyVariableValidator(introduceVariableBase, getProject(), selectedExpr, occurences, (GroovyPsiElement)tempContainer);
       result = validator.isOKTest(varName, replaceAllOccurences);

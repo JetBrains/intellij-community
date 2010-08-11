@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author ilyas
@@ -30,6 +31,9 @@ public interface GrNewExpression extends GrCallExpression, GrConstructorCall {
 
   @Nullable
   GrCodeReferenceElement getReferenceElement();
+
+  @Nullable
+  GrTypeElement getTypeElement();
 
   int getArrayCount();
 

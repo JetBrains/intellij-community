@@ -322,7 +322,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Override
   public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
-    expression.getOperand().accept(this);
+    final GrExpression operand = expression.getOperand();
+    if (operand != null) operand.accept(this);
   }
 
   @Override

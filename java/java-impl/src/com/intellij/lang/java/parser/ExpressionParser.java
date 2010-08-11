@@ -27,6 +27,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
@@ -216,7 +217,7 @@ public class ExpressionParser {
       }
 
       final PsiBuilder.Marker expression = left.precede();
-      builder.advanceLexer();
+      advanceGtToken(builder, tokenType);
 
       final PsiBuilder.Marker right = parseExpression(builder, toParse);
       if (right == null) {
@@ -502,7 +503,11 @@ public class ExpressionParser {
         error(builder, JavaErrorMessages.message("expected.expression"));
       }
 
-      JavaParserUtil.expectOrError(builder, JavaTokenType.RPARENTH, JavaErrorMessages.message("expected.rparen"));
+      if (!expect(builder, JavaTokenType.RPARENTH)) {
+        if (inner != null) {
+          error(builder, JavaErrorMessages.message("expected.rparen"));
+        }
+      }
 
       parenth.done(JavaElementType.PARENTH_EXPRESSION);
       return parenth;
@@ -801,6 +806,9 @@ public class ExpressionParser {
           tokenType = JavaTokenType.GTGT;
         }
       }
+      else if (builder.getTokenType() == JavaTokenType.EQ) {
+        tokenType = JavaTokenType.GE;
+      }
     }
 
     sp.rollbackTo();
@@ -820,6 +828,9 @@ public class ExpressionParser {
       PsiBuilderUtil.advance(builder, 3);
     }
     else if (type == JavaTokenType.GTGT) {
+      PsiBuilderUtil.advance(builder, 2);
+    }
+    else if (type == JavaTokenType.GE) {
       PsiBuilderUtil.advance(builder, 2);
     }
     else {

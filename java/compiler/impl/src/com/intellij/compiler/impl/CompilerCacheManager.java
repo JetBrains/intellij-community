@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.compiler.impl.newApi.NewCompiler;
-import com.intellij.compiler.impl.newApi.NewCompilerCache;
+import com.intellij.compiler.impl.generic.GenericCompilerCache;
+import com.intellij.openapi.compiler.generic.GenericCompiler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
@@ -44,7 +44,7 @@ import java.util.Map;
 public class CompilerCacheManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerCacheManager");
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<Compiler, Object>();
-  private final Map<NewCompiler<?,?,?>, NewCompilerCache<?,?,?>> myNewCachesMap = new HashMap<NewCompiler<?,?,?>, NewCompilerCache<?,?,?>>();
+  private final Map<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>> myGenericCachesMap = new HashMap<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>>();
   private final List<Disposable> myCacheDisposables = new ArrayList<Disposable>();
   private final File myCachesRoot;
   private final Runnable myShutdownTask = new Runnable() {
@@ -90,22 +90,23 @@ public class CompilerCacheManager implements ProjectComponent {
     return dir;
   }
 
-  public synchronized <Key, SourceState, OutputState> NewCompilerCache<Key, SourceState, OutputState>
-                             getNewCompilerCache(NewCompiler<Key, SourceState, OutputState> compiler) throws IOException {
-    NewCompilerCache<?,?,?> cache = myNewCachesMap.get(compiler);
+  public synchronized <Key, SourceState, OutputState> GenericCompilerCache<Key, SourceState, OutputState>
+                                 getGenericCompilerCache(GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException {
+    GenericCompilerCache<?,?,?> cache = myGenericCachesMap.get(compiler);
     if (cache == null) {
-      final NewCompilerCache<?,?,?> newCache = new NewCompilerCache<Key, SourceState, OutputState>(compiler, NewCompilerRunner.getNewCompilerCacheDir(myProject, compiler));
-      myNewCachesMap.put(compiler, newCache);
+      final GenericCompilerCache<?,?,?> genericCache = new GenericCompilerCache<Key, SourceState, OutputState>(compiler, GenericCompilerRunner
+        .getGenericCompilerCacheDir(myProject, compiler));
+      myGenericCachesMap.put(compiler, genericCache);
       myCacheDisposables.add(new Disposable() {
         @Override
         public void dispose() {
-          newCache.close();
+          genericCache.close();
         }
       });
-      cache = newCache;
+      cache = genericCache;
     }
     //noinspection unchecked
-    return (NewCompilerCache<Key, SourceState, OutputState>)cache;
+    return (GenericCompilerCache<Key, SourceState, OutputState>)cache;
   }
 
   public synchronized FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) throws IOException {
@@ -172,7 +173,7 @@ public class CompilerCacheManager implements ProjectComponent {
       }
     }
     myCacheDisposables.clear();
-    myNewCachesMap.clear();
+    myGenericCachesMap.clear();
     myCompilerToCacheMap.clear();
   }
 

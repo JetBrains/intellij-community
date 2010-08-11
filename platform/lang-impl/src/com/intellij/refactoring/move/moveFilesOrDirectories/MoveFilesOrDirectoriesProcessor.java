@@ -122,11 +122,15 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
         else if (element instanceof PsiFile) {
           final PsiFile movedFile = (PsiFile)element;
-          MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, myNewParent, oldToNewMap);
           FileReferenceContextUtil.encodeFileReferences(element);
+          MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, myNewParent, oldToNewMap);
 
-          MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, myNewParent);
-          movedFiles.add(movedFile);
+          PsiFile moving = myNewParent.findFile(movedFile.getName());
+          if (moving == null) {
+            MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, myNewParent);
+          }
+          moving = myNewParent.findFile(movedFile.getName());
+          movedFiles.add(moving);
         }
 
         getTransaction().getElementListener(element).elementMoved(element);

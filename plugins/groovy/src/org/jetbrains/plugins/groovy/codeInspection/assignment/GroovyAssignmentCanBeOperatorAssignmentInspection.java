@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
 
@@ -83,7 +83,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
       GrAssignmentExpression expression) {
     final GrExpression rhs = expression.getRValue();
     final GrBinaryExpression binaryExpression =
-        (GrBinaryExpression) deparenthesizeExpression(rhs);
+        (GrBinaryExpression)PsiUtil.skipParentheses(rhs, false);
     final GrExpression lhs = expression.getLValue();
     assert binaryExpression != null;
     final IElementType sign = binaryExpression.getOperationTokenType();
@@ -117,7 +117,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
       super();
       final GrExpression rhs = expression.getRValue();
       final GrBinaryExpression binaryExpression =
-          (GrBinaryExpression) deparenthesizeExpression(rhs);
+          (GrBinaryExpression)PsiUtil.skipParentheses(rhs, false);
       assert binaryExpression != null;
       final IElementType sign = binaryExpression.getOperationTokenType();
       String signText = getTextForOperator(sign);
@@ -159,8 +159,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
         return;
       }
       final GrExpression lhs = assignment.getLValue();
-      final GrExpression rhs = deparenthesizeExpression(
-          assignment.getRValue());
+      final GrExpression rhs = (GrExpression)PsiUtil.skipParentheses(assignment.getRValue(), false);
       if (!(rhs instanceof GrBinaryExpression)) {
         return;
       }
@@ -199,14 +198,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
     }
   }
 
-  private static GrExpression deparenthesizeExpression(GrExpression expression) {
-    GrExpression expressionToTest = expression;
-    while (expressionToTest instanceof GrParenthesizedExpression) {
-      expressionToTest = ((GrParenthesizedExpression) expressionToTest).getOperand();
-    }
-    return expressionToTest;
-  }
-
+  @Nullable
   @NonNls
   private static String getTextForOperator(IElementType operator) {
     if (operator ==  null) {

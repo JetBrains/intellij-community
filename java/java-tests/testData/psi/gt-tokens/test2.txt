@@ -1,0 +1,10 @@
+a >>>= b ><xyz >>= 3
+------------------
+PsiIdentifier:a
+PsiJavaToken:GTGTGTEQ
+PsiIdentifier:b
+PsiJavaToken:GT
+PsiJavaToken:LT
+PsiIdentifier:xyz
+PsiJavaToken:GTGTEQ
+PsiJavaToken:INTEGER_LITERAL

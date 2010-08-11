@@ -17,11 +17,15 @@ package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,18 +39,21 @@ import java.util.*;
 /**
  * @author nik
 */
-public class LibraryCompositionSettings {
+public class LibraryCompositionSettings implements Disposable {
+
   @NonNls private static final String DEFAULT_LIB_FOLDER = "lib";
   private final LibraryInfo[] myLibraryInfos;
   private final String myBaseDirectoryForDownloadedFiles;
   private final String myTitle;
   private String myDirectoryForDownloadedLibrariesPath;
-  private final Set<VirtualFile> myAddedJars = new LinkedHashSet<VirtualFile>();
   private boolean myDownloadLibraries = true;
   private final Set<Library> myUsedLibraries = new LinkedHashSet<Library>();
   private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
   private String myLibraryName;
   private final Icon myIcon;
+  private boolean myDownloadSources = true;
+  private boolean myDownloadJavadocs = true;
+  private Library myLibrary;
 
   public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
                                     final @NotNull String defaultLibraryName,
@@ -71,15 +78,6 @@ public class LibraryCompositionSettings {
 
   public void setDirectoryForDownloadedLibrariesPath(final String directoryForDownloadedLibrariesPath) {
     myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
-  }
-
-  public Set<VirtualFile> getAddedJars() {
-    return myAddedJars;
-  }
-
-  public void setAddedJars(final Collection<VirtualFile> addedJars) {
-    myAddedJars.clear();
-    myAddedJars.addAll(addedJars);
   }
 
   public boolean isDownloadLibraries() {
@@ -114,13 +112,13 @@ public class LibraryCompositionSettings {
     return myTitle;
   }
 
-  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap, @NotNull LibrariesContainer librariesContainer, final @NotNull JComponent parent,
+  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap,
+                               @NotNull LibrariesContainer librariesContainer, final @NotNull JComponent parent,
                                boolean all) {
     if (myDownloadLibraries) {
       RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(getLibraryInfos());
 
       List<VirtualFile> roots = new ArrayList<VirtualFile>();
-      roots.addAll(myAddedJars);
       for (Library library : myUsedLibraries) {
         ContainerUtil.addAll(roots, librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
       }
@@ -136,7 +134,6 @@ public class LibraryCompositionSettings {
           if (files.length != downloadingInfos.length) {
             return false;
           }
-          ContainerUtil.addAll(myAddedJars, files);
         }
       }
     }
@@ -145,8 +142,8 @@ public class LibraryCompositionSettings {
 
   @Nullable
   private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
-    if (!myAddedJars.isEmpty()) {
-      VirtualFile[] roots = VfsUtil.toVirtualFileArray(myAddedJars);
+    if (myLibrary != null) {
+      VirtualFile[] roots = myLibrary.getFiles(OrderRootType.CLASSES);
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
                                                      myLibraryName, myLibraryLevel, roots, VirtualFile.EMPTY_ARRAY);
     }
@@ -170,13 +167,9 @@ public class LibraryCompositionSettings {
   }
 
   @Nullable
-  public Library addLibraries(final ModifiableRootModel rootModel, final List<Library> addedLibraries) {
-    return addLibraries(rootModel, addedLibraries, null);
-  }
-
-  @Nullable
   public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<Library> addedLibraries,
                               final @Nullable LibrariesContainer librariesContainer) {
+
     Library library = createLibrary(rootModel, librariesContainer);
 
     if (library != null) {
@@ -190,5 +183,44 @@ public class LibraryCompositionSettings {
       rootModel.addLibraryEntry(usedLibrary);
     }
     return library;
+  }
+
+  public boolean isDownloadSources() {
+    return myDownloadSources;
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    myDownloadSources = downloadSources;
+  }
+
+  public boolean isDownloadJavadocs() {
+    return myDownloadJavadocs;
+  }
+
+  public void setDownloadJavadocs(boolean downloadJavadocs) {
+    myDownloadJavadocs = downloadJavadocs;
+  }
+
+  @Nullable
+  public Library getLibrary() {
+    return myLibrary;
+  }
+
+  @NotNull
+  public Library getOrCreateLibrary() {
+    if (myLibrary == null) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myLibrary = new ApplicationLibraryTable().createLibrary();
+          Disposer.register(LibraryCompositionSettings.this, myLibrary);
+        }
+      });
+    }
+    return myLibrary;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

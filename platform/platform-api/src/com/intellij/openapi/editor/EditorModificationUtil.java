@@ -81,7 +81,7 @@ public class EditorModificationUtil {
   public static int insertStringAtCaret(Editor editor, String s, boolean toProcessOverwriteMode, boolean toMoveCaret) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
-      editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart());
+      editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart(), true);
     }
 
     // There is a possible case that particular soft wraps become hard wraps if the caret is located at soft wrap-introduced virtual
@@ -114,7 +114,7 @@ public class EditorModificationUtil {
 
     int offset = oldOffset + s.length();
     if (toMoveCaret){
-      editor.getCaretModel().moveToOffset(offset);
+      editor.getCaretModel().moveToOffset(offset, true);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       selectionModel.removeSelection();
     }

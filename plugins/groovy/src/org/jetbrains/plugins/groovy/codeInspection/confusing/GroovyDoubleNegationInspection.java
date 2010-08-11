@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyDoubleNegationInspection extends BaseInspection {
 
@@ -70,12 +71,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
         throws IncorrectOperationException {
       final GrUnaryExpression expression =
           (GrUnaryExpression) descriptor.getPsiElement();
-      GrExpression operand = expression.getOperand();
-      while (operand instanceof GrParenthesizedExpression) {
-        final GrParenthesizedExpression parenthesizedExpression =
-            (GrParenthesizedExpression) operand;
-        operand = parenthesizedExpression.getOperand();
-      }
+      GrExpression operand = (GrExpression)PsiUtil.skipParentheses(expression.getOperand(), false);
       if (operand instanceof GrUnaryExpression) {
         final GrUnaryExpression prefixExpression =
             (GrUnaryExpression) operand;

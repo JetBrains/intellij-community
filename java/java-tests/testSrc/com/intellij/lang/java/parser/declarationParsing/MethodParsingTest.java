@@ -20,8 +20,10 @@ public class MethodParsingTest extends JavaParsingTestCase {
   public void testUnclosed6() { doTest(true); }
   public void testGenericMethod() { doTest(true); }
   public void testGenericMethodErrors() { doTest(true); }
-  public void testErrors() { doTest(true); }
+  public void testErrors0() { doTest(true); }
   public void testErrors1() { doTest(true); }
+  public void testErrors2() { doTest(true); }
+  public void testErrors3() { doTest(true); }
   public void testCompletionHack() { doTest(true); }
   public void testCompletionHack1() { doTest(true); }
 

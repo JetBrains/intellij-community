@@ -56,9 +56,14 @@ public class CaretModelWindow implements CaretModel {
     myDelegate.moveToLogicalPosition(hostPos);
   }
 
-  public void moveToOffset(final int offset) {
+  @Override
+  public void moveToOffset(int offset) {
+    moveToOffset(offset, false);
+  }
+
+  public void moveToOffset(final int offset, boolean locateBeforeSoftWrap) {
     int hostOffset = myEditorWindow.getDocument().injectedToHost(offset);
-    myDelegate.moveToOffset(hostOffset);
+    myDelegate.moveToOffset(hostOffset, locateBeforeSoftWrap);
   }
 
   public LogicalPosition getLogicalPosition() {

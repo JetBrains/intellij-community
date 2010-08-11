@@ -1,8 +1,7 @@
-// "Add Catch Clause(s)" "true"
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+// "Add Catch Clause(s)" "true"
 class CatchExceptions {
 
 	void foo() throws java.io.IOException, java.io.FileNotFoundException {

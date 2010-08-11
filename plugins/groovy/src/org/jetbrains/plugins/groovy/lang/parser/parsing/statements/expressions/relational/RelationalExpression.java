@@ -22,8 +22,11 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
 
 /**
  * @author ilyas
@@ -69,7 +72,7 @@ public class RelationalExpression implements GroovyElementTypes {
     builder.advanceLexer();
     PsiBuilder.Marker rb = builder.mark();
     ParserUtils.getToken(builder, mNLS);
-    if (!TypeSpec.parse(builder)) {
+    if (TypeSpec.parse(builder) == fail) {
       rb.rollbackTo();
       builder.error(GroovyBundle.message("type.specification.expected"));
     } else {

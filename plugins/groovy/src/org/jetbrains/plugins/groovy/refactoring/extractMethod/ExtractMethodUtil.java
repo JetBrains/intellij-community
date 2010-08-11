@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -253,10 +254,7 @@ public class ExtractMethodUtil {
         buffer.append(outputName);
       }
     } else {
-      GrExpression expr = (GrExpression) helper.getStatements()[0];
-      while (expr instanceof GrParenthesizedExpression) {
-        expr = ((GrParenthesizedExpression) expr).getOperand();
-      }
+      GrExpression expr = (GrExpression)PsiUtil.skipParentheses((GrExpression)helper.getStatements()[0], false);
       buffer.append(PsiType.VOID.equals(type) ? "" : "return ").append(expr != null ? expr.getText() : "");
     }
 

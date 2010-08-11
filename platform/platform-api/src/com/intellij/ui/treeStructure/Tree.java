@@ -54,7 +54,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private Rectangle myLastVisibleRec;
 
   private Dimension myHoldSize;
-  private MySelectionModel mySelectionModel = new MySelectionModel();
+  private final MySelectionModel mySelectionModel = new MySelectionModel();
 
   public Tree() {
     initTree_();
@@ -185,7 +185,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void paint(Graphics g) {
-    Rectangle clip = g.getClipBounds();
     final Rectangle visible = getVisibleRect();
 
     if (!AbstractTreeBuilder.isToPaintSelection(this)) {
@@ -237,7 +236,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (myBusy) {
         myBusyIcon.resume();
         myBusyIcon.setToolTipText("Update is in progress. Click to cancel");
-      } else {
+      }
+      else {
         myBusyIcon.suspend();
         myBusyIcon.setToolTipText(null);
         SwingUtilities.invokeLater(new Runnable() {
@@ -567,8 +567,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (paths == null) return (T[])Array.newInstance(nodeType, 0);
 
     ArrayList<T> nodes = new ArrayList<T>();
-    for (int i = 0; i < paths.length; i++) {
-      Object last = paths[i].getLastPathComponent();
+    for (TreePath path : paths) {
+      Object last = path.getLastPathComponent();
       if (nodeType.isAssignableFrom(last.getClass())) {
         if (filter != null && !filter.accept((T)last)) continue;
         nodes.add((T)last);
@@ -605,11 +605,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (nodesText.length() > 0) {
       info.put("selectedNodes", nodesText.toString());
     }
-  }
-
-  @Override
-  public void reshape(int x, int y, int w, int h) {
-    super.reshape(x, y, w, h);
   }
 
   public void setHoldSize(boolean hold) {

@@ -21,6 +21,7 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -298,6 +299,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }else{ // UNIXes (Linux and MAC) go here
         popupWeight=MEDIUM_WEIGHT_POPUP;
       }
+    } else if (!HEAVY_WEIGHT_POPUP.equals(popupWeight) && !MEDIUM_WEIGHT_POPUP.equals(popupWeight)) {
+      throw new IllegalStateException("unknown value of property -Didea.popup.weight: " + popupWeight);
     }
 
     if (SystemInfo.isMacOSLeopard) {
@@ -308,38 +311,27 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     popupWeight = popupWeight.trim();
 
     PopupFactory popupFactory;
-
     final PopupFactory oldFactory = PopupFactory.getSharedInstance();
     if (!(oldFactory instanceof OurPopupFactory)) {
-      if (HEAVY_WEIGHT_POPUP.equals(popupWeight)) {
-        popupFactory = new OurPopupFactory() {
-          public Popup getPopup(
-            Component owner,
-            Component contents,
-            int x,
-            int y
-          ) throws IllegalArgumentException {
-            final Point point = fixPopupLocation(contents, x, y);
-            return oldFactory.getPopup(owner, contents, point.x, point.y);
-          }
-        };
-      }
-      else if (MEDIUM_WEIGHT_POPUP.equals(popupWeight)) {
-        popupFactory = new OurPopupFactory() {
+      popupFactory = new OurPopupFactory() {
+        public Popup getPopup(
+          Component owner,
+          Component contents,
+          int x,
+          int y
+        ) throws IllegalArgumentException {
+          final Point point = fixPopupLocation(contents, x, y);
 
-          public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
-            return createPopup(owner, contents, x, y);
+          final int popupType = PopupUtil.getPopupType(this);
+          if (popupType >= 0) {
+            PopupUtil.setPopupType(oldFactory, popupType);
           }
 
-          private Popup createPopup(final Component owner, final Component contents, final int x, final int y) {
-            final Point point = fixPopupLocation(contents, x, y);
-            return oldFactory.getPopup(owner, contents, point.x, point.y);
-          }
-        };
-      }
-      else {
-        throw new IllegalStateException("unknown value of property -Didea.popup.weight: " + popupWeight);
-      }
+          return oldFactory.getPopup(owner, contents, point.x, point.y);
+        }
+      };
+
+      PopupUtil.setPopupType(popupFactory, HEAVY_WEIGHT_POPUP.equals(popupWeight) ? 2 : 1);
       PopupFactory.setSharedInstance(popupFactory);
     }
 

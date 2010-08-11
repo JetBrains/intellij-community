@@ -1,0 +1,73 @@
+PsiJavaFile:Errors.java
+  PsiImportList
+    <empty list>
+  PsiClass:D
+    PsiModifierList:@Ann(<error descr="Cannot find method 'value'">0</error>)
+      PsiAnnotation
+        PsiJavaToken:AT('@')
+        PsiJavaCodeReferenceElement:Ann
+          PsiIdentifier:Ann('Ann')
+          PsiReferenceParameterList
+            <empty list>
+        PsiAnnotationParameterList
+          PsiJavaToken:LPARENTH('(')
+          PsiNameValuePair
+            PsiErrorElement:Value expected
+              <empty list>
+          PsiErrorElement:',' or ')' expected
+            <empty list>
+          PsiJavaToken:LT('<')
+          PsiNameValuePair
+            PsiIdentifier:error('error')
+            PsiErrorElement:'=' expected
+              <empty list>
+            PsiWhiteSpace(' ')
+            PsiReferenceExpression:descr
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:descr('descr')
+          PsiErrorElement:',' or ')' expected
+            <empty list>
+          PsiJavaToken:EQ('=')
+          PsiNameValuePair
+            PsiErrorElement:Identifier expected
+              <empty list>
+            PsiErrorElement:'=' expected
+              <empty list>
+            PsiBinaryExpression:"Cannot find method 'value'">0<
+              PsiBinaryExpression:"Cannot find method 'value'">0
+                PsiLiteralExpression:"Cannot find method 'value'"
+                  PsiJavaToken:STRING_LITERAL('"Cannot find method 'value'"')
+                PsiJavaToken:GT('>')
+                PsiLiteralExpression:0
+                  PsiJavaToken:INTEGER_LITERAL('0')
+              PsiJavaToken:LT('<')
+              PsiErrorElement:Expression expected
+                <empty list>
+          PsiErrorElement:',' or ')' expected
+            <empty list>
+          PsiJavaToken:DIV('/')
+          PsiNameValuePair
+            PsiIdentifier:error('error')
+            PsiErrorElement:'=' expected
+              <empty list>
+            PsiErrorElement:Value expected
+              <empty list>
+          PsiErrorElement:',' or ')' expected
+            <empty list>
+          PsiJavaToken:GT('>')
+          PsiJavaToken:RPARENTH(')')
+    PsiWhiteSpace(' ')
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:D('D')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

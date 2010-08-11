@@ -154,7 +154,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     final PsiType[] argTypes = PsiUtil.getArgumentTypes(this, false, upToArgument);
     MethodResolverProcessor methodResolver = runMethodResolverProcessor(argTypes, allVariants);
     assert methodResolver != null;
-    if (!allVariants && methodResolver.hasApplicableCandidates()) return methodResolver.getCandidates();
 
     final String[] names = GroovyPropertyUtils.suggestGettersName(name);
     List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>();
@@ -163,6 +162,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       resolveImpl(getterResolver);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1 && candidates[0].isStaticsOK()) {
+        if (methodResolver.hasApplicableCandidates()) return methodResolver.getCandidates();
         putUserData(IS_RESOLVED_TO_GETTER, true);
         return candidates;
       }
@@ -173,7 +173,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(name, this);
     resolveImpl(propertyResolver);
-    if (!allVariants && propertyResolver.hasCandidates()) return propertyResolver.getCandidates();
+    if (!allVariants) {
+      final GroovyResolveResult[] propertyCandidates = propertyResolver.getCandidates();
+      for (GroovyResolveResult candidate : propertyCandidates) {
+        if (candidate.isStaticsOK() && candidate.isAccessible() && candidate.getElement() instanceof GrVariable &&
+            !(candidate.getElement() instanceof GrField)) {
+          return propertyResolver.getCandidates();
+        }
+      }
+      if (methodResolver.hasApplicableCandidates()) return methodResolver.getCandidates();
+      if (propertyCandidates.length > 0) return propertyCandidates;
+    }
 
     if (allVariants) {
       if (list.isEmpty()) ContainerUtil.addAll(list, propertyResolver.getCandidates());

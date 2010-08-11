@@ -23,6 +23,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -225,9 +226,23 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return filterCandidates();
     }
     if (!myInapplicableCandidates.isEmpty()) {
-      return ResolveUtil.filterSameSignatureCandidates(myInapplicableCandidates, myArgumentTypes != null ? myArgumentTypes.length : -1);
+      final Set<GroovyResolveResult> resultSet = filterCorrectParameterCount(myInapplicableCandidates);
+      return ResolveUtil.filterSameSignatureCandidates(resultSet, myArgumentTypes != null ? myArgumentTypes.length : -1);
     }
     return GroovyResolveResult.EMPTY_ARRAY;
+  }
+
+  private Set<GroovyResolveResult> filterCorrectParameterCount(Set<GroovyResolveResult> candidates) {
+    if (myArgumentTypes == null) return candidates;
+    Set<GroovyResolveResult> result = new HashSet<GroovyResolveResult>();
+    for (GroovyResolveResult candidate : candidates) {
+      final PsiElement element = candidate.getElement();
+      if (element instanceof PsiMethod && ((PsiMethod)element).getParameterList().getParametersCount() == myArgumentTypes.length) {
+        result.add(candidate);
+      }
+    }
+    if (result.size() > 0) return result;
+    return candidates;
   }
 
   private GroovyResolveResult[] filterCandidates() {

@@ -16,6 +16,11 @@
 
 package com.intellij.refactoring.util;
 
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.FindUsagesUtil;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -145,7 +150,9 @@ public class TextOccurrencesUtil {
   }
 
   public static boolean isSearchTextOccurencesEnabled(@NotNull PsiElement element) {
-    return ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
+    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
+    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
+    return FindUsagesUtil.isSearchForTextOccurencesAvailable(element, false, handler);
   }
 
   public interface UsageInfoFactory {

@@ -281,4 +281,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testNumberDuplicatesInMaps() throws Exception {doTest();}
 
   public void testMapNotAcceptedAsStringParameter()  {doTest();}
+
+  public void testBuiltInTypeInstantiation() {doTest();}
 }

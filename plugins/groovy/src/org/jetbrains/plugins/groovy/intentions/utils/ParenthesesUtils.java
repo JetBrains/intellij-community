@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,18 +82,6 @@ public class ParenthesesUtils {
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mEQUAL, EQUALITY_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mNOT_EQUAL, EQUALITY_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mCOMPARE_TO, EQUALITY_PRECEDENCE);
-  }
-
-  @Nullable
-  public static GrExpression stripParentheses(
-      @Nullable GrExpression expression) {
-    GrExpression parenthesized = expression;
-    while (parenthesized instanceof GrParenthesizedExpression) {
-      final GrParenthesizedExpression parenthesizedExpression =
-          (GrParenthesizedExpression) parenthesized;
-      parenthesized = parenthesizedExpression.getOperand();
-    }
-    return parenthesized;
   }
 
   public static int getPrecendence(GrExpression expression) {

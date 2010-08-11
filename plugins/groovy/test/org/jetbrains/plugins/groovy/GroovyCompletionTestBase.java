@@ -25,7 +25,7 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTestCase {
-  protected void doSmartTest() throws Throwable {
+  protected void doSmartTest() {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);

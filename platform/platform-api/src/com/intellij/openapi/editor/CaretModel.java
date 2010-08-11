@@ -55,11 +55,22 @@ public interface CaretModel {
   void moveToVisualPosition(VisualPosition pos);
 
   /**
-   * Moves the caret to the specified offset in the document.
+   * Short hand for calling {@link #moveToOffset(int, boolean)} with <code>'false'</code> as a second argument.
    *
-   * @param offset the offset to move to.
+   * @param offset      the offset to move to
    */
   void moveToOffset(int offset);
+
+  /**
+   * Moves the caret to the specified offset in the document.
+   *
+   * @param offset                  the offset to move to.
+   * @param locateBeforeSoftWrap    there is a possible case that there is a soft wrap at the given offset, hence, the same offset
+   *                                corresponds to two different visual positions - just before soft wrap and just after soft wrap.
+   *                                We may want to clearly indicate where to put the caret then. Given parameter allows to do that.
+   *                                <b>Note:</b> it's ignored if there is no soft wrap at the given offset
+   */
+  void moveToOffset(int offset, boolean locateBeforeSoftWrap);
 
   /**
    * Returns the logical position of the caret.

@@ -24,6 +24,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectioner;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -73,7 +74,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       result = super.select(e, editorText, cursorOffset, editor);
     }
     else {
-      result = new ArrayList<TextRange>();
+      result = Lists.newArrayList();
     }
 
     if (ourStyleSelectioner != null) {

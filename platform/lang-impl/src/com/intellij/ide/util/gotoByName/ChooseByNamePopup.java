@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
+  private boolean myShowListForEmptyPattern = false;
 
   private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
                             final PsiElement context, @Nullable final String predefinedText) {
@@ -56,7 +57,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     super.initUI(callback, modalityState, allowMultipleSelection);
     //LaterInvocator.enterModal(myTextFieldPanel);
     if (myInitialText != null) {
-      rebuildList(0, 0, null, ModalityState.current());
+      rebuildList(0, 0, null, ModalityState.current(), null);
     }
     if (myOldFocusOwner != null){
       myPreviouslyFocusedComponent = myOldFocusOwner;
@@ -69,7 +70,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   protected boolean isShowListForEmptyPattern(){
-    return false;
+    return myShowListForEmptyPattern;
+  }
+
+  public void setShowListForEmptyPattern(boolean showListForEmptyPattern) {
+    myShowListForEmptyPattern = showListForEmptyPattern;
   }
 
   protected boolean isCloseByFocusLost(){
