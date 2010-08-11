@@ -252,7 +252,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   }
 
   public ModifiableRootModel getOrCreateModifiableRootModel(Module module) {
-    final ModuleEditor editor = myContext.getModulesConfigurator().getEditor(module);
+    final ModuleEditor editor = myContext.getModulesConfigurator().getOrCreateModuleEditor(module);
     return editor.getModifiableRootModelProxy();
   }
 }
