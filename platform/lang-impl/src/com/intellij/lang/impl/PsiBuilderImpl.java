@@ -802,7 +802,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (item instanceof StartMarker && ((StartMarker)item).myDoneMarker.myTieToTheLeft) {
         int prevProductionLexIndex = fProduction.get(i - 1).myLexemeIndex;
         while (item.myLexemeIndex > prevProductionLexIndex &&
-               item.myLexemeIndex - 1 < myLexemeCount &&
                whitespaceOrComment(myLexTypes[item.myLexemeIndex - 1])) {
           item.myLexemeIndex--;
         }
@@ -817,7 +816,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       else if (item instanceof DoneMarker || item instanceof ErrorItem) {
         int prevProductionLexIndex = fProduction.get(i - 1).myLexemeIndex;
         while (item.myLexemeIndex > prevProductionLexIndex &&
-               item.myLexemeIndex - 1 < myLexemeCount &&
                whitespaceOrComment(myLexTypes[item.myLexemeIndex - 1])) {
           item.myLexemeIndex--;
         }
