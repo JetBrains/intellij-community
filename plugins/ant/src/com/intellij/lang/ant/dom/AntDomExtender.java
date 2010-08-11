@@ -75,6 +75,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     TAG_MAPPING.put("basename", AntDomBasenameTask.class);
     TAG_MAPPING.put("length", AntDomLengthTask.class);
     TAG_MAPPING.put("tempfile", AntDomTempFile.class);
+    TAG_MAPPING.put("exec", AntDomExecTask.class);
+    TAG_MAPPING.put("buildnumber", AntDomBuildnumberTask.class);
   }
 
   public void registerExtensions(@NotNull final AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {

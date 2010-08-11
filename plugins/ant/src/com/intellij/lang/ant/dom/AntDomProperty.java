@@ -101,7 +101,14 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
   }
 
   public PsiElement getNavigationElement(final String propertyName) {
-    final DomTarget domTarget = DomTarget.getTarget(this);
+    DomTarget domTarget = DomTarget.getTarget(this);
+    if (domTarget == null) {
+      final GenericAttributeValue<String> environment = getEnvironment();
+      if (environment.getRawText() != null) {
+        domTarget = DomTarget.getTarget(this, environment);
+      }
+    }
+    
     if (domTarget != null) {
       final PsiElement psi = PomService.convertToPsi(domTarget);
       if (psi != null) {
