@@ -7,9 +7,9 @@ PsiJavaFile:BindBeforeClass1.java
       PsiReferenceParameterList
         <empty list>
     PsiJavaToken:SEMICOLON(';')
+  PsiWhiteSpace('\n\n')
   PsiImportList
     <empty list>
-  PsiWhiteSpace('\n\n')
   PsiClass:A
     PsiComment(END_OF_LINE_COMMENT)('// comment')
     PsiWhiteSpace('\n')

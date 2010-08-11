@@ -1,8 +1,8 @@
 PsiJavaFile:BindBeforeClass3.java
-  PsiImportList
-    <empty list>
   PsiComment(END_OF_LINE_COMMENT)('// comment')
   PsiWhiteSpace('\n\n')
+  PsiImportList
+    <empty list>
   PsiClass:A
     PsiModifierList:
       <empty list>

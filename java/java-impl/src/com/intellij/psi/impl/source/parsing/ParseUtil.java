@@ -88,19 +88,17 @@ public class ParseUtil extends ParseUtilBase {
       return treeNext instanceof ModifierListElement;
     }
 
-    private static void moveEmptyImportList(ASTNode root) {
-      TreeElement first = (TreeElement)root.getFirstChildNode();
-      TreeElement next = (TreeElement)TreeUtil.skipElements(first, ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET);
-      if (next == null) return;
+    private static final TokenSet BEFORE_IMPORT_BIT_SET = TokenSet.orSet(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET,
+                                                                         TokenSet.create(JavaElementType.PACKAGE_STATEMENT));
 
-      if (next.getElementType() == JavaElementType.PACKAGE_STATEMENT) {
-        first = next.getTreeNext();
-        next = (TreeElement)TreeUtil.skipElements(first, ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET);
-      }
+    private static void moveEmptyImportList(final ASTNode root) {
+      final TreeElement anImport = (TreeElement)TreeUtil.skipElements(root.getFirstChildNode(), BEFORE_IMPORT_BIT_SET);
+      if (anImport == null || !isEmptyImportList(anImport)) return;
 
-      if (next != null && next != first && isEmptyImportList(next)) {
-        next.rawRemove();
-        first.rawInsertBeforeMe(next);
+      final TreeElement next = (TreeElement)TreeUtil.skipElements(anImport.getTreeNext(), ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET);
+      if (next != null && next != anImport) {
+        anImport.rawRemove();
+        next.rawInsertBeforeMe(anImport);
       }
     }
 
@@ -124,23 +122,28 @@ public class ParseUtil extends ParseUtilBase {
       // we'll only bind additional preceding comments in pass 2 when the declaration does not yet have a "doc comment"
       iterator = comments.listIterator();
       while (iterator.hasNext()) {
-        ASTNode child = iterator.next();
-        IElementType type = child.getElementType();
+        ASTNode comment = iterator.next();
+        IElementType type = comment.getElementType();
         if (type == JavaDocElementType.DOC_COMMENT) {
-          if (bindDocComment((TreeElement)child)) iterator.remove();
+          if (bindDocComment((TreeElement)comment)) iterator.remove();
         }
         // bind "trailing comments" (like "int a; // comment")
         else if (type == JavaTokenType.END_OF_LINE_COMMENT || type == JavaTokenType.C_STYLE_COMMENT) {
-          if (bindTrailingComment((TreeElement)child)) iterator.remove();
+          if (bindTrailingComment((TreeElement)comment)) iterator.remove();
         }
       }
 
       // pass 2: bind preceding comments (like "// comment \n void f();")
       iterator = comments.listIterator(comments.size());
       while (iterator.hasPrevious()) {
-        ASTNode child = iterator.previous();
-        TreeElement next = (TreeElement)TreeUtil.skipElements(child.getTreeNext(), ElementType.JAVA_WHITESPACE_BIT_SET);
-        bindPrecedingComment((TreeElement)child, next);
+        final ASTNode comment = iterator.previous();
+
+        TreeElement next = (TreeElement)TreeUtil.skipElements(comment.getTreeNext(), ElementType.JAVA_WHITESPACE_BIT_SET);
+        if (next != null && isEmptyImportList(next)) {
+          next = (TreeElement)TreeUtil.skipElements(next.getTreeNext(), ElementType.JAVA_WHITESPACE_BIT_SET);
+        }
+
+        bindPrecedingComment((TreeElement)comment, next);
       }
     }
 
@@ -220,22 +223,22 @@ public class ParseUtil extends ParseUtilBase {
       TreeElement child = comment;
       while (child != bindTo) {
         final TreeElement next = child.getTreeNext();
-        child.rawRemove();
-        first.rawInsertBeforeMe(child);
+        if (!isEmptyImportList(child)) {
+          child.rawRemove();
+          first.rawInsertBeforeMe(child);
+        }
         child = next;
       }
     }
 
     private static boolean isBindingComment(final ASTNode comment) {
-      ASTNode prev = comment.getTreePrev();
-      if (isEmptyImportList(prev)) prev = prev.getTreePrev();
+      final ASTNode prev = comment.getTreePrev();
       final boolean prevOk = prev == null ||
                              (prev.getElementType() == TokenType.WHITE_SPACE && prev.textContains('\n'));
 
       final ASTNode next = comment.getTreeNext();
       final boolean nextOk = next != null &&
-                             next.getElementType() == TokenType.WHITE_SPACE &&
-                             StringUtil.getLineBreakCount(next.getText()) < 2;
+                             (next.getElementType() != TokenType.WHITE_SPACE || StringUtil.getLineBreakCount(next.getText()) < 2);
 
       return prevOk && nextOk;
     }

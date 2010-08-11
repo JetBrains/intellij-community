@@ -13,9 +13,9 @@ PsiJavaFile:BindDocComment1.java
       PsiReferenceParameterList
         <empty list>
     PsiJavaToken:SEMICOLON(';')
+  PsiWhiteSpace('\n')
   PsiImportList
     <empty list>
-  PsiWhiteSpace('\n')
   PsiClass:A
     PsiModifierList:
       <empty list>

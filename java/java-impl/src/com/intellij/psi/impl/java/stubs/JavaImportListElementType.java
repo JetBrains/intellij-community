@@ -32,7 +32,7 @@ import java.io.IOException;
 
 public class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList> {
   public JavaImportListElementType() {
-    super("IMPORT_LIST", true);
+    super("IMPORT_LIST");
   }
 
   public PsiImportList createPsi(final PsiImportListStub stub) {

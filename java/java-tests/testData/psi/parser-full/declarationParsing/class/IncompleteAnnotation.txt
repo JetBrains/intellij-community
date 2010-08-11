@@ -7,9 +7,9 @@ PsiJavaFile:IncompleteAnnotation.java
       PsiReferenceParameterList
         <empty list>
     PsiJavaToken:SEMICOLON(';')
+  PsiWhiteSpace('\n\n')
   PsiImportList
     <empty list>
-  PsiWhiteSpace('\n\n')
   PsiClass:Foo
     PsiModifierList:public
       PsiKeyword:public('public')

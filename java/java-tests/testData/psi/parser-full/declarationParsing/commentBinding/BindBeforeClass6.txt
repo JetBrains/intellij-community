@@ -1,17 +1,8 @@
-PsiJavaFile:BindBeforeClass4.java
-  PsiPackageStatement:p
-    PsiKeyword:package('package')
-    PsiWhiteSpace(' ')
-    PsiJavaCodeReferenceElement:p
-      PsiIdentifier:p('p')
-      PsiReferenceParameterList
-        <empty list>
-    PsiJavaToken:SEMICOLON(';')
-    PsiComment(END_OF_LINE_COMMENT)('// comment')
-  PsiWhiteSpace('\n')
+PsiJavaFile:BindBeforeClass6.java
   PsiImportList
     <empty list>
   PsiClass:A
+    PsiComment(C_STYLE_COMMENT)('/* comment */')
     PsiModifierList:
       <empty list>
     PsiKeyword:class('class')
