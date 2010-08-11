@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
@@ -46,10 +47,9 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
             if (endOfEnd != null) {
               final TextRange textRange = host.getTextRange();
               final int startOffset = textRange.getStartOffset();
-              registrar.startInjecting(host.getParent().getLanguage()).addPlace(null, null, (PsiLanguageInjectionHost)host,
-                                                                       new TextRange(
-                                                                         conditionalStart.getTextRange().getEndOffset() - startOffset,
-                                                                                     conditionalEnd.getStartOffset() - startOffset)).doneInjecting();
+              Language language = host.getParent().getLanguage();
+              TextRange range = new TextRange(conditionalStart.getTextRange().getEndOffset() - startOffset, conditionalEnd.getStartOffset() - startOffset);
+              registrar.startInjecting(language).addPlace(null, null, (PsiLanguageInjectionHost)host, range).doneInjecting();
             }
           }
         }

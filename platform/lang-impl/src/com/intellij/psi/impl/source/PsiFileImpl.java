@@ -389,13 +389,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
   protected PsiFileImpl clone() {
-    FileViewProvider provider = getViewProvider().clone();
+    FileViewProvider viewProvider = getViewProvider();
+    FileViewProvider providerCopy = viewProvider.clone();
     final Language language = getLanguage();
-    if (provider == null) {
-      throw new AssertionError("Unable to clone the view provider: " + getViewProvider() + "; " + language);
+    if (providerCopy == null) {
+      throw new AssertionError("Unable to clone the view provider: " + viewProvider + "; " + language);
     }
-    PsiFileImpl clone = (PsiFileImpl)provider.getPsi(language);
-    assert clone != null:"Cannot find psi file with language:"+language + " from viewprovider:"+provider+" virtual file:"+getVirtualFile();
+    PsiFileImpl clone = (PsiFileImpl)providerCopy.getPsi(language);
+    assert clone != null : "Cannot find psi file with language:" + language + " from viewprovider:" +
+                           providerCopy + " virtual file:" + getVirtualFile();
 
     copyCopyableDataTo(clone);
 
@@ -406,7 +408,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       treeClone.setPsi(clone);
     }
 
-    if (getViewProvider().isEventSystemEnabled()) {
+    if (viewProvider.isEventSystemEnabled()) {
       clone.myOriginalFile = this;
     }
     else if (myOriginalFile != null) {
