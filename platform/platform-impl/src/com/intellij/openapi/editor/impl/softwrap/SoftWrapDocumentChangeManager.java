@@ -123,7 +123,12 @@ public class SoftWrapDocumentChangeManager implements DocumentListener {
     int diff = event.getNewLength() - event.getOldLength();
     for (int i = index; i < softWraps.size(); i++) {
       TextChangeImpl softWrap = softWraps.get(i);
-      softWrap.advance(diff);
+
+      // Process only soft wraps not affected by the document change. E.g. there is a possible case that whole document text
+      // is replaced, hence, all registered soft wraps are affected by that and no offset advance should be performed.
+      if (softWrap.getStart() >= event.getOffset() + event.getOldLength()) {
+        softWrap.advance(diff);
+      }
     }
   }
 }
