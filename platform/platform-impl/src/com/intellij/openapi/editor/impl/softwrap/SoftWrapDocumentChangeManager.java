@@ -17,11 +17,12 @@ package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,9 +31,9 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jul 7, 2010 2:28:10 PM
  */
-public class SoftWrapDocumentChangeManager {
+public class SoftWrapDocumentChangeManager implements DocumentListener {
 
-  private final List<DeferredChange> myDeferredChanges = new ArrayList<DeferredChange>();
+  private final TIntHashSet mySoftWrapsToRemoveIndices = new TIntHashSet();
 
   private final SoftWrapsStorage myStorage;
   private final Editor           myEditor;
@@ -40,16 +41,23 @@ public class SoftWrapDocumentChangeManager {
   public SoftWrapDocumentChangeManager(@NotNull Editor editor, @NotNull SoftWrapsStorage storage) {
     myStorage = storage;
     myEditor = editor;
-    init(editor.getDocument());
   }
 
   /**
-   * Performs {@code 'soft wrap' -> 'hard wrap'} conversion for the given soft wrap.
+   * Performs {@code 'soft wrap' -> 'hard wrap'} conversion for soft wrap at the given offset if any.
    *
-   * @param softWrap    soft wrap to make hard wrap
+   * @param offset    offset that may point to soft wrap to make hard wrap
+   * @return          <code>true</code> if given offset points to soft wrap that was made hard wrap; <code>false</code> otherwise
    */
-  public void makeHardWrap(@NotNull TextChangeImpl softWrap) {
+  public boolean makeHardWrap(int offset) {
+    TextChangeImpl softWrap = myStorage.getSoftWrap(offset);
+    if (softWrap == null) {
+      return false;
+    }
+
+    myStorage.removeByIndex(myStorage.getSoftWrapIndex(offset));
     myEditor.getDocument().replaceString(softWrap.getStart(), softWrap.getEnd(), softWrap.getText());
+    return true;
   }
 
   /**
@@ -59,74 +67,63 @@ public class SoftWrapDocumentChangeManager {
    * until this method is called.
    */
   public void syncSoftWraps() {
-    Document document = myEditor.getDocument();
-
-    TIntHashSet softWrapsToRemoveIndices = new TIntHashSet();
-
-    // Update offsets for soft wraps that remain after the changed line(s).
-    List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
-    for (DeferredChange change : myDeferredChanges) {
-      if (change.startOffset >= document.getTextLength()) {
-        continue;
-      }
-      int index = myStorage.getSoftWrapIndex(change.startOffset);
-      if (index < 0) {
-        index = -index -1;
-      }
-      for (int i = index; i < softWraps.size(); i++) {
-        TextChangeImpl softWrap = softWraps.get(i);
-        if (softWrapsToRemoveIndices.contains(i)) {
-          continue;
-        }
-        if (softWrap.getStart() < change.endOffset || softWrap.getStart() >= document.getTextLength()) {
-          softWrapsToRemoveIndices.add(i);
-          continue;
-        }
-        softWrap.advance(change.symbolsDifference);
-      }
-    }
-
-    // Removes soft wraps from changed lines.
-    softWrapsToRemoveIndices.forEach(new TIntProcedure() {
+    mySoftWrapsToRemoveIndices.forEach(new TIntProcedure() {
       @Override
       public boolean execute(int value) {
         myStorage.removeByIndex(value);
         return true;
       }
     });
-
-    myDeferredChanges.clear();
+    mySoftWrapsToRemoveIndices.clear();
   }
 
-  private void init(final Document document) {
-    document.addDocumentListener(new LineOrientedDocumentChangeAdapter() {
-      @Override
-      public void beforeDocumentChange(int startLine, int endLine, int symbolsDifference) {
-        myDeferredChanges.add(
-          new DeferredChange(document.getLineStartOffset(startLine), document.getLineEndOffset(endLine), symbolsDifference)
-        );
-      }
+  @Override
+  public void beforeDocumentChange(DocumentEvent event) {
+    // Mark soft wraps to be removed.
+    Document document = myEditor.getDocument();
+    int startLine = document.getLineNumber(event.getOffset());
+    int startOffset = document.getLineStartOffset(startLine);
+    int endLine = document.getLineNumber(event.getOffset() + event.getOldLength());
+    int endOffset = document.getLineEndOffset(endLine);
+    markSoftWrapsForDeletion(startOffset, endOffset);
 
-      @Override
-      public void afterDocumentChange(int startLine, int endLine, int symbolsDifference) {
-      }
-    });
+    // Update offsets for soft wraps that remain after the changed line(s).
+    applyDocumentChangeDiff(event);
   }
 
-  private static class DeferredChange {
-    final int startOffset;
-    final int endOffset;
-    final int symbolsDifference;
+  @Override
+  public void documentChanged(DocumentEvent event) {
+  }
 
-    DeferredChange(int startOffset, int endOffset, int symbolsDifference) {
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-      this.symbolsDifference = symbolsDifference;
+  private void markSoftWrapsForDeletion(int startOffset, int endOffset) {
+    List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
+    int index = myStorage.getSoftWrapIndex(startOffset);
+    if (index < 0) {
+      index = -index - 1;
+    }
+    for (int i = index; i < softWraps.size(); i++) {
+      TextChangeImpl softWrap = softWraps.get(i);
+      if (softWrap.getStart() >= endOffset) {
+        break;
+      }
+      mySoftWrapsToRemoveIndices.add(i);
+    }
+  }
+
+  private void applyDocumentChangeDiff(DocumentEvent event) {
+    List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
+    
+    // We use 'offset + 1' here because soft wrap is represented before the document symbol at the same offset, hence, document
+    // modification at particular offset doesn't affect soft wrap registered for the same offset.
+    int index = myStorage.getSoftWrapIndex(event.getOffset() + 1);
+    if (index < 0) {
+      index = -index - 1;
     }
 
-    @Override
-    public String toString() {
-      return startOffset + "-" + endOffset + ": " + symbolsDifference;
+    int diff = event.getNewLength() - event.getOldLength();
+    for (int i = index; i < softWraps.size(); i++) {
+      TextChangeImpl softWrap = softWraps.get(i);
+      softWrap.advance(diff);
     }
   }
 }

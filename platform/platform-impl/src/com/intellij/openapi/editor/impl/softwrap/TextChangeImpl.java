@@ -134,8 +134,7 @@ public class TextChangeImpl implements TextChange {
   }
 
   /**
-   * Creates new {@link TextChange} on the basis of the current object with given offset applied to its {@link #getStart() start}
-   * and {@link #getEnd() end} properties.
+   * Applies given offset applied to the {@link #getStart() start} and {@link #getEnd() end} properties of current text change object.
    *
    * @param offset    offset to apply to the current change object
    * @return          text change that is built on the basis of the current object that with {@link #getStart() start}

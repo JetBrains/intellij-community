@@ -81,10 +81,10 @@ public class BackspaceAction extends EditorAction {
       }
       else {
         int offset = editor.getCaretModel().getOffset();
-        editor.getCaretModel().moveToOffset(offset-1);
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getSelectionModel().removeSelection();
         document.deleteString(offset-1, offset);
+        editor.getCaretModel().moveToOffset(offset - 1, true);
       }
     }
     else if(lineNumber > 0) {

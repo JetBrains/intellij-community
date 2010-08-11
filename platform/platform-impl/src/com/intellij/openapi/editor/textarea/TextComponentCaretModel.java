@@ -44,14 +44,19 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   public void moveToLogicalPosition(final LogicalPosition pos) {
-    moveToOffset(myEditor.logicalPositionToOffset(pos));
+    moveToOffset(myEditor.logicalPositionToOffset(pos), false);
   }
 
   public void moveToVisualPosition(final VisualPosition pos) {
     moveToLogicalPosition(myEditor.visualToLogicalPosition(pos));
   }
 
-  public void moveToOffset(final int offset) {
+  @Override
+  public void moveToOffset(int offset) {
+    moveToOffset(offset, false);
+  }
+
+  public void moveToOffset(final int offset, boolean locateBeforeSoftWrap) {
     myTextComponent.setCaretPosition(Math.min(offset, myTextComponent.getText().length()));
   }
 

@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl.softwrap;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
@@ -57,7 +58,6 @@ import java.nio.CharBuffer;
  * @since Jul 5, 2010 10:01:27 AM
  */
 public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager {
-
 
   /** Enumerates possible type of soft wrap indents to use. */
   enum IndentType {
@@ -103,6 +103,18 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
   }
 
   private final TIntHashSet myProcessedLogicalLines = new TIntHashSet();
+  private final DocumentListener myDocumentListener = new LineOrientedDocumentChangeAdapter() {
+    @Override
+    public void beforeDocumentChange(int startLine, int endLine, int symbolsDifference) {
+      for (int i = startLine; i <= endLine; i++) {
+        myProcessedLogicalLines.remove(i);
+      }
+    }
+
+    @Override
+    public void afterDocumentChange(int startLine, int endLine, int symbolsDifference) {
+    }
+  };
 
   private final EditorTextRepresentationHelper myTextRepresentationHelper;
   private final SoftWrapsStorage               myStorage;
@@ -120,7 +132,6 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     myEditor = editor;
     myPainter = painter;
     myTextRepresentationHelper = textRepresentationHelper;
-    init(editor.getDocument());
   }
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
@@ -147,19 +158,8 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     }
   }
 
-  private void init(final Document document) {
-    document.addDocumentListener(new LineOrientedDocumentChangeAdapter() {
-      @Override
-      public void beforeDocumentChange(int startLine, int endLine, int symbolsDifference) {
-        for (int i = startLine; i <= endLine; i++) {
-          myProcessedLogicalLines.remove(i);
-        }
-      }
-
-      @Override
-      public void afterDocumentChange(int startLine, int endLine, int symbolsDifference) {
-      }
-    });
+  public DocumentListener getDocumentListener() {
+    return myDocumentListener;
   }
 
   private void dropDataIfNecessary() {
