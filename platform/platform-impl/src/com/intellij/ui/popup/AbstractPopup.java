@@ -1025,6 +1025,10 @@ public class AbstractPopup implements JBPopup {
       else {
         setBorder(border);
       }
+
+      if (drawMacCorner && UIUtil.isUnderAquaLookAndFeel()) {
+        setBackground(new Color(UIUtil.getPanelBackgound().getRGB()));
+      }
     }
 
     public void paint(Graphics g) {
