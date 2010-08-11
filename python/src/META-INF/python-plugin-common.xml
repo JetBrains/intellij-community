@@ -248,6 +248,8 @@
 
     <xml.zenCodingGenerator implementation="com.jetbrains.django.lang.template.DjangoTemplateZenCodingGenerator"/>
 
+    <completion.contributor language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCompletionContributor"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
