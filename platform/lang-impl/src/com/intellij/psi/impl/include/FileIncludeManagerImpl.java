@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -34,7 +35,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -222,7 +222,11 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     public CachedValueProvider.Result<VirtualFile[]> compute(PsiFile param) {
       VirtualFile[] value = computeFiles(param, myRuntimeOnly);
       // todo: we need "url modification tracker" for VirtualFile 
-      return CachedValueProvider.Result.create(value, ArrayUtil.append(value, param.getVirtualFile()));
+      Object[] deps = new Object[value.length + 2];
+      deps[deps.length - 2] = param.getVirtualFile();
+      deps[deps.length - 1] = VirtualFileManager.getInstance();
+
+      return CachedValueProvider.Result.create(value, deps);
     }
   }
 }
