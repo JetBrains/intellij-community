@@ -661,7 +661,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(project) {
 
       protected void run() throws Exception {
-        final int offset = configureByFilesInner(filePath);
+        configureByFilesInner(filePath);
+        int offset = myEditor.getCaretModel().getOffset();
 
         final Collection<HighlightInfo> infos = doHighlighting();
         for (HighlightInfo info :infos) {
@@ -945,7 +946,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     super.tearDown();
   }
 
-  private int configureByFilesInner(@NonNls String... filePaths) throws IOException {
+  private PsiFile configureByFilesInner(@NonNls String... filePaths) throws IOException {
     assertInitialized();
     myFile = null;
     myEditor = null;
@@ -955,13 +956,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return configureByFileInner(filePaths[0]);
   }
 
-  public void configureByFile(final String file) {
+  public PsiFile configureByFile(final String file) {
     assertInitialized();
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Exception {
         configureByFilesInner(file);
       }
     }.execute();
+    return myFile;
   }
 
   public void configureByFiles(@NonNls final String... files) {
@@ -1026,16 +1028,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   /**
    *
    * @param filePath
-   * @return caret offset or -1 if caret marker does not present
    * @throws IOException
    */
-  private int configureByFileInner(@NonNls String filePath) {
+  private PsiFile configureByFileInner(@NonNls String filePath) {
     assertInitialized();
     final VirtualFile file = copyFileToProject(filePath);
     return configureByFileInner(file);
   }
 
-  public int configureFromTempProjectFile(final String filePath)  {
+  public PsiFile configureFromTempProjectFile(final String filePath)  {
     return configureByFileInner(findFileInTempDir(filePath));
   }
 
@@ -1043,11 +1044,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     configureByFileInner(f);
   }
 
-  private int configureByFileInner(final VirtualFile copy) {
+  private PsiFile configureByFileInner(final VirtualFile copy) {
     return configureInner(copy, SelectionAndCaretMarkupLoader.fromFile(copy, getProject()));
   }
 
-  private int configureInner(@NotNull final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
+  private PsiFile configureInner(@NotNull final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
     try {
       final OutputStream outputStream = copy.getOutputStream(null, 0, 0);
@@ -1077,7 +1078,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
 
-    return offset;
+    return myFile;
   }
 
   private static void setContext(final PsiFile file, final PsiElement context) {

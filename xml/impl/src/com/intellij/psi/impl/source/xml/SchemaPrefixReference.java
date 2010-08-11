@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
@@ -36,21 +35,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implements PossiblePrefixReference {
 
-  private final NullableLazyValue<SchemaPrefix> myPrefix = new NullableLazyValue<SchemaPrefix>() {
-    @Override
-    protected SchemaPrefix compute() {
-      if (myElement instanceof XmlAttribute && (((XmlAttribute)myElement).isNamespaceDeclaration())) {
-        return new SchemaPrefix((XmlAttribute)myElement, getRangeInElement(), myName);
-      }
-      else if (myElement instanceof XmlAttributeValue &&
-               ((XmlAttribute)((XmlAttributeValue)myElement).getParent()).getLocalName().equals("prefix")) {
-        return SchemaPrefix.createJspPrefix((XmlAttributeValue)SchemaPrefixReference.this.myElement, myName);
-      }
-      else {
-        return resolvePrefix(myElement, myName);
-      }
-    }
-  };
+  private final SchemaPrefix myPrefix;
 
   private final String myName;
   @Nullable
@@ -67,6 +52,16 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
     super(element, range, true);
     myName = name;
     myTagNameReference = tagNameReference;
+    if (myElement instanceof XmlAttribute && (((XmlAttribute)myElement).isNamespaceDeclaration())) {
+      myPrefix = new SchemaPrefix((XmlAttribute)myElement, getRangeInElement(), myName);
+    }
+    else if (myElement instanceof XmlAttributeValue &&
+             ((XmlAttribute)((XmlAttributeValue)myElement).getParent()).getLocalName().equals("prefix")) {
+      myPrefix = SchemaPrefix.createJspPrefix((XmlAttributeValue)myElement, myName);
+    }
+    else {
+      myPrefix = null;
+    }
   }
 
   public String getNamespacePrefix() {
@@ -74,7 +69,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   }
 
   public SchemaPrefix resolve() {
-    return myPrefix.getValue();
+    return myPrefix == null ? resolvePrefix(myElement, myName) : myPrefix;
   }
 
   @NotNull
