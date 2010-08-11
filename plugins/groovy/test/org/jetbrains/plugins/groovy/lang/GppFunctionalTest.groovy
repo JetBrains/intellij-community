@@ -404,7 +404,7 @@ class Point {
     assertEquals point.constructors[0], resolveReference()
 
     configureGppScript "Point p = ['su<caret>per': 'a']"
-    assertEquals 2, multiResolveReference().size()
+    assertEquals 1, multiResolveReference().size()
   }
 
   public void testGotoSuperConstructorFromLiteralOnsets() throws Exception {
