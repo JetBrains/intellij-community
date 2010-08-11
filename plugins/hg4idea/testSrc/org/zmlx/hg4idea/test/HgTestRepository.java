@@ -24,18 +24,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
  * Representation of a Mercurial repository for tests purposes.
  * @author Kirill Likhodedov
  */
-class HgTestRepository {
+public class HgTestRepository {
   @NotNull private final HgAbstractTestCase myTest;
   @NotNull private final TempDirTestFixture myDirFixture;
   @Nullable private final HgTestRepository myParent; // cloned from
 
-  HgTestRepository(@NotNull HgAbstractTestCase test, @NotNull TempDirTestFixture dir) {
+  public HgTestRepository(@NotNull HgAbstractTestCase test, @NotNull TempDirTestFixture dir) {
     this(test, dir, null);
   }
 
@@ -44,7 +45,7 @@ class HgTestRepository {
    * @param dir    repository root
    * @param parent parent repository where this repository is cloned from, if one exists.
    */
-  HgTestRepository(@NotNull HgAbstractTestCase test, @NotNull TempDirTestFixture dir, @Nullable HgTestRepository parent) {
+  public HgTestRepository(@NotNull HgAbstractTestCase test, @NotNull TempDirTestFixture dir, @Nullable HgTestRepository parent) {
     myTest = test;
     myDirFixture = dir;
     myParent = parent;
@@ -73,7 +74,7 @@ class HgTestRepository {
    * Clones a repository from this one. New repository is located in a new temporary test directory.
    * @return New repository cloned from this one.
    */
-  HgTestRepository cloneRepository() throws Exception {
+  public HgTestRepository cloneRepository() throws Exception {
     final TempDirTestFixture dirFixture = createFixtureDir();
     final ProcessOutput processOutput = myTest.runHg(null, "clone", getDirFixture().getTempDirPath(), dirFixture.getTempDirPath());
     AbstractVcsTestCase.verify(processOutput);
@@ -81,7 +82,7 @@ class HgTestRepository {
   }
 
   @NotNull
-  TempDirTestFixture getDirFixture() {
+  public TempDirTestFixture getDirFixture() {
     return myDirFixture;
   }
 
@@ -89,40 +90,74 @@ class HgTestRepository {
     return myDirFixture.getFile(".");
   }
 
+  /**
+   * Creates a file in this repository.
+   * @param filename relative path to the file.
+   * @return The created file.
+   */
   public VirtualFile createFile(String filename) {
     return myDirFixture.createFile(filename);
+  }
+
+  /**
+   * Creates a file in this repository and fills it with the given content.
+   * @param filename relative path to the file.
+   * @param content  initial content for the file.
+   * @return The created file.
+   */
+  public VirtualFile createFile(String filename, String content) throws FileNotFoundException {
+    final VirtualFile file = createFile(filename);
+    HgTestUtil.printToFile(file, content);
+    return file;
   }
 
   /**
    * Natively executes the given mercurial command.
    * @param commandWithParameters Mercurial command with parameters. E.g. ["status", "-a"]
    */
-  void execute(String... commandWithParameters) throws IOException {
+  public void execute(String... commandWithParameters) throws IOException {
     myTest.runHg(new File(myDirFixture.getTempDirPath()), commandWithParameters);
   }
 
-  void add() throws IOException {
+  public void add() throws IOException {
     execute("add");
   }
 
-  void commit() throws IOException {
+  public void commit() throws IOException {
     execute("commit", "-m", "Sample commit message");
   }
 
-  void merge() throws IOException {
+  public void merge() throws IOException {
     execute("merge");
   }
 
-  void pull() throws IOException {
+  public void pull() throws IOException {
     execute("pull");
   }
 
-  void push() throws IOException {
+  public void push() throws IOException {
     execute("push");
   }
 
-  void update() throws IOException {
+  public void update() throws IOException {
     execute("update");
+  }
+
+  /**
+   * Calls add() and then commit(). A shorthand for usual test situations when a file is added and then immediately committed.
+   */
+  public void addCommit() throws IOException {
+    add();
+    commit();
+  }
+
+  /**
+   * Calls pull, update and merge on this repository. Common for merge testing.
+   */
+  public void pullUpdateMerge() throws IOException {
+    pull();
+    update();
+    merge();
   }
 
 }
