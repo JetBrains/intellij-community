@@ -85,7 +85,6 @@ public class LibraryCompositionOptionsPanel {
     myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
                                              ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    myAddedJars.addAll(myLibraryCompositionSettings.getAddedJars());
     myUsedLibraries.addAll(myLibraryCompositionSettings.getUsedLibraries());
     myAddJarsButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -245,7 +244,6 @@ public class LibraryCompositionOptionsPanel {
       myLibraryCompositionSettings.setDownloadLibraries(false);
     }
     myLibraryCompositionSettings.setUsedLibraries(myUsedLibraries);
-    myLibraryCompositionSettings.setAddedJars(myAddedJars);
     myLibraryCompositionSettings.setLibraryLevel(myLibraryLevels.getKey((String)myLibraryLevelComboBox.getSelectedItem()));
     myLibraryCompositionSettings.setLibraryName(myLibraryNameField.getText());
   }

@@ -15,14 +15,13 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,24 +31,44 @@ import java.awt.*;
  */
 public class EditLibraryDialog extends DialogWrapper {
 
-  private ApplicationLibraryTable myLibraryTable = new ApplicationLibraryTable();
-  private Library myLibrary;
   private JPanel myEditorPanel;
   private JPanel myPanel;
   private JPanel myNameAndLevelPanelWrapper;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private LibraryCompositionSettings mySettings;
+  private LibraryTableEditor myLibraryTableEditor;
 
   public EditLibraryDialog(Component parent, LibraryCompositionSettings settings) {
     super(parent, true);
     mySettings = settings;
-    setTitle("Edit Library");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    final Library library = settings.getOrCreateLibrary();
+
+    myLibraryTableEditor = LibraryTableEditor.editLibrary(new LibraryTableModifiableModelProvider() {
+
       @Override
-      public void run() {
-        myLibrary = myLibraryTable.createLibrary("xxx");
+      public LibraryTable.ModifiableModel getModifiableModel() {
+        return library.getTable().getModifiableModel();
       }
-    });
+
+      @Override
+      public String getTableLevel() {
+        return library.getTable().getTableLevel();
+      }
+
+      @Override
+      public LibraryTablePresentation getLibraryTablePresentation() {
+        return library.getTable().getPresentation();
+      }
+
+      @Override
+      public boolean isLibraryTableEditable() {
+        return false;
+      }
+    }, library);
+
+    Disposer.register(getDisposable(), myLibraryTableEditor);
+
+    setTitle("Edit Library");
 
     myNameAndLevelPanel = new LibraryNameAndLevelPanel();
     myNameAndLevelPanel.reset(mySettings);
@@ -57,36 +76,10 @@ public class EditLibraryDialog extends DialogWrapper {
 
   }
 
-  public Library getLibrary() {
-    return myLibrary;
-  }
-
   @Override
   protected JComponent createCenterPanel() {
 
-    JComponent editor = LibraryTableEditor.editLibrary(new LibraryTableModifiableModelProvider() {
-
-      @Override
-      public LibraryTable.ModifiableModel getModifiableModel() {
-        return myLibraryTable.getModifiableModel();
-      }
-
-      @Override
-      public String getTableLevel() {
-        return myLibraryTable.getTableLevel();
-      }
-
-      @Override
-      public LibraryTablePresentation getLibraryTablePresentation() {
-        return myLibraryTable.getPresentation();
-      }
-
-      @Override
-      public boolean isLibraryTableEditable() {
-        return false;
-      }
-    }, myLibrary).getComponent();
-
+    JComponent editor = myLibraryTableEditor.getComponent();
     myEditorPanel.add(editor);
     myNameAndLevelPanelWrapper.add(myNameAndLevelPanel.getPanel());
     return myPanel;

@@ -18,6 +18,7 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
@@ -51,7 +52,7 @@ public class LibraryOptionsPanel {
   private ButtonGroup myButtonGroup;
   private ElementsChooser<Library> myLibrariesChooser;
 
-  private LibraryCompositionSettings myLibraryCompositionSettings;
+  private LibraryCompositionSettings mySettings;
   private LibrariesContainer myLibrariesContainer;
 
 
@@ -63,14 +64,14 @@ public class LibraryOptionsPanel {
 
   private RadioButtonEnumModel<Choice> myButtonEnumModel;
 
-  public LibraryOptionsPanel(LibraryCompositionSettings libraryCompositionSettings, LibrariesContainer librariesContainer) {
+  public LibraryOptionsPanel(LibraryCompositionSettings settings, LibrariesContainer librariesContainer) {
 
-    myLibraryCompositionSettings = libraryCompositionSettings;
+    mySettings = settings;
     myLibrariesContainer = librariesContainer;
 
     List<Library> suitableLibraries = calculateSuitableLibraries();
     if (!suitableLibraries.isEmpty()) {
-      myLibraryCompositionSettings.setUsedLibraries(suitableLibraries);
+      mySettings.setUsedLibraries(suitableLibraries);
     }
 
     myLibrariesChooser = new ChooseLibrariesDialog.LibraryElementChooser(suitableLibraries);
@@ -79,29 +80,34 @@ public class LibraryOptionsPanel {
     myExistingLibrariesLabel.setLabelFor(myLibrariesChooser.getComponent());
 
     myButtonEnumModel = RadioButtonEnumModel.bindEnum(Choice.class, myButtonGroup);
-    ActionListener listener = new ActionListener() {
+    myButtonEnumModel.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         updateState();
       }
-    };
-    myButtonEnumModel.addActionListener(listener);
+    });
 
     myConfigureButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         switch (myButtonEnumModel.getSelected()) {
           case DOWNLOAD:
-            showDialog(new DownloadingOptionsDialog(myConfigureButton, myLibraryCompositionSettings));
+            showDialog(new DownloadingOptionsDialog(myConfigureButton, mySettings));
             break;
           case PICK_FILES:
-            EditLibraryDialog dialog = new EditLibraryDialog(myConfigureButton, myLibraryCompositionSettings);
-            if (myLibraryCompositionSettings.getAddedJars().isEmpty()) {
+            if (mySettings.getLibrary() == null) {
               VirtualFile[] files = showFileChooser();
-              Library.ModifiableModel modifiableModel = dialog.getLibrary().getModifiableModel();
+              final Library.ModifiableModel modifiableModel = mySettings.getOrCreateLibrary().getModifiableModel();
               for (VirtualFile file : files) {
                 modifiableModel.addRoot(file, OrderRootType.CLASSES);
               }
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  modifiableModel.commit();
+                }
+              });
             }
+            EditLibraryDialog dialog = new EditLibraryDialog(myConfigureButton, mySettings);
             showDialog(dialog);
             break;
           case DO_NOT_CREATE:
@@ -127,7 +133,7 @@ public class LibraryOptionsPanel {
   }
 
   private List<Library> calculateSuitableLibraries() {
-    LibraryInfo[] libraryInfos = myLibraryCompositionSettings.getLibraryInfos();
+    LibraryInfo[] libraryInfos = mySettings.getLibraryInfos();
     RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(libraryInfos);
     List<Library> suitableLibraries = new ArrayList<Library>();
     Library[] libraries = myLibrariesContainer.getAllLibraries();
@@ -150,7 +156,7 @@ public class LibraryOptionsPanel {
 
   @Nullable
   private VirtualFile getBaseDirectory() {
-    String path = myLibraryCompositionSettings.getBaseDirectoryForDownloadedFiles();
+    String path = mySettings.getBaseDirectoryForDownloadedFiles();
     VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(path);
     if (dir == null) {
       path = path.substring(0, path.lastIndexOf('/'));
@@ -169,26 +175,27 @@ public class LibraryOptionsPanel {
 
     switch (myButtonEnumModel.getSelected()) {
       case DOWNLOAD:
-        String path = myLibraryCompositionSettings.getDirectoryForDownloadedLibrariesPath()
-          .substring(myLibraryCompositionSettings.getBaseDirectoryForDownloadedFiles().length());
+        String path = mySettings.getDirectoryForDownloadedLibrariesPath()
+          .substring(mySettings.getBaseDirectoryForDownloadedFiles().length());
         message = MessageFormat.format("{0} jar(s) will be downloaded into <b>{1}</b> directory <br>" +
                                        "{2} library <b>{3}</b> will be created",
-                                       myLibraryCompositionSettings.getLibraryInfos().length,
+                                       mySettings.getLibraryInfos().length,
                                        path,
-                                       myLibraryCompositionSettings.getLibraryLevel(),
-                                       myLibraryCompositionSettings.getLibraryName());
+                                       mySettings.getLibraryLevel(),
+                                       mySettings.getLibraryName());
         break;
       case PICK_FILES:
-        if (myLibraryCompositionSettings.getAddedJars().isEmpty()) {
+        Library library = mySettings.getLibrary();
+        if (library == null) {
           myMessage.setForeground(Color.red);
           message = "Press Configure button to add classes to the library";
         }
         else {
           message = MessageFormat.format("{0} level library <b>{1}</b>" +
-                                         "with {2} file(s) will be created",
-                                         myLibraryCompositionSettings.getLibraryLevel(),
-                                         myLibraryCompositionSettings.getLibraryName(),
-                                         myLibraryCompositionSettings.getAddedJars().size());
+                                         " with {2} file(s) will be created",
+                                         mySettings.getLibraryLevel(),
+                                         mySettings.getLibraryName(),
+                                         library.getFiles(OrderRootType.CLASSES).length);
         }
         break;
       case DO_NOT_CREATE:
@@ -200,13 +207,14 @@ public class LibraryOptionsPanel {
     myMessage.setText("<html>" + message + "</html>");
   }
 
-  public LibraryCompositionSettings getLibraryCompositionSettings() {
-    return myLibraryCompositionSettings;
+  public LibraryCompositionSettings getSettings() {
+    return mySettings;
   }
 
 
   public void apply() {
-    myLibraryCompositionSettings.setUsedLibraries(myLibrariesChooser.getMarkedElements());
+    mySettings.setUsedLibraries(myLibrariesChooser.getMarkedElements());
+    mySettings.setDownloadLibraries(myButtonEnumModel.getSelected() == Choice.DOWNLOAD);
   }
 
   public JComponent getMainPanel() {

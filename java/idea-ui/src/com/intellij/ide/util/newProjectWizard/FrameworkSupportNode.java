@@ -78,7 +78,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   public LibraryOptionsPanel getLibraryCompositionOptionsPanel(LibrariesContainer librariesContainer,
                                                                           LibraryDownloadingMirrorsMap mirrorsMap) {
     final LibraryCompositionSettings libraryCompositionSettings = getLibraryCompositionSettings();
-    if (myLibraryCompositionOptionsPanel == null || !myLibraryCompositionOptionsPanel.getLibraryCompositionSettings().equals(libraryCompositionSettings)) {
+    if (myLibraryCompositionOptionsPanel == null || !myLibraryCompositionOptionsPanel.getSettings().equals(libraryCompositionSettings)) {
       if (libraryCompositionSettings != null) {
         myLibraryCompositionOptionsPanel = new LibraryOptionsPanel(libraryCompositionSettings, librariesContainer);
       }
@@ -126,6 +126,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
       if (libraries.length != 0) {
         myLibraryCompositionSettings = new LibraryCompositionSettings(libraries, myConfigurable.getSelectedVersion().getLibraryName(), myBaseDirForLibrariesGetter.compute(),
                                                                       "Libraries", myProvider.getIcon());
+        Disposer.register(myConfigurable, myLibraryCompositionSettings);
       }
       else {
         myLibraryCompositionSettings = null;

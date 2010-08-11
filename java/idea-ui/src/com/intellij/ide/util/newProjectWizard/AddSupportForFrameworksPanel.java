@@ -351,7 +351,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       FrameworkSupportConfigurable configurable = node.getConfigurable();
       selectedConfigurables.add(configurable);
       final LibraryCompositionSettings settings = node.getLibraryCompositionSettings();
-      Library library = settings != null ? settings.addLibraries(rootModel, addedLibraries) : null;
+      Library library = settings != null ? settings.addLibraries(rootModel, addedLibraries, null) : null;
       configurable.addSupport(module, rootModel, library);
     }
     for (FrameworkSupportNode node : selectedFrameworks) {
