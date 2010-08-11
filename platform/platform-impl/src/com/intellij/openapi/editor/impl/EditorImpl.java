@@ -878,6 +878,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           // There is a possible case that soft wrap contains more than one line feed inside and we need to start counting not
           // from its first line.
           int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.softWrapLinesOnCurrentLogicalLine;
+
+          // Process 'before soft wrap' drawing.
+          if (softWrapLinesToSkip <= 0) {
+            prevX = x;
+            charWidth = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+            x += charWidth;
+            if (x >= px) {
+              break outer;
+            }
+            column++;
+          }
+
           CharSequence softWrapText = softWrap.getText();
           for (int i = 0; i < softWrapText.length(); i++) {
             c = softWrapText.charAt(i);
@@ -888,8 +900,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               continue;
             }
             prevX = x;
+
             charWidth = charToVisibleWidth(c, fontType, x);
             if (charWidth == 0) {
+              charWidth = spaceSize;
               break outer;
             }
 
@@ -946,7 +960,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if ((x - px) * 2 < charWidth) column++;
       }
       else {
-        column += (px - x) / EditorUtil.getSpaceWidth(fontType, this);
+        column += (px - x) / spaceSize;
+        if ((px - x) * 2 >= spaceSize) {
+          column++;
+        }
       }
     }
 
@@ -1132,9 +1149,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (softWrap != null && offset > startOffset) {
         column++;
         x += getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
-        if (column >= length) {
-          break;
-        }
+        // Assuming that first soft wrap symbol is line feed or all soft wrap symbols before the first line feed are spaces.
+        break;
       }
 
       FoldRegion region = state.getCurrentFold();
