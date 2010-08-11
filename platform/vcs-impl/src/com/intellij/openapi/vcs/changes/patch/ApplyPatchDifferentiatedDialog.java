@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -851,7 +852,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         }
       }
       if (diffRequestPresentables.isEmpty()) return;
-      ShowDiffAction.showDiffImpl(myProject, diffRequestPresentables, selectedIdx, ShowDiffAction.DiffExtendUIFactory.NONE, false);
+      ShowDiffAction.showDiffImpl(myProject, diffRequestPresentables, selectedIdx, new ShowDiffUIContext(false));
     }
   }
 

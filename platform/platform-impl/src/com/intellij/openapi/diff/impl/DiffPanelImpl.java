@@ -19,18 +19,21 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
+import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -41,15 +44,20 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.containers.CacheOneStepIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.security.InvalidParameterException;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSidesContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.DiffPanelImpl");
@@ -328,6 +336,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
     final JComponent newBottomComponent = data.getBottomComponent();
     myPanel.setBottomComponent(newBottomComponent);
+    myPanel.requestScrollEditors();
   }
 
   private static void setWindowTitle(Window window, String title) {
@@ -360,8 +369,134 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     public void scrollEditors() {
       getOptions().onNewContent(myCurrentSide);
+      final DiffNavigationContext scrollContext = (DiffNavigationContext) myDiffRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
+      if (scrollContext == null) {
+        scrollCurrentToFirstDiff();
+      } else {
+        final Document document = myRightSide.getEditor().getDocument();
+
+        final FragmentList fragmentList = getFragments();
+
+        final ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(fragmentList.iterator(), document);
+        final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator =
+          new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator);
+        final NavigationContextChecker checker = new NavigationContextChecker(cacheOneStepIterator, scrollContext);
+        int line = checker.contextMatchCheck();
+        if (line < 0) {
+          /*final ChangedLinesIterator changedLinesIterator2 = new ChangedLinesIterator(fragmentList.iterator(), document);
+          final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator2 =
+            new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator2);
+          final NavigationContextChecker checker2 = new NavigationContextChecker(cacheOneStepIterator2,
+            new DiffNavigationContext(Collections.<String>emptyList(), scrollContext.getTargetString()));
+          line = checker2.contextMatchCheck();
+          if (line >= 0) {
+            myRightSide.scrollToFirstDiff(line);
+          } else {*/
+            scrollCurrentToFirstDiff();
+          //}
+        } else {
+          myRightSide.scrollToFirstDiff(line);
+        }
+      }
+    }
+
+    private void scrollCurrentToFirstDiff() {
       int[] fragments = getFragmentBeginnings();
       if (fragments.length > 0) myCurrentSide.scrollToFirstDiff(fragments[0]);
+    }
+  }
+
+  private static class ChangedLinesIterator implements Iterator<Pair<Integer, String>> {
+    private final Document myDocument;
+    private final Iterator<Fragment> myFragmentsIterator;
+    private java.util.List<Pair<Integer, String>> myBuffer;
+
+    private ChangedLinesIterator(Iterator<Fragment> fragmentsIterator, Document document) {
+      myFragmentsIterator = fragmentsIterator;
+      myDocument = document;
+      myBuffer = new LinkedList<Pair<Integer, String>>();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return (! myBuffer.isEmpty()) || myFragmentsIterator.hasNext();
+    }
+
+    @Override
+    public Pair<Integer, String> next() {
+      if (! myBuffer.isEmpty()) {
+        return myBuffer.remove(0);
+      }
+
+      Fragment fragment = null;
+      while (myFragmentsIterator.hasNext()) {
+        fragment = myFragmentsIterator.next();
+        final TextDiffTypeEnum type = fragment.getType();
+        if ((type == null) || TextDiffTypeEnum.DELETED.equals(type) || TextDiffTypeEnum.NONE.equals(type)) continue;
+        break;
+      }
+      if (fragment == null) return null;
+      
+      final TextRange textRange = fragment.getRange(FragmentSide.SIDE2);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          final int startLine = myDocument.getLineNumber(textRange.getStartOffset());
+          final int endLine = myDocument.getLineNumber(textRange.getEndOffset());
+          for (int i = startLine; i <= endLine; i++) {
+            String text = myDocument.getText().substring(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i));
+            //text = text.endsWith("\r\n") ? text.substring(0, text.length() - 2) : text.substring(0, text.length() - 1);
+            myBuffer.add(new Pair<Integer, String>(i, text));
+          }
+        }
+      });
+      if (myBuffer.isEmpty()) return null;
+      return myBuffer.remove(0);
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  private static class NavigationContextChecker {
+    private final Iterator<Pair<Integer, String>> myChangedLinesIterator;
+    private final DiffNavigationContext myContext;
+
+    private NavigationContextChecker(Iterator<Pair<Integer, String>> changedLinesIterator, DiffNavigationContext context) {
+      myChangedLinesIterator = changedLinesIterator;
+      myContext = context;
+    }
+
+    public int contextMatchCheck() {
+      final Iterable<String> contextLines = myContext.getPreviousLinesIterable();
+
+      final Iterator<String> iterator = contextLines.iterator();
+      if (iterator.hasNext()) {
+        String contextLine = iterator.next();
+
+        while (myChangedLinesIterator.hasNext()) {
+          final Pair<Integer, String> pair = myChangedLinesIterator.next();
+          if (pair.getSecond().equals(contextLine)) {
+            if (! iterator.hasNext()) break;
+            contextLine = iterator.next();
+          }
+        }
+        if (iterator.hasNext()) {
+          return -1;
+        }
+      }
+      if (! myChangedLinesIterator.hasNext()) return -1;
+
+      final String targetLine = myContext.getTargetString();
+      while (myChangedLinesIterator.hasNext()) {
+        final Pair<Integer, String> pair = myChangedLinesIterator.next();
+        if (pair.getSecond().equals(targetLine)) {
+          return pair.getFirst();
+        }
+      }
+      return -1;
     }
   }
 
