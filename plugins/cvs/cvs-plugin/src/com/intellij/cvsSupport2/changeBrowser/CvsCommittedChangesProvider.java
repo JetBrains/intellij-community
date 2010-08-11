@@ -132,8 +132,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Nullable
   @Override
-  public CvsChangeList getOneList(RepositoryLocation location, final VcsRevisionNumber number) throws VcsException {
-    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+  public CvsChangeList getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
+    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) getLocationFor(new FilePathImpl(file));
     final String module = cvsLocation.getModuleName();
     final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
     if (connectionSettings.isOffline()) {

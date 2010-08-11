@@ -488,7 +488,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     private final FileAnnotation myFileAnnotation;
     private final AbstractVcs myVcs;
     private final VirtualFile myFile;
-    private RepositoryLocation myLocationFor;
     private int currentLine;
 
     private ShowDiffFromAnnotation(final UpToDateLineNumberProvider lineNumberProvider,
@@ -499,8 +498,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       myVcs = vcs;
       myFile = file;
       final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
-      final VirtualFile root = ProjectLevelVcsManager.getInstance(vcs.getProject()).getVcsRootFor(file);
-      myLocationFor = provider.getLocationFor(new FilePathImpl(root));
       currentLine = -1;
     }
 
@@ -535,7 +532,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
           public void run(@NotNull ProgressIndicator indicator) {
             final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
             try {
-              final CommittedChangeList cl = provider.getOneList(myLocationFor, revisionNumber);
+              final CommittedChangeList cl = provider.getOneList(myFile, revisionNumber);
               if (cl == null) {
                 ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
                 return;
@@ -675,7 +672,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
       private String extractCalculated(int number) {
         String text = myContents.substring(myLinesStartOffsets.get(number),
-                                                 (number > (myLinesStartOffsets.size() - 1))
+                                                 (number + 1 >= myLinesStartOffsets.size())
                                                  ? myContents.length()
                                                  : myLinesStartOffsets.get(number + 1));
         text = text.endsWith("\r\n") ? text.substring(0, text.length() - 2) : text.substring(0, text.length() - 1);

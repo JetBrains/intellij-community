@@ -19,7 +19,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
@@ -377,26 +379,37 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
         final FragmentList fragmentList = getFragments();
 
-        final ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(fragmentList.iterator(), document);
-        final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator =
-          new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator);
-        final NavigationContextChecker checker = new NavigationContextChecker(cacheOneStepIterator, scrollContext);
-        int line = checker.contextMatchCheck();
-        if (line < 0) {
-          /*final ChangedLinesIterator changedLinesIterator2 = new ChangedLinesIterator(fragmentList.iterator(), document);
-          final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator2 =
-            new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator2);
-          final NavigationContextChecker checker2 = new NavigationContextChecker(cacheOneStepIterator2,
-            new DiffNavigationContext(Collections.<String>emptyList(), scrollContext.getTargetString()));
-          line = checker2.contextMatchCheck();
-          if (line >= 0) {
-            myRightSide.scrollToFirstDiff(line);
-          } else {*/
-            scrollCurrentToFirstDiff();
-          //}
-        } else {
-          myRightSide.scrollToFirstDiff(line);
-        }
+        final Application application = ApplicationManager.getApplication();
+        application.executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            final ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(fragmentList.iterator(), document, false);
+            final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator =
+              new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator);
+            final NavigationContextChecker checker = new NavigationContextChecker(cacheOneStepIterator, scrollContext);
+            int line = checker.contextMatchCheck();
+            if (line < 0) {
+              // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
+              // just try to find target line  -> +-
+              final ChangedLinesIterator changedLinesIterator2 = new ChangedLinesIterator(fragmentList.iterator(), document, true);
+              final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator2 =
+                new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator2);
+              final NavigationContextChecker checker2 = new NavigationContextChecker(cacheOneStepIterator2, scrollContext);
+              line = checker2.contextMatchCheck();
+            }
+            final int finalLine = line;
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (finalLine >= 0) {
+                  myRightSide.scrollToFirstDiff(finalLine);
+                } else {
+                  scrollCurrentToFirstDiff();
+                }
+              }
+            }, ModalityState.stateForComponent(myOwnerWindow));
+          }
+        });
       }
     }
 
@@ -408,12 +421,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   private static class ChangedLinesIterator implements Iterator<Pair<Integer, String>> {
     private final Document myDocument;
+    private final boolean myIgnoreFragmentsType;
     private final Iterator<Fragment> myFragmentsIterator;
     private java.util.List<Pair<Integer, String>> myBuffer;
 
-    private ChangedLinesIterator(Iterator<Fragment> fragmentsIterator, Document document) {
+    private ChangedLinesIterator(Iterator<Fragment> fragmentsIterator, Document document, final boolean ignoreFragmentsType) {
       myFragmentsIterator = fragmentsIterator;
       myDocument = document;
+      myIgnoreFragmentsType = ignoreFragmentsType;
       myBuffer = new LinkedList<Pair<Integer, String>>();
     }
 
@@ -428,16 +443,17 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         return myBuffer.remove(0);
       }
 
+      final TextRange textRange;
       Fragment fragment = null;
       while (myFragmentsIterator.hasNext()) {
         fragment = myFragmentsIterator.next();
         final TextDiffTypeEnum type = fragment.getType();
-        if ((type == null) || TextDiffTypeEnum.DELETED.equals(type) || TextDiffTypeEnum.NONE.equals(type)) continue;
+        if ((! myIgnoreFragmentsType) && ((type == null) || TextDiffTypeEnum.DELETED.equals(type) || TextDiffTypeEnum.NONE.equals(type))) continue;
         break;
       }
       if (fragment == null) return null;
-      
-      final TextRange textRange = fragment.getRange(FragmentSide.SIDE2);
+
+      textRange = fragment.getRange(FragmentSide.SIDE2);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
@@ -445,7 +461,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
           final int endLine = myDocument.getLineNumber(textRange.getEndOffset());
           for (int i = startLine; i <= endLine; i++) {
             String text = myDocument.getText().substring(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i));
-            //text = text.endsWith("\r\n") ? text.substring(0, text.length() - 2) : text.substring(0, text.length() - 1);
             myBuffer.add(new Pair<Integer, String>(i, text));
           }
         }
@@ -472,15 +487,16 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     public int contextMatchCheck() {
       final Iterable<String> contextLines = myContext.getPreviousLinesIterable();
 
+      // we ignore spaces.. at least at start/end, since some version controls could ignore their changes when doing annotate
       final Iterator<String> iterator = contextLines.iterator();
       if (iterator.hasNext()) {
-        String contextLine = iterator.next();
+        String contextLine = iterator.next().trim();
 
         while (myChangedLinesIterator.hasNext()) {
           final Pair<Integer, String> pair = myChangedLinesIterator.next();
-          if (pair.getSecond().equals(contextLine)) {
+          if (pair.getSecond().trim().equals(contextLine)) {
             if (! iterator.hasNext()) break;
-            contextLine = iterator.next();
+            contextLine = iterator.next().trim();
           }
         }
         if (iterator.hasNext()) {
@@ -489,10 +505,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       }
       if (! myChangedLinesIterator.hasNext()) return -1;
 
-      final String targetLine = myContext.getTargetString();
+      final String targetLine = myContext.getTargetString().trim();
       while (myChangedLinesIterator.hasNext()) {
         final Pair<Integer, String> pair = myChangedLinesIterator.next();
-        if (pair.getSecond().equals(targetLine)) {
+        if (pair.getSecond().trim().equals(targetLine)) {
           return pair.getFirst();
         }
       }

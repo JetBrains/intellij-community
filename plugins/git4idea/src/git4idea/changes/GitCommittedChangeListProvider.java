@@ -225,8 +225,8 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   }
 
   @Override
-  public CommittedChangeList getOneList(RepositoryLocation location, final VcsRevisionNumber number) throws VcsException {
-    final GitRepositoryLocation l = (GitRepositoryLocation)location;
+  public CommittedChangeList getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
+    final GitRepositoryLocation l = (GitRepositoryLocation) getLocationFor(new FilePathImpl(file));
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
     if (root == null) {
       throw new VcsException("The repository does not exists anymore: " + l.getRoot());

@@ -491,8 +491,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public SvnChangeList getOneList(final RepositoryLocation location, VcsRevisionNumber number) throws VcsException {
-    final String url = ((SvnRepositoryLocation)location).getURL();
+  public SvnChangeList getOneList(final VirtualFile file, VcsRevisionNumber number) throws VcsException {
+    final VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(file);
+    final SvnRepositoryLocation svnRootLocation = (SvnRepositoryLocation)getLocationFor(new FilePathImpl(root));
+    if (svnRootLocation == null) return null;
+    final String url = svnRootLocation.getURL();
     final long revision;
     try {
       revision = Long.parseLong(number.asString());
@@ -521,11 +524,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       throw new VcsException(e);
     }
 
-    tryExactHit((SvnRepositoryLocation)location, result, logger, revisionBefore, repositoryUrl, svnurl);
+    tryExactHit(svnRootLocation, result, logger, revisionBefore, repositoryUrl, svnurl);
     if (result[0] == null) {
       tryByRoot(result, logger, revisionBefore, repositoryUrl);
       if (result[0] == null) {
-        tryStepByStep((SvnRepositoryLocation)location, result, logger, revisionBefore, repositoryUrl, svnurl);
+        tryStepByStep(svnRootLocation, result, logger, revisionBefore, repositoryUrl, svnurl);
       }
     }
     return result[0];
