@@ -29,22 +29,8 @@ public class ColorUtil {
   private ColorUtil() {
   }
 
-  public static String toHex(@NotNull final Color color) {
-    final StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < 3; i++) {
-      String s = Integer.toHexString(i == 0 ? color.getRed() : i == 1 ? color.getGreen() : color.getBlue());
-      if (s.length() < 2) {
-        sb.append('0');
-      }
-
-      sb.append(s);
-    }
-
-    return sb.toString();
-  }
-
   public static String generatePreviewHtml(@NotNull final Color color) {
-    return String.format("<div style=\"width: 50px; height: 30px; background-color: #%s; border: 1px solid #222;\">&nbsp;</div>", toHex(color));
+    return String.format("<div style=\"width: 50px; height: 30px; background-color: #%s; border: 1px solid #222;\">&nbsp;</div>", com.intellij.ui.ColorUtil.toHex(color));
   }
 
   public static void appendColorPreview(final PsiVariable variable, final StringBuilder buffer) {
