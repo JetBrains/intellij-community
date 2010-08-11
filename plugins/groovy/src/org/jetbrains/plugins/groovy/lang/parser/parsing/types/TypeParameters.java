@@ -23,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
+
 /**
  * @autor: ilyas
  */
@@ -80,13 +82,13 @@ public class TypeParameters implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kEXTENDS);
     ParserUtils.getToken(builder, mNLS);
-    if (!ReferenceElement.parseReferenceElement(builder)) {
+    if (ReferenceElement.parseReferenceElement(builder) == fail) {
       builder.error(GroovyBundle.message("identifier.expected"));
     } else {
       while (mBAND == builder.getTokenType()) {
         ParserUtils.getToken(builder, mBAND);
         ParserUtils.getToken(builder, mNLS);
-        if (!ReferenceElement.parseReferenceElement(builder)) {
+        if (ReferenceElement.parseReferenceElement(builder) == fail) {
           builder.error(GroovyBundle.message("type.expected"));
         }
       }

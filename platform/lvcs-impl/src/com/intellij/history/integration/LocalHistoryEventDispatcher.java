@@ -19,15 +19,14 @@ package com.intellij.history.integration;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
 public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
-  private static final Key<Boolean> WAS_VERSIONED_KEY = Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
+  private static final Key<Boolean> WAS_VERSIONED_KEY =
+    Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
 
   private final LocalHistoryFacade myVcs;
   private final IdeaGateway myGateway;
@@ -92,7 +91,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
       myVcs.created(f.getPath(), f.isDirectory());
     }
     if (f.isDirectory()) {
-      for (VirtualFile each : ((NewVirtualFile)f).iterInDbChildren()) {
+      for (VirtualFile each : IdeaGateway.iterateDBChildren(f)) {
         createRecursively(each);
       }
     }

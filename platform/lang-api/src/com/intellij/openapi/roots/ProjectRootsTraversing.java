@@ -252,20 +252,7 @@ public class ProjectRootsTraversing {
       }
 
       public void visit(ModuleSourceOrderEntry orderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
-        if (myExcludeTests) {
-          ContentEntry[] contentEntries = ModuleRootManager.getInstance(orderEntry.getOwnerModule()).getContentEntries();
-          for (ContentEntry contentEntry : contentEntries) {
-            for (SourceFolder folder : contentEntry.getSourceFolders()) {
-              VirtualFile root = folder.getFile();
-              if (root != null && !folder.isTestSource()) {
-                state.add(root);
-              }
-            }
-          }
-        }
-        else {
-          state.addAll(orderEntry.getFiles(OrderRootType.SOURCES));
-        }
+        state.addAll(ModuleRootManager.getInstance(orderEntry.getOwnerModule()).getSourceRoots(!myExcludeTests));
       }
     }
 

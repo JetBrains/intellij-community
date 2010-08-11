@@ -111,7 +111,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private String myOriginalComment = "";
   private final DefaultActionGroup myPopupActions;
 
-  private final Project myProject;
+  private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
@@ -265,20 +265,20 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
   private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
-  public FileHistoryPanelImpl(Project project,
-                              FilePath filePath, final String repositoryPath, VcsHistorySession session,
+  public FileHistoryPanelImpl(AbstractVcs vcs,
+                              FilePath filePath, VcsHistorySession session,
                               VcsHistoryProvider provider,
                               AnnotationProvider annotationProvider,
                               ContentManager contentManager, final Runnable refresher) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history");
+    myVcs = vcs;
     myProvider = provider;
     myAnnotationProvider = annotationProvider;
-    myProject = project;
     myRefresher = refresher;
     myHistorySession = session;         
     myFilePath = filePath;
 
-    COLUMNS = createColumnList(project, provider, session);
+    COLUMNS = createColumnList(myVcs.getProject(), provider, session);
 
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new Dimension(150, 100));
@@ -298,11 +298,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     @NonNls String storageKey = "FileHistory." + provider.getClass().getName();
     if (treeHistoryProvider != null) {
       myDualView = new DualView(new TreeNodeOnVcsRevision(null, treeHistoryProvider.createTreeOn(myHistorySession.getRevisionList())),
-                                COLUMNS, storageKey, project);
+                                COLUMNS, storageKey, myVcs.getProject());
     }
     else {
       myDualView = new DualView(new TreeNodeOnVcsRevision(null, wrapWithTreeElements(myHistorySession.getRevisionList())), COLUMNS,
-                                storageKey, project);
+                                storageKey, myVcs.getProject());
       myDualView.switchToTheFlatMode();
     }
     final TableLinkMouseListener listener = new TableLinkMouseListener();
@@ -330,7 +330,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     // todo react to event?
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
-        if (myProject.isDisposed()) {
+        if (myVcs.getProject().isDisposed()) {
           return;
         }
         final boolean refresh = (! myInRefresh) && myHistorySession.shouldBeRefreshed();
@@ -556,7 +556,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       revision = getFirstSelectedRevision();
       final String message = revision.getCommitMessage();
       myOriginalComment = message;
-      @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, message);
+      @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(myVcs.getProject(), message);
       myComments.setText(text);
       myComments.setCaretPosition(0);
     }
@@ -584,7 +584,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       if (content2 == null) throw new VcsException("Failed to load content for revision " + right.getRevisionNumber().asString());
 
 
-      SimpleDiffRequest diffData = new SimpleDiffRequest(myProject, myFilePath.getPresentableUrl());
+      SimpleDiffRequest diffData = new SimpleDiffRequest(myVcs.getProject(), myFilePath.getPresentableUrl());
 
       diffData.addHint(DiffTool.HINT_SHOW_FRAME);
 
@@ -651,7 +651,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     };
     commentGroup.add(commentLabel, BorderLayout.NORTH);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
-    pane.setBorder(IdeBorderFactory.createSimpleBorder(1, 1, myAdditionalDetails == null ? 0 : 1, 0));
+    pane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | (myAdditionalDetails == null ? 0 : SideBorder.BOTTOM)));
 
     commentGroup.add(pane, BorderLayout.CENTER);
     detailsSplitter.setFirstComponent(commentGroup);
@@ -663,7 +663,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     myLoadingLabel.setBackground(UIUtil.getToolTipBackground());
     wrapper.add(myLoadingLabel, BorderLayout.NORTH);
 
-    myDualView.setViewBorder(IdeBorderFactory.createSimpleBorder(0, 1, 1, 0));
+    myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
     wrapper.add(myDualView, BorderLayout.CENTER);
 
     mySplitter.setFirstComponent(wrapper);
@@ -693,7 +693,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   }
 
   private VcsConfiguration getConfiguration() {
-    return VcsConfiguration.getInstance(myProject);
+    return VcsConfiguration.getInstance(myVcs.getProject());
   }
 
   private DefaultActionGroup createPopupActions() {
@@ -757,7 +757,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   }
 
   private void refreshImpl() {
-    new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
+    new AbstractCalledLater(myVcs.getProject(), ModalityState.NON_MODAL) {
       public void run() {
         if (myInRefresh) return;
         myInRefresh = true;
@@ -806,12 +806,12 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
       int selectionSize = sel.size();
       if (selectionSize > 1) {
-        showDifferences(myProject, sel.get(0), sel.get(sel.size() - 1));
+        showDifferences(myVcs.getProject(), sel.get(0), sel.get(sel.size() - 1));
       }
       else if (selectionSize == 1) {
         final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
         if (currentRevisionNumber != null) {
-          showDifferences(myProject, getFirstSelectedRevision(), new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
+          showDifferences(myVcs.getProject(), getFirstSelectedRevision(), new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
         }
       }
     }
@@ -880,7 +880,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     protected void actionPerformed() {
       final VcsFileRevision revision = getFirstSelectedRevision();
       if (getVirtualFile() != null) {
-        if (!new ReplaceFileConfirmationDialog(myProject, VcsBundle.message("acton.name.get.revision"))
+        if (!new ReplaceFileConfirmationDialog(myVcs.getProject(), VcsBundle.message("acton.name.get.revision"))
           .confirmFor(new VirtualFile[]{getVirtualFile()})) {
           return;
         }
@@ -926,14 +926,14 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         };
       }
       if (refresh != null) {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(refresh, "Refreshing files...", false, myProject);
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(refresh, "Refreshing files...", false, myVcs.getProject());
       }
     }
 
     private void getVersion(final VcsFileRevision revision) {
       final VirtualFile file = getVirtualFile();
       if ((file != null) && !file.isWritable()) {
-        if (ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(file).hasReadonlyFiles()) {
+        if (ReadonlyStatusHandler.getInstance(myVcs.getProject()).ensureFilesWritable(file).hasReadonlyFiles()) {
           return;
         }
       }
@@ -961,7 +961,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       try {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            CommandProcessor.getInstance().executeCommand(myVcs.getProject(), new Runnable() {
                 public void run() {
                   try {
                     write(finalRevisionContent);
@@ -975,7 +975,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
           }
         });
         if (file != null) {
-          VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+          VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(file);
         }
       }
       finally {
@@ -1027,7 +1027,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     private void writeContentToDocument(final Document document, byte[] revisionContent) throws IOException {
       final String content = StringUtil.convertLineSeparators(new String(revisionContent, myFilePath.getCharset().name()));
 
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      CommandProcessor.getInstance().executeCommand(myVcs.getProject(), new Runnable() {
         public void run() {
           document.replaceString(0, document.getTextLength(), content);
         }
@@ -1053,7 +1053,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       boolean enabled = revision != null && revVFile != null && !fileType.isBinary();
 
       if (enabled) {
-        final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+        final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
         enabled &= (! (((ProjectLevelVcsManagerImpl) plVcsManager).getBackgroundableActionHandler(
           VcsBackgroundableActions.ANNOTATE).isInProgress(key(revVFile, revision))));
       }
@@ -1070,14 +1070,14 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
       if ((revision == null) || (revisionVirtualFile == null)) return;
 
-      final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).
+      final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myVcs.getProject())).
         getBackgroundableActionHandler(VcsBackgroundableActions.ANNOTATE);
       handler.register(key(revisionVirtualFile, revision));
 
       final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
       final Ref<VcsException> exceptionRef = new Ref<VcsException>();
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("retrieving.annotations"), true,
+      ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(), VcsBundle.message("retrieving.annotations"), true,
           BackgroundFromStartOption.getInstance()) {
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -1102,7 +1102,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
           }
           if (fileAnnotationRef.isNull()) return;
 
-          AbstractVcsHelper.getInstance(myProject).showAnnotation(fileAnnotationRef.get(), revisionVirtualFile);
+          AbstractVcsHelper.getInstance(myProject).showAnnotation(fileAnnotationRef.get(), revisionVirtualFile, myVcs);
         }
       });
     }
@@ -1118,14 +1118,14 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       }
       VirtualFile virtualFileForRevision = createVirtualFileForRevision(firstSelectedRevision);
       if (virtualFileForRevision != null) {
-        return new OpenFileDescriptor(myProject, virtualFileForRevision);
+        return new OpenFileDescriptor(myVcs.getProject(), virtualFileForRevision);
       }
       else {
         return null;
       }
     }
     else if (PlatformDataKeys.PROJECT.is(dataId)) {
-      return myProject;
+      return myVcs.getProject();
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return firstSelectedRevision;

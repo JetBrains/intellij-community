@@ -39,6 +39,7 @@ public class GroovyValidationUtil {
     GrParametersOwner owner = PsiTreeUtil.getParentOfType(variable, GrParametersOwner.class);
     assert owner != null;
     for (GrParameter parameter : list.getParameters()) {
+      if (parameter.equals(variable)) continue;
       validateVariableOccurrencesDownImpl(parameter, conflicts, varName);
     }
     validateVariableOccurrencesDown(owner, list, conflicts, varName);

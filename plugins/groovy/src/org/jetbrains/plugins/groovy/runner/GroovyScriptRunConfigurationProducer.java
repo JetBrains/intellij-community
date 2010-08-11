@@ -76,13 +76,16 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
                                                                  ConfigurationContext context) {
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final RunConfiguration configuration = existingConfiguration.getConfiguration();
-      final String path = ((GroovyScriptRunConfiguration)configuration).scriptPath;
+      final GroovyScriptRunConfiguration existing = (GroovyScriptRunConfiguration)configuration;
+      final String path = existing.scriptPath;
       if (path != null) {
         final PsiFile file = location.getPsiElement().getContainingFile();
-        if (file != null) {
+        if (file instanceof GroovyFile) {
           final VirtualFile vfile = file.getVirtualFile();
           if (vfile != null && FileUtil.toSystemIndependentName(path).equals(vfile.getPath())) {
-            return existingConfiguration;
+            if (GroovyScriptType.getScriptType((GroovyFile)file).isConfigurationByLocation(existing, location)) {
+              return existingConfiguration;
+            }
           }
         }
       }

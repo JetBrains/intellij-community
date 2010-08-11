@@ -7,3 +7,5 @@ PsiJavaFile:Reference1.java
     PsiJavaToken:DOT('.')
     PsiErrorElement:Identifier expected
       <empty list>
+    PsiReferenceParameterList
+      <empty list>

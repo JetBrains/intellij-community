@@ -64,6 +64,11 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
   }
 
   @Override
+  public String toString() {
+    return "extracted:" + myFilePath + "!" + myPathInJar;
+  }
+
+  @Override
   public VirtualFile findFile() {
     final VirtualFile jarFile = super.findFile();
     if (jarFile == null) return null;

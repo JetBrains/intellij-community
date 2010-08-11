@@ -335,6 +335,13 @@ public class FileUtil {
     return file;
   }
 
+  public static File createTempDirectory(File dir, @NonNls String prefix, @NonNls String suffix) throws IOException{
+    File file = doCreateTempFile(prefix, suffix, dir);
+    file.delete();
+    file.mkdir();
+    return file;
+  }
+
   public static File createTempFile(@NonNls final File dir, @NonNls String prefix, @NonNls String suffix, final boolean create) throws IOException{
     File file = doCreateTempFile(prefix, suffix, dir);
     file.delete();
@@ -1044,5 +1051,19 @@ public class FileUtil {
     }
 
     return null;
+  }
+
+  public static List<File> findFilesByMask(Pattern pattern, File dir) {
+    final ArrayList<File> found = new ArrayList<File>();
+    for (File file : dir.listFiles()) {
+      if (file.isDirectory()) {
+        found.addAll(findFilesByMask(pattern, file));
+      } else {
+        if (pattern.matcher(file.getName()).matches()) {
+          found.add(file);
+        }
+      }
+    }
+    return found;
   }
 }

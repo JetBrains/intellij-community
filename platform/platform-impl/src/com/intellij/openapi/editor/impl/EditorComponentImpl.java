@@ -74,6 +74,11 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     return null;
   }
 
+  @Override
+  public Color getBackground() {
+    return myEditor.getBackgroundColor();
+  }
+
   public Dimension getPreferredSize() {
     return myEditor.getPreferredSize();
   }

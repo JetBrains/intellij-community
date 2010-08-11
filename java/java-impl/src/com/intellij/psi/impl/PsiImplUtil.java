@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -192,6 +191,9 @@ public class PsiImplUtil {
     PsiType[] types = new PsiType[typeElements.length];
     for (int i = 0; i < types.length; i++) {
       types[i] = typeElements[i].getType();
+    }
+    if (types.length == 1 && types[0] instanceof PsiDiamondType) {
+      return ((PsiDiamondType)types[0]).getInferredTypes();
     }
     return types;
   }

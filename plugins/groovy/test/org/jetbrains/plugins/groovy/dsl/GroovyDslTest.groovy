@@ -25,6 +25,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.psi.PsiClass
 
 /**
  * @author peter
@@ -123,4 +124,17 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     return descriptor;
   }
 
+  public void testCategoryWhenMethodRenamed() {
+    PsiClass category = myFixture.addClass("""
+public class MyCategory {
+  public void foo(String s) {}
+}""")
+    def foo = category.getMethods()[0]
+    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", """
+contributor([:]){category 'MyCategory'}""");
+    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    myFixture.renameElement foo, "bar", false, false
+
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
+  }
 }

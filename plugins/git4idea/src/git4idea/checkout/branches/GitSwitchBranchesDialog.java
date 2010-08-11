@@ -268,16 +268,17 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     for (BranchDescriptor d : myBranches) {
       if (d.root != null) {
         if (!StringUtil.isEmpty(d.newBranchName)) {
-          String ref = d.referenceToCheckout.trim();
-          if (!d.existingBranches.contains(ref)) {
-            ref = myConfig.detectTag(d.root, ref);
-          }
-          rc.referencesToUse.put(d.root, ref);
-          rc.target.setBranch(d.root.getPath(), d.newBranchName.trim());
+          final String ref = d.referenceToCheckout.trim();
+          rc.referencesToUse.put(d.root, Pair.create(ref, d.referencesToSelect.contains(ref)));
+          rc.target.setReference(d.root.getPath(), d.newBranchName.trim());
           rc.checkoutNeeded.add(d.root);
         }
         else {
-          rc.target.setBranch(d.root.getPath(), d.referenceToCheckout.trim());
+          String ref = d.referenceToCheckout.trim();
+          if (!d.referencesToSelect.contains(ref)) {
+            ref = myConfig.detectTag(d.root, ref);
+          }
+          rc.target.setReference(d.root.getPath(), ref);
           if (!d.referenceToCheckout.equals(d.currentReference)) {
             rc.checkoutNeeded.add(d.root);
           }
@@ -935,6 +936,11 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
           }
         }
       });
+      myTextField.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          stopCellEditing();
+        }
+      });
       myPanel.add(myTextField,
                   new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
                                          0,
@@ -976,7 +982,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     /**
      * References to use for new branches
      */
-    HashMap<VirtualFile, String> referencesToUse = new HashMap<VirtualFile, String>();
+    HashMap<VirtualFile, Pair<String, Boolean>> referencesToUse = new HashMap<VirtualFile, Pair<String, Boolean>>();
     /**
      * The target configuration
      */

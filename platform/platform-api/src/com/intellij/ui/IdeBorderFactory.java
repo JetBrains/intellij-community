@@ -25,33 +25,42 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 public class IdeBorderFactory {
-  public static TitledBorder createTitledBorder(String title) {
-    //return BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), title);
-    return BorderFactory.createTitledBorder(new RoundedLineBorder(Color.LIGHT_GRAY, 3), title);
-  }
-
-  public static TitledBorder createTitledHeaderBorder(String title) {
-    //return BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), title);
-    return BorderFactory.createTitledBorder(new CompoundBorder(createEmptyBorder(0, 0, 5, 5), new SideBorder(Color.LIGHT_GRAY, SideBorder.TOP)), title);
-  }
+  public static final int BORDER_ROUNDNESS = 5;
 
   public static Border createBorder() {
-    return new RoundedLineBorder(Color.GRAY, 5);
+    return createBorder(SideBorder.ALL);
+  }
+
+  public static Border createBorder(int borders) {
+    return new SideBorder(getBorderColor(), borders);
+  }
+
+  public static Border createRoundedBorder() {
+    return new RoundedLineBorder(getBorderColor(), BORDER_ROUNDNESS);
   }
 
   public static Border createEmptyBorder(Insets insets) {
     return new EmptyBorder(insets);
   }
 
+  public static Border createEmptyBorder(int thickness) {
+    return new EmptyBorder(thickness, thickness, thickness, thickness);
+  }
+
   public static Border createEmptyBorder(int top, int left, int bottom, int right) {
     return new EmptyBorder(top, left, bottom, right);
   }
 
-  public static Border createSimpleBorder() {
-    return createSimpleBorder(1, 1, 1, 1);
+  public static TitledBorder createTitledBorder(String title) {
+    return BorderFactory.createTitledBorder(new RoundedLineBorder(getBorderColor(), BORDER_ROUNDNESS), title);
   }
 
-  public static Border createSimpleBorder(int top, int left, int bottom, int right) {
-    return BorderFactory.createMatteBorder(top, left, bottom, right, UIUtil.getBorderSeparatorColor());
+  public static TitledBorder createTitledHeaderBorder(String title) {
+    return BorderFactory.createTitledBorder(new CompoundBorder(createEmptyBorder(0, 0, BORDER_ROUNDNESS, BORDER_ROUNDNESS),
+                                                               new SideBorder(getBorderColor(), SideBorder.TOP)), title);
+  }
+
+  private static Color getBorderColor() {
+    return UIUtil.getBorderColor();
   }
 }

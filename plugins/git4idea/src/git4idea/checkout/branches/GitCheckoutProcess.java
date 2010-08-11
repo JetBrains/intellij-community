@@ -109,7 +109,7 @@ public class GitCheckoutProcess {
   /**
    * The new branch mapping
    */
-  private Map<VirtualFile, String> myNewBranchMapping = Collections.emptyMap();
+  private Map<VirtualFile, Pair<String, Boolean>> myNewBranchMapping = Collections.emptyMap();
   /**
    * The described roots
    */
@@ -336,10 +336,14 @@ public class GitCheckoutProcess {
       GitRevisionNumber prev = GitRevisionNumber.resolve(myProject, root, "HEAD");
       GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);
       h.addParameters("-f");
-      String branchedRef = myNewBranchMapping.get(root);
+      Pair<String, Boolean> branchedRef = myNewBranchMapping.get(root);
       String ref = myNewConfiguration.getReference(root.getPath());
+      h.addParameters("-l");
       if (branchedRef != null) {
-        h.addParameters("-l", "-t", "-b", ref, branchedRef);
+        if (branchedRef.second) {
+          h.addParameters("-t");
+        }
+        h.addParameters("-b", ref, branchedRef.first);
       }
       else {
         h.addParameters(ref);

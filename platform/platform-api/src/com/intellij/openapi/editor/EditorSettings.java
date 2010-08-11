@@ -103,4 +103,7 @@ public interface EditorSettings {
 
   boolean isAllSoftWrapsShown();
   void setShowAllSoftWraps(boolean show);
+
+  boolean isAllowSingleLogicalLineFolding();
+  void setAllowSingleLogicalLineFolding(boolean allow);
 }

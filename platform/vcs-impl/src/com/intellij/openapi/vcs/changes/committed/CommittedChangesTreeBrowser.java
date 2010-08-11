@@ -57,7 +57,7 @@ import java.util.List;
  * @author yole
  */
 public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider, Disposable, DecoratorManager {
-  private static final Border RIGHT_BORDER = IdeBorderFactory.createSimpleBorder(1, 1, 0, 0);
+  private static final Border RIGHT_BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
 
   private final Project myProject;
   private final Tree myChangesTree;

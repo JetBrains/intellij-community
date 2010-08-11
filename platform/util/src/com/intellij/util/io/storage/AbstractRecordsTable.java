@@ -181,8 +181,10 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
   }
 
   public void dispose() {
-    markClean();
-    myStorage.dispose();
+    if (!myStorage.isDisposed()) {
+      markClean();
+      myStorage.dispose();
+    }
   }
 
   public void force() {

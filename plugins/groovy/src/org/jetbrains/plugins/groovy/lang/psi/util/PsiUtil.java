@@ -692,9 +692,7 @@ public class PsiUtil {
   }
 
   public static boolean isRawClassMemberAccess(GrExpression expr) {
-    while (expr instanceof GrParenthesizedExpression) {
-      expr = ((GrParenthesizedExpression)expr).getOperand();
-    }
+    expr = (GrExpression)skipParentheses(expr, false);
 
     if (expr instanceof GrMethodCallExpression) {
       return isRawMethodCall((GrMethodCallExpression)expr);
@@ -940,4 +938,21 @@ public class PsiUtil {
                                          : new GroovyResolveResultImpl(psiClass, context, substitutor, true, true);
     return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
   }
+
+  public static PsiElement skipParentheses(PsiElement element, boolean up) {
+    if (up) {
+      PsiElement parent;
+      while ((parent=element.getParent()) instanceof GrParenthesizedExpression) {
+        element = parent;
+      }
+      return element;
+    }
+    else {
+      while (element instanceof GrParenthesizedExpression) {
+        element = ((GrParenthesizedExpression)element).getOperand();
+      }
+      return element;
+    }
+  }
+
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +23,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class ExceptionUtil {
+  private ExceptionUtil() {
+  }
+
   public static Throwable getRootCause(Throwable e) {
     while (true) {
       if (e.getCause() == null) return e;
@@ -66,6 +70,16 @@ public class ExceptionUtil {
     };
     aThrowable.printStackTrace(writer);
     return stringWriter.getBuffer().toString();
+  }
+
+  @NotNull
+  public static String getUserStackTrace(@NotNull Throwable aThrowable, Logger logger) {
+    final String result = getThrowableText(aThrowable, "com.intellij.");
+    if (result.indexOf("\n\tat") == -1) {
+      // no stack frames found
+      logger.error(aThrowable);
+    }
+    return result;
   }
 
   public static String getMessage(@NotNull Throwable e) {

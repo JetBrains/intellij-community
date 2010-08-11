@@ -120,7 +120,7 @@ public class GuiUtils {
 
   public static JPanel makeDialogPanel(JPanel aPanel) {
     JPanel emptyBordered = makePaddedPanel(aPanel, paddingFromDialogBoundaries);
-    return wrapWithBorder(emptyBordered, IdeBorderFactory.createBorder());
+    return wrapWithBorder(emptyBordered, IdeBorderFactory.createRoundedBorder());
   }
 
   public static JPanel makeTitledPanel(JComponent aComponent, String aTitle) {

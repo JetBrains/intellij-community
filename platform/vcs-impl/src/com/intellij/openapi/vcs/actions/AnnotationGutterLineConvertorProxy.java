@@ -68,8 +68,8 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
     return myDelegate.getBgColor(currentLine, editor);
   }
 
-  public List<AnAction> getPopupActions(Editor editor) {
-    return myDelegate.getPopupActions(editor);
+  public List<AnAction> getPopupActions(int line, Editor editor) {
+    return myDelegate.getPopupActions(line, editor);
   }
 
   public void gutterClosed() {

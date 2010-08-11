@@ -155,20 +155,25 @@ public class GitProjectLogManager {
         content.setCloseable(false);
         cvcm.addContent(content);
         newKeys.put(root, content);
-        
-        new CalculateContinuation<String>().calculateAndContinue(new ThrowableComputable<String, Exception>() {
-          public String compute() throws Exception {
-            return getCaption(baseDir, root);
+
+        new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
+          @Override
+          public void run() {
+            new CalculateContinuation<String>().calculateAndContinue(new ThrowableComputable<String, Exception>() {
+              public String compute() throws Exception {
+                return getCaption(baseDir, root);
+              }
+            }, new CatchingConsumer<String, Exception>() {
+              public void consume(Exception e) {
+                //should not
+                LOG.info(e);
+              }
+              public void consume(final String caption) {
+                content.setDisplayName(caption);
+              }
+            });
           }
-        }, new CatchingConsumer<String, Exception>() {
-          public void consume(Exception e) {
-            //should not
-            LOG.info(e);
-          }
-          public void consume(final String caption) {
-            content.setDisplayName(caption);
-          }
-        });
+        }.callMe();
       }
     }
 

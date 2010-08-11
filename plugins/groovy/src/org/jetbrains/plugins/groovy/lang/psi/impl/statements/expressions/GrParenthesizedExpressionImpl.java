@@ -7,6 +7,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
@@ -29,13 +30,13 @@ public class GrParenthesizedExpressionImpl extends GrExpressionImpl implements G
   }
 
   public PsiType getType() {
-    return getOperand().getType();
+    final GrExpression operand = getOperand();
+    if (operand == null) return null;
+    return operand.getType();
   }
 
-  @NotNull
+  @Nullable
   public GrExpression getOperand() {
-    final GrExpression expression = findChildByClass(GrExpression.class);
-    assert expression != null;
-    return expression;
+    return findChildByClass(GrExpression.class);
   }
 }

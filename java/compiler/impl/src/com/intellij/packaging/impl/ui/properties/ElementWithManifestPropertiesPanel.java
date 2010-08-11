@@ -15,11 +15,8 @@
  */
 package com.intellij.packaging.impl.ui.properties;
 
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -31,10 +28,6 @@ import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,21 +60,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     myElement = element;
     myContext = context;
 
-    myMainClassField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Project project = context.getProject();
-        final TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(project);
-        final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
-        final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(myMainClassField.getText(), searchScope);
-        final TreeClassChooser chooser =
-            chooserFactory.createWithInnerClassesScopeChooser("Select Main Class", searchScope, new MainClassFilter(), aClass);
-        chooser.showDialog();
-        final PsiClass selected = chooser.getSelectedClass();
-        if (selected != null) {
-          myMainClassField.setText(selected.getQualifiedName());
-        }
-      }
-    });
+    ManifestFileUtil.setupMainClassField(context.getProject(), myMainClassField);
 
     myClasspathField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -192,9 +171,4 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     return className.length() != 0 ? className : null;
   }
 
-  protected static class MainClassFilter implements TreeClassChooser.ClassFilter {
-    public boolean isAccepted(PsiClass aClass) {
-      return PsiMethodUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.hasMainMethod(aClass);
-    }
-  }
 }

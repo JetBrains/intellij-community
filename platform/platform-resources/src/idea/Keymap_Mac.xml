@@ -430,5 +430,7 @@
     <action id="context.save"/>
     <action id="context.load"/>
 
+    <action id="Console.TableResult.DeleteRows"><keyboard-shortcut first-keystroke="meta BACK_SPACE"/></action>
+
   </keymap>
 </component>

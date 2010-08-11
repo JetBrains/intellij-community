@@ -40,7 +40,7 @@
                     interface="com.intellij.codeInspection.FileCheckingInspection"/>
 
     <extensionPoint name="deadCode"
-                    interface="com.intellij.codeInspection.deadCode.UnusedCodeExtension"/>
+                    interface="com.intellij.codeInspection.reference.EntryPoint"/>
 
     <!-- PsiMember -->
     <extensionPoint name="javaDocNotNecessary"

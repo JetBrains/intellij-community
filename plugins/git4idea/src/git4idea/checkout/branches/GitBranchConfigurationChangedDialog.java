@@ -173,7 +173,7 @@ public class GitBranchConfigurationChangedDialog extends DialogWrapper {
       updateConfig.clearReferences();
       for (BranchDescriptor d : list) {
         if (d.root != null) {
-          updateConfig.setBranch(d.root.getPath(), d.actualRef);
+          updateConfig.setReference(d.root.getPath(), d.actualRef);
         }
       }
     }

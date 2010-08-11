@@ -49,12 +49,13 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
     assert element != null;
     if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
     final String superClassName = getSuperClassName(element);
+    final PsiClass aClass = CreateFromUsageUtils.createClass(element, myKind, superClassName);
+    if (aClass == null) return;
+
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
           PsiJavaCodeReferenceElement refElement = element;
-          final PsiClass aClass = CreateFromUsageUtils.createClass(refElement, myKind, superClassName);
-          if (aClass == null) return;
           try {
             refElement = (PsiJavaCodeReferenceElement)refElement.bindToElement(aClass);
           }

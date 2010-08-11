@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class PsiElementModuleRenderer extends DefaultListCellRenderer{
@@ -113,7 +112,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
       setText(value == null ? "" : value.toString());
     }*/
     setText(myText);
-    //setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
+    setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
     setHorizontalTextPosition(SwingConstants.LEFT);
     setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor());

@@ -87,7 +87,8 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     if (myColumnInfos != null && Arrays.equals(columnInfos, myColumnInfos)) {
       return false;
     }
-
+    // clear sort by column without resorting
+    mySortByColumn = -1;
     myColumnInfos = columnInfos;
     fireTableStructureChanged();
     return true;

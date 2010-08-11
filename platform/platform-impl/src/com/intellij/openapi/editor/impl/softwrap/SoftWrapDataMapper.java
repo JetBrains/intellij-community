@@ -23,6 +23,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -185,6 +186,7 @@ public class SoftWrapDataMapper {
       softWrapLinesCurrent = 0;
       softWrapColumnDiff = 0;
       foldingColumnDiff = 0;
+      x = 0;
     }
   }
 
@@ -264,9 +266,8 @@ public class SoftWrapDataMapper {
       int i = CharArrayUtil.shiftBackwardUntil(text, region.getEndOffset() - 1, "\n");
       // Process multi-line folding.
       if (i >= region.getStartOffset()) {
-        int width = myTextRepresentationHelper.textWidth(text, i + 1, region.getEndOffset(), 0);
-        afterFolding.logicalColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(width);
-        afterFolding.x = width;
+        afterFolding.x = myTextRepresentationHelper.textWidth(text, i + 1, region.getEndOffset(), Font.PLAIN, 0);
+        afterFolding.logicalColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, i + 1, region.getEndOffset(), 0);
         afterFolding.softWrapLinesBefore += afterFolding.softWrapLinesCurrent;
         afterFolding.softWrapLinesCurrent = 0;
         afterFolding.softWrapColumnDiff = 0;
@@ -275,8 +276,10 @@ public class SoftWrapDataMapper {
       }
       // Process single-line folding
       else {
-        int width = myTextRepresentationHelper.textWidth(text, region.getStartOffset(), region.getEndOffset(), context.x);
-        int logicalColumnInc = myTextRepresentationHelper.toVisualColumnSymbolsNumber(width);
+        int width = myTextRepresentationHelper.textWidth(text, region.getStartOffset(), region.getEndOffset(), Font.PLAIN, context.x);
+        int logicalColumnInc = myTextRepresentationHelper.toVisualColumnSymbolsNumber(
+          text, region.getStartOffset(), region.getEndOffset(), context.x
+        );
         afterFolding.logicalColumn += logicalColumnInc;
         afterFolding.x += width;
         afterFolding.foldingColumnDiff += visualColumnInc - logicalColumnInc;
@@ -341,30 +344,50 @@ public class SoftWrapDataMapper {
 
       // Update state to the offset that corresponds to the same logical line that was used last time.
       if (currentLogicalLine == lastUsedLogicalLine) {
-        int width = myTextRepresentationHelper.textWidth(text, result.offset, newOffset, result.x);
-        int columnDiff = myTextRepresentationHelper.toVisualColumnSymbolsNumber(width);
-        result.x += width;
+        int columnDiff = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, result.offset, newOffset, result.x);
         result.logicalColumn += columnDiff;
         result.visualColumn += columnDiff;
+        if (strategy.recalculateX(result)) {
+          result.x += myTextRepresentationHelper.textWidth(text, result.offset, newOffset, Font.PLAIN, result.x);
+        }
       }
-      // Update state to the start of the folding that doesn't belong to the same logical line that was used last time.
+      // Update state to offset that doesn't correspond to the same logical line that was used last time.
       else {
         int lineDiff = currentLogicalLine - lastUsedLogicalLine;
         result.logicalLine += lineDiff;
         result.visualLine += lineDiff;
         int startLineOffset = document.getLineStartOffset(currentLogicalLine);
-        result.x = myTextRepresentationHelper.textWidth(text, startLineOffset, newOffset, result.x);
-        result.visualColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(result.x);
+        result.visualColumn = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, startLineOffset, newOffset, 0);
         result.logicalColumn = result.visualColumn;
         result.onNewLine();
+        if (strategy.recalculateX(result)) {
+          result.x = myTextRepresentationHelper.textWidth(text, startLineOffset, newOffset, Font.PLAIN, 0);
+        }
       }
       result.offset = newOffset;
       return result;
     }
   }
 
+  /**
+   * Strategy interface for performing logical position calculation.
+   */
   private interface LogicalPositionCalculatorStrategy {
     boolean exceeds(Context context);
+
+    /**
+     * Profiling shows that visual symbol width calculation (necessary for <code>'x'</code> coordinate update) is quite expensive.
+     * However, the whole logical position calculation algorithm contains many iterations and there is a big chance that many of them
+     * don't require <code>'x'</code> recalculation (e.g. we may map visual position to logical and see that current context visual
+     * line is less than the target, hence, we understand that 'x' coordinate will be reset to zero).
+     * <p/>
+     * This method allows to answer if we need to perform <code>'x'</code> recalculation for the given context (assuming that all
+     * its another parameters are up-to-date).
+     *
+     * @param context
+     * @return
+     */
+    boolean recalculateX(Context context);
     @NotNull LogicalPosition build(Context context);
     @NotNull LogicalPosition build(Context context, FoldRegion region);
     @NotNull LogicalPosition build(Context context, TextChange softWrap);
@@ -382,6 +405,11 @@ public class SoftWrapDataMapper {
     public boolean exceeds(Context context) {
       return context.visualLine > myTargetVisual.line
         || (context.visualLine == myTargetVisual.line && context.visualColumn > myTargetVisual.column);
+    }
+
+    @Override
+    public boolean recalculateX(Context context) {
+      return context.visualLine == myTargetVisual.line;
     }
 
     @NotNull
@@ -435,6 +463,11 @@ public class SoftWrapDataMapper {
     @Override
     public boolean exceeds(Context context) {
       return context.offset > myOffset;
+    }
+
+    @Override
+    public boolean recalculateX(Context context) {
+      return true;
     }
 
     @NotNull

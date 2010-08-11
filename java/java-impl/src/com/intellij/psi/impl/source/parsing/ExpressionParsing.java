@@ -457,7 +457,7 @@ public class ExpressionParsing extends Parsing {
 
         IElementType tokenType = lexer.getTokenType();
         if (tokenType == JavaTokenType.LT) {
-          final TreeElement referenceParameterList = parseReferenceParameterList(lexer, false);
+          final TreeElement referenceParameterList = parseReferenceParameterList(lexer, false, false);
           CompositeElement element1 = ASTFactory.composite(JavaElementType.REFERENCE_EXPRESSION);
           element1.rawAddChildren(element);
           element1.rawAddChildren(dot);
@@ -494,7 +494,7 @@ public class ExpressionParsing extends Parsing {
                  && element.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
 
           lexer.restore(startPos);
-          CompositeElement element1 = parseJavaCodeReference(lexer, false, true, false); // don't eat the last dot before "this" or "super"!
+          CompositeElement element1 = parseJavaCodeReference(lexer, false, true, false, false); // don't eat the last dot before "this" or "super"!
           if (element1 == null || lexer.getTokenType() != JavaTokenType.DOT || lexer.getTokenStart() != pos.getOffset()) {
             lexer.restore(pos);
             return element;
@@ -522,7 +522,7 @@ public class ExpressionParsing extends Parsing {
           element = element1;
         }
         else {
-          final TreeElement referenceParameterList = parseReferenceParameterList(lexer, false);
+          final TreeElement referenceParameterList = parseReferenceParameterList(lexer, false, false);
           CompositeElement element1 = ASTFactory.composite(JavaElementType.REFERENCE_EXPRESSION);
           element1.rawAddChildren(element);
           element1.rawAddChildren(dot);
@@ -731,6 +731,11 @@ public class ExpressionParsing extends Parsing {
     return null;
   }
 
+  protected boolean areDiamondsSupported() {
+    return myContext.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7);
+  }
+
+
   private CompositeElement parseNewExpression(Lexer lexer,
                                               TreeElement qualifier,
                                               TreeElement dot) {
@@ -746,7 +751,7 @@ public class ExpressionParsing extends Parsing {
     TreeElement newKeyword = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
     element.rawAddChildren(newKeyword);
     lexer.advance();
-    element.rawAddChildren(parseReferenceParameterList(lexer, false));
+    element.rawAddChildren(parseReferenceParameterList(lexer, false, areDiamondsSupported()));
 
     boolean isPrimitive;
     TreeElement refOrType;
@@ -754,7 +759,7 @@ public class ExpressionParsing extends Parsing {
 
     if (lexer.getTokenType() == JavaTokenType.IDENTIFIER || parseAnnotations) {
       isPrimitive = false;
-      refOrType = parseJavaCodeReference(lexer, true, true, parseAnnotations);
+      refOrType = parseJavaCodeReference(lexer, true, true, parseAnnotations, areDiamondsSupported());
     }
     else if (lexer.getTokenType() != null && ElementType.PRIMITIVE_TYPE_BIT_SET.contains(lexer.getTokenType())) {
       isPrimitive = true;
@@ -835,7 +840,7 @@ public class ExpressionParsing extends Parsing {
 
   private CompositeElement parseClassObjectAccessExpression(Lexer lexer) {
     final LexerPosition pos = lexer.getCurrentPosition();
-    CompositeElement type = parseType(lexer, false, false); // don't eat last dot before "class"!
+    CompositeElement type = parseType(lexer, false, false, false); // don't eat last dot before "class"!
     if (type == null) return null;
     if (lexer.getTokenType() != JavaTokenType.DOT) {
       lexer.restore(pos);

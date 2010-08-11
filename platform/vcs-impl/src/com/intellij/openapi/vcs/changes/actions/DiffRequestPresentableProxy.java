@@ -43,12 +43,12 @@ public abstract class DiffRequestPresentableProxy implements DiffRequestPresenta
     return myCachedActions;
   }
 
-  public MyResult step() {
+  public MyResult step(DiffChainContext context) {
     final DiffRequestPresentable request = initRequest();
     if (request == null) {
       return new MyResult(null, DiffPresentationReturnValue.removeFromList);
     }
-    myStepResult = request.step();
+    myStepResult = request.step(context);
     return myStepResult;
   }
 

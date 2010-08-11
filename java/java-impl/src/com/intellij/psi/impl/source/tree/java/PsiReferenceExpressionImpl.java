@@ -604,13 +604,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   public PsiType[] getTypeParameters() {
     final PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList == null) return PsiType.EMPTY_ARRAY;
-    PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
-
-    PsiType[] types = new PsiType[typeElements.length];
-    for (int i = 0; i < types.length; i++) {
-      types[i] = typeElements[i].getType();
-    }
-    return types;
+    return parameterList.getTypeArguments();
   }
 
 

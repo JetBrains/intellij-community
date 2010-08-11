@@ -6,10 +6,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
+import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
@@ -205,6 +210,24 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testDuplicatesAnonymousClassCreationWithSimilarParameters () throws Exception {
     doTest(new MockIntroduceVariableHandler("foo1", true, true, false, "Foo"));
+  }
+
+  public void testSiblingInnerClassType() throws Exception {
+    doTest(new MockIntroduceVariableHandler("vari", true, false, false, "A.B"){
+      @Override
+      protected IntroduceVariableSettings getSettings(Project project,
+                                                      Editor editor,
+                                                      PsiExpression expr,
+                                                      PsiElement[] occurrences,
+                                                      boolean anyAssignmentLHS,
+                                                      boolean declareFinalIfAll,
+                                                      PsiType type,
+                                                      TypeSelectorManagerImpl typeSelectorManager,
+                                                      InputValidator validator) {
+        Assert.assertTrue(type.getPresentableText(), type.getPresentableText().equals("B"));
+        return super.getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll, type, typeSelectorManager, validator);
+      }
+    });
   }
 
   public void testNonExpressionPriorityFailure() throws Exception {

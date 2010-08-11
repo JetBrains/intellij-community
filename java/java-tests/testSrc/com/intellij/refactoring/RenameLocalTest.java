@@ -38,6 +38,10 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
     doTest("f");
   }
 
+  public void testConflictWithJavadocTag() throws Exception {
+    doTest("i");
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase

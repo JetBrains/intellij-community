@@ -6,7 +6,7 @@
     <depends>com.intellij.java-i18n</depends>
     <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-        <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGUnusedCodeExtension"/>
+        <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGEntryPoint"/>
         <cantBeStatic implementation="com.theoryinpractice.testng.inspection.TestNGCanBeStaticExtension" />
         <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGInClassConfigurationProducer"/>
         <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGPackageConfigurationProducer"/>

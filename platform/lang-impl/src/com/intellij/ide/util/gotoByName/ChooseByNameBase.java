@@ -74,7 +74,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
-public abstract class ChooseByNameBase{
+public abstract class ChooseByNameBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
 
   protected final Project myProject;
@@ -86,11 +86,13 @@ public abstract class ChooseByNameBase{
   protected Component myPreviouslyFocusedComponent;
 
   protected JPanelProvider myTextFieldPanel;// Located in the layered pane
-  protected JTextField myTextField;
+  protected MyTextField myTextField;
   private JPanel myCardContainer;
   private CardLayout myCard;
   protected JCheckBox myCheckBox;
-  /** the tool area of the popup, it is just after card box */
+  /**
+   * the tool area of the popup, it is just after card box
+   */
   protected JComponent myToolArea;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
@@ -121,6 +123,7 @@ public abstract class ChooseByNameBase{
   private static final int REBUILD_DELAY = 300;
 
   private final Alarm myHideAlarm = new Alarm();
+  private boolean myShowListAfterCompletionKeyStroke = false;
 
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
@@ -158,18 +161,25 @@ public abstract class ChooseByNameBase{
     myPreselectInitialText = preselectInitialText;
   }
 
+  public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
+    myShowListAfterCompletionKeyStroke = showListAfterCompletionKeyStroke;
+  }
+
   /**
    * Set tool area. The method may be called only before invoke.
+   *
    * @param toolArea a tool area component
    */
   public void setToolArea(JComponent toolArea) {
-    if(myCard != null) {
+    if (myCard != null) {
       throw new IllegalStateException("Tool area is modifiable only before invoke()");
     }
     myToolArea = toolArea;
   }
 
-  public void invoke(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
+  public void invoke(final ChooseByNamePopupComponent.Callback callback,
+                     final ModalityState modalityState,
+                     boolean allowMultipleSelection) {
     initUI(callback, modalityState, allowMultipleSelection);
   }
 
@@ -217,7 +227,7 @@ public abstract class ChooseByNameBase{
     }
 
     public void registerHint(JBPopup h) {
-      if (myHint != null && myHint.isVisible() && myHint != h){
+      if (myHint != null && myHint.isVisible() && myHint != h) {
         myHint.cancel();
       }
       myHint = h;
@@ -252,7 +262,7 @@ public abstract class ChooseByNameBase{
     public void updateHint(PsiElement element) {
       if (myHint == null || !myHint.isVisible()) return;
       final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
-      if (updateProcessor != null){
+      if (updateProcessor != null) {
         myHint.cancel();
         updateProcessor.updatePopup(element);
       }
@@ -261,10 +271,12 @@ public abstract class ChooseByNameBase{
 
   /**
    * @param callback
-   * @param modalityState - if not null rebuilds list in given {@link ModalityState}
+   * @param modalityState          - if not null rebuilds list in given {@link ModalityState}
    * @param allowMultipleSelection
    */
-  protected void initUI(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
+  protected void initUI(final ChooseByNamePopupComponent.Callback callback,
+                        final ModalityState modalityState,
+                        boolean allowMultipleSelection) {
     myPreviouslyFocusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
 
     myActionListener = callback;
@@ -279,7 +291,7 @@ public abstract class ChooseByNameBase{
       hBox.add(label);
     }
 
-    myCard          = new CardLayout();
+    myCard = new CardLayout();
     myCardContainer = new JPanel(myCard);
 
     final JPanel checkBoxPanel = new JPanel();
@@ -287,17 +299,18 @@ public abstract class ChooseByNameBase{
     myCheckBox = new JCheckBox(myModel.getCheckBoxName());
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
-    if (myModel.getPromptText() != null){
+    if (myModel.getPromptText() != null) {
       checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.X_AXIS));
-      checkBoxPanel.add (new JLabel ("  ("));
-      checkBoxPanel.add (myCheckBox);
-      checkBoxPanel.add (new JLabel (")"));
-    } else {
+      checkBoxPanel.add(new JLabel("  ("));
+      checkBoxPanel.add(myCheckBox);
+      checkBoxPanel.add(new JLabel(")"));
+    }
+    else {
       checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.LINE_AXIS));
       checkBoxPanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-      checkBoxPanel.add (new JLabel (")"));
-      checkBoxPanel.add (myCheckBox);
-      checkBoxPanel.add (new JLabel ("  ("));
+      checkBoxPanel.add(new JLabel(")"));
+      checkBoxPanel.add(myCheckBox);
+      checkBoxPanel.add(new JLabel("  ("));
     }
     checkBoxPanel.setVisible(myModel.getCheckBoxName() != null);
     JPanel panel = new JPanel(new BorderLayout());
@@ -322,7 +335,7 @@ public abstract class ChooseByNameBase{
       //hBox.add(myCaseCheckBox);
       //hBox.add(myCamelCheckBox);
     }
-    if(myToolArea != null) {
+    if (myToolArea != null) {
       // if too area was set, add it to hbox
       hBox.add(myToolArea);
     }
@@ -372,7 +385,8 @@ public abstract class ChooseByNameBase{
                     }
                   }
                 });
-              } else {
+              }
+              else {
                 hideHint();
               }
             }
@@ -417,7 +431,7 @@ public abstract class ChooseByNameBase{
           case KeyEvent.VK_ENTER:
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
-              rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
+              rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current(), e);
               e.consume();
             }
             break;
@@ -445,7 +459,7 @@ public abstract class ChooseByNameBase{
         if (e.getClickCount() == 2) {
           if (myList.getSelectedValue() == EXTRA_ELEM) {
             myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
-            rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
+            rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current(), e);
             e.consume();
           }
           else {
@@ -475,7 +489,7 @@ public abstract class ChooseByNameBase{
     showTextFieldPanel();
 
     if (modalityState != null) {
-      rebuildList(0, 0, null, modalityState);
+      rebuildList(0, 0, null, modalityState, null);
     }
   }
 
@@ -491,7 +505,7 @@ public abstract class ChooseByNameBase{
    */
   public void rebuildList() {
     // TODO this method is public, because the chooser does not listed for the model.
-    rebuildList(0, REBUILD_DELAY, null, ModalityState.current());
+    rebuildList(0, REBUILD_DELAY, null, ModalityState.current(), null);
   }
 
   private void updateDocumentation() {
@@ -500,7 +514,8 @@ public abstract class ChooseByNameBase{
     if (hint != null) {
       if (element instanceof PsiElement) {
         myTextFieldPanel.updateHint((PsiElement)element);
-      } else if (element instanceof DataProvider) {
+      }
+      else if (element instanceof DataProvider) {
         final Object o = ((DataProvider)element).getData(LangDataKeys.PSI_ELEMENT.getName());
         if (o instanceof PsiElement) {
           myTextFieldPanel.updateHint((PsiElement)o);
@@ -590,7 +605,7 @@ public abstract class ChooseByNameBase{
         doClose(false);
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-       JComponent.WHEN_IN_FOCUSED_WINDOW
+                                            JComponent.WHEN_IN_FOCUSED_WINDOW
     );
 
     myList.registerKeyboardAction(new AbstractAction() {
@@ -598,7 +613,7 @@ public abstract class ChooseByNameBase{
         doClose(false);
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-       JComponent.WHEN_IN_FOCUSED_WINDOW
+                                  JComponent.WHEN_IN_FOCUSED_WINDOW
     );
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
@@ -627,9 +642,13 @@ public abstract class ChooseByNameBase{
     return layeredPane;
   }
 
-  private final Object myRebuildMutex = new Object ();
+  private final Object myRebuildMutex = new Object();
 
-  protected void rebuildList(final int pos, final int delay, final Runnable postRunnable, final ModalityState modalityState) {
+  protected void rebuildList(final int pos,
+                             final int delay,
+                             final Runnable postRunnable,
+                             final ModalityState modalityState,
+                             final @Nullable ComponentEvent e) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myListIsUpToDate = false;
     myAlarm.cancelAllRequests();
@@ -639,7 +658,8 @@ public abstract class ChooseByNameBase{
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final String text = myTextField.getText();
-        if (!isShowListForEmptyPattern() && (text == null || text.trim().length() == 0)) {
+        if (!canShowListForEmptyPattern() &&
+            (text == null || text.trim().length() == 0)) {
           myListModel.clear();
           hideList();
           myCard.show(myCardContainer, CHECK_BOX_CARD);
@@ -682,6 +702,10 @@ public abstract class ChooseByNameBase{
         }
       }
     }, modalityState);
+  }
+
+  private boolean isShowListAfterCompletionKeyStroke() {
+    return myShowListAfterCompletionKeyStroke;
   }
 
   private void cancelCalcElementsThread() {
@@ -768,7 +792,7 @@ public abstract class ChooseByNameBase{
 
   @NonNls
   protected String statisticsContext() {
-    return "choose_by_name#"+myModel.getPromptText()+"#"+ myCheckBox.isSelected() + "#" + myTextField.getText();
+    return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + myTextField.getText();
   }
 
   private String getQualifierPattern(String pattern) {
@@ -858,10 +882,11 @@ public abstract class ChooseByNameBase{
             int pos = selectionPos == 0 ? detectBestStatisticalPosition() : selectionPos;
             ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
           }
-          
+
           if (!myCommands.isEmpty()) {
             myAlarm.addRequest(this, DELAY);
-          } else {
+          }
+          else {
             doPostponedOkIfNeeded();
           }
           if (!myDisposedFlag) {
@@ -885,7 +910,8 @@ public abstract class ChooseByNameBase{
     if (myPosponedOkAction != null) {
       if (success) {
         myPosponedOkAction.setDone();
-      } else {
+      }
+      else {
         myPosponedOkAction.setRejected();
       }
     }
@@ -935,10 +961,12 @@ public abstract class ChooseByNameBase{
   protected void choosenElementMightChange() {
   }
 
-  private final class MyTextField extends JTextField implements PopupOwner {
+  protected final class MyTextField extends JTextField implements PopupOwner {
     private final KeyStroke myCompletionKeyStroke;
     private final KeyStroke forwardStroke;
     private final KeyStroke backStroke;
+
+    private boolean completionKeyStrokeHappened = false;
 
     private MyTextField() {
       super(40);
@@ -961,7 +989,9 @@ public abstract class ChooseByNameBase{
 
     protected void processKeyEvent(KeyEvent e) {
       final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
+      
       if (myCompletionKeyStroke != null && keyStroke.equals(myCompletionKeyStroke)) {
+        completionKeyStrokeHappened = true;
         e.consume();
         final String pattern = myTextField.getText();
         final String oldText = myTextField.getText();
@@ -972,7 +1002,7 @@ public abstract class ChooseByNameBase{
             fillInCommonPrefix(pattern);
           }
         };
-        rebuildList(0, 0, postRunnable, ModalityState.current());
+        rebuildList(0, 0, postRunnable, ModalityState.current(), e);
         return;
       }
       if (backStroke != null && keyStroke.equals(backStroke)) {
@@ -983,7 +1013,7 @@ public abstract class ChooseByNameBase{
           final Pair<String, Integer> last = myHistory.remove(myHistory.size() - 1);
           myTextField.setText(last.first);
           myFuture.add(Pair.create(oldText, oldPos));
-          rebuildList(0, 0, null, ModalityState.current());
+          rebuildList(0, 0, null, ModalityState.current(), e);
         }
         return;
       }
@@ -995,7 +1025,7 @@ public abstract class ChooseByNameBase{
           final Pair<String, Integer> next = myFuture.remove(myFuture.size() - 1);
           myTextField.setText(next.first);
           myHistory.add(Pair.create(oldText, oldPos));
-          rebuildList(0, 0, null, ModalityState.current());
+          rebuildList(0, 0, null, ModalityState.current(), e);
         }
         return;
       }
@@ -1017,7 +1047,7 @@ public abstract class ChooseByNameBase{
       final String oldText = myTextField.getText();
       final int oldPos = myList.getSelectedIndex();
 
-      String commonPrefix  = null;
+      String commonPrefix = null;
       if (!list.isEmpty()) {
         for (String name : list) {
           final String string = name.toLowerCase();
@@ -1071,6 +1101,10 @@ public abstract class ChooseByNameBase{
       UISettings.setupAntialiasing(g);
       super.paintComponent(g);
     }
+
+    public boolean isCompletionKeyStroke() {
+      return completionKeyStrokeHappened;
+    }
   }
 
   private static final String EXTRA_ELEM = "...";
@@ -1086,7 +1120,11 @@ public abstract class ChooseByNameBase{
     private volatile boolean myCancelled = false;
     private final boolean myCanCancel;
 
-    private CalcElementsThread(String pattern, boolean checkboxState, CalcElementsCallback callback, ModalityState modalityState, boolean canCancel) {
+    private CalcElementsThread(String pattern,
+                               boolean checkboxState,
+                               CalcElementsCallback callback,
+                               ModalityState modalityState,
+                               boolean canCancel) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
@@ -1095,6 +1133,7 @@ public abstract class ChooseByNameBase{
     }
 
     private final Alarm myShowCardAlarm = new Alarm();
+
     public void run() {
       showCard(SEARCHING_CARD, 200);
 
@@ -1160,7 +1199,7 @@ public abstract class ChooseByNameBase{
       String qualifierPattern = getQualifierPattern(pattern);
 
       boolean empty = namePattern.length() == 0 || namePattern.equals("@");    // TODO[yole]: remove implicit dependency
-      if (empty && !isShowListForEmptyPattern()) return;
+      if (empty && !canShowListForEmptyPattern()) return;
 
       List<String> namesList = new ArrayList<String>();
       getNamesByPattern(myCheckboxState, this, namesList, namePattern);
@@ -1188,7 +1227,7 @@ public abstract class ChooseByNameBase{
           for (Object element : sameNameElements) {
             elementsArray.add(element);
             if (elementsArray.size() >= myMaximumListSizeLimit) {
-                overflow = true;
+              overflow = true;
               break All;
             }
           }
@@ -1225,7 +1264,7 @@ public abstract class ChooseByNameBase{
         answer.add(token);
       }
     }
-    
+
     return answer.isEmpty() ? Collections.singletonList(s) : answer;
   }
 
@@ -1234,14 +1273,15 @@ public abstract class ChooseByNameBase{
     if (name == null) return false;
 
     final List<String> suspects = split(name);
-    final List<Pair<String, NameUtil.Matcher>> patternsAndMatchers = ContainerUtil.map2List(split(qualifierPattern), new Function<String, Pair<String, NameUtil.Matcher>>() {
-      public Pair<String, NameUtil.Matcher> fun(String s) {
-        final String pattern = getNamePattern(s);
-        final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
+    final List<Pair<String, NameUtil.Matcher>> patternsAndMatchers =
+      ContainerUtil.map2List(split(qualifierPattern), new Function<String, Pair<String, NameUtil.Matcher>>() {
+        public Pair<String, NameUtil.Matcher> fun(String s) {
+          final String pattern = getNamePattern(s);
+          final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
 
-        return new Pair<String, NameUtil.Matcher>(pattern, matcher);
-      }
-    });
+          return new Pair<String, NameUtil.Matcher>(pattern, matcher);
+        }
+      });
 
     int matchPosition = 0;
 
@@ -1262,7 +1302,8 @@ public abstract class ChooseByNameBase{
           return false;
         }
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       // Do nothing. No matches appears valid result for "bad" pattern
       return false;
     }
@@ -1274,7 +1315,7 @@ public abstract class ChooseByNameBase{
                                  CalcElementsThread calcElementsThread,
                                  final List<String> list,
                                  String pattern) throws ProcessCanceledException {
-    if (!isShowListForEmptyPattern()) {
+    if (!canShowListForEmptyPattern()) {
       LOG.assertTrue(pattern.length() > 0);
     }
 
@@ -1298,6 +1339,14 @@ public abstract class ChooseByNameBase{
     catch (Exception e) {
       // Do nothing. No matches appears valid result for "bad" pattern
     }
+  }
+
+  private boolean canShowListForEmptyPattern() {
+    return isShowListForEmptyPattern() || (isShowListAfterCompletionKeyStroke() && lastKeyStrokeIsCompletion());
+  }
+
+  protected boolean lastKeyStrokeIsCompletion() {
+     return myTextField.isCompletionKeyStroke();
   }
 
   private boolean matches(String pattern, NameUtil.Matcher matcher, String name) {

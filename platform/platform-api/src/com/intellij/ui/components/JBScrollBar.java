@@ -36,7 +36,6 @@ public class JBScrollBar extends JScrollBar{
 
   private void init() {
     putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
-    setFocusable(false);
   }
 
   @Override

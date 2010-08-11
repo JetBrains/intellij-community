@@ -36,7 +36,10 @@ public abstract class OrderEnumerationHandler {
     return true;
   }
 
-  public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry, boolean productionOnly, @NotNull Collection<String> urls) {
+  public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry,
+                                 boolean productionOnly,
+                                 boolean runtimeOnly,
+                                 boolean compileOnly, @NotNull Collection<String> urls) {
     return false;
   }
 }

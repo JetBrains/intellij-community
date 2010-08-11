@@ -24,4 +24,6 @@ public interface MavenFacadeLogger extends Remote {
   void warn(Throwable e) throws RemoteException;
 
   void error(Throwable e) throws RemoteException;
+
+  void print(String s) throws RemoteException;
 }

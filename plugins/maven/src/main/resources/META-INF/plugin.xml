@@ -96,6 +96,7 @@
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenGroupIdSmartCompletionContributor"/>
     <annotator language="XML" implementationClass="org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotator"/>
+    <projectService serviceInterface="com.intellij.ide.mavenService.MavenService" serviceImplementation="org.jetbrains.idea.maven.service.MavenServiceImpl"/>
   </extensions>
 
   <application-components>
@@ -177,12 +178,12 @@
     </action>
 
     <action id="Maven.DownloadAllSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAndDocsAction"
-            text="Download Sources And Documentation" description="Download sources and documentation for all dependencies"
+            text="Download Sources and Documentation" description="Download sources and documentation for all dependencies"
             icon="/images/download.png">
     </action>
 
     <action id="Maven.DownloadSelectedSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAndDocsAction"
-            text="Download Sources And Documentation"
+            text="Download Sources and Documentation"
             description="Download sources and documentation for all dependencies for selected projects"
             icon="/images/download.png">
     </action>

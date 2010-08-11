@@ -47,7 +47,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GdkMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
@@ -62,6 +61,8 @@
 
     <!-- GroovyDSL extensions -->
     <gdslTopLevelProvider implementation="org.jetbrains.plugins.groovy.dsl.dsltop.GroovyDslDefaultMembers"/>
+    <gdslTopLevelProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.GdkMethodDslProvider"/>
+    <gdslTopLevelProvider implementation="org.jetbrains.plugins.groovy.gpp.GppDslProvider"/>
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiClassCategory"/>
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiElementCategory"/>
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiMethodCategory"/>
@@ -78,7 +79,6 @@
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
     <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.gpp.GppStdLibSupport"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gpp.GppPositionManager"/>
     
   </extensions>

@@ -172,7 +172,9 @@ public class ReferenceParser {
       parseReferenceParameterList(builder, true);
     }
     else {
-      emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
+      if (!isStaticImport || builder.getTokenType() == JavaTokenType.DOT) {
+        emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
+      }
     }
 
     boolean hasIdentifier;
@@ -210,6 +212,7 @@ public class ReferenceParser {
         }
         else {
           error(builder, JavaErrorMessages.message("expected.identifier"));
+          emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
           break;
         }
       }

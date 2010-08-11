@@ -1,0 +1,26 @@
+PsiJavaFile:Errors0.java
+  PsiImportList
+    <empty list>
+  PsiModifierList:public
+    PsiKeyword:public('public')
+  PsiWhiteSpace(' ')
+  PsiKeyword:class('class')
+  PsiErrorElement:Identifier expected
+    <empty list>
+  PsiWhiteSpace(' ')
+  PsiModifierList:
+    <empty list>
+  PsiErrorElement:'class' or 'interface' expected
+    <empty list>
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiTypeParameter:caret
+      PsiIdentifier:caret('caret')
+      PsiElement(EXTENDS_BOUND_LIST)
+        <empty list>
+    PsiJavaToken:GT('>')
+  PsiErrorElement:'class' or 'interface' expected
+    PsiIdentifier:B('B')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

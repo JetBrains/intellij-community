@@ -61,6 +61,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("B");
   }
 
+  public void testJavadocParamRef() throws Exception {
+    myDoCompare = false;
+    doTest("Super");
+  }
+
   public void testEnumConstructorParameter() throws Exception {
     myDoCompare = false;
     doTest("UserFlags");

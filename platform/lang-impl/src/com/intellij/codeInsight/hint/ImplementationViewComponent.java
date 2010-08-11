@@ -42,8 +42,9 @@ import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.UsageTarget;
@@ -52,7 +53,6 @@ import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -149,10 +149,8 @@ public class ImplementationViewComponent extends JPanel {
 
     myBinarySwitch = new CardLayout();
     myViewingPanel = new JPanel(myBinarySwitch);
-    final Border lineBorder = new EdgeBorder(EdgeBorder.EDGE_TOP);
-    final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 2, 2);
-    final Border compoundBorder = BorderFactory.createCompoundBorder(emptyBorder, lineBorder);
-    myViewingPanel.setBorder(compoundBorder);
+    myEditor.setBorder(null);
+    ((EditorEx)myEditor).getScrollPane().setViewportBorder(JBScrollPane.createIndentBorder());
     myViewingPanel.add(myEditor.getComponent(), TEXT_PAGE_KEY);
 
     myBinaryPanel = new JPanel(new BorderLayout());
@@ -165,8 +163,9 @@ public class ImplementationViewComponent extends JPanel {
     myCountLabel = new JLabel();
 
     JPanel header = new JPanel(new BorderLayout());
-    header.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    JPanel toolbarPanel = new JPanel(new FlowLayout());
+    header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
+                                                        IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+    JPanel toolbarPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
     toolbarPanel.add(myToolbar.getComponent());
 
     if (myElements.length > 1) {
@@ -202,7 +201,7 @@ public class ImplementationViewComponent extends JPanel {
         label.setIcon(file.getIcon());
         label.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
         label.setText(file.getPresentableName());
-        label.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+        label.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
       }
       toolbarPanel.add(label);
     }

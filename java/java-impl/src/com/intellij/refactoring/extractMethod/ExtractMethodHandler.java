@@ -20,7 +20,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -136,16 +135,12 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         public void run() {
           PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
             public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  try {
-                    processor.doRefactoring();
-                  }
-                  catch (IncorrectOperationException e) {
-                    LOG.error(e);
-                  }
-                }
-              });
+              try {
+                processor.doRefactoring();
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
               DuplicatesImpl.processDuplicates(processor, project, editor);
             }
           });

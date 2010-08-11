@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFi
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
@@ -84,7 +85,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -442,18 +442,24 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitListOrMap(GrListOrMap listOrMap) {
-    for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(listOrMap)) {
-      if (type instanceof PsiClassType &&
-          !type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
-          !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE) &&
-          !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        final PsiElement startToken = listOrMap.getFirstChild();
-        if (startToken != null && startToken.getNode().getElementType() == GroovyTokenTypes.mLBRACK) {
-          myHolder.createInfoAnnotation(startToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
-        }
-        final PsiElement endToken = listOrMap.getLastChild();
-        if (endToken != null && endToken.getNode().getElementType() == GroovyTokenTypes.mRBRACK) {
-          myHolder.createInfoAnnotation(endToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
+    final PsiReference constructorReference = listOrMap.getReference();
+    if (constructorReference != null) {
+      final PsiElement startToken = listOrMap.getFirstChild();
+      if (startToken != null && startToken.getNode().getElementType() == GroovyTokenTypes.mLBRACK) {
+        myHolder.createInfoAnnotation(startToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
+      }
+      final PsiElement endToken = listOrMap.getLastChild();
+      if (endToken != null && endToken.getNode().getElementType() == GroovyTokenTypes.mRBRACK) {
+        myHolder.createInfoAnnotation(endToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
+      }
+
+      if (constructorReference instanceof LiteralConstructorReference) {
+        final LiteralConstructorReference ref = (LiteralConstructorReference)constructorReference;
+        if (!ref.isConstructorCallCorrect()) {
+          final String className = ref.getConstructedClassType().getPresentableText();
+          final GrNamedArgument superArg = listOrMap.findNamedArgument("super");
+          PsiElement toHighlight = superArg != null ? superArg.getExpression() : null;
+          myHolder.createWarningAnnotation(toHighlight == null ? listOrMap : toHighlight, "Cannot find constructor of '" + className + "'");
         }
       }
     }
@@ -1305,8 +1311,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
     boolean isStatic = member.hasModifierProperty(GrModifier.STATIC);
-    final PsiElement refNameElement = refExpr.getReferenceNameElement();
-    if (refNameElement == null) return;
+    final PsiElement refNameElement = getElementToHighlight(refExpr);
     Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
 
     if (member instanceof PsiField || member instanceof GrAccessorMethod) {

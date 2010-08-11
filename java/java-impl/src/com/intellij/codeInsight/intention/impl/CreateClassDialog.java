@@ -110,7 +110,7 @@ public class CreateClassDialog extends DialogWrapper {
       gbConstraints.weightx = 0;
       gbConstraints.gridwidth = 1;
       panel.add(myInformationLabel, gbConstraints);
-      panel.setBorder(IdeBorderFactory.createBorder());
+      panel.setBorder(IdeBorderFactory.createRoundedBorder());
       gbConstraints.insets = new Insets(4, 8, 4, 8);
       gbConstraints.gridx = 1;
       gbConstraints.weightx = 1;

@@ -25,11 +25,12 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -53,29 +54,22 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
     if (hierarchicalSignature.getSuperSignatures().size() != 0) return true;
 
     final Project project = method.getProject();
-    final GroovyPsiManager grPsiManager = GroovyPsiManager.getInstance(project);
 
-    final List<PsiMethod> allMethods = grPsiManager.getDefaultMethods(psiClass);
+    final String name = method.getName();
+    final MethodResolverProcessor processor = new MethodResolverProcessor(name, ((GrMethod)method), false, null, null, PsiType.EMPTY_ARRAY);
+    ResolveUtil.processNonCodeMethods(JavaPsiFacade.getElementFactory(project).createType(psiClass), processor, method);
+
+    final GroovyResolveResult[] candidates = processor.getCandidates();
+
+    final List<PsiMethod> allMethods = new ArrayList<PsiMethod>();
+    for (GroovyResolveResult candidate : candidates) {
+      final PsiElement element = candidate.getElement();
+      if (element instanceof PsiMethod) {
+        allMethods.add((PsiMethod)element);
+      }
+    }
 
     final MethodSignature signature = method.getHierarchicalMethodSignature();
-    /*final MethodResolverProcessor processor = new MethodResolverProcessor(method.getName(), ((GrMethod)method), false,
-                                                                          JavaPsiFacade.getElementFactory(project).createType(psiClass),
-                                                                          method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes(),
-                                                                          PsiType.EMPTY_ARRAY);
-    for (PsiMethod m : allMethods) {
-      if (PsiImplUtil.isExtendsSignature(m.getSignature(PsiSubstitutor.EMPTY), signature)) {
-        processor.execute(m, ResolveState.initial());
-      }
-    }
-
-    final GroovyResolveResult[] groovyResolveResults = processor.getCandidates();
-    for (GroovyResolveResult groovyResolveResult : groovyResolveResults) {
-      if (!consumer.process(((GrGdkMethod)groovyResolveResult.getElement()).getStaticMethod().getHierarchicalMethodSignature())) {
-        return false;
-      }
-    }
-  
-    return true;*/
 
     List<PsiMethod> goodSupers = new ArrayList<PsiMethod>();
     for (PsiMethod m : allMethods) {
@@ -93,11 +87,11 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     final Comparator<PsiMethod> comparator = new Comparator<PsiMethod>() {
       public int compare(PsiMethod o1, PsiMethod o2) { //compare by first parameter type
-        final GrGdkMethod m1 = (GrGdkMethod)o1;
-        final GrGdkMethod m2 = (GrGdkMethod)o2;
+        o1 = getRealMethod(o1);
+        o2 = getRealMethod(o2);
 
-        final PsiType type1 = TypeConversionUtil.erasure(m1.getStaticMethod().getParameterList().getParameters()[0].getType());
-        final PsiType type2 = TypeConversionUtil.erasure(m2.getStaticMethod().getParameterList().getParameters()[0].getType());
+        final PsiType type1 = TypeConversionUtil.erasure(o1.getParameterList().getParameters()[0].getType());
+        final PsiType type2 = TypeConversionUtil.erasure(o2.getParameterList().getParameters()[0].getType());
         if (TypesUtil.isAssignable(type1, type2, psiManager, searchScope)) {
           return -1;
         }
@@ -123,10 +117,20 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
       result.add(current);
     }
     for (PsiMethod psiMethod : result) {
-      if (!consumer.process(((GrGdkMethod)psiMethod).getStaticMethod().getHierarchicalMethodSignature())) {
+      if (!consumer.process(getRealMethod(psiMethod).getHierarchicalMethodSignature())) {
         return false;
       }
     }
     return true;
+  }
+
+  private static PsiMethod getRealMethod(PsiMethod method) {
+    final PsiElement element = method.getNavigationElement();
+    if (element instanceof PsiMethod) {
+      return (PsiMethod)element;
+    }
+    else {
+      return method;
+    }
   }
 }

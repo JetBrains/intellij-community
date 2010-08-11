@@ -21,7 +21,7 @@ import com.intellij.openapi.diff.DiffRequest;
 import java.util.List;
 
 public interface DiffRequestPresentable {
-  MyResult step();
+  MyResult step(DiffChainContext context);
   boolean haveStuff();
   List<? extends AnAction> createActions(final ShowDiffAction.DiffExtendUIFactory uiFactory);
 

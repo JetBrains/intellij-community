@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -103,16 +104,22 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
 
   private final TIntHashSet myProcessedLogicalLines = new TIntHashSet();
 
-  private final SoftWrapsStorage myStorage;
-  private final EditorEx         myEditor;
-  private final SoftWrapPainter  myPainter;
+  private final EditorTextRepresentationHelper myTextRepresentationHelper;
+  private final SoftWrapsStorage               myStorage;
+  private final EditorEx                       myEditor;
+  private final SoftWrapPainter                myPainter;
 
   private int myVisibleAreaWidth;
 
-  public DefaultSoftWrapApplianceManager(SoftWrapsStorage storage, EditorEx editor, SoftWrapPainter painter) {
+  public DefaultSoftWrapApplianceManager(SoftWrapsStorage storage,
+                                         EditorEx editor,
+                                         SoftWrapPainter painter,
+                                         EditorTextRepresentationHelper textRepresentationHelper)
+  {
     myStorage = storage;
     myEditor = editor;
     myPainter = painter;
+    myTextRepresentationHelper = textRepresentationHelper;
     init(editor.getDocument());
   }
 
@@ -144,13 +151,13 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     document.addDocumentListener(new LineOrientedDocumentChangeAdapter() {
       @Override
       public void beforeDocumentChange(int startLine, int endLine, int symbolsDifference) {
+        for (int i = startLine; i <= endLine; i++) {
+          myProcessedLogicalLines.remove(i);
+        }
       }
 
       @Override
       public void afterDocumentChange(int startLine, int endLine, int symbolsDifference) {
-        for (int i = startLine; i <= endLine; i++) {
-          myProcessedLogicalLines.remove(i);
-        }
       }
     });
   }
@@ -213,12 +220,14 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     TIntArrayList result = new TIntArrayList();
 
     // Find offsets where soft wraps should be applied for the logical line in case of no indent usage.
-    int x = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+    int x = 0;
+    int beforeSoftWrapDrawingWidth = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
     int prevSoftWrapOffset = start;
+    CharBuffer buffer = CharBuffer.wrap(text);
     for (int i = start; i < end; i++) {
-      int symbolWidth = EditorUtil.textWidth(myEditor, CharBuffer.wrap(text), i, i + 1, fontType, x);
-      if (x + symbolWidth >= myVisibleAreaWidth) {
-        int offset = calculateSoftWrapOffset(text, i - 1, prevSoftWrapOffset, end);
+      int symbolWidth = myTextRepresentationHelper.textWidth(buffer, i, i + 1, fontType, x);
+      if (x + symbolWidth + beforeSoftWrapDrawingWidth >= myVisibleAreaWidth) {
+        int offset = calculateSoftWrapOffset(text, i, prevSoftWrapOffset, end);
         if (offset >= end || offset <= prevSoftWrapOffset) {
           // There is no way to insert soft wrap.
           return result;
@@ -272,8 +281,8 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     for (int i = preferred; i > min; i--) {
       char c = text[i];
 
-      if (i < preferred && WHITE_SPACES.contains(c)) {
-        return i + 1;
+      if (WHITE_SPACES.contains(c)) {
+        return i < preferred ? i + 1 : i;
       }
 
       // Don't wrap on the non-id symbol preceded by another non-id symbol. E.g. consider that we have a statement
@@ -281,8 +290,11 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
       if (i > min + 1 && !isIdSymbol(c) && !isIdSymbol(text[i - 1])) {
         continue;
       }
-      if ((i < preferred) && SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c)) {
-        return i + 1;
+      if (SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c)) {
+        if (i < preferred) {
+          return i + 1;
+        }
+        continue;
       }
       if (SPECIAL_SYMBOLS_TO_WRAP_BEFORE.contains(c) || WHITE_SPACES.contains(c)) {
         return i;

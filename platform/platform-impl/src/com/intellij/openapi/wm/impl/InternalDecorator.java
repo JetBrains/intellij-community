@@ -446,7 +446,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      g.setColor(UIUtil.getBorderInactiveColor());
+      g.setColor(UIUtil.getHeaderInactiveColor());
 
       Insets insets = getBorderInsets(c);
 

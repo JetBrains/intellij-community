@@ -56,7 +56,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
   @NotNull
   public TextRange getTextRange() {
-    if (myTextRange != null) {
+    if (myTextRange != null && !(isCDATAStart() || isCDATAEnd())) {
       return myTextRange;
     }
     else {

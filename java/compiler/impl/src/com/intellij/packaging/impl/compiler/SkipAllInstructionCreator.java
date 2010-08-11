@@ -30,7 +30,7 @@ public class SkipAllInstructionCreator extends IncrementalCompilerInstructionCre
   public void addFileCopyInstruction(@NotNull VirtualFile file, @NotNull String outputFileName) {
   }
 
-  public IncrementalCompilerInstructionCreator subFolder(@NotNull String directoryName) {
+  public SkipAllInstructionCreator subFolder(@NotNull String directoryName) {
     return this;
   }
 

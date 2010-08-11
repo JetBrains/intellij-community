@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -24,7 +25,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 
 /**
  * User: spLeaner
@@ -34,7 +34,7 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
   private static final Border BACKGROUND_PAINTER = new MacBackgroundPainter();
   private JComponent myComponent;
 
-  private WindowListener myWindowListener;
+  private WindowAdapter myWindowListener;
 
   public MacStatusBarUI() {
     myWindowListener = new WindowAdapter() {
@@ -49,6 +49,15 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
 
       @Override
       public void windowDeactivated(final WindowEvent e) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            if (myComponent != null) myComponent.repaint();
+          }
+        });
+      }
+
+      @Override
+      public void windowGainedFocus(WindowEvent e) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
             if (myComponent != null) myComponent.repaint();
@@ -78,13 +87,20 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
   }
 
   public void showNotify() {
-    if (myComponent != null) SwingUtilities.getWindowAncestor(myComponent).addWindowListener(myWindowListener);
+    if (myComponent != null && SystemInfo.isMac) {
+      final Window window = SwingUtilities.getWindowAncestor(myComponent);
+      window.addWindowListener(myWindowListener);
+      window.addWindowFocusListener(myWindowListener);
+    }
   }
 
   public void hideNotify() {
-    if (myComponent != null) {
+    if (myComponent != null && SystemInfo.isMac) {
       final Window window = SwingUtilities.getWindowAncestor(myComponent);
-      if (window != null) window.removeWindowListener(myWindowListener);
+      if (window != null) {
+        window.removeWindowListener(myWindowListener);
+        window.removeWindowFocusListener(myWindowListener);
+      }
     }
   }
 

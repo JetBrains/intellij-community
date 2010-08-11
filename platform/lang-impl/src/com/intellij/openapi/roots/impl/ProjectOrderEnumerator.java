@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -40,8 +39,9 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
     myRecursively = false;
     myWithoutDepModules = true;
     final THashSet<Module> processed = new THashSet<Module>();
-    for (Module module : ModuleManager.getInstance(myProject).getSortedModules()) {
-      processEntries(ModuleRootManager.getInstance(module), processor, processed, true);
+    final Module[] modules = myModulesProvider != null ? myModulesProvider.getModules() : ModuleManager.getInstance(myProject).getSortedModules();
+    for (Module module : modules) {
+      processEntries(getRootModel(module), processor, processed, true);
     }
   }
 }

@@ -115,6 +115,10 @@ public abstract class XmlFormattingPolicy {
 
   public abstract boolean getShouldKeepLineBreaksInText();
 
+  public abstract boolean getKeepWhiteSpacesInsideCDATA();
+
+  public abstract int getWhiteSpaceAroundCDATAOption();
+
   public abstract CodeStyleSettings getSettings();
 
   public boolean processJsp() {

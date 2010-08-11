@@ -22,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
+
 /**
  * @author Dmitry.Krasilschikov
  * @date 26.03.2007
@@ -37,7 +39,7 @@ public class ThrowClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (!ReferenceElement.parseReferenceElement(builder)) {
+    if (ReferenceElement.parseReferenceElement(builder) == fail) {
       throwClauseMarker.done(THROW_CLAUSE);
       builder.error(GroovyBundle.message("identifier.expected"));
       return;
@@ -46,7 +48,7 @@ public class ThrowClause implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (!ReferenceElement.parseReferenceElement(builder)) {
+      if (ReferenceElement.parseReferenceElement(builder) == fail) {
         throwClauseMarker.done(THROW_CLAUSE);
         return;
       }

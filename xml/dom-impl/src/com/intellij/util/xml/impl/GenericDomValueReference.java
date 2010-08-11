@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
@@ -138,7 +139,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
 
   @NotNull
   public String getCanonicalText() {
-    return getStringValue();
+    return StringUtil.notNullize(getStringValue());
   }
 
   public String getUnresolvedMessagePattern() {

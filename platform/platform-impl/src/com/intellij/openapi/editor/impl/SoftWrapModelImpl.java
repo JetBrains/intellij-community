@@ -58,10 +58,14 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
+    this(editor, storage, painter, new DefaultEditorTextRepresentationHelper(editor));
+  }
+
+  public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
+                           EditorTextRepresentationHelper representationHelper) {
     this(
-      editor, storage, painter, new DefaultSoftWrapApplianceManager(storage, editor, painter),
-      new SoftWrapDataMapper(editor, storage, new DefaultEditorTextRepresentationHelper(editor)),
-      new SoftWrapDocumentChangeManager(editor, storage)
+      editor, storage, painter, new DefaultSoftWrapApplianceManager(storage, editor, painter, representationHelper),
+      new SoftWrapDataMapper(editor, storage, representationHelper), new SoftWrapDocumentChangeManager(editor, storage)
     );
   }
 
@@ -168,11 +172,26 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     }
   }
 
+  @Override
   public List<? extends TextChange> getRegisteredSoftWraps() {
     if (!isSoftWrappingEnabled()) {
       return Collections.emptyList();
     }
     return myStorage.getSoftWraps();
+  }
+
+  @Override
+  public boolean isVisible(TextChange softWrap) {
+    FoldingModel foldingModel = myEditor.getFoldingModel();
+    int start = softWrap.getStart();
+    if (!foldingModel.isOffsetCollapsed(start)) {
+      return false;
+    }
+
+    // There is a possible case that soft wrap and collapsed folding region share the same offset, i.e. soft wrap is represented
+    // before the folding. We need to return 'true' in such situation. Hence, we check if offset just before the soft wrap
+    // is collapsed as well.
+    return start <= 0 || !foldingModel.isOffsetCollapsed(start - 1);
   }
 
   @Override
@@ -331,17 +350,21 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   public void beforeDocumentChangeAtCaret() {
-    int offset = myEditor.getCaretModel().getOffset();
+    CaretModel caretModel = myEditor.getCaretModel();
+    VisualPosition visualCaretPosition = caretModel.getVisualPosition();
+    if (!isInsideSoftWrap(visualCaretPosition)) {
+      return;
+    }
+    int offset = caretModel.getOffset();
     TextChangeImpl softWrap = myStorage.getSoftWrap(offset);
     if (softWrap == null) {
       return;
     }
 
-    VisualPosition visualCaretPosition = myEditor.getCaretModel().getVisualPosition();
     myDocumentChangeManager.makeHardWrap(softWrap);
 
     // Restore caret position.
-    myEditor.getCaretModel().moveToVisualPosition(visualCaretPosition);
+    caretModel.moveToVisualPosition(visualCaretPosition);
   }
 
   @Override

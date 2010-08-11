@@ -1,0 +1,6 @@
+PsiJavaFile:Unclosed0.java
+  PsiImportList
+    PsiImportStatement
+      PsiKeyword:import('import')
+      PsiErrorElement:Identifier expected
+        <empty list>

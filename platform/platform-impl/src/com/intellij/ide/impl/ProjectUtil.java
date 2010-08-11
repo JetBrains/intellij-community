@@ -156,7 +156,7 @@ public class ProjectUtil {
       if (settings.getConfirmOpenNewProject() < 0) {
         exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.open.project"),
                                            new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe"),
-                                             CommonBundle.getCancelButtonText()}, 1, Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption() {
+                                             CommonBundle.getCancelButtonText()}, 1, 0, Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption() {
             public boolean isToBeShown() {
               return true;
             }

@@ -101,14 +101,7 @@ public abstract class CachedValueBase<T> {
   }
 
   public boolean hasUpToDateValue() {
-    r.lock();
-
-    try {
-      return getUpToDateOrNull() != null;
-    }
-    finally {
-      r.unlock();
-    }
+    return getUpToDateOrNull() != null;
   }
 
   @Nullable

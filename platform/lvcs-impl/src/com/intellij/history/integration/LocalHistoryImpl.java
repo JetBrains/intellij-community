@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -58,6 +59,8 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   }
 
   public void initComponent() {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    
     myShutdownTask = new Runnable() {
       public void run() {
         disposeComponent();
@@ -193,10 +196,12 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     return "Local History";
   }
 
+  @Nullable
   public LocalHistoryFacade getFacade() {
     return myVcs;
   }
 
+  @Nullable
   public IdeaGateway getGateway() {
     return myGateway;
   }

@@ -198,6 +198,11 @@ public abstract class AbstractSyntheticBlock implements Block {
     return node != null && node.getElementType() == XmlElementType.XML_CDATA;
   }
 
+  public boolean containsCDATA() {
+    return myStartTreeNode.getElementType() == XmlElementType.XML_CDATA_START &&
+           myEndTreeNode.getElementType() == XmlElementType.XML_CDATA_END;
+  }
+
   public boolean endsWithCDATA() {
     return isCDATA(myStartTreeNode.getLastChildNode());
   }

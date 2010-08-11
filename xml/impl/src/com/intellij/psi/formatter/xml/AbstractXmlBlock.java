@@ -414,4 +414,13 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
     return false;
   }
+
+  public boolean isCDATAStart() {
+    return myNode.getElementType() == XmlElementType.XML_CDATA_START;
+  }
+
+  public boolean isCDATAEnd() {
+    return myNode.getElementType() == XmlElementType.XML_CDATA_END;
+  }
+
 }

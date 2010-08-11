@@ -185,7 +185,7 @@ public abstract class CallerChooser extends DialogWrapper {
     final JComponent calleeComponent = myCalleeEditor.getComponent();
     calleeComponent.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("caller.chooser.callee.method")));
     splitter.setSecondComponent(calleeComponent);
-    splitter.setBorder(IdeBorderFactory.createBorder());
+    splitter.setBorder(IdeBorderFactory.createRoundedBorder());
     return splitter;
   }
 

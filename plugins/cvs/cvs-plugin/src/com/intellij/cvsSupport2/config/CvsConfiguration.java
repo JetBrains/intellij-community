@@ -17,14 +17,11 @@ package com.intellij.cvsSupport2.config;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.util.Options;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -86,15 +83,6 @@ public class CvsConfiguration implements PersistentStateComponent<CvsConfigurati
 
   public static CvsConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, CvsConfiguration.class);
-  }
-
-  public static CvsConfiguration getInstanceChecked(final Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<CvsConfiguration>() {
-      public CvsConfiguration compute() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        return ServiceManager.getService(project, CvsConfiguration.class);
-      }
-    });
   }
 
   public static VcsShowConfirmationOption.Value convertToEnumValue(boolean value, boolean onOk) {

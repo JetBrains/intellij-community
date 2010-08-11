@@ -24,13 +24,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightVirtualFile;
@@ -45,6 +45,10 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   public JavaParsingTestCase(@NonNls final String dataPath) {
     super(dataPath, "java");
     IdeaTestCase.initPlatformPrefix();
+  }
+
+  public static JavaPsiFacadeEx getJavaFacade() {
+    return JavaPsiFacadeEx.getInstanceEx(ourProject);
   }
 
   protected static void withLevel(final LanguageLevel level, final Runnable r) {
@@ -62,44 +66,53 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     void parse(PsiBuilder builder);
   }
 
-  protected void doParserTest(final String source, final TestParser parser) {
+  protected void doParserTest(final String text, final TestParser parser) {
     final String name = getTestName(false);
-
-    final IElementType fileElementType = new IFileElementType("test.java.file", StdLanguages.JAVA) {
-      @Override
-      public ASTNode parseContents(final ASTNode chameleon) {
-        final PsiBuilder builder = createBuilder(chameleon);
-
-        final PsiBuilder.Marker root = builder.mark();
-        parser.parse(builder);
-        if (!builder.eof()) {
-          final PsiBuilder.Marker unparsed = builder.mark();
-          while (!builder.eof()) builder.advanceLexer();
-          unparsed.error("Unparsed tokens");
-        }
-        root.done(this);
-
-        final ASTNode rootNode = builder.getTreeBuilt();
-        ParseUtil.bindComments(rootNode);
-        return rootNode.getFirstChildNode();
-      }
-    };
-
-    final LightVirtualFile virtualFile = new LightVirtualFile(name + '.' + myFileExt, StdFileTypes.JAVA, source, -1);
-    final FileViewProvider viewProvider = new SingleRootFileViewProvider(PsiManager.getInstance(getProject()), virtualFile, true);
-    final PsiJavaFileImpl psiFile = new PsiJavaFileImpl(viewProvider) {
-      @Override
-      protected FileElement createFileElement(final CharSequence text) {
-        return new FileElement(fileElementType, text);
-      }
-    };
-
+    myFile = createPsiFile(name, text, parser);
     try {
-      checkResult(name + ".txt", DebugUtil.psiToString(psiFile, false));
+      checkResult(name + ".txt", myFile);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static IFileElementType TEST_FILE_ELEMENT_TYPE = null;
+  private static TestParser TEST_PARSER;
+
+  protected PsiFile createPsiFile(final String name, final String text, final TestParser parser) {
+    if (TEST_FILE_ELEMENT_TYPE == null) {
+      TEST_FILE_ELEMENT_TYPE = new IFileElementType("test.java.file", StdLanguages.JAVA) {
+        @Override
+        public ASTNode parseContents(final ASTNode chameleon) {
+          final PsiBuilder builder = createBuilder(chameleon);
+
+          final PsiBuilder.Marker root = builder.mark();
+          TEST_PARSER.parse(builder);
+          if (!builder.eof()) {
+            final PsiBuilder.Marker unparsed = builder.mark();
+            while (!builder.eof()) builder.advanceLexer();
+            unparsed.error("Unparsed tokens");
+          }
+          root.done(this);
+
+          final ASTNode rootNode = builder.getTreeBuilt();
+          ParseUtil.bindComments(rootNode);
+          return rootNode.getFirstChildNode();
+        }
+      };
+    }
+
+    TEST_PARSER = parser;
+
+    final LightVirtualFile virtualFile = new LightVirtualFile(name + '.' + myFileExt, StdFileTypes.JAVA, text, -1);
+    final FileViewProvider viewProvider = new SingleRootFileViewProvider(PsiManager.getInstance(getProject()), virtualFile, true);
+    return new PsiJavaFileImpl(viewProvider) {
+      @Override
+      protected FileElement createFileElement(final CharSequence text) {
+        return new FileElement(TEST_FILE_ELEMENT_TYPE, text);
+      }
+    };
   }
 
   private static PsiBuilder createBuilder(final ASTNode chameleon) {
@@ -113,5 +126,33 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     JavaParserUtil.setLanguageLevel(builder, level);
 
     return builder;
+  }
+
+  @Override
+  protected void doTest(final boolean checkResult) {
+    doTestDefaultParser(checkResult);
+    doTestNewParser();
+  }
+
+  protected void doTestDefaultParser(final boolean checkResult) {
+    super.doTest(checkResult);
+  }
+
+  // todo: drop after switching to new parser
+  protected void doTestNewParser() {
+    final String name = getTestName(false);
+    final String text;
+    try {
+      text = loadFile(name + "." + myFileExt);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    doParserTest(text, new TestParser() {
+      public void parse(final PsiBuilder builder) {
+        FileParser.parse(builder);
+      }
+    });
   }
 }

@@ -40,7 +40,7 @@ public class CopyToDirectoryInstructionCreator extends IncrementalCompilerInstru
     myContext.addDestination(file, new ExplodedDestinationInfo(myOutputPath + "/" + outputFileName, outputChild(outputFileName)));
   }
 
-  public IncrementalCompilerInstructionCreator subFolder(@NotNull String directoryName) {
+  public CopyToDirectoryInstructionCreator subFolder(@NotNull String directoryName) {
     return new CopyToDirectoryInstructionCreator(myContext, myOutputPath + "/" + directoryName, outputChild(directoryName));
   }
 

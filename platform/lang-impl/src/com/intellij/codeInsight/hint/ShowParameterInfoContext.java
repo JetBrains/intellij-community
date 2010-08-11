@@ -127,7 +127,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        hintManager.showEditorHint(hint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
+        hintManager.showEditorHint(hint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING | HintManagerImpl.HIDE_BY_OTHER_HINT, 0, false);
         new ParameterInfoController(project,
                                     editor,
                                     elementStart,

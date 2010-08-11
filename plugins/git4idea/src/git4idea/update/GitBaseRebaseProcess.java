@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
@@ -35,7 +36,10 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.*;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseUtils;
@@ -190,6 +194,8 @@ public abstract class GitBaseRebaseProcess {
                   //noinspection ThrowableInstanceNeverThrown
                   myExceptions.add(new VcsException("The update process was cancelled for " + root.getPresentableUrl()));
                   doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
+                  progressIndicator.setText2("Refreshing files for the root " + root.getPath());
+                  root.refresh(false, true);
                 }
               }
               finally {
@@ -377,7 +383,7 @@ public abstract class GitBaseRebaseProcess {
       if (changes.size() > 0) {
         myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
         myShelvedChangeList = GitStashUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, myExceptions);
-        if(myShelvedChangeList == null) {
+        if (myShelvedChangeList == null) {
           return false;
         }
       }
@@ -503,9 +509,11 @@ public abstract class GitBaseRebaseProcess {
               .showMergeDialog(affectedFiles, reverse ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider());
             affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
             if (affectedFiles.size() != 0) {
-              int result = Messages
-                .showYesNoDialog(myProject, GitBundle.message("update.rebase.unmerged", affectedFiles.size(), root.getPresentableUrl()),
-                                 GitBundle.getString("update.rebase.unmerged.title"), Messages.getErrorIcon());
+              int result = Messages.showYesNoDialog(myProject,
+                                                    GitBundle.message("update.rebase.unmerged",
+                                                                      StringUtil.escapeXml(root.getPresentableUrl())),
+                                                    GitBundle.getString("update.rebase.unmerged.title"),
+                                                    Messages.getErrorIcon());
               if (result != 0) {
                 cancelled.set(true);
                 return;

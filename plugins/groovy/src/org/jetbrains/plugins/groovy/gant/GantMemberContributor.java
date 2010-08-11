@@ -38,7 +38,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
                                      PsiScopeProcessor processor,
                                      PsiElement place,
                                      ResolveState state) {
-    if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place)) {
+    if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place.getProject())) {
       processAntTasks(processor, place, state);
       return;
     }

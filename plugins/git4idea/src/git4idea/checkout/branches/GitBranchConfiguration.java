@@ -16,6 +16,7 @@
 package git4idea.checkout.branches;
 
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -90,18 +91,33 @@ public class GitBranchConfiguration {
     }
   }
 
-  public void setBranch(String root, String reference) {
+  /**
+   * Set the mapping for the existing branch
+   *
+   * @param root      the root
+   * @param reference the reference
+   */
+  public void setReference(@NotNull String root, @NotNull String reference) {
     synchronized (myConfig.getStateLock()) {
       myReferences.put(root, reference);
     }
   }
 
-  public String getReference(String root) {
+  /**
+   * Get reference in the mapping
+   *
+   * @param root the root to get reference for
+   * @return the branch mapping
+   */
+  public String getReference(@NotNull String root) {
     synchronized (myConfig.getStateLock()) {
       return myReferences.get(root);
     }
   }
 
+  /**
+   * Clear all references in the mapping
+   */
   public void clearReferences() {
     synchronized (myConfig.getStateLock()) {
       myReferences.clear();

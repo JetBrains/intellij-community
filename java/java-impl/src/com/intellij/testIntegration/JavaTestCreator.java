@@ -15,14 +15,26 @@
  */
 package com.intellij.testIntegration;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testIntegration.createTest.CreateTestAction;
 import com.intellij.util.IncorrectOperationException;
 
 public class JavaTestCreator implements TestCreator {
+  private static final Logger LOG = Logger.getInstance("com.intellij.testIntegration.JavaTestCreator");
+
+
+  @Override
+  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    CreateTestAction action = new CreateTestAction();
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+
+    return action.isAvailableForElement(element);
+  }
+
   public void createTest(Project project, Editor editor, PsiFile file) {
     try {
       CreateTestAction action = new CreateTestAction();
@@ -32,7 +44,7 @@ public class JavaTestCreator implements TestCreator {
       }
     }
     catch (IncorrectOperationException e) {
-      throw new RuntimeException(e);
+      LOG.warn(e);
     }
   }
 }

@@ -51,7 +51,7 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   @Override
   public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry,
                                  boolean productionOnly,
-                                 @NotNull Collection<String> urls) {
+                                 boolean runtimeOnly, boolean compileOnly, @NotNull Collection<String> urls) {
     final Module ownerModule = orderEntry.getOwnerModule();
     final Module depModule = orderEntry.getModule();
     if (depModule == null) return false;
@@ -65,7 +65,7 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
 
     for (MavenArtifact each : project.findDependencies(depProject)) {
 
-      if (productionOnly && MavenConstants.SCOPE_PROVIDEED.equals(each.getScope())) continue;
+      if (productionOnly && runtimeOnly && MavenConstants.SCOPE_PROVIDEED.equals(each.getScope())) continue;
       if (productionOnly && MavenConstants.SCOPE_TEST.equals(each.getScope())) continue;
 
       boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(each.getType()) || "tests".equals(each.getClassifier());

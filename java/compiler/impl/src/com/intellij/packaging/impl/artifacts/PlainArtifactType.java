@@ -21,7 +21,6 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +34,7 @@ public class PlainArtifactType extends ArtifactType {
   @NonNls public static final String ID = "plain";
 
   public static PlainArtifactType getInstance() {
-    return ContainerUtil.findInstance(getAllTypes(), PlainArtifactType.class);
+    return EP_NAME.findExtension(PlainArtifactType.class);
   }
 
   public PlainArtifactType() {

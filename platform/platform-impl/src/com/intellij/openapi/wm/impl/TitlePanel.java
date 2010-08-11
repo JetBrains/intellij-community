@@ -88,7 +88,7 @@ public final class TitlePanel extends JPanel {
       final Rectangle sideRec = SwingUtilities.convertRectangle(mySideButtons.getParent(), mySideButtons.getBounds(), this);
       g2d.fillRect(0, STRUT, getWidth() - sideRec.width, getHeight());
 
-      g2d.setColor(UIUtil.getBorderInactiveColor());
+      g2d.setColor(UIUtil.getHeaderInactiveColor());
       final Color buttonInnerColor = myActive ? ACTIVE_SIDE_BUTTON_BG : INACTIVE_SIDE_BUTTON_BG;
       g2d.setPaint(new GradientPaint(sideRec.x, sideRec.y, Color.white, sideRec.x, (int)sideRec.getMaxY() - 1, buttonInnerColor));
       g2d.fillRect(sideRec.x + 2, sideRec.y, sideRec.width - 2, sideRec.height);

@@ -54,6 +54,11 @@ public class TextComponentSoftWrapModel implements SoftWrapModel {
   }
 
   @Override
+  public boolean isVisible(TextChange softWrap) {
+    return false;
+  }
+
+  @Override
   public void beforeDocumentChangeAtCaret() {
   }
 

@@ -116,6 +116,11 @@ class VirtualFileImpl extends HttpVirtualFile {
     return myName;
   }
 
+  @Override
+  public String toString() {
+    return "HttpVirtualFile:" + myPath + ", info=" + myFileInfo;
+  }
+
   public VirtualFile getParent() {
     if (myParentPath == null) return null;
     return myFileSystem.findFileByPath(myParentPath, true);

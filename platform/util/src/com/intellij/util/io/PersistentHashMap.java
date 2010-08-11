@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
@@ -24,7 +25,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -213,6 +216,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
+  /**
+   * Process all keys registered in the map. Note that keys which were removed after {@link #compact()} call will be processed as well. Use
+   * {@link #processKeysWithExistingMapping(com.intellij.util.Processor)} to process only keys with existing mappings
+   */
   public synchronized boolean processKeys(Processor<Key> processor) throws IOException {
     synchronized (ourLock) {
       myAppendCache.clear();
@@ -220,9 +227,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
-  public synchronized Collection<Key> getAllKeysWithExistingMapping() throws IOException {
+  public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
+    final List<Key> values = new ArrayList<Key>();
+    processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<Key>(values));
+    return values;
+  }
+
+  public synchronized boolean processKeysWithExistingMapping(Processor<Key> processor) throws IOException {
     synchronized (ourLock) {
-      return getAllDataObjects(new DataFilter() {
+      return processAllDataObject(processor, new DataFilter() {
         public boolean accept(final int id) {
           try {
             return readValueId(id).address != NULL_ADDR;

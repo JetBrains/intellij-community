@@ -579,7 +579,30 @@ public class HighlightMethodUtil {
   }
 
   private static String esctrim(@NotNull String s) {
-    return XmlStringUtil.escapeString(StringUtil.first(s, 40, true));
+    return XmlStringUtil.escapeString(trimNicely(s));
+  }
+
+  private static String trimNicely(String s) {
+    if (s.length() <= 40) return s;
+
+    List<TextRange> wordIndices = StringUtil.getWordIndicesIn(s);
+    if (wordIndices.size() > 2) {
+      int firstWordEnd = wordIndices.get(0).getEndOffset();
+
+      // try firstWord...remainder
+      for (int i = 1; i<wordIndices.size();i++) {
+        int stringLength = firstWordEnd + s.length() - wordIndices.get(i).getStartOffset();
+        if (stringLength <= 40) {
+          return s.substring(0, firstWordEnd) + "..." + s.substring(wordIndices.get(i).getStartOffset());
+        }
+      }
+    }
+    // maybe one last word will fit?
+    if (!wordIndices.isEmpty() && s.length() - wordIndices.get(wordIndices.size()-1).getStartOffset() <= 40) {
+      return "..." + s.substring(wordIndices.get(wordIndices.size()-1).getStartOffset());
+    }
+
+    return StringUtil.last(s, 40, true).toString();
   }
 
   private static String createMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
@@ -615,7 +638,8 @@ public class HighlightMethodUtil {
     for (int i = 0; i < Math.max(parameters.length,expressions.length); i++) {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
-      @NonNls String mismatchColor = showShortType(i, parameters, expressions, substitutor) ? null : "red";
+      boolean showShort = showShortType(i, parameters, expressions, substitutor);
+      @NonNls String mismatchColor = showShort ? null : "red";
 
       s += "<tr" + (i % 2 == 0 ? " style='background-color: #eeeeee'" : "") + ">";
       s += "<td><b><nobr>";
@@ -631,9 +655,7 @@ public class HighlightMethodUtil {
       if (parameter != null) {
         PsiType type = substitutor.substitute(parameter.getType());
         s +=  "<font " + (mismatchColor == null ? "" : "color=" + mismatchColor) + ">" +
-              esctrim(showShortType(i, parameters, expressions, substitutor)
-                                         ? type.getPresentableText()
-                                         : HighlightUtil.formatType(type))
+              esctrim(showShort ? type.getPresentableText() : HighlightUtil.formatType(type))
               + "</font>"
               ;
       }
@@ -666,12 +688,11 @@ public class HighlightMethodUtil {
       PsiExpression expression = expressions[i];
       PsiType type = expression.getType();
 
-      @NonNls String mismatchColor = showShortType(i, parameters, expressions, substitutor) ? null : "red";
+      boolean showShort = showShortType(i, parameters, expressions, substitutor);
+      @NonNls String mismatchColor = showShort ? null : "red";
       ms += "<td> " + "<b><nobr>" + (i == 0 ? "(" : "")
-            + "<font " + (mismatchColor == null ? "" : "color=" + mismatchColor) + ">" +
-            XmlStringUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
-                                 ? type.getPresentableText()
-                                 : HighlightUtil.formatType(type))
+            + "<font " + (showShort ? "" : "color=" + mismatchColor) + ">" +
+            XmlStringUtil.escapeString(showShort ? type.getPresentableText() : HighlightUtil.formatType(type))
             + "</font>"
             + (i == expressions.length - 1 ? ")" : ",") + "</nobr></b></td>";
     }
@@ -1263,9 +1284,12 @@ public class HighlightMethodUtil {
               return;
             }
             highlightInfo = GenericsHighlightUtil.checkGenericCallWithRawArguments(result, (PsiCallExpression)constructorCall);
-          }
-          if (highlightInfo != null) {
-            holder.add(highlightInfo);
+            if (highlightInfo != null) {
+              holder.add(highlightInfo);
+            }
+            if (PsiUtil.isLanguageLevel7OrHigher(constructorCall)) {
+              //check if not diamand - apply corresponding fix
+            }
           }
         }
       }

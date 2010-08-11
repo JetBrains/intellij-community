@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,4 +109,6 @@ public abstract class RefManager {
   public abstract String getQualifiedName(RefEntity refEntity);
 
   public abstract void removeRefElement(RefElement refElement, List<RefElement> deletedRefs);
+
+  public abstract PsiManager getPsiManager();
 }

@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import org.codehaus.groovy.runtime.GroovyCategorySupport;
@@ -40,14 +40,14 @@ public class GroovyClassDescriptor {
     }
   }
 
-  private final PsiClass myPsiClass;
+  private final PsiType myPsiType;
   private final PsiElement myPlace;
   private final PsiFile myFile;
   private final boolean myPlaceDependent;
   private boolean myPlaceElementAccessed;
 
-  public GroovyClassDescriptor(@NotNull PsiClass psiClass, PsiElement place, boolean placeDependent, final PsiFile placeFile) {
-    myPsiClass = psiClass;
+  public GroovyClassDescriptor(@NotNull PsiType psiType, PsiElement place, boolean placeDependent, final PsiFile placeFile) {
+    myPsiType = psiType;
     myPlace = place;
     myPlaceDependent = placeDependent;
     myFile = placeFile;
@@ -62,12 +62,12 @@ public class GroovyClassDescriptor {
   }
 
   @Nullable
-  public String getQualifiedName() {
-    return myPsiClass.getQualifiedName();
+  public String getTypeText() {
+    return myPsiType.getCanonicalText();
   }
 
   public boolean isInheritor(String qname) {
-    return InheritanceUtil.isInheritor(myPsiClass, qname);
+    return InheritanceUtil.isInheritor(myPsiType, qname);
   }
 
   public PsiElement getPlace() {
@@ -75,8 +75,8 @@ public class GroovyClassDescriptor {
     return myPlace;
   }
 
-  public PsiClass getPsiClass() {
-    return myPsiClass;
+  public PsiType getPsiType() {
+    return myPsiType;
   }
 
   public PsiFile getPlaceFile() {
@@ -94,7 +94,7 @@ public class GroovyClassDescriptor {
 
     GroovyClassDescriptor that = (GroovyClassDescriptor)o;
 
-    if (!myPsiClass.equals(that.myPsiClass)) return false;
+    if (!myPsiType.equals(that.myPsiType)) return false;
 
     if (myPlaceDependent) {
       return myPlace.equals(that.myPlace);
@@ -105,7 +105,7 @@ public class GroovyClassDescriptor {
 
   @Override
   public int hashCode() {
-    int result = myPsiClass.hashCode() * 31 + myFile.hashCode();
+    int result = myPsiType.hashCode() * 31 + myFile.hashCode();
     if (myPlaceDependent) {
       return result * 31 + myPlace.hashCode();
     }

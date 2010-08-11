@@ -366,15 +366,23 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   public TextRange getCDATAInterior() {
     PsiElement[] elements = getChildren();
     int start = 0;
-    if (elements.length != 0 && elements[0].getNode().getElementType() == XmlElementType.XML_CDATA) {
-      ASTNode startNode = elements[0].getNode().findChildByType(XmlTokenType.XML_CDATA_START);
+    int first = 0;
+    if (elements.length > 0 && elements[0] instanceof PsiWhiteSpace) {
+      first ++;
+    }
+    if (elements.length > first && elements[first].getNode().getElementType() == XmlElementType.XML_CDATA) {
+      ASTNode startNode = elements[first].getNode().findChildByType(XmlTokenType.XML_CDATA_START);
       if (startNode != null) {
         start = startNode.getTextRange().getEndOffset() - getTextRange().getStartOffset();
       }
     }
     int end = getTextLength();
-    if (elements.length != 0 && elements[elements.length-1].getNode().getElementType() == XmlElementType.XML_CDATA) {
-      ASTNode startNode = elements[elements.length-1].getNode().findChildByType(XmlTokenType.XML_CDATA_END);
+    int last = elements.length - 1;
+    if (last > 0 && elements[last] instanceof PsiWhiteSpace) {
+      last --;
+    }
+    if (last >= 0 && elements[last].getNode().getElementType() == XmlElementType.XML_CDATA) {
+      ASTNode startNode = elements[last].getNode().findChildByType(XmlTokenType.XML_CDATA_END);
       if (startNode != null) {
         end = startNode.getTextRange().getStartOffset() - getTextRange().getStartOffset();
       }

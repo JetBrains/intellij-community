@@ -4,6 +4,6 @@ class ConstructorAtEnd {
 
   }
 
-  <caret>def ConstructorAtEnd() {
+  <caret>ConstructorAtEnd() {
   }
 }

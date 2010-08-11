@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,9 +66,14 @@ public class GitInit extends DumbAwareAction {
     }
     final VirtualFile root = files[0];
     if (GitUtil.isUnderGit(root)) {
-      Messages.showErrorDialog(project, GitBundle.message("init.error.already.under.git", root.getPresentableUrl()),
-                               GitBundle.getString("init.error.title"));
-      return;
+      final int v = Messages.showYesNoDialog(project,
+                                             GitBundle.message("init.warning.already.under.git",
+                                                               StringUtil.escapeXml(root.getPresentableUrl())),
+                                             GitBundle.getString("init.warning.title"),
+                                             Messages.getWarningIcon());
+      if (v != 0) {
+        return;
+      }
     }
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
     h.setNoSSH(true);
@@ -82,7 +88,7 @@ public class GitInit extends DumbAwareAction {
       return;
     }
     GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
-      
+
       public void run(@NotNull ProgressIndicator indicator) {
         root.refresh(false, false);
         final String path = root.equals(baseDir) ? "" : root.getPath();

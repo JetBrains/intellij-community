@@ -374,7 +374,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
         GitBranchConfiguration n = new GitBranchConfiguration(this, bc.NAME);
         myConfigurations.put(n.getName(), n);
         for (BranchInfo bi : bc.BRANCHES) {
-          n.setBranch(bi.ROOT, bi.REFERENCE);
+          n.setReference(bi.ROOT, bi.REFERENCE);
         }
         myConfigurations.put(bc.NAME, n);
         n.setAutoDetected(bc.IS_AUTO_DETECTED);
@@ -503,33 +503,27 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
         currents.put(root, current == null ? "" : current.getName());
       }
       if (myConfigurations.isEmpty()) {
-        List<String> locals = detectConfigurations(true, myGitRoots);
-        if (locals.isEmpty()) {
-          // no commits
-          locals.add("master");
-        }
-        for (String localName : locals) {
-          GitBranchConfiguration c = createConfiguration(localName);
-          c.setAutoDetected(true);
+        detectLocalConfigurations(true);
+        for (GitBranchConfiguration configuration : myConfigurations.values()) {
           boolean currentsMatched = true;
           for (VirtualFile root : myGitRoots) {
-            c.setBranch(root.getPath(), localName);
-            currentsMatched &= currents.get(root).equals(localName);
+            currentsMatched &= currents.get(root).equals(configuration.getReference(root.getPath()));
           }
           if (currentsMatched) {
-            myCurrentConfiguration = c;
+            myCurrentConfiguration = configuration;
+            break;
           }
         }
         if (myCurrentConfiguration == null) {
           // the configuration does not matches any standard, there could be no configurations with spaces at this point
           // since it is not allowed branch name.
           String name = "untitled";
-          if (locals.contains(name)) {
+          if (myConfigurations.containsKey(name)) {
             String p = name;
             name = null;
             for (int i = 0; i < Integer.MAX_VALUE; i++) {
               final String c = p + i;
-              if (!locals.contains(c)) {
+              if (!myConfigurations.containsKey(c)) {
                 name = c;
                 break;
               }
@@ -540,12 +534,61 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
           }
           GitBranchConfiguration c = createConfiguration(name);
           for (VirtualFile root : myGitRoots) {
-            c.setBranch(root.getPath(), describeRoot(root));
+            c.setReference(root.getPath(), describeRoot(root));
           }
         }
       }
       fireCurrentConfigurationChanged();
       fireConfigurationsChanged();
+    }
+  }
+
+  /**
+   * Detect local configurations
+   *
+   * @param complete if complete configurations should be detected
+   * @throws VcsException
+   */
+  void detectLocalConfigurations(boolean complete) throws VcsException {
+    synchronized (myStateLock) {
+      if (complete) {
+        List<String> locals = detectConfigurations(true, myGitRoots);
+        if (locals.isEmpty()) {
+          // no commits
+          locals.add("master");
+        }
+        locals.removeAll(myConfigurations.keySet());
+        for (String localName : locals) {
+          GitBranchConfiguration c = createConfiguration(localName);
+          c.setAutoDetected(true);
+          for (VirtualFile root : myGitRoots) {
+            c.setReference(root.getPath(), localName);
+          }
+        }
+      }
+      else {
+        HashSet<String> detected = new HashSet<String>();
+        HashSet<String> forRoot = new HashSet<String>();
+        for (VirtualFile root : myGitRoots) {
+          forRoot.clear();
+          GitBranch.listAsStrings(myProject, root, false, true, forRoot, null);
+          for (String b : forRoot) {
+            GitBranchConfiguration c;
+            if (detected.contains(b)) {
+              c = myConfigurations.get(b);
+            }
+            else if (!myConfigurations.containsKey(b)) {
+              detected.add(b);
+              c = createConfiguration(b);
+              c.setAutoDetected(true);
+            }
+            else {
+              continue;
+            }
+            c.setReference(root.getPath(), b);
+          }
+        }
+      }
     }
   }
 

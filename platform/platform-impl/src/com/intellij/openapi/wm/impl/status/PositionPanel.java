@@ -23,8 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -42,7 +41,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPresentation, CaretListener {
+public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPresentation, CaretListener, SelectionListener {
   private String myText;
   private StatusBar myStatusBar;
 
@@ -124,12 +123,16 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
   }
 
   public void dispose() {
-    EditorFactory.getInstance().getEventMulticaster().removeCaretListener(this);
+    final EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+    multicaster.removeCaretListener(this);
+    multicaster.removeSelectionListener(this);
     myStatusBar = null;
   }
 
   public void install(@NotNull StatusBar statusBar) {
-    EditorFactory.getInstance().getEventMulticaster().addCaretListener(this);
+    final EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+    multicaster.addCaretListener(this);
+    multicaster.addSelectionListener(this);
     myStatusBar = statusBar;
   }
 
@@ -137,6 +140,15 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
     message.append(caret.line + 1);
     message.append(":");
     message.append(caret.column + 1);
+  }
+
+  @Override
+  public void selectionChanged(final SelectionEvent e) {
+    final Editor editor = e.getEditor();
+    Project project = editor.getProject();
+    if (project != null && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
+       updatePosition(editor);
+    }
   }
 
   public void caretPositionChanged(final CaretEvent e) {

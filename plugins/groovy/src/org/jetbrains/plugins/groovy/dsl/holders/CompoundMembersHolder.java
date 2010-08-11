@@ -35,7 +35,7 @@ public class CompoundMembersHolder implements CustomMembersHolder {
     return true;
   }
 
-  public void addHolder(CustomMembersHolder holder) {
+  public synchronized void addHolder(CustomMembersHolder holder) {
     myHolders.add(holder);
   }
 }

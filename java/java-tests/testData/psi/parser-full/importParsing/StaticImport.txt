@@ -1,0 +1,24 @@
+PsiJavaFile:StaticImport.java
+  PsiImportList
+    PsiImportStaticStatement
+      PsiKeyword:import('import')
+      PsiWhiteSpace(' ')
+      PsiKeyword:static('static')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:java.util.Arrays
+        PsiJavaCodeReferenceElement:java.util
+          PsiJavaCodeReferenceElement:java
+            PsiIdentifier:java('java')
+            PsiReferenceParameterList
+              <empty list>
+          PsiJavaToken:DOT('.')
+          PsiIdentifier:util('util')
+          PsiReferenceParameterList
+            <empty list>
+        PsiJavaToken:DOT('.')
+        PsiIdentifier:Arrays('Arrays')
+        PsiReferenceParameterList
+          <empty list>
+      PsiJavaToken:DOT('.')
+      PsiJavaToken:ASTERISK('*')
+      PsiJavaToken:SEMICOLON(';')

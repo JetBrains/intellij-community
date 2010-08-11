@@ -16,6 +16,7 @@
 package com.intellij.ui.table;
 
 import com.intellij.Patches;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.*;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
@@ -49,6 +50,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 
   private MyCellEditorRemover myEditorRemover;
+  private boolean myEnableAntialiasing;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -59,11 +61,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myEmptyTextHelper = new EmptyTextHelper(this) {
       @Override
       protected boolean isEmpty() {
-        return getRowCount() == 0;
+        return JBTable.this.isEmpty();
       }
     };
 
     myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+
+    setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {
@@ -82,10 +86,21 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
   }
 
+  public boolean isEmpty() {
+    return getRowCount() == 0;
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
+    if (myEnableAntialiasing) {
+      UISettings.setupAntialiasing(g);
+    }
     super.paintComponent(g);
     myEmptyTextHelper.paint(g);
+  }
+
+  public void setEnableAntialiasing(boolean flag) {
+    myEnableAntialiasing = flag;
   }
 
   public static DefaultCellEditor createBooleanEditor() {

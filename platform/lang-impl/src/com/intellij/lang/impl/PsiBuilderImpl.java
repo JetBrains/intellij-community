@@ -632,7 +632,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private boolean isEmpty(final int startIdx, final int endIdx) {
     for (int i = startIdx; i < endIdx; i++) {
       final IElementType token = myLexTypes[i];
-      if (!myWhitespaces.contains(token) && !myComments.contains(token)) return false;
+      if (!whitespaceOrComment(token)) return false;
     }
     return true;
   }
@@ -801,30 +801,24 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
       if (item instanceof StartMarker && ((StartMarker)item).myDoneMarker.myTieToTheLeft) {
         int prevProductionLexIndex = fProduction.get(i - 1).myLexemeIndex;
-        IElementType prevTokenType;
         while (item.myLexemeIndex > prevProductionLexIndex &&
                item.myLexemeIndex - 1 < myLexemeCount &&
-               (myWhitespaces.contains(prevTokenType = myLexTypes[item.myLexemeIndex - 1]) ||
-                myComments.contains(prevTokenType))) {
+               whitespaceOrComment(myLexTypes[item.myLexemeIndex - 1])) {
           item.myLexemeIndex--;
         }
         ((StartMarker)item).myDoneMarker.myLexemeIndex = item.myLexemeIndex;
       }
       else if (item instanceof StartMarker) {
-        IElementType nextTokenType;
         while (item.myLexemeIndex < myLexemeCount &&
-               (myWhitespaces.contains(nextTokenType = myLexTypes[item.myLexemeIndex]) ||
-                myComments.contains(nextTokenType))) {
+               whitespaceOrComment(myLexTypes[item.myLexemeIndex])) {
           item.myLexemeIndex++;
         }
       }
       else if (item instanceof DoneMarker || item instanceof ErrorItem) {
         int prevProductionLexIndex = fProduction.get(i - 1).myLexemeIndex;
-        IElementType prevTokenType;
         while (item.myLexemeIndex > prevProductionLexIndex &&
                item.myLexemeIndex - 1 < myLexemeCount &&
-               (myWhitespaces.contains(prevTokenType = myLexTypes[item.myLexemeIndex - 1]) ||
-                myComments.contains(prevTokenType))) {
+               whitespaceOrComment(myLexTypes[item.myLexemeIndex - 1])) {
           item.myLexemeIndex--;
         }
       }

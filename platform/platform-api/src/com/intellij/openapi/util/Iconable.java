@@ -31,8 +31,7 @@ public interface Iconable {
 
 
   class LastComputedIcon {
-
-    private static Key<Map<Integer, Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon"); 
+    private static final Key<Map<Integer, Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
 
     @Nullable
     public static Icon get(UserDataHolder holder, int flags) {

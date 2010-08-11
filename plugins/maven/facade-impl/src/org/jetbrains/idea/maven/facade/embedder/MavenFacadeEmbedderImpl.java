@@ -24,8 +24,10 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.manager.WagonManager;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
+import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
@@ -554,6 +556,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
     MavenEmbedder.setImplementation(c, ArtifactFactory.class, CustomArtifactFactory.class);
     MavenEmbedder.setImplementation(c, ProjectArtifactFactory.class, CustomArtifactFactory.class);
     MavenEmbedder.setImplementation(c, ArtifactResolver.class, CustomArtifactResolver.class);
+    MavenEmbedder.setImplementation(c, RepositoryMetadataManager.class, CustomRepositoryMetadataManager.class);
     MavenEmbedder.setImplementation(c, WagonManager.class, CustomWagonManager.class);
     MavenEmbedder.setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
   }
@@ -580,6 +583,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
       ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(projectIdToFileMap, strict);
+      ((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(projectIdToFileMap);
       ((CustomWagonManager)getComponent(WagonManager.class)).customize(strict);
 
       setConsoleAndLogger(logger, process);
@@ -604,6 +608,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).reset();
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).reset();
       ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).reset();
+      ((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).reset();
       ((CustomWagonManager)getComponent(WagonManager.class)).reset();
     }
     catch (Exception e) {

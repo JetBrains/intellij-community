@@ -1,0 +1,23 @@
+PsiJavaFile:ImportListBug.java
+  PsiImportList
+    <empty list>
+  PsiDocComment
+    PsiDocToken:DOC_COMMENT_END('/**/')
+  PsiClass:AClass
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiDocToken:DOC_COMMENT_END('****/')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:AClass('AClass')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

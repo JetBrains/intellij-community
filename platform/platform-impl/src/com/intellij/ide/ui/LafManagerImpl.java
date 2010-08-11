@@ -21,17 +21,21 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SideBorder2;
+import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.plaf.beg.*;
+import com.intellij.util.ui.UIUtil;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -43,6 +47,8 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -153,9 +159,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   public void disposeComponent(){}
 
   public void loadState(final Element element) {
-
-    boolean updateUI = myCurrentLaf != null;
-
     String className=null;
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
@@ -171,12 +174,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       laf=getDefaultLaf();
     }
 
-    myCurrentLaf=laf;
-
-    if (updateUI) {
+    if (myCurrentLaf != null && !laf.getClassName().equals(myCurrentLaf.getClassName())) {
       setCurrentLookAndFeel(laf);
       updateUI();
     }
+
+    myCurrentLaf=laf;
   }
 
   public Element getState() {
@@ -296,6 +299,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }else{ // UNIXes (Linux and MAC) go here
         popupWeight=MEDIUM_WEIGHT_POPUP;
       }
+    } else if (!HEAVY_WEIGHT_POPUP.equals(popupWeight) && !MEDIUM_WEIGHT_POPUP.equals(popupWeight)) {
+      throw new IllegalStateException("unknown value of property -Didea.popup.weight: " + popupWeight);
     }
 
     if (SystemInfo.isMacOSLeopard) {
@@ -306,36 +311,65 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     popupWeight = popupWeight.trim();
 
     PopupFactory popupFactory;
-
-    if(HEAVY_WEIGHT_POPUP.equals(popupWeight)){
-      popupFactory=new PopupFactory(){
+    final PopupFactory oldFactory = PopupFactory.getSharedInstance();
+    if (!(oldFactory instanceof OurPopupFactory)) {
+      popupFactory = new OurPopupFactory() {
         public Popup getPopup(
           Component owner,
           Component contents,
           int x,
           int y
-        ) throws IllegalArgumentException{
+        ) throws IllegalArgumentException {
           final Point point = fixPopupLocation(contents, x, y);
-          return new Popup(owner,contents,point.x,point.y){};
+
+          final int popupType = PopupUtil.getPopupType(this);
+          if (popupType >= 0) {
+            PopupUtil.setPopupType(oldFactory, popupType);
+          }
+
+          return oldFactory.getPopup(owner, contents, point.x, point.y);
         }
       };
-    }else if(MEDIUM_WEIGHT_POPUP.equals(popupWeight)){
-      popupFactory=new PopupFactory() {
 
-        public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
-          return createPopup(owner, contents, x, y);
-        }
-
-        private Popup createPopup(final Component owner, final Component contents, final int x, final int y) {
-          final Point point = fixPopupLocation(contents, x, y);
-          final Popup popup = super.getPopup(owner, contents, point.x, point.y);
-          return popup;
-        }
-      };
-    }else{
-      throw new IllegalStateException("unknown value of property -Didea.popup.weight: "+popupWeight);
+      PopupUtil.setPopupType(popupFactory, HEAVY_WEIGHT_POPUP.equals(popupWeight) ? 2 : 1);
+      PopupFactory.setSharedInstance(popupFactory);
     }
-    PopupFactory.setSharedInstance(popupFactory);
+
+    // update ui for popup menu to get round corners
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+      uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
+      final Icon icon = getAquaMenuInvertedIcon();
+      if (icon != null) {
+        uiDefaults.put("Menu.invertedArrowIcon", icon);
+      }
+    }
+  }
+
+  @Nullable
+  private static Icon getAquaMenuInvertedIcon() {
+    if (!UIUtil.isUnderAquaLookAndFeel()) return null;
+    final Icon arrow = (Icon) UIManager.get("Menu.arrowIcon");
+    if (arrow == null) return null;
+
+    try {
+      final Method method = arrow.getClass().getMethod("getInvertedIcon");
+      if (method != null) {
+        method.setAccessible(true);
+        return (Icon) method.invoke(arrow);
+      }
+
+      return null;
+    }
+    catch (NoSuchMethodException e1) {
+      return null;
+    }
+    catch (InvocationTargetException e1) {
+      return null;
+    }
+    catch (IllegalAccessException e1) {
+      return null;
+    }
   }
 
   private Point fixPopupLocation(final Component contents, final int x, final int y) {
@@ -592,7 +626,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
       defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
       defaults.put("ToolTip.background", new ColorUIResource(255, 255, 231));
-      defaults.put("ToolTip.border", new SideBorder2(Color.gray, Color.gray, Color.black, Color.black, 1));
+      defaults.put("ToolTip.border", new ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1));
       defaults.put("Tree.ancestorInputMap", null);
       defaults.put("FileView.directoryIcon", IconLoader.getIcon("/nodes/folder.png"));
       defaults.put("FileChooser.upFolderIcon", IconLoader.getIcon("/nodes/upFolder.png"));
@@ -659,4 +693,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
            }));
     }
   }
+
+  private static class OurPopupFactory extends PopupFactory {}
 }

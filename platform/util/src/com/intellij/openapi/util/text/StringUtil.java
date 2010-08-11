@@ -31,11 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.DateFormat;
 import java.util.*;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -919,6 +916,27 @@ public class StringUtil {
     return result;
   }
 
+  @NotNull
+  public static List<TextRange> getWordIndicesIn(@NotNull String text) {
+    List<TextRange> result = new SmartList<TextRange>();
+    int start = -1;
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      boolean isIdentifierPart = Character.isJavaIdentifierPart(c);
+      if (isIdentifierPart && start == -1) {
+        start = i;
+      }
+      if (isIdentifierPart && i == text.length() - 1 && start != -1) {
+        result.add(new TextRange(start, i + 1));
+      }
+      else if (!isIdentifierPart && start != -1) {
+        result.add(new TextRange(start, i));
+        start = -1;
+      }
+    }
+    return result;
+  }
+
   @NotNull public static String join(@NotNull final String[] strings, @NotNull final String separator) {
     return join(strings, 0, strings.length, separator);
   }
@@ -1260,6 +1278,23 @@ public class StringUtil {
     return -1;
   }
 
+  /**
+   * Allows to retrieve index of last occurrence of the given symbols at <code>[start; end)</code> sub-sequence of the given text. 
+   *
+   * @param s       target text
+   * @param c       target symbol which last occurrence we want to check
+   * @param start   start offset of the target text (inclusive)
+   * @param end     end offset of the target text (exclusive)
+   * @return        index of the last occurrence of the given symbol at the target sub-sequence of the given text if any;
+   *                <code>-1</code> otherwise
+   */
+  public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
+    for (int i = end - 1; i >= start; i--) {
+      if (s.charAt(i) == c) return i;
+    }
+    return -1;
+  }
+
   @NotNull
   public static String first(@NotNull String text, final int length, final boolean appendEllipsis) {
     return text.length() > length ? text.substring(0, length) + (appendEllipsis ? "..." : "") : text;
@@ -1553,7 +1588,16 @@ public class StringUtil {
     try {
       return Integer.parseInt(string);
     }
-    catch (NumberFormatException e) {
+    catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
+  public static double parseDouble(final String string, final double defaultValue) {
+    try {
+      return Double.parseDouble(string);
+    }
+    catch (Exception e) {
       return defaultValue;
     }
   }
@@ -1580,6 +1624,19 @@ public class StringUtil {
       return "an" + Character.toUpperCase(c) + name.substring(1);
     }
     return "a" + Character.toUpperCase(c) + name.substring(1);
+  }
+
+  public static String sanitizeJavaIdentifier(String name) {
+    final StringBuilder result = new StringBuilder();
+
+    for (int i = 0; i < name.length(); i++) {
+      final char ch = name.charAt(i);
+      if (Character.isLetterOrDigit(ch)) {
+        result.append(ch);
+      }
+    }
+
+    return result.toString();
   }
 
   public static void assertValidSeparators(@NotNull CharSequence s) {

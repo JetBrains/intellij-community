@@ -134,14 +134,8 @@ public class ResolveUtil {
       return false;
     }
 
-    if (type instanceof PsiClassType) {
-      PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass instanceof PsiTypeParameter) {
-        psiClass = psiClass.getSuperClass();
-      }
-      if (psiClass != null && !GroovyDslFileIndex.processExecutors(psiClass, place, processor)) {
-        return false;
-      }
+    if (!GroovyDslFileIndex.processExecutors(type, place, processor)) {
+      return false;
     }
 
     return true;
@@ -167,8 +161,7 @@ public class ResolveUtil {
 
   }
 
-  public static Map<String, PsiType> getAllSuperTypes(PsiType base, final PsiElement place) {
-    final Project project = place.getProject();
+  public static Map<String, PsiType> getAllSuperTypes(PsiType base, final Project project) {
     final Map<String, Map<String, PsiType>> cache =
       CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<String, Map<String, PsiType>>>() {
         @Override
@@ -190,8 +183,8 @@ public class ResolveUtil {
     return result;
   }
 
-  public static boolean isInheritor(PsiType type, @NotNull String baseClass, PsiElement place) {
-    return getAllSuperTypes(type, place).keySet().contains(baseClass);
+  public static boolean isInheritor(PsiType type, @NotNull String baseClass, Project project) {
+    return getAllSuperTypes(type, project).keySet().contains(baseClass);
   }
 
 

@@ -15,12 +15,8 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.compiler.impl.newApi.CompileItem;
-import com.intellij.compiler.impl.newApi.CompilerInstance;
-import com.intellij.compiler.impl.newApi.NewCompiler;
-import com.intellij.compiler.impl.newApi.VirtualFileCompileItem;
+import com.intellij.openapi.compiler.generic.*;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -35,12 +31,12 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class ArtifactsCompiler extends NewCompiler<String, ArtifactPackagingItemOutputState> {
+public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> {
   static final Key<Set<String>> WRITTEN_PATHS_KEY = Key.create("artifacts_written_paths");
   static final Key<Set<Artifact>> AFFECTED_ARTIFACTS = Key.create("affected_artifacts");
 
   public ArtifactsCompiler() {
-    super("artifacts_compiler", 0, NewCompiler.CompileOrderPlace.PACKAGING);
+    super("artifacts_compiler", 0, GenericCompiler.CompileOrderPlace.PACKAGING);
   }
 
   @Nullable
@@ -52,24 +48,26 @@ public class ArtifactsCompiler extends NewCompiler<String, ArtifactPackagingItem
   @NotNull
   @Override
   public KeyDescriptor<String> getItemKeyDescriptor() {
-    return VirtualFileCompileItem.KEY_DESCRIPTOR;
+    return STRING_KEY_DESCRIPTOR;
   }
 
   @NotNull
   @Override
-  public DataExternalizer<ArtifactPackagingItemOutputState> getItemStateExternalizer() {
-    return ArtifactCompilerCompileItem.OUTPUT_EXTERNALIZER;
+  public DataExternalizer<VirtualFilePersistentState> getSourceStateExternalizer() {
+    return VirtualFilePersistentState.EXTERNALIZER;
   }
 
   @NotNull
   @Override
-  public CompilerInstance<ArtifactBuildTarget, ? extends CompileItem<String, ArtifactPackagingItemOutputState>, String, ArtifactPackagingItemOutputState> createInstance(
+  public DataExternalizer<ArtifactPackagingItemOutputState> getOutputStateExternalizer() {
+    return new ArtifactPackagingItemExternalizer();
+  }
+
+  @NotNull
+  @Override
+  public GenericCompilerInstance<ArtifactBuildTarget, ? extends CompileItem<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>, String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> createInstance(
     @NotNull CompileContext context) {
     return new ArtifactsCompilerInstance(context);
-  }
-
-  public boolean validateConfiguration(final CompileScope scope) {
-    return true;
   }
 
   @NotNull

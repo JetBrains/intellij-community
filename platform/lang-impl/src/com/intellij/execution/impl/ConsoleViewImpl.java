@@ -106,10 +106,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     typedAction.setupHandler(new MyTypedHandler(typedAction.getHandler()));
   }
 
+  private final int                CYCLIC_BUFFER_SIZE   = getCycleBufferSize();
+  private final CommandLineFolding myCommandLineFolding = new CommandLineFolding();
+
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
+  private final boolean                 isViewer;
+
   private ConsoleState myState = ConsoleState.NOT_STARTED;
-  private final int CYCLIC_BUFFER_SIZE = getCycleBufferSize();
-  private final boolean isViewer;
   private Computable<ModalityState> myStateForUpdate;
 
   private static int getCycleBufferSize() {
@@ -667,6 +670,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     });
     final EditorEx editor = (EditorEx)document.createViewer(editorDocument, myProject);
+    editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
     final EditorHighlighter highlighter = new MyHighlighter();
     editor.setHighlighter(highlighter);
 
@@ -932,8 +936,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myFoldingAlarm.addRequest(runnable, 50);
     }
   }
-
+  
   private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {
+    String commandLinePlaceholder = myCommandLineFolding.getPlaceholder(line);
+    if (commandLinePlaceholder != null) {
+      FoldRegion region = ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(
+        document.getLineStartOffset(line), document.getLineEndOffset(line), commandLinePlaceholder, null
+      );
+      toAdd.add(region);
+      return;
+    }
     ConsoleFolding current = foldingForLine(getLineText(document, line, false));
     myFolding.put(line, current);
 
@@ -1590,6 +1602,65 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       endOffset = offset;
     }
     return endOffset;
+  }
+
+  /**
+   * Command line used to launch application/test from idea is quite a big most of the time (it's likely that classpath definition
+   * takes a lot of space). Hence, it takes many visual lines during representation if soft wraps are enabled.
+   * <p/>
+   * Our point is to fold such long command line and represent it as a single visual line by default.
+   */
+  private class CommandLineFolding extends ConsoleFolding {
+
+    /**
+     * Checks if target line should be folded and returns its placeholder if the examination succeeds.
+     *
+     * @param line    index of line to check
+     * @return        placeholder text if given line should be folded; <code>null</code> otherwise
+     */
+    @Nullable
+    public String getPlaceholder(int line) {
+      if (myEditor == null || line != 0 || !myEditor.getSettings().isUseSoftWraps()) {
+        return null;
+      }
+
+      String text = getLineText(myEditor.getDocument(), line, false);
+      if (text.length() < 1000) {
+        return null;
+      }
+      boolean nonWhiteSpaceFound = false;
+      int index = 0;
+      // Don't fold the first line if no soft wraps are used or if the line is not that big.
+      if (!myEditor.getSettings().isUseSoftWraps() || text.length() < 1000) {
+        return null;
+      }
+      for (; index < text.length(); index++) {
+        char c = text.charAt(index);
+        if (c != ' ' && c != '\t') {
+          nonWhiteSpaceFound = true;
+          continue;
+        }
+        if (nonWhiteSpaceFound) {
+          break;
+        }
+      }
+      if (index > text.length()) {
+        // Don't expect to be here
+        return "<...>";
+      }
+      return text.substring(0, index) + " ...";
+    }
+
+    @Override
+    public boolean shouldFoldLine(String line) {
+      return false;
+    }
+
+    @Override
+    public String getPlaceholderText(List<String> lines) {
+      // Is not expected to be called.
+      return "<...>";
+    }
   }
 }
 

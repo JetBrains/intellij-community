@@ -304,7 +304,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
   public void dispose() {
     synchronized (myLock) {
-      force();
       myRecordsTable.dispose();
       myDataTable.dispose();
     }

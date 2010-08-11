@@ -276,11 +276,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       public int compare(final Object o1, final Object o2) {
         final MyNode node1 = (MyNode)o1;
         final MyNode node2 = (MyNode)o2;
-        final Object editableObject1 = node1.getConfigurable().getEditableObject();
-        final Object editableObject2 = node2.getConfigurable().getEditableObject();
-        if (editableObject1.getClass() == editableObject2.getClass()) {
+        final NamedConfigurable configurable1 = node1.getConfigurable();
+        final NamedConfigurable configurable2 = node2.getConfigurable();
+        if (configurable1.getClass() == configurable2.getClass()) {
           return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
         }
+        final Object editableObject1 = configurable1.getEditableObject();
+        final Object editableObject2 = configurable2.getEditableObject();
 
         if (editableObject2 instanceof Module && editableObject1 instanceof ModuleGroup) return -1;
         if (editableObject1 instanceof Module && editableObject2 instanceof ModuleGroup) return 1;

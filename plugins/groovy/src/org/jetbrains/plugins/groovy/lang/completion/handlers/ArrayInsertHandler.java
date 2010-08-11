@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -43,7 +44,7 @@ public class ArrayInsertHandler implements InsertHandler<LookupItem> {
     editor.getCaretModel().moveToOffset(caretOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
-    AfterNewClassInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
+    GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
   }
 
 

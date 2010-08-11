@@ -109,19 +109,20 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     if (testNGResults != null) {
       int exceptionMark = myExceptionalMark == -1 ? 0 : myExceptionalMark;
 
-      final String stackTrace = result.getStackTrace();
-      if (stackTrace != null && stackTrace.length() > 10) {
-        exceptionMark = currentTest.getCurrentSize();
-        //trim useless crud from stacktrace
-        String trimmed = trimStackTrace(stackTrace);
-        List<Printable> printables = getPrintables(result, trimmed);
-        for (Printable printable : printables) {
-          currentTest.addLast(printable);
+      if (currentTest != null) {
+        final String stackTrace = result.getStackTrace();
+        if (stackTrace != null && stackTrace.length() > 10) {
+          exceptionMark = currentTest.getCurrentSize();
+          //trim useless crud from stacktrace
+          List<Printable> printables = getPrintables(result);
+          for (Printable printable : printables) {
+            currentTest.addLast(printable);
+          }
         }
-      }
-      final TestProxy failedToStart = testNGResults.getFailedToStart();
-      if (failedToStart != null) {
-        currentTest.addChild(failedToStart);
+        final TestProxy failedToStart = testNGResults.getFailedToStart();
+        if (failedToStart != null) {
+          currentTest.addChild(failedToStart);
+        }
       }
       testNGResults.addTestResult(result, exceptionMark);
       myExceptionalMark = -1;
@@ -166,7 +167,8 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     return builder.toString();
   }
 
-  private List<Printable> getPrintables(final TestResultMessage result, String s) {
+  static List<Printable> getPrintables(final TestResultMessage result) {
+    String s = trimStackTrace(result.getStackTrace());
     List<Printable> printables = new ArrayList<Printable>();
     //figure out if we have a diff we need to hyperlink
     Matcher matcher = COMPARISION_PATTERN.matcher(s);

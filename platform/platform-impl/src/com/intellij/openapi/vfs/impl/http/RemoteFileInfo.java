@@ -218,6 +218,15 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
   }
 
+  @Override
+  public String toString() {
+    final String errorMessage = getErrorMessage();
+    return "state=" + getState()
+           + ", local file=" + myLocalFile
+           + (errorMessage != null ? ", error=" + errorMessage : "")
+           + (isCancelled() ? ", cancelled" : "");
+  }
+
   public RemoteFileState getState() {
     synchronized (myLock) {
       return myState;

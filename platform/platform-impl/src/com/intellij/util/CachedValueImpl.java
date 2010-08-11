@@ -41,16 +41,9 @@ public abstract class CachedValueImpl<T> extends CachedValueBase<T> implements C
   @Nullable
   public T getValue() {
 
-    r.lock();
-
-    T value;
-    try {
-      value = getUpToDateOrNull();
-      if (value != null) {
-        return value == ObjectUtils.NULL ? null : value;
-      }
-    } finally {
-      r.unlock();
+    T value = getUpToDateOrNull();
+    if (value != null) {
+      return value == ObjectUtils.NULL ? null : value;
     }
 
     w.lock();

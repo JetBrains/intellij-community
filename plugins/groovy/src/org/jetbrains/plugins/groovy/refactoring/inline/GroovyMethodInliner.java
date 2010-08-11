@@ -43,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -143,9 +142,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           GrExpression qualifier = ((GrReferenceExpression) invoked).getQualifierExpression();
           if (!GroovyInlineMethodUtil.hasNoSideEffects(qualifier)) {
             String qualName = generateQualifierName(call, method, project, qualifier);
-            while (qualifier instanceof GrParenthesizedExpression) {
-              qualifier = ((GrParenthesizedExpression) qualifier).getOperand();
-            }
+            qualifier = (GrExpression)PsiUtil.skipParentheses(qualifier, false);
             qualifierDeclaration = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, qualifier, null, qualName);
             innerQualifier = (GrReferenceExpression) factory.createExpressionFromText(qualName);
           } else {

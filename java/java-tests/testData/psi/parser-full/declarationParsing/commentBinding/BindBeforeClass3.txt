@@ -1,0 +1,21 @@
+PsiJavaFile:BindBeforeClass3.java
+  PsiImportList
+    <empty list>
+  PsiComment(END_OF_LINE_COMMENT)('// comment')
+  PsiWhiteSpace('\n\n')
+  PsiClass:A
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:A('A')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')
