@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
@@ -58,6 +59,9 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
    */
   int getUnlimitedCountValue();
 
+  /**
+   * @return required list and path of the target file in that revision (changes when move/rename)
+   */
   @Nullable
-  T getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException;
+  Pair<T, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException;
 }

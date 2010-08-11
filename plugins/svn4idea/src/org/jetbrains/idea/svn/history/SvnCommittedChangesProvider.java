@@ -26,6 +26,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -39,12 +41,10 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnAuthenticationNotifier;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -53,6 +53,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -491,7 +492,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public SvnChangeList getOneList(final VirtualFile file, VcsRevisionNumber number) throws VcsException {
+  public Pair<SvnChangeList, FilePath> getOneList(final VirtualFile file, VcsRevisionNumber number) throws VcsException {
     final VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(file);
     final SvnRepositoryLocation svnRootLocation = (SvnRepositoryLocation)getLocationFor(new FilePathImpl(root));
     if (svnRootLocation == null) return null;
@@ -508,13 +509,15 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final SVNRevision revisionBefore;
     final SVNURL repositoryUrl;
     final SVNURL svnurl;
+    final SVNInfo targetInfo;
     try {
       logger = myVcs.createLogClient();
       revisionBefore = SVNRevision.create(revision);
 
       svnurl = SVNURL.parseURIEncoded(url);
       final SVNWCClient client = myVcs.createWCClient();
-      SVNInfo info = client.doInfo(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+      final SVNInfo info = client.doInfo(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+      targetInfo = client.doInfo(new File(file.getPath()), SVNRevision.WORKING);
       if (info == null) {
         throw new VcsException("Can not get repository URL");
       }
@@ -528,10 +531,71 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     if (result[0] == null) {
       tryByRoot(result, logger, revisionBefore, repositoryUrl);
       if (result[0] == null) {
-        tryStepByStep(svnRootLocation, result, logger, revisionBefore, repositoryUrl, svnurl);
+        FilePath path = tryStepByStep(svnRootLocation, result, logger, revisionBefore, targetInfo, svnurl);
+        path = path == null ? new FilePathImpl(file) : path;
+        // and pass & take rename context there
+        return new Pair<SvnChangeList, FilePath>(result[0], path);
       }
     }
-    return result[0];
+    if (result[0].getChanges().size() == 1) {
+      final Collection<Change> changes = result[0].getChanges();
+      final Change change = changes.iterator().next();
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (afterRevision != null) {
+        return new Pair<SvnChangeList, FilePath>(result[0], afterRevision.getFile());
+      } else {
+        return new Pair<SvnChangeList, FilePath>(result[0], new FilePathImpl(file));
+      }
+    }
+    String relativePath = SVNPathUtil.getRelativePath(targetInfo.getRepositoryRootURL().toString(), targetInfo.getURL().toString());
+    relativePath = relativePath.startsWith("/") ? relativePath : "/" + relativePath;
+    final Change targetChange = result[0].getByPath(relativePath);
+    if (targetChange == null) {
+      FilePath path = tryStepByStep(svnRootLocation, result, logger, revisionBefore, targetInfo, svnurl);
+      path = path == null ? new FilePathImpl(file) : path;
+      // and pass & take rename context there
+      return new Pair<SvnChangeList, FilePath>(result[0], path);
+    }
+    return new Pair<SvnChangeList, FilePath>(result[0], new FilePathImpl(file));
+  }
+
+  private static class RenameContext {
+    private String myCurrentPath;
+    private String myRepositoryRoot;
+    private boolean myHadChanged;
+
+    private RenameContext(final SVNInfo info) {
+      myRepositoryRoot = info.getRepositoryRootURL().toString();
+      myCurrentPath = SVNPathUtil.getRelativePath(myRepositoryRoot, info.getURL().toString());
+      myCurrentPath = myCurrentPath.startsWith("/") ? myCurrentPath : ("/" + myCurrentPath);
+    }
+
+    public void accept(final SVNLogEntry entry) {
+      final Map changedPaths = entry.getChangedPaths();
+
+      for (Object o : changedPaths.values()) {
+        final SVNLogEntryPath entryPath = (SVNLogEntryPath) o;
+        if ('A' == entryPath.getType()) {
+          if (myCurrentPath.equals(entryPath.getPath())) {
+            myHadChanged = true;
+            myCurrentPath = entryPath.getCopyPath();
+          }
+        }
+      }
+    }
+
+    @Nullable
+    public FilePath getFilePath(final SvnVcs vcs) {
+      if (! myHadChanged) return null;
+      final SvnFileUrlMapping svnFileUrlMapping = vcs.getSvnFileUrlMapping();
+      final String absolutePath = SVNPathUtil.append(myRepositoryRoot, myCurrentPath);
+      final String localPath = svnFileUrlMapping.getLocalPath(absolutePath);
+      if (localPath == null) {
+        LOG.info("Cannot find local path for url: " + absolutePath);
+        return null;
+      }
+      return new FilePathImpl(new File(localPath), false);
+    }
   }
 
   private void tryByRoot(SvnChangeList[] result, SVNLogClient logger, SVNRevision revisionBefore, SVNURL repositoryUrl) throws VcsException {
@@ -540,13 +604,16 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     tryExactHit(new SvnRepositoryLocation(repositoryUrl.toString()), result, logger, revisionBefore, repositoryUrl, repositoryUrl);
   }
 
-  private void tryStepByStep(final SvnRepositoryLocation svnRepositoryLocation,
+  // return changed path, if any
+  private FilePath tryStepByStep(final SvnRepositoryLocation svnRepositoryLocation,
                              final SvnChangeList[] result,
                              SVNLogClient logger,
-                             final SVNRevision revisionBefore, final SVNURL repositoryUrl, SVNURL svnurl) throws VcsException {
+                             final SVNRevision revisionBefore, final SVNInfo info, SVNURL svnurl) throws VcsException {
+    final String repositoryRoot = info.getRepositoryRootURL().toString();
     try {
+      final RenameContext renameContext = new RenameContext(info);
       logger.doLog(svnurl, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, revisionBefore,
-                   false, true, true, 0, null,
+                   false, true, false, 0, null,
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {
                        if (myProject.isDisposed()) throw new ProcessCanceledException();
@@ -554,11 +621,13 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                          // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
                          return;
                        }
+                       renameContext.accept(logEntry);
                        if (logEntry.getRevision() == revisionBefore.getNumber()) {
-                         result[0] = new SvnChangeList(myVcs, svnRepositoryLocation, logEntry, repositoryUrl.toString());
+                         result[0] = new SvnChangeList(myVcs, svnRepositoryLocation, logEntry, repositoryRoot);
                        }
                      }
                    });
+      return renameContext.getFilePath(myVcs);
     }
     catch (SVNException e) {
       throw new VcsException(e);
