@@ -490,7 +490,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitNewExpression(GrNewExpression newExpression) {
+    final GrTypeElement typeElement = newExpression.getTypeElement();
+
+    if (typeElement instanceof GrBuiltInTypeElement) {
+      if (newExpression.getArrayCount() == 0) {
+        myHolder.createErrorAnnotation(typeElement, GroovyBundle.message("create.instance.of.built-in.type"));
+      }
+    }
+
     if (newExpression.getArrayCount() > 0) return;
+
     GrCodeReferenceElement refElement = newExpression.getReferenceElement();
     if (refElement == null) return;
     final PsiElement element = refElement.resolve();
