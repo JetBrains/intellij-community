@@ -33,6 +33,9 @@ import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
+import java.io.File;
+import java.io.IOException;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -50,24 +53,49 @@ public class HgMergeProvider implements MergeProvider {
     final MergeData mergeData = new MergeData();
     final VcsRunnable runnable = new VcsRunnable() {
       public void run() throws VcsException {
-        // we have a merge in progress, which means we have 2 heads (parents).
-        // the latest one is "their" revision pulled from the parent repo,
-        // the earlier parent is the local change.
-        // to retrieve the base version we get the parent of the local change, i.e. the [only] parent of the second parent.
         final HgWorkingCopyRevisionsCommand command = new HgWorkingCopyRevisionsCommand(myProject);
-        final Pair<HgRevisionNumber, HgRevisionNumber> parents = command.parents(HgUtil.getHgRootOrThrow(myProject, file), file);
-        // we are sure that we have a grandparent, because otherwise we'll get "repository is unrelated" error while pulling,
-        // due to different root changesets which is prohibited.
-        final HgRevisionNumber grandParent = command.parents(HgUtil.getHgRootOrThrow(myProject, file), file, parents.second).first;
-
+        final VirtualFile repo = HgUtil.getHgRootOrThrow(myProject, file);
         final HgFile hgFile = new HgFile(myProject, file);
-        final HgContentRevision server = new HgContentRevision(myProject, hgFile, parents.first);
-        final HgContentRevision local  = new HgContentRevision(myProject, hgFile, parents.second);
-        final HgContentRevision base = new HgContentRevision(myProject, hgFile, grandParent);
 
-        mergeData.ORIGINAL = base.getContentAsBytes();
-        mergeData.CURRENT = local.getContentAsBytes();
+        HgRevisionNumber serverRevisionNumber, baseRevisionNumber;
+        // there are two possibilities: we have checked in local changes in the selected file or we didn't.
+        if (wasFileCheckedIn(repo, file)) {
+          // 1. We checked in.
+          // We have a merge in progress, which means we have 2 heads (parents).
+          // the latest one is "their" revision pulled from the parent repo,
+          // the earlier parent is the local change.
+          // to retrieve the base version we get the parent of the local change, i.e. the [only] parent of the second parent.
+          final Pair<HgRevisionNumber, HgRevisionNumber> parents = command.parents(repo, file);
+          serverRevisionNumber = parents.first;
+          final HgContentRevision local = new HgContentRevision(myProject, hgFile, parents.second);
+          mergeData.CURRENT = local.getContentAsBytes();
+          // we are sure that we have a grandparent, because otherwise we'll get "repository is unrelated" error while pulling,
+          // due to different root changesets which is prohibited.
+          baseRevisionNumber = command.parents(repo, file, parents.second).first;
+        } else {
+          // 2. local changes are not checked in.
+          // then there is only one parent, which is server changes.
+          // local changes are retrieved from the file system, they are not in the Mercurial yet.
+          // base is the only parent of server changes.
+          serverRevisionNumber = command.parents(repo, file).first;
+          baseRevisionNumber = command.parents(repo, file, serverRevisionNumber).first;
+          final File origFile = new File(file.getPath() + ".orig");
+          try {
+            mergeData.CURRENT = VcsUtil.getFileByteContent(origFile);
+          } catch (IOException e) {
+            LOG.info("Couldn't retrieve byte content of the file: " + origFile.getPath(), e);
+          }
+        }
+
+        if (baseRevisionNumber != null) {
+          final HgContentRevision base = new HgContentRevision(myProject, hgFile, baseRevisionNumber);
+          mergeData.ORIGINAL = base.getContentAsBytes();
+        } else { // no base revision means that the file was added simultaneously with different content in both repositories
+          mergeData.ORIGINAL = new byte[0];
+        }
+        final HgContentRevision server = new HgContentRevision(myProject, hgFile, serverRevisionNumber);
         mergeData.LAST = server.getContentAsBytes();
+        file.refresh(false, false);
       }
     };
     VcsUtil.runVcsProcessWithProgress(runnable, VcsBundle.message("multiple.file.merge.loading.progress.title"), false, myProject);
@@ -86,6 +114,18 @@ public class HgMergeProvider implements MergeProvider {
   @Override
   public boolean isBinary(VirtualFile file) {
     return file.getFileType().isBinary();
+  }
+
+  /**
+   * Checks if the given file was checked in before the merge start.
+   * @param repo repository to work on.
+   * @param file file to be checked.
+   * @return True if the file was checked in before merge, false if it wasn't.
+   */
+  private boolean wasFileCheckedIn(VirtualFile repo, VirtualFile file) {
+    // in the case of merge if the file was checked in, it will have 2 parents after hg pull. If it wasn't, it would have only one parent
+    final Pair<HgRevisionNumber, HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo, file);
+    return parents.second != null;
   }
 
 }

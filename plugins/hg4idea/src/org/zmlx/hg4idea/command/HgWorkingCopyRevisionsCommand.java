@@ -20,10 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Commands to get revision numbers. These are: parents, id, tip.
@@ -57,7 +54,8 @@ public class HgWorkingCopyRevisionsCommand {
   }
 
   /**
-   * Parent(s) of the given revision of the given file.
+   * Parent(s) of the given revision of the given file. If there are two of them (in the case of merge) the first element of the pair
+   * is the latest parent (i.e. having greater revision number), second one is the earlier parent (having smaller revision number).
    * @param repo     repository to work on.
    * @param file     file which revision's parents we are interested in. If null, the history of the whole repository is considered.
    * @param revision revision number which parent is wanted. If null, the last revision is taken. 
@@ -120,6 +118,8 @@ public class HgWorkingCopyRevisionsCommand {
   /**
    * Returns the list of revisions returned by one mercurial commands (parents, identify, tip).
    * Executed a command on the whole repository or on the given file.
+   * If the list contains more than one element ('hg parents' executed during merge), it is sorted by revision number, so that
+   * the latest revision number is the first element of the list.
    * @param repo     repository to execute on.
    * @param command  command to execute.
    * @param file     file which revisions are wanted. If <code><b>null</b></code> then repository revisions are considered.
@@ -149,7 +149,15 @@ public class HgWorkingCopyRevisionsCommand {
       final String[] parts = StringUtils.split(line, '|');
       revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1]));
     }
-    
+
+    // sort by descending revision number
+    if (revisions.size() > 1) {
+      Collections.sort(revisions, new Comparator<HgRevisionNumber>() {
+        @Override public int compare(HgRevisionNumber o1, HgRevisionNumber o2) {
+          return o2.compareTo(o1);
+        }
+      });
+    }
     return revisions;
   }
 
