@@ -1037,10 +1037,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     public void plus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
-      final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
-      if (correctedPair == null) return;
       myService.submit(new Runnable() {
         public void run() {
+          final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
+          if (correctedPair == null) return;
           myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
             public void consume(AtomicSectionsAware atomicSectionsAware) {
               myRevisionsCache.plus(correctedPair);
@@ -1051,10 +1051,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     public void minus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
-      final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
-      if (correctedPair == null) return;
       myService.submit(new Runnable() {
         public void run() {
+          final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
+          if (correctedPair == null) return;
           myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
             public void consume(AtomicSectionsAware atomicSectionsAware) {
               myRevisionsCache.minus(correctedPair);
