@@ -414,13 +414,7 @@ public class DeclarationParser {
     }
 
     final IElementType tokenType = builder.getTokenType();
-    if (tokenType == JavaTokenType.SEMICOLON) {
-      builder.advanceLexer();
-    }
-    else if (tokenType == JavaTokenType.LBRACE) {
-      StatementParser.parseCodeBlock(builder);
-    }
-    else {
+    if (tokenType != JavaTokenType.SEMICOLON && tokenType != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
       // heuristic: going to next line obviously means method signature is over, starting new method (actually, another one completion hack)
       final CharSequence text = builder.getOriginalText();
@@ -434,6 +428,12 @@ public class DeclarationParser {
         if (!expect(builder, APPEND_TO_METHOD_SET)) break;
       }
       error.error(JavaErrorMessages.message("expected.lbrace.or.semicolon"));
+    }
+
+    if (!expect(builder, JavaTokenType.SEMICOLON)) {
+      if (builder.getTokenType() == JavaTokenType.LBRACE) {
+        StatementParser.parseCodeBlock(builder);
+      }
     }
 
     declaration.done(anno ? JavaElementType.ANNOTATION_METHOD : JavaElementType.METHOD);
