@@ -1,4 +1,4 @@
-PsiJavaFile:MultiLineUnclosed.java
+PsiJavaFile:MultiLineUnclosed0.java
   PsiImportList
     <empty list>
   PsiClass:Test

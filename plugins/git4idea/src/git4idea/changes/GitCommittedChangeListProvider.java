@@ -20,6 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesRenameContext;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
@@ -227,7 +229,6 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
 
   @Override
   public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
-    // todo implement in proper way
     final FilePathImpl filePath = new FilePathImpl(file);
     final GitRepositoryLocation l = (GitRepositoryLocation) getLocationFor(filePath);
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
@@ -239,6 +240,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
       public void consume(GitSimpleHandler h) {
         h.addParameters("-n1");
+        h.addParameters("-M");
         h.addParameters(number.asString());
       }
     }, new Consumer<CommittedChangeList>() {
@@ -247,7 +249,32 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
         result[0] = committedChangeList;
       }
     }, false);
-    return new Pair<CommittedChangeList, FilePath>(result[0], filePath);
+    
+    final Collection<Change> changes = result[0].getChanges();
+    if (changes.size() == 1) {
+      return new Pair<CommittedChangeList, FilePath>(result[0], changes.iterator().next().getAfterRevision().getFile());
+    }
+    for (Change change : changes) {
+      if (change.getAfterRevision() != null && filePath.getIOFile().equals(change.getAfterRevision().getFile().getIOFile())) {
+        return new Pair<CommittedChangeList, FilePath>(result[0], filePath);
+      }
+    }
+    // go for history
+    final ChangesRenameContext renameContext = new ChangesRenameContext(filePath.getIOFile());
+    GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
+      public void consume(GitSimpleHandler h) {
+        h.addParameters("-M");
+        h.addParameters(number.asString() + "..");
+      }
+    }, new Consumer<CommittedChangeList>() {
+      @Override
+      public void consume(CommittedChangeList committedChangeList) {
+        final Collection<Change> list = committedChangeList.getChanges();
+        renameContext.checkForRename(list);
+      }
+    }, false);
+    renameContext.checkForRename(result[0].getChanges());
+    return new Pair<CommittedChangeList, FilePath>(result[0], new FilePathImpl(renameContext.getCurrentPath(), false));
   }
 
   public int getFormatVersion() {
