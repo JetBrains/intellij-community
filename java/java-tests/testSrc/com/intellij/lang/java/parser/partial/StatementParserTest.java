@@ -33,7 +33,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testBlockSimple() { doParserTest("{ {} }"); }
   public void testBlockEmpty() { doParserTest("{ ; }"); }
   public void testAnonymousInSmartCompletion() { doParserTest("{ new Foo(hash\n#) {};\n new Foo(hash\n#, bar) {};\n new Foo(hash\n#x) {}; }"); }
-  public void testBlockIncomplete0() { doParserTest("{ "); }
+  public void testBlockIncomplete0() { doParserTest("{ /*}"); }
   public void testBlockIncomplete1() { doParserTest("{ { }"); }
   public void testBlockIncomplete2() { doParserTest("{ else; catch; finally; }"); }
 

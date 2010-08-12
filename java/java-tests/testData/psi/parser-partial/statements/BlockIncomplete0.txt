@@ -3,4 +3,5 @@ PsiJavaFile:BlockIncomplete0.java
     PsiJavaToken:LBRACE('{')
     PsiErrorElement:'}' expected
       <empty list>
-  PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    PsiComment(C_STYLE_COMMENT)('/*}')
