@@ -99,7 +99,8 @@
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenGroupIdSmartCompletionContributor"/>
     <annotator language="XML" implementationClass="org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotator"/>
-    <projectService serviceInterface="com.intellij.ide.mavenService.MavenService" serviceImplementation="org.jetbrains.idea.maven.service.MavenServiceImpl"/>
+    <projectService serviceInterface="com.intellij.ide.mavenService.MavenService"
+                    serviceImplementation="org.jetbrains.idea.maven.service.MavenServiceImpl"/>
   </extensions>
 
   <application-components>
@@ -269,8 +270,13 @@
 
     <action id="Maven.Help"
             class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
-    <action id="Maven.ExpandAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$ExpandAll" text="Expand All" icon="/actions/expandall.png"/>
-    <action id="Maven.CollapseAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$CollapseAll" text="Collapse All" icon="/actions/collapseall.png"/>
+
+    <action id="Maven.ExpandAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$ExpandAll" text="Expand All"
+            icon="/actions/expandall.png"
+            use-shortcut-of="ExpandAll"/>
+    <action id="Maven.CollapseAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$CollapseAll" text="Collapse All"
+            icon="/actions/collapseall.png"
+            use-shortcut-of="CollapseAll"/>
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
@@ -288,7 +294,7 @@
       <separator/>
       <action id="Maven.AssignShortcut"
               class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign Shortcut..."
-              description="Assign shortcutto selected phase/goal">
+              description="Assign shortcut to the selected phase/goal">
       </action>
     </group>
 
@@ -308,7 +314,7 @@
       <separator/>
       <reference id="Maven.RunBuild"/>
       <reference id="Maven.ToggleOffline"/>
-      <reference id="Maven.ToggleSkipTests"/>            
+      <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
