@@ -44,6 +44,9 @@
 
     <attachSourcesProvider implementation="org.jetbrains.idea.maven.utils.MavenAttachSourcesProvider"/>
 
+    <liveTemplateContext implementation="org.jetbrains.idea.maven.utils.MavenLiveTemplateContextType"/>
+    <defaultLiveTemplatesProvider implementation="org.jetbrains.idea.maven.utils.MavenLiveTemplatesProvider"/>
+
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription"/>
@@ -105,9 +108,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.MavenDomApplicationComponent</implementation-class>
     </component>
   </application-components>
 
@@ -290,10 +290,6 @@
               class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign Shortcut..."
               description="Assign shortcutto selected phase/goal">
       </action>
-
-      <action id="Generate.Dom.Elements" class="org.jetbrains.idea.maven.dom.generate.MavenGenerateDomActionGroup" text="Generate">
-        <add-to-group anchor="last" group-id="GenerateGroup"/>
-      </action>
     </group>
 
     <group id="Maven.DownloadAllGroup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
@@ -380,20 +376,16 @@
       <reference ref="Maven.BaseProjectMenu"/>
     </group>
 
-    <group id="Maven.GenerateGroup" text="Generate">
+    <action id="Maven.GenerateGroup" class="org.jetbrains.idea.maven.dom.generate.MavenGenerateDomActionGroup" text="Generate">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
-
-      <action id="GenerateDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
-      <action id="OverrideDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateAddManagedDependencyAction"/>
-      <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
-    </group>
+    </action>
 
     <group id="Maven.RefactoringsGroup" text="Refactoring">
       <add-to-group group-id="Maven.BaseProjectMenu" anchor="last"/>
       <separator/>
       <action id="refactoring.introduce.property" text="Introduce Property"
               class="org.jetbrains.idea.maven.dom.refactorings.introduce.IntroducePropertyAction"
-              use-shortcut-of="IntroduceVariable"/>
+              use-shortcut-of="IntroduceVariable"/> <!-- todo -->
 
       <action id="refactoring.extract.dependency" text="Extract Dependency (dependencyManagement)"
               class="org.jetbrains.idea.maven.dom.refactorings.extract.ExtractDependenciesAction">

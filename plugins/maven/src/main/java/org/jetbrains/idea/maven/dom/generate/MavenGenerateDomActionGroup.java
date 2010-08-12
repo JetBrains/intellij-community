@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.dom.generate;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.util.Function;
 import com.intellij.util.xml.DomElement;
@@ -28,48 +27,39 @@ import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomRepository;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class MavenGenerateDomActionGroup extends DefaultActionGroup {
-
   public MavenGenerateDomActionGroup() {
-    // generate dependencies
-    final Function<MavenDomProjectModel, DomElement> dependenciesFunction = new Function<MavenDomProjectModel, DomElement>() {
-      public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
-        return mavenDomProjectModel.getDependencies();
-      }
-    };
-    add(createAction(MavenDomBundle.message("generate.dependency.artifact"), MavenDomDependency.class, "maven-dependency-artifact", dependenciesFunction));
-    add(createAction(MavenDomBundle.message("generate.dependency.group"), MavenDomDependency.class, "maven-dependency", dependenciesFunction));
+    add(new GenerateDependencyAction());
+    add(new GenerateManagedDependencyAction());
 
-    // generate plugins
-    Function<MavenDomProjectModel, DomElement> pluginFunction = new Function<MavenDomProjectModel, DomElement>() {
-      public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
-        return mavenDomProjectModel.getBuild().getPlugins();
-      }
-    };
-    add(createAction(MavenDomBundle.message("generate.plugin.artifact"), MavenDomPlugin.class, "maven-plugin-artifact-first", pluginFunction));
-    add(createAction(MavenDomBundle.message("generate.plugin.group"), MavenDomPlugin.class, "maven-plugin", pluginFunction));
+    add(createAction(MavenDomBundle.message("generate.dependency.template"), MavenDomDependency.class, "maven-dependency",
+                     new Function<MavenDomProjectModel, DomElement>() {
+                       public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
+                         return mavenDomProjectModel.getDependencies();
+                       }
+                     }));
+    add(createAction(MavenDomBundle.message("generate.plugin.template"), MavenDomPlugin.class, "maven-plugin",
+                     new Function<MavenDomProjectModel, DomElement>() {
+                       public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
+                         return mavenDomProjectModel.getBuild().getPlugins();
+                       }
+                     }));
 
-    // generate repository
-    add(createAction(MavenDomRepository.class, "maven-repository", new Function<MavenDomProjectModel, DomElement>() {
-      public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
-        return mavenDomProjectModel.getRepositories();
-      }
-    }));
+    add(createAction(MavenDomBundle.message("generate.repository.template"), MavenDomRepository.class, "maven-repository",
+                     new Function<MavenDomProjectModel, DomElement>() {
+                       public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
+                         return mavenDomProjectModel.getRepositories();
+                       }
+                     }));
+
+
+    add(new GenerateParentAction());
   }
 
-  private static MavenCodeInsightGenerateAction createAction(String actionDescription,
-                                                      final Class<? extends DomElement> aClass,
-                                                      @NonNls @Nullable String mappingId,
-                                                      @NotNull Function<MavenDomProjectModel, DomElement> parentFunction) {
-    return new MavenCodeInsightGenerateAction(actionDescription, aClass, mappingId, parentFunction);
-  }
-
-  protected static AnAction createAction(final Class<? extends DomElement> aClass,
-                                         @NonNls @Nullable String mappingId,
-                                         @NotNull Function<MavenDomProjectModel, DomElement> parentFunction) {
-    return new MavenCodeInsightGenerateAction(aClass, mappingId, parentFunction);
+  private static MavenGenerateTemplateAction createAction(String actionDescription,
+                                                             final Class<? extends DomElement> aClass,
+                                                             @NonNls @Nullable String mappingId,
+                                                             @NotNull Function<MavenDomProjectModel, DomElement> parentFunction) {
+    return new MavenGenerateTemplateAction(actionDescription, aClass, mappingId, parentFunction);
   }
 }

@@ -34,8 +34,8 @@ import org.jetbrains.idea.maven.utils.MavenIcons;
 import java.util.List;
 import java.util.Set;
 
-public class GenerateAddManagedDependencyAction extends GenerateDomElementAction {
-  public GenerateAddManagedDependencyAction() {
+public class GenerateManagedDependencyAction extends GenerateDomElementAction {
+  public GenerateManagedDependencyAction() {
     super(new MavenOverridingDependencyGenerateProvider(), MavenIcons.DEPENDENCY_ICON);
   }
 
