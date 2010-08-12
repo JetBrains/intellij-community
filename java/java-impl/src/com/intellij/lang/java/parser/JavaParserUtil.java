@@ -132,7 +132,7 @@ public class JavaParserUtil {
 
       @Override
       public boolean eof() {
-        return getCurrentOffset() < stopAt || super.eof();
+        return getCurrentOffset() >= stopAt || super.eof();
       }
     };
   }
