@@ -43,14 +43,16 @@ public abstract class ZenCodingGenerator {
   public abstract TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context);
 
   @Nullable
-  public TemplateImpl generateTemplate(@NotNull String key) {
+  public TemplateImpl createTemplateByKey(@NotNull String key) {
     return null;
   }
 
   public abstract boolean isMyContext(@NotNull PsiElement context);
 
   @Nullable
-  public abstract String getSuffix();
+  public String getSuffix() {
+    return null;
+  }
 
   public abstract boolean isAppliedByDefault(@NotNull PsiElement context);
 
