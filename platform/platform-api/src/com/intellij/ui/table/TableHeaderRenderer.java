@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -81,7 +82,9 @@ public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
         icon = IconLoader.getIcon("/actions/sortDesc.png");
       }
     }
-
+    final Icon columnIcon = columnInfo.getIcon();
+    myLabel.setIcon(columnIcon);
+    myLabel.setIconTextGap(10);
     setText(labelString);
     setIcon(icon);
     setToolTipText(columnInfo.getTooltipText());
