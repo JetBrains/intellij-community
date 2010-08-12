@@ -799,6 +799,7 @@ public class DeclarationParser {
 
     parseAnnotationValue(builder);
 
+    boolean unclosed = false;
     while (true) {
       if (expect(builder, JavaTokenType.RBRACE)) {
         break;
@@ -808,11 +809,15 @@ public class DeclarationParser {
       }
       else {
         error(builder, JavaErrorMessages.message("expected.rbrace"));
+        unclosed = true;
         break;
       }
     }
 
     annoArray.done(JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
+    if (unclosed) {
+      annoArray.setCustomEdgeProcessors(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+    }
     return annoArray;
   }
 }
