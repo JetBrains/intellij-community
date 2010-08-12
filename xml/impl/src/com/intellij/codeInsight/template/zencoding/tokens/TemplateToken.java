@@ -16,6 +16,10 @@
 package com.intellij.codeInsight.template.zencoding.tokens;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.xml.XmlFile;
+
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -23,12 +27,27 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 public class TemplateToken extends ZenCodingToken {
   private final String myKey;
   private TemplateImpl myTemplate;
+  private final List<Pair<String, String>> myAttribute2Value;
+  private XmlFile myFile;
 
-  public TemplateToken(String key) {
+  public TemplateToken(String key, List<Pair<String, String>> attribute2value) {
     myKey = key;
+    myAttribute2Value = attribute2value;
   }
 
-  public String getKey() {
+  public List<Pair<String, String>> getAttribute2Value() {
+    return myAttribute2Value;
+  }
+
+  public XmlFile getFile() {
+    return myFile;
+  }
+
+  public void setFile(XmlFile file) {
+    myFile = file;
+  }
+
+   public String getKey() {
     return myKey;
   }
 
@@ -40,7 +59,6 @@ public class TemplateToken extends ZenCodingToken {
     return myTemplate;
   }
 
-  @Override
   public String toString() {
     return "TEMPLATE";
   }
