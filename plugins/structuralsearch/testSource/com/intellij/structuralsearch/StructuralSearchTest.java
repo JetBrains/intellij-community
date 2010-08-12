@@ -425,6 +425,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       4
     );
 
+    String complexCode2 = "enum X { XXX, YYY }\n class C { static void ordinal() {} void test() { C c; c.ordinal(); c.ordinal(); X.XXX.ordinal(); } }";
+    assertEquals(
+      "expr type condition with enums",
+      findMatchesCount(complexCode2, "'t:[exprtype( *java\\.lang\\.Enum )].ordinal()"),
+      1
+    );
+
     assertEquals(
       "no smart detection of search target",
       findMatchesCount("processInheritors(1,2,3,4); processInheritors(1,2,3); processInheritors(1,2,3,4,5,6);","'instance?.processInheritors('_param1{1,6});"),

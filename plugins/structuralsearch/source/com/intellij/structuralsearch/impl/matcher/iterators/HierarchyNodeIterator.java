@@ -1,13 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
-import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Passes the hierarchy
@@ -51,9 +50,7 @@ public class HierarchyNodeIterator extends NodeIterator {
           processClasses(clazz, visited);
 
           if (!objectTaken) {
-            final Project project = clazz.getProject();
-            final PsiClassType javaLangObject = PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
-            build( javaLangObject.resolve(), visited);
+            build(PsiClassImplUtil.getSuperClass(clazz), visited);
           }
         }
 
