@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesRenameContext;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
@@ -259,8 +260,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       }
     }
     // go for history
-    final File[] correctPath = new File[1];
-    correctPath[0] = filePath.getIOFile();
+    final ChangesRenameContext renameContext = new ChangesRenameContext(filePath.getIOFile());
     GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
       public void consume(GitSimpleHandler h) {
         h.addParameters("-M");
@@ -270,23 +270,11 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       @Override
       public void consume(CommittedChangeList committedChangeList) {
         final Collection<Change> list = committedChangeList.getChanges();
-        checkForRename(list, correctPath);
+        renameContext.checkForRename(list);
       }
     }, false);
-    checkForRename(result[0].getChanges(), correctPath);
-    return new Pair<CommittedChangeList, FilePath>(result[0], new FilePathImpl(correctPath[0], false));
-  }
-
-  private void checkForRename(Collection<Change> list, File[] obj) {
-    for (Change change : list) {
-      if (change.getAfterRevision() != null && change.getBeforeRevision() != null) {
-        if (change.getAfterRevision().getFile().getIOFile().equals(obj[0]) &&
-          (! change.getBeforeRevision().getFile().getIOFile().equals(obj[0]))) {
-          obj[0] = change.getBeforeRevision().getFile().getIOFile();
-          return;
-        }
-      }
-    }
+    renameContext.checkForRename(result[0].getChanges());
+    return new Pair<CommittedChangeList, FilePath>(result[0], new FilePathImpl(renameContext.getCurrentPath(), false));
   }
 
   public int getFormatVersion() {
