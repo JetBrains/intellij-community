@@ -15,6 +15,8 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -131,7 +133,9 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
               //if (psi == null) {
               //  continue;
               //}
-              variants.add(LookupElementBuilder.create(/*psi, */targetEffectiveName));
+              final LookupElementBuilder builder = LookupElementBuilder.create(/*psi, */targetEffectiveName);
+              final LookupElement element = AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder);
+              variants.add(element);
             }
           }
           return variants.toArray();

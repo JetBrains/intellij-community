@@ -65,7 +65,7 @@ class AntReferenceInjector implements DomReferenceInjector {
       if ("if".equals(name) || "unless".equals(name)) {
         // special handling of if/unless attributes
         result.add(new AntDomPropertyReference(
-          contextElement, xmlAttributeValue, value, ElementManipulators.getValueTextRange(xmlAttributeValue))
+          contextElement, xmlAttributeValue, ElementManipulators.getValueTextRange(xmlAttributeValue))
         );
         return;
       }
@@ -99,13 +99,13 @@ class AntReferenceInjector implements DomReferenceInjector {
         }
         if (nestedBrackets > 0 || endIndex > value.length()) return;
         if (endIndex >= startIndex) {
-          final String propName = value.substring(startIndex, endIndex);
+          //final String propName = value.substring(startIndex, endIndex);
           //if (antFile.isEnvironmentProperty(propName) && antFile.getProperty(propName) == null) {
           //  continue;
           //}
 
           result.add(new AntDomPropertyReference(
-            contextElement, xmlAttributeValue, propName, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex))
+            contextElement, xmlAttributeValue, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex))
           );
         }
         endIndex = startIndex;

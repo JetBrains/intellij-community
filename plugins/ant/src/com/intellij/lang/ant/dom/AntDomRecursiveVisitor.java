@@ -72,4 +72,13 @@ public class AntDomRecursiveVisitor implements DomElementVisitor{
   public void visitImport(AntDomImport importTag) {
     visitAntDomElement(importTag);
   }
+  
+  public void visitAntDomAntCall(AntDomAntCall antCall) {
+    visitAntDomElement(antCall);
+  }
+  
+  public void visitAntDomAntCallParam(AntDomAntCallParam antCallParam) {
+    visitAntDomElement(antCallParam);
+  }
+  
 }

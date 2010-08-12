@@ -20,13 +20,9 @@
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>    
     <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
     <extendWordSelectionHandler implementation="com.intellij.lang.ant.AntPropertyRefSelectioner"/>
-    <!--<lang.namesValidator language="ANT" implementationClass="com.intellij.lang.ant.AntNamesValidator"/>-->
-    <!--<lang.parserDefinition language="ANT" implementationClass="com.intellij.lang.ant.AntParserDefinition"/>-->
-    <!--<lang.findUsagesProvider language="ANT" implementationClass="com.intellij.lang.ant.psi.usages.AntUsagesProvider"/>-->
-    <!--<lang.commenter language="ANT" implementationClass="com.intellij.lang.xml.XmlCommenter"/>-->
-    <!--<lang.psiStructureViewFactory language="ANT" implementationClass="com.intellij.lang.ant.AntStructureViewBuilderFactory"/>-->
     <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>
     <vetoRenameCondition implementation="com.intellij.lang.ant.refactoring.AntVetoRenameCondition"/>
+    <renamePsiElementProcessor implementation="com.intellij.lang.ant.dom.AntRenameProcessor"/>
     <!--<xml.fileNSInfoProvider implementation="com.intellij.lang.ant.AntDefaultNSProvider"/>-->
     <lang.documentationProvider language="XML" implementationClass="com.intellij.lang.ant.doc.AntDomDocumentationProvider"/>
 
@@ -57,6 +53,7 @@
     <typeName className="com.intellij.lang.ant.dom.AntDomFileList" name="file list"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomPath" name="path"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="target"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="antcall parameter"/>
 
   </extensions>
 

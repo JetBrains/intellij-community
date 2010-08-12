@@ -36,6 +36,10 @@ public class PropertyResolver extends PropertyProviderFinder {
     myPropertyName = propertyName;
   }
 
+  public void visitAntDomAntCallParam(AntDomAntCallParam antCallParam) {
+    // deliberately skip ancall params, they will be processed as a special case
+  }
+
   @NotNull
   public static Pair<PsiElement, Collection<String>> resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
     final PropertyResolver resolver = new PropertyResolver(propertyName, contextElement);

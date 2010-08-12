@@ -19,7 +19,9 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.SubTagList;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,4 +41,7 @@ public abstract class AntDomAntCall extends AntDomElement {
   @Attribute("inheritrefs")
   @Convert(value = AntBooleanConverterDefaultFalse.class)
   public abstract GenericAttributeValue<Boolean> isInheritRefsProperties();
+  
+  @SubTagList("param")
+  public abstract List<AntDomAntCallParam> getParams();
 }
