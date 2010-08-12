@@ -92,7 +92,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     PsiFile file = e.getData(LangDataKeys.PSI_FILE);
     if (file != null) {
       if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
-        disableAction(e);
+        hideAction(e);
         return;
       }
     }
@@ -167,9 +167,6 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   private static void disableAction(final AnActionEvent e) {
     e.getPresentation().setEnabled(false);
-    if (ActionPlaces.isPopupPlace(e.getPlace()) && e.getPresentation().isVisible()) {
-      hideAction(e);
-    }
   }
 
   protected boolean isAvailableForLanguage(Language language) {
