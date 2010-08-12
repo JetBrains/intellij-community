@@ -18,7 +18,8 @@ public class FieldParsingTest extends JavaParsingTestCase {
   public void testUnclosedSemicolon() { doTest(true); }
   public void testMissingInitializerExpression() { doTest(true); }
 
-  public void testMultiLineUnclosed() { doTest(true); }
+  public void testMultiLineUnclosed0() { doTest(true); }
+  public void testMultiLineUnclosed1() { doTest(true); }
 
   public void testComplexInitializer() { doTest(true); }
 }
