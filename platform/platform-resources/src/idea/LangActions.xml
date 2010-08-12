@@ -671,6 +671,8 @@
     </group>
 
     <group id="XDebugger.Watches.Tree.Popup">
+      <reference ref="XDebugger.NewWatch"/>
+      <reference ref="XDebugger.RemoveWatch"/>
       <reference ref="XDebugger.EditWatch"/>
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.SetValue"/>

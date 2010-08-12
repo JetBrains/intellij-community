@@ -118,7 +118,7 @@ public interface JavaElementType {
   IElementType CATCH_SECTION = new IJavaElementType("CATCH_SECTION");
 
   IElementType ANNOTATION_ARRAY_INITIALIZER = new IJavaElementType("ANNOTATION_ARRAY_INITIALIZER");
-  IElementType NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR");
+  IElementType NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR", true);
   IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST", true);
   IElementType METHOD_RECEIVER = new IJavaElementType("METHOD_RECEIVER");
 

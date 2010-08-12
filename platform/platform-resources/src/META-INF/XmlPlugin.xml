@@ -41,7 +41,7 @@
     <extensionPoint name="xml.implicitNamespaceDescriptorProvider"
                     interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider"/>
 
-    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator"/>
+    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.zencoding.generators.ZenCodingGenerator"/>
     <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter"/>
   </extensionPoints>
 
@@ -118,7 +118,7 @@
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"/>
 
-    <customLiveTemplate implementation="com.intellij.codeInsight.template.zencoding.XmlZenCodingTemplate"/>
+    <customLiveTemplate implementation="com.intellij.codeInsight.template.zencoding.ZenCodingTemplate"/>
 
     <externalAnnotator language="XML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
     <externalAnnotator language="HTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>

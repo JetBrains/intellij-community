@@ -153,6 +153,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
             }
           }
           profile.readExternal(rootElement);
+          profile.setLocal(true);
           profile.initInspectionTools();
           if (myProfileManager.getProfile(profile.getName(), false) != null) {
             if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exists. Do you want to overwrite it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;

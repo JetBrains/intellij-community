@@ -24,4 +24,5 @@ public class CommonJavaParsingTest extends JavaParsingTestCase{
   public void testIncompleteCodeBlock() { doTest(true); }
   public void testImportListBug() { doTest(true); }
   public void testRefParamsAfterError() { doTest(true); }
+  public void testUnclosedComment() { doTest(true); }  // todo: fix
 }

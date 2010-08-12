@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.zencoding.filters;
 
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
-import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
@@ -42,17 +41,15 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String filterText(@NotNull String text, @NotNull TemplateToken token) {
-    if (token instanceof XmlTemplateToken) {
-      XmlDocument document = ((XmlTemplateToken)token).getFile().getDocument();
-      if (document != null) {
-        XmlTag tag = document.getRootTag();
-        if (tag != null) {
-          String classAttr = tag.getAttributeValue("class");
-          String idAttr = tag.getAttributeValue("id");
-          if (classAttr != null || idAttr != null) {
-            String commentString = buildCommentString(classAttr, idAttr);
-            return "<!-- " + commentString + " -->\n" + text + "\n<!-- /" + commentString + " -->";
-          }
+    XmlDocument document = token.getFile().getDocument();
+    if (document != null) {
+      XmlTag tag = document.getRootTag();
+      if (tag != null) {
+        String classAttr = tag.getAttributeValue("class");
+        String idAttr = tag.getAttributeValue("id");
+        if (classAttr != null || idAttr != null) {
+          String commentString = buildCommentString(classAttr, idAttr);
+          return "<!-- " + commentString + " -->\n" + text + "\n<!-- /" + commentString + " -->";
         }
       }
     }

@@ -35,7 +35,7 @@ public class HgSingleUserTestCase extends HgAbstractTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myRepo = createRepository();
+    myRepo = HgTestRepository.create(this);
     myProjectDir = new File(myRepo.getDirFixture().getTempDirPath());
     
     initProject(myProjectDir);

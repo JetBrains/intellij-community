@@ -19,6 +19,13 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * MergeData contains 3 versions of raw file content used in 3-way merge.
+ * ORIGINAL - is the content which the file had before conflicting change;
+ * LAST - is the content which came from the server while updating.
+ * CURRENT - is the local change.
+ * {@link com.intellij.openapi.vcs.merge.MergeProvider} should initialize all three variables of the MergeData, because
+ * null value is treated as an error, not as blank content.
+ *
  * @author lesya
  */
 public class MergeData {

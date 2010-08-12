@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.util;
 
-import java.util.Arrays;
-
+import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
  *
@@ -24,10 +23,12 @@ import java.util.Arrays;
 public class Pair<A, B> {
   public final A first;
   public final B second;
+  private final int hashcode;
 
   public Pair(A first, B second) {
     this.first = first;
     this.second = second;
+    hashcode = new HashCodeBuilder().append(first).append(second).toHashCode();
   }
 
   public final A getFirst() {
@@ -46,19 +47,8 @@ public class Pair<A, B> {
     return o instanceof Pair && Comparing.equal(first, ((Pair)o).first) && Comparing.equal(second, ((Pair)o).second);
   }
 
-  public final int hashCode(){
-    int hashCode = 0;
-    if (first != null){
-      hashCode += hashCode(first);
-    }
-    if (second != null){
-      hashCode += hashCode(second);
-    }
-    return hashCode;
-  }
-
-  private static int hashCode(final Object o) {
-    return (o instanceof Object[]) ? Arrays.hashCode((Object[])o) : o.hashCode();
+  public final int hashCode() {
+    return hashcode;
   }
 
   public String toString() {

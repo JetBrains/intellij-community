@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -75,23 +76,30 @@ public class CustomTemplateCallback {
   }
 
   @Nullable
-  public TemplateImpl findApplicableTemplate(@NotNull String key) {
-    List<TemplateImpl> templates = findApplicableTemplates(key);
+  public TemplateImpl findApplicableTemplate(@NotNull String key, TemplateContextType... contextTypes) {
+    List<TemplateImpl> templates = findApplicableTemplates(key, contextTypes);
     return templates.size() > 0 ? templates.get(0) : null;
   }
 
   @NotNull
-  public List<TemplateImpl> findApplicableTemplates(String key) {
+  public List<TemplateImpl> findApplicableTemplates(String key, TemplateContextType... contextTypes) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = filterApplicableCandidates(templates);
+    templates = filterApplicableCandidates(templates, contextTypes);
     return templates;
   }
 
-  private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates) {
+  private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates, TemplateContextType... contextTypes) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
       if (TemplateManagerImpl.isApplicable(myFile, myOffset, candidate)) {
         result.add(candidate);
+      }
+      TemplateContext context = candidate.getTemplateContext();
+      for (TemplateContextType contextType : contextTypes) {
+        if (context.isEnabled(contextType)) {
+          result.add(candidate);
+          break;
+        }
       }
     }
     return result;
