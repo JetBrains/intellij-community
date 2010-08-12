@@ -86,7 +86,8 @@ public class PyDefUseUtil {
     visited[instr] = true;
     if (instructions[instr] instanceof ReadWriteInstruction) {
       final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
-      final String name = ((PyElement)instruction.getElement()).getName();
+      final PsiElement element = instruction.getElement();
+      String name = element instanceof PyElement ? ((PyElement)element).getName() : null;
       if (Comparing.strEqual(name, var.getName())) {
         final ReadWriteInstruction.ACCESS access = instruction.getAccess();
         if (access.isWriteAccess()) {
