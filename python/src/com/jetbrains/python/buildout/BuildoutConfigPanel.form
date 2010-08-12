@@ -30,7 +30,7 @@
         </constraints>
         <properties>
           <editable value="false"/>
-          <text value="For proper Django recipe support, use bin/django[.py] in buildout folder structure."/>
+          <text value=""/>
           <wrapStyleWord value="true"/>
         </properties>
         <clientProperties>
