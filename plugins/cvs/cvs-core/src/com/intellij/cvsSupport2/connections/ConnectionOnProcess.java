@@ -17,18 +17,19 @@ package com.intellij.cvsSupport2.connections;
 
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.concurrency.Semaphore;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
 
 import java.io.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * author: lesya
@@ -47,13 +48,20 @@ public abstract class ConnectionOnProcess implements IConnection {
   private boolean myContainsError = false;
   
   protected final StringBuffer myErrorText = new StringBuffer();
+  private Future<?> myStdErrFuture;
+  private ReadProcessThread myErrThread;
+  private Semaphore myWaitSemaphore;
+  private Future<?> myWaitForThreadFuture;
 
-    protected ConnectionOnProcess(String repository, ErrorRegistry errorRegistry) {
+  protected ConnectionOnProcess(String repository, ErrorRegistry errorRegistry) {
     myRepository = repository;
     myErrorRegistry = errorRegistry;
     }
 
   public synchronized void close() throws IOException {
+    myWaitForThreadFuture.cancel(true);
+    myWaitSemaphore.up();
+
     try {
       if (myInputStream != null && !myContainsError) {
           myInputStream.close();
@@ -74,6 +82,16 @@ public abstract class ConnectionOnProcess implements IConnection {
                 //ignore
             }
 
+        }
+        try {
+          myErrThread.setProcessTerminated(true);
+          myStdErrFuture.get();
+        }
+        catch (InterruptedException e) {
+          //
+        }
+        catch (ExecutionException e) {
+          LOG.error(e);
         }
       }
       finally {
@@ -118,39 +136,44 @@ public abstract class ConnectionOnProcess implements IConnection {
     try {
       commandLine.setEnvParams(EnvironmentUtil.getEnviromentProperties());
       myProcess = commandLine.createProcess();
-      final OSProcessHandler processHandler = new OSProcessHandler(myProcess, commandLine.getCommandLineString()) {
 
-        protected Reader createProcessOutReader() {
-          return new InputStreamReader(new ByteArrayInputStream(new byte[0])); 
+      myErrThread = new ReadProcessThread(
+        new BufferedReader(new InputStreamReader(myProcess.getErrorStream(), EncodingManager.getInstance().getDefaultCharset()))) {
+        protected void textAvailable(String s) {
+          myErrorText.append(s);
+          myErrorRegistry.registerError(s);
+          myContainsError = true;
         }
       };
-      
-      processHandler.addProcessListener(new ProcessListener() {
-        public void startNotified(ProcessEvent event) {
-        }
+      final Application application = ApplicationManager.getApplication();
+      myStdErrFuture = application.executeOnPooledThread(myErrThread);
 
-        public void processTerminated(ProcessEvent event) {
-        }
-
-        public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-        }
-
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
-          if (outputType == ProcessOutputTypes.STDERR) {
-            myErrorText.append(event.getText());
-            myErrorRegistry.registerError(event.getText());
-            myContainsError = true;            
-          }
-        }
-      });
-      
       myInputStream = myProcess.getInputStream();
       myOutputStream = myProcess.getOutputStream();
+
+      waitForProcess(application);
     }
     catch (Exception e) {
       closeInternal();
       throw new AuthenticationException(e.getLocalizedMessage(), e);
     }
+  }
+
+  private void waitForProcess(Application application) {
+    myWaitSemaphore = new Semaphore();
+    myWaitSemaphore.down();
+    myWaitForThreadFuture = application.executeOnPooledThread(new Runnable() {
+      public void run() {
+        try {
+          myProcess.waitFor();
+        }
+        catch (InterruptedException ignored) {
+        }
+        finally {
+          myWaitSemaphore.up();
+        }
+      }
+    });
   }
 
   protected void closeInternal() {
@@ -166,4 +189,83 @@ public abstract class ConnectionOnProcess implements IConnection {
     return myProcess != null;
   }
 
+  private abstract static class ReadProcessThread implements Runnable {
+    private final Reader myReader;
+    private boolean skipLF = false;
+
+    private boolean myIsProcessTerminated = false;
+    private final char[] myBuffer = new char[8192];
+
+    public ReadProcessThread(final Reader reader) {
+      myReader = reader;
+    }
+
+    public synchronized void setProcessTerminated(boolean isProcessTerminated) {
+      myIsProcessTerminated = isProcessTerminated;
+    }
+
+    public void run() {
+      try {
+        while (readAvailable()) {
+          try {
+            Thread.sleep(50L);
+          }
+          catch (InterruptedException ignore) {
+          }
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    private synchronized boolean readAvailable() throws IOException {
+      char[] buffer = myBuffer;
+      StringBuilder token = new StringBuilder();
+      while (myReader.ready()) {
+        int n = myReader.read(buffer);
+        if (n <= 0) break;
+
+        for (int i = 0; i < n; i++) {
+          char c = buffer[i];
+          if (skipLF && c != '\n') {
+            token.append('\r');
+          }
+
+          if (c == '\r') {
+            skipLF = true;
+          }
+          else {
+            skipLF = false;
+            token.append(c);
+          }
+
+          if (c == '\n') {
+            textAvailable(token.toString());
+            token.setLength(0);
+          }
+        }
+      }
+
+      if (token.length() != 0) {
+        textAvailable(token.toString());
+        token.setLength(0);
+      }
+
+      if (myIsProcessTerminated) {
+        try {
+          myReader.close();
+        }
+        catch (IOException e1) {
+          // supressed
+        }
+
+        return false;
+      }
+
+      return true;
+    }
+
+    protected abstract void textAvailable(final String s);
+  }
 }

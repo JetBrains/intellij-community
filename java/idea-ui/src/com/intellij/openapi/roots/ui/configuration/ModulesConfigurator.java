@@ -151,42 +151,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public ModuleRootModel getRootModel(@NotNull Module module) {
-    return getEditor(module).getRootModel();
+    return getOrCreateModuleEditor(module).getRootModel();
   }
 
-  public ModuleEditor getEditor(Module module) {
+  public ModuleEditor getOrCreateModuleEditor(Module module) {
     LOG.assertTrue(getModule(module.getName()) != null, "Module has been deleted");
     ModuleEditor editor = getModuleEditor(module);
     if (editor == null) {
-      editor = createModuleEditor(module);
+      editor = doCreateModuleEditor(module);
     }
     return editor;
   }
 
-  public FacetModel getFacetModel(@NotNull Module module) {
-    return myFacetsConfigurator.getOrCreateModifiableModel(module);
-  }
-
-  public void resetModuleEditors() {
-    myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        assert myModuleEditors.isEmpty();
-        final Module[] modules = myModuleModel.getModules();
-        if (modules.length > 0) {
-          for (Module module : modules) {
-            createModuleEditor(module);
-          }
-          Collections.sort(myModuleEditors, myModuleEditorComparator);
-        }
-      }
-    });
-    myFacetsConfigurator.resetEditors();
-    myModified = false;
-  }
-
-  public ModuleEditor createModuleEditor(final Module module) {
+  private ModuleEditor doCreateModuleEditor(final Module module) {
     final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module) {
       @Override
       public ProjectFacetsConfigurator getFacetsConfigurator() {
@@ -206,6 +183,29 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     });
     return moduleEditor;
+  }
+
+  public FacetModel getFacetModel(@NotNull Module module) {
+    return myFacetsConfigurator.getOrCreateModifiableModel(module);
+  }
+
+  public void resetModuleEditors() {
+    myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        assert myModuleEditors.isEmpty();
+        final Module[] modules = myModuleModel.getModules();
+        if (modules.length > 0) {
+          for (Module module : modules) {
+            getOrCreateModuleEditor(module);
+          }
+          Collections.sort(myModuleEditors, myModuleEditorComparator);
+        }
+      }
+    });
+    myFacetsConfigurator.resetEditors();
+    myModified = false;
   }
 
   public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {
@@ -368,7 +368,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
          public void run() {
            for (Module module : modules) {
-             createModuleEditor(module);
+             getOrCreateModuleEditor(module);
            }
          }
        });
@@ -404,7 +404,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (module != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          createModuleEditor(module);
+          getOrCreateModuleEditor(module);
           Collections.sort(myModuleEditors, myModuleEditorComparator);
         }
       });

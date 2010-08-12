@@ -40,7 +40,15 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
       public String compute() {
         return contentRootPath;
       }
-    });
+    }) {
+
+      @Override
+      protected void onFrameworkStateChanged() {
+        setOKActionEnabled(isOKActionEnabled());
+      }
+    };
+    
+    setOKActionEnabled(isOKActionEnabled());
     Disposer.register(myDisposable, myAddSupportPanel);
     init();
   }
@@ -61,8 +69,13 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
     return roots.length != 0 && FrameworkSupportUtil.hasProviders(module);
   }
 
+  @Override
+  public boolean isOKActionEnabled() {
+    return myAddSupportPanel.hasSelectedFrameworks();
+  }
+
   protected void doOKAction() {
-    if (myAddSupportPanel.haveSelectedFrameworks()) {
+    if (myAddSupportPanel.hasSelectedFrameworks()) {
       if (!myAddSupportPanel.downloadLibraries()) {
         int answer = Messages.showYesNoDialog(myAddSupportPanel.getMainPanel(),
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
@@ -95,5 +108,10 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     return myAddSupportPanel.getMainPanel();
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myAddSupportPanel.getFrameworksTree();
   }
 }

@@ -17,7 +17,9 @@ package com.intellij.ui.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -133,6 +135,11 @@ public interface PopupComponent {
 
     public AwtPopupWrapper(Popup popup) {
       myPopup = popup;
+
+      if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
+        final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
+        c.setBackground(UIUtil.getPanelBackgound());
+      }
     }
 
     public void hide(boolean dispose) {

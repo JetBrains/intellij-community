@@ -317,7 +317,9 @@ public class SvnUtil {
 
     public Collection<File> handleWorkingCopyRoot(File root, ProgressIndicator progress) {
       final Collection<File> result = new HashSet<File>();
+      String oldText = null;
       if (progress != null) {
+        oldText = progress.getText();
         progress.setText(SvnBundle.message("progress.text.discovering.location", root.getAbsolutePath()));
       }
       try {
@@ -329,6 +331,9 @@ public class SvnUtil {
       }
       catch (SVNException e) {
         //
+      }
+      if (progress != null) {
+        progress.setText(oldText);
       }
       return result;
     }

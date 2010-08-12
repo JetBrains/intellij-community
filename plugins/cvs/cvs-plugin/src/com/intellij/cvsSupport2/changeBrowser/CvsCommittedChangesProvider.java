@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.committed.*;
@@ -132,8 +133,10 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Nullable
   @Override
-  public CvsChangeList getOneList(RepositoryLocation location, final VcsRevisionNumber number) throws VcsException {
-    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+  public Pair<CvsChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
+    // todo implement in proper way
+    final FilePathImpl filePath = new FilePathImpl(file);
+    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) getLocationFor(filePath);
     final String module = cvsLocation.getModuleName();
     final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
     if (connectionSettings.isOffline()) {
@@ -162,7 +165,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     else if (! executionResult.hasNoErrors()) {
       throw executionResult.composeError();
     }
-    return result[0];
+    return new Pair<CvsChangeList, FilePath>(result[0], filePath);
   }
 
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) throws VcsException {

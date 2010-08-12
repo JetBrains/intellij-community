@@ -19,8 +19,8 @@ import com.intellij.history.ByteContent;
 import com.intellij.history.Label;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,11 +28,11 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +91,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     final String selectedUrl = VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getData(dc);
 
     ShowDiffAction.showDiffForChange(new MyIterableWrapper(iterable.iterator(), before, after), new MySelectionMarker(selectedUrl),
-                                     project, ShowDiffAction.DiffExtendUIFactory.NONE, true);
+                                     project, new ShowDiffUIContext(true));
   }
 
   private static class MySelectionMarker implements Condition<Change> {

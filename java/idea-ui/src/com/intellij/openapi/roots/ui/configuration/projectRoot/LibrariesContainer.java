@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,12 @@ public interface LibrariesContainer {
   @Nullable
   Project getProject();
 
-  enum LibraryLevel {GLOBAL, PROJECT, MODULE}
+  enum LibraryLevel {GLOBAL, PROJECT, MODULE;
+
+    public String toString() {
+      return StringUtil.capitalize(name().toLowerCase());
+    }
+  }
 
   @NotNull
   Library[] getLibraries(@NotNull LibraryLevel libraryLevel);

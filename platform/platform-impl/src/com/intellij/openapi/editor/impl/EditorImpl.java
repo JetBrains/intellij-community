@@ -50,6 +50,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelEvent;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -294,6 +295,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(myCaretModel);
     myDocument.addDocumentListener(mySelectionModel);
     myDocument.addDocumentListener(myEditorDocumentAdapter);
+    myDocument.addDocumentListener(mySoftWrapModel);
 
     myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new CaretListener() {
@@ -522,6 +524,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.removeDocumentListener(myFoldingModel);
     myDocument.removeDocumentListener(myCaretModel);
     myDocument.removeDocumentListener(mySelectionModel);
+    myDocument.removeDocumentListener(mySoftWrapModel);
 
     MarkupModelEx markupModel = (MarkupModelEx)myDocument.getMarkupModel(myProject, false);
     if (markupModel instanceof MarkupModelImpl) {
@@ -875,6 +878,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           // There is a possible case that soft wrap contains more than one line feed inside and we need to start counting not
           // from its first line.
           int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.softWrapLinesOnCurrentLogicalLine;
+
+          // Process 'before soft wrap' drawing.
+          if (softWrapLinesToSkip <= 0) {
+            prevX = x;
+            charWidth = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+            x += charWidth;
+            if (x >= px) {
+              break outer;
+            }
+            column++;
+          }
+
           CharSequence softWrapText = softWrap.getText();
           for (int i = 0; i < softWrapText.length(); i++) {
             c = softWrapText.charAt(i);
@@ -885,8 +900,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               continue;
             }
             prevX = x;
+
             charWidth = charToVisibleWidth(c, fontType, x);
             if (charWidth == 0) {
+              charWidth = spaceSize;
               break outer;
             }
 
@@ -943,7 +960,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if ((x - px) * 2 < charWidth) column++;
       }
       else {
-        column += (px - x) / EditorUtil.getSpaceWidth(fontType, this);
+        column += (px - x) / spaceSize;
+        if ((px - x) * 2 >= spaceSize) {
+          column++;
+        }
       }
     }
 
@@ -1126,12 +1146,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       // We need to consider 'before soft wrap drawing'.
       TextChange softWrap = getSoftWrapModel().getSoftWrap(offset);
-      if (softWrap != null) {
+      if (softWrap != null && offset > startOffset) {
         column++;
         x += getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
-        if (column >= length) {
-          break;
-        }
+        // Assuming that first soft wrap symbol is line feed or all soft wrap symbols before the first line feed are spaces.
+        break;
       }
 
       FoldRegion region = state.getCurrentFold();
@@ -1585,6 +1604,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @SuppressWarnings({"StatementWithEmptyBody"})
   private void paintBackgrounds(Graphics g, Rectangle clip) {
+    boolean locateBeforeSoftWrap = !SoftWrapHelper.isCaretAfterSoftWrap(this);
     Color defaultBackground = getBackgroundColor();
     g.setColor(defaultBackground);
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
@@ -1702,6 +1722,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
       paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
     }
+
+    // Perform additional activity if soft wrap is added or removed during repainting.
+    if (mySoftWrapsChanged) {
+      mySoftWrapsChanged = false;
+      validateSize();
+
+      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
+      repaintToScreenBottom(xyToLogicalPosition(position).line);
+
+      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
+      // in accordance with the newly introduced soft wrap(s).
+      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
+
+      // Ask caret model to update visual caret position.
+      getCaretModel().moveToOffset(getCaretModel().getOffset(), locateBeforeSoftWrap);
+    }
   }
 
   private void paintRectangularSelection(Graphics g) {
@@ -1756,7 +1792,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (startToUse < softWrapStart) {
         position.x = drawBackground(g, backColor, text.subSequence(startToUse, softWrapStart), position, fontType, defaultBackground, clip);
       }
-      drawSoftWrap(g, backColor, softWrap, position, fontType, defaultBackground, clip);
+      drawSoftWrap(g, softWrap, position, fontType, defaultBackground, clip);
       startToUse = softWrapStart;
     }
 
@@ -1766,37 +1802,61 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return position.x;
   }
 
-  private void drawSoftWrap(Graphics g, Color backColor, TextChange softWrap, Point position,
-                            int fontType, Color defaultBackground, Rectangle clip)
-  {
-    position.x = drawBackground(
-      g, backColor, getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED), position,
-      defaultBackground, clip
-    );
+  private void drawSoftWrap(Graphics g, TextChange softWrap, Point position, int fontType, Color defaultBackground, Rectangle clip) {
+    // The main idea is to to do the following:
+    //     *) update given drawing position coordinates in accordance with the current soft wrap;
+    //     *) draw 'active line' background at soft wrap-introduced virtual space if necessary;
 
     CharSequence softWrapText = softWrap.getText();
-    int start = 0;
-    for (
-      int end = CharArrayUtil.shiftForwardUntil(softWrapText, start, "\n");
-      start < softWrapText.length() && end < softWrapText.length();
-      end = CharArrayUtil.shiftForwardUntil(softWrapText, start, "\n"))
-    {
-      drawBackground(g, backColor, softWrapText.subSequence(start, end), position, fontType, defaultBackground, clip);
-      start = end + 1;
-      position.x = 0;
-      position.y += getLineHeight();
+    int activeRowY = getCaretModel().getVisualPosition().line * getLineHeight();
+    if (position.y == activeRowY) {
+      // Draw 'active line' background after soft wrap.
+      Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+      drawBackground(g, caretRowColor, clip.x + clip.width - position.x, position, defaultBackground, clip);
     }
 
-    if (start < softWrapText.length()) {
-      position.x = drawBackground(
-        g, backColor, softWrapText.subSequence(start, softWrapText.length()), position, fontType, defaultBackground, clip
-      );
+    int i = CharArrayUtil.lastIndexOf(softWrapText, "\n", softWrapText.length()) + 1;
+    position.x = getTextSegmentWidth(softWrapText.subSequence(i, softWrapText.length()), 0, fontType, clip);
+    position.x += getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+    position.y += getLineHeight();
+
+    if (position.y == activeRowY) {
+      // Draw 'active line' background for the soft wrap-introduced virtual space.
+      Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+      drawBackground(g, caretRowColor, position.x, new Point(0, activeRowY), defaultBackground, clip);
     }
 
-    position.x = drawBackground(
-      g, backColor, getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP), position,
-      defaultBackground, clip
-    );
+    // The code below draws background for soft wrap-introduced virtual space. It's is considered that we don't want
+    // to do that for now. Uncomment if that decision is changed.
+
+    //position.x = drawBackground(
+    //  g, backColor, getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED), position,
+    //  defaultBackground, clip
+    //);
+    //
+    //CharSequence softWrapText = softWrap.getText();
+    //int start = 0;
+    //for (
+    //  int end = CharArrayUtil.shiftForwardUntil(softWrapText, start, "\n");
+    //  start < softWrapText.length() && end < softWrapText.length();
+    //  end = CharArrayUtil.shiftForwardUntil(softWrapText, start, "\n"))
+    //{
+    //  drawBackground(g, backColor, softWrapText.subSequence(start, end), position, fontType, defaultBackground, clip);
+    //  start = end + 1;
+    //  position.x = 0;
+    //  position.y += getLineHeight();
+    //}
+    //
+    //if (start < softWrapText.length()) {
+    //  position.x = drawBackground(
+    //    g, backColor, softWrapText.subSequence(start, softWrapText.length()), position, fontType, defaultBackground, clip
+    //  );
+    //}
+    //
+    //position.x = drawBackground(
+    //  g, backColor, getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP), position,
+    //  defaultBackground, clip
+    //);
   }
 
   private int drawBackground(Graphics g, Color backColor, CharSequence text, Point position, int fontType, Color defaultBackground,
@@ -1861,7 +1921,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     // We use AtomicReference here just as a holder for LogicalPosition
     // The main idea is that there is a possible case that we need to perform painting starting from soft-wrapped logical line.
-    // We may want to skip necessary of visual lines then. Hence, we remember logical position that corresponds to the starting
+    // We may want to skip necessary number of visual lines then. Hence, we remember logical position that corresponds to the starting
     // visual line in order to use it for further processing. As soon as necessary number of visual lines is skipped, logical
     // position is expected to be set to null as an indication that no soft wrap-introduced visual lines should be skipped on
     // current painting iteration.
@@ -1975,22 +2035,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     flushCachedChars(g);
-
-    // Perform additional activity if soft wrap is added or removed during repainting.
-    if (mySoftWrapsChanged) {
-      mySoftWrapsChanged = false;
-      validateSize();
-
-      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
-      repaintToScreenBottom(xyToLogicalPosition(position).line);
-
-      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
-      // in accordance with the newly introduced soft wrap(s).
-      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
-
-      // Ask caret model to update visual caret position.
-      getCaretModel().moveToOffset(getCaretModel().getOffset());
-    }
   }
 
   private boolean paintSelection() {
@@ -3536,7 +3580,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super(orientation);
     }
 
-    void setPersistendUI(ScrollBarUI ui) {
+    void setPersistentUI(ScrollBarUI ui) {
       myPersistentUI = ui;
       setUI(ui);
     }

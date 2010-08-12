@@ -548,11 +548,15 @@ public class PathsVerifier<BinaryType extends FilePatch> {
           "\nThe following files should be created by patch, but they already exist.\nDo you want to override them?\n", title,
           "The following file should be created by patch, but it already exists.\nDo you want to override it?\n{0}",
           VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
-        for (FilePath path : selected) {
-          myOverrideExisting.remove(path);
+        if (selected != null) {
+          for (FilePath path : selected) {
+            myOverrideExisting.remove(path);
+          }
         }
         result.addAll(myOverrideExisting.values());
-        myOverridenPaths.addAll(selected);
+        if (selected != null) {
+          myOverridenPaths.addAll(selected);
+        }
       }
       result.addAll(mySkipDeleted.values());
       return result;

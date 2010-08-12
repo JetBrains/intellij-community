@@ -1,0 +1,4 @@
+package enums;
+
+enum OurEnum {
+}

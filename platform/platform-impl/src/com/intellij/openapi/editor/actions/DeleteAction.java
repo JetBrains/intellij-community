@@ -97,6 +97,7 @@ public class DeleteAction extends EditorAction {
     if(afterLineEnd < 0) {
       int offset = editor.getCaretModel().getOffset();
       document.deleteString(offset, offset + 1);
+      editor.getCaretModel().moveToOffset(offset);
       return;
     }
     if(lineNumber + 1 >= document.getLineCount())

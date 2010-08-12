@@ -21,4 +21,5 @@ public class CommentBindingTest extends JavaParsingTestCase {
   public void testBindBeforeClass3() { doTest(true); }
   public void testBindBeforeClass4() { doTest(true); }
   public void testBindBeforeClass5() { doTest(true); }
+  public void testBindBeforeClass6() { doTest(true); }
 }

@@ -13,7 +13,9 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
@@ -270,15 +272,17 @@ public class HgCachingCommitedChangesProvider
   }
 
   @Override
-  public CommittedChangeList getOneList(RepositoryLocation location, VcsRevisionNumber number) throws VcsException {
+  public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) throws VcsException {
     final ChangeBrowserSettings settings = createDefaultSettings();
     settings.USE_CHANGE_AFTER_FILTER = true;
     settings.USE_CHANGE_BEFORE_FILTER = true;
     settings.CHANGE_AFTER = number.asString();
     settings.CHANGE_BEFORE = number.asString();
-    final List<CommittedChangeList> list = getCommittedChanges(settings, location, 1);
+    // todo implement in proper way
+    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+    final List<CommittedChangeList> list = getCommittedChanges(settings, getLocationFor(filePath), 1);
     if (list.size() == 1) {
-      return list.get(0);
+      return new Pair<CommittedChangeList, FilePath>(list.get(0), filePath);
     }
     return null;
   }
