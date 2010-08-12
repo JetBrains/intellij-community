@@ -50,6 +50,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   // guarded by myContainers
   private final Set<VirtualFilePointerContainerImpl> myContainers = new THashSet<VirtualFilePointerContainerImpl>(TObjectHashingStrategy.IDENTITY);
   private final VirtualFileManagerEx myVirtualFileManager;
+  private MessageBus myBus;
   private static final Comparator<String> COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? new Comparator<String>() {
     public int compare(@NotNull String url1, @NotNull String url2) {
       return url1.compareTo(url2);
@@ -62,6 +63,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   VirtualFilePointerManagerImpl(@NotNull VirtualFileManagerEx virtualFileManagerEx, MessageBus bus) {
     myVirtualFileManager = virtualFileManagerEx;
+    myBus = bus;
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new VFSEventsProcessor());
   }
 
@@ -102,12 +104,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private List<VirtualFilePointer> getPointersUnder(String path) {
+  private List<VirtualFilePointer> getPointersUnder(String path, boolean allowSameFSOptimization) {
     final List<VirtualFilePointer> pointers = new ArrayList<VirtualFilePointer>();
-    final boolean urlFromJarFS = path.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
+    final boolean urlFromJarFS = allowSameFSOptimization && path.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
     for (TreeMap<String, VirtualFilePointerImpl> urlToPointer : myUrlToPointerMaps.values()) {
       for (String pointerUrl : urlToPointer.keySet()) {
-        final boolean pointerFromJarFS = pointerUrl.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
+        final boolean pointerFromJarFS = allowSameFSOptimization && pointerUrl.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
         if (urlFromJarFS != pointerFromJarFS) {
           continue; // optimization: consider pointers from the same FS as the url specified
         }
@@ -440,21 +442,21 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
           if (event instanceof VFileDeleteEvent) {
             final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
             String url = deleteEvent.getFile().getPath();
-            toFireEvents.addAll(getPointersUnder(url));
+            toFireEvents.addAll(getPointersUnder(url, true));
           }
           else if (event instanceof VFileCreateEvent) {
             final VFileCreateEvent createEvent = (VFileCreateEvent)event;
             String url = createEvent.getPath();
-            toFireEvents.addAll(getPointersUnder(url));
+            toFireEvents.addAll(getPointersUnder(url, false));
           }
           else if (event instanceof VFileCopyEvent) {
             final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
             String url = copyEvent.getNewParent().getPath() + "/" + copyEvent.getFile().getName();
-            toFireEvents.addAll(getPointersUnder(url));
+            toFireEvents.addAll(getPointersUnder(url, false));
           }
           else if (event instanceof VFileMoveEvent) {
             final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
-            List<VirtualFilePointer> pointers = getPointersUnder(moveEvent.getFile().getPath());
+            List<VirtualFilePointer> pointers = getPointersUnder(moveEvent.getFile().getPath(), false);
             for (VirtualFilePointer pointer : pointers) {
               VirtualFile file = pointer.getFile();
               if (file != null) {
@@ -465,7 +467,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
           else if (event instanceof VFilePropertyChangeEvent) {
             final VFilePropertyChangeEvent change = (VFilePropertyChangeEvent)event;
             if (VirtualFile.PROP_NAME.equals(change.getPropertyName())) {
-              List<VirtualFilePointer> pointers = getPointersUnder(change.getFile().getPath());
+              List<VirtualFilePointer> pointers = getPointersUnder(change.getFile().getPath(), false);
               for (VirtualFilePointer pointer : pointers) {
                 VirtualFile file = pointer.getFile();
                 if (file != null) {
@@ -486,6 +488,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
       for (EventDescriptor event : myEvents) {
         event.fireBefore();
+      }
+
+      if (!toFireEvents.isEmpty()) {
+        VirtualFilePointer[] arr = toFireEvents.toArray(new VirtualFilePointer[toFireEvents.size()]);
+        myBus.syncPublisher(VirtualFilePointerListener.TOPIC).beforeValidityChanged(arr);
       }
 
       myPointersToUdate = toFireEvents;
@@ -516,6 +523,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
       for (EventDescriptor event : myEvents) {
         event.fireAfter();
+      }
+
+      if (!myPointersToUdate.isEmpty()) {
+        VirtualFilePointer[] arr = myPointersToUdate.toArray(new VirtualFilePointer[myPointersToUdate.size()]);
+        myBus.syncPublisher(VirtualFilePointerListener.TOPIC).beforeValidityChanged(arr);
       }
 
       myUrlsToUpdate = null;
