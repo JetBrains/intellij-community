@@ -243,10 +243,8 @@ public class CustomAntElementsRegistry {
     if (error != null) {
       myErrors.put(xmlName, customTagName);
     }
-    else {
-      myCustomElements.put(xmlName, clazz);
-      myDeclarations.put(xmlName, declaringTag);
-    }
+    myCustomElements.put(xmlName, clazz);
+    myDeclarations.put(xmlName, declaringTag);
   }
 
   private static PsiFile createDummyFile(@NonNls final String name, final LanguageFileType type, final CharSequence str, Project project) {
@@ -316,7 +314,13 @@ public class CustomAntElementsRegistry {
   }
 
   private static URL toLocalURL(final File file) throws MalformedURLException {
-    return new URL("file", "", FileUtil.toSystemIndependentName(file.getPath()));
+    String path = FileUtil.toSystemIndependentName(file.getPath());
+    if (!(StringUtil.endsWithIgnoreCase(path, ".jar") || StringUtil.endsWithIgnoreCase(path, ".zip")) && file.isDirectory()) {
+      if (!path.endsWith("/")) {
+        path = path + "/";
+      }
+    }
+    return new URL("file", "", path);
   }
 
 

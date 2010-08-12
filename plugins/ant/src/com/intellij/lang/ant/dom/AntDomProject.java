@@ -101,7 +101,11 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   @Nullable
   public final String getContainingFileDir() {
     final VirtualFile containingFile = getXmlTag().getContainingFile().getOriginalFile().getVirtualFile();
-    return containingFile != null ? containingFile.getParent().getPath() : null;
+    if (containingFile == null) {
+      return null;
+    }
+    final VirtualFile parent = containingFile.getParent();
+    return parent != null? parent.getPath() : null;
   }
 
   @SubTagList("target")
