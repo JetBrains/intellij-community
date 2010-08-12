@@ -19,7 +19,7 @@ all this too.
 """
 
 from datetime import datetime
-OUR_OWN_DATETIME = datetime(2010, 8, 7, 18, 10, 45) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 8, 9, 19, 2, 45) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -362,7 +362,7 @@ def transformSeq(results, toplevel=True):
           ret.append(sanitizeIdent(token_name) + "=" + sanitizeValue(token[2]))
         else:
           # smth like "a, (b1=1, b2=2)", make it "a, p_b"
-          return "p_" + results[0][1]
+          return ["p_" + results[0][1]] # NOTE: fishy. investigate.
       elif token_name == TRIPLE_DOT:
         if toplevel and not hasItemStartingWith(ret, "*"):
           ret.append("*more") # TODO check if *param is present already
@@ -554,11 +554,48 @@ class ModuleRedeclarator(object):
   if version == (2, 5):
     PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there
 
+  # NOTE: per-module signature data may be lazily imported 
   # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
   PREDEFINED_MOD_CLASS_SIGS = {
-    ("datetime", "timedelta", "__new__") : "(cls, days=None, seconds=None, microseconds=None, milliseconds=None, minutes=None, hours=None, weeks=None)",
     ("binascii", None, "hexlify") : "(data)",
     ("binascii", None, "unhexlify") : "(hexstr)",
+
+    ("datetime", "date", "__new__") : "(cls, year=None, month=None, day=None)",
+    ("datetime", "date", "fromordinal") : "(cls, ordinal)",
+    ("datetime", "date", "fromtimestamp") : "(cls, timestamp)",
+    ("datetime", "date", "isocalendar") : "(self)",
+    ("datetime", "date", "isoformat") : "(self)",
+    ("datetime", "date", "isoweekday") : "(self)",
+    ("datetime", "date", "replace") : "(self, year=None, month=None, day=None)",
+    ("datetime", "date", "strftime") : "(self, format)",
+    ("datetime", "date", "timetuple") : "(self)",
+    ("datetime", "date", "today") : "(self)",
+    ("datetime", "date", "toordinal") : "(self)",
+    ("datetime", "date", "weekday") : "(self)",
+    ("datetime", "timedelta", "__new__") : "(cls, days=None, seconds=None, microseconds=None, milliseconds=None, minutes=None, hours=None, weeks=None)",
+    ("datetime", "datetime", "__new__") : "(cls, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
+    ("datetime", "datetime", "astimezone") : "(self, tz)",
+    ("datetime", "datetime", "combine") : "(cls, date, time)",
+    ("datetime", "datetime", "date") : "(self)",
+    ("datetime", "datetime", "fromtimestamp") : "(cls, timestamp, tz=None)",
+    ("datetime", "datetime", "isoformat") : "(self, sep='T')",
+    ("datetime", "datetime", "now") : "(cls, tz=None)",
+    ("datetime", "datetime", "strptime") : "(cls, date_string, format)",
+    ("datetime", "datetime", "replace") : "(self, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
+    ("datetime", "datetime", "time") : "(self)",
+    ("datetime", "datetime", "timetuple") : "(self)",
+    ("datetime", "datetime", "timetz") : "(self)",
+    ("datetime", "datetime", "utcfromtimestamp") : "(self, timestamp)",
+    ("datetime", "datetime", "utcnow") : "(cls)",
+    ("datetime", "datetime", "utctimetuple") : "(self)",
+    ("datetime", "time", "__new__") : "(cls, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
+    ("datetime", "time", "isoformat") : "(self)",
+    ("datetime", "time", "replace") : "(self, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
+    ("datetime", "time", "strftime") : "(self, format)",
+    ("datetime", "tzinfo", "dst") : "(self, date_time)",
+    ("datetime", "tzinfo", "fromutc") : "(self, date_time)",
+    ("datetime", "tzinfo", "tzname") : "(self, date_time)",
+    ("datetime", "tzinfo", "utcoffset") : "(self, date_time)",
   }
   
   # known properties of modules
@@ -698,6 +735,12 @@ class ModuleRedeclarator(object):
       ("zipimporter", 'prefix'): ('r', G_STR),
       ("zipimporter", 'archive'): ('r', G_STR),
       ("zipimporter", '_files'): ('r', G_DICT),
+    },
+    "datetime": {
+      ("datetime", "hour"): ('r', G_INT),
+      ("datetime", "minute"): ('r', G_INT),
+      ("datetime", "second"): ('r', G_INT),
+      ("datetime", "microsecond"): ('r', G_INT),
     },
   }
 
@@ -840,11 +883,12 @@ class ModuleRedeclarator(object):
   SIG_DOC_NOTE = "restored from __doc__"
   SIG_DOC_UNRELIABLY = "NOTE: unreliably restored from __doc__ "
 
-  def restoreByDocString(self, signature_string, func_name, class_name):
+  def restoreByDocString(self, signature_string, func_name, class_name, deco=None):
     """
     @param signature_string: parameter list extracted from the doc string.
     @param func_name: name of the function.
     @param class_name: name of the containing class, or None
+    @param deco: decorator to use
     @return (reconstructed_spec, note) or (None, None) if failed.
     """
     # parse
@@ -882,20 +926,20 @@ class ModuleRedeclarator(object):
     else:
       note = self.SIG_DOC_NOTE
 
-    # add 'self' if needed
+    # add 'self' if needed YYY
     if class_name:
-      if self.KNOWN_DECORATORS.get((class_name, func_name), None) == "staticmethod":
-        pass
-      elif not self.seemsToHaveSelf(seq) and func_name != "__new__":
-        seq.insert(0, "self")
+      first_param = self.proposeFirstParam(deco)
+      if first_param:
+        seq.insert(0, first_param)
     seq = makeNamesUnique(seq)
     return (func_name + flatten(seq), note)
 
-  def parseFuncDoc(self, func_doc, func_name, class_name):
+  def parseFuncDoc(self, func_doc, func_name, class_name, deco=None):
     """
     @param func_doc: __doc__ of the function.
     @param func_name: name of the function.
     @param class_name: name of the containing class, or None
+    @param deco: decorator to use
     @return (reconstructed_spec, note) or (None, None) if failed.
     """
     # find the first thing to look like a definition
@@ -903,7 +947,7 @@ class ModuleRedeclarator(object):
     match = prefix_re.search(func_doc)
     # parse the part that looks right
     if match:
-      spec, note = self.restoreByDocString(func_doc[match.end():], func_name, class_name)
+      spec, note = self.restoreByDocString(func_doc[match.end():], func_name, class_name, deco)
       # if "NOTE" in note: 
         # print "------\n", func_name, "@", match.end()
         # print "------\n", func_doc
@@ -1012,13 +1056,10 @@ class ModuleRedeclarator(object):
         #self.out(deco + " # known case", indent)
         deco_comment = " # known case"
     elif p_class:
-      func_repr = repr(p_func)
       # detect native methods declared with METH_CLASS flag
       if p_name != "__new__" and type(p_func).__name__.startswith('classmethod'):  # 'classmethod_descriptor' in Python 2.x and 3.x, 'classmethod' in Jython
-        #self.out('@classmethod', indent)
         deco = "classmethod"
       elif type(p_func).__name__.startswith('staticmethod'): 
-        #self.out('@staticmethod', indent)
         deco = "staticmethod"
     if p_name == "__new__":
       #self.out("@staticmethod # known case of __new__", indent)
@@ -1050,6 +1091,7 @@ class ModuleRedeclarator(object):
       else:
         ofwhat = "%s.%s" % (p_modname, p_name)
       self.out("def " + p_name + sig + (": # known case of %s" % ofwhat), indent)
+      self.outDocAttr(p_func, indent+1, p_class)
     else:
       # __doc__ is our best source of arglist
       sig_note = "real signature unknown"
@@ -1065,7 +1107,7 @@ class ModuleRedeclarator(object):
         funcdoc = p_func.__doc__
       sig_restored = False
       if isinstance(funcdoc, STR_TYPES):
-        (spec, more_notes) = self.parseFuncDoc(funcdoc, p_name, classname)
+        (spec, more_notes) = self.parseFuncDoc(funcdoc, p_name, classname, deco)
         sig_restored = spec is not None
         if more_notes:
           if sig_note:
@@ -1075,7 +1117,9 @@ class ModuleRedeclarator(object):
         # use an allow-all declaration
         decl = []
         if p_class:
-          decl.append("self")
+          first_param = self.proposeFirstParam(deco)
+          if first_param:
+            decl.append(first_param)
         decl.append("*args")
         decl.append("**kwargs")
         spec = p_name + "(" + ", ".join(decl) + ")"
@@ -1086,6 +1130,16 @@ class ModuleRedeclarator(object):
     if deco and not HAS_DECORATORS:
       self.out(p_name + " = " + deco + "(" + p_name + ")" + deco_comment, indent)
     self.out("", 0) # empty line after each item
+
+  def proposeFirstParam(self, deco):
+    "@return: name of missing first paramater, considering a decorator"
+    if deco is None:
+      return "self"
+    if deco == "classmethod":
+      return "cls"
+    # if deco == "staticmethod":
+    return None
+
 
   def redoClass(self, p_class, p_name, indent, p_modname=None):
     """
