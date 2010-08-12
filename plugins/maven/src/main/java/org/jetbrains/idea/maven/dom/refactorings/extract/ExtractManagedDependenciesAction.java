@@ -22,6 +22,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
@@ -63,7 +64,6 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
   protected RefactoringActionHandler getHandler(DataContext dataContext) {
     return new MyRefactoringActionHandler();
-
   }
 
   @Override
@@ -71,75 +71,101 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
     return MavenDomUtil.isMavenFile(file);
   }
 
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file) {
+    if (!super.isAvailableOnElementInEditorAndFile(element, editor, file)) return false;
+    return findDependencyAndParent(file, editor) != null;
+  }
+
+  private static Pair<MavenDomDependency, Set<MavenDomProjectModel>> findDependencyAndParent(PsiFile file, Editor editor) {
+    final MavenDomDependency dependency = DomUtil.findDomElement(file.findElementAt(editor.getCaretModel().getOffset()),
+                                                                 MavenDomDependency.class);
+    if (dependency == null || isManagedDependency(dependency)) return null;
+
+    Set<MavenDomProjectModel> parents = getParentProjects(file.getProject(), file);
+    if (parents.isEmpty()) return null;
+
+    return Pair.create(dependency, parents);
+  }
+
+  @NotNull
+  private static Set<MavenDomProjectModel> getParentProjects(@NotNull Project project, @NotNull PsiFile file) {
+    final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
+
+    if (model == null) return Collections.emptySet();
+    return MavenDomProjectProcessorUtils.collectParentProjects(model);
+  }
+
+  private static boolean isManagedDependency(@NotNull MavenDomDependency dependency) {
+    return MavenDomProjectProcessorUtils.searchManagingDependency(dependency) != null;
+  }
+
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      final MavenDomDependency dependency =
-        DomUtil.findDomElement(file.findElementAt(editor.getCaretModel().getOffset()), MavenDomDependency.class);
+      Pair<MavenDomDependency, Set<MavenDomProjectModel>> depAndParents = findDependencyAndParent(file, editor);
+      if (depAndParents == null) return;
 
-      if (dependency != null && !isManagedDependency(dependency)) {
-        Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences = getOccurencesFunction(dependency);
+      final MavenDomDependency dependency = depAndParents.first;
+      Set<MavenDomProjectModel> parent = depAndParents.second;
 
-        final ProcessData processData =
-          getProcessData(project, getParentProjects(project, file), funOccurrences, dependency.getExclusions().getXmlElement() != null);
+      Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences = getOccurencesFunction(dependency);
+      final ProcessData processData = getProcessData(project, parent, funOccurrences, dependency.getExclusions().getXmlElement() != null);
+      if (processData == null) return;
 
-        if (processData != null) {
-
-          final MavenDomProjectModel model = processData.getModel();
-          final Set<MavenDomDependency> usages = processData.getUsages();
-          final boolean extractExclusions = processData.isExtractExclusions();
-
-
-          assert model != null;
-          assert usages != null;
-
-          new WriteCommandAction(project, getFiles(file, model, usages)) {
-            @Override
-            protected void run(Result result) throws Throwable {
-              MavenDomDependency addedDependency = model.getDependencyManagement().getDependencies().addDependency();
-              addedDependency.getGroupId().setStringValue(dependency.getGroupId().getStringValue());
-              addedDependency.getArtifactId().setStringValue(dependency.getArtifactId().getStringValue());
-              addedDependency.getVersion().setStringValue(dependency.getVersion().getStringValue());
-              String typeValue = dependency.getType().getStringValue();
-
-              dependency.getVersion().undefine();
-
-              if (typeValue != null) {
-                addedDependency.getType().setStringValue(typeValue);
-                dependency.getType().undefine();
-              }
-
-              String classifier = dependency.getClassifier().getStringValue();
-              if (classifier != null) {
-                addedDependency.getClassifier().setStringValue(classifier);
-                dependency.getClassifier().undefine();
-              }
-
-              String systemPath = dependency.getSystemPath().getStringValue();
-              if (systemPath != null) {
-                addedDependency.getSystemPath().setStringValue(systemPath);
-                dependency.getSystemPath().undefine();
-              }
+      final MavenDomProjectModel model = processData.getModel();
+      final Set<MavenDomDependency> usages = processData.getUsages();
+      final boolean extractExclusions = processData.isExtractExclusions();
 
 
-              if (extractExclusions) {
-                MavenDomExclusions addedExclusions = addedDependency.getExclusions();
-                for (MavenDomExclusion exclusion : dependency.getExclusions().getExclusions()) {
-                  MavenDomExclusion domExclusion = addedExclusions.addExclusion();
+      assert model != null;
+      assert usages != null;
 
-                  domExclusion.getGroupId().setStringValue(exclusion.getGroupId().getStringValue());
-                  domExclusion.getArtifactId().setStringValue(exclusion.getArtifactId().getStringValue());
-                }
+      new WriteCommandAction(project, getFiles(file, model, usages)) {
+        @Override
+        protected void run(Result result) throws Throwable {
+          MavenDomDependency addedDependency = model.getDependencyManagement().getDependencies().addDependency();
+          addedDependency.getGroupId().setStringValue(dependency.getGroupId().getStringValue());
+          addedDependency.getArtifactId().setStringValue(dependency.getArtifactId().getStringValue());
+          addedDependency.getVersion().setStringValue(dependency.getVersion().getStringValue());
+          String typeValue = dependency.getType().getStringValue();
 
-                dependency.getExclusions().undefine();
-              }
+          dependency.getVersion().undefine();
 
-              for (MavenDomDependency usage : usages) {
-                usage.getVersion().undefine();
-              }
+          if (typeValue != null) {
+            addedDependency.getType().setStringValue(typeValue);
+            dependency.getType().undefine();
+          }
+
+          String classifier = dependency.getClassifier().getStringValue();
+          if (classifier != null) {
+            addedDependency.getClassifier().setStringValue(classifier);
+            dependency.getClassifier().undefine();
+          }
+
+          String systemPath = dependency.getSystemPath().getStringValue();
+          if (systemPath != null) {
+            addedDependency.getSystemPath().setStringValue(systemPath);
+            dependency.getSystemPath().undefine();
+          }
+
+
+          if (extractExclusions) {
+            MavenDomExclusions addedExclusions = addedDependency.getExclusions();
+            for (MavenDomExclusion exclusion : dependency.getExclusions().getExclusions()) {
+              MavenDomExclusion domExclusion = addedExclusions.addExclusion();
+
+              domExclusion.getGroupId().setStringValue(exclusion.getGroupId().getStringValue());
+              domExclusion.getArtifactId().setStringValue(exclusion.getArtifactId().getStringValue());
             }
-          }.execute();
+
+            dependency.getExclusions().undefine();
+          }
+
+          for (MavenDomDependency usage : usages) {
+            usage.getVersion().undefine();
+          }
         }
-      }
+      }.execute();
     }
 
     private static PsiFile[] getFiles(@NotNull PsiFile file, @NotNull MavenDomProjectModel model, @NotNull Set<MavenDomDependency> usages) {
@@ -162,9 +188,9 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
     @Nullable
     private static ProcessData getProcessData(@NotNull Project project,
 
-                                                                                      @NotNull Set<MavenDomProjectModel> models,
-                                                                                      @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
-                                                                                      boolean hasExclusions) {
+                                              @NotNull Set<MavenDomProjectModel> models,
+                                              @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
+                                              boolean hasExclusions) {
       if (models.size() == 0) return null;
 
       if (models.size() == 1 && !hasExclusions) {
@@ -174,13 +200,15 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
         }
       }
 
-      SelectMavenProjectDialog dialog = new SelectMavenProjectDialog(project, models, funOccurrences,hasExclusions);
+      SelectMavenProjectDialog dialog = new SelectMavenProjectDialog(project, models, funOccurrences, hasExclusions);
       dialog.show();
 
       if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
         MavenDomProjectModel model = dialog.getSelectedProject();
 
-        return new ProcessData(model, dialog.isReplaceAllOccurrences() ? funOccurrences.fun(model) : Collections.<MavenDomDependency>emptySet(), dialog.isExtractExclusions());
+        return new ProcessData(model,
+                               dialog.isReplaceAllOccurrences() ? funOccurrences.fun(model) : Collections.<MavenDomDependency>emptySet(),
+                               dialog.isExtractExclusions());
       }
 
       return null;
@@ -196,18 +224,6 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
           return MavenDomProjectProcessorUtils.searchDependencyUsages(model, groupId, artifactId, Collections.singleton(dependency));
         }
       };
-    }
-
-    @NotNull
-    private Set<MavenDomProjectModel> getParentProjects(@NotNull Project project, @NotNull PsiFile file) {
-      final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
-
-      if (model == null) return Collections.emptySet();
-      return MavenDomProjectProcessorUtils.collectParentProjects(model);
-    }
-
-    private static boolean isManagedDependency(@NotNull MavenDomDependency dependency) {
-      return MavenDomProjectProcessorUtils.searchManagingDependency(dependency) != null;
     }
 
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
