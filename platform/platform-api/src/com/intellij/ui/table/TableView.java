@@ -26,9 +26,13 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
   public TableView() {
@@ -113,10 +117,17 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   }
 
   public void updateColumnSizes() {
+    final JTableHeader header = getTableHeader();
+    final TableCellRenderer defaultRenderer = header == null? null : header.getDefaultRenderer();
+
     ColumnInfo[] columns = getListTableModel().getColumnInfos();
     for (int i = 0; i < columns.length; i++) {
-      ColumnInfo columnInfo = columns[i];
-      TableColumn column = getColumnModel().getColumn(i);
+      final ColumnInfo columnInfo = columns[i];
+      final TableColumn column = getColumnModel().getColumn(i);
+
+      final Component headerComponent = defaultRenderer == null? null :
+        defaultRenderer.getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0, 0);
+      final Dimension headerSize = headerComponent == null? new Dimension(0, 0) : headerComponent.getPreferredSize();
       final String maxStringValue;
       final String preferredValue;
       if (columnInfo.getWidth(this) > 0) {
@@ -126,11 +137,13 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       }
       else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
         int width = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
+        width = Math.max(width, headerSize.width);
         column.setPreferredWidth(width);
         column.setMaxWidth(width);
       }
       else if ((preferredValue = columnInfo.getPreferredStringValue()) != null) {
         int width = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
+        width = Math.max(width, headerSize.width);
         column.setPreferredWidth(width);
       }
     }

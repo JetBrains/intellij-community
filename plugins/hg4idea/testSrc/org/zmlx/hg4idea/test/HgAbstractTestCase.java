@@ -20,8 +20,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
@@ -64,24 +62,6 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
     HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
 
     myTraceClient = true;
-  }
-
-  /**
-   * Creates a new Mercurial repository in a temporary test directory.
-   * @return created repository
-   */
-  protected HgTestRepository createRepository() throws Exception {
-    final TempDirTestFixture dirFixture = createFixtureDir();
-    final File repo = new File(dirFixture.getTempDirPath());
-    ProcessOutput processOutput = runHg(repo, "init");
-    verify(processOutput);
-    return new HgTestRepository(this, dirFixture);
-  }
-
-  protected static TempDirTestFixture createFixtureDir() throws Exception {
-    final TempDirTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-    fixture.setUp();
-    return fixture;
   }
 
   protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
