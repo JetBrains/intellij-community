@@ -380,16 +380,16 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
-    <group id="Maven.RefactoringsGroup" text="Refactoring">
-      <add-to-group group-id="Maven.BaseProjectMenu" anchor="last"/>
+    <group id="Maven.RefactoringGroup" text="Refactoring">
+      <add-to-group group-id="RefactoringMenu" anchor="last"/>
       <separator/>
       <action id="refactoring.introduce.property" text="Introduce Property"
               class="org.jetbrains.idea.maven.dom.refactorings.introduce.IntroducePropertyAction"
-              use-shortcut-of="IntroduceVariable"/> <!-- todo -->
+              use-shortcut-of="IntroduceVariable"/>
 
-      <action id="refactoring.extract.dependency" text="Extract Dependency (dependencyManagement)"
-              class="org.jetbrains.idea.maven.dom.refactorings.extract.ExtractDependenciesAction">
-      </action>
+      <action id="refactoring.extract.dependency" text="Extract Managed Dependency"
+              class="org.jetbrains.idea.maven.dom.refactorings.extract.ExtractManagedDependenciesAction"
+              use-shortcut-of="ExtractMethod"/>
     </group>
   </actions>
 </idea-plugin>

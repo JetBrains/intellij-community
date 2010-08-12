@@ -40,7 +40,7 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   protected abstract boolean isEnabledOnElements(PsiElement[] elements);
 
-  protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file) {
     return true;
   }
 
@@ -121,7 +121,7 @@ public abstract class BaseRefactoringAction extends AnAction {
                           !(element instanceof SyntheticElement) &&
                           isAvailableForLanguage(PsiUtilBase.getLanguageInEditor(editor, project));
       if (isVisible) {
-        boolean isEnabled = isAvailableOnElementInEditor(element, editor);
+        boolean isEnabled = isAvailableOnElementInEditorAndFile(element, editor, file);
         if (!isEnabled) {
           disableAction(e);
         }

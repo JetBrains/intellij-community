@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -38,10 +37,7 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
     return elements.length == 1 && (elements[0] instanceof PsiMethod || elements[0] instanceof PsiClass);
   }
 
-  protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
-    final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(element.getProject()).getPsiFile(document);
-    if (file == null) return false;
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file) {
     PsiElement targetMember = findTargetMember(file, editor);
     if (targetMember == null) return false;
     final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(targetMember.getLanguage());

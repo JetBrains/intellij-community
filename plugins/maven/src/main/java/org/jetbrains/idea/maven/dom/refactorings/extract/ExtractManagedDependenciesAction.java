@@ -42,9 +42,9 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import java.util.Collections;
 import java.util.Set;
 
-public class ExtractDependenciesAction extends BaseRefactoringAction {
+public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
-  public ExtractDependenciesAction() {
+  public ExtractManagedDependenciesAction() {
     setInjectedContext(true);
   }
 

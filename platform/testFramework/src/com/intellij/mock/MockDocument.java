@@ -32,9 +32,9 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
-import java.util.Map;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class MockDocument implements DocumentEx {
   private final Map myUserData = new HashMap();
@@ -50,6 +50,11 @@ public class MockDocument implements DocumentEx {
 
   public String getText() {
     return myText.toString();
+  }
+
+  @Override
+  public String getText(TextRange range) {
+    return myText.substring(range.getStartOffset(), range.getEndOffset());
   }
 
   public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {

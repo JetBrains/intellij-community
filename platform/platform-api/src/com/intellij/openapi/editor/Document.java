@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +48,8 @@ public interface Document extends UserDataHolder {
    * @return document content.
    */
   String getText();
+
+  String getText(TextRange range);
 
   /**
    * Use this method instead of {@link #getText()} if you do not need to create a copy of the content.

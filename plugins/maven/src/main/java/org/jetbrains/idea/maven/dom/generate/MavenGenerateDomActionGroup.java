@@ -32,6 +32,7 @@ public class MavenGenerateDomActionGroup extends DefaultActionGroup {
     add(new GenerateDependencyAction());
     add(new GenerateManagedDependencyAction());
 
+    addSeparator();
     add(createAction(MavenDomBundle.message("generate.dependency.template"), MavenDomDependency.class, "maven-dependency",
                      new Function<MavenDomProjectModel, DomElement>() {
                        public DomElement fun(MavenDomProjectModel mavenDomProjectModel) {
@@ -52,7 +53,7 @@ public class MavenGenerateDomActionGroup extends DefaultActionGroup {
                        }
                      }));
 
-
+    addSeparator();
     add(new GenerateParentAction());
   }
 
