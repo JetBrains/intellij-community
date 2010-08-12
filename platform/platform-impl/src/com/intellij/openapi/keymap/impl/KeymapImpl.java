@@ -39,10 +39,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene Belyaev
@@ -82,7 +79,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   private KeymapImpl myParent;
   private boolean myCanModify = true;
 
-  private final Map<String, List<Shortcut>> myActionId2ListOfShortcuts = new THashMap<String, List<Shortcut>>();
+  private final Map<String, LinkedHashSet<Shortcut>> myActionId2ListOfShortcuts = new THashMap<String, LinkedHashSet<Shortcut>>();
 
   /**
    * Don't use this field directly! Use it only through <code>getKeystroke2ListOfIds</code>.
@@ -156,10 +153,10 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     newKeymap.myKeystroke2ListOfIds = null;
     newKeymap.myMouseShortcut2ListOfIds = null;
 
-    for (Map.Entry<String, List<Shortcut>> entry : myActionId2ListOfShortcuts.entrySet()) {
-      List<Shortcut> list = entry.getValue();
+    for (Map.Entry<String, LinkedHashSet<Shortcut>> entry : myActionId2ListOfShortcuts.entrySet()) {
+      LinkedHashSet<Shortcut> list = entry.getValue();
       String key = entry.getKey();
-      newKeymap.myActionId2ListOfShortcuts.put(key, new ArrayList<Shortcut>(list));
+      newKeymap.myActionId2ListOfShortcuts.put(key, new LinkedHashSet<Shortcut>(list));
     }
 
     if (copyExternalInfo) {
@@ -209,9 +206,9 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   private void addShortcutSilently(String actionId, Shortcut shortcut, final boolean checkParentShortcut) {
-    List<Shortcut> list = myActionId2ListOfShortcuts.get(actionId);
+    LinkedHashSet<Shortcut> list = myActionId2ListOfShortcuts.get(actionId);
     if (list == null) {
-      list = new ArrayList<Shortcut>();
+      list = new LinkedHashSet<Shortcut>();
       myActionId2ListOfShortcuts.put(actionId, list);
       if (myParent != null) {
         // copy parent shortcuts for this actionId
@@ -235,19 +232,15 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
       removeShortcut(actionId, shortcut);
     }
   }
-  public void removeAllActionShortcuts0(String actionId) {
-    Shortcut[] allShortcuts = getShortcuts(actionId);
-    for (Shortcut shortcut : allShortcuts) {
-      removeShortcut(actionId, shortcut);
-    }
-  }
 
   public void removeShortcut(String actionId, Shortcut shortcut) {
-    List<Shortcut> list = myActionId2ListOfShortcuts.get(actionId);
+    LinkedHashSet<Shortcut> list = myActionId2ListOfShortcuts.get(actionId);
     if (list != null) {
-      for (int i = 0; i < list.size(); i++) {
-        if (shortcut.equals(list.get(i))) {
-          list.remove(i);
+      Iterator<Shortcut> it = list.iterator();
+      while (it.hasNext()) {
+        Shortcut each = it.next();
+        if (shortcut.equals(each)) {
+          it.remove();
           if (myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId))) {
             myActionId2ListOfShortcuts.remove(actionId);
           }
@@ -258,7 +251,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     else if (myParent != null) {
       // put to the map the parent's bindings except for the removed binding
       Shortcut[] parentShortcuts = getParentShortcuts(actionId);
-      ArrayList<Shortcut> listOfShortcuts = new ArrayList<Shortcut>();
+      LinkedHashSet<Shortcut> listOfShortcuts = new LinkedHashSet<Shortcut>();
       for (Shortcut parentShortcut : parentShortcuts) {
         if (!shortcut.equals(parentShortcut)) {
           listOfShortcuts.add(parentShortcut);
@@ -305,7 +298,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   private <T extends Shortcut>void addAction2ShortcutsMap(final String actionId, final Map<T, List<String>> strokesMap, final Class<T> shortcutClass) {
-    List<Shortcut> listOfShortcuts = _getShortcuts(actionId);
+    LinkedHashSet<Shortcut> listOfShortcuts = _getShortcuts(actionId);
     for (Shortcut shortcut : listOfShortcuts) {
       if (!shortcutClass.isAssignableFrom(shortcut.getClass())) {
         continue;
@@ -327,7 +320,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   private void addKeystrokesMap(final String actionId, final Map<KeyStroke, List<String>> strokesMap) {
-    List<Shortcut> listOfShortcuts = _getShortcuts(actionId);
+    LinkedHashSet<Shortcut> listOfShortcuts = _getShortcuts(actionId);
     for (Shortcut shortcut : listOfShortcuts) {
       if (!(shortcut instanceof KeyboardShortcut)) {
         continue;
@@ -346,14 +339,14 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     }
   }
 
-  private List<Shortcut> _getShortcuts(final String actionId) {
+  private LinkedHashSet<Shortcut> _getShortcuts(final String actionId) {
     KeymapManagerEx keymapManager = getKeymapManager();
-    List<Shortcut> listOfShortcuts = myActionId2ListOfShortcuts.get(actionId);
+    LinkedHashSet<Shortcut> listOfShortcuts = myActionId2ListOfShortcuts.get(actionId);
     if (listOfShortcuts != null) {
-      listOfShortcuts = new ArrayList<Shortcut>(listOfShortcuts);
+      listOfShortcuts = new LinkedHashSet<Shortcut>(listOfShortcuts);
     }
     else {
-      listOfShortcuts = new ArrayList<Shortcut>();
+      listOfShortcuts = new LinkedHashSet<Shortcut>();
     }
 
     final String actionBinding = keymapManager.getActionBinding(actionId);
@@ -506,7 +499,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
       return getShortcuts(keymapManager.getActionBinding(actionId));
     }
 
-    List<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
+    LinkedHashSet<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
 
     if (shortcuts == null) {
       if (myParent != null) {
@@ -647,7 +640,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     }
     // Add read shortcuts
     for (String id : id2shortcuts.keySet()) {
-      myActionId2ListOfShortcuts.put(id, new ArrayList<Shortcut>(2)); // It's a trick! After that paren's shortcuts are not added to the keymap
+      myActionId2ListOfShortcuts.put(id, new LinkedHashSet<Shortcut>(2)); // It's a trick! After that parent's shortcuts are not added to the keymap
       ArrayList<Shortcut> shortcuts = id2shortcuts.get(id);
       for (Shortcut shortcut : shortcuts) {
         addShortcutSilently(id, shortcut, false);
