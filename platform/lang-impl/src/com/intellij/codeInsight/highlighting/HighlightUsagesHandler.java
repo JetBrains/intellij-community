@@ -116,8 +116,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     boolean clearHighlights = isClearHighlights(editor);
-    UsageTarget target = usageTargets[0];
-    target.highlightUsages(file, editor, clearHighlights);
+    for (UsageTarget target : usageTargets) {
+      target.highlightUsages(file, editor, clearHighlights);
+    }
   }
 
   @Nullable
