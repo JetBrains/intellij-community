@@ -34,6 +34,7 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.*;
@@ -184,7 +185,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     if (nameElementPsi != null) {
       return nameElementPsi;
     }
-    return getXmlElement();
+    final XmlElement xmlElement = getXmlElement();
+    return xmlElement != null? xmlElement.getNavigationElement() : null;
   }
 
   private Map<String, String> getProperties() {

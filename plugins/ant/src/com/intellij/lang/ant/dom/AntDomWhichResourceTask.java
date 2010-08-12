@@ -34,7 +34,7 @@ public abstract class AntDomWhichResourceTask extends AntDomPropertyDefiningTask
   @Attribute("resource")
   public abstract GenericAttributeValue<String> getResourceName();
 
-  protected String calcPropertyValue() {
+  protected String calcPropertyValue(String propertyName) {
     String resName = getClassName().getStringValue();
     if (resName == null) {
       resName = getResourceName().getStringValue();

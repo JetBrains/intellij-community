@@ -25,7 +25,7 @@ import com.intellij.util.xml.GenericAttributeValue;
  *         Date: Aug 10, 2010
  * TODO: very basic implementation for now; it can be augmented if needed 
  */
-public abstract class AntDomLengthTask extends AntDomPropertyDefiningTask{
+public abstract class AntDomLengthTask extends AntDomPropertyDefiningTask {
 
   @Attribute("file")
   @Convert(value = AntPathConverter.class)

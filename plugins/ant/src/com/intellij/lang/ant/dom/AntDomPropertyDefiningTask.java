@@ -15,55 +15,25 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.pom.references.PomService;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.NameValue;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Aug 10, 2010
  */
-public abstract class AntDomPropertyDefiningTask extends AntDomElement implements PropertiesProvider{
+public abstract class AntDomPropertyDefiningTask extends AntDomPropertyDefiningElement {
 
   @Attribute("property")
   @NameValue
   public abstract GenericAttributeValue<String> getPropertyName();
 
-  @NotNull 
-  public final Iterator<String> getNamesIterator() {
-    final String name = getPropertyName().getStringValue();
-    if (name != null) {
-      if (name.length() > 0) {
-        return Collections.<String>singletonList(name).iterator();
-      }
-    }
-    return Collections.<String>emptyList().iterator();
-  }
-
-  public final PsiElement getNavigationElement(String propertyName) {
-    final DomTarget domTarget = DomTarget.getTarget(this, getPropertyName());
-    if (domTarget != null) {
-      return PomService.convertToPsi(domTarget);
-    }
-    return null;
-  }
-  
-  public String getPropertyValue(String propertyName) {
-    if (!propertyName.equals(getPropertyName().getStringValue())) {
-      return null;
-    }
-    return calcPropertyValue();
-  }
-
-  protected String calcPropertyValue() {
-    return "";
+  protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
+    return Collections.singletonList(getPropertyName());
   }
 
 }

@@ -18,6 +18,9 @@ package com.intellij.lang.ant.dom;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Aug 6, 2010
@@ -28,19 +31,12 @@ public abstract class AntDomChecksumTask extends AntDomPropertyDefiningTask {
   public abstract GenericAttributeValue<String> getVerifyProperty();
   
 
-  public final String getPropertyValue(String propertyName) {
-    if (!propertyName.equals(getPropertyNameAttribute().getStringValue())) {
-      return null;
-    }
-    return calcPropertyValue(); // some non-null value; actual value can be determined at runtime only
-  }
-
-  protected GenericAttributeValue<String> getPropertyNameAttribute() {
+  protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
     final GenericAttributeValue<String> verifyProperty = getVerifyProperty();
     if (verifyProperty.getRawText() != null) {
-      return verifyProperty;
+      return Collections.singletonList(verifyProperty);
     }
-    return getPropertyName();
+    return Collections.singletonList(getPropertyName());
   }
   
 }

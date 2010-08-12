@@ -15,24 +15,18 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.pom.references.PomService;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.NameValue;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Aug 10, 2010
  */
-public abstract class AntDomExecTask extends AntDomElement implements PropertiesProvider{
+public abstract class AntDomExecTask extends AntDomPropertyDefiningElement{
 
   @Attribute("outputproperty")
   @NameValue
@@ -46,44 +40,7 @@ public abstract class AntDomExecTask extends AntDomElement implements Properties
   @NameValue
   public abstract GenericAttributeValue<String> getResultPropertyName();
 
-  @NotNull 
-  public final Iterator<String> getNamesIterator() {
-    final List<GenericAttributeValue<String>> attribs = getPropertyDefiningAttributes();
-    final List<String> result = new ArrayList<String>(attribs.size());
-    for (GenericAttributeValue<String> attribValue : attribs) {
-      final String name = attribValue.getStringValue();
-      if (name != null && name.length() > 0) {
-        result.add(name);
-      }
-    }
-    return result.iterator();
-  }
-
-  public final PsiElement getNavigationElement(String propertyName) {
-    for (GenericAttributeValue<String> value : getPropertyDefiningAttributes()) {
-      if (!propertyName.equals(value.getStringValue())) {
-        continue;
-      }
-      final DomTarget domTarget = DomTarget.getTarget(this, value);
-      return domTarget != null? PomService.convertToPsi(domTarget) : null;
-    }
-    return null;
-  }
-  
-  public String getPropertyValue(final String propertyName) {
-    for (GenericAttributeValue<String> value : getPropertyDefiningAttributes()) {
-      if (propertyName.equals(value.getStringValue())) {
-        return calcPropertyValue(propertyName);
-      }
-    }
-    return null;
-  }
-
-  protected String calcPropertyValue(String propName) {
-    return "";
-  }
-
-  private List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
+  protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
     return Arrays.asList(getOutputPropertyName(), getResultPropertyName(), getErrorPropertyName());
   }
 }

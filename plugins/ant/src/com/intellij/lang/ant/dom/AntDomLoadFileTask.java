@@ -30,7 +30,7 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  *         Date: Aug 6, 2010
  */
-public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask{
+public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomLoadFileTask");
   
@@ -43,7 +43,7 @@ public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask{
   @Attribute("encoding")
   public abstract GenericAttributeValue<String> getEncoding();
   
-  protected String calcPropertyValue() {
+  protected String calcPropertyValue(String propertyName) {
     String text = myCachedText;
     if (text != null) {
       return text; 
