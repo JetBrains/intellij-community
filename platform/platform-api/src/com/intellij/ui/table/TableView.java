@@ -29,7 +29,9 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
@@ -115,6 +117,10 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   }
 
   public void updateColumnSizes() {
+    if (getTableHeader() == null) {
+      return;
+    }
+
     ColumnInfo[] columns = getListTableModel().getColumnInfos();
     for (int i = 0; i < columns.length; i++) {
       final ColumnInfo columnInfo = columns[i];
