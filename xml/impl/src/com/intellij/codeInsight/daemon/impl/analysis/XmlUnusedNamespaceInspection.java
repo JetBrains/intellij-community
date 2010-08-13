@@ -24,10 +24,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.DefaultXmlExtension;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlRefCountHolder;
 import com.intellij.xml.util.XmlUtil;
@@ -130,7 +132,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     }
   }
 
-  public static String getDeclaredPrefix(XmlAttribute attribute) {
+  private static String getDeclaredPrefix(XmlAttribute attribute) {
     return attribute.getName().contains(":") ? attribute.getLocalName() : "";
   }
 
@@ -243,6 +245,12 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     }
 
     protected void doRemove(Project project, XmlAttribute attribute, XmlTag parent) {
+      if (!attribute.isNamespaceDeclaration()) {
+        SchemaPrefix schemaPrefix = DefaultXmlExtension.DEFAULT_EXTENSION.getPrefixDeclaration(parent, myPrefix);
+        if (schemaPrefix != null) {
+          attribute = schemaPrefix.getDeclaration();
+        }
+      }
       String namespace = attribute.getValue();
       String prefix = getDeclaredPrefix(attribute);
 
