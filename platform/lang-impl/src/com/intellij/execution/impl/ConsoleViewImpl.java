@@ -964,12 +964,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
 
       int oStart = document.getLineStartOffset(lStart);
-//      oStart = CharArrayUtil.shiftForward(chars, oStart, " \t");
       if (oStart > 0) oStart--;
       int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
 
       FoldRegion region = ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(oStart, oEnd, prevFolding.getPlaceholderText(toFold), null);
-      toAdd.add(region); 
+      if (region != null) {
+        toAdd.add(region);
+      }
     }
   }
 
