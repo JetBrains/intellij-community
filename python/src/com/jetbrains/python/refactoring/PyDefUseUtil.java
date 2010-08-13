@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -46,7 +47,7 @@ public class PyDefUseUtil {
     if (instructions[instr] instanceof ReadWriteInstruction) {
       final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
       final PsiElement element = instruction.getElement();
-      String name = element instanceof PyElement ? ((PyElement)element).getName() : null;
+      String name = elementName(element);
       final ReadWriteInstruction.ACCESS access = instruction.getAccess();
       if (access == ReadWriteInstruction.ACCESS.WRITETYPE) {
         name = instruction.getName();
@@ -61,6 +62,11 @@ public class PyDefUseUtil {
     for (Instruction instruction : instructions[instr].allPred()) {
       getLatestDefs(var, instructions, instruction.num(), visited, result);
     }
+  }
+
+  @Nullable
+  private static String elementName(PsiElement element) {
+    return element instanceof PyElement ? ((PyElement)element).getName() : null;
   }
 
   @NotNull
@@ -87,7 +93,7 @@ public class PyDefUseUtil {
     if (instructions[instr] instanceof ReadWriteInstruction) {
       final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
       final PsiElement element = instruction.getElement();
-      String name = element instanceof PyElement ? ((PyElement)element).getName() : null;
+      String name = elementName(element);
       if (Comparing.strEqual(name, var.getName())) {
         final ReadWriteInstruction.ACCESS access = instruction.getAccess();
         if (access.isWriteAccess()) {
