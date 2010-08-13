@@ -272,6 +272,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   private int doAdjustLineIndentByOffset(@Nullable Document document, @NotNull PsiFile file, int offset) {
+    if (document instanceof DocumentWindow) {
+      DocumentWindow documentWindow = (DocumentWindow)document;
+      final int hostOffset = documentWindow.injectedToHost(offset);
+      final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(file);
+      final int correctedOffset = doAdjustLineIndentByOffset(documentWindow.getDelegate(), hostFile, hostOffset);
+      return documentWindow.hostToInjected(correctedOffset);
+    }
+
     final PsiFile templateFile = PsiUtilBase.getTemplateLanguageFile(file);
     if (templateFile != null) {
       file = templateFile;
