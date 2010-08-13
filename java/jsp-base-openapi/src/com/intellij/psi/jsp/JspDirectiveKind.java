@@ -24,5 +24,6 @@ public enum JspDirectiveKind {
   INCLUDE,
   TAGLIB,
   ATTRIBUTE,
-  VARIABLE
+  VARIABLE,
+  PARAMETER
 }
