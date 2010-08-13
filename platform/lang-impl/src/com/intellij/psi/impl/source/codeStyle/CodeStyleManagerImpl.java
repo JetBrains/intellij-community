@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
@@ -39,7 +38,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -78,12 +76,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    PsiFileImpl file = (PsiFileImpl)element.getContainingFile();
-    FileType fileType = StdFileTypes.JAVA;
-    if (file != null) {
-      fileType = file.getFileType();
-    }
-    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(getSettings(), fileType).process(treeElement));
+    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(getSettings()).processElement(treeElement));
     if (!canChangeWhiteSpacesOnly) {
       return postProcessElement(formatted);
     } else {
@@ -148,8 +141,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(file);
     transformAllChildren(treeElement);
 
-    FileType fileType = file.getFileType();
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), fileType);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings());
     LOG.assertTrue(file.isValid());
     final PsiElement start = findElementInTreeWithFormatterEnabled(file, startOffset);
     final PsiElement end = findElementInTreeWithFormatterEnabled(file, endOffset);
@@ -190,12 +182,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    FileType fileType = StdFileTypes.JAVA;
-    PsiFile file = element.getContainingFile();
-    if (file != null) {
-      fileType = file.getFileType();
-    }
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), fileType);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings());
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
 
     return canChangeWhiteSpacesOnly ? formatted : postProcessElement(formatted);
@@ -292,6 +279,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   @Nullable
   public String getLineIndent(@NotNull PsiFile file, int offset) {
     return new CodeStyleManagerRunnable<String>(this) {
+      @Override
+      protected boolean useDocumentBaseFormattingModel() {
+        return false;
+      }
+
       @Override
       protected String doPerform(int offset, TextRange range) {
         return FormatterEx.getInstanceEx().getLineIndent(myModel, mySettings, myIndentOptions, offset, mySignificantRange);

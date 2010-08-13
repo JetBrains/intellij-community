@@ -89,7 +89,7 @@ abstract class CodeStyleManagerRunnable<T> {
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
       myModel = builder.createModel(file, mySettings);
 
-      if (document != null) {
+      if (document != null && useDocumentBaseFormattingModel()) {
         myModel = new DocumentBasedFormattingModel(myModel.getRootBlock(), document, myCodeStyleManager.getProject(), mySettings, file.getFileType(), file);
       }
 
@@ -99,6 +99,10 @@ abstract class CodeStyleManagerRunnable<T> {
       }
     }
     return defaultValue;
+  }
+
+  protected boolean useDocumentBaseFormattingModel() {
+    return true;
   }
 
   protected T adjustResultForInjected(T result, DocumentWindow documentWindow) {
