@@ -30,6 +30,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,6 +50,12 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
     }
 
     return null;
+  }
+
+  @Override
+  public XmlTag getRootTag() {
+    XmlDocument document = getDocument();
+    return document == null ? null : document.getRootTag();
   }
 
   public boolean processElements(PsiElementProcessor processor, PsiElement place){
