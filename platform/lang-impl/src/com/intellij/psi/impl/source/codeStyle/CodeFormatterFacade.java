@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -99,52 +98,22 @@ public class CodeFormatterFacade {
     return element;
   }
 
-  public void processTextWithPostponedFormatting(final PsiFile file, final FormatTextRanges ranges) {
+  public void processText(PsiFile file, final FormatTextRanges ranges, boolean doPostponedFormatting) {
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
 
     if (builder != null) {
       if (file.getTextLength() > 0) {
         try {
           ranges.preprocess(file.getNode());
-          final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
-          component.doPostponedFormatting(file.getViewProvider());
-          Block rootBlock= builder.createModel(file, mySettings).getRootBlock();
-          Project project = file.getProject();
-          final FormattingModel model = new DocumentBasedFormattingModel(rootBlock,
-                                                                         PsiDocumentManager.getInstance(project).getDocument(file),
-                                                                         project, mySettings, file.getFileType(), file);
-
-          //printToConsole(rootBlock, model);
-
-          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-    }
-  }
-
-  private void printToConsole(final Block rootBlock, final FormattingModel model) {
-    String tree = JDOMUtil.writeElement(new FormatInfoPrinter(rootBlock, model.getDocumentModel()).blocksAsTree(), "\n");
-    System.out.println("---TREE---");
-    System.out.println(tree);
-    System.out.println("---/TREE---");
-  }
-
-  public void processText(final PsiFile file, final FormatTextRanges ranges) {
-
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-
-    if (builder != null) {
-      if (file.getTextLength() > 0) {
-        try {
-          ranges.preprocess(file.getNode());
-          FormattingModel originalModel = builder.createModel(file, mySettings);
+          if (doPostponedFormatting) {
+            final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
+            component.doPostponedFormatting(file.getViewProvider());
+          }
+          final FormattingModel originalModel = builder.createModel(file, mySettings);
           Project project = file.getProject();
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
-            PsiDocumentManager.getInstance(project).getDocument(file),
-            project, mySettings, file.getFileType(), file);
+                                                                         PsiDocumentManager.getInstance(project).getDocument(file),
+                                                                         project, mySettings, file.getFileType(), file);
 
           FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
         }

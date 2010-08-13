@@ -160,7 +160,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     final SmartPsiElementPointer endPointer = end == null ? null : smartPointerManager.createSmartPsiElementPointer(end);
 
-    codeFormatter.processTextWithPostponedFormatting(file, new FormatTextRanges(new TextRange(startOffset, endOffset), true));
+    codeFormatter.processText(file, new FormatTextRanges(new TextRange(startOffset, endOffset), true));
     final PsiElement startElement = startPointer == null ? null : startPointer.getElement();
     final PsiElement endElement = endPointer == null ? null : endPointer.getElement();
 
