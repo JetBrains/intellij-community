@@ -93,15 +93,34 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     };
   }
 
-  private static void removeReferencesOrAttribute(PsiReference[] references, XmlAttribute attribute) {
-    if (references.length > 0 && references[0].getElement().getReferences().length == references.length) {
+  private static void removeReferencesOrAttribute(PsiReference[] references) {
+    if (references.length == 0) {
+      return;
+    }
+    
+    XmlAttributeValue element = (XmlAttributeValue)references[0].getElement();
+    XmlAttribute attribute = (XmlAttribute)element.getParent();
+    if (element.getReferences().length == references.length) { // all refs to be removed
       attribute.delete();
+      return;
     }
-    else {
-      for (PsiReference reference : references) {
-        RemoveNamespaceDeclarationFix.removeReferenceText(reference);
-      }
+
+    PsiFile file = element.getContainingFile();
+    Project project = file.getProject();
+    SmartPsiElementPointer<XmlAttribute> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(attribute);
+    for (PsiReference reference : references) {
+      RemoveNamespaceDeclarationFix.removeReferenceText(reference);
     }
+
+    // trimming the result
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    Document document = documentManager.getDocument(file);
+    assert document != null;
+    documentManager.commitDocument(document);
+    String trimmed = element.getValue().trim();
+    XmlAttribute pointerElement = pointer.getElement();
+    assert pointerElement != null;
+    pointerElement.setValue(trimmed);
   }
 
   private static void checkUnusedLocations(XmlAttribute attribute, ProblemsHolder holder) {
@@ -267,7 +286,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       else {
         documentManager.doPostponedOperationsAndUnblockDocument(document);
         PsiReference[] references = getLocationReferences(namespace, parent);
-        removeReferencesOrAttribute(references, attribute);
+        removeReferencesOrAttribute(references);
         documentManager.commitDocument(document);
       }
     }
@@ -307,7 +326,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
           return;
         }
         PsiReference[] references = getLocationReferences(myPrefix, value);
-        removeReferencesOrAttribute(references, attribute);
+        removeReferencesOrAttribute(references);
       }
     }
 
