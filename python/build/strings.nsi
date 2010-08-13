@@ -1,7 +1,6 @@
 !define MANUFACTURER "JetBrains"
 !define MUI_PRODUCT  "PyCharm"
 !define PRODUCT_FULL_NAME "JetBrains PyCharm"
-!define OUT_NAME_PREFIX "pycharm"
 !define PRODUCT_EXE_FILE "pycharm.exe"
 !define PRODUCT_ICON_FILE "pycharm_inst.ico"
 !define PRODUCT_UNINST_ICON_FILE "pycharm_uninst.ico"
