@@ -17,6 +17,8 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomRenameableTarget;
+import com.intellij.refactoring.RefactoringFactory;
+import com.intellij.refactoring.RenameRefactoring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +51,12 @@ public class AliasingPsiTarget extends DelegatePsiTarget implements PomRenameabl
   }
 
   protected void renameTargets(@NotNull String newDelegateName) {
-    if (!newDelegateName.equals(((PsiNamedElement)getNavigationElement()).getName())) {
-      ((PsiNamedElement)getNavigationElement()).setName(newDelegateName);
+    final PsiNamedElement namedElement = (PsiNamedElement)getNavigationElement();
+    if (!newDelegateName.equals(namedElement.getName())) {
+      final RenameRefactoring refactoring =
+        RefactoringFactory.getInstance(namedElement.getProject()).createRename(namedElement, newDelegateName);
+      refactoring.run();
+
     }
   }
 }
