@@ -65,8 +65,16 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     for (int i = 0; i < usagesInfos.length; i++) {
       psiUsages[i] = toString(usages[i]);
     }
-    checkResult(new String []{"(2, 14) import com.a.A;","(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();",
-                              "(2, 14) import com.a.A;","(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();"}, psiUsages);
+    checkResult(new String []{
+      "(2: 14) import com.a.A;",
+      "(4: 3) A myA = new A();",
+      "(4: 15) A myA = new A();",
+      "(6: 9) myA.aa();",
+
+      "(2: 14) import com.a.A;",
+      "(4: 3) A myA = new A();",
+      "(4: 15) A myA = new A();",
+      "(6: 9) myA.aa();"}, psiUsages);
   }
 
   private static String toString(Usage usage) {
@@ -96,7 +104,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     for (int i = 0; i < usagesInfos.length; i++) {
       psiUsages[i] = toString(usages[i]);
     }
-    checkResult(new String []{"(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(5, 3) C myC = new C();", "(5, 15) C myC = new C();", "(7, 9) myA.aa();", "(8, 9) myC.cc();"}, psiUsages);
+    checkResult(new String []{"(4: 3) A myA = new A();", "(4: 15) A myA = new A();", "(5: 3) C myC = new C();", "(5: 15) C myC = new C();", "(7: 9) myA.aa();", "(8: 9) myC.cc();"}, psiUsages);
   }
 
   public void testForwardSimple(){
@@ -116,7 +124,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     for (int i = 0; i < usagesInfos.length; i++) {
       psiUsages[i] = toString(usages[i]);
     }
-    checkResult(new String []{"(2, 3) B myB = new B();", "(2, 15) B myB = new B();", "(4, 9) myB.bb();"}, psiUsages);
+    checkResult(new String []{"(2: 3) B myB = new B();", "(2: 15) B myB = new B();", "(4: 9) myB.bb();"}, psiUsages);
   }
 
   private static void checkResult(final String[] usages, final String [] psiUsages) {
