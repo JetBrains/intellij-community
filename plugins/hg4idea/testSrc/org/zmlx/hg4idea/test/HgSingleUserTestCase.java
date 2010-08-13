@@ -42,8 +42,8 @@ public class HgSingleUserTestCase extends HgAbstractTestCase {
     activateVCS(HgVcs.VCS_NAME);
     myChangeListManager = new HgTestChangeListManager(myProject);
 
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
+    doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
 }

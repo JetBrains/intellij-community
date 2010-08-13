@@ -13,21 +13,45 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgUtil;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * A wrapper for the 'hg remove' command.
+ */
 public class HgRemoveCommand {
 
-  private final Project project;
+  private final Project myProject;
 
   public HgRemoveCommand(Project project) {
-    this.project = project;
+    myProject = project;
   }
 
-  public void execute(HgFile hgFile) {
-    HgCommandService.getInstance(project)
-      .execute(hgFile.getRepo(), "remove", Arrays.asList("--after", hgFile.getRelativePath()));
+  /**
+   * Removes given files from their Mercurial repositories.
+   * @param hgFiles files to be removed.
+   */
+  public void execute(@NotNull HgFile... hgFiles) {
+    execute(Arrays.asList(hgFiles));
+  }
+
+  /**
+   * Removes given files from their Mercurial repositories.
+   * @param hgFiles files to be removed.
+   */
+  public void execute(@NotNull Collection<HgFile> hgFiles) {
+    for( Map.Entry<VirtualFile, List<String>> entry : HgUtil.getRelativePathsByRepository(hgFiles).entrySet()) {
+      List<String> filePaths = entry.getValue();
+      filePaths.add(0, "--after");
+      HgCommandService.getInstance(myProject).execute(entry.getKey(), "remove", filePaths);
+    }
   }
 
 }
