@@ -20,6 +20,7 @@ import com.intellij.formatting.FormatTextRanges;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -134,6 +135,15 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   public void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    final Project project = file.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document instanceof DocumentWindow) {
+      file = InjectedLanguageUtil.getTopLevelFile(file);
+      final DocumentWindow documentWindow = (DocumentWindow)document;
+      startOffset = documentWindow.injectedToHost(startOffset);
+      endOffset = documentWindow.injectedToHost(endOffset);
+    }
 
     CheckUtil.checkWritable(file);
     if (!SourceTreeToPsiMap.hasTreeElement(file)) {
