@@ -20,6 +20,7 @@ import com.intellij.formatting.FormatTextRanges;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,24 +28,19 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -80,14 +76,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    PsiFileImpl file = (PsiFileImpl)element.getContainingFile();
-    FileType fileType = StdFileTypes.JAVA;
-    if (file != null) {
-      fileType = file.getFileType();
-    }
-    Helper helper = HelperFactory.createHelper(fileType, myProject);
-    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(
-      new CodeFormatterFacade(getSettings(), helper).process(treeElement, -1));
+    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(getSettings()).processElement(treeElement));
     if (!canChangeWhiteSpacesOnly) {
       return postProcessElement(formatted);
     } else {
@@ -135,6 +124,15 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
+    final Project project = file.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document instanceof DocumentWindow) {
+      file = InjectedLanguageUtil.getTopLevelFile(file);
+      final DocumentWindow documentWindow = (DocumentWindow)document;
+      startOffset = documentWindow.injectedToHost(startOffset);
+      endOffset = documentWindow.injectedToHost(endOffset);
+    }
+
     CheckUtil.checkWritable(file);
     if (!SourceTreeToPsiMap.hasTreeElement(file)) {
       return;
@@ -143,9 +141,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(file);
     transformAllChildren(treeElement);
 
-    FileType fileType = file.getFileType();
-    Helper helper = HelperFactory.createHelper(fileType, myProject);
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings());
     LOG.assertTrue(file.isValid());
     final PsiElement start = findElementInTreeWithFormatterEnabled(file, startOffset);
     final PsiElement end = findElementInTreeWithFormatterEnabled(file, endOffset);
@@ -186,13 +182,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    FileType fileType = StdFileTypes.JAVA;
-    PsiFile file = element.getContainingFile();
-    if (file != null) {
-      fileType = file.getFileType();
-    }
-    Helper helper = HelperFactory.createHelper(fileType, myProject);
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings());
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
 
     return canChangeWhiteSpacesOnly ? formatted : postProcessElement(formatted);
@@ -221,66 +211,15 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   public int adjustLineIndent(@NotNull final PsiFile file, final int offset) throws IncorrectOperationException {
-    final Computable<Pair<Integer, IncorrectOperationException>> computable = new Computable<Pair<Integer, IncorrectOperationException>>() {
-      public Pair<Integer, IncorrectOperationException> compute() {
-        try {
-          return new Pair<Integer, IncorrectOperationException>(adjustLineIndentInner(file, offset), null);
-        }
-        catch (IncorrectOperationException e) {
-          return new Pair<Integer, IncorrectOperationException>(null, e);
-        }
+    return PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(new Computable<Integer>() {
+      public Integer compute() {
+        return doAdjustLineIndentByOffset(file, offset);
       }
-    };
-    final Pair<Integer, IncorrectOperationException> pair =
-      PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(computable);
-    if(pair.getSecond() != null) throw pair.getSecond();
-    return pair.getFirst();
-  }
-
-  public int adjustLineIndentInner(PsiFile file, int offset) throws IncorrectOperationException {
-    final PsiFile templateFile = PsiUtilBase.getTemplateLanguageFile(file);
-
-    if (templateFile != null) {
-      file = templateFile;
-    }
-
-    final PsiElement element = findElementInTreeWithFormatterEnabled(file, offset);
-    if (element == null && offset != file.getTextLength()) {
-      return offset;
-    }
-    if (element instanceof PsiComment && insideElement(element, offset) && !containsInjections(element)) {
-      return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
-    }
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    FormattingModelBuilder elementBuilder = builder;
-    if (element != null) {
-      elementBuilder = LanguageFormatting.INSTANCE.forContext(element);
-    }
-    if (builder != null && elementBuilder != null) {
-      final CodeStyleSettings settings = getSettings();
-      final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
-      final TextRange significantRange = getSignificantRange(file, offset);
-      FormattingModel model = builder.createModel(file, settings);
-
-      final Document doc = PsiDocumentManager.getInstance(myProject).getDocument(file);
-
-      if (doc != null) {
-        model = new DocumentBasedFormattingModel(model.getRootBlock(), doc, getProject(), settings, file.getFileType(), file);
-      }
-
-      return FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, offset, significantRange);
-    }
-    else {
-      return offset;
-    }
-  }
-
-  private static boolean containsInjections(PsiElement element) {
-    return element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element);
+    });
   }
 
   @Nullable
-  public static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
+  static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
     final PsiElement bottomost = file.findElementAt(offset);
     if (bottomost != null && LanguageFormatting.INSTANCE.forContext(bottomost) != null){
       return bottomost;
@@ -297,115 +236,66 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   public int adjustLineIndent(@NotNull final Document document, final int offset) {
     return PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(new Computable<Integer>() {
       public Integer compute() {
-        return adjustLineIndentInner(document, offset);
+        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        documentManager.commitDocument(document);
+
+        PsiFile file = documentManager.getPsiFile(document);
+        if (file == null) return offset;
+
+        return doAdjustLineIndentByOffset(file, offset);
       }
     });
   }
 
-  public int adjustLineIndentInner(Document document, int offset) {
-    final PsiDocumentManager psiDocManager = PsiDocumentManager.getInstance(myProject);
-
-    psiDocManager.commitDocument(document);
-
-    PsiFile file = psiDocManager.getPsiFile(document);
-
-    if (file == null) return offset;
-
-    final PsiFile jspFile = PsiUtilBase.getTemplateLanguageFile(file);
-
-    if (jspFile != null) {
-      file = jspFile;
-    }
-
-    final PsiElement element = findElementInTreeWithFormatterEnabled(file, offset);
-    if (element == null && offset != file.getTextLength()) {
-      return offset;
-    }
-    if (element instanceof PsiComment && insideElement(element, offset)) {
-      return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
-    }
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    FormattingModelBuilder elementBuilder = builder;
-    if (element != null) {
-      elementBuilder = LanguageFormatting.INSTANCE.forContext(element);
-    }
-    if (builder != null && elementBuilder != null) {
-      final CodeStyleSettings settings = getSettings();
-      final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
-      final TextRange significantRange = getSignificantRange(file, offset);
-      final FormattingModel model = builder.createModel(file, settings);
-
-      final DocumentBasedFormattingModel documentBasedModel =
-        new DocumentBasedFormattingModel(model.getRootBlock(), document, getProject(), settings, file.getFileType(), file);
-
-      try {
-        return FormatterEx.getInstanceEx().adjustLineIndent(documentBasedModel, settings, indentOptions, offset, significantRange);
+  private int doAdjustLineIndentByOffset(@NotNull PsiFile file, int offset) {
+    return new CodeStyleManagerRunnable<Integer>(this) {
+      @Override
+      protected Integer doPerform(int offset, TextRange range) {
+        return FormatterEx.getInstanceEx().adjustLineIndent(myModel, mySettings, myIndentOptions, offset, mySignificantRange);
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return offset;
+
+      @Override
+      protected Integer computeValueInsidePlainComment(PsiFile file, int offset, Integer defaultValue) {
+        return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
       }
-    }
-    else {
-      return offset;
-    }
+
+      @Override
+      protected Integer adjustResultForInjected(Integer result, DocumentWindow documentWindow) {
+        return documentWindow.hostToInjected(result);
+      }
+    }.perform(file, offset, null, offset);
   }
 
   public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
-    final PsiFile templateFile = PsiUtilBase.getTemplateLanguageFile(file);
-
-    if (templateFile != null) {
-      file = templateFile;
-    }
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    if (builder != null) {
-      final CodeStyleSettings settings = getSettings();
-      final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
-      final FormattingModel model = builder.createModel(file, settings);
-
-      final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-
-      FormatterEx.getInstanceEx().adjustLineIndentsForRange(new DocumentBasedFormattingModel(model.getRootBlock(), document, getProject(),
-                                                                                             settings, file.getFileType(), file), 
-                                                            settings,
-                                                            indentOptions,
-                                                            rangeToAdjust);
-    }
+    new CodeStyleManagerRunnable<Object>(this) {
+      @Override
+      protected Object doPerform(int offset, TextRange range) {
+        FormatterEx.getInstanceEx().adjustLineIndentsForRange(myModel, mySettings, myIndentOptions, range);
+        return null;
+      }
+    }.perform(file, -1, rangeToAdjust, null);
   }
 
   @Nullable
   public String getLineIndent(@NotNull PsiFile file, int offset) {
-    if (file instanceof PsiCompiledElement) {
-      file = (PsiFile)((PsiCompiledElement)file).getMirror();
-    }
-    final PsiElement element = findElementInTreeWithFormatterEnabled(file, offset);
-    if (element == null) {
-      return null;
-    }
-    if (element instanceof PsiComment && insideElement(element, offset)) {
-      return null;
-    }
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    final FormattingModelBuilder elementBuilder = LanguageFormatting.INSTANCE.forContext(element);
-    if (builder != null && elementBuilder != null) {
-      final CodeStyleSettings settings = getSettings();
-      final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
-      final TextRange significantRange = getSignificantRange(file, offset);
-      final FormattingModel model = builder.createModel(file, settings);
+    return new CodeStyleManagerRunnable<String>(this) {
+      @Override
+      protected boolean useDocumentBaseFormattingModel() {
+        return false;
+      }
 
-      return FormatterEx.getInstanceEx().getLineIndent(model, settings, indentOptions, offset, significantRange);
-    }
-    else {
-      return null;
-    }
+      @Override
+      protected String doPerform(int offset, TextRange range) {
+        return FormatterEx.getInstanceEx().getLineIndent(myModel, mySettings, myIndentOptions, offset, mySignificantRange);
+      }
+    }.perform(file, offset, null, null);
   }
 
   @Nullable
   public String getLineIndent(@NotNull Editor editor) {
     Document doc = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
-    if( offset >= doc.getTextLength() )
-    {
+    if (offset >= doc.getTextLength()) {
       return "";
     }
 
@@ -413,27 +303,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (file == null) return "";
 
     return getLineIndent(file, offset);
-  }
-
-  private static boolean insideElement(final PsiElement element, final int offset) {
-    final TextRange textRange = element.getTextRange();
-    return textRange.getStartOffset() < offset && textRange.getEndOffset() >= offset;
-  }
-
-  private static TextRange getSignificantRange(final PsiFile file, final int offset) {
-    final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(findElementInTreeWithFormatterEnabled(file, offset));
-    if (elementAtOffset == null) {
-      int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\r\t ");
-      return new TextRange(significantRangeStart, offset);
-    }
-
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    final TextRange textRange = builder.getRangeAffectingIndent(file, offset, elementAtOffset);
-    if (textRange != null) {
-      return textRange;
-    }
-
-    return elementAtOffset.getTextRange();
   }
 
   public boolean isLineToBeIndented(@NotNull PsiFile file, int offset) {

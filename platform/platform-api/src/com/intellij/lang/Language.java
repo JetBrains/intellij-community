@@ -46,7 +46,13 @@ public abstract class Language extends UserDataHolderBase {
   private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
-  public static final Language ANY = new Language("") { };
+  public static final Language ANY = new Language("") {
+    @Override
+    public String toString() {
+      //noinspection HardCodedStringLiteral
+      return "Language: ANY";
+    }
+  };
 
   protected Language(@NotNull @NonNls String id) {
     this(id, ArrayUtil.EMPTY_STRING_ARRAY);
@@ -145,7 +151,7 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   public boolean isCaseSensitive() {
-    return myBaseLanguage != null ? myBaseLanguage.isCaseSensitive() : false;
+    return myBaseLanguage != null && myBaseLanguage.isCaseSensitive();
   }
 
   public final boolean isKindOf(Language another) {
@@ -157,8 +163,9 @@ public abstract class Language extends UserDataHolderBase {
     return false;
   }
 
-  public static @Nullable Language findLanguageByID(String id) {
-    final Collection<Language> languages = Language.getRegisteredLanguages();
+  @Nullable
+  public static Language findLanguageByID(String id) {
+    final Collection<Language> languages = getRegisteredLanguages();
     for (Language language : languages) {
       if (language.getID().equals(id)) {
         return language;

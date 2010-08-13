@@ -27,9 +27,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 
 public class JavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
+
+  public static final WhitespacesAndCommentsProcessor GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
+    public int process(final List<IElementType> tokens) {
+      return tokens.size();
+    }
+  };
 
   private JavaParserUtil() { }
 
@@ -124,7 +132,7 @@ public class JavaParserUtil {
 
       @Override
       public boolean eof() {
-        return getCurrentOffset() < stopAt || super.eof();
+        return getCurrentOffset() >= stopAt || super.eof();
       }
     };
   }

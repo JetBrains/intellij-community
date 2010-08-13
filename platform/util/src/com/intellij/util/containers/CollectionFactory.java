@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.Stack;
@@ -54,6 +55,25 @@ public class CollectionFactory {
 
   public static <T> ArrayList<T> arrayList(T... elements) {
     return new ArrayList<T>(Arrays.asList(elements));
+  }
+
+  public static <T> List<T> arrayList(@NotNull final T[] elements, final int start, final int end) {
+    if (start < 0 || start > end || end > elements.length) throw new IllegalArgumentException("start:" + start + " end:" + end + " length:" + elements.length);
+
+    return new AbstractList<T>() {
+      private final int size = end - start;
+
+      @Override
+      public T get(final int index) {
+        if (index < 0 || index >= size) throw new IndexOutOfBoundsException("index:" + index + " size:" + size);
+        return elements[start + index];
+      }
+
+      @Override
+      public int size() {
+        return size;
+      }
+    };
   }
 
   public static <T> Stack<T> stack() {

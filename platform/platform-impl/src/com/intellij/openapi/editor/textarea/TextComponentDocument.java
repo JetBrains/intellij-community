@@ -50,6 +50,17 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     }
   }
 
+  @Override
+  public String getText(TextRange range) {
+    try {
+      final javax.swing.text.Document document = myTextComponent.getDocument();
+      return document.getText(range.getStartOffset(), range.getLength());
+    }
+    catch (BadLocationException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @NotNull
   public CharSequence getCharsSequence() {
     return getText();

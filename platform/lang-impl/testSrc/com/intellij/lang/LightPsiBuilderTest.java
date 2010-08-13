@@ -24,6 +24,7 @@ import com.sun.tools.internal.xjc.util.NullStream;
 import org.junit.Test;
 
 import java.io.PrintStream;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -39,7 +40,10 @@ public class LightPsiBuilderTest {
   private static final IElementType LEFT_BOUND = new IElementType("LEFT_BOUND", Language.ANY) {
     public boolean isLeftBound() { return true; }
   };
+  private static final IElementType COMMENT = new IElementType("COMMENT", Language.ANY);
+
   private static final TokenSet WHITESPACE_SET = TokenSet.create(WHITESPACE);
+  private static final TokenSet COMMENT_SET = TokenSet.create(COMMENT);
 
   @Test
   public void testPlain() {
@@ -279,12 +283,53 @@ public class LightPsiBuilderTest {
            "  PsiElement(LETTER)('c')\n");
   }
 
+  @Test
+  public void testCustomEdgeProcessors() throws Exception {
+    final WhitespacesAndCommentsProcessor leftEdgeProcessor = new WhitespacesAndCommentsProcessor() {
+      public int process(List<IElementType> tokens) {
+        int pos = tokens.size() - 1;
+        while (tokens.get(pos) != COMMENT && pos > 0) pos--;
+        return pos;
+      }
+    };
+    final WhitespacesAndCommentsProcessor rightEdgeProcessor = new WhitespacesAndCommentsProcessor() {
+      public int process(List<IElementType> tokens) {
+        int pos = 0;
+        while (tokens.get(pos) != COMMENT && pos < tokens.size()-1) pos++;
+        return pos + 1;
+      }
+    };
+
+    doTest("{ # i # }",
+           new Parser() {
+             public void parse(PsiBuilder builder) {
+               while (builder.getTokenType() != LETTER) builder.advanceLexer();
+               final PsiBuilder.Marker marker = builder.mark();
+               builder.advanceLexer();
+               marker.done(OTHER);
+               marker.setCustomEdgeProcessors(leftEdgeProcessor, rightEdgeProcessor);
+               while (builder.getTokenType() != null) builder.advanceLexer();
+             }
+           },
+           "Element(ROOT)\n" +
+           "  PsiElement(OTHER)('{')\n" +
+           "  PsiWhiteSpace(' ')\n" +
+           "  Element(OTHER)\n" +
+           "    PsiElement(COMMENT)('#')\n" +
+           "    PsiWhiteSpace(' ')\n" +
+           "    PsiElement(LETTER)('i')\n" +
+           "    PsiWhiteSpace(' ')\n" +
+           "    PsiElement(COMMENT)('#')\n" +
+           "  PsiWhiteSpace(' ')\n" +
+           "  PsiElement(OTHER)('}')\n");
+  }
+
   private interface Parser {
     void parse(PsiBuilder builder);
   }
 
   private static void doTest(final String text, final Parser parser, final String expected) {
-    final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, TokenSet.EMPTY, text);
+    final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, text);
     final PsiBuilder.Marker rootMarker = builder.mark();
     parser.parse(builder);
     rootMarker.done(ROOT);
@@ -332,6 +377,7 @@ public class LightPsiBuilderTest {
       else if (Character.isLetter(myBuffer.charAt(myIndex))) return LETTER;
       else if (Character.isDigit(myBuffer.charAt(myIndex))) return DIGIT;
       else if (Character.isWhitespace(myBuffer.charAt(myIndex))) return WHITESPACE;
+      else if (myBuffer.charAt(myIndex) == '#') return COMMENT;
       else return OTHER;
     }
 

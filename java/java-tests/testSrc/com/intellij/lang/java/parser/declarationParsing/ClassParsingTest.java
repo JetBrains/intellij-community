@@ -34,10 +34,11 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testLongClass() { doTest(false); }
   public void testIncompleteAnnotation() { doTest(true); }
 
-  public void testExtraOpeningBraceInMethod() { doTestDefaultParser(true); }  // todo: fix
+  public void testExtraOpeningBraceInMethod() { doTest(true); }
   public void testExtraClosingBraceInMethod() { doTest(true); }
 
   public void testErrors0() { doTest(true); }
   public void testErrors1() { doTest(true); }
   public void testErrors2() { doTest(true); }
+  public void testErrors3() { doTest(true); }
 }

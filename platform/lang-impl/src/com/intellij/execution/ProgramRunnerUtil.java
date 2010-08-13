@@ -62,7 +62,7 @@ public class ProgramRunnerUtil {
       }
 
       while (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
-        if (0 == Messages.showOkCancelDialog(project, "Configuration is still wrong. Do you want to edit it again?", "Change configuration settings", Messages.getErrorIcon())) {
+        if (0 == Messages.showYesNoDialog(project, "Configuration is still wrong. Do you want to edit it again?", "Change configuration settings", Messages.getErrorIcon())) {
           final boolean result2 = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
           if (!result2) {
             return;

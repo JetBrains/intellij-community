@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding.filters;
+package com.intellij.codeInsight.template.zencoding.generators;
 
-import com.intellij.codeInsight.template.zencoding.XmlZenCodingTemplate;
 import com.intellij.codeInsight.template.zencoding.ZenCodingUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
@@ -23,11 +22,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,13 +44,17 @@ import java.util.List;
 public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   public static final XmlZenCodingGeneratorImpl INSTANCE = new XmlZenCodingGeneratorImpl();
 
+  private static boolean isTrueXml(FileType type) {
+    return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX || type == StdFileTypes.XML;
+  }
+
   @NotNull
   public String toString(@NotNull XmlTag tag,
                          @NotNull List<Pair<String, String>> attribute2Value,
                          boolean hasChildren,
                          @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
-    if (XmlZenCodingTemplate.isTrueXml(fileType)) {
+    if (isTrueXml(fileType)) {
       closeUnclosingTags(tag);
     }
     return tag.getContainingFile().getText();
@@ -69,7 +76,16 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   }
 
   public boolean isMyContext(@NotNull PsiElement context) {
-    return context.getLanguage() instanceof XMLLanguage;
+    if (!(context.getLanguage() instanceof XMLLanguage)) {
+      return false;
+    }
+    if (PsiTreeUtil.getParentOfType(context, XmlAttributeValue.class) != null) {
+      return false;
+    }
+    if (PsiTreeUtil.getParentOfType(context, XmlComment.class) != null) {
+      return false;
+    }
+    return true;
   }
 
   public String getSuffix() {

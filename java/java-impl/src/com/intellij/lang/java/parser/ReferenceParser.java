@@ -104,13 +104,17 @@ public class ReferenceParser {
         DeclarationParser.parseAnnotations(builder);
       }
 
+      final PsiBuilder.Marker bracket = builder.mark();
       if (!expect(builder, JavaTokenType.LBRACKET)) {
+        bracket.drop();
         break;
       }
+      if (!expect(builder, JavaTokenType.RBRACKET)) {
+        bracket.rollbackTo();
+        break;
+      }
+      bracket.drop();
       typeInfo.isArray = true;
-      if (!expectOrError(builder, JavaTokenType.RBRACKET, JavaErrorMessages.message("expected.rbracket"))) {
-        break;
-      }
 
       type = type.precede();
     }

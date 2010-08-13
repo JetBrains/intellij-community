@@ -52,10 +52,12 @@ public class StatementParser {
     final PsiBuilder.Marker codeBlock = builder.mark();
     builder.advanceLexer();
 
+    boolean greedyBlock = false;
     int braceCount = 1;
     while (true) {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == null) {
+        greedyBlock = true;
         break;
       }
       if (tokenType == JavaTokenType.LBRACE) {
@@ -90,6 +92,7 @@ public class StatementParser {
           if (last == JavaTokenType.IDENTIFIER &&
               (prevLast == JavaTokenType.IDENTIFIER || ElementType.PRIMITIVE_TYPE_BIT_SET.contains(prevLast))) {
             position.rollbackTo();
+            greedyBlock = true;
             break;
           }
         }
@@ -98,6 +101,9 @@ public class StatementParser {
     }
 
     codeBlock.collapse(JavaElementType.CODE_BLOCK);
+    if (greedyBlock) {
+      codeBlock.setCustomEdgeProcessors(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+    }
     return codeBlock;
   }
 
@@ -110,9 +116,12 @@ public class StatementParser {
 
     parseStatements(builder, (parseUntilEof ? BraceMode.TILL_LAST : BraceMode.TILL_FIRST));
 
-    expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
+    final boolean greedyBlock = !expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
 
     codeBlock.done(JavaElementType.CODE_BLOCK);
+    if (greedyBlock) {
+      codeBlock.setCustomEdgeProcessors(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+    }
     return codeBlock;
   }
 

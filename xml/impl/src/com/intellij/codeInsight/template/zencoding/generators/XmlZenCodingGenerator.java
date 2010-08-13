@@ -13,35 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding.filters;
+package com.intellij.codeInsight.template.zencoding.generators;
 
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
-import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
 
 /**
  * @author Eugene.Kudelevsky
  */
 public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
-  @NotNull
-  public String toString(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
-    if (!(token instanceof XmlTemplateToken)) {
-      throw new IllegalArgumentException();
+  @Override
+  public TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
+    String s = toString(token, hasChildren, context);
+    TemplateImpl template = token.getTemplate().copy();
+    template.setString(s);
+    return template;
+  }
+
+  @Override
+  public TemplateImpl createTemplateByKey(@NotNull String key) {
+    StringBuilder builder = new StringBuilder("<");
+    builder.append(key).append('>');
+    if (!HtmlUtil.isSingleHtmlTag(key)) {
+      builder.append("$END$</").append(key).append('>');
     }
-    XmlTemplateToken xmlTemplateToken = (XmlTemplateToken)token;
-    XmlFile file = xmlTemplateToken.getFile();
+    return new TemplateImpl("", builder.toString(), "");
+  }
+
+  @NotNull
+  private String toString(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
+    XmlFile file = token.getFile();
     XmlDocument document = file.getDocument();
     if (document != null) {
       XmlTag tag = document.getRootTag();
       if (tag != null) {
-        return toString(tag, xmlTemplateToken.getAttribute2Value(), hasChildren, context);
+        return toString(tag, token.getAttribute2Value(), hasChildren, context);
       }
     }
     return file.getText();

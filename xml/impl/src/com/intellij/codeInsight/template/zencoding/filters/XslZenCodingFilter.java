@@ -15,9 +15,10 @@
  */
 package com.intellij.codeInsight.template.zencoding.filters;
 
+import com.intellij.codeInsight.template.zencoding.generators.XmlZenCodingGenerator;
+import com.intellij.codeInsight.template.zencoding.generators.XmlZenCodingGeneratorImpl;
 import com.intellij.codeInsight.template.zencoding.nodes.GenerationNode;
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
-import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,8 +40,8 @@ public class XslZenCodingFilter extends ZenCodingFilter {
   @Override
   public GenerationNode filterNode(@NotNull final GenerationNode node) {
     TemplateToken token = node.getTemplateToken();
-    if (token instanceof XmlTemplateToken) {
-      XmlTemplateToken xmlToken = (XmlTemplateToken)token;
+    if (token != null) {
+      TemplateToken xmlToken = token;
       XmlDocument document = xmlToken.getFile().getDocument();
       if (document != null) {
         final XmlTag tag = document.getRootTag();

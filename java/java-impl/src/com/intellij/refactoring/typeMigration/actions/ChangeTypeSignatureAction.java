@@ -3,7 +3,6 @@ package com.intellij.refactoring.typeMigration.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -35,15 +34,11 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
     return true;
   }
 
-  protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
-    final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(element.getProject()).getPsiFile(document);
-    if (file != null) {
-      final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
-      final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.getParentOfType(psiElement, PsiReferenceParameterList.class);
-      if (referenceParameterList != null) {
-        return referenceParameterList.getTypeArguments().length > 0;
-      }
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file) {
+    final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
+    final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.getParentOfType(psiElement, PsiReferenceParameterList.class);
+    if (referenceParameterList != null) {
+      return referenceParameterList.getTypeArguments().length > 0;
     }
     return true;
   }

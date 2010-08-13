@@ -89,6 +89,19 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  public static PsiElement findCommonParent(@NotNull List<? extends PsiElement> elements) {
+    if (elements.isEmpty())  return null;
+    PsiElement toReturn = null;
+    for (PsiElement element : elements) {
+      if (element == null) continue;
+      toReturn = toReturn == null ? element : findCommonParent(toReturn, element);
+      if (toReturn == null) return null;
+    }
+
+    return toReturn;
+  }
+
+  @Nullable
   public static PsiElement findCommonParent(@NotNull PsiElement... elements) {
     if (elements.length == 0)  return null;
     PsiElement toReturn = null;
@@ -286,6 +299,20 @@ public class PsiTreeUtil {
       if (instanceOf(aClass,  child)) return (T)child;
     }
     return null;
+  }
+
+  @Nullable
+  public static <T extends PsiElement> T getTopmostParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    T answer = getParentOfType(element, aClass);
+
+    do {
+      T next = getParentOfType(answer, aClass);
+      if (next == null) break;
+      answer = next;
+    }
+    while (true);
+
+    return answer;
   }
 
   @Nullable public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {

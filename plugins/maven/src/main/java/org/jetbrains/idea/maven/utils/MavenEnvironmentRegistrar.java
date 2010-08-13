@@ -21,7 +21,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.TypeNameManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
+import org.jetbrains.idea.maven.dom.model.MavenDomRepository;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.io.File;
@@ -37,6 +43,7 @@ public class MavenEnvironmentRegistrar implements ApplicationComponent {
   public void initComponent() {
     registerFileTypes();
     registerPathVariable();
+    registerPresentations();
   }
 
   private void registerFileTypes() {
@@ -55,6 +62,16 @@ public class MavenEnvironmentRegistrar implements ApplicationComponent {
       if (new File(path).equals(repository)) return;
     }
     macros.setMacro(MAVEN_REPOSITORY, repository.getPath());
+  }
+
+  private void registerPresentations() {
+    TypeNameManager.registerTypeName(MavenDomRepository.class, MavenDomBundle.message("maven.repository"));
+    TypeNameManager.registerTypeName(MavenDomPlugin.class, MavenDomBundle.message("maven.plugin"));
+    TypeNameManager.registerTypeName(MavenDomDependency.class, MavenDomBundle.message("maven.dependency"));
+
+    ElementPresentationManager.registerIcon(MavenDomRepository.class, MavenIcons.REPOSITORY_ICON);
+    ElementPresentationManager.registerIcon(MavenDomDependency.class, MavenIcons.DEPENDENCY_ICON);
+    ElementPresentationManager.registerIcon(MavenDomPlugin.class, MavenIcons.PLUGIN_ICON);
   }
 
   public void disposeComponent() {

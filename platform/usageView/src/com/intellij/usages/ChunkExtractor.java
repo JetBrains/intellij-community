@@ -56,7 +56,7 @@ public class ChunkExtractor {
 
   private final Lexer myLexer;
 
-  private static abstract class WeakFactory<T> {
+  private abstract static class WeakFactory<T> {
 
     private WeakReference<T> myRef;
 
@@ -246,7 +246,7 @@ public class ChunkExtractor {
   private void appendPrefix(List<TextChunk> result, int lineNumber, int columnNumber) {
     StringBuilder buffer = new StringBuilder("(");
     buffer.append(lineNumber + 1);
-    buffer.append(", ");
+    buffer.append(": ");
     buffer.append(columnNumber + 1);
     buffer.append(") ");
     TextChunk prefixChunk = new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), buffer.toString());

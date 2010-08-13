@@ -29,7 +29,9 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
@@ -115,13 +117,17 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   }
 
   public void updateColumnSizes() {
+    final JTableHeader header = getTableHeader();
+    final TableCellRenderer defaultRenderer = header == null? null : header.getDefaultRenderer();
+
     ColumnInfo[] columns = getListTableModel().getColumnInfos();
     for (int i = 0; i < columns.length; i++) {
       final ColumnInfo columnInfo = columns[i];
       final TableColumn column = getColumnModel().getColumn(i);
-      final Component headerComponent =
-        getTableHeader().getDefaultRenderer().getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0, 0);
-      final Dimension headerSize = headerComponent.getPreferredSize();
+
+      final Component headerComponent = defaultRenderer == null? null :
+        defaultRenderer.getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0, 0);
+      final Dimension headerSize = headerComponent == null? new Dimension(0, 0) : headerComponent.getPreferredSize();
       final String maxStringValue;
       final String preferredValue;
       if (columnInfo.getWidth(this) > 0) {
