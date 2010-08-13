@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.BooleanTableCellEditor;
@@ -151,7 +150,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
         psiDocumentManager.commitAllDocuments();
 
-        GeneralHighlightingPass ghp = new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(), true, new TextRange(0, 0));
+        GeneralHighlightingPass ghp = new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(), true);
         LocalInspectionsPass lip = new LocalInspectionsPass(psiFile, document, 0, document.getTextLength());
         return new HighlightingPass[]{ghp, lip};
       }
@@ -162,10 +161,6 @@ public class DomUIFactoryImpl extends DomUIFactory {
       }
     };
 
-  }
-
-  public void updateHighlighting(final EditorTextFieldControl control) {
-    
   }
 
   public BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
