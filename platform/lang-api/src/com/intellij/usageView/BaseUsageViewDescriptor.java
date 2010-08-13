@@ -39,7 +39,7 @@ public class BaseUsageViewDescriptor implements UsageViewDescriptor {
 
   @Override
   public String getProcessedElementsHeader() {
-    return "Element to be refactored:";
+    return "Element(s) to be refactored:";
   }
 
   @Override
