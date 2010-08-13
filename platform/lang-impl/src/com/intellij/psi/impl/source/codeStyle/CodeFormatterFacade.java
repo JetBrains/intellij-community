@@ -65,7 +65,7 @@ public class CodeFormatterFacade {
       TextRange range = preprocess(element, startOffset, endOffset);
       if (document instanceof DocumentWindow) {
         DocumentWindow documentWindow = (DocumentWindow)document;
-        range = new TextRange(documentWindow.injectedToHost(range.getStartOffset()), documentWindow.injectedToHost(range.getEndOffset()));
+        range = documentWindow.injectedToHost(range);
       }
 
       //final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
@@ -99,6 +99,18 @@ public class CodeFormatterFacade {
   }
 
   public void processText(PsiFile file, final FormatTextRanges ranges, boolean doPostponedFormatting) {
+    Project project = file.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document instanceof DocumentWindow) {
+      file = InjectedLanguageUtil.getTopLevelFile(file);
+      final DocumentWindow documentWindow = (DocumentWindow)document;
+      for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+        range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
+      }
+      document = documentWindow.getDelegate();
+    }
+
+
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
 
     if (builder != null) {
@@ -110,9 +122,8 @@ public class CodeFormatterFacade {
             component.doPostponedFormatting(file.getViewProvider());
           }
           final FormattingModel originalModel = builder.createModel(file, mySettings);
-          Project project = file.getProject();
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
-                                                                         PsiDocumentManager.getInstance(project).getDocument(file),
+                                                                         document,
                                                                          project, mySettings, file.getFileType(), file);
 
           FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);

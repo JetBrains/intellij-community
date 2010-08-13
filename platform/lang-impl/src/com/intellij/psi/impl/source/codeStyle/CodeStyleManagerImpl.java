@@ -124,15 +124,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    final Project project = file.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document instanceof DocumentWindow) {
-      file = InjectedLanguageUtil.getTopLevelFile(file);
-      final DocumentWindow documentWindow = (DocumentWindow)document;
-      startOffset = documentWindow.injectedToHost(startOffset);
-      endOffset = documentWindow.injectedToHost(endOffset);
-    }
-
     CheckUtil.checkWritable(file);
     if (!SourceTreeToPsiMap.hasTreeElement(file)) {
       return;
@@ -200,14 +191,21 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (fileViewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
       containingFile = fileViewProvider.getPsi(fileViewProvider.getBaseLanguage());
     }
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(containingFile);
 
-    if (builder != null) {
-      final FormattingModel model = builder.createModel(containingFile, getSettings());
-      FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(), addedElement.getTextRange(), containingFile.getFileType());
+    TextRange textRange = addedElement.getTextRange();
+    final Document document = fileViewProvider.getDocument();
+    if (document instanceof DocumentWindow) {
+      containingFile = InjectedLanguageUtil.getTopLevelFile(containingFile);
+      textRange = ((DocumentWindow)document).injectedToHost(textRange);
     }
 
-    adjustLineIndent(containingFile, addedElement.getTextRange());
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(containingFile);
+    if (builder != null) {
+      final FormattingModel model = builder.createModel(containingFile, getSettings());
+      FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(), textRange, containingFile.getFileType());
+    }
+
+    adjustLineIndent(containingFile, textRange);
   }
 
   public int adjustLineIndent(@NotNull final PsiFile file, final int offset) throws IncorrectOperationException {
