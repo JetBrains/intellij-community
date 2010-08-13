@@ -560,8 +560,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = viewProvider.getDocument();
     final FileType fileType = viewProvider.getVirtualFile().getFileType();
-    final Helper helper = HelperFactory.createHelper(fileType, myPsiManager.getProject());
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings, helper);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings, fileType);
 
     documentManager.commitDocument(document);
     return codeFormatter;
