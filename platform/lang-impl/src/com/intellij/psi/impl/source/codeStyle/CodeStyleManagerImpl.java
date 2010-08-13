@@ -83,9 +83,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (file != null) {
       fileType = file.getFileType();
     }
-    Helper helper = HelperFactory.createHelper(fileType, myProject);
-    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(
-      new CodeFormatterFacade(getSettings(), helper).process(treeElement, -1));
+    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(getSettings(), fileType).process(treeElement));
     if (!canChangeWhiteSpacesOnly) {
       return postProcessElement(formatted);
     } else {
@@ -151,8 +149,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     transformAllChildren(treeElement);
 
     FileType fileType = file.getFileType();
-    Helper helper = HelperFactory.createHelper(fileType, myProject);
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), fileType);
     LOG.assertTrue(file.isValid());
     final PsiElement start = findElementInTreeWithFormatterEnabled(file, startOffset);
     final PsiElement end = findElementInTreeWithFormatterEnabled(file, endOffset);
@@ -198,8 +195,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (file != null) {
       fileType = file.getFileType();
     }
-    Helper helper = HelperFactory.createHelper(fileType, myProject);
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), fileType);
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
 
     return canChangeWhiteSpacesOnly ? formatted : postProcessElement(formatted);

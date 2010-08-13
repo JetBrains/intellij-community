@@ -41,14 +41,14 @@ public class CodeFormatterFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
 
   private final CodeStyleSettings mySettings;
-  private final Helper myHelper;
+  private final FileType myFileType;
 
-  public CodeFormatterFacade(CodeStyleSettings settings, Helper helper) {
+  public CodeFormatterFacade(CodeStyleSettings settings, final FileType fileType) {
     mySettings = settings;
-    myHelper = helper;
+    myFileType = fileType;
   }
 
-  public ASTNode process(ASTNode element, int parent_indent) {
+  public ASTNode process(ASTNode element) {
     final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     if (builder != null) {
@@ -60,7 +60,6 @@ public class CodeFormatterFacade {
   }
 
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
-    final FileType fileType = myHelper.getFileType();
 
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
     final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
@@ -76,7 +75,7 @@ public class CodeFormatterFacade {
       if (containingFile.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(model, mySettings,
-                                             mySettings.getIndentOptions(fileType), new FormatTextRanges(range, true));
+                                             mySettings.getIndentOptions(myFileType), new FormatTextRanges(range, true));
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -104,8 +103,6 @@ public class CodeFormatterFacade {
   }
 
   public void processTextWithPostponedFormatting(final PsiFile file, final FormatTextRanges ranges) {
-    final FileType fileType = myHelper.getFileType();
-
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
 
     if (builder != null) {
@@ -118,11 +115,11 @@ public class CodeFormatterFacade {
           Project project = file.getProject();
           final FormattingModel model = new DocumentBasedFormattingModel(rootBlock,
                                                                          PsiDocumentManager.getInstance(project).getDocument(file),
-                                                                         project, mySettings, fileType, file);
+                                                                         project, mySettings, myFileType, file);
 
           //printToConsole(rootBlock, model);
 
-          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(fileType), ranges);
+          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(myFileType), ranges);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -139,7 +136,6 @@ public class CodeFormatterFacade {
   }
 
   public void processText(final PsiFile file, final FormatTextRanges ranges) {
-    final FileType fileType = myHelper.getFileType();
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
 
@@ -151,9 +147,9 @@ public class CodeFormatterFacade {
           Project project = file.getProject();
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
             PsiDocumentManager.getInstance(project).getDocument(file),
-            project, mySettings, fileType, file);
+            project, mySettings, myFileType, file);
 
-          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(fileType), ranges);
+          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(myFileType), ranges);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
