@@ -44,6 +44,10 @@ public class PropertyResolver extends PropertyProviderFinder {
   public static Pair<PsiElement, Collection<String>> resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
     final PropertyResolver resolver = new PropertyResolver(propertyName, contextElement);
     resolver.execute(project, project.getDefaultTarget().getRawText());
+    if (resolver.getContextElement() instanceof PropertiesProvider) {
+      // special case - when context element is a property provider itself
+      resolver.propertyProviderFound((PropertiesProvider)resolver.getContextElement());
+    }
     return resolver.getResult();
 
   }

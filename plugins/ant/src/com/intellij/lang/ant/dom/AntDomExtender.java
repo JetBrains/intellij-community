@@ -138,9 +138,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       }
       else {
         if (antDomElement instanceof AntDomCustomElement) {
-          final String name = antDomElement.getXmlElementName();
-          final String nsKey = antDomElement.getXmlElementNamespace();
-          final DomElement declaringElement = CustomAntElementsRegistry.getInstance(antProject).getDeclaringElement(new XmlName(name, nsKey));
+          final AntDomNamedElement declaringElement = ((AntDomCustomElement)antDomElement).getDeclaringElement();
           if (declaringElement instanceof AntDomMacroDef) {
             parentIntrospector = new MacrodefIntrospectorAdapter((AntDomMacroDef)declaringElement);
           }

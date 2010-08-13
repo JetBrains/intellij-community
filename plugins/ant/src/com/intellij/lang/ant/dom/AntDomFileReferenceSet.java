@@ -39,11 +39,11 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
 
   private final GenericAttributeValue myValue;
 
-  public AntDomFileReferenceSet(final GenericAttributeValue attribValue) {
-    this(attribValue, attribValue.getRawText(), 0);
+  public AntDomFileReferenceSet(final GenericAttributeValue attribValue, boolean validateFileRefs) {
+    this(attribValue, attribValue.getRawText(), 0, validateFileRefs);
   }
 
-  public AntDomFileReferenceSet(final GenericAttributeValue attribValue, final String pathSubstring, int beginOffset) {
+  public AntDomFileReferenceSet(final GenericAttributeValue attribValue, final String pathSubstring, int beginOffset, boolean validateFileRefs) {
     super(cutTrailingSlash(FileUtil.toSystemIndependentName(pathSubstring)),
           attribValue.getXmlAttributeValue(),
           ElementManipulators.getOffsetInElement(attribValue.getXmlAttributeValue()) + beginOffset,
@@ -51,6 +51,11 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
           SystemInfo.isFileSystemCaseSensitive
     );
     myValue = attribValue;
+    for (FileReference reference : getAllReferences()) {
+      if (reference instanceof AntDomReference) {
+        ((AntDomReference)reference).setShouldBeSkippedByAnnotator(!validateFileRefs);
+      }
+    }
   }
 
   public GenericAttributeValue getAttributeValue() {
@@ -70,7 +75,6 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
 
   public FileReference createFileReference(final TextRange range, final int index, final String text) {
     return new AntDomFileReference(this, range, index, text);
-    //return super.createFileReference(range, index, text);
   }
 
   @Override

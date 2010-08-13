@@ -37,7 +37,7 @@ public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask {
   private String myCachedText;
 
   @Attribute("srcfile")
-  @Convert(value = AntPathConverter.class)
+  @Convert(value = AntPathValidatingConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getSrcFile();
 
   @Attribute("encoding")

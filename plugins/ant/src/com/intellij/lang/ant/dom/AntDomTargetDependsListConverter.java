@@ -18,13 +18,13 @@ package com.intellij.lang.ant.dom;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -114,7 +114,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
       if (domTarget != null) {
         existingRefs.add(antTarget.getSecond());
       }
-      refs.add(new PsiReferenceBase<PsiElement>(valueElement, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length()), true) {
+      refs.add(new AntDomReferenceBase(valueElement, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length()), true) {
         public PsiElement resolve() {
           return domTarget != null? PomService.convertToPsi(domTarget) : null;
         }
@@ -139,6 +139,10 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
             }
           }
           return variants.toArray();
+        }
+
+        public String getUnresolvedMessagePattern() {
+          return AntBundle.message("cannot.resolve.target", getCanonicalText());
         }
       });
     }

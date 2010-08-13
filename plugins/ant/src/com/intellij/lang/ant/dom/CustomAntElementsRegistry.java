@@ -160,6 +160,17 @@ public class CustomAntElementsRegistry {
     return myErrors.get(xmlName);
   }
 
+  public boolean hasTypeLoadingErrors(AntDomTypeDef typedef) {
+    for (Map.Entry<XmlName, AntDomNamedElement> entry : myDeclarations.entrySet()) {
+      if (typedef.equals(entry.getValue())) {
+        if (myErrors.containsKey(entry.getKey()))  {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
   private void rememberNamedClassLoader(AntDomCustomClasspathComponent typedef, AntDomProject antProject) {
     final String loaderRef = typedef.getLoaderRef().getStringValue();
     if (loaderRef != null) {

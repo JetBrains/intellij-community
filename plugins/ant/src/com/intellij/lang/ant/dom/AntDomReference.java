@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant;
-
-import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
-import com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection;
+package com.intellij.lang.ant.dom;
 
 /**
- * @author yole
+ * @author Eugene Zhuravlev
+ *         Date: Aug 13, 2010
  */
-public class AntInspectionToolProvider implements InspectionToolProvider {
-  public Class[] getInspectionClasses() {
-    return new Class[]{
-      AntDuplicateTargetsInspection.class, 
-      AntMissingPropertiesFileInspection.class
-    };
-  }
+public interface AntDomReference {
+  boolean shouldBeSkippedByAnnotator();
+
+  void setShouldBeSkippedByAnnotator(boolean value);
+
+  String getUnresolvedMessagePattern();
 }

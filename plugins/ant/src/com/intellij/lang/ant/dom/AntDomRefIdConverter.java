@@ -15,11 +15,11 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
@@ -51,7 +51,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue<AntDomElement> genericDomValue, final PsiElement element, ConvertContext context) {
     final AntDomElement invocationElement = AntSupport.getInvocationAntDomElement(context);
-    return new PsiReference[] {new PsiReferenceBase<PsiElement>(element, true) {
+    return new PsiReference[] {new AntDomReferenceBase(element, true) {
       public PsiElement resolve() {
         final AntDomElement value = genericDomValue.getValue();
         if (value == null) {
@@ -79,6 +79,10 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
           }
         });
         return variants.size() > 0? variants.toArray(new Object[variants.size()]) : ArrayUtil.EMPTY_OBJECT_ARRAY;
+      }
+
+      public String getUnresolvedMessagePattern() {
+        return AntBundle.message("cannot.resolve.refid", getCanonicalText());
       }
     }};
   }

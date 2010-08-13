@@ -27,7 +27,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 public abstract class AntDomAnt extends AntDomElement {
   
   @Attribute("antfile")
-  @Convert(value = AntPathConverter.class)
+  @Convert(value = AntPathValidatingConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getAntFilePath();
 
   @Attribute("dir")

@@ -64,9 +64,13 @@ class AntReferenceInjector implements DomReferenceInjector {
       final String name = attrib.getName();
       if ("if".equals(name) || "unless".equals(name)) {
         // special handling of if/unless attributes
-        result.add(new AntDomPropertyReference(
-          contextElement, xmlAttributeValue, ElementManipulators.getValueTextRange(xmlAttributeValue))
+        final AntDomPropertyReference ref = new AntDomPropertyReference(
+          contextElement, xmlAttributeValue, ElementManipulators.getValueTextRange(xmlAttributeValue)
         );
+        // in runtime, if execution reaches this task the property is defined since it is used in if-condition
+        // so it is would be a mistake to highlight this as unresolved prop
+        ref.setShouldBeSkippedByAnnotator(true);
+        result.add(ref);
         return;
       }
     }
@@ -103,10 +107,11 @@ class AntReferenceInjector implements DomReferenceInjector {
           //if (antFile.isEnvironmentProperty(propName) && antFile.getProperty(propName) == null) {
           //  continue;
           //}
-
-          result.add(new AntDomPropertyReference(
-            contextElement, xmlAttributeValue, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex))
+          final AntDomPropertyReference ref = new AntDomPropertyReference(
+            contextElement, xmlAttributeValue, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex)
           );
+          
+          result.add(ref);
         }
         endIndex = startIndex;
       }

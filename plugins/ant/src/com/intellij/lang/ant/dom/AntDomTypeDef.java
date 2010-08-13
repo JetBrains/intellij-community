@@ -47,7 +47,10 @@ public abstract class AntDomTypeDef extends AntDomCustomClasspathComponent{
   @Attribute("adaptto")
   public abstract GenericAttributeValue<String> getAdaptto();
 
-
+  public final boolean hasTypeLoadingErrors() {
+    return CustomAntElementsRegistry.getInstance(getAntProject()).hasTypeLoadingErrors(this);
+  }
+  
   private boolean isTask(final Class clazz) {
     if ("taskdef".equals(getXmlTag().getName())) { // in taskdef, the adapter is always set to Task
       return true;

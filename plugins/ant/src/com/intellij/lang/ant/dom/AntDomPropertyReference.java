@@ -18,6 +18,7 @@ package com.intellij.lang.ant.dom;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
@@ -38,12 +39,26 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Apr 21, 2010
  */
-public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElement> {
+public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElement> implements AntDomReference{
   private final DomElement myInvocationContextElement;
-
+  private boolean myShouldBeSkippedByAnnotator = false;
+  
   public AntDomPropertyReference(DomElement invocationContextElement, XmlAttributeValue element, TextRange textRange) {
     super(element, textRange, true);
     myInvocationContextElement = invocationContextElement;
+  }
+
+  public boolean shouldBeSkippedByAnnotator() {
+    return myShouldBeSkippedByAnnotator;
+  }
+
+  public String getUnresolvedMessagePattern() {
+    return AntBundle.message("unknown.property", getCanonicalText());
+  }
+
+
+  public void setShouldBeSkippedByAnnotator(boolean value) {
+    myShouldBeSkippedByAnnotator = value;
   }
 
   @Nullable

@@ -106,7 +106,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
       final String path = pathTokenizer.nextToken();
       if (path.length() > 0) {
         final int pathBeginIndex = cpString.indexOf(path, searchFromIndex);
-        final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attributeValue, path, pathBeginIndex);
+        final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attributeValue, path, pathBeginIndex, false);
         ContainerUtil.addAll(result, refSet.getAllReferences());
         searchFromIndex = pathBeginIndex;
       }

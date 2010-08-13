@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.ConvertContext;
@@ -144,6 +145,11 @@ public class AntSupport implements ApplicationComponent {
   public static AntDomElement getAntDomElement(XmlTag xmlTag) {
     final DomElement domElement = DomManager.getDomManager(xmlTag.getProject()).getDomElement(xmlTag);
     return domElement instanceof AntDomElement? (AntDomElement)domElement : null;
+  }
+
+  @Nullable
+  public static DomElement getDomElement(XmlAttribute xmlAttrib) {
+    return DomManager.getDomManager(xmlAttrib.getProject()).getDomElement(xmlAttrib);
   }
 
   @Nullable

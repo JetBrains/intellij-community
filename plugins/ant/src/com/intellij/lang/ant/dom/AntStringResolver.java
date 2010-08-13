@@ -15,8 +15,13 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -30,6 +35,8 @@ public class AntStringResolver extends PropertyProviderFinder{
     myExpander = expander;
   }
 
+  private static final Key<Map<String, String>> RESOLVED_STRINGS_MAP_KEY = new Key<Map<String, String>>("_ant_resolved_strings_cache_");
+  
   @NotNull
   public static String computeString(@NotNull DomElement context, @NotNull String valueString) {
     PropertyExpander expander = new PropertyExpander(valueString);
@@ -41,8 +48,21 @@ public class AntStringResolver extends PropertyProviderFinder{
       return valueString;
     }
     project = project.getContextAntProject();
+    Map<String, String> cached = context.getUserData(RESOLVED_STRINGS_MAP_KEY);
+    if (cached != null) {
+      final String resolvedFromCache = cached.get(valueString);
+      if (resolvedFromCache != null) {
+        return resolvedFromCache;
+      }
+    }
+    else {
+      cached = Collections.synchronizedMap(new HashMap<String, String>());
+      context.putUserData(RESOLVED_STRINGS_MAP_KEY, cached);
+    }
     new AntStringResolver(context, expander).execute(project, project.getDefaultTarget().getRawText());
-    return expander.getResult();
+    final String result = expander.getResult();
+    cached.put(valueString, result);
+    return result;
   }
 
 

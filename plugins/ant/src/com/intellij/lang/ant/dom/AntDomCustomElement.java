@@ -31,6 +31,16 @@ public abstract class AntDomCustomElement extends AntDomElement{
     return CustomAntElementsRegistry.getInstance(getAntProject()).lookupClass(getXmlName());
   }
 
+  @Nullable
+  public final AntDomNamedElement getDeclaringElement() {
+    return CustomAntElementsRegistry.getInstance(getAntProject()).getDeclaringElement(getXmlName());
+  }
+
+  @Nullable
+  public final String getLoadError() {
+    return CustomAntElementsRegistry.getInstance(getAntProject()).lookupError(getXmlName());
+  }
+
   public final  XmlName getXmlName() {
     if (myXmlName == null) {
       myXmlName = new XmlName(getXmlElementName(), getXmlElementNamespace());
