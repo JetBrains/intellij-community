@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
@@ -76,7 +77,7 @@ public class PyDefUseUtil {
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
     assert instr >= 0;
     final boolean[] visited = new boolean[instructions.length];
-    final Collection<PyElement> result = new HashSet<PyElement>();
+    final Collection<PyElement> result = Sets.newHashSet();
     for (Instruction instruction : instructions[instr].allSucc()) {
       getPostRefs(var, instructions, instruction.num(), visited, result);
     }
