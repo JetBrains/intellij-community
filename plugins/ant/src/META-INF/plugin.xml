@@ -39,7 +39,7 @@
     <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription"/>
     <dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>
     <pom.declarationSearcher implementation="com.intellij.lang.ant.dom.AntDomIdDeclarationSearcher"/>
-    <inspectionToolProvider implementation="com.intellij.lang.ant.dom.AntDomModelInspection"/>
+    <!--<inspectionToolProvider implementation="com.intellij.lang.ant.dom.AntDomModelInspection"/>-->
     
     <!--Type Presentation-->
     <typeName className="com.intellij.lang.ant.dom.AntDomMacroDef" name="macro definition"/>
