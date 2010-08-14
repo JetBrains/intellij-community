@@ -458,21 +458,24 @@ public class PyUtil {
   }
 
   /**
-   * For cases when a function is decorated with only one decorator, and this is a built-in decorator.
-   * <br/> <i>TODO: handle multiple decorators sensibly; then rename and move.</i>
-   *
+   * For cases when a function is decorated many decorators, and the innermost is a built-in decorator:
+   * <pre>
+   * &#x40;foo
+   * &#x40;classmethod <b># &lt;-- that's it</b>
+   * def moo(cls):
+   * &nbsp;&nbsp;pass
+   * </pre>
    * @param node the allegedly decorated function
    * @return name of the only built-in decorator, or null (even if there are multiple or non-built-in decorators!)
    */
   public static
   @Nullable
-  String getTheOnlyBuiltinDecorator(@NotNull final PyFunction node) {
+  String getImmediateBuiltinDecorator(@NotNull final PyFunction node) {
     PyDecoratorList decolist = node.getDecoratorList();
     if (decolist != null) {
       PyDecorator[] decos = decolist.getDecorators();
-      // TODO: look for all decorators
-      if (decos.length == 1) {
-        PyDecorator deco = decos[0];
+      if (decos.length > 0) {
+        PyDecorator deco = decos[decos.length - 1];
         String deconame = deco.getName();
         if (deco.isBuiltin()) {
           return deconame;
@@ -491,7 +494,7 @@ public class PyUtil {
   @NotNull
   public static Set<PyFunction.Flag> detectDecorationsAndWrappersOf(PyFunction function) {
     Set<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
-    String deconame = getTheOnlyBuiltinDecorator(function);
+    String deconame = getImmediateBuiltinDecorator(function);
     if (PyNames.CLASSMETHOD.equals(deconame)) {
       flags.add(CLASSMETHOD);
     }
