@@ -92,6 +92,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         return;
       }
       final ReflectedProject reflected = ReflectedProject.getProject(antProject.getClassLoader());
+      if (reflected.getProject() == null) {
+        return;
+      }
 
       final DomGenericInfo genericInfo = antDomElement.getGenericInfo();
       AntIntrospector classBasedIntrospector = null;
