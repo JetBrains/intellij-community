@@ -59,7 +59,13 @@ class ParameterClassCheckVisitor extends JavaRecursiveElementVisitor{
             return false;
         }
         final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) {
+            return false;
+        }
         final PsiClass aClass = method.getContainingClass();
+        if (aClass == null) {
+            return false;
+        }
         final String className = aClass.getQualifiedName();
         if (!"java.lang.Class".equals(className)) {
             return false;
@@ -89,7 +95,13 @@ class ParameterClassCheckVisitor extends JavaRecursiveElementVisitor{
             return false;
         }
         final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) {
+            return false;
+        }
         final PsiClass aClass = method.getContainingClass();
+        if (aClass == null) {
+            return false;
+        }
         final String className = aClass.getQualifiedName();
         if (!"java.lang.Object".equals(className)) {
             return false;

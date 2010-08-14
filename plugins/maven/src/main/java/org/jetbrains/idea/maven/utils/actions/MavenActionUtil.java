@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -36,11 +37,18 @@ public class MavenActionUtil {
   public static boolean hasProject(DataContext context) {
     return PlatformDataKeys.PROJECT.getData(context) != null;
   }
-  
+
+  @NotNull
   public static Project getProject(DataContext context) {
     return PlatformDataKeys.PROJECT.getData(context);
   }
 
+  public static boolean isMavenizedProject(DataContext context) {
+    Project project = PlatformDataKeys.PROJECT.getData(context);
+    return project != null && MavenProjectsManager.getInstance(project).isMavenizedProject();
+  }
+
+  @Nullable
   public static MavenProject getMavenProject(DataContext context) {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
@@ -66,6 +74,7 @@ public class MavenActionUtil {
     return module != null ? module : DataKeys.MODULE_CONTEXT.getData(context);
   }
 
+  @NotNull
   public static MavenProjectsManager getProjectsManager(DataContext context) {
     return MavenProjectsManager.getInstance(getProject(context));
   }

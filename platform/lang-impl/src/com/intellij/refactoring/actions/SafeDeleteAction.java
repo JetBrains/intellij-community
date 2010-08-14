@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
@@ -44,7 +45,7 @@ public class SafeDeleteAction extends BaseRefactoringAction {
     return true;
   }
 
-  protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file) {
     return SafeDeleteProcessor.validElement(element);
   }
 

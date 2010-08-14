@@ -26,7 +26,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -559,9 +558,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = viewProvider.getDocument();
-    final FileType fileType = viewProvider.getVirtualFile().getFileType();
-    final Helper helper = HelperFactory.createHelper(fileType, myPsiManager.getProject());
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings, helper);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings);
 
     documentManager.commitDocument(document);
     return codeFormatter;
@@ -639,7 +636,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
     public void execute(FileViewProvider viewProvider) {
       final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
-      codeFormatter.processText(viewProvider.getPsi(viewProvider.getBaseLanguage()), myRanges.ensureNonEmpty());
+      codeFormatter.processText(viewProvider.getPsi(viewProvider.getBaseLanguage()), myRanges.ensureNonEmpty(), false);
     }
   }
 

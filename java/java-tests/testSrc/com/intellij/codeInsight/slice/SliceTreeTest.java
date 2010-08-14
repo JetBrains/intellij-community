@@ -25,7 +25,7 @@ import java.util.*;
  */
 public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
   @Override protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
+    return JavaSdkImpl.getMockJdk17();
   }
 
   private SliceTreeStructure configureTree(@NonNls final String name) throws Exception {
@@ -185,69 +185,69 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
 
     checkStructure(newRoot, "Null Values\n" +
                             "  Value: o\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (15, 13) |set|(|o|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (15: 13) |set|(|o|)|;\n" +
                             "  Value: nu()\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (29, 13) |set|(|nu|(|)|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (29: 13) |set|(|nu|(|)|)|;\n" +
                             "  Value: t\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (46, 15) |x|.|set|(|t|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (46: 15) |x|.|set|(|t|)|;\n" +
                             "NotNull Values\n" +
                             "  Value: \"\"\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (19, 13) |set|(|CON|)|;\n" +
-                            "          (5, 39) |private| |final| |static| |String| |CON| |=| |\"\"|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (19: 13) |set|(|CON|)|;\n" +
+                            "          (5: 39) |private| |final| |static| |String| |CON| |=| |\"\"|;\n" +
                             "  Value: \"xxx\"\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (10, 13) |set|(|\"xxx\"|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (10: 13) |set|(|\"xxx\"|)|;\n" +
                             "  Value: new String()\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (17, 13) |set|(|new| |String|(|)|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (17: 13) |set|(|new| |String|(|)|)|;\n" +
                             "  Value: nn()\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (18, 13) |set|(|nn|(|)|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (18: 13) |set|(|nn|(|)|)|;\n" +
                             "  Value: nn\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (21, 13) |set|(|nn|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (21: 13) |set|(|nn|)|;\n" +
                             "  Value: g\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (27, 13) |set|(|g|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (27: 13) |set|(|g|)|;\n" +
                             "  Value: \"null\"\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (48, 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
-                            "          (48, 27) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (48: 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "          (48: 27) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
                             "  Value: t\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (48, 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
-                            "          (48, 36) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (48: 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "          (48: 36) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
                             "  Value: d\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (55, 13) |l| |=| |d|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (55: 13) |l| |=| |d|;\n" +
                             "Other Values\n" +
                             "  Value: g\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (11, 13) |set|(|g|)|;\n" +
-                            "        (24, 13) |set|(|other|)|;\n" +
-                            "          (23, 24) |String| |other| |=| |g| |==| |\"\"| |?| |CON| |:| |g|;\n" +
-                            "            (23, 40) |String| |other| |=| |g| |==| |\"\"| |?| |CON| |:| |g|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (11: 13) |set|(|g|)|;\n" +
+                            "        (24: 13) |set|(|other|)|;\n" +
+                            "          (23: 24) |String| |other| |=| |g| |==| |\"\"| |?| |CON| |:| |g|;\n" +
+                            "            (23: 40) |String| |other| |=| |g| |==| |\"\"| |?| |CON| |:| |g|;\n" +
                             "  Value: d\n" +
-                            "    (6, 12) |String| |l|;\n" +
-                            "      (52, 13) |l| |=| |d|;\n" +
-                            "        (30, 13) |set|(|hz|(|)|)|;\n" +
-                            "          (42, 16) |return| |d|;\n" +
+                            "    (6: 12) |String| |l|;\n" +
+                            "      (52: 13) |l| |=| |d|;\n" +
+                            "        (30: 13) |set|(|hz|(|)|)|;\n" +
+                            "          (42: 16) |return| |d|;\n" +
                             "");
   }
 
@@ -297,9 +297,9 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
     checkStructure(newRoot,
         "Null Values\n" +
         "  Value: null\n" +
-        "    (2, 10) |String| |l|;\n" +
-        "      (4, 9) |l| |=| |null|;\n" +
-        "      (7, 9) |l| |=| |null|;\n" +
+        "    (2: 10) |String| |l|;\n" +
+        "      (4: 9) |l| |=| |null|;\n" +
+        "      (7: 9) |l| |=| |null|;\n" +
         ""
                    );
   }

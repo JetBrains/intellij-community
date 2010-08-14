@@ -541,6 +541,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText.toString();
   }
 
+  @Override
+  public String getText(TextRange range) {
+    assertReadAccessToDocumentsAllowed();
+    return myText.substring(range.getStartOffset(), range.getEndOffset()).toString();
+  }
+
   public int getTextLength() {
     assertReadAccessToDocumentsAllowed();
     return myText.length();

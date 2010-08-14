@@ -31,7 +31,6 @@ import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -45,7 +44,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.lang.reflect.Type;
-import java.util.List;
 
 /**
  * @author peter
@@ -152,10 +150,9 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
         psiDocumentManager.commitAllDocuments();
 
-        final List<HighlightingPass> result = new SmartList<HighlightingPass>();
-        result.add(new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(), true));
-        result.add(new LocalInspectionsPass(psiFile, document, 0, document.getTextLength()));
-        return result.toArray(new HighlightingPass[result.size()]);
+        GeneralHighlightingPass ghp = new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(), true);
+        LocalInspectionsPass lip = new LocalInspectionsPass(psiFile, document, 0, document.getTextLength());
+        return new HighlightingPass[]{ghp, lip};
       }
 
       @NotNull
@@ -164,10 +161,6 @@ public class DomUIFactoryImpl extends DomUIFactory {
       }
     };
 
-  }
-
-  public void updateHighlighting(final EditorTextFieldControl control) {
-    
   }
 
   public BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {

@@ -28,7 +28,6 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
@@ -98,15 +97,17 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   public static void updateActions(Project project, List<MavenProject> mavenProjects) {
     clearActions(project, mavenProjects);
-    doUpdateActions(project, mavenProjects);
+    createActions(project, mavenProjects);
   }
 
-  private static void doUpdateActions(Project project, List<MavenProject> mavenProjects) {
+  private static void createActions(Project project, List<MavenProject> mavenProjects) {
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
       String actionIdPrefix = getActionPrefix(project, eachProject);
       for (MavenGoalAction eachAction : collectActions(eachProject)) {
-        manager.registerAction(actionIdPrefix + eachAction.getGoal(), eachAction);
+        String id = actionIdPrefix + eachAction.getGoal();
+        manager.unregisterAction(id);
+        manager.registerAction(id, eachAction);
       }
     }
   }

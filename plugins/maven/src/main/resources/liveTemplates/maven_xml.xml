@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templateSet group="Maven">
+  <template id="maven-dependency" name="dep" description="dependency"
+            value="&lt;dependency&gt;&#10;   &lt;groupId&gt;$GROUP$&lt;/groupId&gt;&#10;   &lt;artifactId&gt;$ARTIFACT$&lt;/artifactId&gt;&#10;   &lt;version&gt;$VERSION$&lt;/version&gt;&#10;&lt;/dependency&gt;"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="ARTIFACT" expression="complete()" defaultValue="" alwaysStopAt="true"/>
+    <variable name="GROUP" expression="completeSmart()" defaultValue="" alwaysStopAt="true"/>
+    <variable name="VERSION" expression="complete()" defaultValue="" alwaysStopAt="true"/>
+    <context>
+      <option name="MAVEN" value="true"/>
+    </context>
+  </template>
+
+  <template id="maven-plugin" name="pl" description="plugin"
+            value="&lt;plugin&gt;&#10;   &lt;groupId&gt;$GROUP$&lt;/groupId&gt;&#10;   &lt;artifactId&gt;$ARTIFACT$&lt;/artifactId&gt;&#10;   &lt;version&gt;$VERSION$&lt;/version&gt;&#10;&lt;/plugin&gt;"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="ARTIFACT" expression="complete()" defaultValue="" alwaysStopAt="true"/>
+    <variable name="GROUP" expression="completeSmart()" defaultValue="" alwaysStopAt="true"/>
+    <variable name="VERSION" expression="complete()" defaultValue="" alwaysStopAt="true"/>
+    <context>
+      <option name="MAVEN" value="true"/>
+    </context>
+  </template>
+
+  <template id="maven-repository" name="repo" description="repository"
+            value="&lt;repository&gt;&#10;  &lt;id&gt;$ID$&lt;/id&gt;&#10;  &lt;name&gt;$NAME$&lt;/name&gt;&#10;  &lt;url&gt;$URL$&lt;/url&gt;&#10;&lt;/repository&gt;"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="ID" expression="complete()" defaultValue="" alwaysStopAt="true"/>
+    <variable name="NAME" expression="complete()" defaultValue="" alwaysStopAt="true"/>
+    <variable name="URL" expression="complete()" defaultValue="" alwaysStopAt="true"/>
+    <context>
+      <option name="MAVEN" value="true"/>
+    </context>
+  </template>
+</templateSet>

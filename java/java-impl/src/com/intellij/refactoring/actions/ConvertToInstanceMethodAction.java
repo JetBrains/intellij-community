@@ -17,10 +17,7 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
 
@@ -36,7 +33,7 @@ public class ConvertToInstanceMethodAction extends BaseRefactoringAction {
     return elements.length == 1 && elements[0] instanceof PsiMethod;
   }
 
-  protected boolean isAvailableOnElementInEditor(PsiElement element, final Editor editor) {
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, final Editor editor, PsiFile file) {
     if (element instanceof PsiIdentifier) element = element.getParent();
     return element instanceof PsiMethod && ((PsiMethod) element).hasModifierProperty(PsiModifier.STATIC);
   }

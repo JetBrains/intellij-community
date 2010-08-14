@@ -18,9 +18,12 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  private static final String[] ourPackageScopeKeywords =
+    new String[]{"package", "public", "private", "import", "final", "class", "interface", "abstract", "enum", null};
+
   public void testModifiersFileScope_1() throws Exception {
     configureByFile(BASE_PATH + "/fileScope-1.java");
-    testByCount(7, "package", "public", "private", "import", "final", "class", "interface", "abstract", null);
+    testByCount(8, ourPackageScopeKeywords);
   }
 
   private static final String[] ourClassScopeKeywords =
