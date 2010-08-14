@@ -23,6 +23,8 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.TestLookupManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.TestDataFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,6 +33,11 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
 
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/completion/";
+  }
+
+  protected void configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
+    super.configureByFile(filePath);
+    AntSupport.markFileAsAntFile(myVFile, myFile.getProject(), true);
   }
 
   public void testSimpleProperty() throws Exception {

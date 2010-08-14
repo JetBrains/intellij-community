@@ -191,6 +191,11 @@ public final class DomManagerImpl extends DomManager {
     element.putUserData(CACHED_DOM_HANDLER, handler);
   }
 
+  public void forceRecomputeFile(final VirtualFile file) {
+    mySemService.clearCache();
+    processFileChange(file);
+  }
+  
   private void processFileChange(final VirtualFile file) {
     if (StdFileTypes.XML != file.getFileType()) return;
     processFileChange(PsiManager.getInstance(myProject).findFile(file));

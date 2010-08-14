@@ -1,4 +1,4 @@
-<project default="test">
+<project name="build" default="test">
   <target name="init">
   </target>
 

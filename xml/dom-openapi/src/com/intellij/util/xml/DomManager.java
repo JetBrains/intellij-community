@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -170,4 +171,6 @@ public abstract class DomManager implements ModificationTracker {
     final DomFileElement<DomElement> element = getFileElement(xmlFile);
     return element != null ? element.getFileDescription() : null;
   }
+
+  public abstract void forceRecomputeFile(VirtualFile file);
 }

@@ -542,7 +542,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (!(xmlFile instanceof XmlFile) || !AntDomFileDescription.isAntFile(((XmlFile)xmlFile))) {
       throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
     }
-    AntSupport.markFileAsAntFile(file, xmlFile.getViewProvider(), true);
+    AntSupport.markFileAsAntFile(file, xmlFile.getProject(), true);
     final AntBuildFileImpl buildFile = new AntBuildFileImpl((XmlFile)xmlFile, this);
     xmlFile.putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, buildFile);
     synchronized (myBuildFiles) {
@@ -607,7 +607,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final XmlFile antFile = buildFile.getAntFile();
     if (antFile != null) {
       antFile.putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, null);
-      AntSupport.markFileAsAntFile(antFile.getOriginalFile().getVirtualFile(), antFile.getViewProvider(), false);
+      AntSupport.markFileAsAntFile(antFile.getOriginalFile().getVirtualFile(), antFile.getProject(), false);
     }
     synchronized (myBuildFiles) {
       myBuildFilesArray = null;
