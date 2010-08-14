@@ -187,7 +187,9 @@ public class CacheUtils {
     if (_ex[0] != null) {
       throw _ex[0];
     }
-    context.getProgressIndicator().setText(CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()));
+    context.getProgressIndicator().setText(
+      dependentFiles.size() > 0? CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()) : ""
+    );
 
     return dependentFiles;
   }
