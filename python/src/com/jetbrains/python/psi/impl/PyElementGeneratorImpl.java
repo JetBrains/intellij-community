@@ -47,7 +47,12 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return (PyStringLiteralExpression)expressionStatement.getFirstChild();
   }
 
-  public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, String unescaped) {
+
+  public PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped) {
+    return createStringLiteralFromString(null, unescaped);
+  }
+
+  public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, @NotNull String unescaped) {
     boolean useDouble = !unescaped.contains("\"");
     boolean useMulti = unescaped.matches(".*(\r|\n).*");
     String quotes;
