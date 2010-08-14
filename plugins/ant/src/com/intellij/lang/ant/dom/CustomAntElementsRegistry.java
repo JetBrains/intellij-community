@@ -61,6 +61,7 @@ public class CustomAntElementsRegistry {
 
   private final Map<XmlName, Class> myCustomElements = new HashMap<XmlName, Class>();
   private final Map<XmlName, String> myErrors = new HashMap<XmlName, String>();
+  private final Map<AntDomNamedElement, String> myTypeDefErrors = new HashMap<AntDomNamedElement, String>();
   private final Map<XmlName, AntDomNamedElement> myDeclarations = new HashMap<XmlName, AntDomNamedElement>();
   private final Map<String, ClassLoader> myNamedLoaders = new HashMap<String, ClassLoader>();
 
@@ -161,6 +162,10 @@ public class CustomAntElementsRegistry {
   }
 
   public boolean hasTypeLoadingErrors(AntDomTypeDef typedef) {
+    final String generalError = myTypeDefErrors.get(typedef);
+    if (generalError != null) {
+      return true;
+    }
     for (Map.Entry<XmlName, AntDomNamedElement> entry : myDeclarations.entrySet()) {
       if (typedef.equals(entry.getValue())) {
         if (myErrors.containsKey(entry.getKey()))  {
@@ -498,6 +503,9 @@ public class CustomAntElementsRegistry {
                 catch (IOException e) {
                   LOG.info(e);
                 }
+              }
+              else {
+                myTypeDefErrors.put(typedef, "Resource \"" + resource + "\" not found in the classpath");
               }
             }
           }
