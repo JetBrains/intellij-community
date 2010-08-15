@@ -15,16 +15,20 @@
  */
 package com.intellij.lang.ant;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.ant.dom.AntDomAntlib;
 import com.intellij.lang.ant.dom.AntDomElement;
 import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.ConvertContext;
@@ -35,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -72,9 +77,25 @@ public class AntSupport implements ApplicationComponent {
   public static void markFileAsAntFile(final VirtualFile file, final Project project, final boolean value) {
     if (file.isValid() && ForcedAntFileAttribute.isAntFile(file) != value) {
       ForcedAntFileAttribute.forceAntFile(file, value);
-      DomManager.getDomManager(project).forceRecomputeFile(file);
+      ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+      restartDaemon(project);
     }
   }
+  
+  private static void restartDaemon(Project project) {
+    final DaemonCodeAnalyzer daemon = DaemonCodeAnalyzer.getInstance(project);
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      daemon.restart();
+    }
+    else {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          daemon.restart();
+        }
+      });
+    }
+  }
+  
 
   //
   // Managing ant files dependencies via the <import> task.
