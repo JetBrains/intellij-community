@@ -113,7 +113,7 @@ public final class AntIntrospector {
     }
   }
 
-  public Enumeration getAttributes() {
+  public Enumeration<String> getAttributes() {
     return invokeMethod("getAttributes", false);
   }
 

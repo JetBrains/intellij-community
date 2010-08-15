@@ -15,11 +15,8 @@
  */
 package com.intellij.lang.ant.validation;
 
-import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfigurationBase;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.lang.ant.psi.impl.AntImportsIndex;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.options.ConfigurationException;
@@ -27,7 +24,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NonNls;
@@ -47,21 +47,21 @@ public class AntHectorConfigurable extends HectorComponentPanel {
   @NonNls 
   public static final String CONTEXTS_COMBO_KEY = "AntContextsComboBox";
 
-  private final AntFile myFile;
+  private final XmlFile myFile;
   private final String myLocalPath;
-  private final Map<String, AntFile> myPathToFileMap = new HashMap<String, AntFile>();
+  private final Map<String, XmlFile> myPathToFileMap = new HashMap<String, XmlFile>();
   private String myOriginalContext = NONE;
   
   private JComboBox myCombo;
   private final GlobalSearchScope myFileFilter;
+  private final Project myProject;
 
-  public AntHectorConfigurable(AntFile file) {
+  public AntHectorConfigurable(XmlFile file) {
     myFile = file;
+    myProject = file.getProject();
     final VirtualFile selfVFile = myFile.getVirtualFile();
     myLocalPath = PathUtil.getLocalPath(selfVFile);
-    
-    final Project project = file.getProject();
-    myFileFilter = GlobalSearchScope.projectScope(project);
+    myFileFilter = GlobalSearchScope.projectScope(myProject);
   }
 
   public boolean canClose() {
@@ -82,25 +82,20 @@ public class AntHectorConfigurable extends HectorComponentPanel {
         new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0)
     );
 
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
     final FileBasedIndex fbi = FileBasedIndex.getInstance();
     final Collection<VirtualFile> antFiles = fbi.getContainingFiles(AntImportsIndex.INDEX_NAME, AntImportsIndex.ANT_FILES_WITH_IMPORTS_KEY, myFileFilter);
+    
     for (VirtualFile file : antFiles) {
-      final AntFile antFile = AntSupport.toAntFile(file, myFile.getProject());
-      if (antFile != null && !antFile.equals(myFile)) {
-        final String path = PathUtil.getLocalPath(file);
-        final AntFile previous = myPathToFileMap.put(path, antFile);
-        assert previous == null;
+      final PsiFile psiFile = psiManager.findFile(file);
+      if (!(psiFile instanceof XmlFile)) {
+        continue;
       }
-    }
-    final AntConfigurationBase antConfig = AntConfigurationBase.getInstance(myFile.getProject());
-    for (AntBuildFile buildFile : antConfig.getBuildFiles()) {
-      final AntFile antFile = (AntFile)buildFile.getAntFile();
-      final String path = antFile != null? PathUtil.getLocalPath(antFile.getVirtualFile()) : null;
-      if (path != null && !myPathToFileMap.containsKey(path) && !FileUtil.pathsEqual(path, myLocalPath)) {
-        final AntProject antProject = antFile.getAntProject();
-        if (antProject != null && antProject.getImportedFiles().length > 0) {
-          myPathToFileMap.put(path, antFile);
-        }
+      final XmlFile xmlFile = (XmlFile)psiFile;
+      if (!xmlFile.equals(myFile) && AntDomFileDescription.isAntFile(xmlFile)) {
+        final String path = PathUtil.getLocalPath(file);
+        final XmlFile previous = myPathToFileMap.put(path, xmlFile);
+        assert previous == null;
       }
     }
 
@@ -116,7 +111,8 @@ public class AntHectorConfigurable extends HectorComponentPanel {
       myCombo.addItem(path);
     }
 
-    final AntFile currentContext = antConfig.getContextFile(myFile);
+    final AntConfigurationBase antConfig = AntConfigurationBase.getInstance(myProject);
+    final XmlFile currentContext = antConfig.getContextFile(myFile);
     if (currentContext != null) {
       final VirtualFile vFile = currentContext.getVirtualFile();
       
@@ -145,12 +141,12 @@ public class AntHectorConfigurable extends HectorComponentPanel {
   }
 
   private void applyItem(final String contextStr) {
-    AntFile context = null;
+    XmlFile context = null;
     if (!NONE.equals(contextStr)) {
       context = myPathToFileMap.get(contextStr);
       assert context != null;
     }
-    AntConfigurationBase.getInstance(myFile.getProject()).setContextFile(myFile, context);
+    AntConfigurationBase.getInstance(myProject).setContextFile(myFile, context);
   }
 
   public void disposeUIResources() {

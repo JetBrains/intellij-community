@@ -28,6 +28,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.TestDataFile;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,6 +52,11 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
 
   private void doTest(final boolean lowercaseFirstLetter) throws Exception {
     doTest(getTestName(lowercaseFirstLetter) + ".xml", false, false);
+  }
+  
+  protected void configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
+    super.configureByFile(filePath);
+    AntSupport.markFileAsAntFile(myFile.getVirtualFile(), myFile.getProject(), true);
   }
 
   public void testEntity() throws Exception {

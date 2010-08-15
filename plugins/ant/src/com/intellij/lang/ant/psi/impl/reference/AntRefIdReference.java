@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
@@ -26,8 +25,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +68,7 @@ public class AntRefIdReference extends AntGenericReference {
     final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
     try {
       final AntStructuredElement elem = getElement();
-      final AntFile contextFile = AntConfigurationBase.getInstance(elem.getProject()).getEffectiveContextFile(elem.getAntFile());
+      final AntFile contextFile = null/*AntConfigurationBase.getInstance(elem.getProject()).getEffectiveContextFile(elem.getAntFile())*/;
       return resolve(id, contextFile.getAntProject(), elementsDepthStack);
     }
     finally {

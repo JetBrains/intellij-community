@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
@@ -29,6 +30,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -99,7 +101,14 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
   }
 
   public PsiElement getNavigationElement(final String propertyName) {
-    final DomTarget domTarget = DomTarget.getTarget(this);
+    DomTarget domTarget = DomTarget.getTarget(this);
+    if (domTarget == null) {
+      final GenericAttributeValue<String> environment = getEnvironment();
+      if (environment.getRawText() != null) {
+        domTarget = DomTarget.getTarget(this, environment);
+      }
+    }
+    
     if (domTarget != null) {
       final PsiElement psi = PomService.convertToPsi(domTarget);
       if (psi != null) {
@@ -122,7 +131,6 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
         return property != null? property.getNavigationElement() : null;
       }
     }
-    // todo: process property files
     return null;
   }
 
@@ -153,9 +161,14 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
       else {
         String locValue = getLocation().getStringValue();
         if (locValue != null) {
-          locValue = FileUtil.toSystemDependentName(locValue);
-          // todo: if the path is relative, resolve it against project basedir (see ant docs)
-          result = Collections.singletonMap(propertyName, locValue);
+          final File file = new File(locValue);
+          if (!file.isAbsolute()) {
+            final String baseDir = getContextAntProject().getProjectBasedirPath();
+            if (baseDir != null) {
+              locValue = PathUtil.getCanonicalPath(new File(baseDir, locValue).getPath());
+            }
+          }
+          result = Collections.singletonMap(propertyName, FileUtil.toSystemDependentName(locValue));
         }
         else {
           // todo: process refid attrib if specified for the value

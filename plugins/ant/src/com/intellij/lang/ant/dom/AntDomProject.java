@@ -32,7 +32,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.*;
@@ -99,7 +101,11 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   @Nullable
   public final String getContainingFileDir() {
     final VirtualFile containingFile = getXmlTag().getContainingFile().getOriginalFile().getVirtualFile();
-    return containingFile != null ? containingFile.getParent().getPath() : null;
+    if (containingFile == null) {
+      return null;
+    }
+    final VirtualFile parent = containingFile.getParent();
+    return parent != null? parent.getPath() : null;
   }
 
   @SubTagList("target")
@@ -112,7 +118,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   public abstract List<AntDomInclude> getDeclaredIncludes();
 
   @Nullable
-  public final AntDomTarget findDeclaredTarget(String declaredName, DomElement contextElement) {
+  public final AntDomTarget findDeclaredTarget(String declaredName) {
     for (AntDomTarget target : getDeclaredTargets()) {
       if (declaredName.equals(target.getName().getRawText())) {
         return target;
@@ -125,7 +131,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   public final ClassLoader getClassLoader() {
     if (myClassLoader == null) {
       final XmlTag tag = getXmlTag();
-      final AntBuildFileImpl buildFile = (AntBuildFileImpl)tag.getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+      final AntBuildFileImpl buildFile = (AntBuildFileImpl)tag.getContainingFile().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
       if (buildFile != null) {
         myClassLoader = buildFile.getClassLoader();
       }
@@ -153,7 +159,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   @Nullable
   public final Sdk getTargetJdk() {
     final XmlTag tag = getXmlTag();
-    final AntBuildFileImpl buildFile = (AntBuildFileImpl)tag.getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)tag.getContainingFile().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
     if (buildFile != null) {
       String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(buildFile.getAllOptions());
       if (jdkName == null || jdkName.length() == 0) {
@@ -183,7 +189,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     if (nameElementPsi != null) {
       return nameElementPsi;
     }
-    return getXmlElement();
+    final XmlElement xmlElement = getXmlElement();
+    return xmlElement != null? xmlElement.getNavigationElement() : null;
   }
 
   private Map<String, String> getProperties() {
@@ -191,7 +198,15 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
       final ReflectedProject reflected = ReflectedProject.getProject(getClassLoader());
       synchronized (this) {
         if (myProperties == null) {
-          myProperties = loadPredefinedProperties(reflected.getProperties(), Collections.<String, String>emptyMap()  /*todo*/);
+          Map<String, String> externals = Collections.emptyMap();
+          final PsiFile containingFile = getXmlTag().getContainingFile();
+          if (containingFile != null) {
+            final AntBuildFileImpl buildFile = (AntBuildFileImpl)containingFile.getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+            if (buildFile != null) {
+              externals = buildFile.getExternalProperties();
+            }
+          }
+          myProperties = loadPredefinedProperties(reflected.getProperties(), externals);
         }
       }
     }

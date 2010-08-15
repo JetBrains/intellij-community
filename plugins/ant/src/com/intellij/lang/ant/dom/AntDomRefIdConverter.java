@@ -15,11 +15,11 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +38,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     if (s != null) {
       final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
       if (element != null) {
-        return findElementById(getContextProject(element), s);
+        return findElementById(element.getContextAntProject(), s);
       }
     }
     return null;
@@ -51,7 +51,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue<AntDomElement> genericDomValue, final PsiElement element, ConvertContext context) {
     final AntDomElement invocationElement = AntSupport.getInvocationAntDomElement(context);
-    return new PsiReference[] {new PsiReferenceBase<PsiElement>(element, true) {
+    return new PsiReference[] {new AntDomReferenceBase(element, true) {
       public PsiElement resolve() {
         final AntDomElement value = genericDomValue.getValue();
         if (value == null) {
@@ -69,7 +69,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
           return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
         final Set<String> variants = new LinkedHashSet<String>();
-        getContextProject(invocationElement).accept(new AntDomRecursiveVisitor() {
+        invocationElement.getContextAntProject().accept(new AntDomRecursiveVisitor() {
           public void visitAntDomElement(AntDomElement element) {
             final String variant = element.getId().getRawText();
             if (variant != null) {
@@ -80,14 +80,12 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
         });
         return variants.size() > 0? variants.toArray(new Object[variants.size()]) : ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
+
+      public String getUnresolvedMessagePattern() {
+        return AntBundle.message("cannot.resolve.refid", getCanonicalText());
+      }
     }};
   }
-
-  private AntDomProject getContextProject(AntDomElement element) {
-    // todo: correct project
-    return element.getAntProject();
-  }
-
 
   @Nullable
   private static AntDomElement findElementById(AntDomElement from, final String id) {

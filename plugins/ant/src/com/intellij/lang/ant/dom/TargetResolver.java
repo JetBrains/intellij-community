@@ -70,7 +70,7 @@ public class TargetResolver extends PropertyProviderFinder {
     }
   }
 
-  private TargetResolver(@NotNull Collection<String> declaredDependencyRefs, AntDomTarget contextElement) {
+  private TargetResolver(@NotNull Collection<String> declaredDependencyRefs, @Nullable AntDomTarget contextElement) {
     super(contextElement);
     myResult = new Result();
     myDeclaredTargetRefs = new ArrayList<String>(declaredDependencyRefs);
@@ -88,6 +88,25 @@ public class TargetResolver extends PropertyProviderFinder {
     final Result result = resolver.getResult();
     result.setVariants(resolver.getDiscoveredTargets());
     return result;
+  }
+  
+  public interface TargetSink {
+    void duplicateTargetDetected(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String targetEffectiveName);
+  }
+  
+  public static void validateDuplicateTargets(AntDomProject project, final TargetSink sink) {
+    final TargetResolver resolver = new TargetResolver(Collections.<String>emptyList(), null) {
+      protected void duplicateTargetFound(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String taregetEffectiveName) {
+        sink.duplicateTargetDetected(existingTarget, duplicatingTarget, taregetEffectiveName);
+      }
+
+      protected void stageCompleted(Stage completedStage, Stage startingStage) {
+        if (Stage.RESOLVE_MAP_BUILDING_STAGE.equals(completedStage)) {
+          stop();
+        }
+      }
+    };
+    resolver.execute(project, null);
   }
 
   protected void targetDefined(AntDomTarget target, String targetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {

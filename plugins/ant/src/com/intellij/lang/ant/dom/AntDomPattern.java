@@ -158,12 +158,11 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
 
   private static boolean isEnabled(AntDomElement element) {
     final String ifProperty = getAttributeValue(element, "if");
-    // todo: context project
-    if (ifProperty != null && PropertyResolver.resolve(element.getAntProject(), ifProperty, element).getFirst() == null) {
+    if (ifProperty != null && PropertyResolver.resolve(element.getContextAntProject(), ifProperty, element).getFirst() == null) {
       return false;
     }
     final String unlessProperty = getAttributeValue(element, "unless");
-    if (unlessProperty != null && PropertyResolver.resolve(element.getAntProject(), unlessProperty, element).getFirst() != null) {
+    if (unlessProperty != null && PropertyResolver.resolve(element.getContextAntProject(), unlessProperty, element).getFirst() != null) {
       return false;
     }
     return true;

@@ -15,13 +15,13 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +38,7 @@ import java.util.Set;
 public class AntDomDefaultTargetConverter extends Converter<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> implements CustomReferenceConverter<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>>{
 
   @NotNull public PsiReference[] createReferences(final GenericDomValue<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> value, PsiElement element, ConvertContext context) {
-    return new PsiReference[] {new PsiReferenceBase<PsiElement>(element, true) {
+    return new PsiReference[] {new AntDomReferenceBase(element, true) {
       public PsiElement resolve() {
         final Trinity<AntDomTarget, String, Map<String, AntDomTarget>> trinity = value.getValue();
         if (trinity == null) {
@@ -57,6 +57,10 @@ public class AntDomDefaultTargetConverter extends Converter<Trinity<AntDomTarget
         final Set<String> set = trinity.getThird().keySet();
         return set.toArray(new Object[set.size()]);
       }
+
+      public String getUnresolvedMessagePattern() {
+        return AntBundle.message("cannot.resolve.target", getCanonicalText());
+      }
     }};
   }
 
@@ -65,7 +69,7 @@ public class AntDomDefaultTargetConverter extends Converter<Trinity<AntDomTarget
     final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
     if (element != null && s != null) {
       final AntDomProject project = element.getAntProject();
-      final TargetResolver.Result result = TargetResolver.resolve(project, null, s);
+      final TargetResolver.Result result = TargetResolver.resolve(project.getContextAntProject(), null, s);
       final Pair<AntDomTarget,String> pair = result.getResolvedTarget(s);
       return new Trinity<AntDomTarget, String, Map<String, AntDomTarget>>(pair != null? pair.getFirst() : null, pair != null? pair.getSecond() : null, result.getVariants());
     }

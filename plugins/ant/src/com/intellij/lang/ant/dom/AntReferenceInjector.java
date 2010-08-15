@@ -16,8 +16,11 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
@@ -55,6 +58,23 @@ class AntReferenceInjector implements DomReferenceInjector {
   private static void addPropertyReferences(@NotNull ConvertContext context, final XmlAttributeValue xmlAttributeValue, final List<PsiReference> result) {
     final String value = xmlAttributeValue.getValue();
     final DomElement contextElement = context.getInvocationElement();
+    
+    final XmlAttribute attrib = PsiTreeUtil.getParentOfType(xmlAttributeValue, XmlAttribute.class);
+    if (attrib != null) {
+      final String name = attrib.getName();
+      if ("if".equals(name) || "unless".equals(name)) {
+        // special handling of if/unless attributes
+        final AntDomPropertyReference ref = new AntDomPropertyReference(
+          contextElement, xmlAttributeValue, ElementManipulators.getValueTextRange(xmlAttributeValue)
+        );
+        // in runtime, if execution reaches this task the property is defined since it is used in if-condition
+        // so it is would be a mistake to highlight this as unresolved prop
+        ref.setShouldBeSkippedByAnnotator(true);
+        result.add(ref);
+        return;
+      }
+    }
+    
     if (xmlAttributeValue != null && value.indexOf("@{") < 0) {
       final int valueBeginingOffset = Math.abs(xmlAttributeValue.getTextRange().getStartOffset() - xmlAttributeValue.getValueTextRange().getStartOffset());
       int startIndex;
@@ -83,14 +103,15 @@ class AntReferenceInjector implements DomReferenceInjector {
         }
         if (nestedBrackets > 0 || endIndex > value.length()) return;
         if (endIndex >= startIndex) {
-          final String propName = value.substring(startIndex, endIndex);
+          //final String propName = value.substring(startIndex, endIndex);
           //if (antFile.isEnvironmentProperty(propName) && antFile.getProperty(propName) == null) {
           //  continue;
           //}
-
-          result.add(new AntDomPropertyReference(
-            contextElement, xmlAttributeValue, propName, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex))
+          final AntDomPropertyReference ref = new AntDomPropertyReference(
+            contextElement, xmlAttributeValue, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex)
           );
+          
+          result.add(ref);
         }
         endIndex = startIndex;
       }

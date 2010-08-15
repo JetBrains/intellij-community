@@ -18,17 +18,21 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.lang.ant.psi.AntTask;
+import com.intellij.lang.ant.dom.AntDomElement;
+import com.intellij.lang.ant.dom.AntDomProject;
+import com.intellij.lang.ant.dom.AntDomRecursiveVisitor;
+import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.Nullable;
 
 public class AntBuildTargetImpl implements AntBuildTargetBase {
@@ -43,17 +47,28 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   private final Project myProject;
   private final int myTextOffset;
 
-  public AntBuildTargetImpl(final AntTarget target, final AntBuildModelBase buildModel, final VirtualFile sourceFile, final boolean isImported, final boolean isDefault) {
+  public AntBuildTargetImpl(final AntDomTarget target, final AntBuildModelBase buildModel, final VirtualFile sourceFile, final boolean isImported, final boolean isDefault) {
     myModel = buildModel;
     myFile = sourceFile;
     myIsDefault = isDefault;
     myHashCode = target.hashCode();
-    myName = target.getName();
-    myDisplayName = isImported ? target.getQualifiedName() : target.getName();
-    myProject = target.getProject();
-    myTextOffset = target.getTextOffset();
+    myName = target.getName().getRawText();
+    String name = target.getName().getRawText();
+    if (isImported) {
+      final String projectName = target.getAntProject().getName().getRawText();
+      name = projectName + "." + name;
+    }
+    myDisplayName = name;
+    myProject = target.getManager().getProject();
+    final DomTarget domTarget = DomTarget.getTarget(target);
+    if (domTarget != null) {
+      myTextOffset = domTarget.getTextOffset();
+    }
+    else {
+      myTextOffset = target.getXmlTag().getTextOffset();
+    }
     
-    final String desc = target.getDescription();
+    final String desc = target.getDescription().getRawText();
     myDescription = (desc != null && desc.trim().length() > 0) ? desc : null;
   }
 
@@ -122,17 +137,27 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   @Nullable
   public BuildTask findTask(final String taskName) {
-    final AntFile antFile = AntSupport.toAntFile(myFile, myProject);
-    if (antFile != null) {
-      final AntTarget target = antFile.getAntProject().getTarget(myName);
-      if (target != null) {
-        for (final PsiElement element : target.getChildren()) {
-          if (element instanceof AntTask) {
-            final AntTask task = (AntTask)element;
-            if (taskName.equals(task.getSourceElement().getName())) {
-              return new BuildTask(this, task);
+    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
+    final AntDomProject domProject = AntSupport.getAntDomProject(psiFile);
+    if (domProject != null) {
+      final AntDomTarget antTarget = domProject.findDeclaredTarget(myName);
+      if (antTarget != null) {
+        final Ref<AntDomElement> result = new Ref<AntDomElement>(null);
+        antTarget.accept(new AntDomRecursiveVisitor() {
+          public void visitAntDomElement(AntDomElement element) {
+            if (result.get() != null) {
+              return;
             }
+            if (element.isTask() && taskName.equals(element.getXmlElementName())) {
+              result.set(element);
+              return;
+            }
+            super.visitAntDomElement(element);
           }
+        });
+        final AntDomElement task = result.get();
+        if (task != null) {
+          return new BuildTask(this, task);
         }
       }
     }
