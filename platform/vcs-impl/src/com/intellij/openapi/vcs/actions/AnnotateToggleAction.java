@@ -593,12 +593,35 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     private DiffNavigationContext createDiffNavigationContext(final int actualLine) {
       final MyContentsLines contentsLines = new MyContentsLines(myFileAnnotation.getAnnotatedContent());
 
+      final Pair<Integer, String> pair = correctActualLineIfTextEmpty(contentsLines, actualLine);
       return new DiffNavigationContext(new Iterable<String>() {
         @Override
         public Iterator<String> iterator() {
-          return new CacheOneStepIterator<String>(new ContextLineIterator(contentsLines, myFileAnnotation, actualLine));
+          return new CacheOneStepIterator<String>(new ContextLineIterator(contentsLines, myFileAnnotation, pair.getFirst()));
         }
-      }, contentsLines.getLineContents(actualLine));
+      }, pair.getSecond());
+    }
+
+    private final static int ourVicinity = 5;
+    private Pair<Integer, String> correctActualLineIfTextEmpty(final MyContentsLines contentsLines, final int actualLine) {
+      final VcsRevisionNumber revision = myFileAnnotation.getLineRevisionNumber(actualLine);
+
+      for (int i = actualLine; (i < (actualLine + ourVicinity)) && (! contentsLines.isLineEndsFinished()); i++) {
+        if (! revision.equals(myFileAnnotation.getLineRevisionNumber(i))) continue;
+        final String lineContents = contentsLines.getLineContents(i);
+        if (! StringUtil.isEmptyOrSpaces(lineContents)) {
+          return new Pair<Integer, String>(i, lineContents);
+        }
+      }
+      int bound = Math.max(actualLine - ourVicinity, 0);
+      for (int i = actualLine - 1; (i >= bound); --i) {
+        if (! revision.equals(myFileAnnotation.getLineRevisionNumber(i))) continue;
+        final String lineContents = contentsLines.getLineContents(i);
+        if (! StringUtil.isEmptyOrSpaces(lineContents)) {
+          return new Pair<Integer, String>(i, lineContents);
+        }
+      }
+      return new Pair<Integer, String>(actualLine, contentsLines.getLineContents(actualLine));
     }
 
     private static class MySplittingIterator implements Iterator<Integer> {
@@ -679,8 +702,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                                  (number + 1 >= myLinesStartOffsets.size())
                                                  ? myContents.length()
                                                  : myLinesStartOffsets.get(number + 1));
-        text = text.endsWith("\r\n") ? text.substring(0, text.length() - 2) : text.substring(0, text.length() - 1);
+        text = text.endsWith("\r\n") ? text.substring(0, text.length() - 2) : text;
+        text = (text.endsWith("\r") || text.endsWith("\n")) ? text.substring(0, text.length() - 1) : text;
         return text;
+      }
+
+      public boolean isLineEndsFinished() {
+        return myLineEndsFinished;
       }
 
       public int getKnownLinesNumber() {
