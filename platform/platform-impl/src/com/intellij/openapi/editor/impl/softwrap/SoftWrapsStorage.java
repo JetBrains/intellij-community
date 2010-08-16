@@ -96,8 +96,7 @@ public class SoftWrapsStorage {
    * @return            previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
    */
   @Nullable
-  public TextChangeImpl storeOrReplace(TextChangeImpl softWrap) {
-    int i = getSoftWrapIndex(softWrap.getStart());
+  public TextChangeImpl storeOrReplace(TextChangeImpl softWrap) {   int i = getSoftWrapIndex(softWrap.getStart());
     if (i >= 0) {
       return myWraps.set(i, softWrap);
     }

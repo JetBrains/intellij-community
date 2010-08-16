@@ -243,8 +243,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     });
 
-    myCommitMessageArea = new CommitMessage();
-    myCommitMessageArea.init();
+    myCommitMessageArea = new CommitMessage(project);
 
     if (comment != null) {
       setCommitMessage(comment);
@@ -373,7 +372,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitMessageArea.requestFocusInMessage();
     
     for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
-      support.installSearch(myCommitMessageArea.getTextField(), myCommitMessageArea.getTextField());
+      support.installSearch(myCommitMessageArea.getEditorField(), myCommitMessageArea.getEditorField());
     }
 
   }
@@ -934,7 +933,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
   
   public JComponent getPreferredFocusedComponent() {
-    return myCommitMessageArea.getTextField();
+    return myCommitMessageArea.getEditorField();
   }
 
   public void calcData(DataKey key, DataSink sink) {

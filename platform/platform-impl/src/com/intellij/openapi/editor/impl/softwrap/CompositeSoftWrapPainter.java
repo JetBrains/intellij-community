@@ -48,13 +48,13 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u2926',                   '\u2925')),
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\uE48B',                   '\uE48C')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u21B2',                   '\u21B3')),
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u2936',                   '\u2937')),
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\u21A9',                   '\u21AA'))
+          asList('\u21A9',                   '\u21AA')),
+    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+          asList('\uE48B',                   '\uE48C'))
   );
 
   private final EditorEx        myEditor;
