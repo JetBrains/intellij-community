@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
@@ -48,6 +49,14 @@ public class SvnRepositoryLocation implements RepositoryLocation {
 
   public String getKey() {
     return myURL;
+  }
+
+  @Override
+  public void onBeforeBatch() throws VcsException {
+  }
+
+  @Override
+  public void onAfterBatch() {
   }
 
   @Nullable
