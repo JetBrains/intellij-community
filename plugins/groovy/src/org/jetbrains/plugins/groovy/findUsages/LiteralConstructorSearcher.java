@@ -26,7 +26,7 @@ public class LiteralConstructorSearcher {
     if (literal.isMap()) {
       final GrNamedArgument argument = literal.findNamedArgument("super");
       if (argument != null) {
-        return processConstructorReference(ObjectUtils.assertNotNull(argument.getLabel()).getReference());
+        //return processConstructorReference(ObjectUtils.assertNotNull(argument.getLabel()).getReference());
       }
     }
 

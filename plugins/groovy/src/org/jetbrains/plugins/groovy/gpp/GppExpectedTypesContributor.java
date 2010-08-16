@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
@@ -29,8 +30,12 @@ public class GppExpectedTypesContributor extends GroovyExpectedTypesContributor 
       if (!list.isMap()) {
         return addExpectedConstructorParameters(expression, list);
       }
-      else {
+    }
+    if (parent instanceof GrNamedArgument) {
+      final PsiElement map = parent.getParent();
+      if (map instanceof GrListOrMap && "super".equals(((GrNamedArgument)parent).getLabelName())) {
         //todo expected property types
+        return addExpectedConstructorParameters((GrListOrMap)map, new PsiType[]{expression.getType()}, 0);
       }
     }
     return Collections.emptyList();
@@ -46,6 +51,10 @@ public class GppExpectedTypesContributor extends GroovyExpectedTypesContributor 
     final int argIndex = Arrays.asList(list.getInitializers()).indexOf(expression);
     assert argIndex >= 0;
 
+    return addExpectedConstructorParameters(list, argTypes, argIndex);
+  }
+
+  private static List<TypeConstraint> addExpectedConstructorParameters(GrListOrMap list, PsiType[] argTypes, int argIndex) {
     final ArrayList<TypeConstraint> result = new ArrayList<TypeConstraint>();
     for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
       if (type instanceof PsiClassType) {

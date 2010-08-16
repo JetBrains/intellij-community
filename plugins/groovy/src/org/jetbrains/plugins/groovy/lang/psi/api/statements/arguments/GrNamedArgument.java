@@ -31,4 +31,7 @@ public interface GrNamedArgument extends GroovyPsiElement {
 
   @Nullable
   GrExpression getExpression();
+
+  @Nullable
+  String getLabelName();
 }

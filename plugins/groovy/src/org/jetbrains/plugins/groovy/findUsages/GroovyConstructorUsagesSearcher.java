@@ -196,32 +196,46 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
                                             final LiteralConstructorSearcher literalProcessor) {
     final SearchScope gppScope = getGppScope(targetClass.getProject()).intersectWith(scope);
     final ReadActionProcessor<PsiReference> gppCallProcessor = new ReadActionProcessor<PsiReference>() {
-      @Override
-      public boolean processInReadAction(PsiReference psiReference) {
+
+      @Nullable
+      private GrExpression[] getCallArguments(PsiReference psiReference) {
         if (psiReference instanceof GrReferenceElement) {
           final PsiElement parent = ((GrReferenceElement)psiReference).getParent();
           if (parent instanceof GrCall) {
             final GrArgumentList argList = ((GrCall)parent).getArgumentList();
             if (argList != null) {
-              boolean checkedTypedContext = false;
+              return argList.getExpressionArguments();
+            }
+          }
+        }
+        else if (psiReference instanceof LiteralConstructorReference) {
+          return ((LiteralConstructorReference)psiReference).getCallArguments();
+        }
+        return null;
+      }
 
-              for (GrExpression argument : argList.getExpressionArguments()) {
-                if (argument instanceof GrListOrMap) {
-                  if (!checkedTypedContext) {
-                    if (!GppTypeConverter.hasTypedContext(parent)) {
-                      return true;
-                    }
-                    checkedTypedContext = true;
-                  }
+      @Override
+      public boolean processInReadAction(PsiReference psiReference) {
+        final GrExpression[] arguments = getCallArguments(psiReference);
+        if (arguments == null) {
+          return true;
+        }
 
-                  for (PsiType psiType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(argument)) {
-                    if (psiType instanceof PsiClassType &&
-                        targetClass.getManager().areElementsEquivalent(targetClass, ((PsiClassType)psiType).resolve()) &&
-                        !literalProcessor.processLiteral((GrListOrMap)argument)) {
-                      return false;
-                    }
-                  }
-                }
+        boolean checkedTypedContext = false;
+        for (GrExpression argument : arguments) {
+          if (argument instanceof GrListOrMap) {
+            if (!checkedTypedContext) {
+              if (!GppTypeConverter.hasTypedContext(psiReference.getElement())) {
+                return true;
+              }
+              checkedTypedContext = true;
+            }
+
+            for (PsiType psiType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(argument)) {
+              if (psiType instanceof PsiClassType &&
+                  targetClass.getManager().areElementsEquivalent(targetClass, ((PsiClassType)psiType).resolve()) &&
+                  !literalProcessor.processLiteral((GrListOrMap)argument)) {
+                return false;
               }
             }
           }
@@ -230,7 +244,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       }
     };
     if (currentTarget.isConstructor()) {
-      processConstructorUsages(currentTarget, gppScope, gppCallProcessor, originalCollector, false, false);
+      processConstructorUsages(currentTarget, gppScope, gppCallProcessor, originalCollector, true, false);
     }
     else {
       MethodReferencesSearch.searchOptimized(currentTarget, gppScope, true, originalCollector, gppCallProcessor);
