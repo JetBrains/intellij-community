@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -22,13 +23,15 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReferenceInjector;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -48,14 +51,21 @@ class AntReferenceInjector implements DomReferenceInjector {
   @NotNull
   public PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
     if (element instanceof XmlAttributeValue) {
-      final List<PsiReference> refs = new ArrayList<PsiReference>();
-      addPropertyReferences(context, (XmlAttributeValue)element, refs);
-      return refs.toArray(new PsiReference[refs.size()]);
+      final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)element;
+      final List<PsiReference> refs = PsiReferenceListSpinAllocator.alloc();
+      try {
+        addPropertyReferences(context, xmlAttributeValue, refs);
+        addMacrodefParameterRefs(xmlAttributeValue, refs);
+        return refs.size() == 0? PsiReference.EMPTY_ARRAY : ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
+      }
+      finally {
+        PsiReferenceListSpinAllocator.dispose(refs);
+      }
     }
     return PsiReference.EMPTY_ARRAY;
   }
 
-  private static void addPropertyReferences(@NotNull ConvertContext context, final XmlAttributeValue xmlAttributeValue, final List<PsiReference> result) {
+  private static void addPropertyReferences(@NotNull ConvertContext context, final XmlAttributeValue xmlAttributeValue, final Collection<PsiReference> result) {
     final String value = xmlAttributeValue.getValue();
     final DomElement contextElement = context.getInvocationElement();
     
@@ -75,7 +85,7 @@ class AntReferenceInjector implements DomReferenceInjector {
       }
     }
     
-    if (xmlAttributeValue != null && value.indexOf("@{") < 0) {
+    if (xmlAttributeValue != null /*&& value.indexOf("@{") < 0*/) {
       final int valueBeginingOffset = Math.abs(xmlAttributeValue.getTextRange().getStartOffset() - xmlAttributeValue.getValueTextRange().getStartOffset());
       int startIndex;
       int endIndex = -1;
@@ -117,5 +127,45 @@ class AntReferenceInjector implements DomReferenceInjector {
       }
     }
   }
+  
+  public static void addMacrodefParameterRefs(@NotNull XmlAttributeValue element, final Collection<PsiReference> refs) {
+    final DomElement domElement = DomUtil.getDomElement(element);
+    if (domElement == null) {
+      return;
+    }
+    final AntDomMacroDef macrodef = domElement.getParentOfType(AntDomMacroDef.class, true);
+    if (macrodef == null) {
+      return;
+    }
+    final String text = ElementManipulators.getValueText(element);
+    final int valueBeginingOffset = Math.abs(element.getTextRange().getStartOffset() - element.getValueTextRange().getStartOffset());
+    int startIndex;
+    int endIndex = -1;
+    while ((startIndex = text.indexOf("@{", endIndex + 1)) > endIndex) {
+      startIndex += 2;
+      endIndex = startIndex;
+      int nestedBrackets = 0;
+      while (text.length() > endIndex) {
+        final char ch = text.charAt(endIndex);
+        if (ch == '}') {
+          if (nestedBrackets == 0) {
+            break;
+          }
+          --nestedBrackets;
+        }
+        else if (ch == '{') {
+          ++nestedBrackets;
+        }
+        ++endIndex;
+      }
+      if(nestedBrackets > 0 || endIndex == text.length()) return;
+      if (endIndex >= startIndex) {
+        //final String name = text.substring(startIndex, endIndex);
+         refs.add(new AntDomMacrodefAttributeReference(element, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex)));
+      }
+      endIndex = startIndex; 
+    }
+  }
+
 
 }

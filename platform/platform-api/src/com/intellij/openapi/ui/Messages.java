@@ -35,6 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -334,7 +335,7 @@ public class Messages {
     else {
       InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
 
-      final JTextField field = dialog.getTextField();
+      final JTextComponent field = dialog.getTextField();
       if (selection != null) {
         // set custom selection
         field.select(selection.getStartOffset(),
@@ -385,6 +386,16 @@ public class Messages {
       dialog.show();
       return dialog.getInputString();
     }
+  }
+
+  @Nullable
+  public static String showMultilineInputDialog(Project project, String message, String title, @NonNls String initialValue, Icon icon, @Nullable InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return ourTestInputImplementation.show(message);
+    }
+    InputDialog dialog = new MultilineInputDialog(project, message, title, icon, initialValue, validator, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
+    dialog.show();
+    return dialog.getInputString();
   }
 
   @Nullable
@@ -663,7 +674,7 @@ public class Messages {
   }
 
   protected static class InputDialog extends MessageDialog {
-    private JTextField myField;
+    private JTextComponent myField;
     private InputValidator myValidator;
 
     public InputDialog(Project project,
@@ -757,15 +768,19 @@ public class Messages {
         messagePanel.add(textLabel, BorderLayout.NORTH);
       }
 
-      myField = new JTextField(30);
+      myField = createTextFieldComponent();
       messagePanel.add(myField, BorderLayout.SOUTH);
       panel.add(messagePanel, BorderLayout.CENTER);
 
       return panel;
     }
 
-    public JTextField getTextField() {
+    public JTextComponent getTextField() {
       return myField;
+    }
+
+    protected JTextComponent createTextFieldComponent() {
+      return new JTextField(30);
     }
 
     public JComponent getPreferredFocusedComponent() {
@@ -780,6 +795,23 @@ public class Messages {
       else {
         return null;
       }
+    }
+  }
+
+  protected static class MultilineInputDialog extends InputDialog {
+    public MultilineInputDialog(Project project,
+                                String message,
+                                String title,
+                                Icon icon,
+                                String initialValue,
+                                InputValidator validator,
+                                String[] options, int defaultOption) {
+      super(project, message, title, icon, initialValue, validator, options, defaultOption);
+    }
+
+    @Override
+    protected JTextComponent createTextFieldComponent() {
+      return new JTextArea(5, 30);
     }
   }
 
