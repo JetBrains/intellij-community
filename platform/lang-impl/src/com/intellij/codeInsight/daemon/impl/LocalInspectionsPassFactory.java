@@ -22,7 +22,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
-import com.intellij.codeInspection.ex.InspectionProfileWrapperProvider;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -55,8 +54,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
     TextRange textRange = calculateRangeToProcess(editor);
     if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument(), LocalInspectionsPass.IN_PROGRESS_ICON,
                                                                              LocalInspectionsPass.PRESENTABLE_NAME);
-    InspectionProfileWrapperProvider provider = editor.getUserData(InspectionProfileWrapperProvider.KEY);
-    return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), provider) {
+    return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset()) {
       List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
         List<LocalInspectionTool> tools = super.getInspectionTools(profile);
         List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>(tools.size());

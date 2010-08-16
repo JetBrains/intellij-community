@@ -32,7 +32,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.SeparatorFactory;
@@ -89,11 +91,11 @@ public class CommitMessage extends JPanel implements Disposable {
    * Hence, we define custom profile that is used during highlighting of commit area editor.
    */
   @Nullable
-  private static final InspectionProfileWrapperProvider INSPECTION_PROFILE_WRAPPER_PROVIDER = initProvider();
+  private static final InspectionProfileWrapper INSPECTION_PROFILE_WRAPPER_PROVIDER = initProvider();
 
   @SuppressWarnings("unchecked")
   @Nullable
-  private static InspectionProfileWrapperProvider initProvider() {
+  private static InspectionProfileWrapper initProvider() {
     // We don't want to add explicit dependency to 'spellchecker' module, hence, use reflection for instantiating
     // target inspection object. It's assumed that its default settings are just fine for processing commit dialog editor.
     // Please perform corresponding settings tuning if that assumption is broken at future.
@@ -152,13 +154,7 @@ public class CommitMessage extends JPanel implements Disposable {
       }
     };
 
-    return new InspectionProfileWrapperProvider() {
-      @NotNull
-      @Override
-      public InspectionProfileWrapper getWrapper() {
-        return profileWrapper;
-      }
-    };
+    return profileWrapper;
   }
 
   private final EditorTextField myEditorField;
@@ -197,7 +193,10 @@ public class CommitMessage extends JPanel implements Disposable {
         settings.setUseSoftWraps(true);
         settings.setAdditionalColumnsCount(0);
         if (INSPECTION_PROFILE_WRAPPER_PROVIDER != null) {
-          ex.putUserData(InspectionProfileWrapperProvider.KEY, INSPECTION_PROFILE_WRAPPER_PROVIDER);
+          PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
+          if (file != null) {
+            file.putUserData(InspectionProfileWrapper.KEY, INSPECTION_PROFILE_WRAPPER_PROVIDER);
+          }
         }
         ex.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
         return ex;

@@ -80,16 +80,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
   private final String myShortcutText;
   private final SeverityRegistrar mySeverityRegistrar;
-  private final InspectionProfileWrapperProvider myProfileWrapperProvider;
+  private final InspectionProfileWrapper myProfileWrapper;
   private boolean myFailFastOnAcquireReadAction;
 
   public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset) {
-    this(file, document, startOffset, endOffset, null);
-  }
-
-  public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset,
-                              @Nullable InspectionProfileWrapperProvider profileProvider)
-  {
     super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file, true);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
@@ -104,18 +98,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       myShortcutText = "";
     }
     mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
-    if (profileProvider == null) {
-      myProfileWrapperProvider = new InspectionProfileWrapperProvider() {
-        @NotNull
-        @Override
-        public InspectionProfileWrapper getWrapper() {
-          return InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
-        }
-      };
-    }
-    else {
-      myProfileWrapperProvider = profileProvider;
-    }
+    InspectionProfileWrapper customProfile = file.getUserData(InspectionProfileWrapper.KEY);
+    myProfileWrapper = customProfile == null ? InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper() : customProfile;
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
@@ -124,7 +108,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myTools = new ArrayList<LocalInspectionTool>();
     if (!HighlightLevelUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-    final InspectionProfileWrapper profile = myProfileWrapperProvider.getWrapper();
+    final InspectionProfileWrapper profile = myProfileWrapper;
     final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
 
     inspect(tools, iManager, true, true, true);
@@ -402,7 +386,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     @NonNls String message = ProblemDescriptionNode.renderDescriptionMessage(descriptor);
 
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-    final InspectionProfile inspectionProfile = myProfileWrapperProvider.getWrapper().getInspectionProfile();
+    final InspectionProfile inspectionProfile = myProfileWrapper.getInspectionProfile();
     if (!inspectionProfile.isToolEnabled(key, myFile)) return null;
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(psiElement), level.getAttributesKey());
