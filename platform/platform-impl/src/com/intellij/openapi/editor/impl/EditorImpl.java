@@ -2942,7 +2942,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (lineNumber >= totalLines) {
-      moveCaretToScreenPos(x, logicalLineToY(totalLines - 1));
+      moveCaretToScreenPos(x, visibleLineNumberToYPosition(getVisibleLineCount() - 1));
       return;
     }
 
