@@ -498,7 +498,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       myFileAnnotation = fileAnnotation;
       myVcs = vcs;
       myFile = file;
-      final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
       currentLine = -1;
     }
 
