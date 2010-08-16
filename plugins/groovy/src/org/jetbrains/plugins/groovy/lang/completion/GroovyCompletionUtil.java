@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.AllClassesGetter;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -344,10 +345,6 @@ public class GroovyCompletionUtil {
     }
 
     return false;
-  }
-
-  public static LookupElement setTailTypeForConstructor(PsiClass clazz, LookupElement lookupElement) {
-    return LookupElementDecorator.withInsertHandler(lookupElement, ParenthesesInsertHandler.getInstance(hasConstructorParameters(clazz)));
   }
 
   public static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
