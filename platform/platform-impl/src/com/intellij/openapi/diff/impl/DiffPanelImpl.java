@@ -458,9 +458,16 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         @Override
         public void run() {
           final int startLine = myDocument.getLineNumber(textRange.getStartOffset());
-          final int endLine = myDocument.getLineNumber(textRange.getEndOffset());
+          final int endFragmentOffset = textRange.getEndOffset();
+          final int endLine = myDocument.getLineNumber(endFragmentOffset);
           for (int i = startLine; i <= endLine; i++) {
-            String text = myDocument.getText().substring(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i));
+            int lineEndOffset = myDocument.getLineEndOffset(i);
+            final int lineStartOffset = myDocument.getLineStartOffset(i);
+            if (lineEndOffset > endFragmentOffset && (endFragmentOffset == lineStartOffset)) {
+              lineEndOffset = endFragmentOffset;
+            }
+            if (lineStartOffset > lineEndOffset) continue;
+            String text = myDocument.getText().substring(lineStartOffset, lineEndOffset);
             myBuffer.add(new Pair<Integer, String>(i, text));
           }
         }
