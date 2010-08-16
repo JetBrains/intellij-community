@@ -402,7 +402,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
               @Override
               public void run() {
                 if (finalLine >= 0) {
-                  myRightSide.scrollToFirstDiff(finalLine);
+                  final int line = myLineBlocks.transform(myRightSide.getSide(), finalLine);
+                  myLeftSide.scrollToFirstDiff(line);
                 } else {
                   scrollCurrentToFirstDiff();
                 }
