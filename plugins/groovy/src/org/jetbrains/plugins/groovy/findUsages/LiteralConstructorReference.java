@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,6 +33,16 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   public LiteralConstructorReference(@NotNull GrListOrMap element, @NotNull PsiClassType constructedClassType) {
     super(element, TextRange.from(0, 0), false);
     myExpectedType = constructedClassType;
+  }
+
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return getElement();
+  }
+
+  @Override
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    return getElement();
   }
 
   public PsiClassType getConstructedClassType() {
