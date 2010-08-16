@@ -187,7 +187,7 @@ public class CommitMessage extends JPanel implements Disposable {
       protected EditorEx createEditor() {
         final EditorEx ex = super.createEditor();
         ex.setOneLineMode(false);
-        ex.setVerticalScrollbarVisible(false);
+        ex.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         ex.setHorizontalScrollbarVisible(true);
         EditorSettings settings = ex.getSettings();
         settings.setUseSoftWraps(true);
