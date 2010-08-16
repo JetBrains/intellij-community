@@ -136,7 +136,7 @@ public class Change {
 
   private static int revisionHashCode(ContentRevision rev) {
     if (rev == null) return 0;
-    return rev.getFile().hashCode();
+    return rev.getFile().getIOFile().getPath().hashCode();
   }
 
   public boolean affectsFile(File ioFile) {
