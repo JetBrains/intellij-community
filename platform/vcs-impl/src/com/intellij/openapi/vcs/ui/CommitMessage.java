@@ -82,7 +82,7 @@ public class CommitMessage extends JPanel implements Disposable {
   };
 
   /**
-   * Holds custom inspection profile wrapper provider.
+   * Holds custom inspection profile wrapper.
    * <p/>
    * The general idea is that we want to use existing spell checking functionality within commit message all the time.
    * Unfortunately, we can't do that as-is because spell checking inspection may be disabled or specifically configured
@@ -91,7 +91,7 @@ public class CommitMessage extends JPanel implements Disposable {
    * Hence, we define custom profile that is used during highlighting of commit area editor.
    */
   @Nullable
-  private static final InspectionProfileWrapper INSPECTION_PROFILE_WRAPPER_PROVIDER = initProvider();
+  private static final InspectionProfileWrapper INSPECTION_PROFILE_WRAPPER = initProvider();
 
   @SuppressWarnings("unchecked")
   @Nullable
@@ -192,10 +192,10 @@ public class CommitMessage extends JPanel implements Disposable {
         EditorSettings settings = ex.getSettings();
         settings.setUseSoftWraps(true);
         settings.setAdditionalColumnsCount(0);
-        if (INSPECTION_PROFILE_WRAPPER_PROVIDER != null) {
+        if (INSPECTION_PROFILE_WRAPPER != null) {
           PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
           if (file != null) {
-            file.putUserData(InspectionProfileWrapper.KEY, INSPECTION_PROFILE_WRAPPER_PROVIDER);
+            file.putUserData(InspectionProfileWrapper.KEY, INSPECTION_PROFILE_WRAPPER);
           }
         }
         ex.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
