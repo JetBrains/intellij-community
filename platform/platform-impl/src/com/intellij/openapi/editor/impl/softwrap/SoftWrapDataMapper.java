@@ -298,7 +298,7 @@ public class SoftWrapDataMapper {
     private LogicalPosition process(@NotNull TextChange softWrap) {
       int endDocumentOffset = myEditor.getDocument().getTextLength();
       if (softWrap.getStart() >= endDocumentOffset) {
-        return advanceToOffset(endDocumentOffset).build();
+        return strategy.build(context);
       }
       Context newContext = advanceToOffset(softWrap.getStart());
       if (strategy.exceeds(newContext)) {

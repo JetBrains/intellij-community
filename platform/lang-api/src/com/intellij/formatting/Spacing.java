@@ -15,7 +15,6 @@
  */
 package com.intellij.formatting;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 
 /**
@@ -27,8 +26,6 @@ import com.intellij.openapi.util.TextRange;
 
 public abstract class Spacing {
   private static SpacingFactory myFactory;
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Spacing");
 
   static void setFactory(SpacingFactory factory) {
     myFactory = factory;

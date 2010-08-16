@@ -20,14 +20,18 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +43,9 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Apr 21, 2010
  */
-public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElement> implements AntDomReference{
+public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElement> implements AntDomReference {
+
+  public static final String ANT_FILE_PREFIX = "ant.file.";
   private final DomElement myInvocationContextElement;
   private boolean myShouldBeSkippedByAnnotator = false;
   
@@ -88,6 +94,24 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
       return result;
     }
     return EMPTY_ARRAY;
+  }
+
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    final String refText = getCanonicalText();
+    if (refText.startsWith(ANT_FILE_PREFIX)) {
+      final PsiElement resolve = resolve();
+      if (resolve instanceof PomTargetPsiElement) {
+        final PomTarget target = ((PomTargetPsiElement)resolve).getTarget();
+        if(target instanceof DomTarget) {
+          final DomTarget domTarget = (DomTarget)target;
+          final String oldName = domTarget.getName();
+          if (oldName != null && (refText.length() == ANT_FILE_PREFIX.length() + oldName.length()) && refText.endsWith(oldName)) {
+            newElementName = ANT_FILE_PREFIX + newElementName;
+          }
+        }
+      }
+    }
+    return super.handleElementRename(newElementName);
   }
 
   private static class MyResolveResult implements ResolveResult {
