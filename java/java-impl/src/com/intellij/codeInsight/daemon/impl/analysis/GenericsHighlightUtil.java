@@ -172,13 +172,21 @@ public class GenericsHighlightUtil {
                                                                 final PsiSubstitutor substitutor,
                                                                 final PsiType type,
                                                                 final PsiElement typeElement2Highlight) {
-    if (!(type instanceof PsiClassType)) return null;
-    final PsiClass referenceClass = ((PsiClassType)type).resolve();
+    PsiType type2highlight = type;
+    if (type instanceof PsiWildcardType) {
+      if (((PsiWildcardType)type).isExtends()) {
+        type2highlight = ((PsiWildcardType)type).getExtendsBound();
+      } else if (((PsiWildcardType)type).isSuper()) {
+        type2highlight = ((PsiWildcardType)type).getSuperBound();
+      }
+    }
+    if (!(type2highlight instanceof PsiClassType)) return null;
+    final PsiClass referenceClass = ((PsiClassType)type2highlight).resolve();
     if (referenceClass == null) return null;
     final PsiClassType[] bounds = classParameter.getSuperTypes();
     for (PsiClassType type1 : bounds) {
       PsiType bound = substitutor.substitute(type1);
-      if (!TypeConversionUtil.isAssignable(bound, type, false)) {
+      if (!TypeConversionUtil.isAssignable(bound, type2highlight, false) && TypesDistinctProver.provablyDistinct(bound, type)) {
         PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
         @NonNls final String messageKey = boundClass == null || referenceClass.isInterface() == boundClass.isInterface()

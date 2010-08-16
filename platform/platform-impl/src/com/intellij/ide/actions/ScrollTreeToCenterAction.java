@@ -33,7 +33,7 @@ public class ScrollTreeToCenterAction extends AnAction {
     if (component instanceof JTree) {
       JTree tree = (JTree)component;
       final int[] selection = tree.getSelectionRows();
-      if (selection.length > 0) {
+       if (selection != null && selection.length > 0) {
         TreeUtil.showRowCentered(tree, selection [0], false);
       }
     }

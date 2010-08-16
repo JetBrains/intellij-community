@@ -1,4 +1,4 @@
-<project default="copy_files" basedir=".">
+<project name="build" default="copy_files" basedir=".">
   <property name="main.idea.path" value="C:/idea.4247"/>
   <property name="idea.path" value="${main.idea.path}/debug"/>
 

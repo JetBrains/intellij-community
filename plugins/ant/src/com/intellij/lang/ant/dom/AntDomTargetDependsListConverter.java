@@ -15,14 +15,16 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -41,11 +43,10 @@ import java.util.*;
 public class AntDomTargetDependsListConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
   
   public TargetResolver.Result fromString(@Nullable @NonNls String s, ConvertContext context) {
-    AntDomProject project = context.getInvocationElement().getParentOfType(AntDomProject.class, false);
+    final AntDomProject project = context.getInvocationElement().getParentOfType(AntDomProject.class, false);
     if (project == null) {
       return null;
     }
-    // todo: use context project
     final AntDomTarget contextTarget = context.getInvocationElement().getParentOfType(AntDomTarget.class, false);
     if (contextTarget == null) {
       return null;
@@ -62,7 +63,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
         refs.add(ref.trim());
       }
     }
-    final TargetResolver.Result result = TargetResolver.resolve(project, contextTarget, refs);
+    final TargetResolver.Result result = TargetResolver.resolve(project.getContextAntProject(), contextTarget, refs);
     result.setRefsString(s);
     return result;
   }
@@ -113,7 +114,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
       if (domTarget != null) {
         existingRefs.add(antTarget.getSecond());
       }
-      refs.add(new PsiReferenceBase<PsiElement>(valueElement, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length()), true) {
+      refs.add(new AntDomReferenceBase(valueElement, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length()), true) {
         public PsiElement resolve() {
           return domTarget != null? PomService.convertToPsi(domTarget) : null;
         }
@@ -132,10 +133,16 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
               //if (psi == null) {
               //  continue;
               //}
-              variants.add(LookupElementBuilder.create(/*psi, */targetEffectiveName));
+              final LookupElementBuilder builder = LookupElementBuilder.create(/*psi, */targetEffectiveName);
+              final LookupElement element = AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder);
+              variants.add(element);
             }
           }
           return variants.toArray();
+        }
+
+        public String getUnresolvedMessagePattern() {
+          return AntBundle.message("cannot.resolve.target", getCanonicalText());
         }
       });
     }

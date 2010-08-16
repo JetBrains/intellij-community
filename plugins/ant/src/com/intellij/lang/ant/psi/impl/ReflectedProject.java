@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
 * @author Eugene Zhuravlev
@@ -45,6 +46,8 @@ public final class ReflectedProject {
   private static final List<SoftReference<Pair<ReflectedProject, ClassLoader>>> ourProjects =
     new ArrayList<SoftReference<Pair<ReflectedProject, ClassLoader>>>();
 
+  private static final ReentrantLock ourProjectsLock = new ReentrantLock();
+  
   private final Object myProject;
   private Hashtable myTaskDefinitions;
   private Hashtable myDataTypeDefinitions;
@@ -52,26 +55,38 @@ public final class ReflectedProject {
   private Class myTargetClass;
 
   public static ReflectedProject getProject(final ClassLoader classLoader) {
-    for (Iterator<SoftReference<Pair<ReflectedProject, ClassLoader>>> iterator = ourProjects.iterator(); iterator.hasNext();) {
-      final SoftReference<Pair<ReflectedProject, ClassLoader>> ref = iterator.next();
-      final Pair<ReflectedProject, ClassLoader> pair = ref.get();
-      if (pair == null) {
-        iterator.remove();
-      }
-      else {
-        if (pair.first != null && pair.first.getProject() == null) {
+    ourProjectsLock.lock();
+    try {
+      for (Iterator<SoftReference<Pair<ReflectedProject, ClassLoader>>> iterator = ourProjects.iterator(); iterator.hasNext();) {
+        final SoftReference<Pair<ReflectedProject, ClassLoader>> ref = iterator.next();
+        final Pair<ReflectedProject, ClassLoader> pair = ref.get();
+        if (pair == null) {
           iterator.remove();
         }
-        if (pair.second == classLoader) {
-          return pair.first;
+        else {
+          if (pair.first != null && pair.first.getProject() == null) {
+            iterator.remove();
+          }
+          if (pair.second == classLoader) {
+            return pair.first;
+          }
         }
       }
     }
+    finally {
+      ourProjectsLock.unlock();
+    }
     final ReflectedProject project = new ReflectedProject(classLoader);
     if (project.getProject() != null) { // do not cache partially-loaded stuff
-      ourProjects.add(new SoftReference<Pair<ReflectedProject, ClassLoader>>(
-        new Pair<ReflectedProject, ClassLoader>(project, classLoader)
-      ));
+      ourProjectsLock.lock();
+      try {
+        ourProjects.add(new SoftReference<Pair<ReflectedProject, ClassLoader>>(
+          new Pair<ReflectedProject, ClassLoader>(project, classLoader)
+        ));
+      }
+      finally {
+        ourProjectsLock.unlock();
+      }
     }
     return project;
   }

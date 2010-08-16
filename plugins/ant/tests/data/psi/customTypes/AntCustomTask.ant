@@ -1,6 +1,6 @@
-<project default="customTaskTarget">
+<project name="n" default="customTaskTarget">
   <target name="customTaskTarget">
-    <taskdef name="customtask" classname="com.intellij.lang.ant.typedefs.AntCustomTask"/>
+    <taskdef name="customtask" classname="com.intellij.lang.ant.typedefs.AntCustomTask" classpath="<_classpath_>"/>
     <customtask/>
   </target>
 </project>

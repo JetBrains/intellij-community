@@ -137,6 +137,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return text.toString();
   }
 
+  @Override
+  public String getText(TextRange range) {
+    return range.substring(getText());
+  }
+
   @NotNull
   public CharSequence getCharsSequence() {
     return getText();

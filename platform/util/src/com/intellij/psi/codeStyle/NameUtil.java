@@ -239,6 +239,71 @@ public class NameUtil {
     return ArrayUtil.toStringArray(result);
   }
 
+  public static List<String> getSuggestionsByName(String name,
+                                                   String prefix,
+                                                   String suffix,
+                                                   boolean upperCaseStyle,
+                                                   boolean preferLongerNames, boolean isArray) {
+    ArrayList<String> answer = new ArrayList<String>();
+    String[] words = nameToWords(name);
+
+    for (int step = 0; step < words.length; step++) {
+      int wordCount = preferLongerNames ? words.length - step : step + 1;
+
+      String startWord = words[words.length - wordCount];
+      char c = startWord.charAt(0);
+      if( c == '_' || !Character.isJavaIdentifierStart( c ) )
+      {
+        continue;
+      }
+
+      StringBuilder buffer = new StringBuilder();
+      buffer.append(prefix);
+
+      if (upperCaseStyle) {
+        startWord = startWord.toUpperCase();
+      }
+      else {
+        if (prefix.length() == 0 || StringUtil.endsWithChar(prefix, '_')) {
+          startWord = startWord.toLowerCase();
+        }
+        else {
+          startWord = Character.toUpperCase(c) + startWord.substring(1);
+        }
+      }
+      buffer.append(startWord);
+
+      for (int i = words.length - wordCount + 1; i < words.length; i++) {
+        String word = words[i];
+        String prevWord = words[i - 1];
+        if (upperCaseStyle) {
+          word = word.toUpperCase();
+          if (prevWord.charAt(prevWord.length() - 1) != '_') {
+            word = "_" + word;
+          }
+        }
+        else {
+          if (prevWord.charAt(prevWord.length() - 1) == '_') {
+            word = word.toLowerCase();
+          }
+        }
+        buffer.append(word);
+      }
+
+      String suggestion = buffer.toString();
+
+      if (isArray) {
+        suggestion = StringUtil.pluralize(suggestion);
+        if (upperCaseStyle) {
+          suggestion = suggestion.toUpperCase();
+        }
+      }
+
+      answer.add(suggestion + suffix);
+    }
+    return answer;
+  }
+
   private enum WordState { NO_WORD, PREV_UC, WORD }
 
   private static void addAllWords(String word, List<String> result) {

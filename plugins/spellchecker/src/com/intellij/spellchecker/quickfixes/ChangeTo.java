@@ -30,6 +30,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +65,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
     if (element == null) return;
     Navigatable navigatable = EditSourceUtil.getDescriptor(element);
     if (!(navigatable instanceof OpenFileDescriptor)) return;
-    Editor editor = FileEditorManager.getInstance(project).openTextEditor((OpenFileDescriptor)navigatable, true);
+    Editor editor = PsiUtilBase.findEditor(element);
 
     if (editor == null) {
       return;

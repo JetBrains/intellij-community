@@ -108,6 +108,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable {
@@ -1639,6 +1640,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       softWrapsToSkip.add(softWrap.getStart());
     }
 
+    // There is a possible case that caret is located at soft-wrapped line. We don't need to paint caret row background
+    // on a last visual line of that soft-wrapped line then. Below is a holder for the flag that indicates if caret row
+    // background is already drawn. We don't achieve concurrency stuff here, AtomicBoolean is used just as a data holder.
+    AtomicBoolean caretRowPainted = new AtomicBoolean();
+
     IterationState iterationState = new IterationState(this, start, paintSelection());
 
     LineIterator lIterator = createLineIterator();
@@ -1666,7 +1672,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
           position.x = drawSoftWrapAwareBackground(g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
-                                      defaultBackground, clip, softWrapsToSkip);
+                                      defaultBackground, clip, softWrapsToSkip, caretRowPainted);
 
           if (lIterator.getLineNumber() < lastLineIndex) {
             if (backColor != null && !backColor.equals(defaultBackground)) {
@@ -1678,7 +1684,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             paintAfterFileEndBackground(iterationState,
                                         g,
                                         position, clip,
-                                        lineHeight, defaultBackground);
+                                        lineHeight, defaultBackground, caretRowPainted);
             break;
           }
 
@@ -1699,12 +1705,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (hEnd > lEnd - lIterator.getSeparatorLength()) {
             position.x = drawSoftWrapAwareBackground(
               g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
-              defaultBackground, clip, softWrapsToSkip
+              defaultBackground, clip, softWrapsToSkip, caretRowPainted
             );
           }
           else {
             position.x = drawSoftWrapAwareBackground(
-              g, backColor, text, start, hEnd, position, fontType, defaultBackground, clip, softWrapsToSkip
+              g, backColor, text, start, hEnd, position, fontType, defaultBackground, clip, softWrapsToSkip, caretRowPainted
             );
           }
         }
@@ -1720,7 +1726,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     flushBackground(g, clip);
 
     if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
-      paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
+      getSoftWrapModel().registerSoftWrapIfNecessary(myDocument.getRawChars(), start, myDocument.getTextLength(), position.x, fontType);
+      paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground, caretRowPainted);
     }
 
     // Perform additional activity if soft wrap is added or removed during repainting.
@@ -1766,21 +1773,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     g.fillRect(x, y, width, height);
   }
 
-  private static void paintAfterFileEndBackground(IterationState iterationState,
+  private void paintAfterFileEndBackground(IterationState iterationState,
                                                   Graphics g,
                                                   Point position,
                                                   Rectangle clip,
                                                   int lineHeight,
-                                                  final Color defaultBackground) {
+                                                  final Color defaultBackground,
+                                                  AtomicBoolean caretRowPainted) {
     Color backColor = iterationState.getPastFileEndBackground();
-    if (backColor != null && !backColor.equals(defaultBackground)) {
-      g.setColor(backColor);
-      g.fillRect(position.x, position.y, clip.x + clip.width - position.x, lineHeight);
+    if (backColor == null || backColor.equals(defaultBackground)) {
+      return;
     }
+    if (caretRowPainted.get() && backColor.equals(getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR))) {
+        return;
+    }
+    g.setColor(backColor);
+    g.fillRect(position.x, position.y, clip.x + clip.width - position.x, lineHeight);
   }
 
   private int drawSoftWrapAwareBackground(Graphics g, Color backColor, CharSequence text, int start, int end, Point position,
-                                          int fontType, Color defaultBackground, Rectangle clip, TIntHashSet processSoftWrap)
+                                          int fontType, Color defaultBackground, Rectangle clip, TIntHashSet processSoftWrap,
+                                          AtomicBoolean caretRowPainted)
   {
     int startToUse = start;
     List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, end);
@@ -1792,7 +1805,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (startToUse < softWrapStart) {
         position.x = drawBackground(g, backColor, text.subSequence(startToUse, softWrapStart), position, fontType, defaultBackground, clip);
       }
-      drawSoftWrap(g, softWrap, position, fontType, defaultBackground, clip);
+      drawSoftWrap(g, softWrap, position, fontType, defaultBackground, clip, caretRowPainted);
       startToUse = softWrapStart;
     }
 
@@ -1802,7 +1815,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return position.x;
   }
 
-  private void drawSoftWrap(Graphics g, TextChange softWrap, Point position, int fontType, Color defaultBackground, Rectangle clip) {
+  private void drawSoftWrap(Graphics g, TextChange softWrap, Point position, int fontType, Color defaultBackground, Rectangle clip,
+                            AtomicBoolean caretRowPainted) {
     // The main idea is to to do the following:
     //     *) update given drawing position coordinates in accordance with the current soft wrap;
     //     *) draw 'active line' background at soft wrap-introduced virtual space if necessary;
@@ -1813,6 +1827,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Draw 'active line' background after soft wrap.
       Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
       drawBackground(g, caretRowColor, clip.x + clip.width - position.x, position, defaultBackground, clip);
+      caretRowPainted.set(true);
     }
 
     int i = CharArrayUtil.lastIndexOf(softWrapText, "\n", softWrapText.length()) + 1;
@@ -2927,7 +2942,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (lineNumber >= totalLines) {
-      moveCaretToScreenPos(x, logicalLineToY(totalLines - 1));
+      moveCaretToScreenPos(x, visibleLineNumberToYPosition(getVisibleLineCount() - 1));
       return;
     }
 

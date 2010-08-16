@@ -18,7 +18,6 @@ package com.intellij.util;
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -26,12 +25,15 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IconDeferrer;
-import com.intellij.ui.RowIcon;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 
 public class IconUtil {
@@ -93,7 +95,8 @@ public class IconUtil {
       if (project.isInitialized()) {
         was = Boolean.valueOf(true);
         project.putUserData(PROJECT_WAS_EVER_INTIALIZED, was);
-      } else {
+      }
+      else {
         was = Boolean.valueOf(false);
       }
     }
@@ -104,35 +107,59 @@ public class IconUtil {
   public static Icon getIcon(final VirtualFile file, final int flags, final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
-    return IconDeferrer.getInstance().defer(lastIcon != null ? lastIcon : file.getIcon(), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
-      public Icon fun(final FileIconKey key) {
-        VirtualFile file = key.getFile();
-        int flags = key.getFlags();
-        Project project = key.getProject();
+    return IconDeferrer.getInstance()
+      .defer(lastIcon != null ? lastIcon : file.getIcon(), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
+        public Icon fun(final FileIconKey key) {
+          VirtualFile file = key.getFile();
+          int flags = key.getFlags();
+          Project project = key.getProject();
 
-        if (!file.isValid() || project != null && (project.isDisposed()  || !wasEverInitialized(project))) return null;
+          if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
-        Icon providersIcon = getProvidersIcon(file, flags, project);
-        Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
+          Icon providersIcon = getProvidersIcon(file, flags, project);
+          Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
 
-        final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-        for (FileIconPatcher patcher : getPatchers()) {
-          if (dumb && !DumbService.isDumbAware(patcher)) {
-            continue;
+          final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+          for (FileIconPatcher patcher : getPatchers()) {
+            if (dumb && !DumbService.isDumbAware(patcher)) {
+              continue;
+            }
+
+            icon = patcher.patchIcon(icon, file, flags, project);
           }
 
-          icon = patcher.patchIcon(icon, file, flags, project);
-        }
+          if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
+            icon = new LayeredIcon(icon, Icons.LOCKED_ICON);
+          }
 
-        if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
-          icon = new LayeredIcon(icon, Icons.LOCKED_ICON);
-        }
-        
-        Iconable.LastComputedIcon.put(file, icon, flags);
+          Iconable.LastComputedIcon.put(file, icon, flags);
 
-        return icon;
+          return icon;
+        }
+      });
+  }
+
+  @NotNull
+  public static Icon getDisabledIcon(@NotNull final Icon icon) {
+    final BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_4BYTE_ABGR);
+    icon.paintIcon(new JLabel(), image.getGraphics(), 0, 0);
+    final Image disabledImage = GrayFilter.createDisabledImage(image);
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        g.drawImage(disabledImage, x, y, null);
       }
-    });
+
+      @Override
+      public int getIconWidth() {
+        return disabledImage.getWidth(null);
+      }
+
+      @Override
+      public int getIconHeight() {
+        return disabledImage.getHeight(null);
+      }
+    };
   }
 
   @Nullable

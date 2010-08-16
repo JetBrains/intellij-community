@@ -99,13 +99,13 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       final InclusionKind inclusionKind = myNameContext.getCurrentInclusionKind();
       switch (inclusionKind) {
         case IMPORT:
+          final String alias = myNameContext.getShortPrefix() + declaredTargetName;
           if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
             effectiveTargetName = declaredTargetName;
-            final String alias = myNameContext.getShortPrefix() + declaredTargetName;
             myTargetsResolveMap.put(alias, target); 
           }
           else {
-            effectiveTargetName = myNameContext.getShortPrefix() + declaredTargetName;
+            effectiveTargetName = alias;
           }
           break;
 
@@ -117,26 +117,35 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
             effectiveTargetName = declaredTargetName;
           }
+          else {
+            duplicateTargetFound(myTargetsResolveMap.get(declaredTargetName), target, declaredTargetName);
+          }
           break;
       }
       if (effectiveTargetName != null) {
-        myTargetsResolveMap.put(effectiveTargetName, target);
-        final String dependsStr = target.getDependsList().getStringValue();
-        Map<String, Pair<AntDomTarget, String>> depsMap = Collections.emptyMap();
-        if (dependsStr != null) {
-          depsMap = new HashMap<String, Pair<AntDomTarget, String>>();
-          final StringTokenizer tokenizer = new StringTokenizer(dependsStr, ",", false);
-          while (tokenizer.hasMoreTokens()) {
-            final String token = tokenizer.nextToken().trim();
-            final String dependentTargetEffectiveName = myNameContext.calcTargetReferenceText(token);
-            final AntDomTarget dependent = getTargetByName(dependentTargetEffectiveName);
-            if (dependent != null) {
-              depsMap.put(token, new Pair<AntDomTarget, String>(dependent, dependentTargetEffectiveName));
-            }
-            addDependency(effectiveTargetName, dependentTargetEffectiveName);
-          }
+        final AntDomTarget existingTarget = myTargetsResolveMap.get(effectiveTargetName);
+        if (existingTarget != null) {
+          duplicateTargetFound(existingTarget, target, effectiveTargetName);
         }
-        targetDefined(target, effectiveTargetName, depsMap);
+        else {
+          myTargetsResolveMap.put(effectiveTargetName, target);
+          final String dependsStr = target.getDependsList().getStringValue();
+          Map<String, Pair<AntDomTarget, String>> depsMap = Collections.emptyMap();
+          if (dependsStr != null) {
+            depsMap = new HashMap<String, Pair<AntDomTarget, String>>();
+            final StringTokenizer tokenizer = new StringTokenizer(dependsStr, ",", false);
+            while (tokenizer.hasMoreTokens()) {
+              final String token = tokenizer.nextToken().trim();
+              final String dependentTargetEffectiveName = myNameContext.calcTargetReferenceText(token);
+              final AntDomTarget dependent = getTargetByName(dependentTargetEffectiveName);
+              if (dependent != null) {
+                depsMap.put(token, new Pair<AntDomTarget, String>(dependent, dependentTargetEffectiveName));
+              }
+              addDependency(effectiveTargetName, dependentTargetEffectiveName);
+            }
+          }
+          targetDefined(target, effectiveTargetName, depsMap);
+        }
       }
     }
   }
@@ -228,6 +237,14 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
    * @param dependenciesMap Map declared dependency reference->pair[tareget object, effective reference name]
    */
   protected void targetDefined(AntDomTarget target, String taregetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
+  }
+
+  /**
+   * @param existingTarget
+   * @param duplicatingTarget
+   * @param taregetEffectiveName
+   */
+  protected void duplicateTargetFound(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String taregetEffectiveName) {
   }
 
   protected void stageCompleted(Stage completedStage, Stage startingStage) {

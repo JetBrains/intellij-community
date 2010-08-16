@@ -30,6 +30,7 @@ import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.plaf.beg.*;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jdom.Element;
@@ -339,11 +340,19 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (UIUtil.isUnderAquaLookAndFeel()) {
       final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
-      final Icon icon = getAquaMenuInvertedIcon();
-      if (icon != null) {
-        uiDefaults.put("Menu.invertedArrowIcon", icon);
-      }
+      uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
+      uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
+  }
+
+  @Nullable
+  private static Icon getAquaMenuDisabledIcon() {
+    final Icon arrowIcon = (Icon)UIManager.get("Menu.arrowIcon");
+    if (arrowIcon != null) {
+      return IconUtil.getDisabledIcon(arrowIcon);
+    }
+
+    return null;
   }
 
   @Nullable

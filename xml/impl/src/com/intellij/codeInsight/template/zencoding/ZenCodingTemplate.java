@@ -353,7 +353,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       return null;
     }
     if (template == null) {
-      template = generator.generateTemplate(token.getKey());
+      template = generator.createTemplateByKey(token.getKey());
     }
     if (template == null) {
       return null;

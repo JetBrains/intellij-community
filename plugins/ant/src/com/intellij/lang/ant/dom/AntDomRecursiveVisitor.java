@@ -32,6 +32,11 @@ public class AntDomRecursiveVisitor implements DomElementVisitor{
     }
   }
 
+  public void visitAntDomCustomElement(AntDomCustomElement custom) {
+    visitAntDomElement(custom);
+  }
+  
+
   public void visitTypeDef(AntDomTypeDef typedef) {
     visitAntDomElement(typedef);
   }
@@ -71,4 +76,13 @@ public class AntDomRecursiveVisitor implements DomElementVisitor{
   public void visitImport(AntDomImport importTag) {
     visitAntDomElement(importTag);
   }
+  
+  public void visitAntDomAntCall(AntDomAntCall antCall) {
+    visitAntDomElement(antCall);
+  }
+  
+  public void visitAntDomAntCallParam(AntDomAntCallParam antCallParam) {
+    visitAntDomElement(antCallParam);
+  }
+  
 }

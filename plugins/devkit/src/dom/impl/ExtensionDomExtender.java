@@ -95,7 +95,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     if (!epName.startsWith(prefix)) return;
 
     final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(prefix.length())), Extension.class);
-    domExtension.putUserData(DomExtension.KEY_DECLARATION, extensionPoint);
+    domExtension.setDeclaringElement(extensionPoint);
     domExtension.addExtender(new DomExtender() {
       public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
         final String interfaceName = extensionPoint.getInterface().getStringValue();

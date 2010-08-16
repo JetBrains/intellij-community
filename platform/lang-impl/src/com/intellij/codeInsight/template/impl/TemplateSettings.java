@@ -23,7 +23,10 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -530,6 +533,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         clearPreviouslyRegistered(template);
         addTemplateImpl(template);
       }
+      addTemplateById(template);
 
       result.addElement(template);
     }
@@ -591,20 +595,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   public void readHiddenTemplateFile(Document document) throws InvalidDataException {
-    if (document == null) {
-      throw new InvalidDataException();
-    }
-    Element root = document.getRootElement();
-    if (root == null || !TEMPLATE_SET.equals(root.getName())) {
-      throw new InvalidDataException();
-    }
-
-    for (final Object o1 : root.getChildren(TEMPLATE)) {
-
-      addTemplateById(readTemplateFromElement(false, null, (Element)o1, getClass().getClassLoader()));
-    }
-
-
+    readTemplateFile(document, null, false, false, getClass().getClassLoader());
   }
 
   private static void saveTemplate(TemplateImpl template, Element templateSetElement) {

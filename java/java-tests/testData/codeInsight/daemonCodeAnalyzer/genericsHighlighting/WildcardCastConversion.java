@@ -8,7 +8,7 @@ public class Test {
         class B {}
 
         W<? extends A> xx = null;
-        W<? extends B> y = <error>(W<? extends B>) xx</error>;
+        W<? extends B> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends A>>' to 'W<? extends B>'">(W<? extends B>) xx</error>;
     }
 
     void testEE2() {
@@ -55,7 +55,7 @@ public class Test {
     void test411EE() {
         final class A {}
         W<? extends B> xx = null;
-        W<? extends A> y = <error>(W<? extends A>) xx</error>;
+        W<? extends A> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends Test.B>>' to 'W<? extends A>'">(W<? extends A>) xx</error>;
     }
 
     void test412EE() {
@@ -92,7 +92,7 @@ public class Test {
         class B {}
 
         W<? extends A> x = null;
-        W<? super B> y = <error>(W<? super B>) x</error>;
+        W<? super B> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends A>>' to 'W<? super B>'">(W<? super B>) x</error>;
     }
 
     void test2ES() {
@@ -108,13 +108,13 @@ public class Test {
         class B extends A {}
 
         W<? extends B> x = null;
-        W<? super A> y = <error>(W<? super A>) x</error>;
+        W<? super A> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends B>>' to 'W<? super A>'">(W<? super A>) x</error>;
     }
 
 
     void test4ES() {
         W<? extends B> x = null;
-        W<? super A> y = <error>(W<? super A>) x</error>;
+        W<? super A> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends Test.B>>' to 'W<? super Test.A>'">(W<? super A>) x</error>;
     }
 
     void test5ES() {
@@ -128,7 +128,7 @@ public class Test {
         final class B implements A {}
 
         W<? extends B> x = null;
-        W<? super A> y = <error>(W<? super A>) x</error>;
+        W<? super A> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends B>>' to 'W<? super Test.A>'">(W<? super A>) x</error>;
     }
 
   // ? extends A, B -----------------------
@@ -139,7 +139,7 @@ public class Test {
         }
 
         W<? extends A> xx = null;
-        W<B> y = <error>(W<B>) xx</error>;
+        W<B> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends A>>' to 'W<B>'">(W<B>) xx</error>;
     }
 
     void test2EWC() {
@@ -168,7 +168,7 @@ public class Test {
         }
 
         W<? super A> xx = null;
-        W<B> y = <error>(W<B>) xx</error>;
+        W<B> y = <error descr="Inconvertible types; cannot cast 'W<capture<? super A>>' to 'W<B>'">(W<B>) xx</error>;
     }
 
     void test2SWC() {
@@ -204,7 +204,7 @@ public class Test {
         }
 
         W<? extends P<? extends A>> xx = null;
-        W<? extends B> y = <error>(W<? extends B>) xx</error>;
+        W<? extends B> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends P<? extends A>>>' to 'W<? extends B>'">(W<? extends B>) xx</error>;
     }
 
     void test2EEWC() {
@@ -255,7 +255,7 @@ public class Test {
         class B {}
 
         W<? extends A[]> xx = null;
-        W<? extends B[]> y = <error>(W<? extends B[]>) xx</error>;
+        W<? extends B[]> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends A[]>>' to 'W<? extends B[]>'">(W<? extends B[]>) xx</error>;
     }
 
     void test11AE() {
@@ -263,7 +263,7 @@ public class Test {
         class B {}
 
         W<? extends A[]> xx = null;
-        W<? extends B> y = <error>(W<? extends B>) xx</error>;
+        W<? extends B> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends A[]>>' to 'W<? extends B>'">(W<? extends B>) xx</error>;
     }
 
      void test2AE() {
@@ -279,7 +279,7 @@ public class Test {
         class B extends A {}
 
         W<? extends A[]> xx = null;
-        W<? extends B> y = <error>(W<? extends B>) xx</error>;
+        W<? extends B> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends A[]>>' to 'W<? extends B>'">(W<? extends B>) xx</error>;
     }
 
 
@@ -293,7 +293,7 @@ public class Test {
     void testInt1AE() {
 
         W<? extends A[]> xx = null;
-        W<? extends B[][]> y = <error>(W<? extends B[][]>) xx</error>;
+        W<? extends B[][]> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends Test.A[]>>' to 'W<? extends Test.B[][]>'">(W<? extends B[][]>) xx</error>;
     }
 
     void testASS() {
@@ -309,7 +309,7 @@ public class Test {
         class B {}
 
         W<? extends A[]> x = null;
-        W<? super B[]> y = <error>(W<? super B[]>) x</error>;
+        W<? super B[]> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends A[]>>' to 'W<? super B[]>'">(W<? super B[]>) x</error>;
     }
 
     void test2AES() {
@@ -325,14 +325,14 @@ public class Test {
         class B extends A {}
 
         W<? extends B[]> x = null;
-        W<? super A[]> y = <error>(W<? super A[]>) x</error>;
+        W<? super A[]> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends B[]>>' to 'W<? super A[]>'">(W<? super A[]>) x</error>;
     }
 
 
 
     void test4AES() {
         W<? extends B[]> x = null;
-        W<? super A[]> y = <error>(W<? super A[]>) x</error>;
+        W<? super A[]> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends Test.B[]>>' to 'W<? super Test.A[]>'">(W<? super A[]>) x</error>;
     }
 
     void test5AES() {
@@ -346,7 +346,7 @@ public class Test {
         final class B implements A {}
 
         W<? extends B[]> x = null;
-        W<? super A[]> y = <error>(W<? super A[]>) x</error>;
+        W<? super A[]> y = <error descr="Inconvertible types; cannot cast 'W<capture<? extends B[]>>' to 'W<? super Test.A[]>'">(W<? super A[]>) x</error>;
     }
 
   // type parameters extensions: D<T extends A>
@@ -375,7 +375,7 @@ public class Test {
 
             void foo() {
                 D<? extends T> x = null;
-                D<? extends B> y = <error>(D<? extends B>) x</error>;
+                D<<error descr="Type parameter 'B' is not within its bound; should extend 'A'">? extends B</error>> y = (D<<error descr="Type parameter 'B' is not within its bound; should extend 'A'">? extends B</error>>) x;
             }
 
         }

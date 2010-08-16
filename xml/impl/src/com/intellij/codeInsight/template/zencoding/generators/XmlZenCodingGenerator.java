@@ -41,7 +41,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   }
 
   @Override
-  public TemplateImpl generateTemplate(@NotNull String key) {
+  public TemplateImpl createTemplateByKey(@NotNull String key) {
     StringBuilder builder = new StringBuilder("<");
     builder.append(key).append('>');
     if (!HtmlUtil.isSingleHtmlTag(key)) {
