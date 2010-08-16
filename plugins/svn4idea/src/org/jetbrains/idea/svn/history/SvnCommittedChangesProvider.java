@@ -493,7 +493,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Override
   public Pair<SvnChangeList, FilePath> getOneList(final VirtualFile file, VcsRevisionNumber number) throws VcsException {
-    final VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(file);
+    final RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
+    final VirtualFile root = rootUrlInfo.getVirtualFile();
+    if (root == null) return null;
     final SvnRepositoryLocation svnRootLocation = (SvnRepositoryLocation)getLocationFor(new FilePathImpl(root));
     if (svnRootLocation == null) return null;
     final String url = svnRootLocation.getURL();
