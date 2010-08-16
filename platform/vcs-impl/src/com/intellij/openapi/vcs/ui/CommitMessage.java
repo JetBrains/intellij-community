@@ -27,6 +27,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -46,18 +47,27 @@ import java.util.List;
 public class CommitMessage extends JPanel implements Disposable {
 
   /**
-   * Encapsulates sorting rule that considers editor actions to be greater that all other actions. I.e. the main idea here is that
-   * we want to process editor actions with lower priority than non-editor actions.
+   * Encapsulates sorting rule that defines what editor actions have precedence to non-editor actions. Current approach is that
+   * we want to process text processing-oriented editor actions with higher priority than non-editor actions and all
+   * other editor actions with lower priority.
    * <p/>
    * Rationale: there is at least one commit-specific action that is mapped to the editor action by default
    * (<code>'show commit messages history'</code> vs <code>'scroll to center'</code>). We want to process the former on target
-   * short key triggering.
+   * short key triggering. Another example is that {@code 'Ctrl+Shift+Right/Left Arrow'} shortcut is bound to
+   * <code>'expand/reduce selection by word'</code> editor action and <code>'change dialog width'</code> non-editor action
+   * and we want to use the first one.
    */
   private static final Comparator<? super AnAction> ACTIONS_COMPARATOR = new Comparator<AnAction>() {
     @Override
     public int compare(AnAction o1, AnAction o2) {
       if (o1 instanceof EditorAction && o2 instanceof EditorAction) {
         return 0;
+      }
+      if (o1 instanceof TextComponentEditorAction) {
+        return -1;
+      }
+      if (o2 instanceof TextComponentEditorAction) {
+        return 1;
       }
       if (o1 instanceof EditorAction) {
         return 1;
