@@ -194,23 +194,20 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   }
 
   private Map<String, String> getProperties() {
-    if (myProperties == null) {
+    Map<String, String> properties = myProperties;
+    if (properties == null) {
       final ReflectedProject reflected = ReflectedProject.getProject(getClassLoader());
-      synchronized (this) {
-        if (myProperties == null) {
-          Map<String, String> externals = Collections.emptyMap();
-          final PsiFile containingFile = getXmlTag().getContainingFile();
-          if (containingFile != null) {
-            final AntBuildFileImpl buildFile = (AntBuildFileImpl)containingFile.getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
-            if (buildFile != null) {
-              externals = buildFile.getExternalProperties();
-            }
-          }
-          myProperties = loadPredefinedProperties(reflected.getProperties(), externals);
+      Map<String, String> externals = Collections.emptyMap();
+      final PsiFile containingFile = getXmlTag().getContainingFile();
+      if (containingFile != null) {
+        final AntBuildFileImpl buildFile = (AntBuildFileImpl)containingFile.getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+        if (buildFile != null) {
+          externals = buildFile.getExternalProperties();
         }
       }
+      myProperties = (properties = loadPredefinedProperties(reflected.getProperties(), externals));
     }
-    return myProperties;
+    return properties;
   }
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})

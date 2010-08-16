@@ -17,6 +17,7 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -92,12 +93,20 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     if (id.equals(from.getId().getRawText())) {
       return from;
     }
-    for (AntDomElement child : from.getAntChildren()) {
-      final AntDomElement result = findElementById(child, id);
-      if (result != null) {
-        return result;
+    final Ref<AntDomElement> result = new Ref<AntDomElement>(null);
+    from.accept(new AntDomRecursiveVisitor() {
+      public void visitAntDomElement(AntDomElement element) {
+        if (result.get() != null) {
+          return;
+        }
+        if (id.equals(element.getId().getRawText())) {
+          result.set(element);
+          return;
+        }
+        super.visitAntDomElement(element);
       }
-    }
-    return null;
+    });
+    
+    return result.get();
   }
 }
