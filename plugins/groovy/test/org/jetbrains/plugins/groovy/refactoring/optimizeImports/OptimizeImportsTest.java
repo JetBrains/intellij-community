@@ -138,6 +138,12 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
+  public void testJustWrongImport() throws Exception {
+    myFixture.configureByText("a.groovy", "import a.b.c.d");
+    doOptimizeImports();
+    myFixture.checkResult("import a.b.c.d");
+  }
+
   private void doTest() throws Throwable {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
