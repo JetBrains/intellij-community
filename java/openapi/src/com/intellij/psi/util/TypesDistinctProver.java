@@ -66,7 +66,23 @@ public class TypesDistinctProver {
     if (type1 instanceof PsiClassType && ((PsiClassType)type1).resolve() instanceof PsiTypeParameter) return false;
     if (type2 instanceof PsiClassType && ((PsiClassType)type2).resolve() instanceof PsiTypeParameter) return false;
 
-    return !type1.equals(type2);
+    if (TypeConversionUtil.erasure(type1).equals(TypeConversionUtil.erasure(type2))) {
+      final PsiSubstitutor substitutor1 = PsiUtil.resolveGenericsClassInType(type1).getSubstitutor();
+      final PsiSubstitutor substitutor2 = PsiUtil.resolveGenericsClassInType(type2).getSubstitutor();
+      for (PsiTypeParameter parameter : substitutor1.getSubstitutionMap().keySet()) {
+        final PsiType substitutedType1 = substitutor1.substitute(parameter);
+        final PsiType substitutedType2 = substitutor2.substitute(parameter);
+        if (substitutedType1 == null && substitutedType2 == null) return false;
+        if (substitutedType1 == null || substitutedType2 == null) {
+          for (PsiClassType type : parameter.getExtendsListTypes()) {
+            if (!TypeConversionUtil.isAssignable(type, substitutedType1 != null ? substitutedType1 : substitutedType2, false)) return true;
+          }
+        } else if (provablyDistinct(substitutedType1, substitutedType2)) return true;
+      }
+      return false;
+    }
+
+    return type2 != null && type1 != null && !type1.equals(type2);
   }
 
   public static boolean provablyDistinct(PsiWildcardType type1, PsiWildcardType type2) {

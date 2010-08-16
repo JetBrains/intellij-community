@@ -69,7 +69,30 @@ public class WithingBounds {
     }
 
 
-    //---------------------------------
+    void testE25() {
+      class B {
+        void foo() {
+          this.<Iterable>bar();
+        }
+
+        <T extends Iterable<String>> void bar() {
+        }
+      }
+    }
+
+    void testE26() {
+      class A<T>{}
+      class B {
+        void foo() {
+          this.<A>bar();
+        }
+
+        <T extends A<String>> void bar() {
+        }
+      }
+    }
+
+  //---------------------------------
 
     void testE3() {
         class A {
