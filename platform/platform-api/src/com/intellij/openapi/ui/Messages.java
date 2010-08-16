@@ -811,7 +811,7 @@ public class Messages {
 
     @Override
     protected JTextComponent createTextFieldComponent() {
-      return new JTextArea(5, 30);
+      return new JTextArea(7, 50);
     }
   }
 
