@@ -15,13 +15,21 @@
  */
 package com.intellij.lang.ant;
 
+import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.lang.ant.dom.AntDomMacrodefAttribute;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.ResolveTestCase;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.DomUtil;
 
 public class AntResolveTest extends ResolveTestCase {
 
@@ -217,10 +225,15 @@ public class AntResolveTest extends ResolveTestCase {
   public void testBuildNumber() throws Exception {
     doPropertyTest();
   }
-  // TODO: implement functionality
-  public void _testPropertyInMacrodefParam() throws Exception {
+  
+  public void testPropertyInMacrodefParam() throws Exception {
     PsiReference ref = configure();
-    assertNotNull(ref.resolve());
+    final PsiElement result = ref.resolve();
+    assertTrue(result instanceof PomTargetPsiElement);
+    final PsiElement naviElem = ((DomTarget)((PomTargetPsiElement)result).getTarget()).getNavigationElement();
+    final DomElement domElement = DomUtil.getDomElement(naviElem);
+    assertNotNull(domElement);
+    assertNotNull(domElement.getParentOfType(AntDomMacrodefAttribute.class, false));
   }
 
   public void testMacrodefElement() throws Exception {
@@ -228,24 +241,28 @@ public class AntResolveTest extends ResolveTestCase {
     assertNotNull(ref.resolve());
   }
 
-  /* todo: rewrite into DOM
   public void testAntFilePropertyWithContexts() throws Exception {
-    final AntPropertyReference refImporting = (AntPropertyReference)configureByFile("PropertyAntFileImporting.ant");
-    final AntFile importing = refImporting.getElement().getAntFile();
+    final PsiReference refImporting = configureByFile("PropertyAntFileImporting.ant");
 
+    final PsiFile importing = refImporting.getElement().getContainingFile();
+    assertTrue(importing instanceof XmlFile);
+    
     final VirtualFile vFile = importing.getVirtualFile();
     assertTrue(vFile != null);
     
-    final AntPropertyReference refImported = (AntPropertyReference)configureByFile("PropertyAntFileImported.ant", vFile.getParent());
-    final AntFile imported = refImported.getElement().getAntFile();
-
-    AntConfigurationBase.getInstance(getProject()).setContextFile(imported, importing);
-    importing.clearCaches(); // need this because imported file was created after the importing
+    final PsiReference refImported = configureByFile("PropertyAntFileImported.ant", vFile.getParent());
+    
+    final PsiFile imported = refImported.getElement().getContainingFile();
+    assertTrue(imported instanceof XmlFile);
+    
+    final VirtualFile importedVFile = imported.getVirtualFile();
+    assertTrue(importedVFile != null);
+    
+    AntConfigurationBase.getInstance(getProject()).setContextFile((XmlFile)imported, (XmlFile)importing);
                                     
     assertTrue(refImported.resolve() != null);
     assertTrue(refImporting.resolve() != null);
   }
-  */
   
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();
