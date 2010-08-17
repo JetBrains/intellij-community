@@ -55,7 +55,6 @@ import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -267,6 +266,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         LOG.info("Error saving project", e);
       } finally {
         mySavingInProgress.set(false);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectSaved.TOPIC).saved(this);
       }
     }
   }

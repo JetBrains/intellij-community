@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
-package com.intellij.lang;
+package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.refactoring.RefactoringActionHandler;
+import org.intellij.lang.xpath.xslt.refactoring.introduceParameter.XsltIntroduceParameterAction;
 
-public class LanguageRefactoringSupport extends LanguageExtension<RefactoringSupportProvider> {
-  public static final LanguageRefactoringSupport INSTANCE = new LanguageRefactoringSupport();
+/**
+ * @author Dmitry Avdeev
+ */
+public class XsltRefactoringSupportProvider extends RefactoringSupportProvider {
 
-  private LanguageRefactoringSupport() {
-    super("com.intellij.lang.refactoringSupport", new RefactoringSupportProvider() {});
+  @Override
+  public RefactoringActionHandler getIntroduceParameterHandler() {
+    return new XsltIntroduceParameterAction();
   }
 }

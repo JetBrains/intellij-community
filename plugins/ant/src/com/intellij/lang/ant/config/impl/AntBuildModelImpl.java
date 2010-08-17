@@ -21,7 +21,7 @@ import com.intellij.lang.ant.dom.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -29,7 +29,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class AntBuildModelImpl implements AntBuildModelBase {
 
@@ -43,9 +46,11 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   public String getDefaultTargetName() {
     final AntDomProject antDomProject = getAntProject();
     if (antDomProject != null) {
-      final Trinity<AntDomTarget,String,Map<String,AntDomTarget>> defTarget = antDomProject.getDefaultTarget().getValue();
-      if (defTarget != null) {
-        return defTarget.getSecond();
+      final GenericAttributeValue<TargetResolver.Result> attrib = antDomProject.getDefaultTarget();
+      final TargetResolver.Result result = attrib.getValue();
+      if (result != null) {
+        final Pair<AntDomTarget,String> targetWithName = result.getResolvedTarget(attrib.getRawText());
+        return targetWithName != null? targetWithName.getSecond() : null;
       }
     }
     return "";
@@ -152,12 +157,10 @@ public class AntBuildModelImpl implements AntBuildModelBase {
           }
           myProcessed.add(sourceFile);
           if (!myIsImported) {
-            final GenericAttributeValue<Trinity<AntDomTarget,String,Map<String,AntDomTarget>>> defTarget = project.getDefaultTarget();
-            if (defTarget != null) {
-              final Trinity<AntDomTarget, String, Map<String, AntDomTarget>> trinity = defTarget.getValue();
-              if (trinity != null) {
-                myDefaultTarget = trinity.getFirst();
-              }
+            final TargetResolver.Result result = project.getDefaultTarget().getValue();
+            if (result != null) {
+              final Pair<AntDomTarget,String> targetWithName = result.getResolvedTarget(project.getDefaultTarget().getRawText());
+              myDefaultTarget = targetWithName != null? targetWithName.getFirst() : null;
             }
           }
           for (final AntDomTarget target : project.getDeclaredTargets()) {

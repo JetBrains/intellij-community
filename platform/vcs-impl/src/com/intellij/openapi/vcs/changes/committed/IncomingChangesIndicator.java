@@ -130,6 +130,7 @@ public class IncomingChangesIndicator implements ProjectComponent {
     private void update(@NotNull final Icon icon, @Nullable final String toolTipText) {
       myCurrentIcon = icon;
       myToolTipText = toolTipText;
+      myStatusBar.updateWidget(ID());
     }
 
     @NotNull

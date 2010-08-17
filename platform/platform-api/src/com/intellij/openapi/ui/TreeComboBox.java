@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -36,12 +35,17 @@ import java.util.Enumeration;
  */
 public class TreeComboBox extends JComboBox {
   final static int INDENT = UIManager.getInt("Tree.leftChildIndent");
+  private TreeModel myTreeModel;
 
   public TreeComboBox(@NotNull final TreeModel model) {
-    setModel(new TreeModelWrapper(model));
+    myTreeModel = model;
+    setModel(new TreeModelWrapper(myTreeModel));
     setRenderer(new TreeListCellRenderer(this, model));
-    setSelectedIndex(0);
     if (SystemInfo.isMac) setMaximumRowCount(25);
+  }
+
+  public TreeModel getTreeModel() {
+    return myTreeModel;
   }
 
   private static class TreeListCellRenderer extends JLabel implements ListCellRenderer {

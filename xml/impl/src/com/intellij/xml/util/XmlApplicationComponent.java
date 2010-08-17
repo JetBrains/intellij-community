@@ -22,6 +22,7 @@ import com.intellij.psi.filters.position.TargetNamespaceFilter;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.xml.*;
+import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.NamedObjectDescriptor;
 import com.intellij.xml.impl.schema.SchemaNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
@@ -53,6 +54,7 @@ public class XmlApplicationComponent implements MetaDataContributor {
                   new ContentFilter(
                     new OrFilter(
                       new ClassFilter(XmlElementDecl.class),
+                      new ClassFilter(XmlEntityDecl.class),
                       new ClassFilter(XmlConditionalSection.class),
                       new ClassFilter(XmlEntityRef.class)
                     )
@@ -61,7 +63,7 @@ public class XmlApplicationComponent implements MetaDataContributor {
               ),
               new ClassFilter(XmlMarkupDecl.class)
           ),
-          com.intellij.xml.impl.dtd.XmlNSDescriptorImpl.class
+          XmlNSDescriptorImpl.class
       );
     }
 

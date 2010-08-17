@@ -27,7 +27,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.references.PomService;
@@ -63,7 +62,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
 
   @Attribute("default")
   @Convert(value = AntDomDefaultTargetConverter.class)
-  public abstract GenericAttributeValue<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> getDefaultTarget();
+  public abstract GenericAttributeValue<TargetResolver.Result> getDefaultTarget();
 
   @Attribute("basedir")
   @Convert(value = AntPathConverter.class)

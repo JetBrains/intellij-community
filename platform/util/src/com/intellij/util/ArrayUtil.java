@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -546,5 +547,10 @@ public class ArrayUtil {
     if (count == sample.length) return sample;
 
     return (E[])Array.newInstance(sample.getClass().getComponentType(), count);
+  }
+
+  @Nullable
+  public static <T> T getLastElement(T[] array) {
+    return array.length > 0 ? array[array.length -1] : null;
   }
 }
