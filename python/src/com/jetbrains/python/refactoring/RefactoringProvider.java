@@ -58,7 +58,7 @@ public class RefactoringProvider extends RefactoringSupportProvider {
   }
 
   @Override
-  public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
+  public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
     return (element instanceof PyTargetExpression && PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) ||
            element instanceof PyNamedParameter;
   }
