@@ -27,6 +27,14 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public abstract class RefactoringSupportProvider {
+
+  /**
+   * Allows several providers to be available for the same language
+   * @param context refactoring context
+   * @return true if refactoring support is available in given context
+   */
+  public boolean isAvailable(PsiElement context) { return true; }
+
   /**
    * Checks if the Safe Delete refactoring can be applied to the specified element
    * in the language. The Safe Delete refactoring also requires the plugin to implement

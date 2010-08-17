@@ -18,8 +18,12 @@ package com.intellij.refactoring.actions;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,6 +43,19 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
       }
     });
   }
+
+  @Override
+  protected final RefactoringActionHandler getHandler(DataContext dataContext) {
+    final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
+    if (language != null) {
+      RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forLanguage(language);
+      return provider == null ? null : getRefactoringHandler(provider);
+    }
+    return null;
+  }
+
+  @Nullable
+  protected abstract RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider);
 
   @Override
   protected boolean isHidden() {

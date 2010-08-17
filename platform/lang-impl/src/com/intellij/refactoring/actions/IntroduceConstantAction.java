@@ -18,23 +18,19 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class IntroduceConstantAction extends BasePlatformRefactoringAction {
   public IntroduceConstantAction() {
     setInjectedContext(true);
   }
 
-  protected RefactoringActionHandler getHandler(DataContext dataContext) {
-    final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
-    if (language != null) {
-      return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getIntroduceConstantHandler();
-    }
-
-    return null;
+  @Override
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
+    return provider.getIntroduceConstantHandler();
   }
 
   protected boolean isAvailableInEditorOnly() {

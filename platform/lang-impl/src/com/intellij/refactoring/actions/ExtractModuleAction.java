@@ -18,6 +18,7 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
@@ -25,7 +26,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 public class ExtractModuleAction extends ExtractSuperActionBase {
 
   @Override
-  protected RefactoringActionHandler getRefactoringHandler(RefactoringSupportProvider supportProvider) {
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider supportProvider) {
     return supportProvider.getExtractModuleHandler();
   }
 }
