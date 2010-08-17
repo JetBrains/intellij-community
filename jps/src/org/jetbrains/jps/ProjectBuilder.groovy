@@ -78,8 +78,8 @@ class ProjectBuilder {
     listeners*.onBuildStarted(project)
     buildChunks()
     chunks.each {
-      makeChunk(it)
-      makeChunkTests(it)
+      makeChunk(it, false)
+      makeChunk(it, true)
     }
     listeners*.onBuildFinished(project)
   }
@@ -88,7 +88,7 @@ class ProjectBuilder {
     listeners*.onBuildStarted(project)
     buildChunks()
     chunks.each {
-      makeChunk(it)
+      makeChunk(it, false)
     }
     listeners*.onBuildFinished(project)
   }
@@ -107,33 +107,22 @@ class ProjectBuilder {
   }
 
   def makeModule(Module module) {
-    return makeChunk(chunkForModule(module));
-  }
-
-  private def makeChunk(ModuleChunk chunk) {
-    String currentOutput = outputs[chunk]
-    if (currentOutput != null) return currentOutput
-
-    project.stage("Making module ${chunk.name}")
-    def dst = folderForChunkOutput(chunk, false)
-    outputs[chunk] = dst
-    compile(chunk, dst, false)
-
-    return dst
+    return makeChunk(chunkForModule(module), false);
   }
 
   def makeModuleTests(Module module) {
-    return makeChunkTests(chunkForModule(module));
+    return makeChunk(chunkForModule(module), true);
   }
 
-  private def makeChunkTests(ModuleChunk chunk) {
-    String currentOutput = testOutputs[chunk]
+  private def makeChunk(ModuleChunk chunk, boolean tests) {
+    Map outputsMap = tests ? testOutputs : outputs
+    String currentOutput = outputsMap[chunk]
     if (currentOutput != null) return currentOutput
 
-    project.stage("Making tests for ${chunk.name}")
-    def dst = folderForChunkOutput(chunk, true)
-    testOutputs[chunk] = dst
-    compile(chunk, dst, true)
+    project.stage("Making${tests ? ' tests' : ''} module ${chunk.name}")
+    def dst = folderForChunkOutput(chunk, tests)
+    outputsMap[chunk] = dst
+    compile(chunk, dst, tests)
 
     return dst
   }
@@ -163,7 +152,7 @@ class ProjectBuilder {
     }
   }
 
-  def compile(ModuleChunk chunk, String dst, boolean tests) {
+  private def compile(ModuleChunk chunk, String dst, boolean tests) {
     List sources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
 
     if (sources.isEmpty()) return
@@ -273,7 +262,7 @@ class ProjectBuilder {
   private def chunkOutput(ModuleChunk chunk) {
     if (outputs[chunk] == null) {
       project.info("Dependency module ${chunk.name} haven't yet been built, now building it");
-      makeChunk(chunk)
+      makeChunk(chunk, false)
     }
     return outputs[chunk]
   }
@@ -281,7 +270,7 @@ class ProjectBuilder {
   private String chunkTestOutput(ModuleChunk chunk) {
     if (testOutputs[chunk] == null) {
       binding.project.warning("Dependency module ${chunk.name} tests haven't yet been built, now building it");
-      makeChunkTests(chunk)
+      makeChunk(chunk, true)
     }
 
     testOutputs[chunk]
