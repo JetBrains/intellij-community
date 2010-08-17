@@ -74,20 +74,21 @@ class ProjectBuilder {
   }
 
   public def buildAll() {
-    listeners*.onBuildStarted(project)
-    buildChunks()
-    chunks.each {
-      makeChunk(it, false)
-      makeChunk(it, true)
-    }
-    listeners*.onBuildFinished(project)
+    buildAllModules(true)
   }
 
   public def buildProduction() {
+    buildAllModules(false)
+  }
+
+  private def buildAllModules(boolean includeTests) {
     listeners*.onBuildStarted(project)
     buildChunks()
     chunks.each {
       makeChunk(it, false)
+      if (includeTests) {
+        makeChunk(it, true)
+      }
     }
     listeners*.onBuildFinished(project)
   }
@@ -106,11 +107,24 @@ class ProjectBuilder {
   }
 
   def makeModule(Module module) {
-    return makeChunk(chunkForModule(module), false);
+    return makeChunkWithDependencies(chunkForModule(module), false);
   }
 
   def makeModuleTests(Module module) {
-    return makeChunk(chunkForModule(module), true);
+    return makeChunkWithDependencies(chunkForModule(module), true);
+  }
+
+  private def makeChunkWithDependencies(ModuleChunk chunk, boolean tests) {
+    Set<Module> dependencies = new HashSet<Module>()
+    chunk.modules.each {
+      collectModulesFromClasspath(it, getCompileClasspathKind(tests), dependencies)
+    }
+    buildChunks()
+    chunks.each {
+      if (!dependencies.intersect(it.modules).isEmpty()) {
+        makeChunk(it, tests)
+      }
+    }
   }
 
   private def makeChunk(ModuleChunk chunk, boolean tests) {
@@ -166,7 +180,7 @@ class ProjectBuilder {
     (
             sourceRoots: sources,
             excludes: chunk.excludes,
-            classpath: moduleClasspath(chunk, tests ? ClasspathKind.TEST_COMPILE : ClasspathKind.PRODUCTION_COMPILE),
+            classpath: moduleClasspath(chunk, getCompileClasspathKind(tests)),
             targetFolder: dst,
             moduleDependenciesSourceRoots: transitiveModuleDependenciesSourcePaths(chunk, tests),
             tempRootsToDelete: []
@@ -190,6 +204,10 @@ class ProjectBuilder {
     }
   }
 
+  private ClasspathKind getCompileClasspathKind(boolean tests) {
+    return tests ? ClasspathKind.TEST_COMPILE : ClasspathKind.PRODUCTION_COMPILE
+  }
+
   List<String> moduleClasspath(ModuleChunk chunk, ClasspathKind kind) {
     Map<ModuleChunk, List<String>> map = cachedClasspaths[kind]
     if (map == null) {
@@ -205,7 +223,7 @@ class ProjectBuilder {
     collectPathTransitively(chunk, false, kind, set, processed)
 
     if (kind.isTestsIncluded()) {
-      set.add(chunkOutput(chunk))
+      set.add(folderForChunkOutput(chunk, false))
     }
 
     map[chunk] = set.asList()
@@ -213,7 +231,7 @@ class ProjectBuilder {
 
   List<String> transitiveModuleDependenciesSourcePaths(ModuleChunk chunk, boolean tests) {
     Set<String> result = new LinkedHashSet<String>()
-    collectPathTransitively(chunk, true, tests ? ClasspathKind.TEST_COMPILE : ClasspathKind.PRODUCTION_COMPILE, result, new HashSet<Object>())
+    collectPathTransitively(chunk, true, getCompileClasspathKind(tests), result, new HashSet<Object>())
     return result.asList()
   }
 
@@ -224,13 +242,23 @@ class ProjectBuilder {
   List<String> chunkRuntimeClasspath(ModuleChunk chunk, boolean test) {
     Set<String> set = new LinkedHashSet()
     set.addAll(moduleClasspath(chunk, test ? ClasspathKind.TEST_RUNTIME : ClasspathKind.PRODUCTION_RUNTIME))
-    set.add(chunkOutput(chunk))
+    set.add(folderForChunkOutput(chunk, false))
 
     if (test) {
-      set.add(chunkTestOutput(chunk))
+      set.add(folderForChunkOutput(chunk, true))
     }
 
     return set.asList()
+  }
+
+  private def collectModulesFromClasspath(Module module, ClasspathKind kind, Set<Module> result) {
+    if (result.contains(module)) return
+    result << module
+    module.getClasspath(kind).each {
+      if (it instanceof Module) {
+        collectModulesFromClasspath(it, kind, result)
+      }
+    }
   }
 
   private def collectPathTransitively(Object chunkOrModule, boolean collectSources, ClasspathKind classpathKind, Set<String> set, Set<Object> processed) {
@@ -255,28 +283,11 @@ class ProjectBuilder {
   }
 
   String moduleOutput(Module module) {
-    return chunkOutput(chunkForModule(module))
+    return folderForChunkOutput(chunkForModule(module), false)
   }
 
   String moduleTestsOutput(Module module) {
-    chunkTestOutput(chunkForModule(module))
-  }
-
-  private def chunkOutput(ModuleChunk chunk) {
-    if (outputs[chunk] == null) {
-      project.info("Dependency module ${chunk.name} haven't yet been built, now building it");
-      makeChunk(chunk, false)
-    }
-    return outputs[chunk]
-  }
-
-  private String chunkTestOutput(ModuleChunk chunk) {
-    if (testOutputs[chunk] == null) {
-      binding.project.warning("Dependency module ${chunk.name} tests haven't yet been built, now building it");
-      makeChunk(chunk, true)
-    }
-
-    testOutputs[chunk]
+    return folderForChunkOutput(chunkForModule(module), true)
   }
 
   List<String> validatePaths(List<String> list) {
