@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -521,6 +522,29 @@ public class EditorUtil {
       result += nextTabStop(x + result, editor) - result - x;
     }
     return result;
+  }
+
+  /**
+   * Calculates the closest non-soft-wrapped logical positions for current caret position.
+   *
+   * @param editor    target editor to use
+   * @return          pair of non-soft-wrapped logical positions closest to the caret position of the given editor
+   */
+  public static Pair<LogicalPosition, LogicalPosition> calcCaretLinesRange(Editor editor) {
+    VisualPosition caret = editor.getCaretModel().getVisualPosition();
+    int visualLine = caret.line;
+
+    LogicalPosition lineStart = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
+    while (lineStart.softWrapLinesOnCurrentLogicalLine > 0) {
+      lineStart = editor.visualToLogicalPosition(new VisualPosition(--visualLine, 0));
+    }
+
+    visualLine = caret.line + 1;
+    LogicalPosition nextLineStart = editor.visualToLogicalPosition(new VisualPosition(caret.line + 1, 0));
+    while (nextLineStart.line == lineStart.line) {
+      nextLineStart = editor.visualToLogicalPosition(new VisualPosition(++visualLine, 0));
+    }
+    return new Pair<LogicalPosition, LogicalPosition>(lineStart, nextLineStart);
   }
 }
 

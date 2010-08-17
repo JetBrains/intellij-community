@@ -29,6 +29,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.util.Pair;
 
 public class DuplicateAction extends EditorAction {
   public DuplicateAction() {
@@ -60,20 +62,11 @@ public class DuplicateAction extends EditorAction {
       editor.getSelectionModel().setSelection(end, end+s.length());
     }
     else {
-      VisualPosition caret = caretModel.getVisualPosition();
+      Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLinesRange(editor);
       int offset = caretModel.getOffset();
-      int visualLine = caret.line;
 
-      LogicalPosition lineStart = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
-      while (lineStart.softWrapLinesOnCurrentLogicalLine > 0) {
-        lineStart = editor.visualToLogicalPosition(new VisualPosition(--visualLine, 0));
-      }
-
-      visualLine = caret.line + 1;
-      LogicalPosition nextLineStart = editor.visualToLogicalPosition(new VisualPosition(caret.line + 1, 0));
-      while (nextLineStart.line == lineStart.line) {
-        nextLineStart = editor.visualToLogicalPosition(new VisualPosition(++visualLine, 0));
-      }
+      LogicalPosition lineStart = lines.first;
+      LogicalPosition nextLineStart = lines.second;
       int start = editor.logicalPositionToOffset(lineStart);
       int end = editor.logicalPositionToOffset(nextLineStart);
       String s = document.getCharsSequence().subSequence(start, end).toString();
