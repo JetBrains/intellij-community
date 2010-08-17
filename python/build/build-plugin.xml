@@ -38,9 +38,6 @@
         <fileset dir="${idea.lib}">
             <include name="?*.jar"/>
         </fileset>
-      <fileset dir="${community.lib}">
-            <include name="?*.jar"/>
-        </fileset>
         <fileset dir="${plugin.home}/lib">
             <include name = "**/*.jar"/>
         </fileset>
