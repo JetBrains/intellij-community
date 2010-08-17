@@ -79,7 +79,8 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           }
         }
         // normal cases
-        ResolveResult[] targets = ((PyReferenceExpression)callee).getReference(PyResolveContext.noImplicits()).multiResolve(false);
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        ResolveResult[] targets = ((PyReferenceExpression)callee).getReference(resolveContext).multiResolve(false);
         if (targets.length > 0) {
           PsiElement target = targets[0].getElement();
           if (target == null) {

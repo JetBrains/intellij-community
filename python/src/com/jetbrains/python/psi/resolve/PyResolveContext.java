@@ -1,13 +1,22 @@
 package com.jetbrains.python.psi.resolve;
 
+import com.jetbrains.python.psi.types.TypeEvalContext;
+
 /**
  * @author yole
  */
 public class PyResolveContext {
   private final boolean myAllowImplicits;
+  private final TypeEvalContext myTypeEvalContext;
 
   private PyResolveContext(boolean allowImplicits) {
     myAllowImplicits = allowImplicits;
+    myTypeEvalContext = null;
+  }
+
+  private PyResolveContext(boolean allowImplicits, TypeEvalContext typeEvalContext) {
+    myAllowImplicits = allowImplicits;
+    myTypeEvalContext = typeEvalContext;
   }
 
   public boolean allowImplicits() {
@@ -23,6 +32,14 @@ public class PyResolveContext {
 
   public static PyResolveContext noImplicits() {
     return ourNoImplicitsContext;
+  }
+
+  public PyResolveContext withTypeEvalContext(TypeEvalContext context) {
+    return new PyResolveContext(myAllowImplicits, context);
+  }
+
+  public TypeEvalContext getTypeEvalContext() {
+    return myTypeEvalContext != null ? myTypeEvalContext : TypeEvalContext.fast();
   }
 
   @Override

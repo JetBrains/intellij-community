@@ -11,122 +11,122 @@ import java.util.Arrays;
 
 public class PythonCompletionTest extends PyLightFixtureTestCase {
 
-  private void doTest() throws Exception {
+  private void doTest() {
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
-  public void testLocalVar() throws Exception {
+  public void testLocalVar() {
     doTest();
   }
 
-  public void testSelfMethod() throws Exception {
+  public void testSelfMethod() {
     doTest();
   }
 
-  public void testSelfField() throws Exception {
+  public void testSelfField() {
     doTest();
   }
 
-  public void testFuncParams() throws Exception {
+  public void testFuncParams() {
     doTest();
   }
 
-  public void testFuncParamsStar() throws Exception {
+  public void testFuncParamsStar() {
     doTest();
   }
 
-  public void testInitParams() throws Exception {
+  public void testInitParams() {
     doTest();
   }
 
-  public void testSuperInitParams() throws Exception {      // PY-505
+  public void testSuperInitParams() {      // PY-505
     doTest();
   }
 
-  public void testSuperInitKwParams() throws Exception {      // PY-778
+  public void testSuperInitKwParams() {      // PY-778
     doTest();
   }
 
-  public void testPredefinedMethodName() throws Exception {
+  public void testPredefinedMethodName() {
     doTest();
   }
 
-  public void testPredefinedMethodNot() throws Exception {
+  public void testPredefinedMethodNot() {
     doTest();
   }
 
-  public void testKeywordAfterComment() throws Exception {  // PY-697
+  public void testKeywordAfterComment() {  // PY-697
     doTest();
   }
 
-  public void testClassPrivate() throws Exception {
+  public void testClassPrivate() {
     doTest();
   }
 
-  public void testClassPrivateNotInherited() throws Exception {
+  public void testClassPrivateNotInherited() {
     doTest();
   }
 
-  public void testClassPrivateNotPublic() throws Exception {
+  public void testClassPrivateNotPublic() {
     doTest();
   }
 
-  public void testTwoUnderscores() throws Exception {
+  public void testTwoUnderscores() {
     doTest();
   }
 
-  public void testOneUnderscore() throws Exception {
+  public void testOneUnderscore() {
     doTest();
   }
 
-  public void testTwoUnderscoresNotOne() throws Exception {
+  public void testTwoUnderscoresNotOne() {
     doTest();
   }
 
-  public void testKwParamsInCodeUsage() throws Exception { //PY-1002
+  public void testKwParamsInCodeUsage() { //PY-1002
     doTest();
   }
   
-  public void testKwParamsInCodeGetUsage() throws Exception { //PY-1002 
+  public void testKwParamsInCodeGetUsage() { //PY-1002 
     doTest();
   }
 
-  public void testSuperInitKwParamsNotOnlySelfAndKwArgs() throws Exception { //PY-1050 
+  public void testSuperInitKwParamsNotOnlySelfAndKwArgs() { //PY-1050 
     doTest();
   }
 
-  public void testSuperInitKwParamsNoCompletion() throws Exception {
+  public void testSuperInitKwParamsNoCompletion() {
     doTest();
   }
 
-  public void testIsInstance() throws Exception {
+  public void testIsInstance() {
     doTest();    
   }
 
-  public void testIsInstanceAssert() throws Exception {
+  public void testIsInstanceAssert() {
     doTest();
   }
 
-  public void testIsInstanceTuple() throws Exception {
+  public void testIsInstanceTuple() {
     doTest();
   }
 
-  public void testPropertyParens() throws Exception {  // PY-1037
+  public void testPropertyParens() {  // PY-1037
     doTest();
   }
 
-  public void testClassNameFromVarName() throws Exception {
+  public void testClassNameFromVarName() {
     doTest();
   }
 
-  public void testPropertyType() throws Exception {
+  public void testPropertyType() {
     doTest();
   }
 
-  public void testSeenMembers() throws Exception {  // PY-1181
+  public void testSeenMembers() {  // PY-1181
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     final LookupElement[] elements = myFixture.completeBasic();
@@ -134,14 +134,14 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     assertEquals("children", elements [0].getLookupString());
   }
 
-  public void testImportModule() throws Exception {
+  public void testImportModule() {
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFiles(testName + ".py", "completion/someModule.py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
-  public void testPy255() throws Exception {
+  public void testPy255() {
     final String dirname = "completion/";
     final String testName = dirname + "moduleClass";
     myFixture.configureByFiles(testName + ".py", dirname + "__init__.py");
@@ -150,7 +150,7 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
-  public void testPy874() throws Exception {
+  public void testPy874() {
     final String dirname = "completion/";
     final String testName = dirname + "py874";
     myFixture.configureByFile(testName + ".py");
@@ -159,21 +159,26 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
-  public void testClassMethod() throws Exception {  // PY-833
+  public void testClassMethod() {  // PY-833
     doTest();
   }
 
-  public void testStarImport() throws Exception {
+  public void testStarImport() {
     myFixture.configureByFiles("completion/starImport/starImport.py", "completion/starImport/importSource.py");
     myFixture.completeBasic();
     assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
   }
 
-  public void testSlots() throws Exception {  // PY-1211
+  public void testSlots() {  // PY-1211
     doTest();
   }
 
-  public void testReturnType() throws Exception {  
+  public void testReturnType() {  
     doTest();
   }
+
+  public void testChainedCall() {  // PY-1565
+    doTest();
+  }
+  
 }
