@@ -5,6 +5,8 @@ import org.jetbrains.jps.MacroExpansion
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.Module
+import org.jetbrains.jps.DependencyScope
+import org.jetbrains.jps.PredefinedDependencyScopes
 
 /**
  * @author max
@@ -270,7 +272,7 @@ public class IdeaProjectLoader implements MacroExpansion {
       if (componentTag != null) {
         componentTag.orderEntry.each {Node entryTag ->
           String type = entryTag.@type
-          String scope = entryTag.@scope
+          DependencyScope scope = getScopeById(entryTag.@scope)
           switch (type) {
             case "module":
               def moduleName = entryTag.attribute("module-name")
@@ -279,12 +281,7 @@ public class IdeaProjectLoader implements MacroExpansion {
                 project.warning("Cannot resolve module $moduleName in $currentModuleName")
               }
               else {
-                if (scope == "TEST") {
-                  testclasspath module
-                }
-                else {
-                  classpath module
-                }
+                dependency(module, scope)
               }
               break
 
@@ -293,15 +290,7 @@ public class IdeaProjectLoader implements MacroExpansion {
               def libraryName = libraryTag."@name"
               def moduleLibrary = loadLibrary(project, libraryName != null ? libraryName : "moduleLibrary#${libraryCount++}",
                                               libraryTag, projectBasePath, moduleBasePath)
-              if (scope == "PROVIDED") {
-                providedClasspath moduleLibrary
-              }
-              else if (scope == "TEST") {
-                testclasspath moduleLibrary
-              }
-              else {
-                classpath moduleLibrary
-              }
+              dependency(moduleLibrary, scope)
 
               if (libraryName != null) {
                 currentModule.libraries[libraryName] = moduleLibrary
@@ -324,15 +313,7 @@ public class IdeaProjectLoader implements MacroExpansion {
               }
 
               if (library != null) {
-                if (scope == "PROVIDED") {
-                  providedClasspath library
-                }
-                else if (scope == "TEST") {
-                  testclasspath library
-                }
-                else {
-                  classpath library
-                }
+                dependency(library, scope)
               }
               break
 
@@ -344,7 +325,7 @@ public class IdeaProjectLoader implements MacroExpansion {
               }
               else {
                 currentModule.sdk = sdk
-                providedClasspath sdk
+                dependency(sdk, PredefinedDependencyScopes.PROVIDED)
               }
               break
 
@@ -352,7 +333,7 @@ public class IdeaProjectLoader implements MacroExpansion {
               def sdk = project.projectSdk
               if (sdk != null) {
                 currentModule.sdk = sdk
-                providedClasspath sdk
+                dependency(sdk, PredefinedDependencyScopes.PROVIDED)
               }
               break
           }
@@ -438,6 +419,16 @@ public class IdeaProjectLoader implements MacroExpansion {
         url = url.substring(0, url.length() - "!/".length())
     }
     url
+  }
+
+  private DependencyScope getScopeById(String id) {
+    switch (id) {
+      case "COMPILE": return PredefinedDependencyScopes.COMPILE
+      case "RUNTIME": return PredefinedDependencyScopes.RUNTIME
+      case "TEST": return PredefinedDependencyScopes.TEST
+      case "PROVIDED": return PredefinedDependencyScopes.PROVIDED
+      default: return PredefinedDependencyScopes.COMPILE
+    }
   }
 
   private String moduleName(String imlPath) {

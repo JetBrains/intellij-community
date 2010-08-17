@@ -55,7 +55,7 @@ class Library extends LazyInitializeableObject implements ClasspathItem {
     return "library ${name}. classpath: ${classpath}"
   }
 
-  def List<String> getClasspathRoots(boolean test) {
+  def List<String> getClasspathRoots(ClasspathKind kind) {
     classpath
   }
   

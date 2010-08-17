@@ -15,7 +15,7 @@ class ProjectBuilder {
   final Map<Module, ModuleChunk> mapping = [:]
   final Map<ModuleChunk, String> outputs = [:]
   final Map<ModuleChunk, String> testOutputs = [:]
-  final Map<ModuleChunk, List<String>> cp = [:]
+  final Map<ClasspathKind, Map<ModuleChunk, List<String>>> cachedClasspaths = [:]
   final Map<ModuleChunk, List<String>> testCp = [:]
   List<ModuleChunk> chunks = null
 
@@ -50,7 +50,7 @@ class ProjectBuilder {
   private def buildChunks() {
     if (chunks == null) {
       def iterator = { Module module, Closure processor ->
-        module.classpath.each {entry ->
+        module.getFullClasspath().each {entry ->
           if (entry instanceof Module) {
             processor(entry)
           }
@@ -70,8 +70,7 @@ class ProjectBuilder {
   public def clean() {
     outputs.clear()
     testOutputs.clear()
-    cp.clear()
-    testCp.clear()
+    cachedClasspaths.clear();
   }
 
   public def buildAll() {
@@ -167,7 +166,7 @@ class ProjectBuilder {
     (
             sourceRoots: sources,
             excludes: chunk.excludes,
-            classpath: moduleCompileClasspath(chunk, tests, true),
+            classpath: moduleClasspath(chunk, tests ? ClasspathKind.TEST_COMPILE : ClasspathKind.PRODUCTION_COMPILE),
             targetFolder: dst,
             moduleDependenciesSourceRoots: transitiveModuleDependenciesSourcePaths(chunk, tests),
             tempRootsToDelete: []
@@ -191,17 +190,21 @@ class ProjectBuilder {
     }
   }
 
-  List<String> moduleCompileClasspath(ModuleChunk chunk, boolean test, boolean provided) {
-    Map<ModuleChunk, List<String>> map = test ? testCp : cp
+  List<String> moduleClasspath(ModuleChunk chunk, ClasspathKind kind) {
+    Map<ModuleChunk, List<String>> map = cachedClasspaths[kind]
+    if (map == null) {
+      map = new HashMap()
+      cachedClasspaths[kind] = map
+    }
 
     if (map[chunk] != null) return map[chunk]
 
     Set<String> set = new LinkedHashSet()
     Set<Object> processed = new HashSet()
 
-    collectPathTransitively(chunk, false, test, provided, set, processed)
+    collectPathTransitively(chunk, false, kind, set, processed)
 
-    if (test) {
+    if (kind.isTestsIncluded()) {
       set.add(chunkOutput(chunk))
     }
 
@@ -210,7 +213,7 @@ class ProjectBuilder {
 
   List<String> transitiveModuleDependenciesSourcePaths(ModuleChunk chunk, boolean tests) {
     Set<String> result = new LinkedHashSet<String>()
-    collectPathTransitively(chunk, true, tests, true, result, new HashSet<Object>())
+    collectPathTransitively(chunk, true, tests ? ClasspathKind.TEST_COMPILE : ClasspathKind.PRODUCTION_COMPILE, result, new HashSet<Object>())
     return result.asList()
   }
 
@@ -220,7 +223,7 @@ class ProjectBuilder {
 
   List<String> chunkRuntimeClasspath(ModuleChunk chunk, boolean test) {
     Set<String> set = new LinkedHashSet()
-    set.addAll(moduleCompileClasspath(chunk, test, false))
+    set.addAll(moduleClasspath(chunk, test ? ClasspathKind.TEST_RUNTIME : ClasspathKind.PRODUCTION_RUNTIME))
     set.add(chunkOutput(chunk))
 
     if (test) {
@@ -230,22 +233,22 @@ class ProjectBuilder {
     return set.asList()
   }
 
-  private def collectPathTransitively(Object chunkOrModule, boolean collectSources, boolean test, boolean provided, Set<String> set, Set<Object> processed) {
+  private def collectPathTransitively(Object chunkOrModule, boolean collectSources, ClasspathKind classpathKind, Set<String> set, Set<Object> processed) {
     if (processed.contains(chunkOrModule)) return
     processed << chunkOrModule
     
-    chunkOrModule.getClasspath(test, provided).each {
+    chunkOrModule.getClasspath(classpathKind).each {
       if (it instanceof Module) {
-        collectPathTransitively(it, collectSources, test, provided, set, processed)
+        collectPathTransitively(it, collectSources, classpathKind, set, processed)
         if (collectSources) {
           set.addAll(it.sourceRoots)
-          if (test) {
+          if (classpathKind.isTestsIncluded()) {
             set.addAll(it.testRoots)
           }
         }
       }
       if (!collectSources) {
-        set.addAll(it.getClasspathRoots(test))
+        set.addAll(it.getClasspathRoots(classpathKind))
       }
 
     }

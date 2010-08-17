@@ -10,9 +10,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   String name;
   Sdk sdk;
 
-  List<ClasspathItem> classpath = []
-  List<ClasspathItem> testclasspath = []
-  List<ClasspathItem> providedClasspath = []
+  private List<ModuleDependency> dependencies = []
   List sourceRoots = []
   List testRoots = []
   List excludes = []
@@ -30,16 +28,17 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
 
     setInitializer({
       def meta = new InitializingExpando()
+
+      meta.dependency = {Object item, DependencyScope scope ->
+        dependencies << new ModuleDependency(project.resolve(item), scope)
+      }
+
       meta.classpath = {Object[] arg ->
-        arg.each { classpath << project.resolve(it) }
+        arg.each { dependencies << new ModuleDependency(project.resolve(it), PredefinedDependencyScopes.COMPILE) }
       }
 
       meta.testclasspath = {Object[] arg ->
-        arg.each { testclasspath << project.resolve(it) }
-      }
-
-      meta.providedClasspath = {Object[] arg ->
-        arg.each { providedClasspath << project.resolve(it) }
+        arg.each { dependencies << new ModuleDependency(project.resolve(it), PredefinedDependencyScopes.TEST) }
       }
 
       meta.src = {Object[] arg ->
@@ -58,7 +57,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
       initializer.setResolveStrategy Closure.DELEGATE_FIRST
       initializer.call()
 
-      def wrongProperties = ["classpath", "src", "testSrc"] as Set
+      def wrongProperties = ["dependency", "classpath", "testclasspath", "src", "testSrc", "exclude"] as Set
       meta.getProperties().each {String key, Object value ->
         if (!wrongProperties.contains(key)) {
           props[key] = value
@@ -100,8 +99,8 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
     project.builder.makeModuleTests(this)
   }
 
-  def List<String> getClasspathRoots(boolean test) {
-    if (test) {
+  def List<String> getClasspathRoots(ClasspathKind kind) {
+    if (kind.isTestsIncluded()) {
       return [project.builder.moduleTestsOutput(this), project.builder.moduleOutput(this)]
     }
     else {
@@ -109,17 +108,22 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
     }
   }
 
-  def List<String> getClasspath(boolean tests, boolean provided) {
-    List answer = classpath;
+  def List<ClasspathItem> getFullClasspath() {
+    return dependencies*.item;
+  }
 
-    if (tests) {
-      answer = [answer, testclasspath].flatten()
+  def List<ClasspathItem> getClasspath(ClasspathKind kind) {
+    return dependencies.findAll({it.scope.isIncludedIn(kind)})*.item;
+  }
+
+  private static class ModuleDependency {
+    ClasspathItem item
+    DependencyScope scope
+
+    ModuleDependency(ClasspathItem item, DependencyScope scope) {
+      this.item = item
+      this.scope = scope
     }
-
-    if (provided) {
-      answer = [answer, providedClasspath].flatten()
-    }
-
-    return answer
   }
 }
+

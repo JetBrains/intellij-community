@@ -37,8 +37,8 @@ class ModuleChunk extends DagNode<Module> {
     map {it.testRoots}
   }
 
-  def List<ClasspathItem> getClasspath(boolean tests, boolean provided) {
-    map {it.getClasspath(tests, provided)}
+  def List<ClasspathItem> getClasspath(ClasspathKind kind) {
+    map {it.getClasspath(kind)}
   }
 
   def List<String> getExcludes() {

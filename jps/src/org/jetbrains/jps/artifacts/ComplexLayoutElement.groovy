@@ -68,7 +68,7 @@ class LibraryFilesElement extends ComplexLayoutElement {
       return []
     }
 
-    return library.getClasspathRoots(false).collect {String path ->
+    return library.classpath.collect {String path ->
       if (new File(path).isDirectory()) {
         return new DirectoryCopyElement(dirPath: path)
       }

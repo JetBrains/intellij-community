@@ -1,21 +1,14 @@
 package org.jetbrains.jps.builders.javacApi
 
-import javax.tools.JavaCompiler
 import javax.tools.JavaCompiler.CompilationTask
-import javax.tools.JavaFileObject
-import javax.tools.StandardJavaFileManager
-import javax.tools.StandardLocation
-import javax.tools.ToolProvider
-
 import org.jetbrains.jps.ModuleBuildState
 import org.jetbrains.jps.ModuleChunk
+import org.jetbrains.jps.Project
 import org.jetbrains.jps.Sdk
 import org.jetbrains.jps.builders.JavaFileCollector
-import javax.tools.DiagnosticListener
-import javax.tools.DiagnosticCollector
-import org.jetbrains.jps.Project
+import javax.tools.*
 
-/**
+ /**
  * @author nik
  */
 class Java16ApiCompiler {
@@ -60,7 +53,7 @@ class Java16ApiCompiler {
       List<File> classpath = []
       Sdk sdk = chunk.getSdk()
       if (sdk != null) {
-        sdk.getClasspathRoots(true).each { classpath << new File(String.valueOf(it)) }
+        sdk.classpath.each { classpath << new File(String.valueOf(it)) }
       }
       state.classpath.each { classpath << new File(String.valueOf(it)) }
       fileManager.setLocation(StandardLocation.CLASS_PATH, classpath)
