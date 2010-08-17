@@ -103,7 +103,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
           }
         }
       }
-      refs.add(new AntDomTargetReference(element, value, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length())));
+      refs.add(new AntDomTargetReference(element, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length())));
     }
     return refs.toArray(new PsiReference[refs.size()]);
   }

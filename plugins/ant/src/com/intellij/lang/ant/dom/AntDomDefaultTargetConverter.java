@@ -34,7 +34,7 @@ public class AntDomDefaultTargetConverter extends Converter<TargetResolver.Resul
 
   @NotNull 
   public PsiReference[] createReferences(final GenericDomValue<TargetResolver.Result> value, PsiElement element, ConvertContext context) {
-    return new PsiReference[] {new AntDomTargetReference(element, value)};
+    return new PsiReference[] {new AntDomTargetReference(element)};
   }
 
   @Nullable
