@@ -774,9 +774,12 @@ public class ExpressionParser {
       }
     }
 
-    JavaParserUtil.expectOrError(builder, JavaTokenType.RPARENTH, JavaErrorMessages.message("expected.rparen"));
+    final boolean closed = JavaParserUtil.expectOrError(builder, JavaTokenType.RPARENTH, JavaErrorMessages.message("expected.rparen"));
 
     list.done(JavaElementType.EXPRESSION_LIST);
+    if (!closed) {
+      list.setCustomEdgeProcessors(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+    }
     return list;
   }
 
