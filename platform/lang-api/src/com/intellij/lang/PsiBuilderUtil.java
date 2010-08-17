@@ -114,7 +114,7 @@ public class PsiBuilderUtil {
    */
   public static void drop(final PsiBuilder.Marker... markers) {
     for (PsiBuilder.Marker marker : markers) {
-      marker.drop();
+      if (marker != null) marker.drop();
     }
   }
 }

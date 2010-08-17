@@ -63,8 +63,8 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker declaration,
-                                                         final boolean isAnnotation, final Context context) {
+  public static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker declaration,
+                                                        final boolean isAnnotation, final Context context) {
     final IElementType keywordTokenType = builder.getTokenType();
     assert ElementType.CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
     builder.advanceLexer();
@@ -364,13 +364,18 @@ public class DeclarationParser {
 
   @NotNull
   private static Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder) {
+    return parseModifierList(builder, ElementType.MODIFIER_BIT_SET);
+  }
+
+  @NotNull
+  public static Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder, final TokenSet modifiers) {
     final PsiBuilder.Marker modList = builder.mark();
     boolean isEmpty = true;
 
     while (true) {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == null) break;
-      if (ElementType.MODIFIER_BIT_SET.contains(tokenType)) {
+      if (modifiers.contains(tokenType)) {
         builder.advanceLexer();
         isEmpty = false;
       }
@@ -441,7 +446,7 @@ public class DeclarationParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseParameterList(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parseParameterList(final PsiBuilder builder) {
     assert builder.getTokenType() == JavaTokenType.LPARENTH : builder.getTokenType();
     final PsiBuilder.Marker paramList = builder.mark();
     builder.advanceLexer();
@@ -666,7 +671,7 @@ public class DeclarationParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseAnnotation(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parseAnnotation(final PsiBuilder builder) {
     assert builder.getTokenType() == JavaTokenType.AT : builder.getTokenType();
     final PsiBuilder.Marker anno = builder.mark();
     builder.advanceLexer();
