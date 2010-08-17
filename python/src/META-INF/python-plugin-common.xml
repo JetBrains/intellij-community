@@ -251,6 +251,8 @@
 
     <completion.contributor language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCompletionContributor"/>
 
+    <lang.psiStructureViewFactory language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.structureView.DjangoStructureViewBuilderFactory"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
@@ -313,6 +315,9 @@
   <project-components>
     <component>
       <implementation-class>com.jetbrains.python.PythonPsiManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.jetbrains.django.lang.template.DjangoTemplatePsiManager</implementation-class>
     </component>
     <component>
       <implementation-class>com.jetbrains.python.sdk.PythonSdkUpdater</implementation-class>
