@@ -24,6 +24,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyNoneType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,6 +164,9 @@ public class PyOverrideImplementUtil {
     }, ArrayUtil.EMPTY_STRING_ARRAY);
     int startIndex = 0;
 
+    if (baseFunction.getReturnType() != PyNoneType.INSTANCE) {
+      statementBody.append("return ");
+    }
     if (baseClass.isNewStyleClass()) {
       statementBody.append(PyNames.SUPER);
       statementBody.append("(");
