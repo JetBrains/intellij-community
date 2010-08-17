@@ -110,27 +110,24 @@ public class PyUtil {
   /**
    * @see PyUtil#flattenedParens
    */
-  protected static <T extends PyElement> List<T> _unfoldParenExprs(T[] targets, List<T> receiver, boolean unfoldListLiterals) {
+  protected static List<PyExpression> _unfoldParenExprs(PyExpression[] targets, List<PyExpression> receiver,
+                                                        boolean unfoldListLiterals, boolean unfoldStarExpressions) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
-    for (T exp : targets) {
+    for (PyExpression exp : targets) {
       if (exp instanceof PyParenthesizedExpression) {
         final PyParenthesizedExpression parex = (PyParenthesizedExpression)exp;
-        PyExpression cont = parex.getContainedExpression();
-        if (cont instanceof PyTupleExpression) {
-          final PyTupleExpression tupex = (PyTupleExpression)cont;
-          _unfoldParenExprs((T[])tupex.getElements(), receiver, unfoldListLiterals);
-        }
-        else {
-          receiver.add(exp);
-        }
+        _unfoldParenExprs(new PyExpression[] { parex.getContainedExpression() }, receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp instanceof PyTupleExpression) {
         final PyTupleExpression tupex = (PyTupleExpression)exp;
-        _unfoldParenExprs((T[])tupex.getElements(), receiver, unfoldListLiterals);
+        _unfoldParenExprs(tupex.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp instanceof PyListLiteralExpression && unfoldListLiterals) {
         final PyListLiteralExpression listLiteral = (PyListLiteralExpression) exp;
-        _unfoldParenExprs((T[]) listLiteral.getElements(), receiver, unfoldListLiterals);
+        _unfoldParenExprs(listLiteral.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
+      }
+      else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
+        _unfoldParenExprs(new PyExpression[] { ((PyStarExpression) exp).getExpression() }, receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else {
         receiver.add(exp);
@@ -150,13 +147,18 @@ public class PyUtil {
    * @return the list of flattened expressions.
    */
   @NotNull
-  public static <T extends PyElement> List<T> flattenedParens(T... targets) {
-    return _unfoldParenExprs(targets, new ArrayList<T>(targets.length), false);
+  public static List<PyExpression> flattenedParens(PyExpression... targets) {
+    return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), false, false);
   }
 
   @NotNull
-  public static <T extends PyElement> List<T> flattenedParensAndLists(T... targets) {
-    return _unfoldParenExprs(targets, new ArrayList<T>(targets.length), true);
+  public static List<PyExpression> flattenedParensAndLists(PyExpression... targets) {
+    return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), true, true);
+  }
+
+  @NotNull
+  public static List<PyExpression> flattenedParensAndStars(PyExpression... targets) {
+    return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), false, true);
   }
 
   /**

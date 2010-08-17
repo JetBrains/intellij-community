@@ -101,14 +101,13 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
   public Iterable<PyElement> iterateNames() {
     // extract whatever names are defined in "for" components
     List<ComprhForComponent> fors = getForComponents();
-    PyElement[] for_targets = new PyElement[fors.size()];
+    PyExpression[] for_targets = new PyExpression[fors.size()];
     int i = 0;
     for (ComprhForComponent for_comp : fors) {
       for_targets[i] = for_comp.getIteratorVariable();
       i += 1;
     }
-    List<PyElement> name_refs = PyUtil.flattenedParensAndLists(for_targets);
-    return name_refs;
+    return new ArrayList<PyElement>(PyUtil.flattenedParensAndLists(for_targets));
   }
 
   public PsiElement getElementNamed(final String the_name) {

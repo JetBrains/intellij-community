@@ -361,13 +361,10 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testStarUnpacking() {  // PY-1459
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      final PsiElement element = doResolve();
-      assertInstanceOf(element, PyTargetExpression.class);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    assertResolvesTo(LanguageLevel.PYTHON30, PyTargetExpression.class, "heads");
+  }
+
+  public void testStarUnpackingInLoop() {  // PY-1525
+    assertResolvesTo(LanguageLevel.PYTHON30, PyTargetExpression.class, "bbb");
   }
 }
