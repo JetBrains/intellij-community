@@ -66,7 +66,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     @Override
     public void visitPyReferenceExpression(final PyReferenceExpression node) {
       String referencedName = node.getReferencedName();
-      if (referencedName != null && referencedName.equals(PyNames.NONE)) {
+      if (PyNames.NONE.equals(referencedName)) {
         getHolder().createErrorAnnotation(node, (_op == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
       }
     }
@@ -74,10 +74,18 @@ public class AssignTargetAnnotator extends PyAnnotator {
     @Override
     public void visitPyTargetExpression(final PyTargetExpression node) {
       String targetName = node.getName();
-      if (targetName != null && targetName.equals(PyNames.NONE)) {
+      if (PyNames.NONE.equals(targetName)) {
         final VirtualFile vfile = node.getContainingFile().getVirtualFile();
         if (vfile != null && !vfile.getUrl().contains("/" + PythonSdkType.SKELETON_DIR_NAME + "/")){
           getHolder().createErrorAnnotation(node, (_op == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
+        }
+      }
+      if (PyNames.DEBUG.equals(targetName)) {
+        if (LanguageLevel.forElement(node).isPy3K()) {
+          getHolder().createErrorAnnotation(node, "assignment to keyword");
+        }
+        else {
+          getHolder().createErrorAnnotation(node, "cannot assign to __debug__");
         }
       }
     }
@@ -181,6 +189,16 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     public void visitPyLambdaExpression(final PyLambdaExpression node) {
       getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.lambda"));
+    }
+
+    @Override
+    public void visitPyNoneLiteralExpression(PyNoneLiteralExpression node) {
+      getHolder().createErrorAnnotation(node, "assignment to keyword");
+    }
+
+    @Override
+    public void visitPyBoolLiteralExpression(PyBoolLiteralExpression node) {
+      getHolder().createErrorAnnotation(node, "assignment to keyword");
     }
   }
 }
