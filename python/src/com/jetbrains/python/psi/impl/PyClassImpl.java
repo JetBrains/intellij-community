@@ -207,31 +207,26 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return Collections.emptyList();
     }
 
-    List<PyClass> stubSuperClasses = resolveSuperClassesFromStub();
-    if (stubSuperClasses != null) {
-      return stubSuperClasses;
-    }
-
-    PsiElement[] superClassElements = getSuperClassElements();
-    if (superClassElements.length > 0) {
-      List<PyClass> result = new ArrayList<PyClass>();
-      // maybe a bare old-style class?
-      // TODO: depend on language version: py3k does not do old style classes
-      PsiElement paren = PsiTreeUtil.getChildOfType(this, PyArgumentList.class).getFirstChild(); // no NPE, we always have the par expr
-      if (paren != null && "(".equals(paren.getText())) { // "()" after class name, it's new style
-        for (PsiElement element : superClassElements) {
-          if (element instanceof PyClass) {
-            result.add((PyClass)element);
-          }
+    List<PyClass> superClasses = resolveSuperClassesFromStub();
+    if (superClasses == null) {
+      superClasses = new ArrayList<PyClass>();
+      PsiElement[] superClassElements = getSuperClassElements();
+      for (PsiElement element : superClassElements) {
+        if (element instanceof PyClass) {
+          superClasses.add((PyClass)element);
         }
       }
-      else if (!PyBuiltinCache.BUILTIN_FILE.equals(getContainingFile().getName())) { // old-style *and* not builtin object()
-        PyClass oldstyler = PyBuiltinCache.getInstance(this).getClass(PyNames.FAKE_OLD_BASE);
-        if (oldstyler != null) result.add(oldstyler);
-      }
-      return result;
     }
-    return Collections.emptyList();
+
+    if (superClasses.size() == 0 && !PyBuiltinCache.getInstance(this).hasInBuiltins(this)) {
+      String implicitSuperclassName = LanguageLevel.forElement(this).isPy3K() ? PyNames.OBJECT : PyNames.FAKE_OLD_BASE;
+      PyClass implicitSuperclass = PyBuiltinCache.getInstance(this).getClass(implicitSuperclassName);
+      if (implicitSuperclass != null) {
+        superClasses.add(implicitSuperclass);
+      }
+    }
+
+    return superClasses;
   }
 
   @Nullable

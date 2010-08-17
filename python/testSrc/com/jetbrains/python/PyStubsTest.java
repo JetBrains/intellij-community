@@ -15,7 +15,6 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -42,7 +41,6 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     final PyFile file = getTestFile();
     // vfile is problematic, but we need an SDK to check builtins
     final Project project = file.getProject();
-    project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
 
     try {
       PythonLanguageLevelPusher.setForcedLanguageLevel(project, LanguageLevel.PYTHON26); // we need 2.6+ for @foo.setter

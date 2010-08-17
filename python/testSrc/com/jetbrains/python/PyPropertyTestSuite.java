@@ -35,7 +35,6 @@ public class PyPropertyTestSuite {
       super.setUp();
       PsiReference ref = myFixture.getReferenceAtCaretPosition("property/"+ getFileName());
       final Project project = ref.getElement().getContainingFile().getProject();
-      project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
       PythonLanguageLevelPusher.setForcedLanguageLevel(project, myLanguageLevel);
       PsiElement elt = ref.resolve();
       assertInstanceOf(elt, PyExpression.class);

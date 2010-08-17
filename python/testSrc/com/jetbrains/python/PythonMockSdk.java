@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -19,25 +18,24 @@ import java.util.List;
 public class PythonMockSdk {
   @NonNls private static final String MOCK_SDK_NAME = "Mock Python SDK";
 
-  public static Sdk findOrCreate() {
+  public static Sdk findOrCreate(String version) {
     final List<Sdk> sdkList = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
     for (Sdk sdk : sdkList) {
-      if (sdk.getName().equals(MOCK_SDK_NAME)) {
+      if (sdk.getName().equals(MOCK_SDK_NAME + " " + version)) {
         return sdk;
       }
     }
-    return create();
+    return create(version);
   }
 
-  public static Sdk create() {
-    final String version = "2.5"; // TODO: implement language level here
+  public static Sdk create(final String version) {
     final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
 
     String sdkHome = new File(mock_path, "bin/python"+version).getPath();
     SdkType sdkType = PythonSdkType.getInstance();
 
 
-    final Sdk sdk = new ProjectJdkImpl(MOCK_SDK_NAME, sdkType) {
+    final Sdk sdk = new ProjectJdkImpl(MOCK_SDK_NAME + " " + version, sdkType) {
       @Override
       public String getVersionString() {
         return "Python " + version + " Mock SDK";

@@ -24,6 +24,7 @@ public class PythonAllTestsSuite {
     PythonHighlightingTest.class,
     PyStubsTest.class,
     PyResolveTest.class,
+    Py3ResolveTest.class,
     PyMultiFileResolveTest.class,
     PyResolveCalleeTest.class,
     PyAssignmentMappingTest.class,
