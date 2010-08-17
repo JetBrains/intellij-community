@@ -1744,7 +1744,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       // Ask caret model to update visual caret position.
       getCaretModel().moveToOffset(getCaretModel().getOffset(), locateBeforeSoftWrap);
-      getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 
