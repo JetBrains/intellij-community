@@ -119,7 +119,7 @@ class ProjectBuilder {
     String currentOutput = outputsMap[chunk]
     if (currentOutput != null) return currentOutput
 
-    project.stage("Making${tests ? ' tests' : ''} module ${chunk.name}")
+    project.stage("Making${tests ? ' tests for' : ''} module ${chunk.name}")
     def dst = folderForChunkOutput(chunk, tests)
     outputsMap[chunk] = dst
     compile(chunk, dst, tests)
