@@ -166,7 +166,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
 
     element1 = PyRefactoringUtil.getSelectedExpression(project, file, element1, element2);
-    if (!(element1 instanceof PyExpression) || (PsiTreeUtil.getParentOfType(element1, PyParameterList.class)) != null) {
+    if (!(element1 instanceof PyExpression) || !isValidIntroduceContext(element1)) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), myDialogTitle,
                                           "refactoring.extractMethod");
       return;
@@ -178,13 +178,13 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   private boolean smartIntroduce(final PsiFile file, final Editor editor, final String name, final boolean replaceAll, final boolean hasConstructor, final boolean isTestClass) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement elementAtCaret = file.findElementAt(offset);
+    if (!isValidIntroduceContext(elementAtCaret)) {
+      return false;
+    }
     final List<PyExpression> expressions = new ArrayList<PyExpression>();
     while (elementAtCaret != null) {
       if (elementAtCaret instanceof PyStatement) {
         break;
-      }
-      if (elementAtCaret instanceof PyParameterList) {
-        return false;
       }
       if (elementAtCaret instanceof PyExpression && isValidIntroduceVariant(elementAtCaret)) {
         expressions.add((PyExpression)elementAtCaret);
@@ -209,6 +209,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return true;
     }
     return false;
+  }
+
+  protected boolean isValidIntroduceContext(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PyParameterList.class) == null;
   }
 
   private static boolean isValidIntroduceVariant(PsiElement element) {

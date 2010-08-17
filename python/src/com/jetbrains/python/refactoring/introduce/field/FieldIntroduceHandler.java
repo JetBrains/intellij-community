@@ -128,6 +128,11 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     return "refactoring.introduceField";
   }
 
+  @Override
+  protected boolean isValidIntroduceContext(PsiElement element) {
+    return super.isValidIntroduceContext(element) && PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class) != null;
+  }
+
   private static class AddFieldDeclaration implements Function<String, PyStatement> {
     private final PsiElement myDeclaration;
 
