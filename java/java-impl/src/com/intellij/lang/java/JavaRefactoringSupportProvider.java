@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.java;
 
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class JavaRefactoringSupportProvider extends DefaultRefactoringSupportProvider {
+public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   public boolean isSafeDeleteAvailable(PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField ||
            (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) ||

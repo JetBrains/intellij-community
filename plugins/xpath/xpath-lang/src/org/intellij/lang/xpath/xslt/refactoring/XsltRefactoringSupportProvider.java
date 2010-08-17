@@ -15,14 +15,14 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring;
 
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.intellij.lang.xpath.xslt.refactoring.introduceParameter.XsltIntroduceParameterAction;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XsltRefactoringSupportProvider extends DefaultRefactoringSupportProvider {
+public class XsltRefactoringSupportProvider extends RefactoringSupportProvider {
 
   @Override
   public RefactoringActionHandler getIntroduceParameterHandler() {

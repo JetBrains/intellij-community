@@ -21,14 +21,12 @@ import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
@@ -157,7 +155,7 @@ public final class XPathLanguage extends Language {
         }
     }
 
-    public static class XPathRefactoringSupportProvider extends DefaultRefactoringSupportProvider {
+    public static class XPathRefactoringSupportProvider extends RefactoringSupportProvider {
         @Override
         public boolean isSafeDeleteAvailable(PsiElement element) {
             if (!element.isWritable() || element.getContainingFile() == null) return false;
