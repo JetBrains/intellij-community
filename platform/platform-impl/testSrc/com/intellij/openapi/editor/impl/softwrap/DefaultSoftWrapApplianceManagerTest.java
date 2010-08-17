@@ -76,6 +76,7 @@ public class DefaultSoftWrapApplianceManagerTest {
 
       // Storage.
       allowing(myStorage).removeAll();
+      allowing(myStorage).removeInRange(with(any(int.class)), with(any(int.class)));
 
       // Soft wrap drawings.
       allowing(myPainter).getMinDrawingWidth(with(any(SoftWrapDrawingType.class))); will(returnValue(SOFT_WRAP_DRAWING_SIZE));
