@@ -15,14 +15,12 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.util.Trinity;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.SubTagList;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -32,7 +30,7 @@ public abstract class AntDomAntCall extends AntDomElement {
   
   @Attribute("target")
   @Convert(value = AntDomDefaultTargetConverter.class)
-  public abstract GenericAttributeValue<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> getTarget();
+  public abstract GenericAttributeValue<TargetResolver.Result> getTarget();
 
   @Attribute("inheritall")
   @Convert(value = AntBooleanConverterDefaultTrue.class)

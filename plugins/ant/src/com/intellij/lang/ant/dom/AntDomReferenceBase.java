@@ -16,9 +16,15 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -48,5 +54,28 @@ public abstract class AntDomReferenceBase extends PsiReferenceBase<PsiElement> i
 
   public void setShouldBeSkippedByAnnotator(boolean value) {
     myShouldBeSkippedByAnnotator = true;
+  }
+  
+  @Nullable 
+  public AntDomElement lookupResolvedAntDomElement() {
+    final DomElement result = lookupResolveResult();
+    if (result != null) {
+      return result.getParentOfType(AntDomElement.class, false);
+    }
+    return null;
+  }
+
+  @Nullable 
+  public DomElement lookupResolveResult() {
+    final PsiElement resolve = resolve();
+    if (resolve instanceof PomTargetPsiElement) {
+      final PomTarget target = ((PomTargetPsiElement)resolve).getTarget();
+      if(target instanceof DomTarget) {
+        final DomTarget domTarget = (DomTarget)target;
+        final PsiElement navigationElement = domTarget.getNavigationElement();
+        return DomUtil.getDomElement(navigationElement);
+      }
+    }
+    return null;
   }
 }
