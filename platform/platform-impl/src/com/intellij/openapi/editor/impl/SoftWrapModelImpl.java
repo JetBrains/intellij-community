@@ -301,8 +301,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
       return false;
     }
 
-    // We consider visual positions that point after the last symbol before soft wrap and the first symbol after soft wrap to not
-    // belong to soft wrap-introduced virtual space.
+    // We consider visual position that points after the last symbol before soft wrap belong to soft wrap-introduced virtual space
+    // and visual position that points to the first document symbol after soft wrap not belong to soft wrap-introduced virtual space.
     VisualPosition visualAfterSoftWrap = myEditor.offsetToVisualPosition(offset);
     if (visualAfterSoftWrap.line == visual.line && visualAfterSoftWrap.column <= visual.column) {
       return false;
@@ -320,7 +320,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     }
     int width = EditorUtil.textWidthInColumns(myEditor, myEditor.getDocument().getCharsSequence(), offset - 1, offset, columnOffset);
     int softWrapStartColumn = visualBeforeSoftWrap.column  + width;
-    return visual.line > visualBeforeSoftWrap.line || visual.column > softWrapStartColumn;
+    return visual.line > visualBeforeSoftWrap.line || visual.column >= softWrapStartColumn;
   }
 
   @Override
