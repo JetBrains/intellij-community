@@ -420,7 +420,7 @@ public class EditorUtil {
     int startToUse = start;
 
     // Skip all lines except the last.
-    for (int i = StringUtil.lastIndexOf(text, '\n', start, end); i >= 0; i = StringUtil.lastIndexOf(text, '\n', start, end)) {
+    for (int i = StringUtil.lastIndexOf(text, '\n', startToUse, end); i >= 0; i = StringUtil.lastIndexOf(text, '\n', startToUse, end)) {
       startToUse = i + 1;
     }
 
