@@ -25,11 +25,13 @@ import org.jetbrains.annotations.Nullable;
 public class AddFieldQuickFix implements LocalQuickFix {
 
   private PyClass myQualifierClass;
+  private final String myInitializer;
   private String myIdentifier;
 
-  public AddFieldQuickFix(String identifier, PyClass qualifierClass) {
+  public AddFieldQuickFix(String identifier, PyClass qualifierClass, String initializer) {
     myIdentifier = identifier;
     myQualifierClass = qualifierClass;
+    myInitializer = initializer;
   }
 
   @NotNull
@@ -67,7 +69,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     PyClass cls = myQualifierClass;
     String item_name = myIdentifier;
     if (cls != null) {
-      PsiElement initStatement = addFieldToInit(project, cls, item_name, new CreateFieldCallback(project, item_name));
+      PsiElement initStatement = addFieldToInit(project, cls, item_name, new CreateFieldCallback(project, item_name, myInitializer));
       if (initStatement != null) {
         showTemplateBuilder(initStatement);
         return;
@@ -77,11 +79,11 @@ public class AddFieldQuickFix implements LocalQuickFix {
     PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
   }
 
-  private static void showTemplateBuilder(PsiElement initStatement) {
+  private void showTemplateBuilder(PsiElement initStatement) {
     initStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(initStatement);
     if (initStatement instanceof PyAssignmentStatement) {
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(initStatement);
-      builder.replaceElement(((PyAssignmentStatement) initStatement).getAssignedValue(), "None");
+      builder.replaceElement(((PyAssignmentStatement) initStatement).getAssignedValue(), myInitializer);
       builder.run();
     }
   }
@@ -159,14 +161,16 @@ public class AddFieldQuickFix implements LocalQuickFix {
   private static class CreateFieldCallback implements Function<String, PyStatement> {
     private Project myProject;
     private String myItemName;
+    private String myInitializer;
 
-    private CreateFieldCallback(Project project, String itemName) {
+    private CreateFieldCallback(Project project, String itemName, String initializer) {
       myProject = project;
       myItemName = itemName;
+      myInitializer = initializer;
     }
 
     public PyStatement fun(String self_name) {
-      return PyElementGenerator.getInstance(myProject).createFromText(PyStatement.class, self_name + "." + myItemName + " = None");
+      return PyElementGenerator.getInstance(myProject).createFromText(PyStatement.class, self_name + "." + myItemName + " = " + myInitializer);
     }
   }
 }

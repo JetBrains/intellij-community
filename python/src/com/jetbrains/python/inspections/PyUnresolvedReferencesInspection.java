@@ -210,7 +210,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                     if (reference.getElement().getParent() instanceof PyCallExpression) {
                       actions.add(new AddMethodQuickFix(ref_text, (PyClassType)qtype));
                     }
-                    else actions.add(new AddFieldQuickFix(ref_text, cls));
+                    else actions.add(new AddFieldQuickFix(ref_text, cls, "None"));
                   }
                 }
                 description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));

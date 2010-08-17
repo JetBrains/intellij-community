@@ -17,6 +17,8 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -244,14 +246,23 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               continue;
             }
           }
+          boolean isInitMethod = false;
+          PyClass containingClass = null;
           PyParameterList paramList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
           if (paramList != null && paramList.getParent() instanceof PyFunction) {
             PyFunction func = (PyFunction) paramList.getParent();
-            if (canHaveUnusedParameters(func, functionsWithInheritors)) {
+            containingClass = func.getContainingClass();
+            if (PyNames.INIT.equals(func.getName()) && containingClass != null) {
+              isInitMethod = true;
+            }
+            else if (ignoreUnusedParameters(func, functionsWithInheritors)) {
               continue;
             }
           }
-          registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name));
+          LocalQuickFix[] fixes = isInitMethod
+                                  ? new LocalQuickFix[] { new AddFieldQuickFix(name, containingClass, name) }
+                                  : LocalQuickFix.EMPTY_ARRAY;
+          registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes);
         }
         else {
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
@@ -269,7 +280,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
   }
 
-  private static boolean canHaveUnusedParameters(PyFunction func, Set<PyFunction> functionsWithInheritors) {
+  private static boolean ignoreUnusedParameters(PyFunction func, Set<PyFunction> functionsWithInheritors) {
     if (functionsWithInheritors.contains(func)) {
       return true;
     }
@@ -297,8 +308,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private void registerWarning(final PsiElement element, final String msg) {
-    registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null);
+  private void registerWarning(final PsiElement element, final String msg, LocalQuickFix... quickfixes) {
+    registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, quickfixes);
   }
 
   private static class ReplaceWithWildCard implements LocalQuickFix {
