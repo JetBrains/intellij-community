@@ -12,6 +12,10 @@ class JavaSdk extends Sdk {
   }
 
   String getJavacExecutable() {
-    return jdkPath + "/bin/javac"
+    return jdkPath + File.separator + "bin" + File.separator + "javac";
+  }
+
+  String getJavaExecutable() {
+    return jdkPath + File.separator + "bin" + File.separator + "java";
   }
 }
