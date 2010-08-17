@@ -181,9 +181,6 @@
     <codeInsight.wordCompletionFilter language="JSP" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
     <codeInsight.wordCompletionFilter language="JSPX" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
 
-    <lang.fileViewProviderFactory language="XML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
-    <lang.fileViewProviderFactory language="HTML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
-    <lang.fileViewProviderFactory language="XHTML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
 
     <lang.psiStructureViewFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdStructureViewBuilderFactory"/>
     <lang.psiStructureViewFactory language="XML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>

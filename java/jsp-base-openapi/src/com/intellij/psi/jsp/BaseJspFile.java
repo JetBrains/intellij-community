@@ -33,6 +33,7 @@ public interface BaseJspFile extends XmlFile {
 
   XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind, final boolean searchInIncludes);
   XmlTag createDirective(XmlTag context, JspDirectiveKind directiveKind);
+  XmlTag createDirective(JspDirectiveKind directiveKind);
 
   /**
    * Method with a bad name. Returns file corresponding to getTemplateDataLanguage() method of ViewProvider
@@ -47,4 +48,6 @@ public interface BaseJspFile extends XmlFile {
 
   @NotNull
   JspxFileViewProvider getViewProvider();
+
+  XmlTag getRootTag();
 }

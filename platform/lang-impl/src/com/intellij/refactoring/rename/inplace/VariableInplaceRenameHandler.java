@@ -57,7 +57,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
       supportProvider = element != null ? LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()):null;
     return supportProvider != null &&
            editor.getSettings().isVariableInplaceRenameEnabled() &&
-           supportProvider.doInplaceRenameFor(element, nameSuggestionContext);
+           supportProvider.isInplaceRenameAvailable(element, nameSuggestionContext);
   }
 
   public final boolean isRenaming(final DataContext dataContext) {

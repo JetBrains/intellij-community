@@ -15,69 +15,43 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 16, 2010
  */
-public class AntDomDefaultTargetConverter extends Converter<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> implements CustomReferenceConverter<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>>{
+public class AntDomDefaultTargetConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
 
-  @NotNull public PsiReference[] createReferences(final GenericDomValue<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> value, PsiElement element, ConvertContext context) {
-    return new PsiReference[] {new AntDomReferenceBase(element, true) {
-      public PsiElement resolve() {
-        final Trinity<AntDomTarget, String, Map<String, AntDomTarget>> trinity = value.getValue();
-        if (trinity == null) {
-          return null;
-        }
-        final DomTarget domTarget = trinity.getFirst() != null? DomTarget.getTarget(trinity.getFirst()) : null;
-        return domTarget != null? PomService.convertToPsi(domTarget) : null;
-      }
-
-      @NotNull
-      public Object[] getVariants() {
-        final Trinity<AntDomTarget, String, Map<String, AntDomTarget>> trinity = value.getValue();
-        if (trinity == null) {
-          return ArrayUtil.EMPTY_OBJECT_ARRAY;
-        }
-        final Set<String> set = trinity.getThird().keySet();
-        return set.toArray(new Object[set.size()]);
-      }
-
-      public String getUnresolvedMessagePattern() {
-        return AntBundle.message("cannot.resolve.target", getCanonicalText());
-      }
-    }};
+  @NotNull 
+  public PsiReference[] createReferences(final GenericDomValue<TargetResolver.Result> value, PsiElement element, ConvertContext context) {
+    return new PsiReference[] {new AntDomTargetReference(element)};
   }
 
   @Nullable
-  public Trinity<AntDomTarget, String, Map<String, AntDomTarget>> fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public TargetResolver.Result fromString(@Nullable @NonNls String s, ConvertContext context) {
     final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
     if (element != null && s != null) {
       final AntDomProject project = element.getAntProject();
       final TargetResolver.Result result = TargetResolver.resolve(project.getContextAntProject(), null, s);
-      final Pair<AntDomTarget,String> pair = result.getResolvedTarget(s);
-      return new Trinity<AntDomTarget, String, Map<String, AntDomTarget>>(pair != null? pair.getFirst() : null, pair != null? pair.getSecond() : null, result.getVariants());
+      result.setRefsString(s);
+      return result;
     }
     return null;
   }
 
   @Nullable
-  public String toString(@Nullable Trinity<AntDomTarget, String, Map<String, AntDomTarget>> trinity, ConvertContext context) {
-    return trinity != null? trinity.getSecond() : null;
+  public String toString(@Nullable TargetResolver.Result result, ConvertContext context) {
+    return result != null? result.getRefsString() : null;
   }
+
 }
