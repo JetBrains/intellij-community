@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Default implementation of <code>RefactoringSupportProvider</code> to inherit from
  */
-public class DefaultRefactoringSupportProvider implements RefactoringSupportProvider {
+public class DefaultRefactoringSupportProvider extends RefactoringSupportProvider {
   public boolean isSafeDeleteAvailable(PsiElement element) {
     return false;
   }
