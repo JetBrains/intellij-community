@@ -53,16 +53,16 @@ public abstract class ValidatingTableEditor<Item> {
     String getTitle();
   }
 
-  private class ColumnInfoWrapper extends ColumnInfo<Item, String> {
-    private final ColumnInfo<Item, String> myDelegate;
+  private class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
+    private final ColumnInfo<Item, Object> myDelegate;
 
-    public ColumnInfoWrapper(ColumnInfo<Item, String> delegate) {
+    public ColumnInfoWrapper(ColumnInfo<Item, Object> delegate) {
       super(delegate.getName());
       myDelegate = delegate;
     }
 
     @Override
-    public String valueOf(Item item) {
+    public Object valueOf(Item item) {
       return myDelegate.valueOf(item);
     }
 
@@ -72,7 +72,7 @@ public abstract class ValidatingTableEditor<Item> {
     }
 
     @Override
-    public void setValue(Item item, String value) {
+    public void setValue(Item item, Object value) {
       myDelegate.setValue(item, value);
       updateMessage(-1, null);
     }
@@ -80,6 +80,11 @@ public abstract class ValidatingTableEditor<Item> {
     @Override
     public TableCellEditor getEditor(Item item) {
       return myDelegate.getEditor(item);
+    }
+
+    @Override
+    public int getWidth(JTable table) {
+      return myDelegate.getWidth(table);
     }
   }
 
@@ -146,10 +151,10 @@ public abstract class ValidatingTableEditor<Item> {
 
   private void createUIComponents() {
     myTable = new ChangesTrackingTableView<Item>() {
-      protected void onTextChanged(int row, int column, String value) {
+      protected void onCellValueChanged(int row, int column, Object value) {
         final Item original = getItems().get(row);
         Item override = cloneOf(original);
-        final ColumnInfo<Item, String> columnInfo = getTableModel().getColumnInfos()[column];
+        final ColumnInfo<Item, Object> columnInfo = getTableModel().getColumnInfos()[column];
         columnInfo.setValue(override, value);
         updateMessage(row, override);
       }
@@ -235,7 +240,7 @@ public abstract class ValidatingTableEditor<Item> {
     return (ListTableModel<Item>)myTable.getModel();
   }
 
-  public void setModel(ColumnInfo<Item, String>[] valueColumns, List<Item> items) {
+  public void setModel(ColumnInfo<Item, Object>[] valueColumns, List<Item> items) {
     ColumnInfo[] columns = new ColumnInfo[valueColumns.length + 1];
     IconColumn iconColumn = new IconColumn();
     int maxHeight = iconColumn.getRowHeight();
@@ -265,15 +270,7 @@ public abstract class ValidatingTableEditor<Item> {
   private List<Item> doGetItems() {
     List<Item> items = new ArrayList<Item>(getTableModel().getItems());
     if (myTable.isEditing()) {
-      Component c = myTable.getEditorComponent();
-      final JTextField textField;
-      if (c instanceof CellEditorComponentWithBrowseButton) {
-        textField = (JTextField)((CellEditorComponentWithBrowseButton)c).getChildComponent();
-      }
-      else {
-        textField = (JTextField)c;
-      }
-      String value = textField.getText();
+      Object value = ChangesTrackingTableView.getValue(myTable.getEditorComponent());
       ColumnInfo column = ((ListTableModel)myTable.getModel()).getColumnInfos()[myTable.getEditingColumn()];
       ((ColumnInfoWrapper)column).myDelegate.setValue(items.get(myTable.getEditingRow()), value);
     }
@@ -308,7 +305,11 @@ public abstract class ValidatingTableEditor<Item> {
       current.set(index, override);
     }
 
-    Pair<String, Fix> messageAndFix = validate(current, myWarnings);
+    displayMessageAndFix(validate(current, myWarnings));
+    myTable.repaint();
+  }
+
+  protected void displayMessageAndFix(@Nullable Pair<String, Fix> messageAndFix) {
     if (messageAndFix != null) {
       myMessageLabel.setText(messageAndFix.first);
       myMessageLabel.setIcon(WARNING_ICON);
@@ -323,7 +324,11 @@ public abstract class ValidatingTableEditor<Item> {
       myFixLink.setVisible(false);
       myFixRunnable = null;
     }
-    myTable.repaint();
+  }
+
+  public void hideMessageLabel() {
+    myMessageLabel.setVisible(false);
+    myFixLink.setVisible(false);
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -354,5 +359,11 @@ public abstract class ValidatingTableEditor<Item> {
     return myContentPane;
   }
 
+  public void setColumnReorderingAllowed(boolean value) {
+    JTableHeader header = myTable.getTableHeader();
+    if (header != null) {
+      header.setReorderingAllowed(value);
+    }
+  }
 
 }
