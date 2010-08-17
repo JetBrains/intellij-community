@@ -49,16 +49,18 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected final RefactoringActionHandler getHandler(DataContext dataContext) {
-    final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
-    if (language != null) {
-      List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
-      if (providers.isEmpty()) return null;
-      if (providers.size() == 1) return getRefactoringHandler(providers.get(0));
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (element != null) {
-        for (RefactoringSupportProvider provider : providers) {
-          if (provider.isAvailable(element)) {
-            return getRefactoringHandler(provider);
+    final Language[] languages = LangDataKeys.CONTEXT_LANGUAGES.getData(dataContext);
+    if (languages != null) {
+      for (Language language : languages) {
+        List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+        if (providers.isEmpty()) continue;
+        if (providers.size() == 1) return getRefactoringHandler(providers.get(0));
+        PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        if (element != null) {
+          for (RefactoringSupportProvider provider : providers) {
+            if (provider.isAvailable(element)) {
+              return getRefactoringHandler(provider);
+            }
           }
         }
       }
