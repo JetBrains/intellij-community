@@ -51,12 +51,10 @@ class CompositeRepositoryLocation implements RepositoryLocation {
     return myProviderLocation.getKey();
   }
 
-  @Override
   public void onBeforeBatch() throws VcsException {
     myProviderLocation.onBeforeBatch();
   }
 
-  @Override
   public void onAfterBatch() {
     myProviderLocation.onAfterBatch();
   }
