@@ -301,9 +301,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
 
-    setCurrentLogicalCaret(new LogicalPosition(
-      line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
-    ));
+    LogicalPosition logicalPositionToUse;
+    if (pos.visualPositionAware) {
+      logicalPositionToUse = new LogicalPosition(
+        line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
+      );
+    }
+    else {
+      logicalPositionToUse = new LogicalPosition(line, column);
+    }
+    setCurrentLogicalCaret(logicalPositionToUse);
 
     final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
 

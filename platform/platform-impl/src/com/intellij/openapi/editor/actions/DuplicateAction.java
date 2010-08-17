@@ -47,35 +47,48 @@ public class DuplicateAction extends EditorAction {
 
   private static void duplicateLineOrSelectedBlockAtCaret(Editor editor) {
     Document document = editor.getDocument();
+    CaretModel caretModel = editor.getCaretModel();
+    ScrollingModel scrollingModel = editor.getScrollingModel();
     if(editor.getSelectionModel().hasSelection()) {
       int start = editor.getSelectionModel().getSelectionStart();
       int end = editor.getSelectionModel().getSelectionEnd();
       String s = document.getCharsSequence().subSequence(start, end).toString();
       document.insertString(end, s);
-      editor.getCaretModel().moveToOffset(end+s.length());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      caretModel.moveToOffset(end+s.length());
+      scrollingModel.scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
       editor.getSelectionModel().setSelection(end, end+s.length());
     }
     else {
-      VisualPosition caret = editor.getCaretModel().getVisualPosition();
-      LogicalPosition lineStart = editor.visualToLogicalPosition(new VisualPosition(caret.line, 0));
-      LogicalPosition nextLineStart = editor.visualToLogicalPosition(new VisualPosition(caret.line + 1, 0));
-      if (nextLineStart.line == lineStart.line) {
-        nextLineStart = new LogicalPosition(lineStart.line+1, 0);
+      VisualPosition caret = caretModel.getVisualPosition();
+      int offset = caretModel.getOffset();
+      int visualLine = caret.line;
+
+      LogicalPosition lineStart = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
+      while (lineStart.softWrapLinesOnCurrentLogicalLine > 0) {
+        lineStart = editor.visualToLogicalPosition(new VisualPosition(--visualLine, 0));
       }
 
+      visualLine = caret.line + 1;
+      LogicalPosition nextLineStart = editor.visualToLogicalPosition(new VisualPosition(caret.line + 1, 0));
+      while (nextLineStart.line == lineStart.line) {
+        nextLineStart = editor.visualToLogicalPosition(new VisualPosition(++visualLine, 0));
+      }
       int start = editor.logicalPositionToOffset(lineStart);
       int end = editor.logicalPositionToOffset(nextLineStart);
       String s = document.getCharsSequence().subSequence(start, end).toString();
       final int lineToCheck = nextLineStart.line - 1;
 
+      int newOffset = end + offset - start;
       if(lineToCheck == document.getLineCount () /*empty document*/ ||
          document.getLineSeparatorLength(lineToCheck) == 0) {
         s = "\n"+s;
+        newOffset++;
       }
       document.insertString(end, s);
-      editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
+
+      caretModel.moveToOffset(newOffset);
+      scrollingModel.scrollToCaret(ScrollType.RELATIVE);
     }
   }
 

@@ -1666,7 +1666,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
       int lEnd = lIterator.getEnd();
-      getSoftWrapModel().registerSoftWrapIfNecessary(myDocument.getRawChars(), start, hEnd, position.x, fontType);
+      getSoftWrapModel().registerSoftWrapIfNecessary(text, start, hEnd, position.x, fontType);
 
       if (hEnd >= lEnd) {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
@@ -1726,7 +1726,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     flushBackground(g, clip);
 
     if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
-      getSoftWrapModel().registerSoftWrapIfNecessary(myDocument.getRawChars(), start, myDocument.getTextLength(), position.x, fontType);
+      getSoftWrapModel().registerSoftWrapIfNecessary(text, start, myDocument.getTextLength(), position.x, fontType);
       paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground, caretRowPainted);
     }
 
@@ -1744,6 +1744,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       // Ask caret model to update visual caret position.
       getCaretModel().moveToOffset(getCaretModel().getOffset(), locateBeforeSoftWrap);
+      getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 

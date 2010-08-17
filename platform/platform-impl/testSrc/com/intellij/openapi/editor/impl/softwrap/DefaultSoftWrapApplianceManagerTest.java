@@ -110,8 +110,7 @@ public class DefaultSoftWrapApplianceManagerTest {
       allowing(myScrollingModel).getVisibleArea(); will(returnValue(new Rectangle(0, 0, context.visualWidth, Integer.MAX_VALUE)));
       allowing(myDocument).getLineEndOffset(0); will(returnValue(context.document.length()));
     }});
-    char[] documentChars = context.document.toCharArray();
-    myManager.registerSoftWrapIfNecessary(documentChars, 0, documentChars.length, 0, Font.PLAIN);
+    myManager.registerSoftWrapIfNecessary(context.document, 0, context.document.length(), 0, Font.PLAIN);
   }
 
   private static TextChangeImpl createSoftWrap(int offset, int indent) {

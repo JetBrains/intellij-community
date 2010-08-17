@@ -172,7 +172,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     return result;
   }
 
-  public void registerSoftWrapIfNecessary(@NotNull char[] chars, int start, int end, int x, int fontType) {
+  public void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType) {
     if (!isSoftWrappingEnabled()) {
       return;
     }
@@ -180,7 +180,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
     myActive++;
     try {
-      myApplianceManager.registerSoftWrapIfNecessary(chars, start, end, x, fontType);
+      myApplianceManager.registerSoftWrapIfNecessary(text, start, end, x, fontType);
     }
     finally {
       myActive--;

@@ -127,6 +127,36 @@ public class SoftWrapsStorage {
   }
 
   /**
+   * Allows to remove all soft wraps registered at the current storage with offsets from <code>[start; end)</code> range if any.
+   *
+   * @param startOffset   start offset to use (inclusive)
+   * @param endOffset     end offset to use (exclusive)
+   */
+  public void removeInRange(int startOffset, int endOffset) {
+    int startIndex = getSoftWrapIndex(startOffset);
+    if (startIndex < 0) {
+      startIndex = -startIndex - 1;
+    }
+
+    if (startIndex >= myWraps.size()) {
+      return;
+    }
+
+    int endIndex = startIndex;
+    for (; endIndex < myWraps.size(); endIndex++) {
+      TextChangeImpl softWrap = myWraps.get(endIndex);
+      if (softWrap.getStart() >= endOffset) {
+        break;
+      }
+    }
+    
+    if (endIndex > startIndex) {
+      myWraps.subList(startIndex, endIndex).clear();
+      notifyListenersAboutRemoval();
+    }
+  }
+
+  /**
    * Removes all soft wraps registered at the current storage.
    */
   public void removeAll() {
