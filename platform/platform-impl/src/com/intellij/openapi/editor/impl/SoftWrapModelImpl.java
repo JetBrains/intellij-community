@@ -384,6 +384,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
+    if (!isSoftWrappingEnabled()) {
+      return;
+    }
     for (DocumentListener listener : myDocumentListeners) {
       listener.beforeDocumentChange(event);
     }
@@ -391,6 +394,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
   @Override
   public void documentChanged(DocumentEvent event) {
+    if (!isSoftWrappingEnabled()) {
+      return;
+    }
     for (DocumentListener listener : myDocumentListeners) {
       listener.documentChanged(event);
     }
