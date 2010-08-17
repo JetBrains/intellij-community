@@ -116,13 +116,16 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     }
 
     private void dropData(int startLine, int endLine) {
+      Document document = myEditor.getDocument();
       for (int i = startLine; i <= endLine; i++) {
         myProcessedLogicalLines.remove(i);
 
         // Calculate approximate soft wraps positions using plain font.
         // Note: we don't update 'myProcessedLogicalLines' collection here, i.e. soft wraps will be recalculated precisely
         // during standard editor repainting iteration.
-        processLogicalLine(myEditor.getDocument().getCharsSequence(), i, Font.PLAIN, IndentType.NONE);
+        if (i < document.getLineCount()) {
+          processLogicalLine(document.getCharsSequence(), i, Font.PLAIN, IndentType.NONE);
+        }
       }
     }
   };
@@ -150,7 +153,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
   public void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType) {
     dropDataIfNecessary();
 
-    if (start >= end) {
+    if (myVisibleAreaWidth <= 0 || start >= end) {
       return;
     }
 
@@ -344,7 +347,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
       }
 
       // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++;
-      if (!isIdSymbol(c) && (i >= max || isIdSymbol(text.charAt(i + 1)))) {
+      if (!isIdSymbol(c) && (i >= max - 1 || isIdSymbol(text.charAt(i + 1)))) {
         return i;
       }
     }
