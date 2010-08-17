@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class PsiTreeUtil {
@@ -465,6 +466,25 @@ public class PsiTreeUtil {
     return processor.toArray();
   }
 
+  @NotNull
+  public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable PsiElement element, final @NotNull Class<T> ... classes)  {
+    PsiElementProcessor.CollectFilteredElements<T> processor = new PsiElementProcessor.CollectFilteredElements<T>(new PsiElementFilter() {
+
+      @Override
+      public boolean isAccepted(PsiElement element) {
+        for (Class<T> clazz: classes) {
+          if (clazz.isInstance(element)) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+    });
+    processElements(element, processor);
+    return processor.getCollection();
+  }
+
   public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor processor) {
     if (element == null) return true;
     if (!processor.execute(element)) return false;
@@ -740,5 +760,5 @@ public class PsiTreeUtil {
     }
     throw new AssertionError(descendant + " is not a descendant of " + ancestor);
   }
-  
+
 }
