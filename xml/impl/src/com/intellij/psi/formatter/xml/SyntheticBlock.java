@@ -216,4 +216,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
   public boolean endsWithAttribute() {
     return isAttributeBlock(getSubBlocks().get(getSubBlocks().size() - 1));
   }
+
+  public Indent getChildIndent() {
+    return myChildIndent;
+  }
 }
