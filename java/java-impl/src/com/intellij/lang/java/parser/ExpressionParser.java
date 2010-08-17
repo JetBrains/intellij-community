@@ -290,7 +290,7 @@ public class ExpressionParser {
 
   @Nullable
   private static PsiBuilder.Marker parsePostfix(final PsiBuilder builder) {
-    PsiBuilder.Marker operand = parsePrimary(builder, false);
+    PsiBuilder.Marker operand = parsePrimary(builder, null);
     if (operand == null) return null;
 
     while (POSTFIX_OPS.contains(builder.getTokenType())) {
@@ -303,8 +303,10 @@ public class ExpressionParser {
     return operand;
   }
 
+  private enum BreakPoint {P1, P2, P3, P4}
+
   @Nullable
-  private static PsiBuilder.Marker parsePrimary(final PsiBuilder builder, final boolean planB) {
+  private static PsiBuilder.Marker parsePrimary(final PsiBuilder builder, final BreakPoint breakPoint) {
     PsiBuilder.Marker startMarker = builder.mark();
 
     PsiBuilder.Marker expr = parsePrimaryExpressionStart(builder);
@@ -321,7 +323,7 @@ public class ExpressionParser {
 
         final IElementType dotTokenType = builder.getTokenType();
         if (dotTokenType == JavaTokenType.CLASS_KEYWORD && exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
-          if (planB) {
+          if (breakPoint == BreakPoint.P1) {
             error(builder, JavaErrorMessages.message("expected.identifier"));
             PsiBuilderUtil.drop(startMarker, dotPos);
             return expr;
@@ -333,7 +335,7 @@ public class ExpressionParser {
           final PsiBuilder.Marker classObjAccess = parseClassObjectAccess(builder);
           if (classObjAccess == null) {
             copy.rollbackTo();
-            return parsePrimary(builder, true);
+            return parsePrimary(builder, BreakPoint.P1);
           }
 
           startMarker = copy;
@@ -345,7 +347,7 @@ public class ExpressionParser {
         }
         else if ((dotTokenType == JavaTokenType.THIS_KEYWORD || dotTokenType == JavaTokenType.SUPER_KEYWORD) &&
                  exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
-          if (planB) {
+          if (breakPoint == BreakPoint.P2) {
             dotPos.rollbackTo();
             startMarker.drop();
             return expr;
@@ -357,13 +359,13 @@ public class ExpressionParser {
           final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, false, true, false);
           if (ref == null || builder.getTokenType() != JavaTokenType.DOT) {
             copy.rollbackTo();
-            return parsePrimary(builder, true);
+            return parsePrimary(builder, BreakPoint.P2);
           }
           builder.advanceLexer();
 
           if (builder.getTokenType() != dotTokenType) {
             copy.rollbackTo();
-            return parsePrimary(builder, true);
+            return parsePrimary(builder, BreakPoint.P2);
           }
           builder.advanceLexer();
 
@@ -396,7 +398,7 @@ public class ExpressionParser {
       else if (tokenType == JavaTokenType.LPARENTH) {
         if (exprType(expr) != JavaElementType.REFERENCE_EXPRESSION) {
           if (exprType(expr) == JavaElementType.SUPER_EXPRESSION) {
-            if (planB) {
+            if (breakPoint == BreakPoint.P3) {
               startMarker.drop();
               return expr;
             }
@@ -420,7 +422,7 @@ public class ExpressionParser {
             }
 
             copy.rollbackTo();
-            return parsePrimary(builder, true);
+            return parsePrimary(builder, BreakPoint.P3);
           }
           else {
             startMarker.drop();
@@ -434,7 +436,7 @@ public class ExpressionParser {
         expr = callExpr;
       }
       else if (tokenType == JavaTokenType.LBRACKET) {
-        if (planB) {
+        if (breakPoint == BreakPoint.P4) {
           startMarker.drop();
           return expr;
         }
@@ -442,13 +444,14 @@ public class ExpressionParser {
         builder.advanceLexer();
 
         if (builder.getTokenType() == JavaTokenType.RBRACKET && exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
+          final int pos = builder.getCurrentOffset();
           final PsiBuilder.Marker copy = startMarker.precede();
           startMarker.rollbackTo();
 
           final PsiBuilder.Marker classObjAccess = parseClassObjectAccess(builder);
-          if (classObjAccess == null) {
+          if (classObjAccess == null || builder.getCurrentOffset() <= pos) {
             copy.rollbackTo();
-            return parsePrimary(builder, true);
+            return parsePrimary(builder, BreakPoint.P4);
           }
 
           startMarker = copy;
