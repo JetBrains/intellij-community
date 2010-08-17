@@ -55,11 +55,9 @@ public class RepositoryLocationGroup implements RepositoryLocation {
     return sb.toString();
   }
 
-  @Override
   public void onBeforeBatch() throws VcsException {
   }
 
-  @Override
   public void onAfterBatch() {
   }
 
