@@ -36,6 +36,25 @@ import java.util.*;
  * @author Alexey.Ivanov
  */
 abstract public class IntroduceHandler implements RefactoringActionHandler {
+  protected static PsiElement findAnchor(List<PsiElement> occurrences) {
+    PsiElement anchor = occurrences.get(0);
+    next:
+    do {
+      PyStatement statement = PsiTreeUtil.getParentOfType(anchor, PyStatement.class);
+
+      final PsiElement parent = statement.getParent();
+      for (PsiElement element : occurrences) {
+        if (!PsiTreeUtil.isAncestor(parent, element, true)) {
+          anchor = statement;
+          continue next;
+        }
+      }
+
+      return statement;
+    }
+    while (true);
+  }
+
   public enum InitPlace {
     SAME_METHOD,
     CONSTRUCTOR,
@@ -234,7 +253,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       initInConstructor = dialog.getInitPlace();
     }
     String assignmentText = name + " = " + expression.getText();
-    PyAssignmentStatement declaration = createDeclaration(project, assignmentText);
+    PsiElement anchor = replaceAll ? findAnchor(occurrences) : PsiTreeUtil.getParentOfType(expression, PyStatement.class);
+    PyAssignmentStatement declaration = createDeclaration(project, assignmentText, anchor);
 
     assert name != null;
     declaration = performReplace(project, declaration, expression, occurrences, name, replaceAll, initInConstructor);
@@ -245,7 +265,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
   protected abstract String getHelpId();
 
-  protected PyAssignmentStatement createDeclaration(Project project, String assignmentText) {
+  protected PyAssignmentStatement createDeclaration(Project project, String assignmentText, PsiElement anchor) {
     return PyElementGenerator.getInstance(project).createFromText(PyAssignmentStatement.class, assignmentText);
   }
 
