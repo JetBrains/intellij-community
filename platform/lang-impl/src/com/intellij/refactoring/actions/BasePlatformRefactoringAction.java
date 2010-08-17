@@ -22,9 +22,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -48,8 +51,17 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   protected final RefactoringActionHandler getHandler(DataContext dataContext) {
     final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
     if (language != null) {
-      RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forLanguage(language);
-      return provider == null ? null : getRefactoringHandler(provider);
+      List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+      if (providers.isEmpty()) return null;
+      if (providers.size() == 1) return getRefactoringHandler(providers.get(0));
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      if (element != null) {
+        for (RefactoringSupportProvider provider : providers) {
+          if (provider.isAvailable(element)) {
+            return getRefactoringHandler(provider);
+          }
+        }
+      }
     }
     return null;
   }

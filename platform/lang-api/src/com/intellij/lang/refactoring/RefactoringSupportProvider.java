@@ -18,6 +18,7 @@ package com.intellij.lang.refactoring;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,7 +34,7 @@ public abstract class RefactoringSupportProvider {
    * @param context refactoring context
    * @return true if refactoring support is available in given context
    */
-  public boolean isAvailable(PsiElement context) { return true; }
+  public boolean isAvailable(@NotNull PsiElement context) { return true; }
 
   /**
    * Checks if the Safe Delete refactoring can be applied to the specified element
