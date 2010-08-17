@@ -183,6 +183,9 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       if (elementAtCaret instanceof PyStatement) {
         break;
       }
+      if (elementAtCaret instanceof PyParameterList) {
+        return false;
+      }
       if (elementAtCaret instanceof PyExpression && isValidIntroduceVariant(elementAtCaret)) {
         expressions.add((PyExpression)elementAtCaret);
       }
