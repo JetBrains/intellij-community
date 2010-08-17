@@ -430,8 +430,11 @@
               text="Add Test Notification"/>
       <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
       <separator/>
+      <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction" text="Start Focus Debugger"/>
+      <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI Inspector"/>
+      <separator/>
       <reference ref="MaintenanceGroup"/>
-      
+
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 

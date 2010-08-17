@@ -30,6 +30,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,10 +205,15 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
         fileChooserDescriptor.setDescription(myDescription);
       }
       VirtualFile initialFile = getInitialFile();
-      VirtualFile[] files = doChoose(fileChooserDescriptor, initialFile);
-      if (files != null && files.length != 0) {
-        onFileChoosen(files[0]);
-      }
+
+      FileChooser.chooseFilesWithSlideEffect(fileChooserDescriptor, myProject, initialFile, new Consumer<VirtualFile[]>() {
+        @Override
+        public void consume(VirtualFile[] virtualFiles) {
+          if (virtualFiles != null && virtualFiles.length > 0) {
+            onFileChoosen(virtualFiles[0]);
+          }
+        }
+      });
     }
 
     @Nullable
@@ -233,14 +239,6 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       myAccessor.setText(myTextComponent.getChildComponent(), chosenFile.getPresentableUrl());
     }
 
-    private VirtualFile[] doChoose(FileChooserDescriptor fileChooserDescriptor, VirtualFile initialFile) {
-      if (myProject == null) {
-        return FileChooser.chooseFiles(myTextComponent, fileChooserDescriptor, initialFile);
-      }
-      else {
-        return FileChooser.chooseFiles(myProject, fileChooserDescriptor, initialFile);
-      }
-    }
   }
 
   public final void requestFocus() {
