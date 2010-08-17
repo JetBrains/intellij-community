@@ -16,6 +16,7 @@
 package com.intellij.platform;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -37,7 +38,7 @@ public class PlatformVcsDetector implements ProjectComponent {
   }
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
       public void run() {
         VirtualFile file = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myProject.getBaseDir());
         AbstractVcs vcs = myVcsManager.findVersioningVcs(file);
