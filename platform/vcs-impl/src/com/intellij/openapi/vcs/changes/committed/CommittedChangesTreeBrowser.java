@@ -292,10 +292,14 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private static void addOrReplaceChange(final List<Change> changes, final Change c) {
     final ContentRevision beforeRev = c.getBeforeRevision();
+    // todo!!! further improvements needed
     if (beforeRev != null) {
+      final String beforeName = beforeRev.getFile().getName();
+      final String beforeAbsolutePath = beforeRev.getFile().getIOFile().getAbsolutePath();
       for(Change oldChange: changes) {
         ContentRevision rev = oldChange.getAfterRevision();
-        if (rev != null && rev.getFile().getIOFile().getAbsolutePath().equals(beforeRev.getFile().getIOFile().getAbsolutePath())) {
+        // first compare name, which is many times faster - to remove 99% not matching
+        if (rev != null && (rev.getFile().getName().equals(beforeName)) && rev.getFile().getIOFile().getAbsolutePath().equals(beforeAbsolutePath)) {
           changes.remove(oldChange);
           if (oldChange.getBeforeRevision() != null || c.getAfterRevision() != null) {
             changes.add(new Change(oldChange.getBeforeRevision(), c.getAfterRevision()));
