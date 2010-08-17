@@ -48,7 +48,7 @@ public class XsltLanguage extends Language {
         LanguageFindUsages.INSTANCE.addExplicitExtension(this, new MyFindUsagesProvider());
         LanguageRefactoringSupport.INSTANCE.addExplicitExtension(this, new RefactoringSupportProvider() {
             @Override
-            public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
+            public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
                 return element instanceof XsltVariable && element.getUseScope() instanceof LocalSearchScope;
             }
 

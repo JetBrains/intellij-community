@@ -61,7 +61,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   }
 
   @Override
-  public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
+  public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
     if (!(element instanceof GrVariable)) return false;
     if (element instanceof GrField) return false;
 

@@ -164,10 +164,10 @@ public final class XPathLanguage extends Language {
         }
 
         @Override
-        public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
+        public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
             if (!element.isWritable() || element.getContainingFile() == null) return false;
             final RefactoringSupportProvider realProvider = ContextProvider.getContextProvider(element).getRefactoringSupportProvider();
-            return realProvider != null && realProvider.doInplaceRenameFor(element, context);
+            return realProvider != null && realProvider.isInplaceRenameAvailable(element, context);
         }
 
         @Override

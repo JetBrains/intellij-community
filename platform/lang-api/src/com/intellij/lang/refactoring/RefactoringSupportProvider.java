@@ -114,5 +114,5 @@ public abstract class RefactoringSupportProvider {
   @Nullable
   public ChangeSignatureHandler getChangeSignatureHandler() { return null; }
 
-  public boolean doInplaceRenameFor(PsiElement element, PsiElement context) { return false; }
+  public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) { return false; }
 }

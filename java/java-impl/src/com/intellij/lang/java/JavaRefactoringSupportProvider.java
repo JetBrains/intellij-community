@@ -53,7 +53,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
     return new IntroduceFieldHandler();
   }
 
-  public boolean doInplaceRenameFor(final PsiElement element, final PsiElement context) {
+  public boolean isInplaceRenameAvailable(final PsiElement element, final PsiElement context) {
     return mayRenameInplace(element, context);
   }
 
