@@ -60,11 +60,9 @@ public class CvsRepositoryLocation implements RepositoryLocation {
     return myModuleName;
   }
 
-  @Override
   public void onBeforeBatch() throws VcsException {
   }
 
-  @Override
   public void onAfterBatch() {
   }
 }

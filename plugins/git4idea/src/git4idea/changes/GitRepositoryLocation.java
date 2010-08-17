@@ -60,11 +60,9 @@ public class GitRepositoryLocation implements RepositoryLocation {
     return myUrl;
   }
 
-  @Override
   public void onBeforeBatch() throws VcsException {
   }
 
-  @Override
   public void onAfterBatch() {
   }
 

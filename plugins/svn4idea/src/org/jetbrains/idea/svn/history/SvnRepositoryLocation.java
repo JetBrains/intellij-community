@@ -51,11 +51,9 @@ public class SvnRepositoryLocation implements RepositoryLocation {
     return myURL;
   }
 
-  @Override
   public void onBeforeBatch() throws VcsException {
   }
 
-  @Override
   public void onAfterBatch() {
   }
 
