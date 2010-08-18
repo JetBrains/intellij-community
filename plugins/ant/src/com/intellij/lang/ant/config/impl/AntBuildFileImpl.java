@@ -378,8 +378,10 @@ public class AntBuildFileImpl implements AntBuildFileBase {
               LOG.debug(e);
             }
           }
-
           myCachedExternalProperties = result;  
+        }
+        else {
+          result = myCachedExternalProperties;
         }
       }
     }

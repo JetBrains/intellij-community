@@ -31,6 +31,7 @@ public class TestDataReferenceCollector {
   private final String myTestDataPath;
   private final String myTestName;
   private final List<String> myLogMessages = new ArrayList<String>();
+  private PsiClass myContainingClass;
   private boolean myFoundTestDataParameters = false;
 
   public TestDataReferenceCollector(String testDataPath, String testName) {
@@ -39,6 +40,7 @@ public class TestDataReferenceCollector {
   }
 
   List<String> collectTestDataReferences(final PsiMethod method) {
+    myContainingClass = method.getContainingClass();
     final List<String> result = collectTestDataReferences(method, new HashMap<String, Computable<String>>());
     if (!myFoundTestDataParameters) {
       myLogMessages.add("Found no parameters annotated with @TestDataFile");
@@ -53,7 +55,16 @@ public class TestDataReferenceCollector {
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         String callText = expression.getMethodExpression().getReferenceName();
         if (callText == null) return;
-        final PsiMethod callee = expression.resolveMethod();
+        PsiMethod callee = expression.resolveMethod();
+        if (callee != null && callee.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          final PsiClass calleeContainingClass = callee.getContainingClass();
+          if (calleeContainingClass != null && myContainingClass.isInheritor(calleeContainingClass, true)) {
+            final PsiMethod implementation = myContainingClass.findMethodBySignature(callee, true);
+            if (implementation != null) {
+              callee = implementation;
+            }
+          }
+        }
         if (callee != null) {
           boolean haveAnnotatedParameters = false;
           final PsiParameter[] psiParameters = callee.getParameterList().getParameters();

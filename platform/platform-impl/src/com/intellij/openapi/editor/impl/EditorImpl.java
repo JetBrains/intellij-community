@@ -769,7 +769,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public JComponent getContentComponent() {
+  public EditorComponentImpl getContentComponent() {
     return myEditorComponent;
   }
 
@@ -4968,10 +4968,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // for another visible area width.
         int startToUse = 0;
         int endToUse = Math.min(lineCount, myLineWidths.size());
-        if (getSoftWrapModel().isSoftWrappingEnabled()) {
+        if (endToUse > 0 && getSoftWrapModel().isSoftWrappingEnabled()) {
           Rectangle visibleArea = getScrollingModel().getVisibleArea();
           startToUse = xyToLogicalPosition(visibleArea.getLocation()).line + 1;
-          endToUse = xyToLogicalPosition(new Point(0, visibleArea.y + visibleArea.height)).line;
+          endToUse = Math.min(endToUse, xyToLogicalPosition(new Point(0, visibleArea.y + visibleArea.height)).line);
         }
         int maxWidth = 0;
         for (int i = startToUse; i < endToUse; i++) {

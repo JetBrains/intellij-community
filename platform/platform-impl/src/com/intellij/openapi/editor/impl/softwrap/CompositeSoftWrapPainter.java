@@ -108,7 +108,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     }
     if (++mySymbolsDrawingIndex < SYMBOLS.size()) {
       TextDrawingCallback callback = myEditor.getTextDrawingCallback();
-      ColorProvider colorHolder = ColorProvider.byColorScheme(myEditor, EditorColors.RIGHT_MARGIN_COLOR, EditorColors.WHITESPACES_COLOR);
+      ColorProvider colorHolder = ColorProvider.byColorScheme(myEditor, EditorColors.SOFT_WRAP_SIGN_COLOR);
       myDelegate = new TextBasedSoftWrapPainter(SYMBOLS.get(mySymbolsDrawingIndex), myEditor, callback, colorHolder);
       initDelegateIfNecessary();
       return;

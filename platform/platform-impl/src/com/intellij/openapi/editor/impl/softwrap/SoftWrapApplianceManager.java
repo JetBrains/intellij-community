@@ -44,6 +44,8 @@ public interface SoftWrapApplianceManager {
    * @param end       end offset of the token to process within the given char array (exclusive)
    * @param x         <code>'x'</code> coordinate within the given graphics buffer that will be used to start drawing the text
    * @param fontType  font type used for the target text fragment representation
+   * @param temporary defines type of the current call. <code>'Temporary'</code> means that soft wraps registered during
+   *                  the processing should be recalculated on further invocations; they may be reused otherwise
    */
-  void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType);
+  void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType, boolean temporary);
 }

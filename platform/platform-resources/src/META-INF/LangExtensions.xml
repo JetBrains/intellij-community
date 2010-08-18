@@ -131,6 +131,9 @@
   <applicationService serviceInterface="com.intellij.ide.PowerSaveMode"
                       serviceImplementation="com.intellij.ide.PowerSaveMode"/>
 
+  <applicationService serviceInterface="com.intellij.ui.SpellCheckAwareEditorFieldProvider"
+                      serviceImplementation="com.intellij.ui.SpellCheckAwareEditorFieldProviderImpl"/>
+
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
 

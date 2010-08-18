@@ -39,6 +39,7 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
   public static final DataKey<PsiFile> PSI_FILE = DataKey.create("psi.File");
   public static final DataKey<Language> LANGUAGE = DataKey.create("Language");
+  public static final DataKey<Language[]> CONTEXT_LANGUAGES = DataKey.create("context.Languages");
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
 
   /**
