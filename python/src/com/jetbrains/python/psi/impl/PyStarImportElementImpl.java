@@ -36,18 +36,20 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
     PyFromImportStatement import_from_stmt = PsiTreeUtil.getParentOfType(this, PyFromImportStatement.class);
     if (import_from_stmt != null) {
       PyReferenceExpression from_src = import_from_stmt.getImportSource();
-      final PsiElement importedFile = ResolveImportUtil.resolveImportReference(from_src);
-      final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
-      if (source instanceof PyFile) {
-        PyFile sourceFile = (PyFile)source;
-        final PsiElement exportedName = sourceFile.findExportedName(the_name);
-        if (exportedName != null) {
-          final List<String> all = sourceFile.getDunderAll();
-          if (all != null && !all.contains(the_name)) {
-            return null;
+      final List<PsiElement> importedFiles = ResolveImportUtil.resolveImportReference(from_src);
+      for (PsiElement importedFile : importedFiles) {
+        final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
+        if (source instanceof PyFile) {
+          PyFile sourceFile = (PyFile)source;
+          final PsiElement exportedName = sourceFile.findExportedName(the_name);
+          if (exportedName != null) {
+            final List<String> all = sourceFile.getDunderAll();
+            if (all != null && !all.contains(the_name)) {
+              continue;
+            }
           }
+          return exportedName;
         }
-        return exportedName;
       }
     }
     return null;

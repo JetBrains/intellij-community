@@ -13,6 +13,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
@@ -125,6 +126,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (statements != null) {
       statements.accept(visitor);
       if (isGeneratedStub() && !visitor.myHasReturns) {
+        if (PyNames.INIT.equals(getName())) {
+          return PyNoneType.INSTANCE;
+        }
         return null;
       }
     }

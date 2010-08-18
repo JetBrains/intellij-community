@@ -93,8 +93,26 @@ public class ResolveImportUtil {
 
   @Nullable
   public static PsiElement resolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
+    final List<PsiElement> psiElements = multiResolveImportElement(import_element, qName);
+    if (psiElements.size() > 1) {
+      // prefer the directory which has a non-empty __init__.py
+      for (PsiElement element : psiElements) {
+        final PsiElement init = PyUtil.turnDirIntoInit(element);
+        if (init instanceof PsiFile) {
+          VirtualFile vFile = ((PsiFile) init).getVirtualFile();
+          if (vFile != null && vFile.getLength() > 0) {
+            return element;
+          }
+        }
+      }
+    }
+    return psiElements.isEmpty() ? null : psiElements.get(0);
+  }
+
+  @NotNull
+  public static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
     if (qName == null) {
-      return null;
+      return Collections.emptyList();
     }
 
     final PsiFile file = import_element.getContainingFile().getOriginalFile();
@@ -109,69 +127,69 @@ public class ResolveImportUtil {
       final int relative_level = from_import_statement.getRelativeLevel();
 
       if (relative_level > 0 && moduleQName == null) { // "from ... import foo"
-        return resolveChild(stepBackFrom(file, relative_level), qName.getComponents().get(0), file, false);
+        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), qName.getComponents().get(0), file, false);
+        return element != null ? Collections.singletonList(element) : Collections.<PsiElement>emptyList();
       }
 
       if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
         final List<PsiElement> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
         for (PsiElement candidate : candidates) {
           PsiElement result = resolveChild(candidate, qName.getComponents().get(0), file, false);
-          if (result != null) return result;
+          if (result != null) return Collections.singletonList(result);
         }
       }
     }
     else if (importStatement instanceof PyImportStatement) { // "import foo"
-      List<PsiElement> result = resolveModule(qName, file, absolute_import_enabled, 0);
-      return result.isEmpty() ? null : result.get(0);
+      return resolveModule(qName, file, absolute_import_enabled, 0);
     }
     // in-python resolution failed
     if (moduleQName != null) {
       final List<PsiElement> importFrom = resolveModule(moduleQName, file, false, 0);
-      return resolveForeignImport(import_element, StringUtil.join(qName.getComponents(), "."),
-                                  importFrom.isEmpty() ? null : importFrom.get(0));
+      final PsiElement result = resolveForeignImport(import_element, StringUtil.join(qName.getComponents(), "."),
+                                                     importFrom.isEmpty() ? null : importFrom.get(0));
+      return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
     }
-    return null;
+    return Collections.emptyList();
   }
 
-  @Nullable
-  public static PsiElement resolveImportReference(final PyReferenceExpression importRef) {
+  @NotNull
+  public static List<PsiElement> resolveImportReference(final PyReferenceExpression importRef) {
     // prerequisites
-    if (importRef == null) return null;
-    if (!importRef.isValid()) return null; // we often catch a reparse while in a process of resolution
+    if (importRef == null) return Collections.emptyList();
+    if (!importRef.isValid()) return Collections.emptyList(); // we often catch a reparse while in a process of resolution
     final String referencedName = importRef.getReferencedName(); // it will be the "foo" in later comments
-    if (referencedName == null) return null;
+    if (referencedName == null) return Collections.emptyList();
     final PsiFile file = importRef.getContainingFile();
-    if (file == null || !file.isValid()) return null;
+    if (file == null || !file.isValid()) return Collections.emptyList();
 
     final PsiElement parent =
       PsiTreeUtil.getParentOfType(importRef, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
     if (parent instanceof PyImportElement) {
       PyImportElement import_element = (PyImportElement)parent;
-      final PsiElement result = resolveImportElement(import_element, importRef.asQualifiedName());
-      if (result != null) {
-        return result;
-      }
+      return multiResolveImportElement(import_element, importRef.asQualifiedName());
     }
     else if (parent instanceof PyFromImportStatement) { // "from foo import"
       PyFromImportStatement from_import_statement = (PyFromImportStatement)parent;
-      PsiElement module = resolveFromImportStatementSource(from_import_statement, importRef.asQualifiedName());
-      if (module != null) return module;
+      return resolveFromImportStatementSource(from_import_statement, importRef.asQualifiedName());
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Nullable
   public static PsiElement resolveFromImportStatementSource(PyFromImportStatement from_import_statement) {
     final PyQualifiedName qName = from_import_statement.getImportSourceQName();
-    return qName == null ? null : resolveFromImportStatementSource(from_import_statement, qName);
+    if (qName == null) {
+      return null;
+    }
+    final List<PsiElement> source = resolveFromImportStatementSource(from_import_statement, qName);
+    return source.isEmpty() ? null : source.get(0);
   }
 
-  @Nullable
-  private static PsiElement resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
+  @NotNull
+  private static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
-    final List<PsiElement> candidates = resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
-    return candidates.isEmpty() ? null : candidates.get(0);
+    return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
   }
 
   /**
@@ -265,28 +283,7 @@ public class ResolveImportUtil {
     return visitor.results;
   }
 
-  /**
-   * Finds a named submodule file/dir under given root.
-   */
-  @Nullable
-  private static PsiElement matchToFile(String name, PsiManager manager, VirtualFile rootFile) {
-    VirtualFile child_file = rootFile.findChild(name);
-    if (child_file != null) {
-      if (name.equals(child_file.getName())) {
-        VirtualFile initpy = child_file.findChild(PyNames.INIT_DOT_PY);
-        if (initpy != null) {
-          PsiFile initFile = manager.findFile(initpy);
-          if (initFile != null) {
-            initFile.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE); // we really resolved to the dir
-            return initFile;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  // TODO: rewrite using resolveImportReference 
+  // TODO: rewrite using resolveImportReference
 
   /**
    * Resolves either <tt>import foo</tt> or <tt>from foo import bar</tt>.
@@ -503,15 +500,10 @@ public class ResolveImportUtil {
     PsiDirectory dir = null;
     PsiElement ret = null;
     if (parent instanceof PyFile) {
-      if (parent.getCopyableUserData(PyFile.KEY_IS_DIRECTORY) == Boolean.TRUE) {
-        // the file was a fake __init__.py covering a reference to dir
+      ret = ((PyFile)parent).getElementNamed(referencedName);
+      if (ret != null) return ret;
+      if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
         dir = ((PyFile)parent).getContainingDirectory();
-      }
-      else {
-        // look for name in the file:
-        //processor = new ResolveProcessor(referencedName);
-        ret = ((PyFile)parent).getElementNamed(referencedName);
-        if (ret != null) return ret;
       }
     }
     else if (parent instanceof PsiDirectory) {

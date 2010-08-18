@@ -49,10 +49,10 @@ public class PyRefactoringUtil {
   }
 
   @Nullable
-  public static PsiElement getSelectedExpression(@NotNull final Project project,
-                                                 @NotNull PsiFile file,
-                                                 @NotNull final PsiElement element1,
-                                                 @NotNull final PsiElement element2) {
+  public static PyExpression getSelectedExpression(@NotNull final Project project,
+                                                   @NotNull PsiFile file,
+                                                   @NotNull final PsiElement element1,
+                                                   @NotNull final PsiElement element2) {
     PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
     if (parent != null && !(parent instanceof PyElement)) {
       parent = PsiTreeUtil.getParentOfType(parent, PyElement.class);
@@ -69,7 +69,7 @@ public class PyRefactoringUtil {
       return null;
     }
     if ((element1 == PsiTreeUtil.getDeepestFirst(parent)) && (element2 == PsiTreeUtil.getDeepestLast(parent))) {
-      return parent;
+      return (PyExpression) parent;
     }
 
     // Check if selection breaks AST node in binary expression

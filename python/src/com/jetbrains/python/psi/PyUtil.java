@@ -567,7 +567,6 @@ public class PyUtil {
       final PsiDirectory dir = (PsiDirectory)target;
       final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
       if (file != null) {
-        file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
         return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
       }
       else {

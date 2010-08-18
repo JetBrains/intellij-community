@@ -233,8 +233,12 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       } 
       // Local variable or parameter
       else {
-        final String name = element.getText();
+        String name = element.getText();
         if (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter) {
+          PyNamedParameter namedParameter = element instanceof PyNamedParameter
+                                            ? (PyNamedParameter) element
+                                            : (PyNamedParameter) element.getParent();
+          name = namedParameter.getName();
           // Ignore unused self parameters as obligatory
           if ("self".equals(name) && PyPsiUtils.isMethodContext(element)) {
             continue;
