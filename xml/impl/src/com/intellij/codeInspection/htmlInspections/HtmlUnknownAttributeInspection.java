@@ -23,9 +23,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
@@ -39,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
+  private static final String HTML5_DATA_ATTR_PREFIX = "data-";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection");
   @NonNls public static final String ATTRIBUTE_SHORT_NAME = "HtmlUnknownAttribute";
 
@@ -87,9 +89,11 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
       XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
 
       final String name = attribute.getName();
-      
+
       if (attributeDescriptor == null && !attribute.isNamespaceDeclaration()) {
-        if (!XmlUtil.attributeFromTemplateFramework(name, tag) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
+        if (!XmlUtil.attributeFromTemplateFramework(name, tag) &&
+            (!isCustomValuesEnabled() || !isCustomValue(name)) &&
+            !isHtml5DataAttribute(tag, name)) {
           final ASTNode node = attribute.getNode();
           assert node != null;
           final PsiElement nameElement = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node).getPsi();
@@ -101,5 +105,21 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
         }
       }
     }
+  }
+
+  private static boolean isHtml5DataAttribute(XmlTag tag, String attrName) {
+    if (!attrName.startsWith(HTML5_DATA_ATTR_PREFIX)) {
+      return false;
+    }
+    XmlDocument doc = PsiTreeUtil.getParentOfType(tag, XmlDocument.class);
+    if (!(doc instanceof HtmlDocumentImpl)) {
+      return false;
+    }
+    XmlProlog prolog = doc.getProlog();
+    if (prolog == null) {
+      return false;
+    }
+    XmlDoctype doctype = prolog.getDoctype();
+    return doctype != null && doctype.getDtdUri() == null && doctype.getPublicId() == null;
   }
 }
