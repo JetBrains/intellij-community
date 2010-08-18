@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -23,6 +24,8 @@ import java.util.List;
  * @author max
  */
 public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Result> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ExecutorsQuery"); 
+
   private final List<QueryExecutor<Result, Parameter>> myExecutors;
   private final Parameter myParameters;
 
@@ -33,8 +36,13 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
 
   protected boolean processResults(final Processor<Result> consumer) {
     for (QueryExecutor<Result, Parameter> executor : myExecutors) {
-      if (!executor.execute(myParameters, consumer)) {
-        return false;
+      try {
+        if (!executor.execute(myParameters, consumer)) {
+          return false;
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
 
