@@ -130,7 +130,9 @@ public class FieldIntroduceHandler extends IntroduceHandler {
 
   @Override
   protected boolean isValidIntroduceContext(PsiElement element) {
-    return super.isValidIntroduceContext(element) && PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class) != null;
+    return super.isValidIntroduceContext(element) &&
+           PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class) != null &&
+           PsiTreeUtil.getParentOfType(element, PyDecoratorList.class) == null;
   }
 
   private static class AddFieldDeclaration implements Function<String, PyStatement> {

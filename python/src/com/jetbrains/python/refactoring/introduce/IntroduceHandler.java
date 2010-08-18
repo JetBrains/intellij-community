@@ -212,6 +212,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected boolean isValidIntroduceContext(PsiElement element) {
+    PyDecorator decorator = PsiTreeUtil.getParentOfType(element, PyDecorator.class);
+    if (decorator != null && PsiTreeUtil.isAncestor(decorator.getCallee(), element, false)) {
+      return false;
+    }
     return PsiTreeUtil.getParentOfType(element, PyParameterList.class) == null;
   }
 
