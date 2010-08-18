@@ -46,6 +46,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -74,7 +75,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   static final Icon ourIntentionOffIcon = IconLoader.getIcon("/actions/realIntentionOffBulb.png");
   static final Icon ourQuickFixOffIcon = IconLoader.getIcon("/actions/quickfixOffBulb.png");
   static final Icon ourArrowIcon = IconLoader.getIcon("/general/arrowDown.png");
-  private static final Border INACTIVE_BORDER = null;
+  static final Icon ourInactiveArrowIcon = new EmptyIcon(ourArrowIcon.getIconWidth(), ourArrowIcon.getIconHeight());
+  private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
   private static final Insets INACTIVE_MARGIN = new Insets(0, 0, 0, 0);
   private static final Insets ACTIVE_MARGIN = new Insets(0, 0, 0, 0);
 
@@ -86,6 +88,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private final JButton myButton;
 
   private final Icon mySmartTagIcon;
+  private final RowIcon myInactiveIcon;
 
   private static final int DELAY = 500;
   private final MyComponentHint myComponentHint;
@@ -223,7 +226,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myHighlightedIcon.setIcon(mySmartTagIcon, 0);
     myHighlightedIcon.setIcon(ourArrowIcon, 1);
 
-    myButton = new JButton(mySmartTagIcon);
+    myInactiveIcon = new RowIcon(2);
+    myInactiveIcon.setIcon(mySmartTagIcon, 0);
+    myInactiveIcon.setIcon(ourInactiveArrowIcon, 1);
+
+    myButton = new JButton(myInactiveIcon);
     myButton.setFocusable(false);
     myButton.setMargin(INACTIVE_MARGIN);
     myButton.setBorderPainted(false);
@@ -261,7 +268,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     Window ancestor = SwingUtilities.getWindowAncestor(myPopup.getContent());
     if (ancestor == null) {
       myButton.setBackground(BACKGROUND_COLOR);
-      myButton.setIcon(mySmartTagIcon);
+      myButton.setIcon(myInactiveIcon);
       setBorder(INACTIVE_BORDER);
       myButton.setMargin(INACTIVE_MARGIN);
       updateComponentHintSize();
