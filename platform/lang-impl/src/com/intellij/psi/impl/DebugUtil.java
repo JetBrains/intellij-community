@@ -17,8 +17,10 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -31,6 +33,7 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -89,9 +92,7 @@ public class DebugUtil {
                                   final boolean usePsi) {
     if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
 
-    for (int i = 0; i < indent; i++) {
-      buffer.append(' ');
-    }
+    StringUtil.repeatSymbol(buffer, ' ', indent);
     if (root instanceof CompositeElement) {
       if (usePsi) {
         final PsiElement psiElement = root.getPsi();
@@ -119,9 +120,7 @@ public class DebugUtil {
       ASTNode child = root.getFirstChildNode();
 
       if (child == null) {
-        for (int i = 0; i < indent + 2; i++) {
-          buffer.append(' ');
-        }
+        StringUtil.repeatSymbol(buffer, ' ', indent + 2);
         buffer.append("<empty list>\n");
       }
       else {
@@ -136,9 +135,7 @@ public class DebugUtil {
   private static void treeToBufferWithUserData(StringBuilder buffer, TreeElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
 
-    for (int i = 0; i < indent; i++) {
-      buffer.append(' ');
-    }
+    StringUtil.repeatSymbol(buffer, ' ', indent);
     if (root instanceof CompositeElement) {
       buffer.append(SourceTreeToPsiMap.treeElementToPsi(root).toString());
     }
@@ -159,9 +156,7 @@ public class DebugUtil {
       }
 
       if (children.length == 0) {
-        for (int i = 0; i < indent + 2; i++) {
-          buffer.append(' ');
-        }
+        StringUtil.repeatSymbol(buffer, ' ', indent + 2);
         buffer.append("<empty list>\n");
       }
     }
@@ -170,9 +165,7 @@ public class DebugUtil {
   private static void treeToBufferWithUserData(StringBuilder buffer, PsiElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
-    for (int i = 0; i < indent; i++) {
-      buffer.append(' ');
-    }
+    StringUtil.repeatSymbol(buffer, ' ', indent);
     if (root instanceof CompositeElement) {
       buffer.append(root);
     }
@@ -193,9 +186,7 @@ public class DebugUtil {
     }
 
     if (children.length == 0) {
-      for (int i = 0; i < indent + 2; i++) {
-        buffer.append(' ');
-      }
+      StringUtil.repeatSymbol(buffer, ' ', indent + 2);
       buffer.append("<empty list>\n");
     }
 
@@ -290,9 +281,7 @@ public class DebugUtil {
                                  final boolean showChildrenRanges) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
-    for (int i = 0; i < indent; i++) {
-      buffer.append(' ');
-    }
+    StringUtil.repeatSymbol(buffer, ' ', indent);
     final String rootStr = root.toString();
     buffer.append(rootStr);
     PsiElement child = root.getFirstChild();
