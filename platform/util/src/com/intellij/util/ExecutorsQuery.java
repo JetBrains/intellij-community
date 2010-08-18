@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -40,6 +41,9 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
         if (!executor.execute(myParameters, consumer)) {
           return false;
         }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error(e);
