@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -25,8 +26,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,18 +132,12 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     if (psiElement == null) return -1;
     if (!psiElement.isValid()) return -1;
     LOG.assertTrue(psiElement.isPhysical());
-    PsiFile containingFile = psiElement.getContainingFile();
-    PsiElement containingFileContext = containingFile.getContext();
-    if (containingFileContext != null) {
-      containingFile = containingFileContext.getContainingFile();
-    }
+    PsiFile containingFile = InjectedLanguageUtil.getTopLevelFile(psiElement);
     Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(containingFile);
     if (document == null) return -1;
     TextRange textRange = getTextRange();
     if (textRange == null) return -1;
-    if (containingFileContext != null) {
-      textRange = textRange.shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(psiElement));
-    }
+    textRange = InjectedLanguageManager.getInstance(containingFile.getProject()).injectedToHost(psiElement, textRange);
     return document.getLineNumber(textRange.getStartOffset()) + 1;
   }
 
@@ -165,7 +160,8 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   public TextRange getTextRangeForNavigation() {
     TextRange textRange = getTextRange();
     if (textRange == null) return null;
-    return textRange.shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(getPsiElement()));
+    PsiElement element = getPsiElement();
+    return InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, element.getTextRange());
   }
 
   public TextRange getTextRange() {

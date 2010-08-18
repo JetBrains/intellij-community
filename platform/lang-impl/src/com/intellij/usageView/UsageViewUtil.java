@@ -19,6 +19,7 @@ package com.intellij.usageView;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
@@ -27,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +122,7 @@ public class UsageViewUtil {
             PsiReference psiReference = usage.getReference();
             if (psiReference == null) continue;
             
-            int injectionOffsetInMasterFile = PsiUtilBase.findInjectedElementOffsetInRealDocument(usageElement) + usageElement.getTextOffset();
+            int injectionOffsetInMasterFile = InjectedLanguageManager.getInstance(usageElement.getProject()).injectedToHost(usageElement, usageElement.getTextOffset());
             set.remove(
               NonCodeUsageInfo.create(
                 context.getContainingFile(), 
