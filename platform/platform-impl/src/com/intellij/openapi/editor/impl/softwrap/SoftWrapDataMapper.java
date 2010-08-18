@@ -608,8 +608,8 @@ public class SoftWrapDataMapper {
       }
       while (myIndex < myFoldRegions.length) {
         FoldRegion result = myFoldRegions[myIndex++];
-        if (result.isExpanded()) {
-          return get();
+        if (!result.isExpanded()) {
+          return result;
         }
       }
       return null;
