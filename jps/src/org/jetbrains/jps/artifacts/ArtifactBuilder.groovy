@@ -1,5 +1,6 @@
 package org.jetbrains.jps.artifacts
 
+import org.jetbrains.jps.Module
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.dag.DagBuilder
 import org.jetbrains.jps.dag.DagNode
@@ -49,19 +50,23 @@ class ArtifactBuilder {
   }
 
   def buildArtifacts() {
-    getSortedArtifacts().each {
-      doBuildArtifact it
-    }
+    compileModulesAndBuildArtifacts(getSortedArtifacts())
   }
 
   def buildArtifact(Artifact artifact) {
-    buildArtifactWithDependencies(artifact, [] as Set)
+    Set<Artifact> included = new LinkedHashSet<Artifact>()
+    collectIncludedArtifacts(artifact, [] as Set, included)
+    compileModulesAndBuildArtifacts(included as List)
   }
 
-  private def buildArtifactWithDependencies(Artifact artifact, Set<Artifact> parents) {
+  private def collectIncludedArtifacts(Artifact artifact, Set<Artifact> parents, Set<Artifact> result) {
     if (artifact in parents) {
       project.error("Circular inclusion of artifacts: $parents")
     }
+    if (result.contains(artifact)) {
+      return
+    }
+
     Set<Artifact> included = new LinkedHashSet<Artifact>()
     processIncludedArtifacts(artifact) {
       included << it
@@ -70,9 +75,27 @@ class ArtifactBuilder {
     Set<Artifact> newParents = new HashSet<Artifact>(parents)
     newParents << artifact
     included.each {
-      buildArtifactWithDependencies(it, newParents)
+      collectIncludedArtifacts(it, newParents, result)
     }
-    doBuildArtifact(artifact)
+    result << artifact
+  }
+
+  private def compileModulesAndBuildArtifacts(List<Artifact> artifacts) {
+    Set<Module> modules = [] as Set
+    artifacts*.rootElement*.process(project) {LayoutElement element ->
+      if (element instanceof ModuleOutputElement) {
+        Module module = project.modules[element.moduleName]
+        if (module != null) {
+          modules << module
+        }
+      }
+      return true
+    }
+    modules.each { it.make() }
+
+    artifacts.each {
+      doBuildArtifact(it)
+    }
   }
 
   private def doBuildArtifact(Artifact artifact) {
