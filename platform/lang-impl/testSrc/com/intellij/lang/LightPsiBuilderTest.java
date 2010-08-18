@@ -17,9 +17,11 @@ package com.intellij.lang;
 
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.LexerBase;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.sun.tools.internal.xjc.util.NullStream;
 import org.junit.Test;
 
@@ -34,7 +36,6 @@ public class LightPsiBuilderTest {
   private static final IElementType ROOT = new IElementType("ROOT", Language.ANY);
   private static final IElementType LETTER = new IElementType("LETTER", Language.ANY);
   private static final IElementType DIGIT = new IElementType("DIGIT", Language.ANY);
-  private static final IElementType WHITESPACE = new IElementType("WHITESPACE", Language.ANY);
   private static final IElementType OTHER = new IElementType("OTHER", Language.ANY);
   private static final IElementType COLLAPSED = new IElementType("COLLAPSED", Language.ANY);
   private static final IElementType LEFT_BOUND = new IElementType("LEFT_BOUND", Language.ANY) {
@@ -42,7 +43,7 @@ public class LightPsiBuilderTest {
   };
   private static final IElementType COMMENT = new IElementType("COMMENT", Language.ANY);
 
-  private static final TokenSet WHITESPACE_SET = TokenSet.create(WHITESPACE);
+  private static final TokenSet WHITESPACE_SET = TokenSet.create(TokenType.WHITE_SPACE);
   private static final TokenSet COMMENT_SET = TokenSet.create(COMMENT);
 
   @Test
@@ -65,20 +66,23 @@ public class LightPsiBuilderTest {
 
   @Test
   public void testCollapse() {
-    doTest("a<<b",
+    doTest("a<<>>b",
            new Parser() {
              public void parse(PsiBuilder builder) {
-               PsiBuilder.Marker inner = null;
-               while (builder.getTokenType() != null) {
-                 if (builder.getTokenType() == OTHER && inner == null) inner = builder.mark();
-                 builder.advanceLexer();
-                 if (builder.getTokenType() != OTHER && inner != null) { inner.collapse(COLLAPSED); inner = null; }
-               }
+               PsiBuilderUtil.advance(builder, 1);
+               final PsiBuilder.Marker marker1 = builder.mark();
+               PsiBuilderUtil.advance(builder, 2);
+               marker1.collapse(COLLAPSED);
+               final PsiBuilder.Marker marker2 = builder.mark();
+               PsiBuilderUtil.advance(builder, 2);
+               marker2.collapse(COLLAPSED);
+               PsiBuilderUtil.advance(builder, 1);
              }
            },
            "Element(ROOT)\n" +
            "  PsiElement(LETTER)('a')\n" +
            "  PsiElement(COLLAPSED)('<<')\n" +
+           "  PsiElement(COLLAPSED)('>>')\n" +
            "  PsiElement(LETTER)('b')\n"
     );
   }
@@ -333,6 +337,11 @@ public class LightPsiBuilderTest {
     final PsiBuilder.Marker rootMarker = builder.mark();
     parser.parse(builder);
     rootMarker.done(ROOT);
+
+    final FlyweightCapableTreeStructure<LighterASTNode> lightTree = builder.getLightTree();
+    final String lightExpected = expected.replaceAll("PsiErrorElement:.*\n", "PsiErrorElement\n");
+    assertEquals(lightExpected, DebugUtil.lightTreeToString(lightTree, text, false));
+
     final ASTNode root = builder.getTreeBuilt();
     assertEquals(expected, DebugUtil.nodeTreeToString(root, false));
   }
@@ -376,7 +385,7 @@ public class LightPsiBuilderTest {
       if (myIndex >= myBufferEnd) return null;
       else if (Character.isLetter(myBuffer.charAt(myIndex))) return LETTER;
       else if (Character.isDigit(myBuffer.charAt(myIndex))) return DIGIT;
-      else if (Character.isWhitespace(myBuffer.charAt(myIndex))) return WHITESPACE;
+      else if (Character.isWhitespace(myBuffer.charAt(myIndex))) return TokenType.WHITE_SPACE;
       else if (myBuffer.charAt(myIndex) == '#') return COMMENT;
       else return OTHER;
     }
