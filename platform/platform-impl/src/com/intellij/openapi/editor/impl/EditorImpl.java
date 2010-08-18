@@ -769,7 +769,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public JComponent getContentComponent() {
+  public EditorComponentImpl getContentComponent() {
     return myEditorComponent;
   }
 
