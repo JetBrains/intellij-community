@@ -91,6 +91,7 @@
 
     <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
     <fileBasedIndex implementation="com.intellij.xml.index.XmlNamespaceIndex"/>
+    <fileBasedIndex implementation="com.intellij.html.index.Html5CustomAttributesIndex"/>
     <include.provider implementation="com.intellij.xml.util.XIncludeProvider"/>
     <indexedRootsProvider implementation="com.intellij.xml.index.ExternalResourcesRootsProvider"/>
 
