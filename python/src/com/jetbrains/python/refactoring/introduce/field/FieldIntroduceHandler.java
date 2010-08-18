@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
@@ -129,10 +130,31 @@ public class FieldIntroduceHandler extends IntroduceHandler {
   }
 
   @Override
+  protected boolean checkIntroduceContext(PsiFile file, Editor editor, PsiElement element) {
+    if (element != null && isInStaticMethod(element)) {
+      CommonRefactoringUtil.showErrorHint(file.getProject(), editor, "Introduce Field refactoring cannot be used in static methods",
+                                          RefactoringBundle.message("introduce.field.title"),
+                                          "refactoring.extractMethod");
+      return false;
+    }
+    return super.checkIntroduceContext(file, editor, element);
+  }
+
+  private static boolean isInStaticMethod(PsiElement element) {
+    PyFunction containingMethod = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
+    if (containingMethod != null) {
+      final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(containingMethod);
+      return flags.contains(PyFunction.Flag.STATICMETHOD);
+    }
+    return false;
+  }
+
+  @Override
   protected boolean isValidIntroduceContext(PsiElement element) {
     return super.isValidIntroduceContext(element) &&
            PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class) != null &&
-           PsiTreeUtil.getParentOfType(element, PyDecoratorList.class) == null;
+           PsiTreeUtil.getParentOfType(element, PyDecoratorList.class) == null &&
+           !isInStaticMethod(element);
   }
 
   private static class AddFieldDeclaration implements Function<String, PyStatement> {
