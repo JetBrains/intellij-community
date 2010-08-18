@@ -36,6 +36,7 @@ import java.util.*;
 
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
+
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
   @NonNls private static final String FILETYPE = "fileType";
 

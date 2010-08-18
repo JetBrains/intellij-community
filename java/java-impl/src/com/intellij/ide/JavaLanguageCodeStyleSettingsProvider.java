@@ -192,7 +192,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                          "}";
 
   private static final String SPACING_SAMPLE = "@Annotation(param1 = \"value1\", param2 = \"value2\")\n" +
-                                               "public class Foo {\n" +
+                                               "public class Foo<T, U> {\n" +
                                                "  int[] X = new int[]{1, 3, 5, 6, 7, 87, 1213, 2};\n" +
                                                "\n" +
                                                "  public void foo(int x, int y) {\n" +

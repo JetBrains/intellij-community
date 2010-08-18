@@ -19,9 +19,9 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -59,6 +59,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements 
   protected void initTables() {
     myAllowedOptions = new HashSet<String>();
     myCustomOptions = new MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>>();
+
     for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
       provider.customizeSpacingOptions(this);
     }
@@ -99,7 +100,9 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements 
     initBooleanField("SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE", ApplicationBundle.message("checkbox.spaces.array.initializer.left.brace"), BEFORE_LEFT_BRACE);
     initCustomOptions(BEFORE_LEFT_BRACE);
 
-    initBooleanField("SPACE_WITHIN_PARENTHESES", ApplicationBundle.message("checkbox.spaces.parentheses"), WITHIN_PARENTHESES);
+    initBooleanField("SPACE_WITHIN_PARENTHESES", ApplicationBundle.message("checkbox.spaces.within.parentheses"), WITHIN_PARENTHESES);
+    initBooleanField("SPACE_WITHIN_BRACKETS", ApplicationBundle.message("checkbox.spaces.within.brackets"), WITHIN_PARENTHESES);
+    initBooleanField("SPACE_WITHIN_ARRAY_INITIALIZER_BRACES", ApplicationBundle.message("checkbox.spaces.within.array.initializer.braces"), WITHIN_PARENTHESES);
     initBooleanField("SPACE_WITHIN_METHOD_CALL_PARENTHESES", ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.call.parentheses"), WITHIN_PARENTHESES);
     initBooleanField("SPACE_WITHIN_METHOD_PARENTHESES", ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.declaration.parentheses"), WITHIN_PARENTHESES);
     initBooleanField("SPACE_WITHIN_IF_PARENTHESES", ApplicationBundle.message("checkbox.spaces.if.parentheses"), WITHIN_PARENTHESES);
@@ -121,9 +124,6 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements 
     initBooleanField("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", ApplicationBundle.message("checkbox.spaces.after.comma"), TYPE_ARGUMENTS);
     initCustomOptions(TYPE_ARGUMENTS);
 
-    //TODO looks like this option is never implemented: initBooleanField("SPACE_AFTER_LABEL", ApplicationBundle.message("checkbox.spaces.after.colon.in.label.declaration"), OTHER);
-    initBooleanField("SPACE_WITHIN_BRACKETS", ApplicationBundle.message("checkbox.spaces.within.brackets"), OTHER);
-    initBooleanField("SPACE_WITHIN_ARRAY_INITIALIZER_BRACES", ApplicationBundle.message("checkbox.spaces.within.array.initializer.braces"), OTHER);
     initBooleanField("SPACE_AFTER_COMMA", ApplicationBundle.message("checkbox.spaces.after.comma"), OTHER);
     initBooleanField("SPACE_BEFORE_COMMA", ApplicationBundle.message("checkbox.spaces.before.comma"), OTHER);
     initBooleanField("SPACE_AFTER_SEMICOLON", ApplicationBundle.message("checkbox.spaces.after.semicolon"), OTHER);
@@ -180,9 +180,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements 
                                String optionName,
                                String groupName) {
     if (!myUpdateOnly) {
-      myCustomOptions.putValue(groupName,
-                               Trinity.<Class<? extends CustomCodeStyleSettings>, String, String>create(settingsClass, fieldName,
-                                                                                                        optionName));
+      myCustomOptions.putValue(groupName, Trinity.<Class<? extends CustomCodeStyleSettings>, String, String>create(settingsClass, fieldName, optionName));
     }
     enableOption(fieldName);
   }

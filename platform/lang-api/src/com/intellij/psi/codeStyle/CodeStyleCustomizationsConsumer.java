@@ -28,7 +28,7 @@ public interface CodeStyleCustomizationsConsumer {
   String AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
   String BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
   String BEFORE_LEFT_BRACE = ApplicationBundle.message("group.spaces.before.left.brace");
-  String WITHIN_PARENTHESES = ApplicationBundle.message("group.spaces.within.parentheses");
+  String WITHIN_PARENTHESES = ApplicationBundle.message("group.spaces.within");
   String TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
   String TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
   String OTHER = ApplicationBundle.message("group.spaces.other");
