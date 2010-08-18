@@ -114,7 +114,7 @@ public class SpellCheckAwareEditorFieldProviderImpl implements SpellCheckAwareEd
         LocalInspectionTool tool = inspectionClass.newInstance();
         tools.put(tool.getShortName(), tool);
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         return null;
       }
     }

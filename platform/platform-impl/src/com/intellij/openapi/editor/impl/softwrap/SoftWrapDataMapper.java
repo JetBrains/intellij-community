@@ -579,16 +579,16 @@ public class SoftWrapDataMapper {
 
     @Nullable
     public TextChange get() {
-      if (myIndex < 0 || myIndex >= mySoftWraps.size()) {
+      if (myIndex < 0) {
         return null;
       }
-      TextChange result = mySoftWraps.get(myIndex++);
-      if (isVisible(result)) {
-        return result;
+      while (myIndex < mySoftWraps.size()) {
+        TextChange result = mySoftWraps.get(myIndex++);
+        if (isVisible(result)) {
+          return result;
+        }
       }
-      else {
-        return get();
-      }
+      return null;
     }
   }
 
@@ -603,16 +603,16 @@ public class SoftWrapDataMapper {
 
     @Nullable
     public FoldRegion get() {
-      if (myFoldRegions == null || myIndex < 0 || myIndex >= myFoldRegions.length) {
+      if (myFoldRegions == null || myIndex < 0) {
         return null;
       }
-      FoldRegion result = myFoldRegions[myIndex++];
-      if (result.isExpanded()) {
-        return get();
+      while (myIndex < myFoldRegions.length) {
+        FoldRegion result = myFoldRegions[myIndex++];
+        if (result.isExpanded()) {
+          return get();
+        }
       }
-      else {
-        return result;
-      }
+      return null;
     }
   }
 }
