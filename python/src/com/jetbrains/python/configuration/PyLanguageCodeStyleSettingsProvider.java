@@ -52,7 +52,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_LBRACKET", "Left bracket", BEFORE_PARENTHESES);    
     consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AROUND_EQ_IN_NAMED_PARAMETER", "Around = in named parameter", AROUND_OPERATORS);
     consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT", "Around = in keyword argument", AROUND_OPERATORS);
-    consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_WITHIN_BRACES", "Within braces", OTHER);
+    consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_WITHIN_BRACES", "Within braces", WITHIN_PARENTHESES);
     consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_COLON", ApplicationBundle.message("checkbox.spaces.before.colon"), OTHER);
   }
 
