@@ -16,8 +16,6 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -29,6 +27,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -103,7 +102,12 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     SPECIAL_SYMBOLS_TO_WRAP_BEFORE.add('.');
   }
 
-  private final TIntHashSet myProcessedLogicalLines = new TIntHashSet();
+  /**
+   * Holds information about logical lines for which soft wrap is calculated as a set of
+   * <code>(logical line number; temporary)</code> pairs.
+   */
+  private final TIntObjectHashMap<Boolean> myProcessedLogicalLines = new TIntObjectHashMap<Boolean>();
+
   private final DocumentListener myDocumentListener = new LineOrientedDocumentChangeAdapter() {
     @Override
     public void beforeDocumentChange(int startLine, int endLine, int symbolsDifference) {
@@ -124,7 +128,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
         // Note: we don't update 'myProcessedLogicalLines' collection here, i.e. soft wraps will be recalculated precisely
         // during standard editor repainting iteration.
         if (i < document.getLineCount()) {
-          processLogicalLine(document.getCharsSequence(), i, Font.PLAIN, IndentType.NONE);
+          processLogicalLine(document.getCharsSequence(), i, Font.PLAIN, IndentType.NONE, true);
         }
       }
     }
@@ -150,7 +154,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
   @Override
-  public void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType) {
+  public void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType, boolean temporary) {
     dropDataIfNecessary();
 
     if (myVisibleAreaWidth <= 0 || start >= end) {
@@ -161,13 +165,13 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     int startLine = document.getLineNumber(start);
     int endLine = document.getLineNumber(end);
     for (int i = startLine; i <= endLine; i++) {
-      if (!myProcessedLogicalLines.contains(i)) {
+      if (!myProcessedLogicalLines.contains(i) || (!temporary && myProcessedLogicalLines.get(i))) {
         IndentType indent = IndentType.NONE;
         if (!myEditor.isViewer() && !document.isWritable()) {
           indent = IndentType.TO_PREV_LINE_NON_WS_START;
         }
-        processLogicalLine(text, i, fontType, indent);
-        myProcessedLogicalLines.add(i);
+        processLogicalLine(text, i, fontType, indent, temporary);
+        myProcessedLogicalLines.put(i, temporary);
       }
     }
   }
@@ -188,7 +192,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     myVisibleAreaWidth = currentVisibleAreaWidth;
   }
 
-  private void processLogicalLine(CharSequence text, int line, int fontType, IndentType indentType) {
+  private void processLogicalLine(CharSequence text, int line, int fontType, IndentType indentType, boolean temporary) {
     Document document = myEditor.getDocument();
     int startOffset = document.getLineStartOffset(line);
     int endOffset = document.getLineEndOffset(line);
@@ -202,15 +206,26 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
 
     if (indentType == IndentType.NONE) {
       TIntArrayList offsets = calculateSoftWrapOffsets(text, startOffset, endOffset, fontType, 0);
-      registerSoftWraps(offsets, 0);
+      registerSoftWraps(offsets, 0, temporary);
       return;
     }
 
     // Understand if it's worth to define indent for soft wrap(s) to create and perform their actual construction and registration.
+    int prevLineIndentInColumns = 0;
+    
+    int firstNonSpaceSymbolIndex = startOffset;
+    for (; firstNonSpaceSymbolIndex < endOffset; firstNonSpaceSymbolIndex++) {
+      char c = text.charAt(firstNonSpaceSymbolIndex);
+      if (c != ' ' && c != '\t') {
+        break;
+      }
+    }
+    if (firstNonSpaceSymbolIndex > startOffset) {
+      prevLineIndentInColumns = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, startOffset, firstNonSpaceSymbolIndex, 0);
+    }
+
     int spaceWidth = EditorUtil.getSpaceWidth(fontType, myEditor);
     int indentInColumns = getIndentSize();
-    VisualPosition visual = myEditor.offsetToVisualPosition(startOffset);
-    int prevLineIndentInColumns = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(myEditor, visual.line);
     int indentInColumnsToUse = 0;
     TIntArrayList softWrapOffsetsToUse = null;
     for (; indentInColumns >= 0; indentInColumns--) {
@@ -229,10 +244,10 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     }
 
     if (indentInColumnsToUse <= 0) {
-      processLogicalLine(text, line, fontType, IndentType.NONE);
+      processLogicalLine(text, line, fontType, IndentType.NONE, temporary);
     }
     else {
-      registerSoftWraps(softWrapOffsetsToUse, indentInColumnsToUse + prevLineIndentInColumns);
+      registerSoftWraps(softWrapOffsetsToUse, indentInColumnsToUse + prevLineIndentInColumns, temporary);
     }
   }
 
@@ -275,10 +290,10 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     return settings.getIndentSize(file.getFileType());
   }
 
-  private void registerSoftWraps(TIntArrayList offsets, int indentInColumns) {
+  private void registerSoftWraps(TIntArrayList offsets, int indentInColumns, boolean temporary) {
     for (int i = 0; i < offsets.size(); i++) {
       int offset = offsets.getQuick(i);
-      myStorage.storeOrReplace(new TextChangeImpl("\n" + StringUtil.repeatSymbol(' ', indentInColumns), offset));
+      myStorage.storeOrReplace(new TextChangeImpl("\n" + StringUtil.repeatSymbol(' ', indentInColumns), offset), !temporary);
     }
   }
 

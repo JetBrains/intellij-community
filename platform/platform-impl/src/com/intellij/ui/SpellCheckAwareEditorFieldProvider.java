@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.ui;
 
-package com.intellij.refactoring.actions;
-
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.refactoring.RefactoringActionHandler;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project;
 
 /**
- * @author Dennis.Ushakov
+ * Defines common contract for building {@link EditorTextField} with spell checking support.
+ *
+ * @author Denis Zhdanov
+ * @since Aug 18, 2010 1:37:55 PM
  */
-public class ExtractModuleAction extends ExtractSuperActionBase {
+public interface SpellCheckAwareEditorFieldProvider {
 
-  @Override
-  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider supportProvider) {
-    return supportProvider.getExtractModuleHandler();
-  }
+  /**
+   * @param project   target project
+   * @return          {@link EditorTextField} with spell checking support.
+   */
+  EditorTextField getEditorField(Project project);
 }

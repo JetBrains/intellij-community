@@ -16,13 +16,21 @@
 package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
+import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.refactoring.introduceParameter.XsltIntroduceParameterAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public class XsltRefactoringSupportProvider extends RefactoringSupportProvider {
+
+  @Override
+  public boolean isAvailable(@NotNull PsiElement context) {
+    return XsltSupport.isXsltFile(context.getContainingFile());
+  }
 
   @Override
   public RefactoringActionHandler getIntroduceParameterHandler() {

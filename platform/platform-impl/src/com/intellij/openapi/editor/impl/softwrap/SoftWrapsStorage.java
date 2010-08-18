@@ -92,19 +92,23 @@ public class SoftWrapsStorage {
   /**
    * Inserts given soft wrap to {@link #myWraps} collection at the given index.
    *
-   * @param softWrap    soft wrap to store
-   * @return            previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
+   * @param softWrap          soft wrap to store
+   * @param notifyListeners   flag that indicates if registered listeners should be notified about soft wrap registration
+   * @return                  previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
    */
   @Nullable
-  public TextChangeImpl storeOrReplace(TextChangeImpl softWrap) {   int i = getSoftWrapIndex(softWrap.getStart());
+  public TextChangeImpl storeOrReplace(TextChangeImpl softWrap, boolean notifyListeners) {
+    int i = getSoftWrapIndex(softWrap.getStart());
     if (i >= 0) {
       return myWraps.set(i, softWrap);
     }
 
     i = -i - 1;
     myWraps.add(i, softWrap);
-    for (SoftWrapChangeListener listener : myListeners) {
-      listener.softWrapAdded(softWrap);
+    if (notifyListeners) {
+      for (SoftWrapChangeListener listener : myListeners) {
+        listener.softWrapAdded(softWrap);
+      }
     }
     return null;
   }
