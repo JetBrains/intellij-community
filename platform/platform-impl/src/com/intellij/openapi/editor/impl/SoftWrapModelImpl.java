@@ -172,6 +172,28 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     return result;
   }
 
+  @Override
+  public void defineApproximateSoftWraps(int line1, int line2) {
+    if (!isSoftWrappingEnabled()) {
+      return;
+    }
+    int startLine = line1;
+    int endLine = line2;
+    if (line1 > line2) {
+      startLine = line2;
+      endLine = line1;
+    }
+
+    // Normalization.
+    Document document = myEditor.getDocument();
+    startLine = Math.max(0, startLine);
+    endLine = Math.min(endLine, document.getLineCount() - 1);
+
+    myApplianceManager.registerSoftWrapIfNecessary(
+      document.getCharsSequence(), document.getLineStartOffset(startLine), document.getLineEndOffset(endLine), 0, Font.PLAIN, true
+    );
+  }
+
   public void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType) {
     if (!isSoftWrappingEnabled()) {
       return;
@@ -180,7 +202,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
     myActive++;
     try {
-      myApplianceManager.registerSoftWrapIfNecessary(text, start, end, x, fontType);
+      myApplianceManager.registerSoftWrapIfNecessary(text, start, end, x, fontType, false);
     }
     finally {
       myActive--;
