@@ -94,13 +94,15 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
     final List<PsiElement> psiElements = multiResolveImportElement(import_element, qName);
-    // prefer the directory which has a non-empty __init__.py
-    for (PsiElement element : psiElements) {
-      final PsiElement init = PyUtil.turnDirIntoInit(element);
-      if (init instanceof PsiFile) {
-        VirtualFile vFile = ((PsiFile) init).getVirtualFile();
-        if (vFile != null && vFile.getLength() > 0) {
-          return element;
+    if (psiElements.size() > 1) {
+      // prefer the directory which has a non-empty __init__.py
+      for (PsiElement element : psiElements) {
+        final PsiElement init = PyUtil.turnDirIntoInit(element);
+        if (init instanceof PsiFile) {
+          VirtualFile vFile = ((PsiFile) init).getVirtualFile();
+          if (vFile != null && vFile.getLength() > 0) {
+            return element;
+          }
         }
       }
     }
