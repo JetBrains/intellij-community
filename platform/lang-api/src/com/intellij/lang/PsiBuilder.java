@@ -198,6 +198,7 @@ public interface PsiBuilder extends UserDataHolder {
   /**
    * Same as {@link #getTreeBuilt()} but returns a light tree, which is build faster,
    * produces less garbage but is incapable of creating a PSI over.
+   * <br><b>Note</b>: this method shouldn't be called if {@link #getTreeBuilt()} was called before.
    *
    * @return the light tree built.
    */
