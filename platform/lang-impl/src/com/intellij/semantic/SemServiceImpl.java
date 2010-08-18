@@ -154,12 +154,12 @@ public class SemServiceImpl extends SemService{
 
   @Nullable
   public <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi) {
-    ensureInitialized();
-
     List<T> cached = _getCachedSemElements(key, psi, true);
     if (cached != null) {
       return cached;
     }
+
+    ensureInitialized();
 
     final Map<SemKey, List<SemElement>> map = new THashMap<SemKey, List<SemElement>>();
     LinkedHashSet<T> result = null;
