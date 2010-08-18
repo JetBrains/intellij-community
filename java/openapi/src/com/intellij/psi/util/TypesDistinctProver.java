@@ -52,7 +52,7 @@ public class TypesDistinctProver {
           if (superBound.getArrayDimensions() > 0) return true;
           final PsiClass boundClass1 = PsiUtil.resolveClassInType(TypeConversionUtil.erasure(superBound));
           if (boundClass1 == null || boundClass1 instanceof PsiTypeParameter) return false;
-          return !boundClass1.isInheritor(psiClass2, true);
+          return !InheritanceUtil.isInheritorOrSelf(boundClass1, psiClass2, true);
         }
 
         final PsiType bound = ((PsiWildcardType)type1).getBound();
@@ -112,7 +112,7 @@ public class TypesDistinctProver {
           return try2ProveTypeParameterDistinct(type2, extendsBoundClass);
         }
         if (superBoundClass instanceof PsiTypeParameter) return false;
-        return !superBoundClass.isInheritor(extendsBoundClass, true);
+        return !InheritanceUtil.isInheritorOrSelf(superBoundClass, extendsBoundClass, true);
       }
       return true;
     }
@@ -125,10 +125,10 @@ public class TypesDistinctProver {
                                                     PsiClass boundClass2) {
     if (boundClass1.isInterface() && boundClass2.isInterface()) return false;
     if (boundClass1.isInterface()) {
-      return !(boundClass2.hasModifierProperty(PsiModifier.FINAL) ? boundClass2.isInheritor(boundClass1, true) : true);
+      return !(boundClass2.hasModifierProperty(PsiModifier.FINAL) ? InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true) : true);
     }
     if (boundClass2.isInterface()) {
-      return !(boundClass1.hasModifierProperty(PsiModifier.FINAL) ? boundClass1.isInheritor(boundClass2, true) : true);
+      return !(boundClass1.hasModifierProperty(PsiModifier.FINAL) ? InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true) : true);
     }
 
     if (boundClass1 instanceof PsiTypeParameter) {
@@ -139,7 +139,7 @@ public class TypesDistinctProver {
       return try2ProveTypeParameterDistinct(type1, boundClass2);
     }
 
-    return !boundClass1.isInheritor(boundClass2, true) && !boundClass2.isInheritor(boundClass1, true);
+    return !InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true) && !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true);
   }
 
   public static boolean try2ProveTypeParameterDistinct(PsiType type, PsiClass typeParameter) {
