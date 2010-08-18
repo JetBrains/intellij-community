@@ -148,6 +148,10 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     doInspectionTest("FieldFromUnusedParameter.py", PyUnusedLocalInspection.class, "Add field 'foo' to class A", true, true);
   }
 
+  public void testFieldFromUnusedParameterKeyword() {  // PY-1602
+    doInspectionTest("FieldFromUnusedParameterKeyword.py", PyUnusedLocalInspection.class, "Add field 'foo' to class A", true, true);
+  }
+
   @NonNls
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/inspections/";
