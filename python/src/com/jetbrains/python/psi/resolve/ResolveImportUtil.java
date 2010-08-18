@@ -500,15 +500,10 @@ public class ResolveImportUtil {
     PsiDirectory dir = null;
     PsiElement ret = null;
     if (parent instanceof PyFile) {
-      if (parent.getCopyableUserData(PyFile.KEY_IS_DIRECTORY) == Boolean.TRUE) {
-        // the file was a fake __init__.py covering a reference to dir
+      ret = ((PyFile)parent).getElementNamed(referencedName);
+      if (ret != null) return ret;
+      if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
         dir = ((PyFile)parent).getContainingDirectory();
-      }
-      else {
-        // look for name in the file:
-        //processor = new ResolveProcessor(referencedName);
-        ret = ((PyFile)parent).getElementNamed(referencedName);
-        if (ret != null) return ret;
       }
     }
     else if (parent instanceof PsiDirectory) {
