@@ -145,7 +145,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     if (selfName != null) {
       existing.add(selfName);
     }
-    final String dependsString = contextTarget.getDependsList().getStringValue();
+    final String dependsString = contextTarget.getDependsList().getRawText();
     if (dependsString != null) {
       final StringTokenizer tokenizer = new StringTokenizer(dependsString, ",", false);
       while (tokenizer.hasMoreTokens()) {
