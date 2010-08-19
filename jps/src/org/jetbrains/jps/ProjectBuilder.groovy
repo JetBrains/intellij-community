@@ -114,15 +114,18 @@ class ProjectBuilder {
     return makeChunkWithDependencies(chunkForModule(module), true);
   }
 
-  private def makeChunkWithDependencies(ModuleChunk chunk, boolean tests) {
+  private def makeChunkWithDependencies(ModuleChunk chunk, boolean includeTests) {
     Set<Module> dependencies = new HashSet<Module>()
     chunk.modules.each {
-      collectModulesFromClasspath(it, getCompileClasspathKind(tests), dependencies)
+      collectModulesFromClasspath(it, getCompileClasspathKind(includeTests), dependencies)
     }
     buildChunks()
     chunks.each {
       if (!dependencies.intersect(it.modules).isEmpty()) {
-        makeChunk(it, tests)
+        makeChunk(it, false)
+        if (includeTests) {
+          makeChunk(it, true)
+        }
       }
     }
   }
