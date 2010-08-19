@@ -31,7 +31,7 @@ public class AccessorResolverProcessor extends ResolverProcessor {
   private final boolean mySearchForGetter;
 
   public AccessorResolverProcessor(String name, PsiElement place, boolean searchForGetter) {
-    super(name, EnumSet.of(ResolveKind.METHOD), place, PsiType.EMPTY_ARRAY);
+    super(name, RESOLVE_KINDS_METHOD, place, PsiType.EMPTY_ARRAY);
     mySearchForGetter = searchForGetter;
   }
 
