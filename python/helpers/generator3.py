@@ -217,7 +217,7 @@ def sanitizeIdent(x):
   if x in ("class", "object", "def", "list", "tuple", "int", "float", "str", "unicode" "None"):
     return "p_" + x
   else:
-    return x.replace("-", "_").replace(" ", "_") # for things like "list-or-tuple" or "list or tuple"
+    return x.replace("-", "_").replace(" ", "_").replace(".", "_") # for things like "list-or-tuple" or "list or tuple"
 
 def sanitizeValue(p_value):
   "Returns p_value or its part if it represents a sane simple value, else returns 'None'"
@@ -305,7 +305,7 @@ APOS = Suppress("'")
 QUOTE = Suppress('"')
 SP = Suppress(Optional(White()))
 
-ident = Word(alphas+"_", alphanums+"_-").setName("ident") # we accept things like "foo-or-bar"
+ident = Word(alphas+"_", alphanums+"_-.").setName("ident") # we accept things like "foo-or-bar"
 decorated_ident = ident + Optional(Suppress(SP + Literal(":") + SP + ident)) # accept "foo: bar", ignore "bar"
 spaced_ident = Combine(decorated_ident + ZeroOrMore(Literal(' ') + decorated_ident)) # we accept 'list or tuple' or 'C struct'
 
@@ -892,11 +892,13 @@ class ModuleRedeclarator(object):
     @param deco: decorator to use
     @return (reconstructed_spec, note) or (None, None) if failed.
     """
+    print 'restoreByDocString ' + func_name
     # parse
     parsing_failed = False
     try:
       # strict parsing
       tokens = paramSeqAndRest.parseString(signature_string, True)
+      print tokens
     except ParseException:
       # it did not parse completely; scavenge what we can
       parsing_failed = True
