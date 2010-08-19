@@ -540,6 +540,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlainFontMetrics = null;
     myScrollingModel.dispose();
     myGutterComponent.dispose();
+    Disposer.dispose(myCaretModel);
     clearCaretThread();
     //myFoldingModel.dispose(); TODO range marker tree
   }
