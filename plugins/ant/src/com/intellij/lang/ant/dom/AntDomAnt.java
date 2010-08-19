@@ -35,7 +35,8 @@ public abstract class AntDomAnt extends AntDomElement {
   public abstract GenericAttributeValue<PsiFileSystemItem> getAntFileDir();
 
   @Attribute("target")
-  public abstract GenericAttributeValue<String> getDefaultTarget();
+  @Convert(value = AntDomDefaultTargetConverter.class)
+  public abstract GenericAttributeValue<TargetResolver.Result> getDefaultTarget();
 
   @Attribute("output")
   @Convert(value = AntPathConverter.class)

@@ -68,26 +68,8 @@ public abstract class AntDomElement implements DomElement {
     return AntSupport.getAntDomProject(contextFile);
   }
 
-  //public static final Key<List<AntDomElement>> ANT_CHILDREN_KEY = Key.create("_ant_children_list_");
-  private volatile List<AntDomElement> myCachedChildren;
-  
   public final List<AntDomElement> getAntChildren() {
-    //List<AntDomElement> cached = getUserData(ANT_CHILDREN_KEY);
-    List<AntDomElement> cached = myCachedChildren;
-    if (cached != null) {
-      for (AntDomElement element : cached) {
-        if (!element.isValid()) {
-          cached = null;
-          break;
-        }
-      }
-    }
-    if (cached == null) {
-      cached = DomUtil.getDefinedChildrenOfType(this, AntDomElement.class, true, false);
-      myCachedChildren = cached;
-      //putUserData(ANT_CHILDREN_KEY, cached);
-    }
-    return cached;
+    return DomUtil.getDefinedChildrenOfType(this, AntDomElement.class, true, false);
   }
 
   public final boolean isTask() {

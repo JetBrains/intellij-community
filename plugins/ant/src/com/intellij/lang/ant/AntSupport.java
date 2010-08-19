@@ -130,6 +130,20 @@ public class AntSupport implements ApplicationComponent {
   }
 
   @Nullable
+  public static AntDomProject getAntDomProjectForceAntFile(PsiFile psiFile) {
+    if (psiFile instanceof XmlFile) {
+      final DomManager domManager = DomManager.getDomManager(psiFile.getProject());
+      DomFileElement<AntDomProject> fileElement = domManager.getFileElement((XmlFile)psiFile, AntDomProject.class);
+      if (fileElement == null) {
+        ForcedAntFileAttribute.forceAntFile(psiFile.getVirtualFile(), true);
+        fileElement = domManager.getFileElement((XmlFile)psiFile, AntDomProject.class);
+      }
+      return fileElement != null? fileElement.getRootElement() : null;
+    }
+    return null;
+  }
+
+  @Nullable
   public static AntDomAntlib getAntLib(PsiFile psiFile) {
     if (psiFile instanceof XmlFile) {
       final DomManager domManager = DomManager.getDomManager(psiFile.getProject());

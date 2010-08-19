@@ -19,12 +19,15 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.AntSupport;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -127,8 +130,21 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     if (hostingElement == null) {
       return null;
     }
-    final AntDomTarget contextTarget = hostingElement.getParentOfType(AntDomTarget.class, false);
-    return TargetResolver.resolve(hostingElement.getContextAntProject(), contextTarget, referenceText == null? Collections.<String>emptyList() : Collections.singletonList(referenceText));
+    AntDomProject projectToSearchFrom;
+    AntDomTarget contextTarget;
+    if (hostingElement instanceof AntDomAnt) {
+      final PsiFileSystemItem antFile = ((AntDomAnt)hostingElement).getAntFilePath().getValue();
+      projectToSearchFrom = antFile instanceof PsiFile ? AntSupport.getAntDomProjectForceAntFile((PsiFile)antFile) : null;
+      contextTarget = null;
+    }
+    else {
+      projectToSearchFrom = hostingElement.getContextAntProject();
+      contextTarget = hostingElement.getParentOfType(AntDomTarget.class, false);
+    }
+    if (projectToSearchFrom == null) {
+      return null;
+    }
+    return TargetResolver.resolve(projectToSearchFrom, contextTarget, referenceText == null? Collections.<String>emptyList() : Collections.singletonList(referenceText));
   }
   
   private Set<String> getExistingNames() {

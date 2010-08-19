@@ -539,10 +539,13 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private AntBuildFileBase addBuildFileImpl(final VirtualFile file) throws AntNoFileException {
     PsiFile xmlFile = myPsiManager.findFile(file);
-    if (!(xmlFile instanceof XmlFile) || !AntDomFileDescription.isAntFile(((XmlFile)xmlFile))) {
+    if (!(xmlFile instanceof XmlFile)) {
       throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
     }
     AntSupport.markFileAsAntFile(file, xmlFile.getProject(), true);
+    if (!AntDomFileDescription.isAntFile(((XmlFile)xmlFile))) {
+      throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
+    }
     final AntBuildFileImpl buildFile = new AntBuildFileImpl((XmlFile)xmlFile, this);
     xmlFile.putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, buildFile);
     synchronized (myBuildFiles) {
