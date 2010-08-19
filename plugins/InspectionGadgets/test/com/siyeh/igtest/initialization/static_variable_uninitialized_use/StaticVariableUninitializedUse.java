@@ -8,8 +8,8 @@ public class StaticVariableUninitializedUse {
     static {
         System.out.println(StaticVariableUninitializedUse.s);
     }
-    
     public static void main(String[] args) {
+        if (s instanceof Object) {}
         if (i == 42) {
             System.out.println("Unbelievable");
         }

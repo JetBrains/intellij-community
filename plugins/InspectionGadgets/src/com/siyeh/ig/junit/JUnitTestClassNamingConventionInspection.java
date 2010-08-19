@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,6 +25,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.naming.ConventionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnitTestClassNamingConventionInspection
@@ -32,20 +34,24 @@ public class JUnitTestClassNamingConventionInspection
     private static final int DEFAULT_MIN_LENGTH = 8;
     private static final int DEFAULT_MAX_LENGTH = 64;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "j.unit.test.class.naming.convention.display.name");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final String className = (String)infos[0];
@@ -61,18 +67,22 @@ public class JUnitTestClassNamingConventionInspection
                 getRegex());
     }
 
+    @Override
     protected String getDefaultRegex() {
         return "[A-Z][A-Za-z\\d]*Test";
     }
 
+    @Override
     protected int getDefaultMinLength() {
         return DEFAULT_MIN_LENGTH;
     }
 
+    @Override
     protected int getDefaultMaxLength() {
         return DEFAULT_MAX_LENGTH;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
     }
@@ -91,7 +101,9 @@ public class JUnitTestClassNamingConventionInspection
                 return;
             }
             if(!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
-                return;
+                if (!hasJUnit4TestMethods(aClass)) {
+                    return;
+                }
             }
             final String name = aClass.getName();
             if (name == null) {
@@ -101,6 +113,20 @@ public class JUnitTestClassNamingConventionInspection
                 return;
             }
             registerClassError(aClass, name);
+        }
+
+        private boolean hasJUnit4TestMethods(@NotNull PsiClass aClass) {
+            //use this if this method turns out to have bad performance:
+            //if (!TestUtils.isTest(aClass)) {
+            //    return false;
+            //}
+            final PsiMethod[] methods = aClass.getMethods();
+            for (PsiMethod method : methods) {
+                if (TestUtils.isJUnit4TestMethod(method)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

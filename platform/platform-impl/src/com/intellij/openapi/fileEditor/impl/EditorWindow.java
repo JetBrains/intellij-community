@@ -281,7 +281,7 @@ public class EditorWindow {
       }
       disposeTabs();
       if (currentFile != null) {
-        getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this, null);
+        getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this);
       }
       else {
         myPanel.repaint();

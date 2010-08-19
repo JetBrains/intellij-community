@@ -84,7 +84,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<JUnitConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JUnitConfigurable(getProject()));
     RunConfigurationExtension.appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<JUnitConfiguration>());
     return group;
   }
 

@@ -107,11 +107,11 @@ public class TextPatchBuilder {
 
       final String beforeContent = beforeRevision.getContentAsString();
       if (beforeContent == null) {
-        throw new VcsException("Failed to fetch old content for changed file " + beforeRevision.getPath());
+        throw new VcsException("Failed to fetch old content for changed file " + beforeRevision.getPath().getPath());
       }
       final String afterContent = afterRevision.getContentAsString();
       if (afterContent == null) {
-        throw new VcsException("Failed to fetch new content for changed file " + afterRevision.getPath());
+        throw new VcsException("Failed to fetch new content for changed file " + afterRevision.getPath().getPath());
       }
       String[] beforeLines = new LineTokenizer(beforeContent).execute();
       String[] afterLines = new LineTokenizer(afterContent).execute();
@@ -208,7 +208,7 @@ public class TextPatchBuilder {
   private TextFilePatch buildAddedFile(final String basePath, final AirContentRevision afterRevision) throws VcsException {
     final String content = afterRevision.getContentAsString();
     if (content == null) {
-      throw new VcsException("Failed to fetch content for added file " + afterRevision.getPath());
+      throw new VcsException("Failed to fetch content for added file " + afterRevision.getPath().getPath());
     }
     String[] lines = new LineTokenizer(content).execute();
     TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
@@ -224,7 +224,7 @@ public class TextPatchBuilder {
   private TextFilePatch buildDeletedFile(String basePath, AirContentRevision beforeRevision) throws VcsException {
     final String content = beforeRevision.getContentAsString();
     if (content == null) {
-      throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getPath());
+      throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getPath().getPath());
     }
     String[] lines = new LineTokenizer(content).execute();
     TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);

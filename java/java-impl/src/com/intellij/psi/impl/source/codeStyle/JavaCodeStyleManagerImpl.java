@@ -640,6 +640,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           return new NamesByExprInfo(null, constantValueToConstantName(names));
         }
       }
+    } else if (expr instanceof PsiParenthesizedExpression) {
+      return suggestVariableNameByExpressionOnly(((PsiParenthesizedExpression)expr).getExpression(), variableKind);
+    } else if (expr instanceof PsiTypeCastExpression) {
+      return suggestVariableNameByExpressionOnly(((PsiTypeCastExpression)expr).getOperand(), variableKind);
+    } else if (expr instanceof PsiLiteralExpression) {
+      final String text = StringUtil.stripQuotesAroundValue(expr.getText());
+      if (isIdentifier(text)) {
+        return new NamesByExprInfo(text, getSuggestionsByName(text, variableKind, false));
+      }
     }
 
     return new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);

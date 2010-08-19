@@ -15,41 +15,18 @@
  */
 package com.intellij.lang.ant.validation;
 
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.dom.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericDomValue;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 
-import java.util.HashSet;
-import java.util.Set;
+public class AntAnnotator implements DomElementsAnnotator {
 
-public class AntAnnotator implements Annotator {
-
-  public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {
-    AntDomElement antElement = null;
-    final XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
-    if (xmlTag != null) {
-      antElement = AntSupport.getAntDomElement((xmlTag));
-    }
-    if (antElement == null)  {
-      return;
-    }
-
-    antElement.accept(new AntDomRecursiveVisitor() {
+  public void annotate(DomElement element, final DomElementAnnotationHolder holder) {
+    element.accept(new AntDomRecursiveVisitor() {
 
       public void visitTypeDef(AntDomTypeDef typedef) {
         if (typedef.hasTypeLoadingErrors()) {
@@ -74,25 +51,26 @@ public class AntAnnotator implements Annotator {
       }
 
       public void visitAntDomElement(AntDomElement element) {
-        for (GenericDomValue child : DomUtil.getDefinedChildrenOfType(element, GenericDomValue.class, false, true)) {
-          final XmlElement valueElement = DomUtil.getValueElement(child);
-          if (valueElement != null) {
-            checkReferences(valueElement, holder);
-          }
-        }
+        //for (GenericDomValue child : DomUtil.getDefinedChildrenOfType(element, GenericDomValue.class, false, true)) {
+        //  final XmlElement valueElement = DomUtil.getValueElement(child);
+        //  if (valueElement != null) {
+        //    checkReferences(valueElement, holder, child);
+        //  }
+        //}
         super.visitAntDomElement(element);
       }
     });
   }
 
-  private static void createAnnotationOnTag(AntDomElement custom, String failedMessage, AnnotationHolder holder) {
+  private static void createAnnotationOnTag(AntDomElement custom, String failedMessage, DomElementAnnotationHolder holder) {
     final XmlTag tag = custom.getXmlTag();
     if (tag == null) {
       return;
     }
     final String name = custom.getXmlElementName();
     final TextRange absoluteRange = new TextRange(0, name.length()).shiftRight(tag.getTextRange().getStartOffset() + 1);
-    holder.createErrorAnnotation(absoluteRange, failedMessage);
+    holder.createProblem(custom, failedMessage);
+    //holder.createErrorAnnotation(absoluteRange, failedMessage);
   }
 
   //private static void addDefinitionQuickFixes(final Annotation annotation, final AntStructuredElement se) {
@@ -148,37 +126,38 @@ public class AntAnnotator implements Annotator {
   //  }
   //}
 
-  private static void checkReferences(final XmlElement xmlElement, final @NonNls AnnotationHolder holder) {
-    if (xmlElement == null) {
-      return;
-    }
-    Set<PsiReference> processed = null;
-    for (final PsiReference ref : xmlElement.getReferences()) {
-      if (!(ref instanceof AntDomReference)) {
-        continue;
-      }
-      final AntDomReference antDomRef = (AntDomReference)ref;
-      if (antDomRef.shouldBeSkippedByAnnotator()) {
-        continue;
-      }
-      if (processed != null && processed.contains(ref)) {
-        continue;
-      }
-      if (ref.resolve() == null) {
-        final TextRange absoluteRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
-        final Annotation annotation = holder.createErrorAnnotation(absoluteRange, antDomRef.getUnresolvedMessagePattern());
-        annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-        if (ref instanceof AntDomFileReference) {
-          if (processed == null) {
-            processed = new HashSet<PsiReference>();
-          }
-          ContainerUtil.addAll(processed, ((AntDomFileReference)ref).getFileReferenceSet().getAllReferences());
-        }
-        //final IntentionAction[] intentionActions = antRef.getFixes();
-        //for (final IntentionAction action : intentionActions) {
-        //  annotation.registerFix(action);
-        //}
-      }
-    }
-  }
+  //private static void checkReferences(final XmlElement xmlElement, final @NonNls DomElementAnnotationHolder holder, DomElement domElement) {
+  //  if (xmlElement == null) {
+  //    return;
+  //  }
+  //  Set<PsiReference> processed = null;
+  //  for (final PsiReference ref : xmlElement.getReferences()) {
+  //    if (!(ref instanceof AntDomReference)) {
+  //      continue;
+  //    }
+  //    final AntDomReference antDomRef = (AntDomReference)ref;
+  //    if (antDomRef.shouldBeSkippedByAnnotator()) {
+  //      continue;
+  //    }
+  //    if (processed != null && processed.contains(ref)) {
+  //      continue;
+  //    }
+  //    if (ref.resolve() == null) {
+  //      final TextRange absoluteRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
+  //      final Annotation annotation = holder.createProblem(absoluteRange, antDomRef.getUnresolvedMessagePattern());
+  //      annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+  //      if (ref instanceof AntDomFileReference) {
+  //        if (processed == null) {
+  //          processed = new HashSet<PsiReference>();
+  //        }
+  //        ContainerUtil.addAll(processed, ((AntDomFileReference)ref).getFileReferenceSet().getAllReferences());
+  //      }
+  //
+  //      //final IntentionAction[] intentionActions = antRef.getFixes();
+  //      //for (final IntentionAction action : intentionActions) {
+  //      //  annotation.registerFix(action);
+  //      //}
+  //    }
+  //  }
+  //}
 }

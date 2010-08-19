@@ -24,9 +24,9 @@ import com.intellij.lang.PsiParser;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -45,12 +45,10 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.injected.editor.DocumentWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 public class PsiUtilBase {
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
@@ -585,37 +583,6 @@ public class PsiUtilBase {
       child = parent;
     }
     while (true);
-  }
-
-  public static int findInjectedElementOffsetInRealDocument(final PsiElement element) {
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) return -1;
-    Document document = PsiDocumentManager.getInstance(containingFile.getProject()).getDocument(containingFile);
-    if (document instanceof DocumentWindow && !((DocumentWindow)document).isValid()) {
-      return -1;
-    }
-    final PsiElement context = containingFile.getContext();
-    if (!(context instanceof PsiLanguageInjectionHost)) {
-      return 0;
-    }
-    final int[] result = new int[1];
-    ((PsiLanguageInjectionHost)context).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        if (injectedPsi != containingFile) {
-          return;
-        }
-        final PsiLanguageInjectionHost.Shred shred = places.get(0);
-        final TextRange textRange = element.getTextRange();
-        if (shred.prefix != null && textRange.getEndOffset() < shred.prefix.length()) {
-          result[0] = -1;
-          return;
-        }
-        final int injectedStart = shred.getRangeInsideHost().getStartOffset() +
-                                  shred.host.getTextRange().getStartOffset() - (shred.prefix != null ? shred.prefix.length():0);
-        result[0] = injectedStart;
-      }
-    });
-    return result[0];
   }
 
   public static Language getNotAnyLanguage(ASTNode node) {

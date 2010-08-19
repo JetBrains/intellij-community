@@ -22,6 +22,7 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -79,7 +80,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (usageTargets == null) {
       PsiElement targetElement = getTargetElement(editor, file);
       if (targetElement != null) {
-        usageTargets = new UsageTarget[]{new PsiElement2UsageTargetAdapter(targetElement)};
+        if (!(targetElement instanceof NavigationItem)) {
+          targetElement = targetElement.getNavigationElement();
+        }
+        if (targetElement instanceof NavigationItem) {
+          usageTargets = new UsageTarget[]{new PsiElement2UsageTargetAdapter(targetElement)};
+        }
       }
     }
 

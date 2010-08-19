@@ -85,7 +85,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<ApplicationConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable(getProject()));
     RunConfigurationExtension.appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<ApplicationConfiguration>());
     return group;
   }
 

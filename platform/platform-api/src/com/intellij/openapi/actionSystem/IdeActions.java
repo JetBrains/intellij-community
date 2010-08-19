@@ -45,6 +45,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_ESCAPE = "EditorEscape";
   @NonNls String ACTION_EDITOR_JOIN_LINES = "EditorJoinLines";
   @NonNls String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
+  @NonNls String ACTION_EDITOR_USE_SOFT_WRAPS = "EditorToggleUseSoftWraps";
 
   @NonNls String ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE = "NextTemplateVariable";
   @NonNls String ACTION_EDITOR_PREVIOUS_TEMPLATE_VARIABLE = "PreviousTemplateVariable";

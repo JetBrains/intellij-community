@@ -130,7 +130,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
         }
         else {
           myTargetsResolveMap.put(effectiveTargetName, target);
-          final String dependsStr = target.getDependsList().getStringValue();
+          final String dependsStr = target.getDependsList().getRawText();
           Map<String, Pair<AntDomTarget, String>> depsMap = Collections.emptyMap();
           if (dependsStr != null) {
             depsMap = new HashMap<String, Pair<AntDomTarget, String>>();
@@ -165,7 +165,15 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       }
     }
     if (!myStopped) {
-      super.visitAntDomElement(element);
+      //super.visitAntDomElement(element);
+      for (AntDomElement child : element.getAntChildren()) {
+        child.accept(this);
+        if (myStage == Stage.TARGETS_WALKUP_STAGE) {
+          if (myStopped) {
+            break;
+          }
+        }
+      }
     }
   }
 

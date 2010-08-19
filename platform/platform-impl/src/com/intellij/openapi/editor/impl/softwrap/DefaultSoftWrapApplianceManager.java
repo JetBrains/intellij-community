@@ -202,7 +202,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     // Hence, we approximately define soft wraps for the inserted text assuming that there precise calculation will be performed
     // on regular editor repainting iteration. However, we need to drop all those temporary soft wraps registered for
     // the same line before.
-    myStorage.removeInRange(startOffset, endOffset);
+    myStorage.removeInRange(startOffset, endOffset + 1/* add 1 to handle possible situation when soft wrap is registered at the line end */);
 
     if (indentType == IndentType.NONE) {
       TIntArrayList offsets = calculateSoftWrapOffsets(text, startOffset, endOffset, fontType, 0);

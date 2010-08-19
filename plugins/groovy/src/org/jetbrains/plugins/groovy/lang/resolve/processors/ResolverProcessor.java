@@ -41,6 +41,13 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.Res
  */
 public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
   public static final Key<GroovyPsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
+
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS_PACKAGE = EnumSet.of(CLASS, PACKAGE);
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS = EnumSet.of(CLASS);
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD = EnumSet.of(METHOD);
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD_PROPERTY = EnumSet.of(METHOD, PROPERTY);
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_PROPERTY = EnumSet.of(PROPERTY);
+  
   protected String myName;
   private final EnumSet<ResolveKind> myResolveTargetKinds;
   private final Set<String> myProcessedClasses = new HashSet<String>();

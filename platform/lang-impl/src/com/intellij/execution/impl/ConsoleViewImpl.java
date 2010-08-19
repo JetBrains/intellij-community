@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.actions.DiffActions;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -1414,12 +1415,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     prevAction.getTemplatePresentation().setText(getPreviousOccurenceActionName());
     AnAction nextAction = actionsManager.createNextOccurenceAction(this);
     nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
+    AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction();
+
     //Initializing custom actions
-    AnAction[] consoleActions = new AnAction[2 + customActions.size()];
+    AnAction[] consoleActions = new AnAction[3 + customActions.size()];
     consoleActions[0] = prevAction;
     consoleActions[1] = nextAction;
+    consoleActions[2] = switchSoftWrapsAction;
     for (int i = 0; i < customActions.size(); ++i) {
-      consoleActions[i + 2] = customActions.get(i);
+      consoleActions[i + 3] = customActions.get(i);
     }
     return consoleActions;
   }

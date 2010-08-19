@@ -167,6 +167,7 @@ public class SpellCheckAwareEditorFieldProviderImpl implements SpellCheckAwareEd
         EditorSettings settings = ex.getSettings();
         settings.setUseSoftWraps(true);
         settings.setAdditionalColumnsCount(0);
+        settings.setVirtualSpace(true);
         if (INSPECTION_PROFILE_WRAPPER != null) {
           PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
           if (file != null) {

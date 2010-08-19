@@ -43,15 +43,15 @@ public class CompletionProcessor extends ResolverProcessor {
   }
 
   public static ResolverProcessor createPropertyCompletionProcessor(PsiElement place) {
-    return new CompletionProcessor(place, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), null);
+    return new CompletionProcessor(place, RESOLVE_KINDS_METHOD_PROPERTY, null);
   }
 
   public static ResolverProcessor createRefSameNameProcessor(PsiElement place, String name) {
-    return new CompletionProcessor(place, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), name);
+    return new CompletionProcessor(place, RESOLVE_KINDS_METHOD_PROPERTY, name);
   }
 
   public static ResolverProcessor createClassCompletionProcessor(PsiElement place) {
-    return new CompletionProcessor(place, EnumSet.of(ResolveKind.PACKAGE, ResolveKind.CLASS), null);
+    return new CompletionProcessor(place, RESOLVE_KINDS_CLASS_PACKAGE, null);
   }
 
   @NotNull

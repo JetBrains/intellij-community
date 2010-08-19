@@ -36,7 +36,7 @@ public abstract class VisibleHighlightingPassFactory extends AbstractProjectComp
   }
 
   @NotNull
-  public static TextRange calculateVisibleRange(Editor editor) {
+  public static TextRange calculateVisibleRange(@NotNull Editor editor) {
     Rectangle rect = editor.getScrollingModel().getVisibleArea();
     LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));
 

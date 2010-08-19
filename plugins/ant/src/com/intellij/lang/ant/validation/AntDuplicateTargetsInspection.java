@@ -15,26 +15,17 @@
  */
 package com.intellij.lang.ant.validation;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.dom.TargetResolver;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AntDuplicateTargetsInspection extends AntInspection {
 
@@ -52,50 +43,28 @@ public class AntDuplicateTargetsInspection extends AntInspection {
     return SHORT_NAME;
   }
 
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
-    final AntDomProject project = AntSupport.getAntDomProject(file);
-    if (project == null) {
-      return null;
+  protected void checkDomElement(DomElement element, final DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+    if (element instanceof AntDomProject) {
+      final AntDomProject project = (AntDomProject)element;
+      TargetResolver.validateDuplicateTargets(project.getContextAntProject(), new TargetResolver.TargetSink() {
+        public void duplicateTargetDetected(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String targetEffectiveName) {
+          final AntDomProject existingTargetProj = existingTarget.getAntProject();
+          final AntDomProject duplucatingTargetProj = duplicatingTarget.getAntProject();
+          final boolean isFromDifferentFiles = !Comparing.equal(existingTargetProj, duplucatingTargetProj);
+          if (project.equals(existingTargetProj)) {
+            final String duplicatedMessage = isFromDifferentFiles? 
+              AntBundle.message("target.is.duplicated.in.imported.file", targetEffectiveName, duplucatingTargetProj != null? duplucatingTargetProj.getName() : "") : 
+              AntBundle.message("target.is.duplicated", targetEffectiveName);
+            holder.createProblem(existingTarget.getName(), duplicatedMessage);
+          }
+          if (project.equals(duplucatingTargetProj)) {
+            final String duplicatedMessage = isFromDifferentFiles? 
+              AntBundle.message("target.is.duplicated.in.imported.file", targetEffectiveName, existingTargetProj != null? existingTargetProj.getName() : "") : 
+              AntBundle.message("target.is.duplicated", targetEffectiveName);
+            holder.createProblem(duplicatingTarget.getName(), duplicatedMessage);
+          }
+        }
+      });      
     }
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    TargetResolver.validateDuplicateTargets(project.getContextAntProject(), new TargetResolver.TargetSink() {
-      public void duplicateTargetDetected(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String targetEffectiveName) {
-        final PsiFile existingTargetFile = getContainingFile(existingTarget);
-        final PsiFile duplucatingTargetFile = getContainingFile(duplicatingTarget);
-        final boolean isFromDifferentFiles = !Comparing.equal(existingTargetFile, duplucatingTargetFile);
-        if (file.equals(existingTargetFile)) {
-          final PsiElement psi = existingTarget.getXmlElement();
-          if (psi != null) {
-            final String duplicatedMessage = isFromDifferentFiles? 
-              AntBundle.message("target.is.duplicated.in.imported.file", targetEffectiveName, duplucatingTargetFile != null? duplucatingTargetFile.getName() : "") : 
-              AntBundle.message("target.is.duplicated", targetEffectiveName);
-            problems.add(manager.createProblemDescriptor(
-              psi, duplicatedMessage, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-            );
-          }
-        }
-        if (file.equals(duplucatingTargetFile)) {
-          final PsiElement psi = duplicatingTarget.getXmlElement();
-          if (psi != null) {
-            final String duplicatedMessage = isFromDifferentFiles? 
-              AntBundle.message("target.is.duplicated.in.imported.file", targetEffectiveName, existingTargetFile != null? existingTargetFile.getName() : "") : 
-              AntBundle.message("target.is.duplicated", targetEffectiveName);
-            problems.add(manager.createProblemDescriptor(
-              psi, duplicatedMessage, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-            );
-          }
-        }
-      }
-    });
-    final int problemCount = problems.size();
-    return problemCount > 0? problems.toArray(new ProblemDescriptor[problemCount]) : null;
   }
-
-  @Nullable 
-  private static PsiFile getContainingFile(AntDomTarget target) {
-    final XmlElement xmlElement = target.getXmlElement();
-    return xmlElement != null? xmlElement.getContainingFile() : null;
-  }
-  
 }
