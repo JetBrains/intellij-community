@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
+package com.intellij.util;
 
-import com.intellij.psi.ImplicitVariable;
-import com.intellij.psi.NavigatablePsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * User: Dmitry.Krasilschikov
- * Date: 04.02.2008
+ * @author Konstantin Bulenkov
  */
-public interface GrImplicitVariable extends ImplicitVariable, NavigatablePsiElement {
+public class ConstantFunction<Param, Result> implements NotNullFunction<Param, Result> {
+  private final Result value;
+
+  public ConstantFunction(@NotNull Result value) {
+    this.value = value;
+  }
+
+  @NotNull
+  @Override
+  public Result fun(Param param) {
+    return value;
+  }
 }

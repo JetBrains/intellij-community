@@ -117,6 +117,7 @@ public class JavaParameters extends SimpleJavaParameters {
     if ((classPathType & CLASSES_ONLY) == 0) {
       return;
     }
+    setDefaultCharset(project);
     configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType, jdk).collectPaths(getClassPath());
   }
 
