@@ -20,6 +20,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +34,12 @@ import java.util.List;
  */
 public abstract class IntentionManager  {
   public static final ExtensionPointName<IntentionActionBean> EP_INTENTION_ACTIONS = new ExtensionPointName<IntentionActionBean>("com.intellij.intentionAction");
+
+  /**
+   * Key to be used within {@link UserDataHolder} in order to check presence of explicit indication on if intentions sub-menu
+   * should be shown.
+   */
+  public static final Key<Boolean> SHOW_INTENTION_OPTIONS_KEY = Key.create("SHOW_INTENTION_OPTIONS_KEY");
 
   /**
    * @deprecated Use {@link #getInstance()} unstead.

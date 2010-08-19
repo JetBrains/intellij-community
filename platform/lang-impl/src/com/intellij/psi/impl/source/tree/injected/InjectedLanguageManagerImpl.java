@@ -28,7 +28,6 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -134,7 +133,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     ProperTextRange.assertProperRange(injectedTextRange);
     PsiFile file = injectedContext.getContainingFile();
     if (file == null) return injectedTextRange;
-    Document document = PsiDocumentManager.getInstance(injectedContext.getProject()).getCachedDocument(file);
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
     if (!(document instanceof DocumentWindowImpl)) return injectedTextRange;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
     return documentWindow.injectedToHost(injectedTextRange);
@@ -142,7 +141,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   public int injectedToHost(@NotNull PsiElement element, int offset) {
     PsiFile file = element.getContainingFile();
     if (file == null) return offset;
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(file);
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
     if (!(document instanceof DocumentWindowImpl)) return offset;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
     return documentWindow.injectedToHost(offset);

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +57,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    * @param psiFile the file for which the structure view model is requested.
    */
   protected TextEditorBasedStructureViewModel(@NotNull PsiFile psiFile) {
-    this(getEditorForFile(psiFile), psiFile);
+    this(PsiUtilBase.findEditor(psiFile), psiFile);
   }
 
   /**
@@ -86,21 +87,6 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     };
 
     EditorFactory.getInstance().getEventMulticaster().addCaretListener(myCaretListener);
-  }
-
-  @Nullable
-  private static Editor getEditorForFile(@NotNull final PsiFile psiFile) {
-    VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
-    if (virtualFile == null) {
-      return null;
-    }
-    final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
-    for (FileEditor editor : editors) {
-      if (editor instanceof TextEditor) {
-        return ((TextEditor)editor).getEditor();
-      }
-    }
-    return null;
   }
 
   public final void addEditorPositionListener(FileEditorPositionListener listener) {

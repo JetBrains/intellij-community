@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
@@ -27,7 +28,12 @@ import junit.framework.TestCase;
 * Date: 17.12.2008
 */
 public abstract class TestBase extends TestCase {
-    protected CodeInsightTestFixture myFixture;
+
+  protected TestBase() {
+    IdeaTestCase.initPlatformPrefix();
+  }
+
+  protected CodeInsightTestFixture myFixture;
 
     @Override
     protected void setUp() throws Exception {

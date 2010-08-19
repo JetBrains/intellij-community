@@ -1,4 +1,4 @@
-<project default="main">
+<project name="n" default="main">
 <property name="p1" value="v1"/>
 <target name="main">
 <echo message="p1=${<ref>p1}"/>

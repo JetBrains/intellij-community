@@ -122,7 +122,7 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockWithParent {
     tlBlock.setParent(this);
   }
 
-  Block getOriginal() {
+  public Block getOriginal() {
     return myOriginal;
   }
 

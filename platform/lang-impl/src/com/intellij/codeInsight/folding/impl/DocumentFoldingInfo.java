@@ -128,7 +128,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
           String placeHolderText = myPlaceholderTexts.get(marker);
           region = ((FoldingModelEx)editor.getFoldingModel()).createFoldRegion(marker.getStartOffset(), marker.getEndOffset(), placeHolderText, null);  
           //may fail to add in case intersecting region exists
-          if (!editor.getFoldingModel().addFoldRegion(region)) return;
+          if (region == null || !editor.getFoldingModel().addFoldRegion(region)) return;
         }
 
         boolean state = myExpandedStates.get(i).booleanValue();

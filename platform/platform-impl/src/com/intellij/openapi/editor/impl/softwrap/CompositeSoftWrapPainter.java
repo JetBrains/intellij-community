@@ -48,13 +48,13 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u2926',                   '\u2925')),
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\uE48B',                   '\uE48C')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u21B2',                   '\u21B3')),
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u2936',                   '\u2937')),
     asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\u21A9',                   '\u21AA'))
+          asList('\u21A9',                   '\u21AA')),
+    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+          asList('\uE48B',                   '\uE48C'))
   );
 
   private final EditorEx        myEditor;
@@ -108,7 +108,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     }
     if (++mySymbolsDrawingIndex < SYMBOLS.size()) {
       TextDrawingCallback callback = myEditor.getTextDrawingCallback();
-      ColorProvider colorHolder = ColorProvider.byColorScheme(myEditor, EditorColors.RIGHT_MARGIN_COLOR, EditorColors.WHITESPACES_COLOR);
+      ColorProvider colorHolder = ColorProvider.byColorScheme(myEditor, EditorColors.SOFT_WRAP_SIGN_COLOR);
       myDelegate = new TextBasedSoftWrapPainter(SYMBOLS.get(mySymbolsDrawingIndex), myEditor, callback, colorHolder);
       initDelegateIfNecessary();
       return;

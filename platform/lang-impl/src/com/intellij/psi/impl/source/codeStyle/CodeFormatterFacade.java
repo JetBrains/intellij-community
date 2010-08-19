@@ -17,15 +17,14 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.formatting.*;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -34,6 +33,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -41,50 +41,45 @@ public class CodeFormatterFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
 
   private final CodeStyleSettings mySettings;
-  private final Helper myHelper;
 
-  public CodeFormatterFacade(CodeStyleSettings settings, Helper helper) {
+  public CodeFormatterFacade(CodeStyleSettings settings) {
     mySettings = settings;
-    myHelper = helper;
   }
 
-  public ASTNode process(ASTNode element, int parent_indent) {
-    final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    if (builder != null) {
-      TextRange range = element.getTextRange();
-      return processRange(element, range.getStartOffset(), range.getEndOffset());
-    }
-
-    return element;
+  public ASTNode processElement(ASTNode element) {
+    TextRange range = element.getTextRange();
+    return processRange(element, range.getStartOffset(), range.getEndOffset());
   }
 
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
-    final FileType fileType = myHelper.getFileType();
-
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
-    final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
+    final PsiFile file = psiElement.getContainingFile();
     final Document document = file.getViewProvider().getDocument();
     final RangeMarker rangeMarker = document != null && endOffset < document.getTextLength()? document.createRangeMarker(startOffset, endOffset):null;
 
+    PsiElement elementToFormat = document instanceof DocumentWindow ? InjectedLanguageUtil.getTopLevelFile(file) : psiElement;
+    final PsiFile fileToFormat = elementToFormat.getContainingFile();
+
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(fileToFormat);
     if (builder != null) {
       TextRange range = preprocess(element, startOffset, endOffset);
+      if (document instanceof DocumentWindow) {
+        DocumentWindow documentWindow = (DocumentWindow)document;
+        range = documentWindow.injectedToHost(range);
+      }
+
       //final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
-      final PsiFile containingFile = psiElement.getContainingFile();
-      final FormattingModel model = builder.createModel(psiElement, mySettings);
-      if (containingFile.getTextLength() > 0) {
+      final FormattingModel model = builder.createModel(elementToFormat, mySettings);
+      if (file.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(model, mySettings,
-                                             mySettings.getIndentOptions(fileType), new FormatTextRanges(range, true));
+                                             mySettings.getIndentOptions(fileToFormat.getFileType()), new FormatTextRanges(range, true));
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
 
-      /*
-       */
       if (!psiElement.isValid()) {
         if (rangeMarker != null) {
           final PsiElement at = file.findElementAt(rangeMarker.getStartOffset());
@@ -103,43 +98,18 @@ public class CodeFormatterFacade {
     return element;
   }
 
-  public void processTextWithPostponedFormatting(final PsiFile file, final FormatTextRanges ranges) {
-    final FileType fileType = myHelper.getFileType();
-
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-
-    if (builder != null) {
-      if (file.getTextLength() > 0) {
-        try {
-          ranges.preprocess(file.getNode());
-          final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
-          component.doPostponedFormatting(file.getViewProvider());
-          Block rootBlock= builder.createModel(file, mySettings).getRootBlock();
-          Project project = file.getProject();
-          final FormattingModel model = new DocumentBasedFormattingModel(rootBlock,
-                                                                         PsiDocumentManager.getInstance(project).getDocument(file),
-                                                                         project, mySettings, fileType, file);
-
-          //printToConsole(rootBlock, model);
-
-          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(fileType), ranges);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+  public void processText(PsiFile file, final FormatTextRanges ranges, boolean doPostponedFormatting) {
+    Project project = file.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document instanceof DocumentWindow) {
+      file = InjectedLanguageUtil.getTopLevelFile(file);
+      final DocumentWindow documentWindow = (DocumentWindow)document;
+      for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+        range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
       }
+      document = documentWindow.getDelegate();
     }
-  }
 
-  private void printToConsole(final Block rootBlock, final FormattingModel model) {
-    String tree = JDOMUtil.writeElement(new FormatInfoPrinter(rootBlock, model.getDocumentModel()).blocksAsTree(), "\n");
-    System.out.println("---TREE---");
-    System.out.println(tree);
-    System.out.println("---/TREE---");
-  }
-
-  public void processText(final PsiFile file, final FormatTextRanges ranges) {
-    final FileType fileType = myHelper.getFileType();
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
 
@@ -147,13 +117,16 @@ public class CodeFormatterFacade {
       if (file.getTextLength() > 0) {
         try {
           ranges.preprocess(file.getNode());
-          FormattingModel originalModel = builder.createModel(file, mySettings);
-          Project project = file.getProject();
+          if (doPostponedFormatting) {
+            final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
+            component.doPostponedFormatting(file.getViewProvider());
+          }
+          final FormattingModel originalModel = builder.createModel(file, mySettings);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
-            PsiDocumentManager.getInstance(project).getDocument(file),
-            project, mySettings, fileType, file);
+                                                                         document,
+                                                                         project, mySettings, file.getFileType(), file);
 
-          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(fileType), ranges);
+          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

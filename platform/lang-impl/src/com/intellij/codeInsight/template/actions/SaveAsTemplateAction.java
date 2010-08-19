@@ -46,12 +46,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import java.util.Map;
 
 public class SaveAsTemplateAction extends AnAction {
-  public static final @NonNls String JAVA_LANG_PACKAGE_PREFIX = "java.lang";
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
@@ -120,6 +119,13 @@ public class SaveAsTemplateAction extends AnAction {
       template.getTemplateContext().setEnabled(contextType, contextType.isInContext(fileType));
     }
 
+    if (editTemplate(template, editor.getComponent(), true)) return;
+    templateSettings.addTemplate(template);
+  }
+
+  public static boolean editTemplate(TemplateImpl template, JComponent component, final boolean newTemplate) {
+
+    TemplateSettings templateSettings = TemplateSettings.getInstance();
     String defaultShortcut = "";
     if (templateSettings.getDefaultShortcutChar() == TemplateSettings.ENTER_CHAR) {
       defaultShortcut = CodeInsightBundle.message("template.shortcut.enter");
@@ -135,20 +141,20 @@ public class SaveAsTemplateAction extends AnAction {
     Map<TemplateContextType, Boolean> context = template.createContext();
 
     EditTemplateDialog dialog = new EditTemplateDialog(
-      editor.getComponent(),
+      component,
       CodeInsightBundle.message("dialog.edit.live.template.title"),
       template,
       templateSettings.getTemplateGroups(),
-      defaultShortcut, options, context);
+      defaultShortcut, options, context, newTemplate);
     dialog.show();
     if (!dialog.isOK()) {
-      return;
+      return true;
     }
     dialog.apply();
     template.applyOptions(options);
     template.applyContext(context);
-    templateSettings.addTemplate(template);
     templateSettings.setLastSelectedTemplateKey(template.getKey());
+    return false;
   }
 
   public void update(AnActionEvent e) {

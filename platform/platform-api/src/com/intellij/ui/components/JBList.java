@@ -19,8 +19,11 @@ import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,6 +31,10 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 
+/**
+ * @author Anton Makeev
+ * @author Konstantin Bulenkov
+ */
 public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
   private EmptyTextHelper myEmptyTextHelper;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
@@ -47,8 +54,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   }
 
   public JBList(Collection items) {
-    super(items.toArray(new Object[items.size()]));
-    init();
+    this(ArrayUtil.toObjectArray(items));
   }
 
   @Override
@@ -58,6 +64,9 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   }
 
   private void init() {
+    setSelectionBackground(UIUtil.getListSelectionBackground());
+    setSelectionForeground(UIUtil.getListSelectionForeground());
+
     myEmptyTextHelper = new EmptyTextHelper(this) {
       @Override
       protected boolean isEmpty() {
@@ -104,5 +113,24 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   @NotNull
   public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
+  }
+
+  public <T> void installCellRenderer(final @NotNull NotNullFunction<T, JComponent> fun) {
+    setCellRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        @SuppressWarnings({"unchecked"})
+        final JComponent comp = fun.fun((T)value);  
+        comp.setOpaque(true);
+        if (isSelected) {
+          comp.setBackground(list.getSelectionBackground());
+          comp.setForeground(list.getSelectionForeground());
+        } else {
+          comp.setBackground(list.getBackground());
+          comp.setForeground(list.getForeground());
+        }
+        return comp;
+      }
+    });
   }
 }

@@ -44,7 +44,7 @@ public class RecentProjectsManager extends RecentProjectsManagerBase {
     return location == null ? null : location.replace('/', File.separatorChar);
   }
 
-  protected void doOpenProject(final String projectPath, Project projectToClose) {
-    ProjectUtil.openProject(projectPath, projectToClose, false);
+  protected void doOpenProject(final String projectPath, Project projectToClose, final boolean forceOpenInNewFrame) {
+    ProjectUtil.openProject(projectPath, projectToClose, forceOpenInNewFrame);
   }
 }

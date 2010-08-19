@@ -22,6 +22,7 @@ import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.psi.AntFilesProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.pom.PomTarget;
@@ -47,6 +48,8 @@ import java.util.HashSet;
 import java.util.List;
 
 public class AntDomDocumentationProvider implements DocumentationProvider {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.doc.AntDomDocumentationProvider");
   
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     final String mainDoc = getMainDocumentation(originalElement);
@@ -241,7 +244,13 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
       }
       else if (pomTarget instanceof DomChildrenDescription) {
         final DomChildrenDescription description = (DomChildrenDescription)pomTarget;
-        final Type type = description.getType();
+        Type type = null;
+        try {
+          type = description.getType();
+        }
+        catch (UnsupportedOperationException e) {
+          LOG.info(e);
+        }
         if (type instanceof Class && AntDomElement.class.isAssignableFrom(((Class)type))) {
           final String elemName = description.getName();
           if (elemName != null) {

@@ -119,6 +119,10 @@ public class ChangeDiffRequest implements ChangeRequestChain {
       }
       if (DiffPresentationReturnValue.removeFromList.equals(returnValue)) {
         mySteps.remove(nextIdx);
+        if (moveDirection.direction() < 0) {
+          // our position moves to head
+          myIndex += moveDirection.direction();
+        }
         continue;
       }
       final DiffRequest request = result.getRequest();

@@ -16,12 +16,17 @@
 package com.intellij.lang.ant.validation;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.dom.AntDomProject;
+import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AntInspection extends LocalInspectionTool {
+public abstract class AntInspection extends BasicDomElementsInspection<AntDomProject> {
+
+  protected AntInspection() {
+    super(AntDomProject.class);
+  }
 
   @Nls
   @NotNull

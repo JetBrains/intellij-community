@@ -25,4 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public interface XmlFile extends PsiFile, XmlElement, FileResolveScopeProvider {
   @Nullable
   XmlDocument getDocument();
+
+  @Nullable
+  XmlTag getRootTag();
 }

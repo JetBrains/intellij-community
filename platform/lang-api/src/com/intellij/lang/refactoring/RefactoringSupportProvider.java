@@ -18,6 +18,7 @@ package com.intellij.lang.refactoring;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,8 +27,15 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ven
  */
+public abstract class RefactoringSupportProvider {
 
-public interface RefactoringSupportProvider {
+  /**
+   * Allows several providers to be available for the same language
+   * @param context refactoring context
+   * @return true if refactoring support is available in given context
+   */
+  public boolean isAvailable(@NotNull PsiElement context) { return true; }
+
   /**
    * Checks if the Safe Delete refactoring can be applied to the specified element
    * in the language. The Safe Delete refactoring also requires the plugin to implement
@@ -36,73 +44,84 @@ public interface RefactoringSupportProvider {
    * @param element the element for which Safe Delete was invoked
    * @return true if Safe Delete is available, false otherwise.
    */
-  boolean isSafeDeleteAvailable(PsiElement element);
+  public boolean isSafeDeleteAvailable(PsiElement element) { return false; }
 
   /**
    * @return handler for introducing local variables in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getIntroduceVariableHandler();
+  @Nullable
+  public RefactoringActionHandler getIntroduceVariableHandler() { return null; }
 
   /**
    * @return handler for extracting methods in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getExtractMethodHandler();
+  @Nullable
+  public RefactoringActionHandler getExtractMethodHandler() { return null; }
 
   /**
    * @return handler for introducing constants in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getIntroduceConstantHandler();
+  @Nullable
+  public RefactoringActionHandler getIntroduceConstantHandler() { return null; }
 
   /**
    * @return handler for introducing fields in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getIntroduceFieldHandler();
+  @Nullable
+  public RefactoringActionHandler getIntroduceFieldHandler() { return null; }
 
   /**
    * @return  handler for introducing parameters in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getIntroduceParameterHandler();
+  @Nullable
+  public RefactoringActionHandler getIntroduceParameterHandler() { return null; }
 
   /**
    * @return  handler for pulling up members in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getPullUpHandler();
+  @Nullable
+  public RefactoringActionHandler getPullUpHandler() { return null; }
 
   /**
    * @return  handler for pushing down members in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getPushDownHandler();
+  @Nullable
+  public RefactoringActionHandler getPushDownHandler() { return null; }
 
   /**
    * @return  handler for extracting members to an interface in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getExtractInterfaceHandler();
+  @Nullable
+  public RefactoringActionHandler getExtractInterfaceHandler() { return null; }
 
   /**
    * @return  handler for extracting members to some module in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getExtractModuleHandler();
+  @Nullable
+  public RefactoringActionHandler getExtractModuleHandler() { return null; }
 
   /**
    * @return  handler for extracting super class in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable RefactoringActionHandler getExtractSuperClassHandler();
+  @Nullable
+  public RefactoringActionHandler getExtractSuperClassHandler() { return null; }
 
   /**
    * @return  handler for changing signature in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
-  @Nullable ChangeSignatureHandler getChangeSignatureHandler();
+  @Nullable
+  public ChangeSignatureHandler getChangeSignatureHandler() { return null; }
 
-  boolean doInplaceRenameFor(PsiElement element, PsiElement context);
+  public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) { return false; }
 }

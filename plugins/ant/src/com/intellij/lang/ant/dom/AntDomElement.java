@@ -15,7 +15,12 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.AntSupport;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 
@@ -43,10 +48,56 @@ public abstract class AntDomElement implements DomElement {
     return getParentOfType(AntDomProject.class, false);
   }
 
-  public final List<AntDomElement> getAntChildren() {
-    return DomUtil.getDefinedChildrenOfType(this, AntDomElement.class, true, false);
+  public final AntDomProject getContextAntProject() {
+    final AntConfigurationBase antConfig = AntConfigurationBase.getInstance(getManager().getProject());
+    final XmlElement xmlElement = getXmlElement();
+    if (xmlElement == null) {
+      return getAntProject();
+    }
+    PsiFile containingFile = xmlElement.getContainingFile();
+    if (containingFile != null) {
+      containingFile = containingFile.getOriginalFile();
+    }
+    if (!(containingFile instanceof XmlFile)) {
+      return getAntProject();
+    }
+    final XmlFile contextFile = antConfig.getEffectiveContextFile(((XmlFile)containingFile));
+    if (contextFile == null) {
+      return getAntProject();
+    }
+    return AntSupport.getAntDomProject(contextFile);
   }
 
+  //public static final Key<List<AntDomElement>> ANT_CHILDREN_KEY = Key.create("_ant_children_list_");
+  private volatile List<AntDomElement> myCachedChildren;
+  
+  public final List<AntDomElement> getAntChildren() {
+    //List<AntDomElement> cached = getUserData(ANT_CHILDREN_KEY);
+    List<AntDomElement> cached = myCachedChildren;
+    if (cached != null) {
+      for (AntDomElement element : cached) {
+        if (!element.isValid()) {
+          cached = null;
+          break;
+        }
+      }
+    }
+    if (cached == null) {
+      cached = DomUtil.getDefinedChildrenOfType(this, AntDomElement.class, true, false);
+      myCachedChildren = cached;
+      //putUserData(ANT_CHILDREN_KEY, cached);
+    }
+    return cached;
+  }
+
+  public final boolean isTask() {
+    return Role.TASK.equals(getChildDescription().getUserData(ROLE));
+  }
+
+  public final boolean isDataType() {
+    return Role.DATA_TYPE.equals(getChildDescription().getUserData(ROLE));
+  }
+  
   public String toString() {
     final XmlTag tag = getXmlTag();
     if (tag == null) {

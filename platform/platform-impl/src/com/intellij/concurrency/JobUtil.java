@@ -35,6 +35,9 @@ import java.util.concurrent.Callable;
 public class JobUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobUtil");
 
+  private JobUtil() {
+  }
+
   private static <T> boolean invokeConcurrentlyForAll(@NotNull final List<T> things,
                                                       @NotNull final Processor<T> thingProcessor,
                                                       boolean failFastOnAcquireReadAction) throws ProcessCanceledException {

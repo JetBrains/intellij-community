@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -450,10 +451,16 @@ public class DaemonListeners implements Disposable {
 
       boolean shown = false;
       try {
-        LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
+        // There is a possible case that cursor is located at soft wrap-introduced virtual space (that is mapped to offset
+        // of the document symbol just after soft wrap). We don't want to show any tooltips for it then.
+        VisualPosition visual = editor.xyToVisualPosition(e.getMouseEvent().getPoint());
+        if (editor.getSoftWrapModel().isInsideOrBeforeSoftWrap(visual)) {
+          return;
+        }
+        LogicalPosition logical = editor.visualToLogicalPosition(visual);
         if (e.getArea() == EditorMouseEventArea.EDITING_AREA) {
-          int offset = editor.logicalPositionToOffset(pos);
-          if (editor.offsetToLogicalPosition(offset).column != pos.column) return; // we are in virtual space
+          int offset = editor.logicalPositionToOffset(logical);
+          if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
           if (info == null || info.description == null) return;
           DaemonTooltipUtil.showInfoTooltip(info, editor, offset);

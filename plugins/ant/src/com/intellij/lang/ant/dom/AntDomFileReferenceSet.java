@@ -39,11 +39,11 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
 
   private final GenericAttributeValue myValue;
 
-  public AntDomFileReferenceSet(final GenericAttributeValue attribValue) {
-    this(attribValue, attribValue.getRawText(), 0);
+  public AntDomFileReferenceSet(final GenericAttributeValue attribValue, boolean validateFileRefs) {
+    this(attribValue, attribValue.getRawText(), 0, validateFileRefs);
   }
 
-  public AntDomFileReferenceSet(final GenericAttributeValue attribValue, final String pathSubstring, int beginOffset) {
+  public AntDomFileReferenceSet(final GenericAttributeValue attribValue, final String pathSubstring, int beginOffset, boolean validateFileRefs) {
     super(cutTrailingSlash(FileUtil.toSystemIndependentName(pathSubstring)),
           attribValue.getXmlAttributeValue(),
           ElementManipulators.getOffsetInElement(attribValue.getXmlAttributeValue()) + beginOffset,
@@ -51,6 +51,11 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
           SystemInfo.isFileSystemCaseSensitive
     );
     myValue = attribValue;
+    for (FileReference reference : getAllReferences()) {
+      if (reference instanceof AntDomReference) {
+        ((AntDomReference)reference).setShouldBeSkippedByAnnotator(!validateFileRefs);
+      }
+    }
   }
 
   public GenericAttributeValue getAttributeValue() {
@@ -70,7 +75,6 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
 
   public FileReference createFileReference(final TextRange range, final int index, final String text) {
     return new AntDomFileReference(this, range, index, text);
-    //return super.createFileReference(range, index, text);
   }
 
   @Override
@@ -93,7 +97,7 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
     }
     return FileUtil.isAbsolute(pathString);
   }
-  // todo: correct context for "output" attribute file reference of the "ant" task
+
   @NotNull
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
     final AntDomElement element = myValue.getParentOfType(AntDomElement.class, false);
@@ -109,16 +113,25 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
         }
       }
       else {
-        final String basedir;
-        if (element instanceof AntDomIncludingDirective) {
-          basedir = containingProject.getContainingFileDir();
+        
+        if (element instanceof AntDomAnt) {
+          final PsiFileSystemItem dirValue = ((AntDomAnt)element).getAntFileDir().getValue();
+          if (dirValue instanceof PsiDirectory) {
+            root = dirValue.getVirtualFile();
+          }
         }
-        else {
-          // todo: use correct context project if specified
-          basedir = containingProject.getProjectBasedirPath();
+
+        if (root == null) {
+          final String basedir;
+          if (element instanceof AntDomIncludingDirective) {
+            basedir = containingProject.getContainingFileDir();
+          }
+          else {
+            basedir = containingProject.getContextAntProject().getProjectBasedirPath();
+          }
+          assert basedir != null;
+          root = LocalFileSystem.getInstance().findFileByPath(basedir);
         }
-        assert basedir != null;
-        root = LocalFileSystem.getInstance().findFileByPath(basedir);
       }
 
       if (root != null) {

@@ -16,8 +16,6 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -29,8 +27,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.nio.CharBuffer;
 
 /**
@@ -102,17 +102,35 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     SPECIAL_SYMBOLS_TO_WRAP_BEFORE.add('.');
   }
 
-  private final TIntHashSet myProcessedLogicalLines = new TIntHashSet();
+  /**
+   * Holds information about logical lines for which soft wrap is calculated as a set of
+   * <code>(logical line number; temporary)</code> pairs.
+   */
+  private final TIntObjectHashMap<Boolean> myProcessedLogicalLines = new TIntObjectHashMap<Boolean>();
+
   private final DocumentListener myDocumentListener = new LineOrientedDocumentChangeAdapter() {
     @Override
     public void beforeDocumentChange(int startLine, int endLine, int symbolsDifference) {
-      for (int i = startLine; i <= endLine; i++) {
-        myProcessedLogicalLines.remove(i);
-      }
+      dropData(startLine, endLine);
     }
 
     @Override
     public void afterDocumentChange(int startLine, int endLine, int symbolsDifference) {
+      dropData(startLine, endLine);
+    }
+
+    private void dropData(int startLine, int endLine) {
+      Document document = myEditor.getDocument();
+      for (int i = startLine; i <= endLine; i++) {
+        myProcessedLogicalLines.remove(i);
+
+        // Calculate approximate soft wraps positions using plain font.
+        // Note: we don't update 'myProcessedLogicalLines' collection here, i.e. soft wraps will be recalculated precisely
+        // during standard editor repainting iteration.
+        if (i < document.getLineCount()) {
+          processLogicalLine(document.getCharsSequence(), i, Font.PLAIN, IndentType.NONE, true);
+        }
+      }
     }
   };
 
@@ -136,10 +154,10 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
   @Override
-  public void registerSoftWrapIfNecessary(@NotNull char[] chars, int start, int end, int x, int fontType) {
+  public void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType, boolean temporary) {
     dropDataIfNecessary();
 
-    if (start >= end) {
+    if (myVisibleAreaWidth <= 0 || start >= end) {
       return;
     }
 
@@ -147,13 +165,13 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     int startLine = document.getLineNumber(start);
     int endLine = document.getLineNumber(end);
     for (int i = startLine; i <= endLine; i++) {
-      if (!myProcessedLogicalLines.contains(i)) {
+      if (!myProcessedLogicalLines.contains(i) || (!temporary && myProcessedLogicalLines.get(i))) {
         IndentType indent = IndentType.NONE;
         if (!myEditor.isViewer() && !document.isWritable()) {
           indent = IndentType.TO_PREV_LINE_NON_WS_START;
         }
-        processLogicalLine(chars, i, fontType, indent);
-        myProcessedLogicalLines.add(i);
+        processLogicalLine(text, i, fontType, indent, temporary);
+        myProcessedLogicalLines.put(i, temporary);
       }
     }
   }
@@ -174,22 +192,40 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     myVisibleAreaWidth = currentVisibleAreaWidth;
   }
 
-  private void processLogicalLine(char[] text, int line, int fontType, IndentType indentType) {
+  private void processLogicalLine(CharSequence text, int line, int fontType, IndentType indentType, boolean temporary) {
     Document document = myEditor.getDocument();
     int startOffset = document.getLineStartOffset(line);
     int endOffset = document.getLineEndOffset(line);
 
+    // There is a possible case that this method is called for the approximate soft wraps positions calculation. E.g. the
+    // user can insert a long string to the end of the document and we don't want to perform horizontal scrolling to its end.
+    // Hence, we approximately define soft wraps for the inserted text assuming that there precise calculation will be performed
+    // on regular editor repainting iteration. However, we need to drop all those temporary soft wraps registered for
+    // the same line before.
+    myStorage.removeInRange(startOffset, endOffset + 1/* add 1 to handle possible situation when soft wrap is registered at the line end */);
+
     if (indentType == IndentType.NONE) {
       TIntArrayList offsets = calculateSoftWrapOffsets(text, startOffset, endOffset, fontType, 0);
-      registerSoftWraps(offsets, 0);
+      registerSoftWraps(offsets, 0, temporary);
       return;
     }
 
     // Understand if it's worth to define indent for soft wrap(s) to create and perform their actual construction and registration.
+    int prevLineIndentInColumns = 0;
+    
+    int firstNonSpaceSymbolIndex = startOffset;
+    for (; firstNonSpaceSymbolIndex < endOffset; firstNonSpaceSymbolIndex++) {
+      char c = text.charAt(firstNonSpaceSymbolIndex);
+      if (c != ' ' && c != '\t') {
+        break;
+      }
+    }
+    if (firstNonSpaceSymbolIndex > startOffset) {
+      prevLineIndentInColumns = myTextRepresentationHelper.toVisualColumnSymbolsNumber(text, startOffset, firstNonSpaceSymbolIndex, 0);
+    }
+
     int spaceWidth = EditorUtil.getSpaceWidth(fontType, myEditor);
     int indentInColumns = getIndentSize();
-    VisualPosition visual = myEditor.offsetToVisualPosition(startOffset);
-    int prevLineIndentInColumns = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(myEditor, visual.line);
     int indentInColumnsToUse = 0;
     TIntArrayList softWrapOffsetsToUse = null;
     for (; indentInColumns >= 0; indentInColumns--) {
@@ -208,15 +244,15 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     }
 
     if (indentInColumnsToUse <= 0) {
-      processLogicalLine(text, line, fontType, IndentType.NONE);
+      processLogicalLine(text, line, fontType, IndentType.NONE, temporary);
     }
     else {
-      registerSoftWraps(softWrapOffsetsToUse, indentInColumnsToUse + prevLineIndentInColumns);
+      registerSoftWraps(softWrapOffsetsToUse, indentInColumnsToUse + prevLineIndentInColumns, temporary);
     }
   }
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
-  private TIntArrayList calculateSoftWrapOffsets(char[] text, int start, int end, int fontType, int reservedWidth) {
+  private TIntArrayList calculateSoftWrapOffsets(CharSequence text, int start, int end, int fontType, int reservedWidth) {
     TIntArrayList result = new TIntArrayList();
 
     // Find offsets where soft wraps should be applied for the logical line in case of no indent usage.
@@ -254,10 +290,10 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     return settings.getIndentSize(file.getFileType());
   }
 
-  private void registerSoftWraps(TIntArrayList offsets, int indentInColumns) {
+  private void registerSoftWraps(TIntArrayList offsets, int indentInColumns, boolean temporary) {
     for (int i = 0; i < offsets.size(); i++) {
       int offset = offsets.getQuick(i);
-      myStorage.storeOrReplace(new TextChangeImpl("\n" + StringUtil.repeatSymbol(' ', indentInColumns), offset));
+      myStorage.storeOrReplace(new TextChangeImpl("\n" + StringUtil.repeatSymbol(' ', indentInColumns), offset), !temporary);
     }
   }
 
@@ -276,10 +312,10 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
    * @param max         max offset to use (inclusive)
    * @return            wrapping offset to use (given <code>'max'</code> value should be returned if no more suitable point is found)
    */
-  private static int calculateSoftWrapOffset(char[] text, int preferred, int min, int max) {
+  private static int calculateSoftWrapOffset(CharSequence text, int preferred, int min, int max) {
     // Try to find target offset that is not greater than preferred position.
     for (int i = preferred; i > min; i--) {
-      char c = text[i];
+      char c = text.charAt(i);
 
       if (WHITE_SPACES.contains(c)) {
         return i < preferred ? i + 1 : i;
@@ -287,7 +323,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
 
       // Don't wrap on the non-id symbol preceded by another non-id symbol. E.g. consider that we have a statement
       // like 'foo(int... args)'. We don't want to wrap on the second or third dots then.
-      if (i > min + 1 && !isIdSymbol(c) && !isIdSymbol(text[i - 1])) {
+      if (i > min + 1 && !isIdSymbol(c) && !isIdSymbol(text.charAt(i - 1))) {
         continue;
       }
       if (SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c)) {
@@ -302,20 +338,20 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
 
       // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++.
       // Also don't wrap before non-id symbol preceded by a space - wrap on space instead;
-      if (!isIdSymbol(c) && (i < min + 2 || (isIdSymbol(text[i - 1]) && !WHITE_SPACES.contains(text[i - 1])))) {
+      if (!isIdSymbol(c) && (i < min + 2 || (isIdSymbol(text.charAt(i - 1)) && !WHITE_SPACES.contains(text.charAt(i - 1))))) {
         return i;
       }
     }
 
     // Try to find target offset that is greater than preferred position.
     for (int i = preferred + 1; i < max; i++) {
-      char c = text[i];
+      char c = text.charAt(i);
       if (WHITE_SPACES.contains(c)) {
         return i;
       }
       // Don't wrap on the non-id symbol preceded by another non-id symbol. E.g. consider that we have a statement
       // like 'foo(int... args)'. We don't want to wrap on the second or third dots then.
-      if (i < max - 1 && !isIdSymbol(c) && !isIdSymbol(text[i + 1]) && !isIdSymbol(text[i - 1])) {
+      if (i < max - 1 && !isIdSymbol(c) && !isIdSymbol(text.charAt(i + 1)) && !isIdSymbol(text.charAt(i - 1))) {
         continue;
       }
       if (SPECIAL_SYMBOLS_TO_WRAP_BEFORE.contains(c)) {
@@ -326,7 +362,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
       }
 
       // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++;
-      if (!isIdSymbol(c) && (i >= max || isIdSymbol(text[i + 1]))) {
+      if (!isIdSymbol(c) && (i >= max - 1 || isIdSymbol(text.charAt(i + 1)))) {
         return i;
       }
     }

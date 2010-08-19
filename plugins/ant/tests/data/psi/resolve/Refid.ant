@@ -1,4 +1,4 @@
-<project default="main">
+<project name="n" default="main">
 <target name="main">
 <property id="1" name="p" value="v"/>
 <echo refid="<ref>1" message="${p}"/>

@@ -29,6 +29,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -61,6 +62,11 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
     final XmlDocument document = findChildByClass(XmlDocument.class);
     assert document != null;
     return document;
+  }
+
+  @Override
+  public XmlTag getRootTag() {
+    return getDocument().getRootTag();
   }
 
   @Override

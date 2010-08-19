@@ -44,7 +44,9 @@ public class AntDomFileDescription extends AntFileDescription<AntDomProject> {
     if (document != null) {
       final XmlTag tag = document.getRootTag();
       if (tag != null && ROOT_TAG_NAME.equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-        return true;
+        if (tag.getAttributeValue("name") != null && tag.getAttributeValue("default") != null) {
+          return true;
+        }
       }
       final VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();
       if (vFile != null && ForcedAntFileAttribute.isAntFile(vFile)) {

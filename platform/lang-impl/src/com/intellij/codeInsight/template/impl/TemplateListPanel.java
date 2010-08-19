@@ -452,7 +452,7 @@ class TemplateListPanel extends JPanel {
     String oldGroupName = template.getGroupName();
 
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
+                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
     dialog.show();
     if (!dialog.isOK()) return;
 
@@ -536,7 +536,7 @@ class TemplateListPanel extends JPanel {
     myTemplateOptions.put(getKey(template), template.createOptions());
     myTemplateContext.put(getKey(template), template.createContext());
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.add.live.template.title"), template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
+                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
     dialog.show();
     if (!dialog.isOK()) return;
     dialog.apply();
@@ -558,7 +558,7 @@ class TemplateListPanel extends JPanel {
     myTemplateOptions.put(getKey(template), getOptions(orTemplate));
     myTemplateContext.put(getKey(template), getContext(orTemplate));
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.copy.live.template.title"), template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
+                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
     dialog.show();
     if (!dialog.isOK()) return;
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,12 +41,13 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   private static final Icon ERROR = IconLoader.getIcon("/compiler/error.png");
   private static final Icon WARNING = IconLoader.getIcon("/compiler/warning.png");
   protected RefEntity myElement;
-  private CommonProblemDescriptor myDescriptor;
-  protected DescriptorProviderInspection myTool;
+  private final CommonProblemDescriptor myDescriptor;
+  protected final DescriptorProviderInspection myTool;
 
   public ProblemDescriptionNode(final Object userObject, final DescriptorProviderInspection tool) {
     super(userObject);
     myTool = tool;
+    myDescriptor = null;
   }
 
   public ProblemDescriptionNode(RefEntity element,
@@ -111,10 +113,11 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    return renderDescriptionMessage(getDescriptor()).replaceAll("<[^>]*>", "");
+    CommonProblemDescriptor descriptor = getDescriptor();
+    return descriptor == null ? "" : renderDescriptionMessage(descriptor).replaceAll("<[^>]*>", "");
   }
 
-  public static String renderDescriptionMessage(CommonProblemDescriptor descriptor) {
+  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
     String message = descriptor.getDescriptionTemplate();
 
