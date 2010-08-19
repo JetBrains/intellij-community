@@ -193,7 +193,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
   }
 
   protected String getPopupTitle(AnActionEvent e) {
-    return VcsBundle.message("vcs.quicklist.pupup.title");
+    return VcsBundle.message("vcs.quicklist.popup.title");
   }
 
   public enum SupportedVCS {
