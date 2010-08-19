@@ -64,7 +64,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
         List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
         if (providers.isEmpty()) continue;
         if (providers.size() == 1) return getRefactoringHandler(providers.get(0));
-        PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        PsiElement element = getElementAtCaret(LangDataKeys.EDITOR.getData(dataContext), LangDataKeys.PSI_FILE.getData(dataContext));
         if (element != null) {
           for (RefactoringSupportProvider provider : providers) {
             if (provider.isAvailable(element)) {
