@@ -18,13 +18,14 @@ package com.intellij.ide;
 import com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author rvishnyakov
  */
 public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+  @NotNull
   @Override
   public Language getLanguage() {
     return StdLanguages.JAVA;
@@ -32,29 +33,18 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
-    switch(settingsType) {
-      case BLANK_LINE_SETTINGS:
-        return BLANK_LINE_SAMPLE;
-      case INDENT_AND_BRACES_SETTINGS:
-        return INDENT_AND_BRACES_SAMPLE;
-      case SPACING_SETTINGS:
-        return SPACING_SAMPLE;
-      case WRAPPING_SETTINGS:
-        return WRAPPING_CODE_SAMPLE;
-    }
+    if (settingsType == SettingsType.SPACING_SETTINGS) return SPACING_SAMPLE;
+    if (settingsType == SettingsType.INDENTS_AND_BRACES_SETTINGS) return INDENT_AND_BRACES_SAMPLE;
+    if (settingsType == SettingsType.BLANK_LINES_SETTINGS) return BLANK_LINE_SAMPLE;
+    if (settingsType == SettingsType.WRAPPING_SETTINGS) return WRAPPING_CODE_SAMPLE;
+
     return GENERAL_CODE_SAMPLE;
   }
 
   @Override
-  public void customizeSpacingOptions(CodeStyleCustomizationsConsumer consumer) {
+  public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     consumer.showAllStandardOptions();
   }
-
-  @Override
-  public void customizeBlankLinesOptions(CodeStyleCustomizationsConsumer consumer) {
-    consumer.showAllStandardOptions();
-  }
-  
 
   private static final String GENERAL_CODE_SAMPLE = "public class Foo {\n" +
                                                     "  public int[] X = new int[]{1, 3, 5 7, 9, 11};\n" +

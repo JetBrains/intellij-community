@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -127,7 +128,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
   };
 
-  private final TreeTable myTreeTable;
+  private TreeTable myTreeTable;
   private final HashMap myKeyToFieldMap = new HashMap();
   private final ArrayList myKeys = new ArrayList();
 
@@ -135,11 +136,18 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   public OptionTableWithPreviewPanel(CodeStyleSettings settings) {
     super(settings);
-    myPanel.setLayout(new GridBagLayout());
 
+
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+
+    myPanel.setLayout(new GridBagLayout());
     initTables();
 
-    myTreeTable = createOptionsTree(settings);
+    myTreeTable = createOptionsTree(getSettings());
     myPanel.add(ScrollPaneFactory.createScrollPane(myTreeTable),
                 new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                        new Insets(7, 7, 3, 4), 0, 0));
@@ -154,6 +162,23 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   }
 
+  @Override
+  public void showAllStandardOptions() {
+    //TODO: IMPLEMENT
+  }
+
+  @Override
+  public void showStandardOptions(String... optionNames) {
+    //TODO: IMPLEMENT
+  }
+
+  @Override
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                               String fieldName,
+                               String optionName,
+                               String groupName) {
+    //TODO: IMPLEMENT
+  }
 
   protected TreeTable createOptionsTree(CodeStyleSettings settings) {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();

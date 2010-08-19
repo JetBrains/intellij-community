@@ -18,7 +18,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,28 +26,24 @@ import java.util.ArrayList;
 
 /**
  * Base class and extension point for code style settings shared between multiple languages
- * (blank lines, indent and braces, spaces).
- *
- * @author rvishnyakov
  */
 public abstract class LanguageCodeStyleSettingsProvider {
-  public enum SettingsType {
-    BLANK_LINE_SETTINGS, INDENT_AND_BRACES_SETTINGS, SPACING_SETTINGS, WRAPPING_SETTINGS, LANG_SPECIFIC
-  }
-  
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
 
+  public enum SettingsType {
+    BLANK_LINES_SETTINGS, INDENTS_AND_BRACES_SETTINGS, SPACING_SETTINGS, WRAPPING_SETTINGS, LANGUAGE_SPECIFIC
+  }
+
+  @NotNull
   public abstract Language getLanguage();
 
   public abstract String getCodeSample(@NotNull SettingsType settingsType);
 
-  public void customizeSpacingOptions(CodeStyleCustomizationsConsumer consumer) {
+  public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
   }
 
-  public void customizeBlankLinesOptions(CodeStyleCustomizationsConsumer consumer) {
-  }
-
+  @NotNull
   public static Language[] getLanguagesWithCodeStyleSettings() {
     ArrayList<Language> langs = new ArrayList<Language>();
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
@@ -56,7 +52,8 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return langs.toArray(new Language[langs.size()]);
   }
 
-  public static @Nullable String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
+  @Nullable
+  public static String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (provider.getLanguage().equals(lang)) {
         return provider.getCodeSample(settingsType);
@@ -65,7 +62,8 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return null;
   }
 
-  public static @Nullable Language getLanguage(String langName) {
+  @Nullable
+  public static Language getLanguage(String langName) {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (langName.equals(provider.getLanguage().getDisplayName())) {
         return provider.getLanguage();

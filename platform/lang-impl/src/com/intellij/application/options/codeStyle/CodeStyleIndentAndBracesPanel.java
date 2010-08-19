@@ -15,10 +15,10 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.OptionGroup;
 
 import javax.swing.*;
@@ -95,6 +95,13 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
   public CodeStyleIndentAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
 
+    init();
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+
     myPanel.add(createKeepWhenReformattingPanel(),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                        new Insets(0, 4, 0, 4), 0, 0));
@@ -131,11 +138,24 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
 
   @Override
   protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
-    return LanguageCodeStyleSettingsProvider.SettingsType.INDENT_AND_BRACES_SETTINGS;
+    return LanguageCodeStyleSettingsProvider.SettingsType.INDENTS_AND_BRACES_SETTINGS;
   }
 
   @Override
-  protected void onLanguageChange(Language language) {
+  public void showAllStandardOptions() {
+    // TODO: IMPLEMENT
+  }
+
+  @Override
+  public void showStandardOptions(String... optionNames) {
+    // TODO: IMPLEMENT
+  }
+
+  @Override
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                               String fieldName,
+                               String optionName,
+                               String groupName) {
     // TODO: IMPLEMENT
   }
 
