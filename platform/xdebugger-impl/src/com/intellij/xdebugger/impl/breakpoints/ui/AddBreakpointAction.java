@@ -34,8 +34,8 @@ public class AddBreakpointAction<B extends XBreakpoint<?>> extends XBreakpointPa
     return true;
   }
 
-  public void perform(@NotNull final Collection<? extends B> breakpoints, final JComponent parentComponent) {
-    B b = myBreakpointsPanel.getType().addBreakpoint(myBreakpointsPanel.getProject(), parentComponent);
+  public void perform(@NotNull final Collection<? extends B> breakpoints) {
+    B b = myBreakpointsPanel.getType().addBreakpoint(myBreakpointsPanel.getProject(), myBreakpointsPanel.getTree());
     if (b != null) {
       myBreakpointsPanel.resetBreakpoints();
       myBreakpointsPanel.selectBreakpoint(b);

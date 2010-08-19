@@ -178,12 +178,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
 
   private JButton createButton(final XBreakpointPanelAction<B> action) {
     final JButton button = new JButton(action.getName());
-    button.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        List<B> list = myTree.getSelectedBreakpoints();
-        action.perform(list, button);
-      }
-    });
+    button.addActionListener(action);
     return button;
   }
 
@@ -239,6 +234,10 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
 
   public XBreakpointType<B, ?> getType() {
     return myType;
+  }
+
+  public XBreakpointsTree<B> getTree() {
+    return myTree;
   }
 
   public boolean canSelectBreakpoint(final XBreakpoint breakpoint) {
