@@ -172,35 +172,30 @@ public class GenericsHighlightUtil {
                                                                 final PsiSubstitutor substitutor,
                                                                 final PsiType type,
                                                                 final PsiElement typeElement2Highlight) {
-    PsiType type2highlight = type;
-    if (type instanceof PsiWildcardType) {
-      if (((PsiWildcardType)type).isExtends()) {
-        type2highlight = ((PsiWildcardType)type).getExtendsBound();
-      } else if (((PsiWildcardType)type).isSuper()) {
-        type2highlight = ((PsiWildcardType)type).getSuperBound();
-      }
+    final PsiClass referenceClass;
+    if (type instanceof PsiClassType){
+      referenceClass = ((PsiClassType)type).resolve();
+    } else {
+      referenceClass = null;
     }
-    if (!(type2highlight instanceof PsiClassType)) return null;
-    final PsiClass referenceClass = ((PsiClassType)type2highlight).resolve();
-    if (referenceClass == null) return null;
     final PsiClassType[] bounds = classParameter.getSuperTypes();
     for (PsiClassType type1 : bounds) {
       PsiType bound = substitutor.substitute(type1);
-      if (!TypeConversionUtil.isAssignable(bound, type2highlight, false) && TypesDistinctProver.provablyDistinct(bound, type)) {
+      if (checkNotInBounds(type, bound)) {
         PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
-        @NonNls final String messageKey = boundClass == null || referenceClass.isInterface() == boundClass.isInterface()
+        @NonNls final String messageKey = boundClass == null || referenceClass == null || referenceClass.isInterface() == boundClass.isInterface()
                                           ? "generics.type.parameter.is.not.within.its.bound.extend"
                                           : "generics.type.parameter.is.not.within.its.bound.implement";
 
         String description = JavaErrorMessages.message(messageKey,
-                                                       HighlightUtil.formatClass(referenceClass),
+                                                       referenceClass != null ? HighlightUtil.formatClass(referenceClass) : type.getPresentableText(),
                                                        HighlightUtil.formatType(bound));
 
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                               typeElement2Highlight,
                                                                               description);
-        if (bound instanceof PsiClassType) {
+        if (bound instanceof PsiClassType && referenceClass != null) {
           QuickFixAction
             .registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(referenceClass, (PsiClassType)bound, true),
                                     null);
@@ -209,6 +204,78 @@ public class GenericsHighlightUtil {
       }
     }
     return null;
+  }
+
+  private static boolean checkNotInBounds(PsiType type, PsiType bound) {
+    if (type instanceof PsiClassType) {
+      return checkNotAssignable(bound, type);
+    }
+    else {
+      if (type instanceof PsiWildcardType) {
+        if (((PsiWildcardType)type).isExtends()) {
+          return checkExtendsWildcardCaptureFailure((PsiWildcardType)type, bound);
+        }
+        else if (((PsiWildcardType)type).isSuper()) {
+          return checkNotAssignable(bound, ((PsiWildcardType)type).getSuperBound());
+        }
+      }
+      else if (type instanceof PsiArrayType) {
+        return checkNotAssignable(bound, type, true);
+      }
+    }
+    return false;
+  }
+
+  //JLS 5.1.10
+  private static boolean checkExtendsWildcardCaptureFailure(PsiWildcardType type, PsiType bound) {
+    LOG.assertTrue(type.isExtends());
+    final PsiType extendsBound = type.getExtendsBound();
+    PsiType boundBound = bound;
+    if (bound instanceof PsiWildcardType) {
+      if (((PsiWildcardType)bound).isBounded()) {
+        boundBound = ((PsiWildcardType)bound).isSuper()
+                     ? ((PsiWildcardType)bound).getSuperBound()
+                     : ((PsiWildcardType)bound).getExtendsBound();
+      } else {
+        return false;
+      }
+    }
+    return !TypeConversionUtil.areTypesConvertible(boundBound, extendsBound) &&
+           !TypeConversionUtil.areTypesConvertible(extendsBound, boundBound);
+  }
+
+  private static boolean checkNotAssignable(final PsiType bound, final PsiType type) {
+    return checkNotAssignable(bound, type, allowUncheckedConversions(type));
+  }
+
+  private static boolean checkNotAssignable(final PsiType bound,
+                                            final PsiType type,
+                                            final boolean allowUncheckedConversion) {
+    if (bound instanceof PsiWildcardType) {
+      if (((PsiWildcardType)bound).isBounded()) {
+        final PsiType boundBound = ((PsiWildcardType)bound).isExtends()
+                                   ? ((PsiWildcardType)bound).getExtendsBound()
+                                   : ((PsiWildcardType)bound).getSuperBound();
+        return !TypeConversionUtil.isAssignable(boundBound, type, allowUncheckedConversion);
+      } else {
+        return true;
+      }
+    } else {
+      return !TypeConversionUtil.isAssignable(bound, type, allowUncheckedConversion);
+    }
+  }
+
+  private static boolean allowUncheckedConversions(PsiType type) {
+    boolean allowUncheckedConversions = true;
+    if (type instanceof PsiClassType) {
+      final PsiClass classType = ((PsiClassType)type).resolve();
+      if (classType != null) {
+        for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(classType)) {
+          allowUncheckedConversions &=  parameter.getExtendsListTypes().length == 0;
+        }
+      }
+    }
+    return allowUncheckedConversions;
   }
 
   private static String typeParameterListOwnerDescription(final PsiTypeParameterListOwner typeParameterListOwner) {

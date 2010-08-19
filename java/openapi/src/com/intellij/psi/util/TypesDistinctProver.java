@@ -15,7 +15,12 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.HashSet;
+
+import java.util.Set;
 
 /**
  * User: anna
@@ -41,7 +46,8 @@ public class TypesDistinctProver {
 
         if (((PsiWildcardType)type1).isExtends()) {
           final PsiType extendsBound = ((PsiWildcardType)type1).getExtendsBound();
-          if (extendsBound.getArrayDimensions() > 0) return true;
+          if (extendsBound instanceof PsiArrayType &&
+              proveArrayTypeDistinct(((PsiWildcardType)type1).getManager().getProject(), (PsiArrayType)extendsBound, type2)) return true;
           final PsiClass boundClass1 = PsiUtil.resolveClassInType(TypeConversionUtil.erasure(extendsBound));
           if (boundClass1 == null) return false;
           return proveExtendsBoundsDistinct(type1, type2, boundClass1, psiClass2);
@@ -49,7 +55,8 @@ public class TypesDistinctProver {
 
         if (((PsiWildcardType)type1).isSuper()) {
           final PsiType superBound = ((PsiWildcardType)type1).getSuperBound();
-          if (superBound.getArrayDimensions() > 0) return true;
+          if (superBound instanceof PsiArrayType &&
+              proveArrayTypeDistinct(((PsiWildcardType)type1).getManager().getProject(), (PsiArrayType)superBound, type2)) return true;
           final PsiClass boundClass1 = PsiUtil.resolveClassInType(TypeConversionUtil.erasure(superBound));
           if (boundClass1 == null || boundClass1 instanceof PsiTypeParameter) return false;
           return !InheritanceUtil.isInheritorOrSelf(boundClass1, psiClass2, true);
@@ -57,6 +64,10 @@ public class TypesDistinctProver {
 
         final PsiType bound = ((PsiWildcardType)type1).getBound();
         return bound != null && !bound.equals(psiClass2);
+      }
+      
+      if (type2 instanceof PsiArrayType) {
+        return proveArrayTypeDistinct(((PsiWildcardType)type1).getManager().getProject(), (PsiArrayType)type2, type1);
       }
     }
     if (type1 instanceof PsiCapturedWildcardType) return provablyDistinct(((PsiCapturedWildcardType)type1).getWildcard(), type2);
@@ -90,7 +101,8 @@ public class TypesDistinctProver {
     if (type1.isExtends() && type2.isExtends()) {
       final PsiType extendsBound1 = type1.getExtendsBound();
       final PsiType extendsBound2 = type2.getExtendsBound();
-      if (extendsBound1.getArrayDimensions() != extendsBound2.getArrayDimensions()) return true;
+      if (extendsBound1 instanceof PsiArrayType && proveArrayTypeDistinct(type1.getManager().getProject(), (PsiArrayType)extendsBound1, extendsBound2) ||
+          extendsBound2 instanceof PsiArrayType && proveArrayTypeDistinct(type1.getManager().getProject(), (PsiArrayType)extendsBound2, extendsBound1)) return true;
 
       final PsiClass boundClass1 = PsiUtil.resolveClassInType(extendsBound1);
       final PsiClass boundClass2 = PsiUtil.resolveClassInType(extendsBound2);
@@ -103,7 +115,8 @@ public class TypesDistinctProver {
     if (type1.isExtends() && type2.isSuper()) {
       final PsiType extendsBound = type1.getExtendsBound();
       final PsiType superBound = type2.getSuperBound();
-      if (extendsBound.getArrayDimensions() != superBound.getArrayDimensions()) return true;
+      if (extendsBound instanceof PsiArrayType && proveArrayTypeDistinct(type1.getManager().getProject(), (PsiArrayType)extendsBound, superBound) ||
+          superBound instanceof PsiArrayType && proveArrayTypeDistinct(type1.getManager().getProject(), (PsiArrayType)superBound, extendsBound)) return true;
 
       final PsiClass extendsBoundClass = PsiUtil.resolveClassInType(extendsBound);
       final PsiClass superBoundClass = PsiUtil.resolveClassInType(superBound);
@@ -146,5 +159,37 @@ public class TypesDistinctProver {
     final PsiClassType[] types = typeParameter.getExtendsListTypes();
     if (types.length == 0) return false;
     return provablyDistinct(PsiWildcardType.createExtends(typeParameter.getManager(), types[0]), type);
+  }
+
+  public static boolean proveArrayTypeDistinct(Project project,
+                                               PsiArrayType type,
+                                               PsiType bound) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
+    final Set<PsiClass> possibleClasses = new HashSet<PsiClass>();
+    possibleClasses.add(facade.findClass(CommonClassNames.JAVA_IO_SERIALIZABLE, searchScope));
+    possibleClasses.add(facade.findClass(CommonClassNames.JAVA_LANG_CLONEABLE, searchScope));
+    possibleClasses.add(facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, searchScope));
+
+    if (type.getArrayDimensions() == bound.getArrayDimensions()) {
+      final PsiType componentType = type.getComponentType();
+      final PsiType boundComponentType = ((PsiArrayType)bound).getComponentType();
+      if (boundComponentType instanceof PsiClassType && componentType instanceof PsiClassType) {
+        return proveExtendsBoundsDistinct(boundComponentType, componentType, ((PsiClassType)boundComponentType).resolve(), ((PsiClassType)componentType).resolve());
+      }
+      else {
+        return !bound.equals(type);
+      }
+    }
+    else if (bound.getArrayDimensions() + 1 == type.getArrayDimensions() && bound.getDeepComponentType() instanceof PsiClassType) {
+      return !possibleClasses.contains(((PsiClassType)bound.getDeepComponentType()).resolve());
+    }
+    else if (bound.getArrayDimensions() == type.getArrayDimensions() + 1 && type.getDeepComponentType() instanceof PsiClassType) {
+      return !possibleClasses.contains(((PsiClassType)type.getDeepComponentType()).resolve());
+    }
+    else if (bound instanceof PsiClassType) {
+      return !possibleClasses.contains(((PsiClassType)bound).resolve());
+    }
+    return true;
   }
 }
