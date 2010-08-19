@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -116,17 +117,12 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           break;
 
         default:
-          if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
-            effectiveTargetName = declaredTargetName;
-          }
-          else {
-            duplicateTargetFound(myTargetsResolveMap.get(declaredTargetName), target, declaredTargetName);
-          }
+          effectiveTargetName = declaredTargetName;
           break;
       }
       if (effectiveTargetName != null) {
         final AntDomTarget existingTarget = myTargetsResolveMap.get(effectiveTargetName);
-        if (existingTarget != null) {
+        if (existingTarget != null && Comparing.equal(existingTarget.getAntProject(), target.getAntProject())) {
           duplicateTargetFound(existingTarget, target, effectiveTargetName);
         }
         else {

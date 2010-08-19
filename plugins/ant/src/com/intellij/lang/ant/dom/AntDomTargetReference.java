@@ -71,11 +71,22 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
           final TargetResolver.Result result = doResolve(null);
           if (result != null) {
             final Map<String, AntDomTarget> variants = result.getVariants();
+            String newName = null;
             for (Map.Entry<String, AntDomTarget> entry : variants.entrySet()) {
               if (pointingToTarget.equals(entry.getValue())) {
-                handleElementRename(entry.getKey());
-                break;
+                final String candidate = entry.getKey();
+                if (newName == null) {
+                  newName = candidate;
+                }
+                else {
+                  if (candidate.length() < newName.length()) {
+                    newName = candidate; // prefer shorter names
+                  }
+                }
               }
+            }
+            if (newName != null) {
+              handleElementRename(newName);
             }
           }
       }
