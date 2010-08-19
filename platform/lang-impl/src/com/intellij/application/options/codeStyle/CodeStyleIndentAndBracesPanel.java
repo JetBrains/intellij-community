@@ -452,10 +452,9 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     settings.ALIGN_MULTILINE_THROWS_LIST = myAlignThrowsList.isSelected();
     settings.ALIGN_GROUP_FIELDS_VARIABLES = myAlignSubsequentDeclarations.isSelected();
     settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = myAlignArrayInitializerExpression.isSelected();
-//    mySettings.LABEL_INDENT =
 
-    settings.FOR_BRACE_FORCE = getForceBracesValue(myForForceCombo);
     settings.IF_BRACE_FORCE = getForceBracesValue(myIfForceCombo);
+    settings.FOR_BRACE_FORCE = getForceBracesValue(myForForceCombo);
     settings.WHILE_BRACE_FORCE = getForceBracesValue(myWhileForceCombo);
     settings.DOWHILE_BRACE_FORCE = getForceBracesValue(myDoWhileForceCombo);
 

@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -29,7 +30,8 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -112,7 +114,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         MyTreeNode node = (MyTreeNode)value;
         myLabel.setText(node.getText());
         myLabel.setFont(
-          myLabel.getFont().deriveFont(node.getKey() instanceof IntSelectionOptionKey ? Font.BOLD : Font.PLAIN));
+          myLabel.getFont().deriveFont(node.getKey().groupName == null ? Font.BOLD : Font.PLAIN));
       }
       else {
         myLabel.setText(value.toString());
@@ -130,7 +132,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   private TreeTable myTreeTable;
   private final HashMap myKeyToFieldMap = new HashMap();
-  private final ArrayList myKeys = new ArrayList();
+  private final ArrayList<OptionKey> myKeys = new ArrayList<OptionKey>();
 
   private final JPanel myPanel = new JPanel();
 
@@ -182,30 +184,27 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   protected TreeTable createOptionsTree(CodeStyleSettings settings) {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
-    String groupName = "";
-    DefaultMutableTreeNode groupNode = null;
-    for (int i = 0; i < myKeys.size(); i++) {
-      if (myKeys.get(i) instanceof BooleanOptionKey) {
-        BooleanOptionKey key = (BooleanOptionKey)myKeys.get(i);
-        String newGroupName = key.groupName;
-        if (!newGroupName.equals(groupName) || groupNode == null) {
-          groupName = newGroupName;
-          groupNode = new DefaultMutableTreeNode(newGroupName);
-          rootNode.add(groupNode);
-        }
-        groupNode.add(new MyTreeNode(key, key.cbName, settings));
-      }
-      else if (myKeys.get(i) instanceof IntSelectionOptionKey) {
-        IntSelectionOptionKey key = (IntSelectionOptionKey)myKeys.get(i);
-        String newGroupName = key.groupName;
-        if (!newGroupName.equals(groupName) || groupNode == null) {
-          groupName = newGroupName;
-          groupNode = new MyTreeNode(key, key.groupName, settings);
-          rootNode.add(groupNode);
+
+    String currentGroupName = "";
+    DefaultMutableTreeNode currentGroupNode = null;
+
+    for (OptionKey each : myKeys) {
+      String group = each.groupName;
+
+      MyTreeNode newNode = new MyTreeNode(each, each.title, settings);
+      if (currentGroupNode == null || !Comparing.equal(group, currentGroupName)) {
+        if (group == null) {
+          currentGroupName = each.title;
+          currentGroupNode = newNode;
         }
         else {
-          LOG.assertTrue(false);
+          currentGroupName = group;
+          currentGroupNode = new DefaultMutableTreeNode(group);
+          currentGroupNode.add(newNode);
         }
+        rootNode.add(currentGroupNode);
+      } else {
+        currentGroupNode.add(newNode);
       }
     }
 
@@ -320,11 +319,15 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     return false;
   }
 
-  protected void initBooleanField(@NonNls String fieldName, String cbName, String groupName) {
+  protected void initBooleanGroup(@NotNull String fieldName, @NotNull String title) {
+    initBooleanField(fieldName, title, null);
+  }
+
+  protected void initBooleanField(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
     try {
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
-      BooleanOptionKey key = new BooleanOptionKey(groupName, cbName);
+      BooleanOptionKey key = new BooleanOptionKey(title, groupName);
       myKeyToFieldMap.put(key, field);
       myKeys.add(key);
     }
@@ -334,11 +337,16 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
   }
 
-  protected void initRadioGroupField(@NonNls String fieldName, String groupName, String[] rbNames, int[] values) {
+  protected void initSelectionGroup(@NotNull String fieldName, @NotNull String title, @NotNull String[] options, @NotNull int[] values) {
+    initSelectionField(fieldName, title, null, options, values);
+  }
+
+  protected void initSelectionField(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
+                                     @NotNull String[] options, @NotNull int[] values) {
     try {
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
-      IntSelectionOptionKey key = new IntSelectionOptionKey(groupName, rbNames, values);
+      SelectionOptionKey key = new SelectionOptionKey(title, groupName, options, values);
       myKeyToFieldMap.put(key, field);
       myKeys.add(key);
     }
@@ -352,51 +360,69 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     //
   }
 
-  private static class BooleanOptionKey {
-    final String groupName;
-    final String cbName;
+  private static abstract class OptionKey {
+    @NotNull final String title;
+    @Nullable final String groupName;
 
-    public BooleanOptionKey(String groupName, String cbName) {
+    public OptionKey(@NotNull String title, @Nullable String groupName) {
+      this.title = title;
       this.groupName = groupName;
-      this.cbName = cbName;
     }
 
-    public boolean equals(Object obj) {
-      if (!(obj instanceof BooleanOptionKey)) return false;
-      BooleanOptionKey key = (BooleanOptionKey)obj;
-      return groupName.equals(key.groupName) && cbName.equals(key.cbName);
-    }
-
-    public int hashCode() {
-      return cbName.hashCode();
-    }
-  }
-
-  private static class IntSelectionOptionKey {
-    final String groupName;
-    final String[] rbNames;
-    final int[] values;
-
-    public IntSelectionOptionKey(String groupName, String[] rbNames, int[] values) {
-      this.groupName = groupName;
-      this.rbNames = rbNames;
-      this.values = values;
-    }
-
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof IntSelectionOptionKey)) return false;
+      if (o == null || getClass() != o.getClass()) return false;
 
-      final IntSelectionOptionKey intSelectionOptionKey = (IntSelectionOptionKey)o;
+      OptionKey that = (OptionKey)o;
 
-      if (!groupName.equals(intSelectionOptionKey.groupName)) return false;
-      if (!Arrays.equals(rbNames, intSelectionOptionKey.rbNames)) return false;
+      if (groupName != null ? !groupName.equals(that.groupName) : that.groupName != null) return false;
+      if (!title.equals(that.title)) return false;
 
       return true;
     }
 
+    @Override
     public int hashCode() {
-      return groupName.hashCode() + rbNames[0].hashCode() * 29;
+      int result = title.hashCode();
+      result = 31 * result + (groupName != null ? groupName.hashCode() : 0);
+      return result;
+    }
+  }
+
+  private static class BooleanOptionKey extends OptionKey {
+    private BooleanOptionKey(@NotNull String title, @Nullable String groupName) {
+      super(title, groupName);
+    }
+  }
+
+  private static class SelectionOptionKey extends OptionKey {
+    @NotNull final String[] options;
+    @NotNull final int[] values;
+
+    public SelectionOptionKey(@NotNull String title, @Nullable String groupName, @NotNull String[] options, @NotNull int[] values) {
+      super(title, groupName);
+      this.options = options;
+      this.values = values;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (!super.equals(o)) return false;
+
+      SelectionOptionKey that = (SelectionOptionKey)o;
+      if (!Arrays.equals(options, that.options)) return false;
+      if (!Arrays.equals(values, that.values)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + Arrays.hashCode(options);
+      result = 31 * result + Arrays.hashCode(values);
+      return result;
     }
   }
 
@@ -406,13 +432,13 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         Field field = (Field)myKeyToFieldMap.get(key);
         return field.getBoolean(settings) ? Boolean.TRUE : Boolean.FALSE;
       }
-      else if (key instanceof IntSelectionOptionKey) {
+      else if (key instanceof SelectionOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
-        IntSelectionOptionKey intKey = (IntSelectionOptionKey)key;
+        SelectionOptionKey intKey = (SelectionOptionKey)key;
         int[] values = intKey.values;
         int value = field.getInt(settings);
         for (int i = 0; i < values.length; i++) {
-          if (values[i] == value) return intKey.rbNames[i];
+          if (values[i] == value) return intKey.options[i];
         }
       }
     }
@@ -428,12 +454,12 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         Field field = (Field)myKeyToFieldMap.get(key);
         field.setBoolean(settings, ((Boolean)value).booleanValue());
       }
-      else if (key instanceof IntSelectionOptionKey) {
+      else if (key instanceof SelectionOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
-        IntSelectionOptionKey intKey = (IntSelectionOptionKey)key;
+        SelectionOptionKey intKey = (SelectionOptionKey)key;
         int[] values = intKey.values;
         for (int i = 0; i < values.length; i++) {
-          if (intKey.rbNames[i].equals(value)) {
+          if (intKey.options[i].equals(value)) {
             field.setInt(settings, values[i]);
             return;
           }
@@ -445,21 +471,27 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   }
 
   private class MyTreeNode extends DefaultMutableTreeNode {
-    private final Object myKey;
+    private final OptionKey myKey;
     private final String myText;
     private Object myValue;
 
-    public MyTreeNode(Object key, String text, CodeStyleSettings settings) {
+    public MyTreeNode(OptionKey key, String text, CodeStyleSettings settings) {
       myKey = key;
       myText = text;
       myValue = getSettingsValue(key, settings);
     }
 
-    public Object getKey() { return myKey; }
+    public OptionKey getKey() {
+      return myKey;
+    }
 
-    public String getText() { return myText; }
+    public String getText() {
+      return myText;
+    }
 
-    public Object getValue() { return myValue; }
+    public Object getValue() {
+      return myValue;
+    }
 
     public void setValue(Object value) {
       myValue = value;
@@ -559,8 +591,8 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         else {
           myCurrentEditor = myComboBox;
           myComboBox.removeAllItems();
-          IntSelectionOptionKey key = (IntSelectionOptionKey)node.getKey();
-          String[] values = key.rbNames;
+          SelectionOptionKey key = (SelectionOptionKey)node.getKey();
+          String[] values = key.options;
           for (int i = 0; i < values.length; i++) {
             myComboBox.addItem(values[i]);
           }

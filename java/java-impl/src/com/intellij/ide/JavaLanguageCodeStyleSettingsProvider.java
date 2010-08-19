@@ -220,8 +220,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                      " */\n" +
                                                      "\n" +
                                                      "public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {\n" +
-                                                     "  private int f1;\n" +
-                                                     "  private int f2;\n" +
+                                                     "  private int f1 = 1;\n" +
+                                                     "  private String field2 = \"\";\n" +
                                                      "  public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}\n" +
                                                      "  public static void longerMethod() throws Exception1, Exception2, Exception3 {\n" +
                                                      "    int[] a = new int[] {1, 2, 0x0052, 0x0053, 0x0054};\n" +
@@ -231,10 +231,12 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                      "    s1 = s2 = s3 = \"012345678901456\";\n" +
                                                      "    assert i + j + k + l + n+ m <= 2 : \"assert description\";" +
                                                      "    int y = 2 > 3 ? 7 + 8 + 9 : 11 + 12 + 13;\n" +
+                                                     "    super.getFoo().foo().getBar().bar();\n" +
                                                      "    label: " +
-                                                     "    for (int i = 0; i < 0xFFFFFF; i += 2) {\n" +
-                                                     "       super.getFoo().foo().getBar().bar();\n" +
-                                                     "    }\n" +
+                                                     "    if (2 < 3) return;\n" +
+                                                     "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i);\n" +
+                                                     "    while (x < 50000) x++;\n" +
+                                                     "    do x++ while (x < 10000);\n" +
                                                      "  }\n" +
                                                      "}\n" +
                                                      "\n" +
