@@ -22,11 +22,13 @@
  */
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -45,7 +47,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
   private boolean myDisposed;
   private DumbModeAction myDumbModeAction = DumbModeAction.NOTHING;
-  private ProjectManagerListener myListener;
 
   public BackgroundableProcessIndicator(Task.Backgroundable task) {
     this(task.getProject(), task, task);
@@ -67,21 +68,27 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   public BackgroundableProcessIndicator(@Nullable final Project project, TaskInfo info, @NotNull PerformInBackgroundOption option) {
     super(info.isCancellable(), true, project, info.getCancelText());
     if (project != null) {
-      myListener = new ProjectManagerAdapter() {
+      final ProjectManagerAdapter myListener = new ProjectManagerAdapter() {
         public void projectClosing(Project closingProject) {
-          if (project == closingProject && isRunning()) {
+          if (isRunning()) {
             cancel();
           }
         }
       };
-      ProjectManager.getInstance().addProjectManagerListener(myListener);
+      ProjectManager.getInstance().addProjectManagerListener(project, myListener);
+      Disposer.register(this, new Disposable() {
+        @Override
+        public void dispose() {
+          ProjectManager.getInstance().removeProjectManagerListener(myListener);
+        }
+      });
     }
     setOwnerTask(info);
     setProcessId(info.getProcessId());
     myOption = option;
     myInfo = info;
     setTitle(info.getTitle());
-    final Project nonDefaultProject = (project == null || project.isDisposed()) ? null : ((project.isDefault()) ? null : project);
+    final Project nonDefaultProject = project == null || project.isDisposed() ? null : project.isDefault() ? null : project;
     final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(nonDefaultProject);
     myStatusBar = (StatusBarEx)frame.getStatusBar();
     if (option.shouldStartInBackground()) {
@@ -145,10 +152,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
   public void dispose() {
     super.dispose();
-    if (myListener != null) {
-      ProjectManager.getInstance().removeProjectManagerListener(myListener);
-      myListener = null;
-    }
     myDisposed = true;
     myInfo = null;
     myStatusBar = null;
