@@ -152,7 +152,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     Document document = myEditor.getDocument();
     int start = document.getLineStartOffset(documentLine);
     int end = document.getLineEndOffset(documentLine);
-    return getSoftWrapsForRange(start, end);
+    return getSoftWrapsForRange(start, end + 1/* it's theoretically possible that soft wrap is registered just before the line feed,
+                                               * hence, we add '1' here assuming that end line offset points to line feed symbol */
+    );
   }
 
   /**
@@ -306,9 +308,36 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     }
   }
 
+  /**
+   * Allows to answer if given visual position points to soft wrap-introduced virtual space.
+   *
+   * @param visual    target visual position to check
+   * @return          <code>true</code> if given visual position points to soft wrap-introduced virtual space;
+   *                  <code>false</code> otherwise
+   */
   @Override
   public boolean isInsideSoftWrap(@NotNull VisualPosition visual) {
+    return isInsideSoftWrap(visual, false);
+  }
+
+  /**
+   * Allows to answer if given visual position points to soft wrap-introduced virtual space or points just before soft wrap.
+   *
+   * @param visual    target visual position to check
+   * @return          <code>true</code> if given visual position points to soft wrap-introduced virtual space;
+   *                  <code>false</code> otherwise
+   */
+  @Override
+  public boolean isInsideOrBeforeSoftWrap(@NotNull VisualPosition visual) {
+    return isInsideSoftWrap(visual, true);
+  }
+
+  private boolean isInsideSoftWrap(@NotNull VisualPosition visual, boolean countBeforeSoftWrap) {
     if (!isSoftWrappingEnabled()) {
+      return false;
+    }
+    SoftWrapModel model = myEditor.getSoftWrapModel();
+    if (!model.isSoftWrappingEnabled()) {
       return false;
     }
     LogicalPosition logical = myEditor.visualToLogicalPosition(visual);
@@ -318,31 +347,34 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
       return false;
     }
 
-    TextChange softWrap = getSoftWrap(offset);
+    TextChange softWrap = model.getSoftWrap(offset);
     if (softWrap == null) {
       return false;
     }
 
-    // We consider visual position that points after the last symbol before soft wrap belong to soft wrap-introduced virtual space
-    // and visual position that points to the first document symbol after soft wrap not belong to soft wrap-introduced virtual space.
+    // We consider visual positions that point after the last symbol before soft wrap and the first symbol after soft wrap to not
+    // belong to soft wrap-introduced virtual space.
     VisualPosition visualAfterSoftWrap = myEditor.offsetToVisualPosition(offset);
     if (visualAfterSoftWrap.line == visual.line && visualAfterSoftWrap.column <= visual.column) {
       return false;
     }
 
     VisualPosition visualBeforeSoftWrap = myEditor.offsetToVisualPosition(offset - 1);
-    int columnOffset = 0;
+    int x = 0;
     LogicalPosition logLineStart = myEditor.visualToLogicalPosition(new VisualPosition(visualBeforeSoftWrap.line, 0));
     if (logLineStart.softWrapLinesOnCurrentLogicalLine > 0) {
       int offsetLineStart = myEditor.logicalPositionToOffset(logLineStart);
-      softWrap = getSoftWrap(offsetLineStart);
+      softWrap = model.getSoftWrap(offsetLineStart);
       if (softWrap != null) {
-        columnOffset = getSoftWrapIndentWidthInColumns(softWrap);
+        x = model.getSoftWrapIndentWidthInColumns(softWrap) * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
       }
     }
-    int width = EditorUtil.textWidthInColumns(myEditor, myEditor.getDocument().getCharsSequence(), offset - 1, offset, columnOffset);
+    int width = EditorUtil.textWidthInColumns(myEditor, myEditor.getDocument().getCharsSequence(), offset - 1, offset, x);
     int softWrapStartColumn = visualBeforeSoftWrap.column  + width;
-    return visual.line > visualBeforeSoftWrap.line || visual.column >= softWrapStartColumn;
+    if (visual.line > visualBeforeSoftWrap.line) {
+      return true;
+    }
+    return countBeforeSoftWrap ? visual.column >= softWrapStartColumn : visual.column > softWrapStartColumn;
   }
 
   @Override

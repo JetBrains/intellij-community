@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -453,7 +454,7 @@ public class DaemonListeners implements Disposable {
         // There is a possible case that cursor is located at soft wrap-introduced virtual space (that is mapped to offset
         // of the document symbol just after soft wrap). We don't want to show any tooltips for it then.
         VisualPosition visual = editor.xyToVisualPosition(e.getMouseEvent().getPoint());
-        if (editor.getSoftWrapModel().isInsideSoftWrap(visual)) {
+        if (editor.getSoftWrapModel().isInsideOrBeforeSoftWrap(visual)) {
           return;
         }
         LogicalPosition logical = editor.visualToLogicalPosition(visual);

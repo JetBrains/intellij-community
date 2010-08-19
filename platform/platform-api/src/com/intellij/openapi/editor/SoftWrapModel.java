@@ -91,7 +91,7 @@ public interface SoftWrapModel {
    * Allows to ask current model about all soft wraps registered for the given document offsets range.
    *
    * @param start   start document offset range to use (inclusive)
-   * @param end     end document offset range to use (exclusive)
+   * @param end     end document offset range to use (inclusive)
    * @return        all soft wraps registered for the target document offsets range
    */
   @NotNull
@@ -132,6 +132,15 @@ public interface SoftWrapModel {
    *                    <code>false</code> otherwise
    */
   boolean isInsideSoftWrap(@NotNull VisualPosition position);
+
+  /**
+   * Allows to answer if given visual position points to soft wrap-introduced virtual space or points just before soft wrap.
+   *
+   * @param visual    target visual position to check
+   * @return          <code>true</code> if given visual position points to soft wrap-introduced virtual space;
+   *                  <code>false</code> otherwise
+   */
+  boolean isInsideOrBeforeSoftWrap(@NotNull VisualPosition visual);
 
   /**
    * Asks current model to calculate indent width of the given soft wrap in pixels.

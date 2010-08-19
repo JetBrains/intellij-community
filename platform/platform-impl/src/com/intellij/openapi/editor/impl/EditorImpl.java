@@ -849,6 +849,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int x = 0;
     int charWidth;
+    boolean onSoftWrapDrawing = false;
     outer:
     while (true) {
       charWidth = -1;
@@ -887,6 +888,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             charWidth = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
             x += charWidth;
             if (x >= px) {
+              onSoftWrapDrawing = true;
               break outer;
             }
             column++;
@@ -922,6 +924,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           charWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
           x += charWidth;
           if (x >= px) {
+            onSoftWrapDrawing = true;
             break outer;
           }
           column++;
@@ -948,7 +951,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       charWidth = EditorUtil.charWidth(c, fontType, this);
     }
 
-    if (x >= px && c == '\t') {
+    if (x >= px && c == '\t' && !onSoftWrapDrawing) {
       if (mySettings.isCaretInsideTabs()) {
         column += (px - prevX) / spaceSize;
         if ((px - prevX) % spaceSize > spaceSize / 2) column++;
