@@ -568,20 +568,13 @@ public class PythonSdkType extends SdkType {
         int cutpos = line.indexOf(' ');
         if (cutpos < 0) throw new InvalidSdkException("Bad output");
         String modname = line.substring(0, cutpos);
-        String mod_fname = modname.replace(".", File.separator); // "a.b.c" -> "a/b/c", no ext
-        String fname = line.substring(cutpos + 1);
         //String ext = fname.substring(fname.lastIndexOf('.')); // no way ext is absent
-        // check if it's fresh
-        File f_orig = new File(fname);
-        File f_skel = new File(stubsRoot + File.separator + mod_fname + ".py");
-        if (f_orig.lastModified() >= f_skel.lastModified()) {
-          // stale skeleton, rebuild
-          if (indicator != null) {
-            indicator.setText2(modname);
-          }
-          LOG.info("Skeleton for " + modname);
-          generateSkeleton(binaryPath, stubsRoot, modname, Collections.<String>emptyList());
+        // stale skeleton, rebuild
+        if (indicator != null) {
+          indicator.setText2(modname);
         }
+        LOG.info("Skeleton for " + modname);
+        generateSkeleton(binaryPath, stubsRoot, modname, Collections.<String>emptyList());
       }
     }
     catch (InvalidSdkException e) {
