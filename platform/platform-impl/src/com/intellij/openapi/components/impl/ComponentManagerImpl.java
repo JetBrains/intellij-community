@@ -117,6 +117,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       final Class[] componentInterfaces = myComponentsRegistry.getComponentInterfaces();
       for (Class componentInterface : componentInterfaces) {
+        if (myHaveProgressManager) {
+          ProgressManager.checkCanceled();
+        }
         try {
           createComponent(componentInterface);
         }
@@ -304,6 +307,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     Class[] componentClasses = myComponentsRegistry.getComponentInterfaces();
     ArrayList<Object> components = new ArrayList<Object>(componentClasses.length);
     for (Class<?> interfaceClass : componentClasses) {
+      if (myHaveProgressManager) {
+        ProgressManager.checkCanceled();
+      }
       Object component = getComponent(interfaceClass);
       if (component != null) components.add(component);
     }
