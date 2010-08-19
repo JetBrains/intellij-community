@@ -47,7 +47,7 @@ class ChangedConstantsDependencyProcessor {
   private final boolean mySkipExpressionResolve;
   private final FieldChangeInfo[] myChangedFields;
   private final FieldChangeInfo[] myRemovedFields;
-  private static final long ANALYSIS_DURATION_THRESHOLD_MILLIS = 15000L /*15 sec*/;
+  private static final long ANALYSIS_DURATION_THRESHOLD_MILLIS = 60000L /*1 minute*/;
 
 
   public ChangedConstantsDependencyProcessor(Project project,
