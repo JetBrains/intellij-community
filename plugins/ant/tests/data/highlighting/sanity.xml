@@ -114,7 +114,7 @@
   <target <error>aaa</error>="bbb" />
 
    <!-- Duplicate target should be detected -->
-  <error><target name="DuplicateTarget"/></error>
-  <error><target name="DuplicateTarget"/></error>
+  <target name="<error>DuplicateTarget</error>"/>
+  <target name="<error>DuplicateTarget</error>"/>
  
 </project>

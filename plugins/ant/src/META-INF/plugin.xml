@@ -32,14 +32,12 @@
     <declarationRangeHandler key="com.intellij.lang.ant.psi.AntStructuredElement"
                              implementationClass="com.intellij.lang.ant.AntDeclarationRangeHandler"/>
     <refactoring.elementListenerProvider implementation="com.intellij.lang.ant.refactoring.AntTargetRenameListenerProvider"/>
-    <annotator language="XML" implementationClass="com.intellij.lang.ant.validation.AntAnnotator"/>
     <inspectionToolProvider implementation="com.intellij.lang.ant.AntInspectionToolProvider"/>
 
     <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntDomFileDescription"/>
     <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription"/>
     <dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>
     <pom.declarationSearcher implementation="com.intellij.lang.ant.dom.AntDomIdDeclarationSearcher"/>
-    <!--<inspectionToolProvider implementation="com.intellij.lang.ant.dom.AntDomModelInspection"/>-->
     
     <!--Type Presentation-->
     <typeName className="com.intellij.lang.ant.dom.AntDomMacroDef" name="macro definition"/>

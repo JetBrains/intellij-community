@@ -15,27 +15,16 @@
  */
 package com.intellij.lang.ant.validation;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.dom.AntDomElement;
-import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.dom.AntDomProperty;
-import com.intellij.lang.ant.dom.AntDomRecursiveVisitor;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AntMissingPropertiesFileInspection extends AntInspection {
 
@@ -53,42 +42,18 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
     return SHORT_NAME;
   }
 
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final AntDomProject project = AntSupport.getAntDomProject(file);
-    if (project != null) {
-      final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-      checkElement(project, manager, problems, isOnTheFly);
-      final int problemCount = problems.size();
-      if (problemCount > 0) {
-        return problems.toArray(new ProblemDescriptor[problemCount]);
-      }
-    }
-    return null;
-  }
-
-  private static void checkElement(final AntDomElement tag, @NotNull final InspectionManager manager, final List<ProblemDescriptor> problems, final boolean isOnTheFly) {
-    tag.accept(new AntDomRecursiveVisitor() {
-
-      public void visitProperty(AntDomProperty property) {
-        final String fileName = property.getFile().getStringValue();
-        if (fileName != null) {
-          final PsiFileSystemItem file = property.getFile().getValue();
-          if (!(file instanceof PropertiesFile)) {
-            final PsiElement psiElement = property.getFile().getXmlElement();
-            if (psiElement != null)  {
-              problems.add(manager.createProblemDescriptor(
-                psiElement, 
-                AntBundle.message("file.doesnt.exist", fileName), 
-                isOnTheFly, 
-                LocalQuickFix.EMPTY_ARRAY,
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-              );
-            }
-          }
+  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+    if (element instanceof AntDomProperty) {
+      final AntDomProperty property = (AntDomProperty)element;
+      final String fileName = property.getFile().getStringValue();
+      if (fileName != null) {
+        final PsiFileSystemItem file = property.getFile().getValue();
+        if (!(file instanceof PropertiesFile)) {
+          holder.createProblem(property.getFile(), AntBundle.message("file.doesnt.exist", fileName));
         }
       }
-    });
+    }
   }
+
 }
 
