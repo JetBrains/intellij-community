@@ -680,7 +680,7 @@ public class TypeConversionUtil {
              IS_ASSIGNABLE_BIT_SET[rightTypeIndex][leftTypeIndex];
     }
     if (!(right instanceof PsiClassType)) {
-      LOG.error(right);
+      return false; // must be TypeCook's PsiTypeVariable
     }
     if (left instanceof PsiPrimitiveType) {
       return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right);
