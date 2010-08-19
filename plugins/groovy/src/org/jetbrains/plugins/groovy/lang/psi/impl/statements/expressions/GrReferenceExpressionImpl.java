@@ -83,8 +83,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
-                                           ? EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE)
-                                           : EnumSet.of(ClassHint.ResolveKind.CLASS);
+                                           ? ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE
+                                           : ResolverProcessor.RESOLVE_KINDS_CLASS;
     boolean hasAt = hasAt();
     GroovyResolveResult[] classCandidates = GroovyResolveResult.EMPTY_ARRAY;
     if (!hasAt) {
