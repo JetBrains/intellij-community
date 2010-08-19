@@ -107,8 +107,12 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
 
-    if (element.getParent() instanceof PsiMethod && ((PsiMethod)element.getParent()).getNameIdentifier()==element) {
-      return element.getParent();
+    final PsiElement elementParent = element.getParent();
+    if (elementParent instanceof PsiMethod && ((PsiMethod)elementParent).getNameIdentifier()==element) {
+      return elementParent;
+    }
+    if (elementParent instanceof PsiClass && ((PsiClass)elementParent).getNameIdentifier()==element) {
+      return elementParent;
     }
 
     final PsiCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
