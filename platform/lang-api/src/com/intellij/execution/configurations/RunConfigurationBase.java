@@ -101,7 +101,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return runConfiguration;
   }
 
-  public @Nullable LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+  @Nullable
+  public LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
     return null;
   }
 

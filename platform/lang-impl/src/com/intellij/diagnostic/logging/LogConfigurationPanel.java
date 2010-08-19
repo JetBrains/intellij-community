@@ -51,9 +51,9 @@ import java.util.Map;
  * User: anna
  * Date: Apr 22, 2005
  */
-public class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<RunConfigurationBase> {
-  private final TableView myFilesTable;
-  private final ListTableModel myModel;
+public class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<T> {
+  private final TableView<LogFileOptions> myFilesTable;
+  private final ListTableModel<LogFileOptions> myModel;
   private JPanel myWholePanel;
   private JButton myAddButton;
   private JButton myRemoveButton;
@@ -63,11 +63,11 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
   private final ColumnInfo<LogFileOptions, Boolean> IS_SHOW = new MyIsActiveColumnInfo();
   private final ColumnInfo<LogFileOptions, LogFileOptions> FILE = new MyLogFileColumnInfo();
-  private final ColumnInfo<LogFileOptions, Boolean> IS_SKIP_CONTENT = new MyIsSkippColumnInfo();
+  private final ColumnInfo<LogFileOptions, Boolean> IS_SKIP_CONTENT = new MyIsSkipColumnInfo();
 
   public LogConfigurationPanel() {
-    myModel = new ListTableModel<LogFileOptions>(new ColumnInfo[]{IS_SHOW, FILE, IS_SKIP_CONTENT});
-    myFilesTable = new TableView(myModel);
+    myModel = new ListTableModel<LogFileOptions>(IS_SHOW, FILE, IS_SKIP_CONTENT);
+    myFilesTable = new TableView<LogFileOptions>(myModel);
     final JTableHeader tableHeader = myFilesTable.getTableHeader();
     final FontMetrics fontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
 
@@ -149,7 +149,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
         final LogFileOptions options = configurationBase.getOptionsForPredefinedLogFile(predefined);
         if (LogFileOptions.areEqual(item, options)) {
           newItems.add(item);
-        }
+  }
         else {
           changed = true;
           myLog2Predefined.remove(item);
@@ -184,7 +184,6 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   }
 
   protected void resetEditorFrom(final RunConfigurationBase configuration) {
-    clearModel();
     ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>();
     final ArrayList<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
@@ -213,30 +212,23 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     configuration.removeAllPredefinedLogFiles();
 
     for (int i = 0; i < myModel.getRowCount(); i++) {
-      LogFileOptions pair = (LogFileOptions)myModel.getValueAt(i, 1);
-      if (Comparing.equal(pair.getPathPattern(),"")){
-        continue;
-      }
+      LogFileOptions options = (LogFileOptions)myModel.getValueAt(i, 1);
+      if (Comparing.equal(options.getPathPattern(),"")){
+          continue;
+        }
       final Boolean checked = (Boolean)myModel.getValueAt(i, 0);
       final Boolean skipped = (Boolean)myModel.getValueAt(i, 2);
-      final PredefinedLogFile predefined = myLog2Predefined.get(pair);
-      if (predefined != null && !isPredefinedChanged(configuration, predefined, pair)) {
-        configuration.addPredefinedLogFile(new PredefinedLogFile(predefined.getId(), pair.isEnabled()));
+      final PredefinedLogFile predefined = myLog2Predefined.get(options);
+      if (predefined != null) {
+        configuration.addPredefinedLogFile(new PredefinedLogFile(predefined.getId(), options.isEnabled()));
       }
       else {
-        configuration.addLogFile(pair.getPathPattern(), pair.getName(), checked.booleanValue(), skipped.booleanValue(), pair.isShowAll());
+        configuration.addLogFile(options.getPathPattern(), options.getName(), checked.booleanValue(), skipped.booleanValue(), options.isShowAll());
       }
     }
     for (PredefinedLogFile logFile : myUnresolvedPredefined) {
       configuration.addPredefinedLogFile(logFile);
-    }
   }
-
-  private static boolean isPredefinedChanged(final RunConfigurationBase configuration, final PredefinedLogFile predefined, final LogFileOptions options) {
-    final LogFileOptions oldOptions = configuration.getOptionsForPredefinedLogFile(predefined);
-    return oldOptions == null || !oldOptions.getPathPattern().equals(options.getPathPattern()) ||
-           oldOptions.isSkipContent() != options.isSkipContent() || oldOptions.isShowAll() != options.isShowAll() ||
-           !oldOptions.getName().equals(options.getName());
   }
 
   @NotNull
@@ -245,26 +237,9 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   }
 
   protected void disposeEditor() {
-
   }
 
-  public JComponent getLoggerComponent() {
-    return getComponent();
-  }
-
-  public void addLogFile(String file, String alias, boolean isShowAll, boolean checked, boolean skipContent) {
-    final List<LogFileOptions> itemsUnmodifiable = myModel.getItems();
-    List<LogFileOptions> items = new ArrayList<LogFileOptions>();
-    items.addAll(itemsUnmodifiable);
-    items.add(new LogFileOptions(alias, file, checked, skipContent, isShowAll));
-    myModel.setItems(items);
-  }
-
-  private void clearModel() {
-    myModel.setItems(new ArrayList<LogFileOptions>());
-  }
-
- @Nullable
+  @Nullable
   private static LogFileOptions showEditorDialog(String name, String location, boolean showAll){
     EditLogPatternDialog dialog = new EditLogPatternDialog();
     dialog.init(name, location, showAll);
@@ -306,22 +281,22 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
     public TableCellEditor getEditor(final LogFileOptions item) {
       return new LogFileCellEditor(item);
-    }
+      }
 
     public void setValue(final LogFileOptions o, final LogFileOptions aValue) {
       if (aValue != null) {
         if (!o.getName().equals(aValue.getName()) || !o.getPathPattern().equals(aValue.getPathPattern())
           || o.isShowAll() != aValue.isShowAll()) {
           myLog2Predefined.remove(o);
-        }
+      }
         o.setName(aValue.getName());
         o.setLast(!aValue.isShowAll());
         o.setPathPattern(aValue.getPathPattern());
-      }
+    }
     }
 
     public boolean isCellEditable(final LogFileOptions o) {
-      return true;
+      return !myLog2Predefined.containsKey(o);
     }
   }
 
@@ -346,13 +321,13 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       final PredefinedLogFile predefinedLogFile = myLog2Predefined.get(element);
       if (predefinedLogFile != null) {
         predefinedLogFile.setEnabled(checked.booleanValue());
-      }
-      element.setEnable(checked.booleanValue());
     }
+      element.setEnable(checked.booleanValue());
+  }
   }
 
-  private class MyIsSkippColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
-    protected MyIsSkippColumnInfo() {
+  private class MyIsSkipColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
+    protected MyIsSkipColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.is.skipped.column"));
     }
 
@@ -365,18 +340,15 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     }
 
     public boolean isCellEditable(LogFileOptions element) {
-      return true;
+      return !myLog2Predefined.containsKey(element);
     }
 
     public void setValue(LogFileOptions element, Boolean skipped) {
-      if (element.isSkipContent() != skipped.booleanValue()) {
-        myLog2Predefined.remove(element);
-      }
       element.setSkipContent(skipped.booleanValue());
     }
   }
 
-  private class LogFileCellEditor extends AbstractTableCellEditor {
+  private static class LogFileCellEditor extends AbstractTableCellEditor {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
     private LogFileOptions myLogFileOptions;
 
@@ -389,7 +361,6 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
         public void actionPerformed(ActionEvent e) {
           final LogFileOptions newValue = showEditorDialog(myLogFileOptions.getName(), myLogFileOptions.getPathPattern(), myLogFileOptions.isShowAll());
           if (newValue != null) {
-            myLog2Predefined.remove(myLogFileOptions);
             myLogFileOptions = newValue;
           }
           JTextField textField = getChildComponent();
