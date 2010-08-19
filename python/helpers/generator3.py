@@ -30,6 +30,7 @@ import string
 import stat
 import types
 import atexit
+import keyword
 #import __builtin__
 
 try:
@@ -1166,8 +1167,13 @@ class ModuleRedeclarator(object):
             item = "" # must be declared in base types
           else:
             continue # in all other cases. must be skipped
+        elif keyword.iskeyword(item_name):    # for example, PyQt4 contains definitions of methods named 'exec'
+          continue
         else:
-          item =  p_class.__dict__[item_name]
+          try:
+            item = getattr(p_class, item_name) # let getters do the magic
+          except:
+            item = p_class.__dict__[item_name]   # have it raw
         if isCallable(item):
           methods[item_name] = item
         elif isProperty(item):
