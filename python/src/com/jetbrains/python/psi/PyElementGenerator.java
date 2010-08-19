@@ -21,6 +21,9 @@ public abstract class PyElementGenerator {
    */
   public abstract PyStringLiteralExpression createStringLiteralAlreadyEscaped(String str);
 
+
+
+
   /**
    * Creates a string literal, adding appropriate quotes, properly escaping characters inside.
    * @param destination where the literal is destined to; used to determine the encoding.
@@ -28,6 +31,7 @@ public abstract class PyElementGenerator {
    * @return            a newly created literal
    */
   public abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, String unescaped);
+  public abstract PyStringLiteralExpression createStringLiteralFromString(String unescaped);
 
   public abstract PyListLiteralExpression createListLiteral();
 

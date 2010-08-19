@@ -46,12 +46,13 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
   @NotNull
   public String getDescriptiveName(@NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
-      return ((PsiNamedElement)element).getName();
+      final String name = ((PsiNamedElement)element).getName();
+      return name == null ? "<unnamed>" : name;
     }
     if (element instanceof PyReferenceExpression) {
       String referencedName = ((PyReferenceExpression)element).getReferencedName();
       if (referencedName == null) {
-        return "";
+        return "<unnamed>";
       }
       return referencedName;
     }

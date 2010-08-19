@@ -3,6 +3,8 @@ package com.jetbrains.python;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
  * @author yole
@@ -50,6 +52,16 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
 
   public void testDictLiteral() {  // PY-1461
     doTest();    
+  }
+
+  public void testStarExpression() {  // PY-1523
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
+    try {
+      doTest();
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
 
   private void doTest() {

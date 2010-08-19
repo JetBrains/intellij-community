@@ -15,14 +15,12 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.toolbox.Maybe;
 
-import java.io.IOException;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/../testData/stubs/")
@@ -38,11 +36,10 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
   }
 
-  public void testStubStructure() throws Exception {
+  public void testStubStructure() {
     final PyFile file = getTestFile();
     // vfile is problematic, but we need an SDK to check builtins
     final Project project = file.getProject();
-    project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
 
     try {
       PythonLanguageLevelPusher.setForcedLanguageLevel(project, LanguageLevel.PYTHON26); // we need 2.6+ for @foo.setter
@@ -130,7 +127,7 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     }
   }
 
-  public void testLoadingDeeperTreeRemainsKnownPsiElement() throws Exception {
+  public void testLoadingDeeperTreeRemainsKnownPsiElement() {
     final PyFile file = getTestFile();
     final List<PyClass> classes = file.getTopLevelClasses();
     assertEquals(1, classes.size());
@@ -150,7 +147,7 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertSame(pyClass, children[0]);
   }
 
-  public void testLoadingTreeRetainsKnownPsiElement() throws Exception {
+  public void testLoadingTreeRetainsKnownPsiElement() {
     final PyFile file = getTestFile();
     final List<PyClass> classes = file.getTopLevelClasses();
     assertEquals(1, classes.size());
@@ -167,7 +164,7 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertSame(pyClass, children[0]);
   }
 
-  public void testRenamingUpdatesTheStub() throws Exception {
+  public void testRenamingUpdatesTheStub() {
     final PyFile file = getTestFile("LoadingTreeRetainsKnownPsiElement.py");
     final List<PyClass> classes = file.getTopLevelClasses();
     assertEquals(1, classes.size());
@@ -206,7 +203,7 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertEquals("RenamedClass", newclassstub.getName());
   }
 
-  public void testImportStatement() throws Exception {
+  public void testImportStatement() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
 
     final List<PyFromImportStatement> fromImports = file.getFromImports();
@@ -229,25 +226,25 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNotParsed(file);
   }
 
-  public void testDunderAll() throws Exception {
+  public void testDunderAll() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
     final List<String> all = file.getDunderAll();
     assertSameElements(all, "foo", "bar");
     assertNotParsed(file);
   }
 
-  public void testSlots() throws Exception {
+  public void testSlots() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
     final PyClass pyClass = file.getTopLevelClasses().get(0);
     assertSameElements(pyClass.getSlots(), "foo", "bar");
     assertNotParsed(file);
   }
 
-  private PyFile getTestFile() throws Exception {
+  private PyFile getTestFile() {
     return getTestFile(getTestName(false) + ".py");
   }
 
-  private PyFile getTestFile(final String fileName) throws IOException {
+  private PyFile getTestFile(final String fileName) {
     VirtualFile sourceFile = myFixture.copyFileToProject(fileName);
     assert sourceFile != null;
     PsiFile psiFile = myFixture.getPsiManager().findFile(sourceFile);

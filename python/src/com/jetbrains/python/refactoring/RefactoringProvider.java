@@ -1,6 +1,6 @@
 package com.jetbrains.python.refactoring;
 
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -21,7 +21,7 @@ import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHand
  * Date: Aug 19, 2009
  * Time: 6:26:22 PM
  */
-public class RefactoringProvider extends DefaultRefactoringSupportProvider {
+public class RefactoringProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new VariableIntroduceHandler();
@@ -58,7 +58,7 @@ public class RefactoringProvider extends DefaultRefactoringSupportProvider {
   }
 
   @Override
-  public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
+  public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
     return (element instanceof PyTargetExpression && PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) ||
            element instanceof PyNamedParameter;
   }

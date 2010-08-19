@@ -20,7 +20,7 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
   @Override
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, "Ruby") {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, "Python") {
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new PyCodeStylePanel(settings);
       }

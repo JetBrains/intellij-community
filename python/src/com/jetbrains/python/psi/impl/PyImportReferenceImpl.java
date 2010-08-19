@@ -51,14 +51,21 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
-    PsiElement target = ResolveImportUtil.resolveImportReference(myElement);
-
-    target = PyUtil.turnDirIntoInit(target);
-    if (target == null) {
-      ret.clear();
-      return ret; // it was a dir without __init__.py, worthless
+    List<PsiElement> targets = ResolveImportUtil.resolveImportReference(myElement);
+    for (PsiElement target : targets) {
+      target = PyUtil.turnDirIntoInit(target);
+      if (target != null) {   // ignore dirs without __init__.py, worthless
+        int rate = RatedResolveResult.RATE_HIGH;
+        if (target instanceof PyFile) {
+          VirtualFile vFile = ((PyFile)target).getVirtualFile();
+          if (vFile != null && vFile.getLength() == 0) {
+            rate -= 100;
+          }
+        }
+        ret.poke(target, rate);
+      }
     }
-    ret.poke(target, RatedResolveResult.RATE_HIGH);
+
     return ret;
   }
 

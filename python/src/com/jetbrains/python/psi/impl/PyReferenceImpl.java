@@ -291,6 +291,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   public boolean isReferenceTo(PsiElement element) {
+    if (element instanceof PsiFileSystemItem) {
+      // may be import via alias, so don't check if names match, do simple resolve check instead
+      return resolve() == element;
+    }
     if (element instanceof PsiNamedElement) {
       final String elementName = ((PsiNamedElement)element).getName();
       if ((Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) && !haveQualifiers(element)) {

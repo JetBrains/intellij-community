@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
@@ -11,6 +12,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -46,7 +48,7 @@ public class PyDefUseUtil {
     if (instructions[instr] instanceof ReadWriteInstruction) {
       final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
       final PsiElement element = instruction.getElement();
-      String name = element instanceof PyElement ? ((PyElement)element).getName() : null;
+      String name = elementName(element);
       final ReadWriteInstruction.ACCESS access = instruction.getAccess();
       if (access == ReadWriteInstruction.ACCESS.WRITETYPE) {
         name = instruction.getName();
@@ -63,6 +65,11 @@ public class PyDefUseUtil {
     }
   }
 
+  @Nullable
+  private static String elementName(PsiElement element) {
+    return element instanceof PyElement ? ((PyElement)element).getName() : null;
+  }
+
   @NotNull
   public static PsiElement[] getPostRefs(ScopeOwner block, PyTargetExpression var, PyExpression anchor) {
     final ControlFlow controlFlow = block.getControlFlow();
@@ -70,7 +77,7 @@ public class PyDefUseUtil {
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
     assert instr >= 0;
     final boolean[] visited = new boolean[instructions.length];
-    final Collection<PyElement> result = new HashSet<PyElement>();
+    final Collection<PyElement> result = Sets.newHashSet();
     for (Instruction instruction : instructions[instr].allSucc()) {
       getPostRefs(var, instructions, instruction.num(), visited, result);
     }
@@ -87,7 +94,7 @@ public class PyDefUseUtil {
     if (instructions[instr] instanceof ReadWriteInstruction) {
       final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
       final PsiElement element = instruction.getElement();
-      String name = element instanceof PyElement ? ((PyElement)element).getName() : null;
+      String name = elementName(element);
       if (Comparing.strEqual(name, var.getName())) {
         final ReadWriteInstruction.ACCESS access = instruction.getAccess();
         if (access.isWriteAccess()) {

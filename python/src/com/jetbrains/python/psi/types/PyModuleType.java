@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.*;
@@ -9,11 +10,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
-import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,17 +26,7 @@ import static com.jetbrains.python.psi.resolve.ResolveImportUtil.ROLE_IN_IMPORT.
 public class PyModuleType implements PyType { // Modules don't descend from object
   private final PsiFile myModule;
 
-  protected static Set<String> ourPossibleFields;
-
-  static {
-    ourPossibleFields = new HashSet<String>();
-    ourPossibleFields.add("__name__");
-    ourPossibleFields.add("__file__");
-    ourPossibleFields.add("__path__");
-    ourPossibleFields.add("__doc__");
-    ourPossibleFields.add("__dict__");
-    ourPossibleFields = Collections.unmodifiableSet(ourPossibleFields);
-  }
+  protected static ImmutableSet<String> ourPossibleFields = ImmutableSet.of("__name__", "__file__", "__path__", "__doc__", "__dict__");
 
   public PyModuleType(PsiFile source) {
     myModule = source;

@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -8,7 +7,6 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 
@@ -16,8 +14,6 @@ public class PyResolveTest extends PyResolveTestCase {
   @Override
   protected PsiElement doResolve() {
     myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
-    final Project project = myFixture.getProject();
-    project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
     int offset = findMarkerOffset(myFixture.getFile());
     final PsiReference ref = myFixture.getFile().findReferenceAt(offset);
     return ref.resolve();
@@ -25,8 +21,6 @@ public class PyResolveTest extends PyResolveTestCase {
 
   protected PsiElement resolve() {
     PsiReference ref = configureByFile("resolve/" + getTestName(false) + ".py");
-    final Project project = ref.getElement().getContainingFile().getProject();
-    project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
     //  if need be: PythonLanguageLevelPusher.setForcedLanguageLevel(project, LanguageLevel.PYTHON26);
     return ref.resolve();
   }
@@ -361,13 +355,10 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testStarUnpacking() {  // PY-1459
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      final PsiElement element = doResolve();
-      assertInstanceOf(element, PyTargetExpression.class);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    assertResolvesTo(LanguageLevel.PYTHON30, PyTargetExpression.class, "heads");
+  }
+
+  public void testStarUnpackingInLoop() {  // PY-1525
+    assertResolvesTo(LanguageLevel.PYTHON30, PyTargetExpression.class, "bbb");
   }
 }

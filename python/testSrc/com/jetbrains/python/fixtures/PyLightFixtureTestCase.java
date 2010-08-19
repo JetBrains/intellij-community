@@ -25,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyLightFixtureTestCase extends UsefulTestCase {
-  private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor();
+  private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor("2.5");
+  protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor("3.1");
 
   protected CodeInsightTestFixture myFixture;
   private static boolean ourPlatformPrefixInitialized;
@@ -74,12 +75,18 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
+    private final String myPythonVersion;
+
+    public PyLightProjectDescriptor(String pythonVersion) {
+      myPythonVersion = pythonVersion;
+    }
+
     public ModuleType getModuleType() {
       return EmptyModuleType.getInstance();
     }
 
     public Sdk getSdk() {
-      return PythonMockSdk.findOrCreate();
+      return PythonMockSdk.findOrCreate(myPythonVersion);
     }
 
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {

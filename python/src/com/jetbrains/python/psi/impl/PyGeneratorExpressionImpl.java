@@ -7,6 +7,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,14 +31,13 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
   public Iterable<PyElement> iterateNames() {
     // extract whatever names are defined in "for" components
     List<ComprhForComponent> fors = getForComponents();
-    PyElement[] for_targets = new PyElement[fors.size()];
+    PyExpression[] for_targets = new PyExpression[fors.size()];
     int i = 0;
     for (ComprhForComponent for_comp : fors) {
       for_targets[i] = for_comp.getIteratorVariable();
       i += 1;
     }
-    List<PyElement> name_refs = PyUtil.flattenedParens(for_targets);
-    return name_refs;
+    return new ArrayList<PyElement>(PyUtil.flattenedParensAndStars(for_targets));
   }
 
   public PsiElement getElementNamed(final String the_name) {

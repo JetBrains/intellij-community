@@ -8,6 +8,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.testFramework.TestDataFile;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -46,6 +48,16 @@ public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
   }
 
   protected abstract PsiElement doResolve() throws Exception;
+
+  protected <T extends PsiElement> T assertResolvesTo(final LanguageLevel langLevel, final Class<T> aClass, final String name) {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), langLevel);
+    try {
+      return assertResolvesTo(aClass, name, null);
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
 
   protected <T extends PsiElement> T assertResolvesTo(final Class<T> aClass, final String name) {
     return assertResolvesTo(aClass, name, null);

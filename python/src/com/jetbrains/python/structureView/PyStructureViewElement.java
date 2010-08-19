@@ -143,13 +143,10 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     return new ItemPresentation() {
       public String getPresentableText() {
         if (myElement instanceof PyFunction) {
-          PsiElement[] children = myElement.getChildren();
-          if (children.length > 0 && children[0] instanceof PyParameterList) {
-            PyParameterList argList = (PyParameterList)children[0];
-            StringBuilder result = new StringBuilder(myElement.getName());
-            ParamHelper.appendParameterList(argList, result);
-            return result.toString();
-          }
+          PyParameterList argList = ((PyFunction) myElement).getParameterList();
+          StringBuilder result = new StringBuilder(myElement.getName());
+          ParamHelper.appendParameterList(argList, result);
+          return result.toString();
         }
         return myElement.getName();
       }

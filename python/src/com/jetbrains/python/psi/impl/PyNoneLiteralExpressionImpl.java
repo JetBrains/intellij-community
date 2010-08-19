@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
@@ -17,5 +18,10 @@ public class PyNoneLiteralExpressionImpl extends PyElementImpl implements PyNone
 
   public PyType getType(@NotNull TypeEvalContext context) {
     return PyNoneType.INSTANCE;
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyNoneLiteralExpression(this);
   }
 }

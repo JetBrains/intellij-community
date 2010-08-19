@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
@@ -107,13 +109,52 @@ public class FieldIntroduceHandler extends IntroduceHandler {
   }
 
   @Override
-  protected PyAssignmentStatement createDeclaration(Project project, String assignmentText) {
-    return PyElementGenerator.getInstance(project).createFromText(PyAssignmentStatement.class, PyNames.CANONICAL_SELF + "." + assignmentText);
+  protected PyAssignmentStatement createDeclaration(Project project, String assignmentText, PsiElement anchor) {
+    String selfName = PyNames.CANONICAL_SELF;
+    final PyFunction container = PsiTreeUtil.getParentOfType(anchor, PyFunction.class);
+    if (container != null) {
+      final PyParameter[] params = container.getParameterList().getParameters();
+      if (params.length > 0) {
+        final PyNamedParameter named = params[0].getAsNamed();
+        if (named != null) {
+          selfName = named.getName();
+        }
+      }
+    }
+    return PyElementGenerator.getInstance(project).createFromText(PyAssignmentStatement.class, selfName + "." + assignmentText);
   }
 
   @Override
   protected String getHelpId() {
     return "refactoring.introduceField";
+  }
+
+  @Override
+  protected boolean checkIntroduceContext(PsiFile file, Editor editor, PsiElement element) {
+    if (element != null && isInStaticMethod(element)) {
+      CommonRefactoringUtil.showErrorHint(file.getProject(), editor, "Introduce Field refactoring cannot be used in static methods",
+                                          RefactoringBundle.message("introduce.field.title"),
+                                          "refactoring.extractMethod");
+      return false;
+    }
+    return super.checkIntroduceContext(file, editor, element);
+  }
+
+  private static boolean isInStaticMethod(PsiElement element) {
+    PyFunction containingMethod = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
+    if (containingMethod != null) {
+      final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(containingMethod);
+      return flags.contains(PyFunction.Flag.STATICMETHOD);
+    }
+    return false;
+  }
+
+  @Override
+  protected boolean isValidIntroduceContext(PsiElement element) {
+    return super.isValidIntroduceContext(element) &&
+           PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class) != null &&
+           PsiTreeUtil.getParentOfType(element, PyDecoratorList.class) == null &&
+           !isInStaticMethod(element);
   }
 
   private static class AddFieldDeclaration implements Function<String, PyStatement> {

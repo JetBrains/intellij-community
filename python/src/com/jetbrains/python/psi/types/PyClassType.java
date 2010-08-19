@@ -91,37 +91,10 @@ public class PyClassType implements PyType {
       return new SmartList<PsiElement>(classMember);
     }
 
-    boolean hasSuperClasses = false;
     for (PyClass superClass : myClass.iterateAncestors()) {
-      hasSuperClasses = true;
       PsiElement superMember = resolveClassMember(superClass, name);
       if (superMember != null) {
         return new SmartList<PsiElement>(superMember);
-      }
-    }
-    if (!hasSuperClasses) {
-      // no superclasses, try old-style
-      if (getClass() != null) {
-        PyClassType implicitSuperclassType;
-        if (LanguageLevel.forElement(myClass).isPy3K()) {
-          implicitSuperclassType = PyBuiltinCache.getInstance(myClass).getObjectType();
-        }
-        else {
-          implicitSuperclassType = PyBuiltinCache.getInstance(myClass).getOldstyleClassobjType();
-        }
-        if (implicitSuperclassType != null) {
-          final PyClass myclass = getPyClass();
-          if (myclass != null) {
-            final String myname = myclass.getName();
-            final PyClass implicitSuperclass = implicitSuperclassType.getPyClass();
-            if (implicitSuperclass != null) {
-              final String oldstylename = implicitSuperclass.getName();
-              if ((myname != null) && (oldstylename != null) && !myname.equals(oldstylename) && !myname.equals("object")) {
-                return implicitSuperclassType.resolveMember(name, direction);
-              }
-            }
-          }
-        }
       }
     }
     return Collections.emptyList();

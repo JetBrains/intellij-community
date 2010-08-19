@@ -237,4 +237,12 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyAssertStatement(final PyAssertStatement node) {
     visitPyElement(node);
   }
+
+  public void visitPyNoneLiteralExpression(final PyNoneLiteralExpression node) {
+    visitPyElement(node);
+  }
+
+  public void visitPyBoolLiteralExpression(final PyBoolLiteralExpression node) {
+    visitPyElement(node);
+  }
 }

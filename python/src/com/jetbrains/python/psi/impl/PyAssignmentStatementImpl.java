@@ -153,9 +153,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    PyElement[] targets = getTargets();
-    // return _unfoldParenExprs(targets, new ArrayList<PyElement>(targets.length));
-    return PyUtil.flattenedParens(targets);
+    return new ArrayList<PyElement>(PyUtil.flattenedParensAndStars(getTargets()));
   }
 
   public PyElement getElementNamed(final String the_name) {

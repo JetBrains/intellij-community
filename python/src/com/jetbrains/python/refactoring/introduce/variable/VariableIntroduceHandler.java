@@ -10,10 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 19, 2009
- * Time: 5:22:02 PM
+ * @author Alexey.Ivanov
  */
 public class VariableIntroduceHandler extends IntroduceHandler {
   public VariableIntroduceHandler() {
@@ -37,25 +34,6 @@ public class VariableIntroduceHandler extends IntroduceHandler {
     assert anchor != null;
     final PsiElement parent = anchor.getParent();
     return parent.addBefore(declaration, anchor);
-  }
-
-  private static PsiElement findAnchor(List<PsiElement> occurrences) {
-    PsiElement anchor = occurrences.get(0);
-    next:
-    do {
-      PyStatement statement = PsiTreeUtil.getParentOfType(anchor, PyStatement.class);
-
-      final PsiElement parent = statement.getParent();
-      for (PsiElement element : occurrences) {
-        if (!PsiTreeUtil.isAncestor(parent, element, true)) {
-          anchor = statement;
-          continue next;
-        }
-      }
-
-      return statement;
-    }
-    while (true);
   }
 
   @Override
