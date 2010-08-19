@@ -22,8 +22,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,14 @@ import java.util.List;
  * @author yole
  */
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
+
   private Boolean myHidden = null;
+  private final Condition<RefactoringSupportProvider> myCondition = new Condition<RefactoringSupportProvider>() {
+    @Override
+    public boolean value(RefactoringSupportProvider provider) {
+      return getRefactoringHandler(provider) != null;
+    }
+  };
 
   public BasePlatformRefactoringAction() {
     LanguageRefactoringSupport.INSTANCE.addListener(new ExtensionPointListener<RefactoringSupportProvider>() {
@@ -66,6 +75,11 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
       }
     }
     return null;
+  }
+
+  protected boolean isAvailableForLanguage(final Language language) {
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+    return ContainerUtil.find(providers, myCondition) != null;
   }
 
   @Nullable

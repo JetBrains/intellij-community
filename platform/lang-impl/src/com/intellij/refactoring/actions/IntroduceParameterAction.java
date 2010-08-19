@@ -44,8 +44,4 @@ public class IntroduceParameterAction extends BasePlatformRefactoringAction {
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return provider.getIntroduceParameterHandler();
   }
-
-  protected boolean isAvailableForLanguage(Language language) {
-    return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getIntroduceParameterHandler() != null;
-  }
 }

@@ -40,8 +40,4 @@ public class ExtractMethodAction extends BasePlatformRefactoringAction {
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return provider.getExtractMethodHandler();
   }
-
-  protected boolean isAvailableForLanguage(final Language language) {
-    return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getExtractMethodHandler() != null;
-  }
 }
