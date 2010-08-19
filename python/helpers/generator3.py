@@ -902,13 +902,11 @@ class ModuleRedeclarator(object):
         @param deco: decorator to use
         @return (reconstructed_spec, note) or (None, None) if failed.
         """
-        print 'restoreByDocString ' + func_name
         # parse
         parsing_failed = False
         try:
         # strict parsing
             tokens = paramSeqAndRest.parseString(signature_string, True)
-            print tokens
         except ParseException:
         # it did not parse completely; scavenge what we can
             parsing_failed = True
