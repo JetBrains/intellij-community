@@ -272,6 +272,9 @@ public class PathManagerEx {
     try {
       return Class.forName(className, true, classLoader);
     }
+    catch (NoClassDefFoundError e) {
+      return null;
+    }
     catch (ClassNotFoundException e) {
       return null;
     }
