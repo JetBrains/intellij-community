@@ -88,7 +88,7 @@ import java.util.Map;
   }
 
   public void setWorkingDirectory(String workingDirectory) {
-    myWorkingDirectoryTextField.setText(FileUtil.toSystemDependentName(workingDirectory));
+    myWorkingDirectoryTextField.setText(workingDirectory == null ? "" : FileUtil.toSystemDependentName(workingDirectory));
   }
 
   @Nullable

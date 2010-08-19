@@ -2,26 +2,21 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
-import com.jetbrains.python.buildout.BuildoutFacetType;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.toolbox.FP;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,26 +110,34 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS");
-    final String parentEnvs = JDOMExternalizerUtil.readField(element, "PARENT_ENVS");
-    if (parentEnvs != null) {
-      myPassParentEnvs = Boolean.parseBoolean(parentEnvs);
-    }
+    readEnvs(element);
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
     getConfigurationModule().readExternal(element);
+  }
+
+  protected void readEnvs(Element element) {
+    final String parentEnvs = JDOMExternalizerUtil.readField(element, "PARENT_ENVS");
+    if (parentEnvs != null) {
+      myPassParentEnvs = Boolean.parseBoolean(parentEnvs);
+    }
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
-    JDOMExternalizerUtil.writeField(element, "PARENT_ENVS", Boolean.toString(myPassParentEnvs));
+    writeEnvs(element);
     JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
     JDOMExternalizerUtil.writeField(element, "WORKING_DIRECTORY", myWorkingDirectory);
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
-    EnvironmentVariablesComponent.writeExternal(element, getEnvs());
     getConfigurationModule().writeExternal(element);
+  }
+
+  protected void writeEnvs(Element element) {
+    JDOMExternalizerUtil.writeField(element, "PARENT_ENVS", Boolean.toString(myPassParentEnvs));
+    EnvironmentVariablesComponent.writeExternal(element, getEnvs());
   }
 
   public Map<String, String> getEnvs() {
