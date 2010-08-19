@@ -39,11 +39,16 @@ public class CurrentContentRevision implements ContentRevision {
 
   @Nullable
   public String getContent() {
-    final VirtualFile vFile = getVirtualFile();
-    if (vFile == null) return null;
+    VirtualFile vFile = getVirtualFile();
+    if (vFile == null) {
+      myFile.refresh();
+      vFile = getVirtualFile();
+      if (vFile == null) return null;
+    }
+    final VirtualFile finalVFile = vFile;
     final Document doc = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
       public Document compute() {
-        return FileDocumentManager.getInstance().getDocument(vFile);
+        return FileDocumentManager.getInstance().getDocument(finalVFile);
     }});
     if (doc == null) return null;
     return doc.getText();
