@@ -18,16 +18,17 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
-import com.intellij.xdebugger.impl.breakpoints.ui.actions.GoToBreakpointAction;
-import com.intellij.xdebugger.impl.breakpoints.ui.actions.RemoveBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeDialogState;
+import com.intellij.xdebugger.impl.breakpoints.ui.actions.GoToBreakpointAction;
+import com.intellij.xdebugger.impl.breakpoints.ui.actions.RemoveBreakpointAction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     myAllGroupingRules = new ArrayList<XBreakpointGroupingRule<B,?>>(myType.getGroupingRules());
     mySelectedGroupingRules = getInitialGroupingRules();
 
-    myTree = XBreakpointsTree.createTree(myType, mySelectedGroupingRules);
+    myTree = XBreakpointsTree.createTree(myType, mySelectedGroupingRules, myParentDialog);
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
         onSelectionChanged();
@@ -218,6 +219,14 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     Collection<? extends B> breakpoints = getBreakpoints();
     myTree.buildTree(breakpoints);
     fireBreakpointsChanged();
+  }
+
+  @Override
+  public void ensureSelectionExists() {
+    final B first = ContainerUtil.getFirstItem(getBreakpoints(), null);
+    if (first != null) {
+      selectBreakpoint(first);
+    }
   }
 
   private Collection<? extends B> getBreakpoints() {
