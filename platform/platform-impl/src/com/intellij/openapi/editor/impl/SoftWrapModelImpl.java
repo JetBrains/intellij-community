@@ -189,7 +189,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     // Normalization.
     Document document = myEditor.getDocument();
     startLine = Math.max(0, startLine);
-    endLine = Math.min(endLine, document.getLineCount() - 1);
+    endLine = Math.max(0, Math.min(endLine, document.getLineCount() - 1));
 
     myApplianceManager.registerSoftWrapIfNecessary(
       document.getCharsSequence(), document.getLineStartOffset(startLine), document.getLineEndOffset(endLine), 0, Font.PLAIN, true
