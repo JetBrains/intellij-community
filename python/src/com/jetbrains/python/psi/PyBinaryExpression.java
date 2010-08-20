@@ -9,9 +9,13 @@ import org.jetbrains.annotations.Nullable;
 public interface PyBinaryExpression extends PyExpression {
   PyExpression getLeftExpression();
   @Nullable PyExpression getRightExpression();
+
+  @Nullable
   PyElementType getOperator();
+
   @Nullable
   PsiElement getPsiOperator();
+
   boolean isOperator(String chars);
 
   PyExpression getOppositeExpression(PyExpression expression)
