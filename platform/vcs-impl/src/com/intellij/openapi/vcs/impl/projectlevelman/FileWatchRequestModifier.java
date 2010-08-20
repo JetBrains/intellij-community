@@ -58,7 +58,10 @@ public class FileWatchRequestModifier implements Runnable {
     }
     for (VcsDirectoryMapping mapping : deleted) {
       if (mapping.isDefaultMapping()) continue;
-      myLfs.removeWatchedRoot(myDirectoryMappingWatches.remove(mapping));
+      final LocalFileSystem.WatchRequest removed = myDirectoryMappingWatches.remove(mapping);
+      if (removed != null) {
+        myLfs.removeWatchedRoot(removed);
+      }
     }
   }
 }
