@@ -87,7 +87,6 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
           }
           finally {
             myJob.taskDone();
-            //myDoneCondition.up();
           }
         }
       }
