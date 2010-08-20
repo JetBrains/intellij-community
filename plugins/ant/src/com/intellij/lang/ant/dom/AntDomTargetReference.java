@@ -128,7 +128,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
       if (existing.contains(s)){
         continue;
       }
-      final LookupElementBuilder builder = LookupElementBuilder.create(s);
+      final LookupElementBuilder builder = LookupElementBuilder.create(s).setCaseSensitive(false);
       final LookupElement element = AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder);
       resVariants.add(element);
     }

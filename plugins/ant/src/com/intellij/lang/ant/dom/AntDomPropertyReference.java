@@ -87,7 +87,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
       Object[] result = new Object[variants.size()];
       int idx = 0;
       for (String variant : variants) {
-        final LookupElementBuilder builder = LookupElementBuilder.create(variant);
+        final LookupElementBuilder builder = LookupElementBuilder.create(variant).setCaseSensitive(false);
         final LookupElement element = AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder);
         result[idx++] = element;
       }
