@@ -34,7 +34,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) return SPACING_SAMPLE;
-    if (settingsType == SettingsType.INDENTS_AND_BRACES_SETTINGS) return INDENT_AND_BRACES_SAMPLE;
     if (settingsType == SettingsType.BLANK_LINES_SETTINGS) return BLANK_LINE_SAMPLE;
     if (settingsType == SettingsType.WRAPPING_SETTINGS) return WRAPPING_CODE_SAMPLE;
 
@@ -120,66 +119,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                        "  }\n" +
                                                        "\n" +
                                                        "}";
-
-  private static final String INDENT_AND_BRACES_SAMPLE = "public class Foo {\n" +
-                                                         "  public Foo foo;\n" +
-                                                         "  public int[] X = new int[]{1, 3, 5 7, 9, 11};\n" +
-                                                         "\n" +
-                                                         "  public void foo(boolean a, int x, int y, int z) {\n" +
-                                                         "    label1:\n" +
-                                                         "    do {\n" +
-                                                         "      try {\n" +
-                                                         "        if (x > 0) {\n" +
-                                                         "          int someVariable = a ? x : y;\n" +
-                                                         "          int anotherVariable = a ? x : y;\n" +
-                                                         "        }\n" +
-                                                         "        else if (x < 0) {\n" +
-                                                         "          int someVariable = (y + z);\n" +
-                                                         "          someVariable = x = x + y;\n" +
-                                                         "        }\n" +
-                                                         "        else {\n" +
-                                                         "          label2:\n" +
-                                                         "          for (int i = 0; i < 5; i++) doSomething(i);\n" +
-                                                         "        }\n" +
-                                                         "        switch (a) {\n" +
-                                                         "          case 0:\n" +
-                                                         "            doCase0();\n" +
-                                                         "            break;\n" +
-                                                         "          default:\n" +
-                                                         "            doDefault();\n" +
-                                                         "        }\n" +
-                                                         "      }\n" +
-                                                         "      catch (Exception e) {\n" +
-                                                         "        processException(e.getMessage(), x + y, z, a);\n" +
-                                                         "      }\n" +
-                                                         "      finally {\n" +
-                                                         "        processFinally();\n" +
-                                                         "      }\n" +
-                                                         "    }\n" +
-                                                         "    while (true);\n" +
-                                                         "\n" +
-                                                         "    if (2 < 3) return;\n" +
-                                                         "    if (3 < 4) return;\n" +
-                                                         "    do {\n" +
-                                                         "      x++\n" +
-                                                         "    }\n" +
-                                                         "    while (x < 10000);\n" +
-                                                         "    while (x < 50000) x++;\n" +
-                                                         "    for (int i = 0; i < 5; i++) System.out.println(i);\n" +
-                                                         "    foo.fooBar().fooBar()\n" +
-                                                         "       .fooBar().foo.fooBar().fooBar()\n" +
-                                                         "                    .fooBar();\n" +
-                                                         "  }\n" +
-                                                         "\n" +
-                                                         "  public Foo fooBar() {\n" +
-                                                         "    return this;\n" +
-                                                         "  }\n" +
-                                                         "\n" +
-                                                         "  private class InnerClass implements I1, I2 {\n" +
-                                                         "    public void bar() throws E1, E2 {\n" +
-                                                         "    }\n" +
-                                                         "  }\n" +
-                                                         "}";
 
   private static final String SPACING_SAMPLE = "@Annotation(param1 = \"value1\", param2 = \"value2\")\n" +
                                                "public class Foo<T, U> {\n" +

@@ -32,7 +32,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
     ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
 
   public enum SettingsType {
-    BLANK_LINES_SETTINGS, INDENTS_AND_BRACES_SETTINGS, SPACING_SETTINGS, WRAPPING_SETTINGS, LANGUAGE_SPECIFIC
+    BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_SETTINGS, LANGUAGE_SPECIFIC
   }
 
   @NotNull
