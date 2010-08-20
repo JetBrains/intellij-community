@@ -67,6 +67,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public VcsShowConfirmationOption.Value REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public boolean ENABLE_BACKGROUND_PROCESSES = false;
   public int CHANGED_ON_SERVER_INTERVAL = 60;
+  public boolean SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = true;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

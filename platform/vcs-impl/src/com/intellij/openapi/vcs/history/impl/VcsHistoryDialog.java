@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.history.impl;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.diff.Block;
+import com.intellij.diff.FindBlock;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
@@ -24,14 +27,13 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
@@ -40,6 +42,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -49,13 +52,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
 public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
+  private final int mySelectionStart;
+  private final int mySelectionEnd;
+
+  private final Map<VcsFileRevision, Block> myRevisionToContentMap = new com.intellij.util.containers.HashMap<VcsFileRevision, Block>();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
   private final AbstractVcs myActiveVcs;
@@ -103,7 +109,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   private final Splitter mySplitter;
   private final VirtualFile myFile;
   private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
-  private final Map<VcsFileRevision, String> myCachedContents = new com.intellij.util.containers.HashMap<VcsFileRevision, String>();
+  private final CachedRevisionsContents myCachedContents;
   private final JTextArea myComments = new JTextArea();
   private static final int CURRENT = 0;
   private boolean myIsInLoading = false;
@@ -111,14 +117,20 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   private boolean myIsDisposed = false;
   private final FileType myContentFileType;
 
-
   public VcsHistoryDialog(Project project,
                           final VirtualFile file,
                           final VcsHistoryProvider vcsHistoryProvider,
                           VcsHistorySession session,
-                          AbstractVcs vcs){
+                          AbstractVcs vcs,
+                          int selectionStart,
+                          int selectionEnd,
+                          final String title, final CachedRevisionsContents cachedContents){
     super(project, true);
     myProject = project;
+    mySelectionStart = selectionStart;
+    mySelectionEnd = selectionEnd;
+    myCachedContents = cachedContents;
+    setTitle(title);
     myActiveVcs = vcs;
     myRevisions = new ArrayList<VcsFileRevision>();
     myFile = file;
@@ -146,7 +158,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
     myContentFileType = FileTypeManager.getInstance().getFileTypeByFile(file);
 
-    updateRevisionsList();
+    final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
 
     mySplitter = new Splitter(true, getVcsConfiguration().FILE_HISTORY_DIALOG_SPLITTER_PROPORTION);
 
@@ -182,8 +194,11 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       }
     });
 
+    myChangesOnlyCheckBox.setSelected(configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF);
+    updateRevisionsList();
     myChangesOnlyCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = myChangesOnlyCheckBox.isSelected();
         updateRevisionsList();
       }
     });
@@ -217,71 +232,12 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return result;
   }
 
-  protected synchronized String getContentOf(VcsFileRevision revision) {
-    LOG.assertTrue(myCachedContents.containsKey(revision), revision.getRevisionNumber().asString());
-    return myCachedContents.get(revision);
+  protected String getContentOf(VcsFileRevision revision) {
+    return myCachedContents.getContentOf(revision);
   }
 
-  private synchronized void loadContentsFor(final VcsFileRevision[] revisions) {
-    if (myIsInLoading) return;
-    myIsInLoading = true;
-    try {
-      synchronized (myCachedContents) {
-
-        final VcsFileRevision[] revisionsToLoad = revisionsNeededToBeLoaded(revisions);
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            progressIndicator.pushState();
-            try {
-              for (int i = 0; i < revisionsToLoad.length; i++) {
-                final VcsFileRevision vcsFileRevision = revisionsToLoad[i];
-                progressIndicator.setText2(VcsBundle.message("progress.text2.loading.revision", vcsFileRevision.getRevisionNumber()));
-                progressIndicator.setFraction((double)i / (double)revisionsToLoad.length);
-                if (!myCachedContents.containsKey(vcsFileRevision)) {
-                  try {
-                    vcsFileRevision.loadContent();
-                  }
-                  catch (final VcsException e) {
-                    ApplicationManager.getApplication().invokeLater(new Runnable() {
-                      public void run() {
-                        Messages.showErrorDialog(VcsBundle.message("message.text.cannot.load.version.bocause.of.error",
-                                                                   vcsFileRevision.getRevisionNumber(), e.getLocalizedMessage()), VcsBundle.message("message.title.load.version"));
-                      }
-                    });
-                  } catch (ProcessCanceledException ex){
-                    return;
-                  }
-                  String content = null;
-                  try {
-                    final byte[] byteContent = vcsFileRevision.getContent();
-                    if (byteContent != null) {
-                      content = new String(byteContent, myFile.getCharset().name());
-                    }
-                  }
-                  catch (IOException e) {
-                    LOG.error(e);
-                  }
-                  myCachedContents.put(vcsFileRevision, content);
-
-                }
-              }
-            }
-            finally {
-              progressIndicator.popState();
-            }
-
-          }
-        }, VcsBundle.message("progress.title.loading.contents"), false, myProject);
-      }
-    }
-    finally {
-      myIsInLoading = false;
-    }
-  }
-
-  protected VcsFileRevision[] revisionsNeededToBeLoaded(VcsFileRevision[] revisions) {
-    return revisions;
+  private void loadContentsFor(final VcsFileRevision[] revisions) {
+    myCachedContents.loadContentsFor(revisions);
   }
 
   private void updateRevisionsList() {
@@ -339,7 +295,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       secondRev = tmp;
     }
 
-    loadContentsFor(new VcsFileRevision[]{firstRev, secondRev});
     if (myIsDisposed) return;
     myDiffPanel.setContents(new SimpleContent(getContentToShow(firstRev), myContentFileType),
                             new SimpleContent(getContentToShow(secondRev), myContentFileType));
@@ -352,10 +307,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     myIsDisposed = true;
     myDiffPanel.dispose();
     super.dispose();
-  }
-
-  protected String getContentToShow(final VcsFileRevision firstRev) {
-    return getContentOf(firstRev);
   }
 
   private JComponent createBottomPanel(final JComponent addComp) {
@@ -444,5 +395,30 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       return myList.getSelectedObject();
     }
     return null;
+  }
+
+  protected String getContentToShow(VcsFileRevision revision) {
+    final Block block = getBlock(revision);
+    if (block == null) return "";
+    return block.getBlockContent();
+  }
+
+  @Nullable
+  private Block getBlock(VcsFileRevision revision){
+    if (myRevisionToContentMap.containsKey(revision))
+      return myRevisionToContentMap.get(revision);
+
+    int index = myRevisions.indexOf(revision);
+
+    final String revisionContent = getContentOf(revision);
+    if (revisionContent == null) return null;
+    if (index == 0)
+      myRevisionToContentMap.put(revision, new Block(revisionContent,  mySelectionStart, mySelectionEnd));
+    else {
+      Block prevBlock = getBlock(myRevisions.get(index - 1));
+      if (prevBlock == null) return null;
+      myRevisionToContentMap.put(revision, new FindBlock(revisionContent, prevBlock).getBlockInThePrevVersion());
+    }
+    return myRevisionToContentMap.get(revision);
   }
 }
