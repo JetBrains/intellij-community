@@ -201,4 +201,8 @@ public class WizardModel {
   public String getTitle() {
     return myTitle;
   }
+
+  public int getStepIndex(WizardStep step) {
+    return mySteps.indexOf(step);
+  }
 }
