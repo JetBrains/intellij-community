@@ -232,6 +232,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
 
   public JComponent prepare(final WizardNavigationState state) {
     myRootPanel.revalidate();
+    myPluginsList.requestFocusInWindow();
     return myRootPanel;
   }
 
@@ -284,6 +285,11 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
       }
     }
     return prev;
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myPluginsList;
   }
 
   @Override

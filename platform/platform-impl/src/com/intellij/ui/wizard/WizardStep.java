@@ -16,6 +16,7 @@
 package com.intellij.ui.wizard;
 
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -79,6 +80,11 @@ public abstract class WizardStep<T extends WizardModel> {
 
   public boolean onFinish() {
     return true;
+  }
+
+  @Nullable
+  public JComponent getPreferredFocusedComponent() {
+    return null;
   }
 
   public Icon getIcon() {

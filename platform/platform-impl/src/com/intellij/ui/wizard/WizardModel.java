@@ -72,9 +72,8 @@ public class WizardModel {
     if (nextStep == null) {
       nextStep = getNextFor(getCurrentStep());
     }
-    prepareCurrentStep(nextStep);
 
-    getCallback().onStepChanged();
+    changeToStep(nextStep);
   }
 
   public final void previous() {
@@ -85,7 +84,11 @@ public class WizardModel {
       previousStep = getPreviousFor(getCurrentStep());
     }
 
-    prepareCurrentStep(previousStep);
+    changeToStep(previousStep);
+  }
+
+  private void changeToStep(WizardStep step) {
+    prepareCurrentStep(step);
 
     getCallback().onStepChanged();
   }
