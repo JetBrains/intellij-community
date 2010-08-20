@@ -322,17 +322,18 @@ public final class ComponentItemDialog extends DialogWrapper {
   private boolean isOKEnabled() {
     myErrorLabel.setText(" ");
     if (myClassRadioButton.isSelected()) {
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
-      if (!JavaPsiFacade.getInstance(psiManager.getProject()).getNameHelper().isQualifiedName(myDocument.getText())) {
+      if (myDocument == null) {  // why?
+        return false;
+      }
+      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(myProject);
+      if (!javaPsiFacade.getNameHelper().isQualifiedName(myDocument.getText())) {
         if (myDocument.getTextLength() > 0) {
           myErrorLabel.setText(UIDesignerBundle.message("add.component.error.qualified.name.required"));
         }
         return false;
       }
-      PsiClass psiClass =
-        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
-      PsiClass componentClass =
-        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
+      PsiClass psiClass = javaPsiFacade.findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
+      PsiClass componentClass = javaPsiFacade.findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
       if (psiClass != null && componentClass != null && !InheritanceUtil.isInheritorOrSelf(psiClass, componentClass, true)) {
         myErrorLabel.setText(UIDesignerBundle.message("add.component.error.component.required"));
         return false;
