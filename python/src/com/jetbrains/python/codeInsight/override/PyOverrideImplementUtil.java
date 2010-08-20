@@ -129,12 +129,17 @@ public class PyOverrideImplementUtil {
       PyFunction function = builder.addFunctionAfter(statementList, anchor);
       element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
     }
-    
+
     PyPsiUtils.removeRedundantPass(statementList);
-    final int start = element.getStatementList().getTextRange().getStartOffset();
-    editor.getCaretModel().moveToOffset(start);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    editor.getSelectionModel().setSelection(start, element.getTextRange().getEndOffset());
+    if (element != null) {
+      final PyStatementList targetStatementList = element.getStatementList();
+      final int start = targetStatementList != null
+                        ? targetStatementList.getTextRange().getStartOffset()
+                        : element.getTextRange().getStartOffset();
+      editor.getCaretModel().moveToOffset(start);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      editor.getSelectionModel().setSelection(start, element.getTextRange().getEndOffset());
+    }
   }
 
   private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass, PyFunction baseFunction) {
