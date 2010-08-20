@@ -44,9 +44,13 @@
     <extensionPoint name="psiEnhancerCategory" interface="org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory"/>
     <extensionPoint name="gdslTopLevelProvider" interface="org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider"/>
 
+    <extensionPoint name="groovyFrameworkConfigNotification" interface="org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
+    <groovyFrameworkConfigNotification order="last"
+        implementation="org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotification"/>
+
     <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
