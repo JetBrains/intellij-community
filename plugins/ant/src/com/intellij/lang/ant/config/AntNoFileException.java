@@ -16,13 +16,14 @@
 
 package com.intellij.lang.ant.config;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class AntNoFileException extends Exception {
   private final VirtualFile myFile;
 
   public AntNoFileException(final String message, final VirtualFile file) {
-    super(message + file.getPresentableUrl());
+    super(AntBundle.message("cant.add.file.error.message", file.getPresentableUrl(), message));
     myFile = file;
   }
 

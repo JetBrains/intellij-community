@@ -42,9 +42,12 @@ public class AddAntBuildFile extends AnAction {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD).activate(null);
     }
     catch (AntNoFileException e) {
-      Messages.showWarningDialog(project, AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message",
-                                                            e.getFile().getPresentableUrl()),
-                                          AntBundle.message("cannot.add.build.file.dialog.title"));
+      String message = e.getMessage();
+      if (message == null || message.length() == 0) {
+        message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", e.getFile().getPresentableUrl());
+      }
+
+      Messages.showWarningDialog(project, message, AntBundle.message("cannot.add.build.file.dialog.title"));
     }
   }
 
