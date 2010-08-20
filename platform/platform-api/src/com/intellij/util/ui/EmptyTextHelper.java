@@ -29,8 +29,10 @@ import java.util.ArrayList;
 public abstract class EmptyTextHelper implements ComponentWithEmptyText{
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
 
-  private final JComponent myOwner;
+  private static final Color BG_COLOR = new Color(240, 240, 240, 230);
+  private static final Color BORDER_COLOR = new Color(200, 200, 200, 230);
 
+  private final JComponent myOwner;
   private String myEmptyText = "";
   private final SimpleColoredComponent myEmptyTextComponent = new SimpleColoredComponent();
   private final ArrayList<ActionListener> myEmptyTextClickListeners = new ArrayList<ActionListener>();
@@ -62,6 +64,7 @@ public abstract class EmptyTextHelper implements ComponentWithEmptyText{
         }
       }
     });
+    myEmptyTextComponent.setOpaque(false);
     myEmptyTextComponent.setFont(UIUtil.getLabelFont());
 
     setEmptyText(UIBundle.message("message.nothingToShow"), DEFAULT_ATTRIBUTES);
@@ -123,10 +126,26 @@ public abstract class EmptyTextHelper implements ComponentWithEmptyText{
       myEmptyTextComponent.setForeground(myOwner.getForeground());
 
       Rectangle b = getTextComponentBound();
+
       myEmptyTextComponent.setBounds(0, 0, b.width, b.height);
 
-      Graphics g2 = g.create(b.x, b.y, b.width, b.height);
+      Graphics2D g2 = (Graphics2D)g.create(b.x, b.y, b.width, b.height);
+
+      int w = b.width - 1;
+      int h = b.height - 1;
+
+      g2.setColor(BG_COLOR);
+      g2.fillRoundRect(0, 0, w, h, h / 2, h / 2);
+
+      Object prev = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setColor(BORDER_COLOR);
+      g2.drawRoundRect(0, 0, w, h, h / 2, h / 2);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prev);
+
       myEmptyTextComponent.paint(g2);
+
+      g2.dispose();
     }
   }
 
