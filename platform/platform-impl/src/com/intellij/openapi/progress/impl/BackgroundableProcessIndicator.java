@@ -79,7 +79,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       Disposer.register(this, new Disposable() {
         @Override
         public void dispose() {
-          ProjectManager.getInstance().removeProjectManagerListener(myListener);
+          ProjectManager.getInstance().removeProjectManagerListener(project, myListener);
         }
       });
     }
