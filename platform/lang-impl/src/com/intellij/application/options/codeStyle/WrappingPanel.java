@@ -18,9 +18,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
-/**
- * @author max
- */
 public class WrappingPanel extends OptionTableWithPreviewPanel {
   private static final String[] FULL_WRAP_OPTIONS = new String[] {
     ApplicationBundle.message("combobox.codestyle.do.not.wrap"),
@@ -55,6 +52,24 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
     CodeStyleSettings.FORCE_BRACES_ALWAYS
   };
 
+  private static final String[] BRACE_PLACEMENT_OPTIONS = new String[]{
+    ApplicationBundle.message("combobox.brace.placement.end.of.line"),
+    ApplicationBundle.message("combobox.brace.placement.next.line.if.wrapped"),
+    ApplicationBundle.message("combobox.brace.placement.next.line"),
+    ApplicationBundle.message("combobox.brace.placement.next.line.shifted"),
+    ApplicationBundle.message("combobox.brace.placement.next.line.shifted2")
+  };
+
+  private static final int[] BRACE_PLACEMENT_VALUES = new int[] {
+    CodeStyleSettings.END_OF_LINE,
+    CodeStyleSettings.NEXT_LINE_IF_WRAPPED,
+    CodeStyleSettings.NEXT_LINE,
+    CodeStyleSettings.NEXT_LINE_SHIFTED,
+    CodeStyleSettings.NEXT_LINE_SHIFTED2
+  };
+
+  private static final String KEEP_WRAPPING = ApplicationBundle.message("title.keep.when.reformatting");
+  private static final String BRACES_WRAPPING = ApplicationBundle.message("combobox.wrap.braces");
   private static final String METHOD_PARAMETERS_WRAPPING = ApplicationBundle.message("combobox.wrap.method.declaration.parameters");
   private static final String METHOD_PARENTHESES = ApplicationBundle.message("checkbox.align.multiline.method.parentheses");
   private static final String CALL_PARAMETERS_WRAPPING = ApplicationBundle.message("combobox.wrap.method.call.arguments");
@@ -63,6 +78,7 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
   private static final String IF_STATEMENT_WRAPPING = ApplicationBundle.message("combobox.wrap.if.statement");
   private static final String WHILE_STATEMENT_WRAPPING = ApplicationBundle.message("combobox.wrap.while.statement");
   private static final String DOWHILE_STATEMENT_WRAPPING = ApplicationBundle.message("combobox.wrap.dowhile.statement");
+  private static final String SWITCH_STATEMENT_WRAPPING = ApplicationBundle.message("combobox.wrap.switch.statement");
   private static final String TRY_STATEMENT_WRAPPING = ApplicationBundle.message("combobox.wrap.try.statement");
   private static final String BINARY_OPERATION_WRAPPING = ApplicationBundle.message("combobox.wrap.binary.operations");
   private static final String EXTENDS_LIST_WRAPPING = ApplicationBundle.message("combobox.wrap.extends.implements.list");
@@ -73,7 +89,6 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
   private static final String ASSIGNMENT_WRAPPING = ApplicationBundle.message("combobox.wrap.assignment.statement");
   private static final String FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("combobox.wrap.assignment.statement");
   private static final String ARRAY_INITIALIZER_WRAPPING = ApplicationBundle.message("combobox.wrap.array.initializer");
-  private static final String LABELED_STATEMENT_WRAPPING = ApplicationBundle.message("combobox.wrap.label.declaration");
   private static final String MODIFIER_LIST_WRAPPING = ApplicationBundle.message("combobox.wrap.modifier.list");
   private static final String ASSERT_STATEMENT_WRAPPING = ApplicationBundle.message("combobox.wrap.assert.statement");
 
@@ -88,77 +103,93 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
   }
 
   protected void initTables() {
-    initSelectionGroup("EXTENDS_LIST_WRAP", EXTENDS_LIST_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_EXTENDS_LIST", ApplicationBundle.message("title.align.when.multiline"), EXTENDS_LIST_WRAPPING);
+    addOption("KEEP_LINE_BREAKS", ApplicationBundle.message("checkbox.keep.when.reformatting.line.breaks"), KEEP_WRAPPING);
+    addOption("KEEP_FIRST_COLUMN_COMMENT", ApplicationBundle.message("checkbox.keep.when.reformatting.comment.at.first.column"), KEEP_WRAPPING);
+    addOption("KEEP_CONTROL_STATEMENT_IN_ONE_LINE", ApplicationBundle.message("checkbox.keep.when.reformatting.control.statement.in.one.line"), KEEP_WRAPPING);
+    addOption("KEEP_SIMPLE_BLOCKS_IN_ONE_LINE", ApplicationBundle.message("checkbox.keep.when.reformatting.simple.blocks.in.one.line"), KEEP_WRAPPING);
+    addOption("KEEP_SIMPLE_METHODS_IN_ONE_LINE", ApplicationBundle.message("checkbox.keep.when.reformatting.simple.methods.in.one.line"), KEEP_WRAPPING);
 
-    initSelectionGroup("EXTENDS_KEYWORD_WRAP", EXTENDS_KEYWORD_WRAPPING, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
+    addOption("CLASS_BRACE_STYLE", ApplicationBundle.message("combobox.brace.placement.class.declaration"), BRACES_WRAPPING, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);
+    addOption("METHOD_BRACE_STYLE", ApplicationBundle.message("combobox.brace.placement.method.declaration"), BRACES_WRAPPING, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);
+    addOption("BRACE_STYLE", ApplicationBundle.message("combobox.brace.placement.other"), BRACES_WRAPPING, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);
 
-    initSelectionGroup("METHOD_PARAMETERS_WRAP", METHOD_PARAMETERS_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_PARAMETERS", ApplicationBundle.message("title.align.when.multiline"), METHOD_PARAMETERS_WRAPPING);
-    initBooleanField("METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.new.line.after.lpar"), METHOD_PARAMETERS_WRAPPING);
-    initBooleanField("METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.place.rpar.on.new.line"), METHOD_PARAMETERS_WRAPPING);
+    addOption("EXTENDS_LIST_WRAP", EXTENDS_LIST_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_EXTENDS_LIST", ApplicationBundle.message("title.align.when.multiline"), EXTENDS_LIST_WRAPPING);
 
-    initBooleanField("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("title.align.when.multiline"), METHOD_PARENTHESES);
+    addOption("EXTENDS_KEYWORD_WRAP", EXTENDS_KEYWORD_WRAPPING, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
 
-    initSelectionGroup("THROWS_LIST_WRAP", THROWS_LIST_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_THROWS_LIST", ApplicationBundle.message("title.align.when.multiline"), THROWS_LIST_WRAPPING);
-    initSelectionGroup("THROWS_KEYWORD_WRAP", THROWS_KEYWORD_WRAPPING, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
+    addOption("METHOD_PARAMETERS_WRAP", METHOD_PARAMETERS_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_PARAMETERS", ApplicationBundle.message("title.align.when.multiline"), METHOD_PARAMETERS_WRAPPING);
+    addOption("METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.new.line.after.lpar"), METHOD_PARAMETERS_WRAPPING);
+    addOption("METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.place.rpar.on.new.line"), METHOD_PARAMETERS_WRAPPING);
 
-    initSelectionGroup("CALL_PARAMETERS_WRAP", CALL_PARAMETERS_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_PARAMETERS_IN_CALLS", ApplicationBundle.message("title.align.when.multiline"), CALL_PARAMETERS_WRAPPING);
-    initBooleanField("PREFER_PARAMETERS_WRAP", ApplicationBundle.message("checkbox.wrap.take.priority.over.call.chain.wrapping"), CALL_PARAMETERS_WRAPPING);
-    initBooleanField("CALL_PARAMETERS_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.new.line.after.lpar"), CALL_PARAMETERS_WRAPPING);
-    initBooleanField("CALL_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.place.rpar.on.new.line"), CALL_PARAMETERS_WRAPPING);
+    addOption("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("title.align.when.multiline"), METHOD_PARENTHESES);
 
-    initSelectionGroup("METHOD_CALL_CHAIN_WRAP", CALL_CHAIN_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("title.align.when.multiline"), CALL_CHAIN_WRAPPING);
+    addOption("THROWS_LIST_WRAP", THROWS_LIST_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_THROWS_LIST", ApplicationBundle.message("title.align.when.multiline"), THROWS_LIST_WRAPPING);
+    addOption("THROWS_KEYWORD_WRAP", THROWS_KEYWORD_WRAPPING, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
 
-    initSelectionField("IF_BRACE_FORCE", ApplicationBundle.message("title.force.braces"), IF_STATEMENT_WRAPPING, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
+    addOption("CALL_PARAMETERS_WRAP", CALL_PARAMETERS_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_PARAMETERS_IN_CALLS", ApplicationBundle.message("title.align.when.multiline"), CALL_PARAMETERS_WRAPPING);
+    addOption("PREFER_PARAMETERS_WRAP", ApplicationBundle.message("checkbox.wrap.take.priority.over.call.chain.wrapping"), CALL_PARAMETERS_WRAPPING);
+    addOption("CALL_PARAMETERS_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.new.line.after.lpar"), CALL_PARAMETERS_WRAPPING);
+    addOption("CALL_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.place.rpar.on.new.line"), CALL_PARAMETERS_WRAPPING);
 
-    initSelectionGroup("FOR_STATEMENT_WRAP", FOR_STATEMENT_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_FOR", ApplicationBundle.message("title.align.when.multiline"), FOR_STATEMENT_WRAPPING);
-    initBooleanField("FOR_STATEMENT_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.new.line.after.lpar"), FOR_STATEMENT_WRAPPING);
-    initBooleanField("FOR_STATEMENT_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.place.rpar.on.new.line"), FOR_STATEMENT_WRAPPING);
-    initSelectionField("FOR_BRACE_FORCE", ApplicationBundle.message("title.force.braces"), FOR_STATEMENT_WRAPPING, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
+    addOption("METHOD_CALL_CHAIN_WRAP", CALL_CHAIN_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("title.align.when.multiline"), CALL_CHAIN_WRAPPING);
 
-    initSelectionField("WHILE_BRACE_FORCE", ApplicationBundle.message("title.force.braces"), WHILE_STATEMENT_WRAPPING, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
-    initSelectionField("DOWHILE_BRACE_FORCE", ApplicationBundle.message("title.force.braces"), DOWHILE_STATEMENT_WRAPPING, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
+    addOption("IF_BRACE_FORCE", ApplicationBundle.message("title.force.braces"), IF_STATEMENT_WRAPPING, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
+    addOption("ELSE_ON_NEW_LINE", ApplicationBundle.message("checkbox.place.else.on.new.line"), IF_STATEMENT_WRAPPING);
+    addOption("SPECIAL_ELSE_IF_TREATMENT", ApplicationBundle.message("checkbox.brace.special.else.if.treatment"), IF_STATEMENT_WRAPPING);
 
-    initBooleanField("ALIGN_GROUP_FIELDS_VARIABLES", ApplicationBundle.message("title.align.when.multiline"), FIELDS_VARIABLES_GROUPS);
+    addOption("FOR_STATEMENT_WRAP", FOR_STATEMENT_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_FOR", ApplicationBundle.message("title.align.when.multiline"), FOR_STATEMENT_WRAPPING);
+    addOption("FOR_STATEMENT_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.new.line.after.lpar"), FOR_STATEMENT_WRAPPING);
+    addOption("FOR_STATEMENT_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.place.rpar.on.new.line"), FOR_STATEMENT_WRAPPING);
+    addOption("FOR_BRACE_FORCE", ApplicationBundle.message("title.force.braces"), FOR_STATEMENT_WRAPPING, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
 
-    initSelectionGroup("BINARY_OPERATION_WRAP", BINARY_OPERATION_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_BINARY_OPERATION", ApplicationBundle.message("title.align.when.multiline"), BINARY_OPERATION_WRAPPING);
-    initBooleanField("BINARY_OPERATION_SIGN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.operation.sign.on.next.line"), BINARY_OPERATION_WRAPPING);
-    initBooleanField("ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION", ApplicationBundle.message("title.align.parenthesised.when.multiline"), BINARY_OPERATION_WRAPPING);
-    initBooleanField("PARENTHESES_EXPRESSION_LPAREN_WRAP", ApplicationBundle.message("checkbox.wrap.new.line.after.lpar"), BINARY_OPERATION_WRAPPING);
-    initBooleanField("PARENTHESES_EXPRESSION_RPAREN_WRAP", ApplicationBundle.message("checkbox.wrap.place.rpar.on.new.line"), BINARY_OPERATION_WRAPPING);
+    addOption("WHILE_BRACE_FORCE", ApplicationBundle.message("title.force.braces"), WHILE_STATEMENT_WRAPPING, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
+    addOption("DOWHILE_BRACE_FORCE", ApplicationBundle.message("title.force.braces"), DOWHILE_STATEMENT_WRAPPING, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
+    addOption("WHILE_ON_NEW_LINE", ApplicationBundle.message("checkbox.place.while.on.new.line"), DOWHILE_STATEMENT_WRAPPING);
 
-    initSelectionGroup("ASSIGNMENT_WRAP", ASSIGNMENT_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_ASSIGNMENT", ApplicationBundle.message("title.align.when.multiline"), ASSIGNMENT_WRAPPING);
-    initBooleanField("PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.assignment.sign.on.next.line"), ASSIGNMENT_WRAPPING);
+    addOption("INDENT_CASE_FROM_SWITCH", ApplicationBundle.message("checkbox.brace.indent.case.from.switch"), SWITCH_STATEMENT_WRAPPING);
 
-    initSelectionGroup("TERNARY_OPERATION_WRAP", TERNARY_OPERATION_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_TERNARY_OPERATION", ApplicationBundle.message("title.align.when.multiline"), TERNARY_OPERATION_WRAPPING);
-    initBooleanField("TERNARY_OPERATION_SIGNS_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.quest.and.colon.signs.on.next.line"), TERNARY_OPERATION_WRAPPING);
+    addOption("CATCH_ON_NEW_LINE", ApplicationBundle.message("checkbox.place.catch.on.new.line"), TRY_STATEMENT_WRAPPING);
+    addOption("FINALLY_ON_NEW_LINE", ApplicationBundle.message("checkbox.place.finally.on.new.line"), TRY_STATEMENT_WRAPPING);
 
-    initSelectionGroup("ARRAY_INITIALIZER_WRAP", ARRAY_INITIALIZER_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION", ApplicationBundle.message("title.align.when.multiline"), ARRAY_INITIALIZER_WRAPPING);
-    initBooleanField("ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.new.line.after.lbrace"), ARRAY_INITIALIZER_WRAPPING);
-    initBooleanField("ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.place.rbrace.on.new.line"), ARRAY_INITIALIZER_WRAPPING);
+    addOption("ALIGN_GROUP_FIELDS_VARIABLES", ApplicationBundle.message("title.align.when.multiline"), FIELDS_VARIABLES_GROUPS);
 
-    initSelectionGroup("LABELED_STATEMENT_WRAP", LABELED_STATEMENT_WRAPPING, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
+    addOption("BINARY_OPERATION_WRAP", BINARY_OPERATION_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_BINARY_OPERATION", ApplicationBundle.message("title.align.when.multiline"), BINARY_OPERATION_WRAPPING);
+    addOption("BINARY_OPERATION_SIGN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.operation.sign.on.next.line"), BINARY_OPERATION_WRAPPING);
+    addOption("ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION", ApplicationBundle.message("title.align.parenthesised.when.multiline"), BINARY_OPERATION_WRAPPING);
+    addOption("PARENTHESES_EXPRESSION_LPAREN_WRAP", ApplicationBundle.message("checkbox.wrap.new.line.after.lpar"), BINARY_OPERATION_WRAPPING);
+    addOption("PARENTHESES_EXPRESSION_RPAREN_WRAP", ApplicationBundle.message("checkbox.wrap.place.rpar.on.new.line"), BINARY_OPERATION_WRAPPING);
 
-    initBooleanField("MODIFIER_LIST_WRAP", ApplicationBundle.message("checkbox.wrap.after.modifier.list"), MODIFIER_LIST_WRAPPING);
+    addOption("ASSIGNMENT_WRAP", ASSIGNMENT_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_ASSIGNMENT", ApplicationBundle.message("title.align.when.multiline"), ASSIGNMENT_WRAPPING);
+    addOption("PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.assignment.sign.on.next.line"), ASSIGNMENT_WRAPPING);
 
-    initSelectionGroup("ASSERT_STATEMENT_WRAP", ASSERT_STATEMENT_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initBooleanField("ASSERT_STATEMENT_COLON_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.colon.signs.on.next.line"), ASSERT_STATEMENT_WRAPPING);
+    addOption("TERNARY_OPERATION_WRAP", TERNARY_OPERATION_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_TERNARY_OPERATION", ApplicationBundle.message("title.align.when.multiline"), TERNARY_OPERATION_WRAPPING);
+    addOption("TERNARY_OPERATION_SIGNS_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.quest.and.colon.signs.on.next.line"), TERNARY_OPERATION_WRAPPING);
 
-    initSelectionGroup("CLASS_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.classes.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initSelectionGroup("METHOD_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.methods.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initSelectionGroup("FIELD_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.fields.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initSelectionGroup("PARAMETER_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.parameters.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initSelectionGroup("VARIABLE_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.local.variables.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    initSelectionGroup("ENUM_CONSTANTS_WRAP", ApplicationBundle.message("checkbox.wrap.enum.constants"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ARRAY_INITIALIZER_WRAP", ARRAY_INITIALIZER_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION", ApplicationBundle.message("title.align.when.multiline"), ARRAY_INITIALIZER_WRAPPING);
+    addOption("ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.new.line.after.lbrace"), ARRAY_INITIALIZER_WRAPPING);
+    addOption("ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.place.rbrace.on.new.line"), ARRAY_INITIALIZER_WRAPPING);
+
+    addOption("MODIFIER_LIST_WRAP", ApplicationBundle.message("checkbox.wrap.after.modifier.list"), MODIFIER_LIST_WRAPPING);
+
+    addOption("ASSERT_STATEMENT_WRAP", ASSERT_STATEMENT_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ASSERT_STATEMENT_COLON_ON_NEXT_LINE", ApplicationBundle.message("checkbox.wrap.colon.signs.on.next.line"), ASSERT_STATEMENT_WRAPPING);
+
+    addOption("CLASS_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.classes.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("METHOD_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.methods.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("FIELD_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.fields.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("PARAMETER_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.parameters.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("VARIABLE_ANNOTATION_WRAP", ApplicationBundle.message("checkbox.wrap.local.variables.annotation"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ENUM_CONSTANTS_WRAP", ApplicationBundle.message("checkbox.wrap.enum.constants"), FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
   }
 
   protected int getRightMargin() {

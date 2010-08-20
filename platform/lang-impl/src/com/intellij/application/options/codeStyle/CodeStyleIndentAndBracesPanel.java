@@ -426,11 +426,16 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
   }
 
   public void apply(CodeStyleSettings settings) {
+    settings.KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
+    settings.KEEP_FIRST_COLUMN_COMMENT = myKeepCommentAtFirstColumn.isSelected();
+    settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = myKeepControlStatementInOneLine.isSelected();
+    settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
+    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = myKeepMethodsInOneLine.isSelected();
+
     settings.ELSE_ON_NEW_LINE = myCbElseOnNewline.isSelected();
     settings.WHILE_ON_NEW_LINE = myCbWhileOnNewline.isSelected();
     settings.CATCH_ON_NEW_LINE = myCbCatchOnNewline.isSelected();
     settings.FINALLY_ON_NEW_LINE = myCbFinallyOnNewline.isSelected();
-
 
     settings.SPECIAL_ELSE_IF_TREATMENT = myCbSpecialElseIfTreatment.isSelected();
     settings.INDENT_CASE_FROM_SWITCH = myCbIndentCaseFromSwitch.isSelected();
@@ -458,11 +463,6 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     settings.WHILE_BRACE_FORCE = getForceBracesValue(myWhileForceCombo);
     settings.DOWHILE_BRACE_FORCE = getForceBracesValue(myDoWhileForceCombo);
 
-    settings.KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
-    settings.KEEP_FIRST_COLUMN_COMMENT = myKeepCommentAtFirstColumn.isSelected();
-    settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = myKeepControlStatementInOneLine.isSelected();
-    settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
-    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = myKeepMethodsInOneLine.isSelected();
 
   }
 

@@ -203,7 +203,8 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
           currentGroupNode.add(newNode);
         }
         rootNode.add(currentGroupNode);
-      } else {
+      }
+      else {
         currentGroupNode.add(newNode);
       }
     }
@@ -319,11 +320,11 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     return false;
   }
 
-  protected void initBooleanGroup(@NotNull String fieldName, @NotNull String title) {
-    initBooleanField(fieldName, title, null);
+  protected void addOption(@NotNull String fieldName, @NotNull String title) {
+    addOption(fieldName, title, null);
   }
 
-  protected void initBooleanField(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
     try {
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
@@ -337,12 +338,12 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
   }
 
-  protected void initSelectionGroup(@NotNull String fieldName, @NotNull String title, @NotNull String[] options, @NotNull int[] values) {
-    initSelectionField(fieldName, title, null, options, values);
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @NotNull String[] options, @NotNull int[] values) {
+    addOption(fieldName, title, null, options, values);
   }
 
-  protected void initSelectionField(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
-                                     @NotNull String[] options, @NotNull int[] values) {
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
+                          @NotNull String[] options, @NotNull int[] values) {
     try {
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
