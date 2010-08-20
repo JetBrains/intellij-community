@@ -132,7 +132,27 @@ public class ActionsTreeUtil {
 
   private static String getName(AnAction action) {
     final String name = action.getTemplatePresentation().getText();
-    return name != null ? name : ActionManager.getInstance().getId(action);
+    if (name != null && !name.isEmpty()) {
+      return name;
+    }
+    else {
+      final String id = ActionManager.getInstance().getId(action);
+      if (id != null) {
+        return id;
+      }
+      if (action instanceof DefaultActionGroup) {
+        final DefaultActionGroup group = (DefaultActionGroup)action;
+        if (group.getChildrenCount() == 0) return "Empty group";
+        final AnAction[] children = group.getChildActionsOrStubs();
+        for (AnAction child : children) {
+          if (!(child instanceof Separator)) {
+            return "group." + getName(child);
+          }
+        }
+        return "Empty unnamed group";
+      }
+      return action.getClass().getName();
+    }
   }
 
   public static Group createGroup(ActionGroup actionGroup,
