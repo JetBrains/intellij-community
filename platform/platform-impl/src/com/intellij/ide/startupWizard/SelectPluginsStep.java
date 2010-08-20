@@ -38,7 +38,7 @@ import java.util.List;
 public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   private JPanel myRootPanel;
   private JList myPluginsList;
-  private JTextArea myDescriptionArea;
+  private JTextPane myDescriptionArea;
   private JButton myEnableAllButton;
   private JButton myDisableAllButton;
   private final List<IdeaPluginDescriptor> myPlugins = new ArrayList<IdeaPluginDescriptor>();

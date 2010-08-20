@@ -23,21 +23,21 @@
       </scrollpane>
       <scrollpane id="9e9c6" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="-1" height="100"/>
+          </grid>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <component id="71236" class="javax.swing.JTextArea" binding="myDescriptionArea">
+          <component id="d75b2" class="javax.swing.JTextPane" binding="myDescriptionArea">
             <constraints/>
             <properties>
               <background swing-color="Label.background"/>
+              <contentType value="text/html"/>
               <editable value="false"/>
               <font swing-font="Label.font"/>
-              <lineWrap value="true"/>
-              <rows value="4"/>
-              <text value="Select a plugin to see its description"/>
-              <wrapStyleWord value="true"/>
+              <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      Please select a plugin to see its description&#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
             </properties>
           </component>
         </children>
