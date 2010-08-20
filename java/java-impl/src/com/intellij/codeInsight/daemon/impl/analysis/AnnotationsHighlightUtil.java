@@ -132,7 +132,7 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkDuplicatedAnnotations(PsiAnnotation annotationToCheck) {
+  public static HighlightInfo checkDuplicateAnnotations(PsiAnnotation annotationToCheck) {
     PsiAnnotationOwner owner = annotationToCheck.getOwner();
     if (owner == null) {
       return null;
