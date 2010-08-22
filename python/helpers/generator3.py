@@ -943,9 +943,9 @@ class ModuleRedeclarator(object):
             if first_param:
                 seq.insert(0, first_param)
         seq = makeNamesUnique(seq)
-        return (func_name + flatten(seq), note)
+        return (seq, note)
 
-    def parseFuncDoc(self, func_doc, func_name, class_name, deco=None):
+    def parseFuncDoc(self, func_doc, func_name, class_name, deco=None, sip_generated=False):
         """
         @param func_doc: __doc__ of the function.
         @param func_name: name of the function.
@@ -953,12 +953,25 @@ class ModuleRedeclarator(object):
         @param deco: decorator to use
         @return (reconstructed_spec, note) or (None, None) if failed.
         """
+        if sip_generated:
+            overloads = []
+            for l in func_doc.split('\n'):
+                signature = func_name + '('
+                i = l.find(signature)
+                if i >= 0:
+                    overloads.append(l[i+len(signature):])
+            if len(overloads) > 1:
+                param_lists = [self.restoreByDocString(s, func_name, class_name, deco)[0] for s in overloads]
+                spec = self.buildSignature(func_name, self.restoreParametersForOverloads(param_lists))
+                return (spec, "restored from __doc__ with multiple overloads")
+
         # find the first thing to look like a definition
         prefix_re = re.compile(func_name + "\s*\(") # "foo(..."
         match = prefix_re.search(func_doc)
         # parse the part that looks right
         if match:
-            spec, note = self.restoreByDocString(func_doc[match.end():], func_name, class_name, deco)
+            params, note = self.restoreByDocString(func_doc[match.end():], func_name, class_name, deco)
+            spec = func_name + flatten(params)
             # if "NOTE" in note:
             # print "------\n", func_name, "@", match.end()
             # print "------\n", func_doc
@@ -996,23 +1009,22 @@ class ModuleRedeclarator(object):
             spec.append("**" + kwarg)
         return flatten(spec)
 
-    def restoreParametersForOverloads(self, methods):
+    def restoreParametersForOverloads(self, parameter_lists):
         param_index = 0
         star_args = False
         optional = False
         params = []
         while True:
-            methods_copy = [m for m in methods]
-            for m in methods_copy:
-                if param_index >= len(m.GetParameters()):
-                    methods.remove(m)
+            parameter_lists_copy = [pl for pl in parameter_lists]
+            for pl in parameter_lists_copy:
+                if param_index >= len(pl):
+                    parameter_lists.remove(pl)
                     optional = True
-            if not methods:
-                methods = methods_copy
+            if not parameter_lists:
                 break
-            name = methods[0].GetParameters()[param_index].Name
-            for m in methods[1:]:
-                if m.GetParameters()[param_index].Name != name:
+            name = parameter_lists[0][param_index]
+            for pl in parameter_lists[1:]:
+                if pl[param_index] != name:
                     star_args = True
                     break
             if star_args: break
@@ -1023,9 +1035,10 @@ class ModuleRedeclarator(object):
             param_index += 1
         if star_args:
             params.append("*__args")
-        if not methods[0].IsStatic:
-            params = ['self'] + params
         return params
+
+    def buildSignature(self, p_name, params):
+        return p_name + '(' + ', '.join(params) + ')'
 
     def restoreClr(self, p_name, p_class):
         """Restore the function signature by the CLR type signature"""
@@ -1043,8 +1056,13 @@ class ModuleRedeclarator(object):
                     return None, None
                 return p_name + '(*args)', 'cannot find CLR method'
 
-        params = self.restoreParametersForOverloads(methods)
-        return p_name + '(' + ', '.join(params) + ')', None
+        parameter_lists = []
+        for m in methods:
+            parameter_lists.append([p.Name for p in m.GetParameters()])
+        params = self.restoreParametersForOverloads(parameter_lists)
+        if not methods[0].IsStatic:
+            params = ['self'] + params
+        return self.buildSignature(p_name, params), None
 
     def redoFunction(self, p_func, p_name, indent, p_class=None, p_modname=None):
         """
@@ -1057,6 +1075,10 @@ class ModuleRedeclarator(object):
 
         # real work
         classname = p_class and p_class.__name__ or None
+        if p_class and hasattr(p_class, '__mro__'):
+            sip_generated = [t for t in p_class.__mro__ if 'sip.simplewrapper' in str(t)]
+        else:
+            sip_generated = False
         deco = None
         deco_comment = ""
         mod_class_method_tuple = (p_modname, classname, p_name)
@@ -1119,7 +1141,7 @@ class ModuleRedeclarator(object):
                 funcdoc = p_func.__doc__
             sig_restored = False
             if isinstance(funcdoc, STR_TYPES):
-                (spec, more_notes) = self.parseFuncDoc(funcdoc, p_name, classname, deco)
+                (spec, more_notes) = self.parseFuncDoc(funcdoc, p_name, classname, deco, sip_generated)
                 sig_restored = spec is not None
                 if more_notes:
                     if sig_note:
