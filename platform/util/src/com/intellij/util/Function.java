@@ -21,6 +21,7 @@ import java.util.Collection;
  * @author max
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings({"unchecked"})
 public interface Function<Param, Result> {
   Result fun(Param param);
 
