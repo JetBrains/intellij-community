@@ -113,12 +113,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
             ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> newCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(myStaticGenericInfo.getCollections());
             for (final DomExtensionImpl extension : collections) {
               newCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(),
-                                                                                                        Collections.<JavaMethod>emptyList(),
-                                                                                                        Collections.<JavaMethod>emptyList(),
-                                                                                                        Collections.<JavaMethod>emptyList(),
-                                                                                                        Collections.<JavaMethod>emptyList(),
-                                                                                                        Collections.<JavaMethod>emptyList(),
-                                                                                                        Collections.<JavaMethod>emptyList())));
+                                                                                                        Collections.<JavaMethod>emptyList()
+              )));
             }
             clearSubTags = true;
             myCollections = newCollections;

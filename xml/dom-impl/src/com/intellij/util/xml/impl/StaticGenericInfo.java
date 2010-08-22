@@ -65,11 +65,12 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
 
       for (final CollectionChildDescriptionImpl description : myCollectionChildrenGetterMethods.values()) {
-        addAdder(description, description.getAdderMethods());
-        addAdder(description, description.getIndexedAdderMethods());
-        addAdder(description, description.getIndexedClassAdderMethods());
-        addAdder(description, description.getInvertedIndexedClassAdderMethods());
-        addAdder(description, description.getClassAdderMethods());
+        final XmlName name = description.getXmlName();
+        addAdders(description, builder.collectionAdders.get(name));
+        addAdders(description, builder.collectionIndexAdders.get(name));
+        addAdders(description, builder.collectionIndexClassAdders.get(name));
+        addAdders(description, builder.collectionClassIndexAdders.get(name));
+        addAdders(description, builder.collectionClassAdders.get(name));
       }
 
       final NotNullFunction<String, CollectionChildDescriptionImpl> mapper = new NotNullFunction<String, CollectionChildDescriptionImpl>() {
@@ -94,7 +95,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     return true;
   }
 
-  private void addAdder(final CollectionChildDescriptionImpl description, final Collection<JavaMethod> methods) {
+  private void addAdders(final CollectionChildDescriptionImpl description, final Collection<JavaMethod> methods) {
     if (methods != null) {
       for (final JavaMethod method : methods) {
         myCollectionChildrenAdditionMethods.put(method.getSignature(), description);
