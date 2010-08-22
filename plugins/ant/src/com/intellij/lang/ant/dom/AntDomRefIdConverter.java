@@ -39,7 +39,8 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     if (s != null) {
       final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
       if (element != null) {
-        return findElementById(element.getContextAntProject(), s);
+        final boolean skipCustomtags = element.getParentOfType(AntDomTypeDef.class, false) != null;
+        return findElementById(element.getContextAntProject(), s, skipCustomtags);
       }
     }
     return null;
@@ -89,14 +90,20 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
   }
 
   @Nullable
-  private static AntDomElement findElementById(AntDomElement from, final String id) {
+  private static AntDomElement findElementById(AntDomElement from, final String id, final boolean skipCustomTags) {
     if (id.equals(from.getId().getRawText())) {
       return from;
     }
     final Ref<AntDomElement> result = new Ref<AntDomElement>(null);
     from.accept(new AntDomRecursiveVisitor() {
+      public void visitAntDomCustomElement(AntDomCustomElement custom) {
+        if (!skipCustomTags) {
+          super.visitAntDomCustomElement(custom);
+        }
+      }
+
       public void visitAntDomElement(AntDomElement element) {
-        if (result.get() != null) {
+        if (result.get() != null || element instanceof AntDomCustomElement) {
           return;
         }
         if (id.equals(element.getId().getRawText())) {
