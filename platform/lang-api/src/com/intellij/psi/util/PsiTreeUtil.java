@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class PsiTreeUtil {
@@ -86,6 +87,19 @@ public class PsiTreeUtil {
       }
       parent = parent.getContext();
     }
+  }
+
+  @Nullable
+  public static PsiElement findCommonParent(@NotNull List<? extends PsiElement> elements) {
+    if (elements.isEmpty())  return null;
+    PsiElement toReturn = null;
+    for (PsiElement element : elements) {
+      if (element == null) continue;
+      toReturn = toReturn == null ? element : findCommonParent(toReturn, element);
+      if (toReturn == null) return null;
+    }
+
+    return toReturn;
   }
 
   @Nullable
@@ -288,6 +302,20 @@ public class PsiTreeUtil {
     return null;
   }
 
+  @Nullable
+  public static <T extends PsiElement> T getTopmostParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    T answer = getParentOfType(element, aClass);
+
+    do {
+      T next = getParentOfType(answer, aClass);
+      if (next == null) break;
+      answer = next;
+    }
+    while (true);
+
+    return answer;
+  }
+
   @Nullable public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     return getParentOfType(element, aClass, true);
   }
@@ -436,6 +464,25 @@ public class PsiTreeUtil {
     PsiElementProcessor.CollectFilteredElements<PsiElement> processor = new PsiElementProcessor.CollectFilteredElements<PsiElement>(filter);
     processElements(element, processor);
     return processor.toArray();
+  }
+
+  @NotNull
+  public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable PsiElement element, final @NotNull Class<T> ... classes)  {
+    PsiElementProcessor.CollectFilteredElements<T> processor = new PsiElementProcessor.CollectFilteredElements<T>(new PsiElementFilter() {
+
+      @Override
+      public boolean isAccepted(PsiElement element) {
+        for (Class<T> clazz: classes) {
+          if (clazz.isInstance(element)) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+    });
+    processElements(element, processor);
+    return processor.getCollection();
   }
 
   public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor processor) {
@@ -713,5 +760,5 @@ public class PsiTreeUtil {
     }
     throw new AssertionError(descendant + " is not a descendant of " + ancestor);
   }
-  
+
 }

@@ -17,12 +17,10 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 
 /**
  * @author peter
@@ -31,13 +29,7 @@ public class BasicToClassNameDelegator extends AbstractBasicToClassNameDelegator
 
   @Override
   protected boolean isClassNameCompletionSupported(CompletionResultSet result, PsiFile file, PsiElement position) {
-    final boolean isJava = file.getLanguage() == StdLanguages.JAVA;
-    if (!isJava && !(file.getLanguage() instanceof XMLLanguage)) return false;
-
-    if (isJava) {
-      if (!(position.getParent() instanceof PsiJavaCodeReferenceElement)) return false;
-      if (((PsiJavaCodeReferenceElement)position.getParent()).getQualifier() != null) return false;
-    }
+    if (!(file.getLanguage() instanceof XMLLanguage)) return false;
 
     final String s = result.getPrefixMatcher().getPrefix();
     if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return false;

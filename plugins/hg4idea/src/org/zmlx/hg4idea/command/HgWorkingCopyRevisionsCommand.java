@@ -13,26 +13,63 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
+/**
+ * Commands to get revision numbers. These are: parents, id, tip.
+ */
 public class HgWorkingCopyRevisionsCommand {
 
-  private final Project project;
+  private final Project myProject;
 
   public HgWorkingCopyRevisionsCommand(Project project) {
-    this.project = project;
+    myProject = project;
   }
 
+  /**
+   * Current repository revision(s).
+   * @param repo repository to work on.
+   * @return List of parent's revision numbers.
+   * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vfs.VirtualFile, org.zmlx.hg4idea.HgRevisionNumber)
+   * TODO: return Pair
+   */
+  @NotNull
   public List<HgRevisionNumber> parents(@NotNull VirtualFile repo) {
-    return getRevisions(repo, "parents");
+    return getRevisions(repo, "parents", null, null);
+  }
+
+  /**
+   * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vfs.VirtualFile, org.zmlx.hg4idea.HgRevisionNumber)
+   */
+  @NotNull
+  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file) {
+    return parents(repo, file, null);
+  }
+
+  /**
+   * Parent(s) of the given revision of the given file. If there are two of them (in the case of merge) the first element of the pair
+   * is the latest parent (i.e. having greater revision number), second one is the earlier parent (having smaller revision number).
+   * @param repo     repository to work on.
+   * @param file     file which revision's parents we are interested in. If null, the history of the whole repository is considered.
+   * @param revision revision number which parent is wanted. If null, the last revision is taken. 
+   * @return One or two (in case of a merge commit) parents of the given revision. Or even zero in case of a fresh repository.
+   *         So one should check pair elements for null.
+   */
+  @NotNull
+  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
+    final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision);
+    switch (revisions.size()) {
+      case 1: return Pair.create(revisions.get(0), null);
+      case 2: return Pair.create(revisions.get(0), revisions.get(1));
+      default: return Pair.create(null, null);
+    }
   }
 
   @Nullable
@@ -49,7 +86,7 @@ public class HgWorkingCopyRevisionsCommand {
 
   @Nullable
   public HgRevisionNumber tip(@NotNull VirtualFile repo) {
-    List<HgRevisionNumber> tips = getRevisions(repo, "tip");
+    List<HgRevisionNumber> tips = getRevisions(repo, "tip", null, null);
     if (tips.size() > 1) {
       throw new IllegalStateException("There cannot be multiple tips");
     }
@@ -61,7 +98,7 @@ public class HgWorkingCopyRevisionsCommand {
 
   @Nullable
   public HgRevisionNumber identify(@NotNull VirtualFile repo) {
-    HgCommandService commandService = HgCommandService.getInstance(project);
+    HgCommandService commandService = HgCommandService.getInstance(myProject);
     HgCommandResult result = commandService.execute(
       repo, "identify", Arrays.asList("--num", "--id")
     );
@@ -78,24 +115,49 @@ public class HgWorkingCopyRevisionsCommand {
     return null;
   }
 
+  /**
+   * Returns the list of revisions returned by one mercurial commands (parents, identify, tip).
+   * Executed a command on the whole repository or on the given file.
+   * If the list contains more than one element ('hg parents' executed during merge), it is sorted by revision number, so that
+   * the latest revision number is the first element of the list.
+   * @param repo     repository to execute on.
+   * @param command  command to execute.
+   * @param file     file which revisions are wanted. If <code><b>null</b></code> then repository revisions are considered.
+   * @param revision revision to execute on. If <code><b>null</b></code> then executed without the '-r' parameter, i.e. on the latest revision.
+   * @return List of revisions.
+   */
   @NotNull
-  private List<HgRevisionNumber> getRevisions(VirtualFile repo, String command) {
-    HgCommandService commandService = HgCommandService.getInstance(project);
-    HgCommandResult result = commandService.execute(
-      repo, command, Arrays.asList("--template", "{rev}|{node|short}\\n")
-    );
+  private List<HgRevisionNumber> getRevisions(@NotNull VirtualFile repo, @NotNull String command, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
+    final List<String> args = new LinkedList<String>();
+    args.add("--template");
+    args.add("{rev}|{node|short}\\n");
+    if (revision != null) {
+      args.add("-r");
+      args.add(revision.getChangeset());
+    }
+    if (file != null) { // NB: this must be the last argument
+      args.add(file.getPath());
+    }
+    final HgCommandResult result = HgCommandService.getInstance(myProject).execute(repo, command, args);
 
     if (result == null) {
       return new ArrayList<HgRevisionNumber>(0);
     }
-    List<String> lines = result.getOutputLines();
-    List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(lines.size());
-    
+    final List<String> lines = result.getOutputLines();
+    final List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(lines.size());
     for(String line: lines) {
-      String[] parts = StringUtils.split(line, '|');
+      final String[] parts = StringUtils.split(line, '|');
       revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1]));
     }
-    
+
+    // sort by descending revision number
+    if (revisions.size() > 1) {
+      Collections.sort(revisions, new Comparator<HgRevisionNumber>() {
+        @Override public int compare(HgRevisionNumber o1, HgRevisionNumber o2) {
+          return o2.compareTo(o1);
+        }
+      });
+    }
     return revisions;
   }
 

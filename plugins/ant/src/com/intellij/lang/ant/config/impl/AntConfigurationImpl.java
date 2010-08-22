@@ -25,7 +25,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
-import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -114,8 +114,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final PsiManager myPsiManager;
   private final Map<ExecutionEvent, Pair<AntBuildFile, String>> myEventToTargetMap =
     new HashMap<ExecutionEvent, Pair<AntBuildFile, String>>();
-  private final List<AntBuildFile> myBuildFiles = new ArrayList<AntBuildFile>();
-  private AntBuildFile[] myBuildFilesArray = null; // cached result of call to myBuildFiles.toArray()
+  private final List<AntBuildFileBase> myBuildFiles = new ArrayList<AntBuildFileBase>();
+  private volatile AntBuildFileBase[] myBuildFilesArray = null; // cached result of call to myBuildFiles.toArray()
   private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = new HashMap<AntBuildFile, AntBuildModelBase>();
   private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new java.util.HashMap<VirtualFile, VirtualFile>();
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
@@ -208,13 +208,17 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return initialized == null || initialized.booleanValue();
   }
 
-  public AntBuildFile[] getBuildFiles() {
-    synchronized (myBuildFiles) {
-      if (myBuildFilesArray == null) {
-        myBuildFilesArray = myBuildFiles.toArray(new AntBuildFile[myBuildFiles.size()]);
+  public AntBuildFileBase[] getBuildFiles() {
+    AntBuildFileBase[] result = myBuildFilesArray;
+    if (result == null) {
+      synchronized (myBuildFiles) {
+        if (myBuildFilesArray == null) {
+          result = myBuildFiles.toArray(new AntBuildFileBase[myBuildFiles.size()]);
+          myBuildFilesArray = result;
+        }
       }
-      return myBuildFilesArray;
     }
+    return result;
   }
 
   public AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException {
@@ -435,7 +439,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     try {
       ActionRunner.runInsideReadAction(new ActionRunner.InterruptibleRunnable() {
         public void run() throws WriteExternalException {
-          for (final AntBuildFile buildFile : getBuildFiles()) {
+          for (final AntBuildFileBase buildFile : getBuildFiles()) {
             final Element element = new Element(BUILD_FILE);
             element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
             ((AntBuildFileBase)buildFile).writeProperties(element);
@@ -534,18 +538,16 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private AntBuildFileBase addBuildFileImpl(final VirtualFile file) throws AntNoFileException {
-    PsiFile psiFile = myPsiManager.findFile(file);
-    if (psiFile == null) {
-      throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
+    PsiFile xmlFile = myPsiManager.findFile(file);
+    if (!(xmlFile instanceof XmlFile)) {
+      throw new AntNoFileException("the file is not an xml file", file);
     }
-    AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
-    psiFile = AntSupport.getAntFile(psiFile);
-    if (psiFile == null) {
-      throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
+    AntSupport.markFileAsAntFile(file, xmlFile.getProject(), true);
+    if (!AntDomFileDescription.isAntFile(((XmlFile)xmlFile))) {
+      throw new AntNoFileException("the file is not recognized as an ANT file", file);
     }
-    final AntFile antFile = (AntFile)psiFile;
-    final AntBuildFileImpl buildFile = new AntBuildFileImpl(antFile, this);
-    antFile.getSourceElement().putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, buildFile);
+    final AntBuildFileImpl buildFile = new AntBuildFileImpl((XmlFile)xmlFile, this);
+    xmlFile.putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, buildFile);
     synchronized (myBuildFiles) {
       myBuildFilesArray = null;
       myBuildFiles.add(buildFile);
@@ -605,11 +607,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private void removeBuildFileImpl(AntBuildFile buildFile) {
-    final AntFile antFile = (AntFile)buildFile.getAntFile();
+    final XmlFile antFile = buildFile.getAntFile();
     if (antFile != null) {
-      final XmlFile xmlFile = antFile.getSourceElement();
-      xmlFile.putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, null);
-      AntSupport.markFileAsAntFile(xmlFile.getVirtualFile(), xmlFile.getViewProvider(), false);
+      antFile.putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, null);
+      AntSupport.markFileAsAntFile(antFile.getOriginalFile().getVirtualFile(), antFile.getProject(), false);
     }
     synchronized (myBuildFiles) {
       myBuildFilesArray = null;
@@ -861,28 +862,39 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
   }
 
-  public void setContextFile(@NotNull AntFile file, @Nullable AntFile context) {
+  public void setContextFile(@NotNull XmlFile file, @Nullable XmlFile context) {
     if (context != null) {
       myAntFileToContextFileMap.put(file.getVirtualFile(), context.getVirtualFile());
     }
     else {
       myAntFileToContextFileMap.remove(file.getVirtualFile());
     }
-    file.clearCaches();
-  }
-
-  public AntFile getContextFile(@Nullable final AntFile file) {
-    return file != null? AntSupport.toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile()), getProject()) : null;
   }
 
   @Nullable
-  public AntFile getEffectiveContextFile(final AntFile file) {
+  public XmlFile getContextFile(@Nullable final XmlFile file) {
+    if (file == null) {
+      return null;
+    }
+    final VirtualFile context = myAntFileToContextFileMap.get(file.getVirtualFile());
+    if (context == null) {
+      return null;
+    }
+    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(context);
+    if (!(psiFile instanceof XmlFile)) {
+      return null;
+    }
+    final XmlFile xmlFile = (XmlFile)psiFile;
+    return AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
+  }
+
+  @Nullable
+  public XmlFile getEffectiveContextFile(final XmlFile file) {
     return new Object() {
-      @Nullable
-      AntFile findContext(final AntFile file, Set<PsiElement> processed) {
+      @Nullable XmlFile findContext(final XmlFile file, Set<PsiElement> processed) {
         if (file != null) {
           processed.add(file);
-          final AntFile contextFile = AntSupport.toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile()), getProject());
+          final XmlFile contextFile = getContextFile(file);
           return (contextFile == null || processed.contains(contextFile))? file : findContext(contextFile, processed);
         }
         return null;

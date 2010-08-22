@@ -155,12 +155,16 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
       }
     }
     if (fileType instanceof XmlLikeFileType) {
-      return tokenType == XmlTokenType.XML_START_TAG_START ||
-             tokenType == XmlTokenType.XML_TAG_END ||
-             tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
-             tokenType == XmlTokenType.XML_TAG_END && isFileTypeWithSingleHtmlTags(fileType) && isEndOfSingleHtmlTag(text, iterator);
+      return isXmlStructuralBrace(iterator, text, fileType, tokenType);
     }
     return false;
+  }
+
+  protected boolean isXmlStructuralBrace(HighlighterIterator iterator, CharSequence text, FileType fileType, IElementType tokenType) {
+    return tokenType == XmlTokenType.XML_START_TAG_START ||
+           tokenType == XmlTokenType.XML_TAG_END ||
+           tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
+           tokenType == XmlTokenType.XML_TAG_END && isFileTypeWithSingleHtmlTags(fileType) && isEndOfSingleHtmlTag(text, iterator);
   }
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {

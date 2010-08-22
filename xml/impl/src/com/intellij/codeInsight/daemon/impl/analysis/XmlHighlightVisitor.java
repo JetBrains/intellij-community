@@ -31,6 +31,7 @@ import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,7 +47,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -679,9 +679,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         final HighlightInfo highlightInfo;
 
         if (contextOfFile != null) {
-          final int offsetInRealDocument = PsiUtilBase.findInjectedElementOffsetInRealDocument(context);
-          highlightInfo = HighlightInfo.createHighlightInfo(defaultInfoType, context.getTextRange().shiftRight(offsetInRealDocument), message);
-        } else {
+          TextRange range = InjectedLanguageManager.getInstance(context.getProject()).injectedToHost(context, context.getTextRange());
+          highlightInfo = HighlightInfo.createHighlightInfo(defaultInfoType, range, message);
+        }
+        else {
           highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message);
         }
 

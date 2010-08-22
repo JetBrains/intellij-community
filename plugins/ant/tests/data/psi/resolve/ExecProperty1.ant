@@ -1,4 +1,4 @@
-<project default="main">
+<project name="n" default="main">
   <target name="main">
     <exec executable="hostname" resultproperty="host.name" failonerror="true"/>
     <property name="host.name.copy" value="${<ref>host.name}"/>

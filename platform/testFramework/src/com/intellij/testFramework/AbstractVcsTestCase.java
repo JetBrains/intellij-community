@@ -215,7 +215,7 @@ public class AbstractVcsTestCase {
     option.setValue(value);
   }
 
-  protected static void verify(final ProcessOutput runResult) {
+  public static void verify(final ProcessOutput runResult) {
     Assert.assertEquals(runResult.getStderr(), 0, runResult.getExitCode());
   }
 

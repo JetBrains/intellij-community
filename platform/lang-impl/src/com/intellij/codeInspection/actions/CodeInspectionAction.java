@@ -52,13 +52,17 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   protected void analyze(@NotNull Project project, AnalysisScope scope) {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManager.getInstance(project));
-    final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
-    inspectionContext.setExternalProfile(myExternalProfile);
-    inspectionContext.setCurrentScope(scope);
-    inspectionContext.doInspections(scope, inspectionManagerEx);
-    myGlobalInspectionContext = null;
+    try {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
+      final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
+      inspectionContext.setExternalProfile(myExternalProfile);
+      inspectionContext.setCurrentScope(scope);
+      inspectionContext.doInspections(scope, inspectionManagerEx);
+    }
+    finally {
+      myGlobalInspectionContext = null;
+    }
   }
 
 

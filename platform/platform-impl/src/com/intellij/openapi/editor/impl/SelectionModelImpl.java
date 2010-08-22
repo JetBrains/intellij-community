@@ -40,9 +40,11 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -448,9 +450,9 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       return;
     }
 
-    VisualPosition caret = myEditor.getCaretModel().getVisualPosition();
-    LogicalPosition lineStart = myEditor.visualToLogicalPosition(new VisualPosition(caret.line, 0));
-    LogicalPosition nextLineStart = myEditor.visualToLogicalPosition(new VisualPosition(caret.line + 1, 0));
+    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLinesRange(myEditor);
+    LogicalPosition lineStart = lines.first;
+    LogicalPosition nextLineStart = lines.second;
 
     int start = myEditor.logicalPositionToOffset(lineStart);
     int end = myEditor.logicalPositionToOffset(nextLineStart);

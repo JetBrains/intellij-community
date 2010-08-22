@@ -4,7 +4,7 @@ import java.util.List;
 public class X<T> {
     private List<T> myList;
 
-    public void set(List<T> list, String s) {
+    public void set(List<T> list, String aaa) {
         myList = list;
     }
 

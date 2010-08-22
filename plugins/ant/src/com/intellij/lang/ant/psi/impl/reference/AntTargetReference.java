@@ -96,7 +96,7 @@ public class AntTargetReference extends AntGenericReference {
       if (psiFile != null) {
         AntFile antFile = AntSupport.getAntFile(psiFile);
         if (antFile != null) {
-          final AntFile context = antConfig.getEffectiveContextFile(antFile);
+          final AntFile context = null/*antConfig.getEffectiveContextFile(antFile)*/;
 
           assert context != null;
 
@@ -109,7 +109,7 @@ public class AntTargetReference extends AntGenericReference {
     }
 
     if (result == null) {
-      final AntFile context = antConfig.getEffectiveContextFile(element.getAntFile());
+      final AntFile context = null/*antConfig.getEffectiveContextFile(element.getAntFile())*/;
 
       assert context != null;
 

@@ -222,7 +222,7 @@ public abstract class PsiAnchor {
     }
 
     public PsiFile getFile() {
-      if (myProject.isDisposed()) return null;
+      if (myProject.isDisposed() || !myVirtualFile.isValid()) return null;
       return PsiManager.getInstance(myProject).findFile(myVirtualFile);
     }
 

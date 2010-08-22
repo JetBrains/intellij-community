@@ -6,7 +6,7 @@ class Test {
     }
 
     class Inner {
-        public Inner(String s) {
+        public Inner(String a) {
             <selection>//To change body of created methods use File | Settings | File Templates.</selection><caret>
         }
     }

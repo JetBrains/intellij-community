@@ -32,18 +32,20 @@ public interface SoftWrapApplianceManager {
    * Defines a callback that is invoked on request to draw target text fragment and that can register new soft wraps in order
    * to correctly represent it.
    * <p/>
-   * Target text fragment to represent belongs to the given char array and lays at <code>[start; end)</code> interval.
+   * Target text fragment to represent belongs to the given char sequence and lays at <code>[start; end)</code> interval.
    * <p/>
    * Please note that it's possible for soft wrap to occur inside <code>[start; end)</code> region - e.g. there is a possible
    * case that particular single token is too long and we want to split it.
    * <p/>
    * <b>Note:</b> it's assumed that this method is called only on editor repainting.
    *
-   * @param chars     target text holder
+   * @param text      target text holder
    * @param start     start offset of the token to process within the given char array (inclusive)
    * @param end       end offset of the token to process within the given char array (exclusive)
    * @param x         <code>'x'</code> coordinate within the given graphics buffer that will be used to start drawing the text
    * @param fontType  font type used for the target text fragment representation
+   * @param temporary defines type of the current call. <code>'Temporary'</code> means that soft wraps registered during
+   *                  the processing should be recalculated on further invocations; they may be reused otherwise
    */
-  void registerSoftWrapIfNecessary(@NotNull char[] chars, int start, int end, int x, int fontType);
+  void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType, boolean temporary);
 }

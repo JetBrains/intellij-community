@@ -15,14 +15,13 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.actions;
 
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.pom.Navigatable;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointPanelAction;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointsPanel;
-import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -45,7 +44,7 @@ public class GoToBreakpointAction<B extends XBreakpoint<?>> extends XBreakpointP
     return navigatable != null && navigatable.canNavigateToSource();
   }
 
-  public void perform(@NotNull final Collection<? extends B> breakpoints, final JComponent parentComponent) {
+  public void perform(@NotNull final Collection<? extends B> breakpoints) {
     B b = breakpoints.iterator().next();
     Navigatable navigatable = b.getNavigatable();
     if (navigatable != null) {

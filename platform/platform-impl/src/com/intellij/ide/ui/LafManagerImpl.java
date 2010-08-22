@@ -339,11 +339,19 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (UIUtil.isUnderAquaLookAndFeel()) {
       final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
-      final Icon icon = getAquaMenuInvertedIcon();
-      if (icon != null) {
-        uiDefaults.put("Menu.invertedArrowIcon", icon);
-      }
+      uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
+      uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
+  }
+
+  @Nullable
+  private static Icon getAquaMenuDisabledIcon() {
+    final Icon arrowIcon = (Icon)UIManager.get("Menu.arrowIcon");
+    if (arrowIcon != null) {
+      return IconLoader.getDisabledIcon(arrowIcon);
+    }
+
+    return null;
   }
 
   @Nullable

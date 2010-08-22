@@ -27,9 +27,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 
 public class JavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
+
+  public static final WhitespacesAndCommentsProcessor GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
+    public int process(final List<IElementType> tokens) {
+      return tokens.size();
+    }
+  };
 
   private JavaParserUtil() { }
 
@@ -89,30 +97,21 @@ public class JavaParserUtil {
   }
 
   public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {
-    return new PsiBuilderAdapter(builder) {
-      private int braceCount = 1;
-      private int lastOffset = -1;
+    final PsiBuilder.Marker pos = builder.mark();
 
-      @Override
-      public IElementType getTokenType() {
-        final IElementType tokenType = super.getTokenType();
-        if (getCurrentOffset() != lastOffset) {
-          if (tokenType == JavaTokenType.LBRACE) {
-            braceCount++;
-          }
-          else if (tokenType == JavaTokenType.RBRACE) {
-            braceCount--;
-          }
-          lastOffset = getCurrentOffset();
-        }
-        return (braceCount == 0 ? null : tokenType);
-      }
+    int braceCount = 1;
+    while (!builder.eof()) {
+      final IElementType tokenType = builder.getTokenType();
+      if (tokenType == JavaTokenType.LBRACE) braceCount++;
+      else if (tokenType == JavaTokenType.RBRACE) braceCount--;
+      if (braceCount == 0) break;
+      builder.advanceLexer();
+    }
+    final int stopAt = builder.getCurrentOffset();
 
-      @Override
-      public boolean eof() {
-        return braceCount == 0 || super.eof();
-      }
-    };
+    pos.rollbackTo();
+
+    return stoppingBuilder(builder, stopAt);
   }
 
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final int stopAt) {
@@ -124,7 +123,7 @@ public class JavaParserUtil {
 
       @Override
       public boolean eof() {
-        return getCurrentOffset() < stopAt || super.eof();
+        return getCurrentOffset() >= stopAt || super.eof();
       }
     };
   }

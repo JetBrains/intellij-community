@@ -23,8 +23,8 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
+import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -86,7 +86,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return SHORT_NAME;
   }
 
-  @Pattern("[a-zA-Z_0-9.]+")
+  @Pattern(VALID_ID_PATTERN)
   @NotNull
   @NonNls
   public String getID() {

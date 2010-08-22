@@ -40,7 +40,7 @@ public class PropertiesSplitter extends BaseSplitter {
     }
     List<CheckArea> results = new ArrayList<CheckArea>();
     final IdentifierSplitter splitter = SplitterFactory.getInstance().getIdentifierSplitter();
-    Matcher matcher = WORD.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
+    Matcher matcher = WORD.matcher(range.substring(text));
     while (matcher.find()) {
       if (matcher.end() - matcher.start() < MIN_RANGE_LENGTH) {
         continue;

@@ -16,6 +16,7 @@
 package com.intellij.testAssistant;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.TestDataPath;
@@ -28,35 +29,47 @@ import java.util.List;
  */
 @TestDataPath("$CONTENT_ROOT/testData/")
 public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestCase {
-  public void testDoTestParameters() throws Exception {
+  public void testDoTestParameters() {
     final List<String> references = doTest();
     assertEquals(1, references.size());
     assertEquals("doTestParameters.java", references.get(0));
   }
 
-  public void testDoFileTest() throws Exception {
+  public void testDoFileTest() {
     final List<String> references = doTest();
     assertEquals(2, references.size());
     assertTrue(references.contains("before"));
     assertTrue(references.contains("after"));
   }
 
-  public void testReferencesInAnyMethod() throws Exception {
+  public void testReferencesInAnyMethod() {
     final List<String> references = doTest();
     assertEquals(1, references.size());
     assertEquals("before", references.get(0));
   }
 
-  public void testTestNameAsParameter() throws Exception {
+  public void testTestNameAsParameter() {
     final List<String> references = doTest();
     assertEquals(1, references.size());
     assertEquals("beforeTestNameAsParameter", references.get(0));
   }
 
-  private List<String> doTest() throws Exception {
+  public void testAbstractMethod() {
+    final List<String> references = doTest();
+    assertEquals(1, references.size());
+    assertEquals("abstractMethod.java", references.get(0));
+  }
+
+  private List<String> doTest() {
     myFixture.configureByFile("referenceCollector/" + getTestName(false) + ".java");
-    final PsiMethod theMethod = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
-    return new TestDataReferenceCollector("", theMethod.getName().substring(4)).collectTestDataReferences(theMethod);
+    final PsiClass[] classes = ((PsiJavaFile)myFixture.getFile()).getClasses();
+    for (PsiClass aClass : classes) {
+      if (aClass.getName().equals("ATest")) {
+        final PsiMethod theMethod = aClass.getMethods()[0];
+        return new TestDataReferenceCollector("", theMethod.getName().substring(4)).collectTestDataReferences(theMethod);
+      }
+    }
+    throw new RuntimeException("Couldn't find class ATest in test data file");
   }
 
   @Override

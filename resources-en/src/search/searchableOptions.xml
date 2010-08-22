@@ -6895,9 +6895,9 @@
     <option name="faces" hit="Use as Faces Config" />
     <option name="actions" hit="VCS Actions" />
     <option name="vcs" hit="VCS Actions" />
-    <option name="list" hit="VCS Quick List..." />
-    <option name="quick" hit="VCS Quick List..." />
-    <option name="vcs" hit="VCS Quick List..." />
+    <option name="list" hit="VCS Operations Popup..." />
+    <option name="quick" hit="VCS Operations Popup..." />
+    <option name="vcs" hit="VCS Operations Popup..." />
     <option name="actions" hit="VCS/LVCS Actions" />
     <option name="lvcs" hit="VCS/LVCS Actions" />
     <option name="vcs" hit="VCS/LVCS Actions" />

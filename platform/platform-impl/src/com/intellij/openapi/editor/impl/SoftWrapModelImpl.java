@@ -152,7 +152,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     Document document = myEditor.getDocument();
     int start = document.getLineStartOffset(documentLine);
     int end = document.getLineEndOffset(documentLine);
-    return getSoftWrapsForRange(start, end);
+    return getSoftWrapsForRange(start, end + 1/* it's theoretically possible that soft wrap is registered just before the line feed,
+                                               * hence, we add '1' here assuming that end line offset points to line feed symbol */
+    );
   }
 
   /**
@@ -172,7 +174,29 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     return result;
   }
 
-  public void registerSoftWrapIfNecessary(@NotNull char[] chars, int start, int end, int x, int fontType) {
+  @Override
+  public void defineApproximateSoftWraps(int line1, int line2) {
+    if (!isSoftWrappingEnabled()) {
+      return;
+    }
+    int startLine = line1;
+    int endLine = line2;
+    if (line1 > line2) {
+      startLine = line2;
+      endLine = line1;
+    }
+
+    // Normalization.
+    Document document = myEditor.getDocument();
+    startLine = Math.max(0, startLine);
+    endLine = Math.max(0, Math.min(endLine, document.getLineCount() - 1));
+
+    myApplianceManager.registerSoftWrapIfNecessary(
+      document.getCharsSequence(), document.getLineStartOffset(startLine), document.getLineEndOffset(endLine), 0, Font.PLAIN, true
+    );
+  }
+
+  public void registerSoftWrapIfNecessary(@NotNull CharSequence text, int start, int end, int x, int fontType) {
     if (!isSoftWrappingEnabled()) {
       return;
     }
@@ -180,7 +204,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
     myActive++;
     try {
-      myApplianceManager.registerSoftWrapIfNecessary(chars, start, end, x, fontType);
+      myApplianceManager.registerSoftWrapIfNecessary(text, start, end, x, fontType, false);
     }
     finally {
       myActive--;
@@ -284,9 +308,36 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     }
   }
 
+  /**
+   * Allows to answer if given visual position points to soft wrap-introduced virtual space.
+   *
+   * @param visual    target visual position to check
+   * @return          <code>true</code> if given visual position points to soft wrap-introduced virtual space;
+   *                  <code>false</code> otherwise
+   */
   @Override
   public boolean isInsideSoftWrap(@NotNull VisualPosition visual) {
+    return isInsideSoftWrap(visual, false);
+  }
+
+  /**
+   * Allows to answer if given visual position points to soft wrap-introduced virtual space or points just before soft wrap.
+   *
+   * @param visual    target visual position to check
+   * @return          <code>true</code> if given visual position points to soft wrap-introduced virtual space;
+   *                  <code>false</code> otherwise
+   */
+  @Override
+  public boolean isInsideOrBeforeSoftWrap(@NotNull VisualPosition visual) {
+    return isInsideSoftWrap(visual, true);
+  }
+
+  private boolean isInsideSoftWrap(@NotNull VisualPosition visual, boolean countBeforeSoftWrap) {
     if (!isSoftWrappingEnabled()) {
+      return false;
+    }
+    SoftWrapModel model = myEditor.getSoftWrapModel();
+    if (!model.isSoftWrappingEnabled()) {
       return false;
     }
     LogicalPosition logical = myEditor.visualToLogicalPosition(visual);
@@ -296,7 +347,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
       return false;
     }
 
-    TextChange softWrap = getSoftWrap(offset);
+    TextChange softWrap = model.getSoftWrap(offset);
     if (softWrap == null) {
       return false;
     }
@@ -309,18 +360,21 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     }
 
     VisualPosition visualBeforeSoftWrap = myEditor.offsetToVisualPosition(offset - 1);
-    int columnOffset = 0;
+    int x = 0;
     LogicalPosition logLineStart = myEditor.visualToLogicalPosition(new VisualPosition(visualBeforeSoftWrap.line, 0));
     if (logLineStart.softWrapLinesOnCurrentLogicalLine > 0) {
       int offsetLineStart = myEditor.logicalPositionToOffset(logLineStart);
-      softWrap = getSoftWrap(offsetLineStart);
+      softWrap = model.getSoftWrap(offsetLineStart);
       if (softWrap != null) {
-        columnOffset = getSoftWrapIndentWidthInColumns(softWrap);
+        x = model.getSoftWrapIndentWidthInColumns(softWrap) * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
       }
     }
-    int width = EditorUtil.textWidthInColumns(myEditor, myEditor.getDocument().getCharsSequence(), offset - 1, offset, columnOffset);
+    int width = EditorUtil.textWidthInColumns(myEditor, myEditor.getDocument().getCharsSequence(), offset - 1, offset, x);
     int softWrapStartColumn = visualBeforeSoftWrap.column  + width;
-    return visual.line > visualBeforeSoftWrap.line || visual.column > softWrapStartColumn;
+    if (visual.line > visualBeforeSoftWrap.line) {
+      return true;
+    }
+    return countBeforeSoftWrap ? visual.column >= softWrapStartColumn : visual.column > softWrapStartColumn;
   }
 
   @Override
@@ -384,6 +438,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
+    if (!isSoftWrappingEnabled()) {
+      return;
+    }
     for (DocumentListener listener : myDocumentListeners) {
       listener.beforeDocumentChange(event);
     }
@@ -391,6 +448,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
   @Override
   public void documentChanged(DocumentEvent event) {
+    if (!isSoftWrappingEnabled()) {
+      return;
+    }
     for (DocumentListener listener : myDocumentListeners) {
       listener.documentChanged(event);
     }

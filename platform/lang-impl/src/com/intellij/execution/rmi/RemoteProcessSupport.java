@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,11 +234,12 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
 
       public void onTextAvailable(ProcessEvent event, Key outputType) {
+        final String text = StringUtil.notNullize(event.getText());
         if (outputType == ProcessOutputTypes.STDERR) {
-          LOG.warn(event.getText());
+          LOG.warn(text.trim());
         }
         else {
-          LOG.info(event.getText());
+          LOG.info(text.trim());
         }
 
         Info result = null;
@@ -248,7 +250,6 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           if (o instanceof PendingInfo) {
             info = (PendingInfo)o;
             if (outputType == ProcessOutputTypes.STDOUT) {
-              final String text = event.getText();
               final String prefix = "Port/ID:";
               if (text != null && text.startsWith(prefix)) {
                 final String pair = text.substring(prefix.length()).trim();
@@ -259,7 +260,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
               }
             }
             else if (outputType == ProcessOutputTypes.STDERR) {
-              info.stderr.append(event.getText());
+              info.stderr.append(text);
             }
           }
           else {

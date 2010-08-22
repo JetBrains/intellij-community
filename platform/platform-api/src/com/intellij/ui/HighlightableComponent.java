@@ -250,7 +250,7 @@ public class HighlightableComponent extends JComponent {
 
     // paint text
 
-    UIUtil.applyRenderingHints(g);
+    applyRenderingHints(g);
     FontMetrics defFontMetrics = getFontMetrics(getFont());
 
     if (myText == null) {
@@ -339,6 +339,10 @@ public class HighlightableComponent extends JComponent {
     }
 
     super.paintComponent(g);
+  }
+
+  protected void applyRenderingHints(Graphics g) {
+    UIUtil.applyRenderingHints(g);
   }
 
   private int getTextOffset() {

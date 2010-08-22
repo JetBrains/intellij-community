@@ -200,6 +200,10 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
     else {
       getRootPane().setDefaultButton(null);
     }
+    JComponent focusComponent = current.getPreferredFocusedComponent();
+    if (focusComponent != null) {
+      focusComponent.requestFocusInWindow();
+    }
   }
 
 
@@ -235,5 +239,10 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
 
   protected Dimension getWindowPreferredSize() {
     return null;
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myModel.getCurrentStep().getPreferredFocusedComponent();
   }
 }

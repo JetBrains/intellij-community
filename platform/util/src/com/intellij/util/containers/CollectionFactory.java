@@ -15,8 +15,12 @@
  */
 package com.intellij.util.containers;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.Stack;
@@ -49,30 +53,49 @@ public class CollectionFactory {
   }
 
   public static <T> ArrayList<T> arrayList() {
-    return new ArrayList<T>();
+    return Lists.newArrayList();
   }
 
   public static <T> ArrayList<T> arrayList(T... elements) {
     return new ArrayList<T>(Arrays.asList(elements));
   }
 
+  public static <T> List<T> arrayList(@NotNull final T[] elements, final int start, final int end) {
+    if (start < 0 || start > end || end > elements.length) throw new IllegalArgumentException("start:" + start + " end:" + end + " length:" + elements.length);
+
+    return new AbstractList<T>() {
+      private final int size = end - start;
+
+      @Override
+      public T get(final int index) {
+        if (index < 0 || index >= size) throw new IndexOutOfBoundsException("index:" + index + " size:" + size);
+        return elements[start + index];
+      }
+
+      @Override
+      public int size() {
+        return size;
+      }
+    };
+  }
+
   public static <T> Stack<T> stack() {
     return new Stack<T>();
   }
 
-  public static <T> HashSet<T> hashSet() {
-    return new HashSet<T>();
+  public static <T> Set<T> hashSet() {
+    return Sets.newHashSet();
   }
 
-  public static <T, V> HashMap<T, V> hashMap() {
-    return new HashMap<T,V>();
+  public static <T, V> Map<T, V> hashMap() {
+    return Maps.newHashMap();
   }
 
   public static <T, V> LinkedHashMap<T, V> linkedMap() {
-    return new LinkedHashMap<T,V>();
+    return Maps.newLinkedHashMap();
   }
 
   public static <T> LinkedHashSet<T> linkedHashSet() {
-    return new LinkedHashSet<T>();
+    return Sets.newLinkedHashSet();
   }
 }

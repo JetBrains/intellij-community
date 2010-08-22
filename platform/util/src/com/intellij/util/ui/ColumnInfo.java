@@ -44,6 +44,11 @@ public abstract class ColumnInfo <Item, Aspect> {
     myName = name;
   }
 
+  @Nullable
+  public Icon getIcon() {
+    return null;
+  }
+
   public String toString() {
     return getName();
   }

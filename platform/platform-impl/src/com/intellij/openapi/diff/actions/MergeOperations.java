@@ -143,7 +143,7 @@ public class MergeOperations {
   }
 
   private static String getSubstring(Document document, TextRange range) {
-    return range.substring(document.getText());
+    return document.getText(range);
   }
 
   private Document getOtherDocument() {

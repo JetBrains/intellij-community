@@ -320,7 +320,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     }
 
     private void registerError(PsiJavaCodeReferenceElement reference, LanguageLevel api) {
-      if (isInProject(reference)) {
+      if (reference != null && isInProject(reference)) {
         myHolder.registerProblem(reference, InspectionsBundle.message("inspection.1.5.problem.descriptor", getPresentable(api)));
       }
     }

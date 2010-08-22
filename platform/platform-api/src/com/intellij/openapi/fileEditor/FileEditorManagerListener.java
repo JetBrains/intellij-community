@@ -44,8 +44,7 @@ public interface FileEditorManagerListener extends EventListener{
     void beforeFileOpened(FileEditorManager source, VirtualFile file);
     void beforeFileClosed(FileEditorManager source, VirtualFile file);
 
-    public static class Adapter implements Before {
-
+    class Adapter implements Before {
       public void beforeFileOpened(FileEditorManager source, VirtualFile file) {
       }
 

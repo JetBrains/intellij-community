@@ -262,15 +262,16 @@ public class FileStatusMap implements Disposable {
     if (old == null) {
       return document.createRangeMarker(scope);
     }
-    TextRange oldRange = !old.isValid() || scope.getEndOffset() >= textLength ? new TextRange(0, textLength) : new TextRange(old.getStartOffset(), old.getEndOffset());
+    TextRange oldRange = new TextRange(old.getStartOffset(), old.getEndOffset());
     TextRange union = scope.union(oldRange);
     if (old.isValid() && union.equals(oldRange)) {
       return old;
     }
-    else {
-      ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)old);
-      return document.createRangeMarker(union);
+    if (union.getEndOffset() > textLength) {
+      union = union.intersection(new TextRange(0, textLength));
     }
+    ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)old);
+    return document.createRangeMarker(union);
   }
 
   public boolean allDirtyScopesAreNull(@NotNull Document document) {

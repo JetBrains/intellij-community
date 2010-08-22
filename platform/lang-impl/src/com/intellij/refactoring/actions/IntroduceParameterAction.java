@@ -24,12 +24,12 @@
  */
 package com.intellij.refactoring.actions;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class IntroduceParameterAction extends BasePlatformRefactoringAction {
   protected boolean isAvailableInEditorOnly() {
@@ -40,16 +40,8 @@ public class IntroduceParameterAction extends BasePlatformRefactoringAction {
     return false;
   }
 
-  protected RefactoringActionHandler getHandler(DataContext dataContext) {
-    final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
-    if (language != null) {
-      return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getIntroduceParameterHandler();
-    }
-
-    return null;
-  }
-
-  protected boolean isAvailableForLanguage(Language language) {
-    return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getIntroduceParameterHandler() != null;
+  @Override
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
+    return provider.getIntroduceParameterHandler();
   }
 }

@@ -107,8 +107,17 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
 
-    if (element.getParent() instanceof PsiMethod && ((PsiMethod)element.getParent()).getNameIdentifier()==element) {
-      return element.getParent();
+    final PsiTypeParameterList typeParameterList = PsiTreeUtil.getParentOfType(element, PsiTypeParameterList.class);
+    if (typeParameterList != null) {
+      return PsiTreeUtil.getParentOfType(typeParameterList, PsiMember.class);
+    }
+
+    final PsiElement elementParent = element.getParent();
+    if (elementParent instanceof PsiMethod && ((PsiMethod)elementParent).getNameIdentifier()==element) {
+      return elementParent;
+    }
+    if (elementParent instanceof PsiClass && ((PsiClass)elementParent).getNameIdentifier()==element) {
+      return elementParent;
     }
 
     final PsiCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
@@ -133,11 +142,6 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
       else {
         return expression.resolveMethod();
       }
-    }
-
-    final PsiTypeParameterList typeParameterList = PsiTreeUtil.getParentOfType(element, PsiTypeParameterList.class);
-    if (typeParameterList != null) {
-      return PsiTreeUtil.getParentOfType(typeParameterList, PsiMember.class);
     }
 
     final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class);

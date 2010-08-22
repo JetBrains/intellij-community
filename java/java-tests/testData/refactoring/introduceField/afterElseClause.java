@@ -1,12 +1,12 @@
 class A {
-    public static final String string;
+    public static final String test2;
 
     public void demo(String val){
         if ("test1".equals(val)){
             //do somethign
         } else {
-            string = "test2";
-            if (string.equals(val)) {
+            test2 = "test2";
+            if (test2.equals(val)) {
                 //... something else
             }
         }

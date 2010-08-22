@@ -197,7 +197,7 @@ public class AbstractPopup implements JBPopup {
     myPopupBorder = PopupBorder.Factory.create(true);
     myShadowed = showShadow;
     myPaintShadow = showShadow && !SystemInfo.isMac && !movable && !resizable && Registry.is("ide.popup.dropShadow");
-    myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner());
+    myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner() && resizable);
     myMayBeParent = mayBeParent;
 
     myContent.add(component, BorderLayout.CENTER);

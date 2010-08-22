@@ -61,7 +61,9 @@ public class PsiScopesUtil {
       if(scope instanceof PsiClass){
         processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, scope);
       }
-      if (!scope.processDeclarations(processor, state, prevParent, entrance)) return false;
+      if (!scope.processDeclarations(processor, state, prevParent, entrance)) {
+        return false; // resolved
+      }
 
       if (scope instanceof PsiModifierListOwner && !(scope instanceof PsiParameter/* important for not loading tree! */)){
         PsiModifierList modifierList = ((PsiModifierListOwner)scope).getModifierList();

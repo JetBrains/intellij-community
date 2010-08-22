@@ -16,6 +16,7 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.Patches;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -46,6 +47,7 @@ public class IdeaMenuUI extends BasicMenuUI{
 
   private static final Border SELECTED_BACKGROUND_PAINTER = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
   private static final Icon INVERTED_ARROW_ICON = (Icon) UIManager.get("Menu.invertedArrowIcon");
+  private static final Icon DISABLED_ARROW_ICON = (Icon) UIManager.get("Menu.disabledArrowIcon");
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -188,8 +190,10 @@ public class IdeaMenuUI extends BasicMenuUI{
       }
       if (useCheckAndArrow()){
         try {
-          if (UIUtil.isUnderAquaLookAndFeel() && buttonmodel.isSelected() && INVERTED_ARROW_ICON != null) {
+          if (SystemInfo.isMac && INVERTED_ARROW_ICON != null && (buttonmodel.isArmed() || buttonmodel.isSelected()) && UIUtil.isUnderAquaLookAndFeel()) {
             INVERTED_ARROW_ICON.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
+          } else if (SystemInfo.isMac && DISABLED_ARROW_ICON != null && !buttonmodel.isEnabled() && UIUtil.isUnderAquaLookAndFeel()) {
+            DISABLED_ARROW_ICON.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
           } else arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
         }
         catch (NullPointerException npe) {
@@ -213,7 +217,7 @@ public class IdeaMenuUI extends BasicMenuUI{
     if (i1 == 0){
       return new MenuElement[0];
     }
-    java.awt.Container container = menuItem.getParent();
+    Container container = menuItem.getParent();
     MenuElement amenuelement1[];
     if (amenuelement[i1 - 1].getComponent() == container){
       amenuelement1 = new MenuElement[i1 + 1];

@@ -39,6 +39,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -331,10 +335,32 @@ public class TestAll implements Test {
   private static String [] getClassRoots() {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
+      System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
       return testRoots.split(";");
     }
     final String[] roots = ExternalClasspathClassLoader.getRoots();
-    return roots != null ? roots : System.getProperty("java.class.path").split(File.pathSeparator);
+    if (roots != null) {
+      System.out.println("Collecting tests from roots specified by classpath.file property: " + Arrays.toString(roots));
+      return roots;
+    }
+    else {
+      final ClassLoader loader = TestAll.class.getClassLoader();
+      if (loader instanceof URLClassLoader) {
+        final URL[] urls = ((URLClassLoader)loader).getURLs();
+        final String[] urlsStrings = new String[urls.length];
+        for (int i = 0; i < urls.length; i++) {
+          try {
+            urlsStrings[i] = urls[i].toURI().toString();
+          }
+          catch (URISyntaxException e) {
+            e.printStackTrace();
+          }
+        }
+        System.out.println("Collecting tests from classloader: " + Arrays.toString(urlsStrings));
+        return urlsStrings;
+      }
+      return System.getProperty("java.class.path").split(File.pathSeparator);
+    }
   }
 
   public TestAll(String packageRoot) throws Throwable {

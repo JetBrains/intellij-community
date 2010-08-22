@@ -15,25 +15,16 @@
  */
 package com.intellij.lang.ant.validation;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntProperty;
-import com.intellij.lang.ant.psi.AntStructuredElement;
-import com.intellij.lang.ant.psi.impl.AntFileImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.lang.ant.dom.AntDomProperty;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AntMissingPropertiesFileInspection extends AntInspection {
 
@@ -51,40 +42,18 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
     return SHORT_NAME;
   }
 
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (file instanceof AntFile) {
-      final AntProject project = ((AntFile)file).getAntProject();
-      if (project != null) {
-        final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-        checkElement(project, manager, problems, isOnTheFly);
-        final int problemCount = problems.size();
-        if (problemCount > 0) {
-          return problems.toArray(new ProblemDescriptor[problemCount]);
+  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+    if (element instanceof AntDomProperty) {
+      final AntDomProperty property = (AntDomProperty)element;
+      final String fileName = property.getFile().getStringValue();
+      if (fileName != null) {
+        final PsiFileSystemItem file = property.getFile().getValue();
+        if (!(file instanceof PropertiesFile)) {
+          holder.createProblem(property.getFile(), AntBundle.message("file.doesnt.exist", fileName));
         }
-      }
-    }
-    return null;
-  }
-
-  private static void checkElement(final AntStructuredElement tag,
-                                   @NotNull InspectionManager manager,
-                                   final List<ProblemDescriptor> problems, boolean isOnTheFly) {
-    for (final PsiElement element : tag.getChildren()) {
-      if (element instanceof AntProperty) {
-        final AntProperty prop = (AntProperty)element;
-        if (AntFileImpl.PROPERTY.equals(prop.getSourceElement().getName())) {
-          final String filename = prop.getFileName();
-          if (filename != null && prop.getPropertiesFile() == null) {
-            problems.add(manager.createProblemDescriptor(prop, AntBundle.message("file.doesnt.exist", filename), isOnTheFly, LocalQuickFix.EMPTY_ARRAY,
-                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-          }
-        }
-      }
-      else if (element instanceof AntStructuredElement) {
-        checkElement((AntStructuredElement)element, manager, problems, isOnTheFly);
       }
     }
   }
+
 }
 

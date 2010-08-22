@@ -18,6 +18,7 @@ package com.intellij.util.xml.reflect;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.ConvertAnnotationImpl;
 import com.intellij.util.xml.impl.DomChildDescriptionImpl;
@@ -64,6 +65,11 @@ public class DomExtensionImpl implements DomExtension {
   @NotNull
   public Type getType() {
     return myType;
+  }
+
+  public DomExtension setDeclaringElement(@NotNull DomElement declaringElement) {
+    putUserData(KEY_DECLARATION, declaringElement);
+    return this;
   }
 
   public DomExtension setConverter(@NotNull Converter converter) {

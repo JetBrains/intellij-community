@@ -447,6 +447,12 @@ public class UninitializedReadCollector {
                     parenthesizedExpression.getExpression();
              return expressionAssignsVariable(innerExpression, variable, stamp,
                      checkedMethods);
+        } else if(expression instanceof PsiInstanceOfExpression) {
+            final PsiInstanceOfExpression instanceOfExpression =
+                    (PsiInstanceOfExpression) expression;
+            final PsiExpression operand = instanceOfExpression.getOperand();
+            return expressionAssignsVariable(operand, variable, stamp,
+                    checkedMethods);
         } else{
             assert false : "unknown expression: " + expression;
             return false;

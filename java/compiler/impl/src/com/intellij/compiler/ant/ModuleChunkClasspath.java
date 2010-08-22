@@ -108,7 +108,9 @@ public class ModuleChunkClasspath extends Path {
                 return true;
               }
 
-              if (!generateRuntimeClasspath && !(orderEntry instanceof ModuleOrderEntry)) {
+              if (!generateRuntimeClasspath &&
+                  !(orderEntry instanceof ModuleOrderEntry) &&
+                  !(orderEntry instanceof ModuleSourceOrderEntry)) {
                 // needed for compilation classpath only
                 final boolean isExported = (orderEntry instanceof ExportableOrderEntry) && ((ExportableOrderEntry)orderEntry).isExported();
                 if (dependencyLevel > 0 && !isExported) {
@@ -119,7 +121,8 @@ public class ModuleChunkClasspath extends Path {
 
               if (orderEntry instanceof JdkOrderEntry) {
                 if (genOptions.forceTargetJdk && !generateRuntimeClasspath) {
-                  pathItems.add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
+                  pathItems
+                    .add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
                 }
               }
               else if (orderEntry instanceof ModuleOrderEntry) {

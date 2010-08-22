@@ -488,20 +488,9 @@ class FindDialog extends DialogWrapper {
   }
 
   public void doHelpAction() {
-    String id;
-    if (myModel.isReplaceState()) {
-      if (myModel.isMultipleFiles()) {
-        id = HelpID.REPLACE_IN_PATH;
-      } else {
-        id = HelpID.REPLACE_OPTIONS;
-      }
-    } else {
-      if (myModel.isMultipleFiles()) {
-        id = HelpID.FIND_IN_PATH;
-      } else {
-        id = HelpID.FIND_OPTIONS;
-      }
-    }
+    String id = myModel.isReplaceState()
+                ? myModel.isMultipleFiles() ? HelpID.REPLACE_IN_PATH : HelpID.REPLACE_OPTIONS
+                : myModel.isMultipleFiles() ? HelpID.FIND_IN_PATH : HelpID.FIND_OPTIONS;
     HelpManager.getInstance().invokeHelp(id);
   }
 
@@ -589,7 +578,7 @@ class FindDialog extends DialogWrapper {
 
     if (editorComponent instanceof EditorTextField) {
       boolean selected = myCbRegularExpressions.isSelectedWhenSelectable();
-      final @NonNls String s = selected ? "*.regexp" : "*.txt";
+      @NonNls final String s = selected ? "*.regexp" : "*.txt";
       FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(s);
 
       if (selected && fileType == FileTypes.UNKNOWN) {
@@ -1027,7 +1016,7 @@ class FindDialog extends DialogWrapper {
         myModuleComboBox.setVisible(true);
       }
       else {
-        assert false;
+        assert false : myModel;
       }
 
       myCbWithSubdirectories.setSelected(myModel.isWithSubdirectories());

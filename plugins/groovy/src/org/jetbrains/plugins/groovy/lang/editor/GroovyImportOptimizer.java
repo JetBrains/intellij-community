@@ -112,6 +112,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       // Add new import statements
       GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers, implicitlyImported);
+      if (oldImports.isEmpty() && newImports.length == 0 && aliased.isEmpty()) {
+        return;
+      }
+
       for (GrImportStatement aliasedImport : aliased) {
         myFile.addImport(aliasedImport);
       }

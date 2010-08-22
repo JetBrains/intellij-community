@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -34,6 +35,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -51,16 +53,22 @@ import java.awt.*;
  *
  * @author rvishnyakov
  */
-public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstractPanel {
+public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstractPanel implements CodeStyleSettingsCustomizable {
+  private static final Logger LOG = Logger.getInstance("com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
 
   private Language myLanguage;
   private LanguageSelector myLanguageSelector;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
   private int myLangSelectionIndex;
   private JTabbedPane tabbedPane;
 
   protected MultilanguageCodeStyleAbstractPanel(CodeStyleSettings settings) {
     super(settings);
+  }
+
+  protected void init() {
+    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+      provider.customizeSettings(this, getSettingsType());
+    }
   }
 
   public void setLanguageSelector(LanguageSelector langSelector) {
@@ -71,10 +79,19 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   public void setPanelLanguage(Language language) {
     myLanguage = language;
     updatePreviewEditor();
+
+    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+      if (provider.getLanguage().is(language)) {
+        provider.customizeSettings(this, getSettingsType());
+      }
+    }
     onLanguageChange(language);
   }
 
   protected abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();
+
+  protected void onLanguageChange(Language language) {
+  }
 
   @Override
   protected String getPreviewText() {
@@ -152,7 +169,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   @Override
   protected void installPreviewPanel(final JPanel previewPanel) {
-    if (getSettingsType() != LanguageCodeStyleSettingsProvider.SettingsType.LANG_SPECIFIC) {
+    if (getSettingsType() != LanguageCodeStyleSettingsProvider.SettingsType.LANGUAGE_SPECIFIC) {
       tabbedPane = new JTabbedPane();
       tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
       Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
@@ -204,7 +221,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     }
   }
 
-
   private void onTabSelection(JTabbedPane tabs) {
     int i = tabs.getSelectedIndex();
     tabs.setComponentAt(myLangSelectionIndex, createDummy());
@@ -221,7 +237,4 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   private static JComponent createDummy() {
     return new JLabel("");
   }
-
-  protected abstract void onLanguageChange(Language language);
-
 }

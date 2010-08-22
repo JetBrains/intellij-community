@@ -9,7 +9,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -17,7 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 
 import java.util.List;
 
@@ -25,23 +23,6 @@ import java.util.List;
  * @author peter
  */
 public class GppReferenceContributor extends PsiReferenceContributor {
-  @Nullable
-  private static PsiType[] getSuperConstructorArguments(GrExpression superAttributeValue) {
-    if (superAttributeValue == null) {
-      return null;
-    }
-
-    final PsiType type = superAttributeValue.getType();
-    if (type == null) {
-      return null;
-    }
-
-    if (type instanceof GrTupleType) {
-      return ((GrTupleType)type).getComponentTypes();
-    }
-
-    return new PsiType[]{type};
-  }
 
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
@@ -58,7 +39,7 @@ public class GppReferenceContributor extends PsiReferenceContributor {
     });
   }
 
-  private static class GppMapMemberReference extends PsiReferenceBase.Poly<GrArgumentLabel> {
+  public static class GppMapMemberReference extends PsiReferenceBase.Poly<GrArgumentLabel> {
 
     public GppMapMemberReference(PsiElement element) {
       super((GrArgumentLabel)element);
@@ -74,7 +55,8 @@ public class GppReferenceContributor extends PsiReferenceContributor {
     public ResolveResult[] multiResolve(boolean incompleteCode) {
       final GrArgumentLabel context = getElement();
       final GrNamedArgument namedArgument = (GrNamedArgument) context.getParent();
-      final PsiClassType classType = LiteralConstructorReference.getTargetConversionType((GrExpression)namedArgument.getParent());
+      final GrExpression map = (GrExpression)namedArgument.getParent();
+      final PsiClassType classType = LiteralConstructorReference.getTargetConversionType(map);
       if (classType != null) {
         final PsiClass psiClass = classType.resolve();
         if (psiClass != null) {
@@ -84,7 +66,10 @@ public class GppReferenceContributor extends PsiReferenceContributor {
 
           final String memberName = getValue();
           if ("super".equals(memberName) && GppTypeConverter.hasTypedContext(myElement)) {
-            applicable.addAll(LiteralConstructorReference.getConstructorCandidates(classType, context, getSuperConstructorArguments(value), false));
+            final LiteralConstructorReference reference = (LiteralConstructorReference)map.getReference();
+            if (reference != null) {
+              return reference.multiResolve(incompleteCode);
+            }
           }
 
           if (value == null || applicable.isEmpty()) {

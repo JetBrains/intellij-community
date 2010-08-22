@@ -29,7 +29,6 @@ import com.intellij.semantic.SemRegistrar;
 import com.intellij.semantic.SemService;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
@@ -49,18 +48,16 @@ import static com.intellij.patterns.XmlPatterns.*;
  */
 public class DomSemContributor extends SemContributor {
   private final SemService mySemService;
-  private final DomManagerImpl myDomManager;
 
-  public DomSemContributor(SemService semService, DomManager domManager) {
+  public DomSemContributor(SemService semService) {
     mySemService = semService;
-    myDomManager = (DomManagerImpl)domManager;
   }
 
   public void registerSemProviders(SemRegistrar registrar) {
     registrar.registerSemElementProvider(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlFile(), new NullableFunction<XmlFile, FileDescriptionCachedValueProvider>() {
       public FileDescriptionCachedValueProvider fun(XmlFile xmlFile) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
-        return new FileDescriptionCachedValueProvider(myDomManager, xmlFile);
+        return new FileDescriptionCachedValueProvider(DomManagerImpl.getDomManager(xmlFile.getProject()), xmlFile);
       }
     });
 
@@ -117,6 +114,7 @@ public class DomSemContributor extends SemContributor {
             }
           }
 
+          final DomManagerImpl myDomManager = parent.getManager();
           final IndexedElementInvocationHandler handler =
             new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
                                                 new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, namespace);
@@ -204,6 +202,7 @@ public class DomSemContributor extends SemContributor {
               //see XmlTagImpl.getAttribute(localName, namespace)
               if (ns.equals(tag.getNamespace()) && localName.equals(attribute.getName()) ||
                   ns.equals(attribute.getNamespace())) {
+                final DomManagerImpl myDomManager = handler.getManager();
                 final AttributeChildInvocationHandler attributeHandler =
                   new AttributeChildInvocationHandler(evaluatedXmlName, description, myDomManager,
                                                       new PhysicalDomParentStrategy(attribute, myDomManager));

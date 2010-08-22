@@ -41,7 +41,7 @@
     <extensionPoint name="xml.implicitNamespaceDescriptorProvider"
                     interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider"/>
 
-    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator"/>
+    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.zencoding.generators.ZenCodingGenerator"/>
     <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter"/>
   </extensionPoints>
 
@@ -54,7 +54,7 @@
     <lang.literalEscaper language="XML" implementationClass="com.intellij.lang.xml.XmlLiteralEscaper"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"
-                            order="first, before basic2ClassName"/>
+                            order="first"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.XmlCharFilter" id="xml"/>
 
@@ -91,6 +91,7 @@
 
     <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
     <fileBasedIndex implementation="com.intellij.xml.index.XmlNamespaceIndex"/>
+    <fileBasedIndex implementation="com.intellij.html.index.Html5CustomAttributesIndex"/>
     <include.provider implementation="com.intellij.xml.util.XIncludeProvider"/>
     <indexedRootsProvider implementation="com.intellij.xml.index.ExternalResourcesRootsProvider"/>
 
@@ -118,7 +119,7 @@
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"/>
 
-    <customLiveTemplate implementation="com.intellij.codeInsight.template.zencoding.XmlZenCodingTemplate"/>
+    <customLiveTemplate implementation="com.intellij.codeInsight.template.zencoding.ZenCodingTemplate"/>
 
     <externalAnnotator language="XML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
     <externalAnnotator language="HTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
@@ -181,9 +182,6 @@
     <codeInsight.wordCompletionFilter language="JSP" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
     <codeInsight.wordCompletionFilter language="JSPX" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
 
-    <lang.fileViewProviderFactory language="XML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
-    <lang.fileViewProviderFactory language="HTML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
-    <lang.fileViewProviderFactory language="XHTML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
 
     <lang.psiStructureViewFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdStructureViewBuilderFactory"/>
     <lang.psiStructureViewFactory language="XML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>

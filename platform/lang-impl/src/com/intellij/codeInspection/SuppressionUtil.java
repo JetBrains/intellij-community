@@ -40,11 +40,15 @@ public class SuppressionUtil {
    * Comment start prefix isn't included, e.g. add '//' for Java/C/JS or '#' for Ruby
    */
   @NonNls
-  public static final String COMMON_SUPPRESS_REGEXP = "\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(\\s*,\\w+)*\\s*\\w*)";
+  public static final String COMMON_SUPPRESS_REGEXP = "\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME +
+                                                      "\\s+(" + LocalInspectionTool.VALID_ID_PATTERN +
+                                                      "(\\s*,\\s*" + LocalInspectionTool.VALID_ID_PATTERN + ")*)\\s*\\w*";
 
   @NonNls
   public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//" + COMMON_SUPPRESS_REGEXP);  // for Java, C, JS line comments
-  @NonNls public static final String ALL = "ALL";
+
+  @NonNls
+  public static final String ALL = "ALL";
 
   private SuppressionUtil() {
   }

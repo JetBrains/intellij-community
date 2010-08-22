@@ -369,7 +369,9 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
   @Override
   public void loadState(State state) {
     synchronized (myStateLock) {
-      myConfigurations.clear();
+      if (!myConfigurations.isEmpty()) {
+        return;
+      }
       for (BranchConfiguration bc : state.CONFIGURATIONS) {
         GitBranchConfiguration n = new GitBranchConfiguration(this, bc.NAME);
         myConfigurations.put(n.getName(), n);

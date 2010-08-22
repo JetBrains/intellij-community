@@ -77,6 +77,7 @@
       <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
       <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
       <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
+      <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsAction" icon="/actions/toggleSoftWrap.png"/>
 
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
       <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
@@ -180,6 +181,7 @@
         <reference ref="EditorToggleShowWhitespaces"/>
         <reference ref="EditorToggleShowLineNumbers"/>
         <reference ref="EditorToggleShowIndentLines" />
+        <reference ref="EditorToggleUseSoftWraps" />
         <separator/>
         <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
         <separator/>
@@ -366,6 +368,7 @@
     <group id="EditorGutterPopupMenu">
       <reference ref="EditorToggleShowLineNumbers"/>
       <reference ref="EditorToggleShowIndentLines" />
+      <reference ref="EditorToggleUseSoftWraps" />
     </group>
 
     <group id="FileChooserToolbar">
@@ -430,8 +433,11 @@
               text="Add Test Notification"/>
       <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
       <separator/>
+      <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction" text="Start Focus Debugger"/>
+      <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI Inspector"/>
+      <separator/>
       <reference ref="MaintenanceGroup"/>
-      
+
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 

@@ -22,7 +22,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -63,8 +62,6 @@ import java.util.*;
  * @author Gregory.Shrago
  */
 public class RepositoryAttachHandler implements LibraryTableAttachHandler {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.maven.utils.RepositoryAttachHandler");
-
   public String getLongName() {
     return "Attach Classes from Repository...";
   }
@@ -180,10 +177,10 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         library.addRoot(url, OrderRootType.CLASSES);
       }
       catch (MalformedURLException e) {
-        LOG.warn(e);
+        MavenLog.LOG.warn(e);
       }
       catch (IOException e) {
-        LOG.warn(e);
+        MavenLog.LOG.warn(e);
       }
     }
   }
@@ -214,7 +211,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
               artifacts = facade.findArtifacts(template, nexusUrl);
             }
             catch (Exception ex) {
-              LOG.warn("Accessing Nexus at: " + nexusUrl, ex);
+              MavenLog.LOG.warn("Accessing Nexus at: " + nexusUrl, ex);
               continue;
             }
             if (artifacts == null) {
@@ -263,7 +260,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
               repositories = manager.getRepositories(nexusUrl);
             }
             catch (Exception ex) {
-              LOG.warn("Accessing Nexus at: " + nexusUrl, ex);
+              MavenLog.LOG.warn("Accessing Nexus at: " + nexusUrl, ex);
               continue;
             }
             repoList.addAll(repositories);
@@ -299,7 +296,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   }
 
   private static void handleError(String message, Exception e) {
-    LOG.error(message, e);
+    MavenLog.LOG.error(message, e);
   }
 
   public static void resolveLibrary(final Project project,

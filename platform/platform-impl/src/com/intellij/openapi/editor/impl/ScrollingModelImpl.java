@@ -142,6 +142,13 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   private Point calcOffsetsToScroll(LogicalPosition pos, ScrollType scrollType, Rectangle viewRect) {
+    // There is a possible case that the user opens huge document with many number of soft-wrapped line.
+    // Suppose that he or she wants to move viewport to such a logical position that many document lines between current
+    // viewport position and the target one are not displayed before. That means that we can't be sure about vertical offset
+    // to be applied to the viewport. Hence, we ask soft wrap model to roughly define soft wraps on a trail.
+    LogicalPosition firstVisibleLineStart = myEditor.xyToLogicalPosition(viewRect.getLocation());
+    myEditor.getSoftWrapModel().defineApproximateSoftWraps(firstVisibleLineStart.line, pos.line);
+
     Point targetLocation = myEditor.logicalPositionToXY(pos);
 
     if (myEditor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
@@ -424,9 +431,10 @@ public class ScrollingModelImpl implements ScrollingModel {
       return new Rectangle(myEndHOffset, myEndVOffset, viewRect.width, viewRect.height);
     }
 
-    public Runnable getStartCommand() {
-      return myStartCommand;
-    }
+    // Commented as the method is not used
+    //public Runnable getStartCommand() {
+    //  return myStartCommand;
+    //}
 
     private void tick() {
       double time = (myTicksCount + 1) / (double)myStepCount;
@@ -496,9 +504,8 @@ public class ScrollingModelImpl implements ScrollingModel {
       double lineDist = myTotalDist / lineHeight;
       double part = (lineDist - 1) / 10;
       if (part > 1) part = 1;
-      int duration = (int)(part * SCROLL_DURATION);
       //System.out.println("duration = " + duration);
-      return duration;
+      return (int)(part * SCROLL_DURATION);
     }
   }
 

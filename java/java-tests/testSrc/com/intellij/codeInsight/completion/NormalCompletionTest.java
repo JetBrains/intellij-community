@@ -467,12 +467,6 @@ public class NormalCompletionTest extends LightCompletionTestCase {
     checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
   }
 
-  public void testNoAllClassesAutoInsert() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    assertStringItems("GregorianCalendar");
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-  }
-
   public void testFinishClassNameWithDot() throws Throwable {
     configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     type('.');

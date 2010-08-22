@@ -75,8 +75,11 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
   }
 
   private static AntDomProject getEffectiveAntProject(GenericAttributeValue attribValue) {
-    // todo: get context (including) project if configured 
-    return attribValue.getParentOfType(AntDomProject.class, false);
+    AntDomProject project = attribValue.getParentOfType(AntDomProject.class, false);
+    if (project != null) {
+      project = project.getContextAntProject();
+    }
+    return project;
   }
 
   public String toString(@Nullable List<File> files, ConvertContext context) {
@@ -103,7 +106,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
       final String path = pathTokenizer.nextToken();
       if (path.length() > 0) {
         final int pathBeginIndex = cpString.indexOf(path, searchFromIndex);
-        final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attributeValue, path, pathBeginIndex);
+        final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attributeValue, path, pathBeginIndex, false);
         ContainerUtil.addAll(result, refSet.getAllReferences());
         searchFromIndex = pathBeginIndex;
       }

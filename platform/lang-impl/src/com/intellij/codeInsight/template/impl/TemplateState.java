@@ -1047,7 +1047,4 @@ public class TemplateState implements Disposable {
     return myTemplate;
   }
 
-  void reset() {
-    myListeners = new ArrayList<TemplateEditingListener>();
-  }
 }

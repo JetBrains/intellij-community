@@ -96,9 +96,16 @@ public class ParseUtil extends ParseUtilBase {
       if (anImport == null || !isEmptyImportList(anImport)) return;
 
       final TreeElement next = (TreeElement)TreeUtil.skipElements(anImport.getTreeNext(), ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET);
-      if (next != null && next != anImport) {
+      if (next != null) {
         anImport.rawRemove();
         next.rawInsertBeforeMe(anImport);
+      }
+      else {
+        final TreeElement last = (TreeElement)root.getLastChildNode();
+        if (last != null && last != anImport) {
+          anImport.rawRemove();
+          last.rawInsertAfterMe(anImport);
+        }
       }
     }
 

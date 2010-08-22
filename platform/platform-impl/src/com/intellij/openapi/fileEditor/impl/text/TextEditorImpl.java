@@ -57,7 +57,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @NotNull
-  public JComponent getComponent() {
+  public TextEditorComponent getComponent() {
     return myComponent;
   }
 

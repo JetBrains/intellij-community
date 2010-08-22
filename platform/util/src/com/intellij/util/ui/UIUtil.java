@@ -207,6 +207,13 @@ public class UIUtil {
     return s;
   }
 
+  public static int getDisplayMnemonicIndex(@NotNull String s) {
+    int idx = s.indexOf('&');
+    if (idx >= 0) return idx;
+
+    return s.indexOf(MNEMONIC);
+  }
+
   public static String replaceMnemonicAmpersand(final String value) {
     if (value.indexOf('&') >= 0) {
       boolean useMacMnemonic = value.contains("&&");

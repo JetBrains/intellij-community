@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ChunkBuildExtension {
@@ -37,7 +38,14 @@ public abstract class ChunkBuildExtension {
 
   public abstract void process(Project project, ModuleChunk chunk, GenerationOptions genOptions, CompositeGenerator generator);
 
+  public void generateProjectTargets(Project project, GenerationOptions genOptions, CompositeGenerator generator) {
+  }
+
   public void generateProperties(final PropertyFileGenerator generator, final Project project, final GenerationOptions options) {
+  }
+
+  public List<String> getCleanTargetNames(Project project, GenerationOptions genOptions) {
+    return Collections.emptyList();
   }
 
   public static String[] getAllTargets(ModuleChunk chunk) {

@@ -90,6 +90,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myFreezeSemaphore = freezeSemaphore;
 
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "", new CompletionLookupArranger(parameters));
+    if (editor.isOneLineMode()) {
+      myLookup.setForceShowAsPopup(true);
+      myLookup.setCancelOnClickOutside(true);
+      myLookup.setCancelOnOtherWindowOpen(true);
+      myLookup.setResizable(false);
+    }
 
     myLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {

@@ -138,7 +138,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionAdapter() {
     public void mouseMoved(final EditorMouseEvent e) {
-      if (e.isConsumed() || myProject.isDisposed()) {
+      if (e.isConsumed() || !myProject.isInitialized()) {
         return;
       }
       MouseEvent mouseEvent = e.getMouseEvent();

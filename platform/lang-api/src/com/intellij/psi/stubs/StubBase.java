@@ -57,7 +57,11 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
 
   @Nullable
   public <P extends PsiElement> StubElement<P> findChildStubByType(final IStubElementType<?, P> elementType) {
-    for (StubElement childStub : getChildrenStubs()) {
+    final List<StubElement> childrenStubs = getChildrenStubs();
+    final int size = childrenStubs.size();
+
+    for (int i = 0; i < size; ++i) {
+      final StubElement childStub = childrenStubs.get(i);
       if (childStub.getStubType() == elementType) {
         return childStub;
       }

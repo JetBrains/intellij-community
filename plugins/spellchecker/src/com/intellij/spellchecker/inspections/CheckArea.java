@@ -48,7 +48,7 @@ public class CheckArea {
   @Nullable
   public String getWord() {
     if (text == null || textRange == null) return null;
-    return text.substring(textRange.getStartOffset(), textRange.getEndOffset());
+    return textRange.substring(text);
   }
 
   @Override

@@ -18,14 +18,9 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class ExtractSuperActionBase extends BasePlatformRefactoringAction {
 
@@ -40,21 +35,6 @@ public abstract class ExtractSuperActionBase extends BasePlatformRefactoringActi
       return handler instanceof ElementsHandler && ((ElementsHandler)handler).isEnabledOnElements(elements);
     }
     return false;
-  }
-
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-    if (file == null) return null;
-    final RefactoringSupportProvider supportProvider =
-      LanguageRefactoringSupport.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
-    return supportProvider != null ? getRefactoringHandler(supportProvider) : null;
-  }
-
-  @Nullable
-  protected abstract RefactoringActionHandler getRefactoringHandler(RefactoringSupportProvider supportProvider);
-
-  protected boolean isAvailableForLanguage(final Language language) {
-    return getRefactoringHandler(LanguageRefactoringSupport.INSTANCE.forLanguage(language)) != null;
   }
 
 }

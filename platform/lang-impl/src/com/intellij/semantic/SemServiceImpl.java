@@ -33,6 +33,7 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -52,7 +53,6 @@ public class SemServiceImpl extends SemService{
   private final MultiMap<SemKey, SemKey> myInheritors = new MultiMap<SemKey, SemKey>();
   private final Project myProject;
 
-  private volatile boolean myInitialized = false;
   private boolean myBulkChange = false;
 
   public SemServiceImpl(Project project, PsiManager psiManager) {
@@ -71,6 +71,61 @@ public class SemServiceImpl extends SemService{
         }
       }
     });
+
+    final MutablePicoContainer container = (MutablePicoContainer)project.getPicoContainer();
+    final String serviceKey = SemService.class.getName();
+    container.unregisterComponent(serviceKey);
+    container.registerComponentInstance(serviceKey, this);
+
+    SemKey[] allKeys = collectProducers();
+
+    cacheKeyHierarchy(allKeys);
+  }
+
+  private void cacheKeyHierarchy(SemKey[] allKeys) {
+    ContainerUtil.process(allKeys, new Processor<SemKey>() {
+      public boolean process(SemKey key) {
+        myInheritors.putValue(key, key);
+        for (SemKey parent : key.getSupers()) {
+          myInheritors.putValue(parent, key);
+          process(parent);
+        }
+        return true;
+      }
+    });
+    for (final SemKey each : myInheritors.keySet()) {
+      final List<SemKey> inheritors = new ArrayList<SemKey>(myInheritors.get(each));
+      Collections.sort(inheritors, KEY_COMPARATOR);
+      myInheritors.put(each, inheritors);
+    }
+  }
+
+  private SemKey[] collectProducers() {
+    final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> map = new MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>>();
+
+    final SemRegistrar registrar = new SemRegistrar() {
+      public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key,
+                                                                                          final ElementPattern<? extends V> place,
+                                                                                          final NullableFunction<V, T> provider) {
+        map.putValue(key, new NullableFunction<PsiElement, SemElement>() {
+          public SemElement fun(PsiElement element) {
+            if (place.accepts(element)) {
+              return provider.fun((V)element);
+            }
+            return null;
+          }
+        });
+      }
+    };
+    for (SemContributor contributor : myProject.getExtensions(SemContributor.EP_NAME)) {
+      contributor.registerSemProviders(registrar);
+    }
+
+    SemKey[] allKeys = map.keySet().toArray(new SemKey[map.size()]);
+    for (final SemKey key : allKeys) {
+      myProducers.put(key, map.get(key));
+    }
+    return allKeys;
   }
 
   public void clearCache() {
@@ -99,63 +154,8 @@ public class SemServiceImpl extends SemService{
     return myBulkChange;
   }
 
-  private void ensureInitialized() {
-    if (myInitialized) return;
-
-    final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> map = new MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>>();
-
-    final SemRegistrar registrar = new SemRegistrar() {
-      public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key,
-                                                                                   final ElementPattern<? extends V> place,
-                                                                                   final NullableFunction<V, T> provider) {
-        map.putValue(key, new NullableFunction<PsiElement, SemElement>() {
-          public SemElement fun(PsiElement element) {
-            if (place.accepts(element)) {
-              return provider.fun((V)element);
-            }
-            return null;
-          }
-        });
-      }
-    };
-    for (SemContributor contributor : myProject.getExtensions(SemContributor.EP_NAME)) {
-      contributor.registerSemProviders(registrar);
-    }
-
-    synchronized (myCache) {
-      if (myInitialized) return;
-
-      assert myProducers.isEmpty();
-      assert myInheritors.isEmpty();
-
-      SemKey[] allKeys = map.keySet().toArray(new SemKey[map.size()]);
-      for (final SemKey key : allKeys) {
-        myProducers.put(key, map.get(key));
-      }
-      ContainerUtil.process(allKeys, new Processor<SemKey>() {
-        public boolean process(SemKey key) {
-          myInheritors.putValue(key, key);
-          for (SemKey parent : key.getSupers()) {
-            myInheritors.putValue(parent, key);
-            process(parent);
-          }
-          return true;
-        }
-      });
-      for (final SemKey each : myInheritors.keySet()) {
-        final List<SemKey> inheritors = new ArrayList<SemKey>(myInheritors.get(each));
-        Collections.sort(inheritors, KEY_COMPARATOR);
-        myInheritors.put(each, inheritors);
-      }
-
-      myInitialized = true;
-    }
-  }
-
   @Nullable
   public <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi) {
-    ensureInitialized();
-
     List<T> cached = _getCachedSemElements(key, psi, true);
     if (cached != null) {
       return cached;
@@ -245,7 +245,7 @@ public class SemServiceImpl extends SemService{
   }
 
   @Override
-  public <T extends SemElement> void clearCachedSemElements(@NotNull PsiElement psi) {
+  public void clearCachedSemElements(@NotNull PsiElement psi) {
     myCache.remove(psi);
   }
 

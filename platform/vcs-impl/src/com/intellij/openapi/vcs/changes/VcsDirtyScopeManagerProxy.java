@@ -84,24 +84,24 @@ class VcsDirtyScopeManagerProxy extends VcsDirtyScopeManager {
     throw new UnsupportedOperationException();
   }
 
-  public boolean filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
+  public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
     if (filesDirty != null) {
       myFiles.addAll(filesDirty);
     }
     if (dirsRecursivelyDirty != null) {
       myDirs.addAll(dirsRecursivelyDirty);
     }
-    return true;
+    return;
   }
 
-  public boolean filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
+  public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
     if (filesDirty != null) {
       myVFiles.addAll(filesDirty);
     }
     if (dirsRecursivelyDirty != null) {
       myVDirs.addAll(dirsRecursivelyDirty);
     }
-    return true;
+    return;
   }
 
   public void callRealManager(final VcsDirtyScopeManager manager) {

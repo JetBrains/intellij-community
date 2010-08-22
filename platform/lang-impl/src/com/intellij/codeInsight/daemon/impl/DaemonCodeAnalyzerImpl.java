@@ -179,7 +179,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   void repaintErrorStripeRenderer(Editor editor) {
-    if (myProject.isDisposed()) return;
+    if (!myProject.isInitialized()) return;
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     final EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
@@ -588,7 +588,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       public void run() {
         if (!myUpdateByTimerEnabled) return;
         if (PowerSaveMode.isEnabled()) return;
-        if (myDisposed || myProject.isDisposed()) return;
+        if (myDisposed || !myProject.isInitialized()) return;
         final Collection<FileEditor> activeEditors = myDaemonListeners.getSelectedEditors();
         if (activeEditors.isEmpty()) return;
         Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());

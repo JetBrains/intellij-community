@@ -15,49 +15,18 @@
  */
 package org.jetbrains.idea.maven.navigator.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
+import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import javax.swing.*;
 
-/**
- * @author Konstantin Bulenkov
- */
-public abstract class MavenTreeAction extends AnAction implements DumbAware {
-  private boolean updated = false;
-
+public abstract class MavenTreeAction extends MavenAction {
   @Override
-  public void update(AnActionEvent e) {
-    if (!updated) { //don't do it in constructor, this is not gonna work
-      final String name = getShortcutSetActionName();
-      if (name != null) {
-        final AnAction action = ActionManager.getInstance().getAction(name);
-        if (action != null) {
-          final String id = ActionManager.getInstance().getId(this);
-          final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-          for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
-            keymap.addShortcut(id, shortcut);
-          }
-
-        }
-      }
-      updated = true;
-    }
-    e.getPresentation().setEnabled(MavenActionUtil.hasProject(e.getDataContext())
-                                   && MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject());
-  }
-
-  @Nullable
-  public String getShortcutSetActionName() {
-    return null;
+  protected boolean isAvailable(AnActionEvent e) {
+    return super.isAvailable(e) && MavenActionUtil.isMavenizedProject(e.getDataContext()) && getTree(e) != null;
   }
 
   @Nullable
@@ -66,14 +35,8 @@ public abstract class MavenTreeAction extends AnAction implements DumbAware {
   }
 
   public static class CollapseAll extends MavenTreeAction {
-    @Override
-    public String getShortcutSetActionName() {
-      return "CollapseAll";
-    }
-
     public void actionPerformed(AnActionEvent e) {
-      final JTree tree = getTree(e);
-
+      JTree tree = getTree(e);
       if (tree == null) return;
 
       int row = tree.getRowCount() - 1;
@@ -85,14 +48,8 @@ public abstract class MavenTreeAction extends AnAction implements DumbAware {
   }
 
   public static class ExpandAll extends MavenTreeAction {
-    @Override
-    public String getShortcutSetActionName() {
-      return "ExpandAll";
-    }
-
     public void actionPerformed(AnActionEvent e) {
-      final JTree tree = getTree(e);
-
+      JTree tree = getTree(e);
       if (tree == null) return;
 
       for (int i = 0; i < tree.getRowCount(); i++) {

@@ -16,8 +16,10 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +34,7 @@ public interface EditChangelistSupport {
 
   ExtensionPointName<EditChangelistSupport> EP_NAME = ExtensionPointName.create("com.intellij.editChangelistSupport");
 
-  void installSearch(JTextComponent name, JTextComponent comment);
+  void installSearch(EditorTextField name, EditorTextField comment);
 
   Consumer<LocalChangeList> addControls(JPanel bottomPanel, @Nullable LocalChangeList initial);
   void changelistCreated(LocalChangeList changeList);

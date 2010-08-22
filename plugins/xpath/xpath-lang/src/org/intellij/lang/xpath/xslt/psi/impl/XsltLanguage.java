@@ -20,7 +20,7 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
@@ -46,9 +46,9 @@ public class XsltLanguage extends Language {
     XsltLanguage() {
         super(ID);
         LanguageFindUsages.INSTANCE.addExplicitExtension(this, new MyFindUsagesProvider());
-        LanguageRefactoringSupport.INSTANCE.addExplicitExtension(this, new DefaultRefactoringSupportProvider() {
+        LanguageRefactoringSupport.INSTANCE.addExplicitExtension(this, new RefactoringSupportProvider() {
             @Override
-            public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
+            public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
                 return element instanceof XsltVariable && element.getUseScope() instanceof LocalSearchScope;
             }
 

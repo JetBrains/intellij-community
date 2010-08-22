@@ -48,6 +48,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   private boolean myForceShowAsPopup = false;
   private String myTitle = null;
+  private boolean myCancelOnClickOutside;
+  private boolean myCancelOnOtherWindowOpen;
+  private boolean myResizable;
 
   public LightweightHint(@NotNull final JComponent component) {
     myComponent = component;
@@ -72,6 +75,18 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public void setSelectingHint(final boolean selectingHint) {
     mySelectingHint = selectingHint;
+  }
+
+  public void setCancelOnClickOutside(final boolean b) {
+    myCancelOnClickOutside = b;
+  }
+
+  public void setCancelOnOtherWindowOpen(final boolean b) {
+    myCancelOnOtherWindowOpen = b;
+  }
+
+  public void setResizable(final boolean b) {
+    myResizable = b;
   }
 
   /**
@@ -105,13 +120,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       myIsRealPopup = true;
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myComponent, null)
         .setRequestFocus(false)
-        .setResizable(myForceShowAsPopup)
-        .setMovable(myForceShowAsPopup)
+        .setResizable(myResizable)
+        .setMovable(myTitle != null)
         .setTitle(myTitle)
         .setShowShadow(false)
         .setCancelKeyEnabled(false)
-        .setCancelOnClickOutside(false)
-        .setCancelOnOtherWindowOpen(false)
+        .setCancelOnClickOutside(myCancelOnClickOutside)
+        .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
         .createPopup();
 
       beforeShow();

@@ -4,6 +4,5 @@ PsiJavaFile:Type3.java
       PsiKeyword:int('int')
     PsiJavaToken:LBRACKET('[')
     PsiJavaToken:RBRACKET(']')
-  PsiJavaToken:LBRACKET('[')
-  PsiErrorElement:']' expected
-    <empty list>
+  PsiErrorElement:Unparsed tokens
+    PsiJavaToken:LBRACKET('[')

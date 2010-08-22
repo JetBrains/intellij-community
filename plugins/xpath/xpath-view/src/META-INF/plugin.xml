@@ -90,6 +90,7 @@
     
     <inspectionToolProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
     <usageGroupingRuleProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
+    <lang.refactoringSupport language="XML" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupportProvider" />
 
     <intentionAction>
       <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>

@@ -85,7 +85,9 @@ public class VcsConfigurationsDialog extends DialogWrapper{
     currentVcs = selectedIndex >= 0 ? (VcsDescriptor)(myVcses.getModel()).getElementAt(selectedIndex) : null;
     String currentName = currentVcs == null ? NONE : currentVcs.getName();
     if (currentVcs != null) {
-      myVcsNameToConfigurableMap.get(currentName).createComponent();
+      final UnnamedConfigurable unnamedConfigurable = myVcsNameToConfigurableMap.get(currentName);
+      unnamedConfigurable.createComponent();
+      unnamedConfigurable.reset();
     }
     final CardLayout cardLayout = (CardLayout)myVcsConfigurationPanel.getLayout();
     cardLayout.show(myVcsConfigurationPanel, currentName);

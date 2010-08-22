@@ -327,6 +327,26 @@ foo = 4"""
    doInplaceRenameTest();
   }
 
+  public void testRenameClassWithLiteralUsages() throws Exception {
+    def file = myFixture.addFileToProject("aaa.groovy", """
+      class Foo {
+        Foo(int a) {}
+      }
+      def x = [2] as Foo
+      def y  = ['super':2] as Foo
+""")
+    myFixture.configureFromExistingVirtualFile file.virtualFile
+
+    myFixture.renameElement myFixture.findClass("Foo"), "Bar"
+    myFixture.checkResult """
+      class Bar {
+        Bar(int a) {}
+      }
+      def x = [2] as Bar
+      def y  = ['super':2] as Bar
+"""
+  }
+
   public void testExtensionOnClassRename() {
     myFixture.configureByText "Foo.gpp", "class Foo {}"
     myFixture.renameElement myFixture.findClass("Foo"), "Bar"
