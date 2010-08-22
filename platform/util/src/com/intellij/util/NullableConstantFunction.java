@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,21 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * 
- * @author peter
  * @author Konstantin Bulenkov
  */
-public interface NotNullFunction<Param, Result> extends NullableFunction<Param, Result> {
-  @NotNull
-  Result fun(final Param dom);
+public final class NullableConstantFunction<Param, Result> implements NullableFunction<Param, Result> {
+  private final Result value;
+
+  public NullableConstantFunction(@Nullable Result value) {
+    this.value = value;
+  }
+
+  @Nullable
+  @Override
+  public Result fun(Param param) {
+    return value;
+  }
 }

@@ -159,11 +159,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   private static Function<Object[], Type> getTypeGetter(final JavaMethod method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     if (parameterTypes.length >= 1 && parameterTypes[0].equals(Class.class)) {
-      return new Function<Object[], Type>() {
-        public Type fun(final Object[] s) {
-          return (Type)s[0];
-        }
-      };
+      return new Function.First<Object, Type>();
     }
 
     if (parameterTypes.length == 2 && parameterTypes[1].equals(Class.class)) {
@@ -185,11 +181,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   private static Function<Object[], Integer> getIndexGetter(final JavaMethod method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     if (parameterTypes.length >= 1 && parameterTypes[0].equals(int.class)) {
-      return new Function<Object[], Integer>() {
-        public Integer fun(final Object[] s) {
-          return (Integer)s[0];
-        }
-      };
+      return new Function.First<Object, Integer>();
     }
 
     if (parameterTypes.length == 2 && parameterTypes[1].equals(int.class)) {
@@ -200,11 +192,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
       };
     }
 
-    return new Function<Object[], Integer>() {
-      public Integer fun(final Object[] s) {
-        return Integer.MAX_VALUE;
-      }
-    };
+    return new ConstantFunction<Object[], Integer>(Integer.MAX_VALUE);
   }
 
   @Nullable

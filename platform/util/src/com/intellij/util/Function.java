@@ -15,11 +15,14 @@
  */
 package com.intellij.util;
 
+import java.util.Collection;
+
 /**
  * @author max
+ * @author Konstantin Bulenkov
  */
-public interface Function<PARAM, RESULT> {
-  RESULT fun(PARAM param);
+public interface Function<Param, Result> {
+  Result fun(Param param);
 
   Function ID = new Function() {
     public Object fun(final Object o) {
@@ -27,4 +30,25 @@ public interface Function<PARAM, RESULT> {
     }
   };
   Function NULL = NullableFunction.NULL;
+
+  final class Self<P, R> implements Function<P, R> {
+    @Override
+    public R fun(P p) {
+      return (R)p;
+    }
+  }
+
+  final class First<P, R extends P> implements Function<P[], R> {
+    @Override
+    public R fun(P[] ps) {
+      return (R)ps[0];
+    }
+  }
+
+  final class FirstInCollection<P, R extends P> implements Function<Collection<P>, R> {
+    @Override
+    public R fun(Collection<P> ps) {
+      return (R)ps.iterator().next();
+    }
+  }
 }

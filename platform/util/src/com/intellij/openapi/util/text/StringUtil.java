@@ -18,10 +18,7 @@ package com.intellij.openapi.util.text;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
@@ -37,10 +34,26 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class StringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
   @NonNls private static final String VOWELS = "aeiouy";
   private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
+  public static final NotNullFunction<String, String> QUOTER = new NotNullFunction<String, String>() {
+    @NotNull
+    public String fun(String s) {
+      return "\"" + s + "\"";
+    }
+  };
+
+  public static <T> Function<T, String> createToStringFunction(Class<T> cls) {
+    return new Function<T, String>() {
+      @Override
+      public String fun(T o) {
+        return o.toString();
+      }
+    };
+  }
 
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);

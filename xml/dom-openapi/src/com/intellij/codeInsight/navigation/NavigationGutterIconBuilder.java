@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -155,11 +156,14 @@ public class NavigationGutterIconBuilder<T> {
 
   public LineMarkerInfo createLineMarkerInfo(PsiElement element) {
     final MyNavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
-    return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), renderer.getIcon(), Pass.UPDATE_OVERRIDEN_MARKERS, new NullableFunction<PsiElement, String>() {
-      public String fun(final PsiElement element) {
-        return renderer.getTooltipText();
-      }
-    }, renderer, renderer.getAlignment());
+    final String tooltip = renderer.getTooltipText();
+    return new LineMarkerInfo<PsiElement>(element,
+                                          element.getTextRange(),
+                                          renderer.getIcon(),
+                                          Pass.UPDATE_OVERRIDEN_MARKERS,
+                                          tooltip == null ? null : new ConstantFunction<PsiElement, String>(tooltip),
+                                          renderer,
+                                          renderer.getAlignment());
   }
 
   private MyNavigationGutterIconRenderer createGutterIconRenderer(final Project project) {
