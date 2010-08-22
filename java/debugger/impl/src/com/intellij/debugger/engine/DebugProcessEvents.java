@@ -34,6 +34,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -134,7 +135,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
             final EventSet eventSet = eventQueue.remove();
             if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
               int processed = 0;
-              for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext(); ) {
+              for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
                 final Event event = eventIterator.nextEvent();
                 if (event instanceof MethodExitEvent) {
                   if (myReturnValueWatcher.processMethodExitEvent((MethodExitEvent)event)) {
@@ -152,7 +153,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
               protected void action() throws Exception {
                 final SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(eventSet);
 
-                for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext(); ) {
+                for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
                   final Event event = eventIterator.nextEvent();
 
                   //if (LOG.isDebugEnabled()) {
@@ -180,7 +181,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                     else if (event instanceof LocatableEvent) {
                       processLocatableEvent(suspendContext, (LocatableEvent)event);
                     }
-                    else if (event instanceof ClassUnloadEvent){
+                    else if (event instanceof ClassUnloadEvent) {
                       processDefaultEvent(suspendContext);
                     }
                   }
@@ -205,6 +206,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
             throw e;
           }
           catch (VMDisconnectedException e) {
+            throw e;
+          }
+          catch (ProcessCanceledException e) {
             throw e;
           }
           catch (Throwable e) {
