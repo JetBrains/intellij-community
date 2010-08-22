@@ -251,9 +251,9 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     buildMethodMaps();
     final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<AbstractDomChildDescriptionImpl>();
-    list.addAll(myAttributes.getDescriptions());
-    list.addAll(myFixed.getDescriptions());
-    list.addAll(myCollections.getDescriptions());
+    myAttributes.dumpDescriptions(list);
+    myFixed.dumpDescriptions(list);
+    myCollections.dumpDescriptions(list);
     ContainerUtil.addIfNotNull(getCustomNameChildrenDescription(), list);
     return list;
   }

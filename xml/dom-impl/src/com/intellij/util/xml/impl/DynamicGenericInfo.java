@@ -17,9 +17,10 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.semantic.SemService;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +28,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.*;
-import com.intellij.semantic.SemService;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,6 @@ import java.util.Set;
 public class DynamicGenericInfo extends DomGenericInfoEx {
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
-  private final Project myProject;
   private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
   private volatile boolean myInitialized;
   private volatile ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
@@ -52,10 +51,9 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   private volatile ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
   private volatile CustomDomChildrenDescriptionImpl myCustomChildren;
 
-  public DynamicGenericInfo(@NotNull final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo, final Project project) {
+  public DynamicGenericInfo(@NotNull final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo) {
     myInvocationHandler = handler;
     myStaticGenericInfo = staticGenericInfo;
-    myProject = project;
 
     myAttributes = staticGenericInfo.getAttributes();
     myFixeds = staticGenericInfo.getFixed();
@@ -84,7 +82,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
 
         if (registrar != null) {
-          final SemService semService = SemService.getSemService(myProject);
+          final SemService semService = SemService.getSemService(myInvocationHandler.getManager().getProject());
 
           final List<DomExtensionImpl> fixeds = registrar.getFixeds();
           final List<DomExtensionImpl> collections = registrar.getCollections();
@@ -146,8 +144,9 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   private DomExtensionsRegistrarImpl runDomExtenders() {
     DomExtensionsRegistrarImpl registrar = null;
     final DomElement domElement = myInvocationHandler.getProxy();
+    final Project project = myInvocationHandler.getManager().getProject();
     for (final DomExtenderEP extenderEP : Extensions.getExtensions(DomExtenderEP.EP_NAME)) {
-      registrar = extenderEP.extend(myProject, domElement, registrar);
+      registrar = extenderEP.extend(project, domElement, registrar);
     }
 
     final AbstractDomChildDescriptionImpl description = myInvocationHandler.getChildDescription();
@@ -186,9 +185,9 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     checkInitialized();
     final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<AbstractDomChildDescriptionImpl>();
-    list.addAll(myAttributes.getDescriptions());
-    list.addAll(myFixeds.getDescriptions());
-    list.addAll(myCollections.getDescriptions());
+    myAttributes.dumpDescriptions(list);
+    myFixeds.dumpDescriptions(list);
+    myCollections.dumpDescriptions(list);
     ContainerUtil.addIfNotNull(myStaticGenericInfo.getCustomNameChildrenDescription(), list);
     return list;
   }
