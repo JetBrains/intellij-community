@@ -35,12 +35,12 @@ import java.util.Set;
  *         Date: Apr 16, 2010
  */
 public class AntDomRefIdConverter extends Converter<AntDomElement> implements CustomReferenceConverter<AntDomElement>{
+
   public AntDomElement fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s != null) {
       final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
       if (element != null) {
-        final boolean skipCustomtags = element.getParentOfType(AntDomTypeDef.class, false) != null;
-        return findElementById(element.getContextAntProject(), s, skipCustomtags);
+        return findElementById(element.getContextAntProject(), s, CustomAntElementsRegistry.ourIsBuildingClasspathForCustomTagLoading.get());
       }
     }
     return null;
