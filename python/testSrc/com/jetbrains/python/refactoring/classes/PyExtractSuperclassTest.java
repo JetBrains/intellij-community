@@ -1,7 +1,6 @@
 package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
@@ -17,9 +16,13 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     doHelperTest("Foo", "Suppa", null, ".foo");
   }
 
+  public void testWithSuper() throws Exception {
+    doHelperTest("Foo", "Suppa", null, ".foo");
+  }
+
   private void doHelperTest(final String className, final String superclassName, final String expectedError, final String... membersName) throws Exception {
     try {
-    String baseName = getTestName(true);
+    String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
     myFixture.configureByFile(baseName + ".before.py");
     final PyClass clazz = findClass(className);
     final List<PyMemberInfo> members = new ArrayList<PyMemberInfo>();
@@ -41,10 +44,5 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
       if (expectedError == null) throw e;
       assertEquals(expectedError, e.getMessage());
     }
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/refactoring/extractsuperclass/";
   }
 }

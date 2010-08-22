@@ -13,6 +13,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
@@ -75,7 +76,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
 
     final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
 
-    final List<PsiElement> superClassesElements = PyClassRefactoringUtil.removeAndGetSuperClasses(myClass, superClasses);
+    final List<PyExpression> superClassesElements = PyClassRefactoringUtil.removeAndGetSuperClasses(myClass, superClasses);
 
     for (UsageInfo usage : usages) {
       final PyClass targetClass = (PyClass)usage.getElement();

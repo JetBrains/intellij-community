@@ -25,6 +25,9 @@ public interface PyClass extends
   @NotNull
   PyStatementList getStatementList();
 
+  @Nullable
+  PyArgumentList getSuperClassExpressionList(); 
+
   @NotNull
   PyExpression[] getSuperClassExpressions();
 
