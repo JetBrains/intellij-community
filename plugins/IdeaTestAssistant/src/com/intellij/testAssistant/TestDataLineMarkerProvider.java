@@ -34,7 +34,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
       List<String> fileNames = new TestDataReferenceCollector(testDataPath, name.substring(4)).collectTestDataReferences(method);
       if (fileNames.size() > 0) {
         return new LineMarkerInfo<PsiMethod>(method, method.getTextOffset(), Icons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null,
-                                             new TestDataNavigationHandler(fileNames));
+                                             new TestDataNavigationHandler());
       }
     }
     return null;
