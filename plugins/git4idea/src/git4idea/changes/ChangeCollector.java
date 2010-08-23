@@ -258,7 +258,7 @@ class ChangeCollector {
         StringTokenizer tokenizer = new StringTokenizer(output, "\n\r");
         while (tokenizer.hasMoreTokens()) {
           final String s = tokenizer.nextToken();
-          Change ch = new Change(null, GitContentRevision.createRevision(myVcsRoot, s, null, myProject, false), FileStatus.ADDED);
+          Change ch = new Change(null, GitContentRevision.createRevision(myVcsRoot, s, null, myProject, false, false), FileStatus.ADDED);
           myChanges.add(ch);
         }
       }
@@ -333,8 +333,8 @@ class ChangeCollector {
           // TODO handle conflict delete-modify
           // TODO handle conflict rename-delete
           // assume modify-modify conflict
-          ContentRevision before = GitContentRevision.createRevision(myVcsRoot, file, new GitRevisionNumber("orig_head"), myProject, false);
-          ContentRevision after = GitContentRevision.createRevision(myVcsRoot, file, null, myProject, false);
+          ContentRevision before = GitContentRevision.createRevision(myVcsRoot, file, new GitRevisionNumber("orig_head"), myProject, false, true);
+          ContentRevision after = GitContentRevision.createRevision(myVcsRoot, file, null, myProject, false, false);
           myChanges.add(new Change(before, after, FileStatus.MERGED_WITH_CONFLICTS));
         }
         else {
