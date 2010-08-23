@@ -2,6 +2,7 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,13 +22,18 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
   @Override
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
-    commandLine.getParametersList().addParametersString(myConfig.getInterpreterOptions());
+    ParametersList parametersList = commandLine.getParametersList();
+    ParamsGroup exe_options = parametersList.getParamsGroup(GROUP_EXE_OPTIONS);
+    assert exe_options != null;
+    exe_options.addParametersString(myConfig.getInterpreterOptions());
 
+    ParamsGroup script_parameters = parametersList.getParamsGroup(GROUP_EXE_OPTIONS);
+    assert script_parameters != null;
     if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
-      commandLine.addParameter(myConfig.getScriptName());
+      script_parameters.addParameter(myConfig.getScriptName());
     }
 
-    commandLine.getParametersList().addParametersString(myConfig.getScriptParameters());
+    script_parameters.addParametersString(myConfig.getScriptParameters());
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());

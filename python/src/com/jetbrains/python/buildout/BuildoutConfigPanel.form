@@ -30,7 +30,7 @@
         </constraints>
         <properties>
           <editable value="false"/>
-          <text value=""/>
+          <text value="Set to &lt;buildout-dir&gt;/bin/django.py for proper Django support "/>
           <wrapStyleWord value="true"/>
         </properties>
         <clientProperties>

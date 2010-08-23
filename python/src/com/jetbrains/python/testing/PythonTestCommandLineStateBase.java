@@ -3,6 +3,7 @@ package com.jetbrains.python.testing;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -65,7 +66,9 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
       flavor.addToPythonPath(cmd, pythonPath);
     }
 
-    cmd.getParametersList().addParametersString(myConfiguration.getInterpreterOptions());
+    ParamsGroup exe_options = cmd.getParametersList().getParamsGroup(GROUP_EXE_OPTIONS);
+    assert exe_options != null;
+    exe_options.addParametersString(myConfiguration.getInterpreterOptions());
     addTestRunnerParameters(cmd);
 
     cmd.setPassParentEnvs(myConfiguration.isPassParentEnvs());

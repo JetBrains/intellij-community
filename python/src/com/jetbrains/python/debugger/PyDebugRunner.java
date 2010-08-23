@@ -3,10 +3,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
@@ -61,7 +58,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     final PythonCommandLineState pyState = (PythonCommandLineState)state;
     final CommandLinePatcher debug_server_patcher = new CommandLinePatcher() {
       public void patchCommandLine(GeneralCommandLine commandLine) {
-        final String[] args = new String[]{
+        final String[] debugger_args = new String[]{
           PythonHelpersLocator.getHelperPath("pydev/pydevd.py"),
           "--client", "127.0.0.1",
           "--port", String.valueOf(serverSocket.getLocalPort()),
@@ -69,17 +66,17 @@ public class PyDebugRunner extends GenericProgramRunner {
         };
         // script name is the last parameter; all other params are for python interpreter; insert just before name
         final ParametersList parameters_list = commandLine.getParametersList();
-        int parameter_offset = pyState.getInterpreterOptionsCount();
+
+        ParamsGroup debug_params = parameters_list.getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER);
+        assert debug_params != null;
+        ParamsGroup exe_params = parameters_list.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
+        assert exe_params != null;
+
         final PythonSdkFlavor flavor = pyState.getConfig().getSdkFlavor();
         if (flavor != null) {
-          final Collection<String> options = flavor.getExtraDebugOptions();
-          for (String option : options) {
-            parameters_list.addAt(parameter_offset++, option);
-          }
+          for (String option : flavor.getExtraDebugOptions()) exe_params.addParameter(option);
         }
-        for (int i = 0; i < args.length; i++) {
-          parameters_list.addAt(i + parameter_offset, args[i]);
-        }
+        for (String s : debugger_args) debug_params.addParameter(s);
       }
     };
     RunProfile profile = env.getRunProfile();

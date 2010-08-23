@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -27,6 +28,12 @@ import java.util.Map;
  * @author Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
+
+  // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
+
+  public static final String GROUP_EXE_OPTIONS = "Exe Options";
+  public static final String GROUP_DEBUGGER = "Debugger";
+  public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
   private final List<Filter> myFilters;
 
@@ -99,6 +106,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
     GeneralCommandLine commandLine = new GeneralCommandLine();
 
     setRunnerPath(commandLine);
+
+    // define groups
+    ParametersList params = commandLine.getParametersList();
+    params.addParamsGroup(GROUP_EXE_OPTIONS);
+    params.addParamsGroup(GROUP_DEBUGGER);
+    params.addParamsGroup(GROUP_SCRIPT);
 
     buildCommandLineParameters(commandLine);
 

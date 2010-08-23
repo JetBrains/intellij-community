@@ -1,6 +1,7 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.jetbrains.python.PythonHelpersLocator;
 
@@ -22,8 +23,10 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
   }
 
   protected void addTestRunnerParameters(GeneralCommandLine cmd) {
-    cmd.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), UTRUNNER_PY).getAbsolutePath());
-    cmd.addParameters(getTestSpecs());
+    ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
+    assert script_params != null;
+    script_params.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), UTRUNNER_PY).getAbsolutePath());
+    script_params.addParameters(getTestSpecs());
   }
 
   @Override

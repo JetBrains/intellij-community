@@ -6,8 +6,10 @@ import com.intellij.facet.FacetType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.appengine.facet.AppEngineFacetType;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +59,12 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       }
     }
     return null;
+  }
+
+  @Override
+  public void initFacet() {
+    BuildoutFacetConfiguration config = getConfiguration();
+    config.setPaths(extractFromScript(LocalFileSystem.getInstance().findFileByPath(config.getScriptName())));
   }
 
   /**
