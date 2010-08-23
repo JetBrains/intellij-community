@@ -16,22 +16,23 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.EventDispatcher;
@@ -50,8 +51,9 @@ public class EditorTracker extends AbstractProjectComponent {
 
   private final WindowManager myWindowManager;
   private final EditorFactory myEditorFactory;
-  private final FileEditorManager myFileEditorManager;
-  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private final ToolWindowManager myToolwindowManager;
+
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) 
+  private final ToolWindowManager myToolwindowManager;
 
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
   private final Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
@@ -67,23 +69,21 @@ public class EditorTracker extends AbstractProjectComponent {
   //todo:
   //toolwindow manager is unfortunately needed since
   //it actually initializes frame in WindowManager
-  public EditorTracker(Project project, final WindowManager windowManager, final EditorFactory editorFactory,
-                       final FileEditorManager fileEditorManager, ToolWindowManager toolwindowManager) {
+  public EditorTracker(Project project, final WindowManager windowManager, final EditorFactory editorFactory, ToolWindowManager toolwindowManager) {
     super(project);
     myWindowManager = windowManager;
     myEditorFactory = editorFactory;
-    myFileEditorManager = fileEditorManager;
     myToolwindowManager = toolwindowManager;
   }
 
   public void projectOpened() {
     myIdeFrame = ((WindowManagerEx)myWindowManager).getFrame(myProject);
-    myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
+    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent event) {
         if (myIdeFrame.getFocusOwner() == null) return;
         setActiveWindow(myIdeFrame);
       }
-    }, myProject);
+    });
 
     myEditorFactoryListener = new MyEditorFactoryListener();
     myEditorFactory.addEditorFactoryListener(myEditorFactoryListener);
@@ -102,6 +102,7 @@ public class EditorTracker extends AbstractProjectComponent {
   }
 
   private void editorFocused(Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Window window = myEditorToWindowMap.get(editor);
     if (window == null) return;
 
@@ -183,7 +184,8 @@ public class EditorTracker extends AbstractProjectComponent {
     return window;
   }
 
-  @NotNull public List<Editor> getActiveEditors() {
+  @NotNull
+  public List<Editor> getActiveEditors() {
     return myActiveEditors;
   }
 

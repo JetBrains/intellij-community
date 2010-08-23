@@ -40,8 +40,7 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
   }
 
   public void initComponent() {
-    myProject.getMessageBus().connect()
-      .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
+    myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
   }
 
   private static boolean isEnabled() {

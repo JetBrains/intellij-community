@@ -120,7 +120,8 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return FileEditorPolicy.NONE;
   }
 
-  @NotNull public TextEditor getTextEditor(@NotNull Editor editor) {
+  @NotNull
+  public TextEditor getTextEditor(@NotNull Editor editor) {
     TextEditor textEditor = editor.getUserData(TEXT_EDITOR_KEY);
     if (textEditor == null) {
       textEditor = createWrapperForEditor(editor);
