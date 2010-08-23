@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jul 7, 2010 2:28:10 PM
  */
-public class SoftWrapDocumentChangeManager implements DocumentListener {
+public class SoftWrapDocumentChangeManager implements PrioritizedDocumentListener {
 
   private final TIntHashSet mySoftWrapsToRemoveIndices = new TIntHashSet();
 
@@ -86,13 +87,17 @@ public class SoftWrapDocumentChangeManager implements DocumentListener {
     int endLine = document.getLineNumber(event.getOffset() + event.getOldLength());
     int endOffset = document.getLineEndOffset(endLine);
     markSoftWrapsForDeletion(startOffset, endOffset);
+  }
 
+  @Override
+  public void documentChanged(DocumentEvent event) {
     // Update offsets for soft wraps that remain after the changed line(s).
     applyDocumentChangeDiff(event);
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public int getPriority() {
+    return SoftWrapConstants.DOCUMENT_CHANGE_LISTENER_PRIORITY;
   }
 
   private void markSoftWrapsForDeletion(int startOffset, int endOffset) {

@@ -119,6 +119,11 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
       dropData(startLine, endLine);
     }
 
+    @Override
+    public int getPriority() {
+      return SoftWrapConstants.SOFT_WRAP_APPLIANCE_LISTENER_PRIORITY;
+    }
+
     private void dropData(int startLine, int endLine) {
       Document document = myEditor.getDocument();
       for (int i = startLine; i <= endLine; i++) {

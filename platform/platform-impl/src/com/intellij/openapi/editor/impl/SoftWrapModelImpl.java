@@ -94,6 +94,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     myDocumentChangeManager = documentChangeManager;
 
     myDocumentListeners.add(myDocumentChangeManager);
+    Collections.sort(myDocumentListeners, DocumentImpl.ourListenersByPriorityComparator);
   }
 
   public boolean isSoftWrappingEnabled() {
