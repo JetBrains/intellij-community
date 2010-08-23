@@ -3,6 +3,8 @@ package com.jetbrains.python.psi.types;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -15,7 +17,10 @@ import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.resolve.ResolveImportUtil.ROLE_IN_IMPORT.NONE;
 // .impl looks impure
@@ -59,7 +64,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         // file modules
         for (PsiFile f : mydir.getFiles()) {
           final String filename = f.getName();
-          if (f instanceof PyFile && !filename.equals(PyNames.INIT_DOT_PY)) result.add(f);
+          // if we have a binary module, we'll most likely also have a stub for it in site-packages
+          if ((f instanceof PyFile && !filename.equals(PyNames.INIT_DOT_PY)) || isBinaryModule(filename)) {
+            result.add(f);
+          }
         }
         // dir modules
         for (PsiDirectory dir : mydir.getSubdirectories()) {
@@ -68,6 +76,16 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
     return result;
+  }
+
+  private static boolean isBinaryModule(String filename) {
+    final String ext = FileUtil.getExtension(filename);
+    if (SystemInfo.isWindows) {
+      return "pyd".equalsIgnoreCase(ext);
+    }
+    else {
+      return "so".equals(ext);      
+    }
   }
 
   public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
