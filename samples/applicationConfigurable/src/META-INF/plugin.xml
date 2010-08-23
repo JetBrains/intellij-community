@@ -1,0 +1,25 @@
+<idea-plugin version="2">
+  <name>MY_IDE_Settings</name>
+  <description>This sample plugin illustrates how to contribute to the applicationConfigurable extension point in the IDEA core.
+  </description>
+  <version>1.0</version>
+  <vendor>JetBrains</vendor>
+  <idea-version since-build="8000"/>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+  </project-components>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+      <applicationConfigurable implementation="MyPack.MyExtensConfigurable"></applicationConfigurable>
+  </extensions>
+</idea-plugin>
