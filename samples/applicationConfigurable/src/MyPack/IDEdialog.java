@@ -9,7 +9,7 @@ import java.awt.event.*;
 
 public class IDEdialog extends JDialog {
     private JPanel contentPane;
-
+    public JPanel Name;
     public JComboBox myFontCombo;
     public JComboBox myFontSize;
     public JLabel menuFontSettingsLabel;
