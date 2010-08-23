@@ -375,7 +375,6 @@
 
   <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings" serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
   <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
-  <applicationConfigurable implementation="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
 
   <stacktrace.fold substring="at java.lang.reflect.Method.invoke("/>
   <stacktrace.fold substring="at java.lang.reflect.Constructor.newInstance("/>

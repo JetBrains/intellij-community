@@ -644,6 +644,8 @@
          it's only required in full IDEA -->
     <applicationConfigurable implementation="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
 
+    <applicationConfigurable implementation="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
+
     <!-- Resources -->
 
     <!--TODO <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>--> <!-- Plugins -->
