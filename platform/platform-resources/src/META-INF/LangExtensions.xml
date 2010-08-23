@@ -131,8 +131,8 @@
   <applicationService serviceInterface="com.intellij.ide.PowerSaveMode"
                       serviceImplementation="com.intellij.ide.PowerSaveMode"/>
 
-  <applicationService serviceInterface="com.intellij.ui.SpellCheckAwareEditorFieldProvider"
-                      serviceImplementation="com.intellij.ui.SpellCheckAwareEditorFieldProviderImpl"/>
+  <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
+                  serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
@@ -437,6 +437,7 @@
   <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
+  <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
   <!-- Colors & Fonts-->
   <editorOptionsProvider implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorTabsConfigurable"/>
