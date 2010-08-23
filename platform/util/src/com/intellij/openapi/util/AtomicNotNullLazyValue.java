@@ -27,14 +27,16 @@ public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
 
   @NotNull
   public final T getValue() {
-    if (myValue != null) {
-      return myValue;
+    T value = myValue;
+    if (value != null) {
+      return value;
     }
     synchronized (this) {
-      if (myValue == null) {
-        myValue = compute();
+      value = myValue;
+      if (value == null) {
+        myValue = value = compute();
       }
     }
-    return myValue;
+    return value;
   }
 }
