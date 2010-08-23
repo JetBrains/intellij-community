@@ -22,6 +22,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobImpl;
 import com.intellij.concurrency.JobUtil;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -109,6 +110,7 @@ public abstract class PassExecutorService implements Disposable {
       Document document = null;
       if (fileEditor instanceof TextEditor) {
         Editor editor = ((TextEditor)fileEditor).getEditor();
+        LOG.assertTrue(!(editor instanceof EditorWindow));
         document = editor.getDocument();
       }
 
