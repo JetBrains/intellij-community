@@ -41,9 +41,9 @@ public class JUnit4TestResultsSender extends RunListener {
     final Description description = failure.getDescription();
     final Throwable throwable = failure.getException();
 
-    if (throwable instanceof AssertionError) {
+    if (throwable instanceof AssertionError || throwable.getCause() instanceof AssertionError) {
       // junit4 makes no distinction between errors and failures
-      doAddFailure(description, (Error)throwable);
+      doAddFailure(description, throwable);
     }
 
     else {
@@ -85,9 +85,17 @@ public class JUnit4TestResultsSender extends RunListener {
 
   private static PacketFactory createExceptionNotification(Throwable assertion) {
     if (assertion instanceof KnownException) return ((KnownException)assertion).getPacketFactory();
-    if (assertion instanceof ComparisonFailure || assertion.getClass().getName().equals("org.junit.ComparisonFailure")) {
+    if (assertion instanceof ComparisonFailure || assertion instanceof org.junit.ComparisonFailure) {
       return ComparisonDetailsExtractor.create(assertion);
     }
+    final Throwable cause = assertion.getCause();
+    if (cause instanceof ComparisonFailure || cause instanceof org.junit.ComparisonFailure) {
+      try {
+        return ComparisonDetailsExtractor.create(assertion, ComparisonDetailsExtractor.getExpected(cause), ComparisonDetailsExtractor.getActual(cause));
+      }
+      catch (Throwable ignore) {}
+    }
+
     return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
   }
 
