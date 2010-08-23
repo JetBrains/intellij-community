@@ -40,9 +40,4 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     }
   }
 
-  @Override
-  public int getInterpreterOptionsCount() {
-    String options = myConfig.getInterpreterOptions();
-    return ParametersList.parse(options).length;
-  }
 }

@@ -49,15 +49,12 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return consoleView;
   }
 
-  protected GeneralCommandLine generateCommandLine() throws ExecutionException {
-    GeneralCommandLine cmd = new GeneralCommandLine();
+  public GeneralCommandLine generateCommandLine() throws ExecutionException {
+    GeneralCommandLine cmd = super.generateCommandLine();
 
-    setRunnerPath(cmd);
     if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory())) {
       cmd.setWorkDirectory(myConfiguration.getWorkingDirectory());
     }
-
-    initEnvironment(cmd);
 
     Collection<String> pythonPathList = buildPythonPath();
     String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
@@ -70,8 +67,6 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     assert exe_options != null;
     exe_options.addParametersString(myConfiguration.getInterpreterOptions());
     addTestRunnerParameters(cmd);
-
-    cmd.setPassParentEnvs(myConfiguration.isPassParentEnvs());
 
     return cmd;
   }

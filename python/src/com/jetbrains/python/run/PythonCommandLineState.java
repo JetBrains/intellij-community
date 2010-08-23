@@ -102,7 +102,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return new ColoredProcessHandler(process, commandLine.getCommandLineString());
   }
 
-  protected GeneralCommandLine generateCommandLine() throws ExecutionException {
+  public GeneralCommandLine generateCommandLine() throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
 
     setRunnerPath(commandLine);
@@ -152,9 +152,5 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
-  }
-
-  public int getInterpreterOptionsCount() {
-    return 0;    
   }
 }
