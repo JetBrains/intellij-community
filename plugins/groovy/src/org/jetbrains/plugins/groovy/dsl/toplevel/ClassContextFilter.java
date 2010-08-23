@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
@@ -21,11 +22,13 @@ public class ClassContextFilter implements ContextFilter {
   }
 
   public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-    return myPattern.accepts(new Pair<PsiType, PsiElement>(findPsiType(descriptor.getProject(), descriptor.getTypeText(), descriptor.getPlace(), ctx), descriptor.getPlace()), ctx);
+    final PsiFile place = descriptor.getPlaceFile();
+    return myPattern.accepts(new Pair<PsiType, PsiElement>(findPsiType(descriptor.getProject(), descriptor.getTypeText(), place, ctx),
+                                                           place), ctx);
   }
 
   @Nullable
-  private static PsiType findPsiType(Project project, String typeText, PsiElement place, ProcessingContext ctx) {
+  private static PsiType findPsiType(Project project, String typeText, PsiFile place, ProcessingContext ctx) {
     final String key = getClassKey(typeText);
     final Object cached = ctx.get(key);
     if (cached instanceof PsiType) {
