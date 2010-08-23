@@ -31,7 +31,7 @@ public abstract class PyElementGenerator {
    * @return            a newly created literal
    */
   public abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, String unescaped);
-  public abstract PyStringLiteralExpression createStringLiteralFromString(String unescaped);
+  public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped);
 
   public abstract PyListLiteralExpression createListLiteral();
 

@@ -74,7 +74,13 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       }
     }
     else {
-      addArgumentLastWithoutComma(arg);
+      final PyExpression[] args = getArguments();
+      if (args.length > 0) {
+        addArgumentAfter(arg, args [args.length-1]);
+      }
+      else {
+        addArgumentLastWithoutComma(arg);
+      }
     }
   }
 

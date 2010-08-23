@@ -38,6 +38,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return PsiTreeUtil.getNextSiblingOfType(getLeftExpression(), PyExpression.class);
   }
 
+  @Nullable
   public PyElementType getOperator() {
     final PsiElement psiOperator = getPsiOperator();
     return psiOperator != null ? (PyElementType)psiOperator.getNode().getElementType() : null;

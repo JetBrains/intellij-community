@@ -127,7 +127,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       final String text = child.getText();
       TextRange textRange = getNodeTextRange(text);
       int offset = child.getTextRange().getStartOffset() - elStart + textRange.getStartOffset();
-      String undecoded = text.substring(textRange.getStartOffset(), textRange.getEndOffset());
+      String undecoded = textRange.substring(text);
       if (!iterateCharacterRanges(consumer, undecoded, offset, isRaw(text), isUnicode(text))) {
         break;
       }

@@ -242,7 +242,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     while(true) {
       PyElement parentContainer = PsiTreeUtil.getParentOfType(container, PyFunction.class, PyClass.class);
       if (parentContainer instanceof PyClass) {
-        return super.getUseScope();
+        if (getQualifier() != null) {
+          return super.getUseScope();
+        }
+        break;
       }
       if (parentContainer == null) {
         break;

@@ -5,7 +5,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -126,7 +128,18 @@ public class PyClassType implements PyType {
     return null;
   }
 
+  private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
+
   public Object[] getCompletionVariants(String prefix, PyExpression expressionHook, ProcessingContext context) {
+    Set<PyClassType> visited = context.get(CTX_VISITED);
+    if (visited == null) {
+      visited = new HashSet<PyClassType>();
+      context.put(CTX_VISITED, visited);
+    }
+    if (visited.contains(this)) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+    visited.add(this);
     Set<String> namesAlready = context.get(CTX_NAMES);
     if (namesAlready == null) {
       namesAlready = new HashSet<String>();

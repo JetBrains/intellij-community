@@ -17,8 +17,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.PathUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -48,6 +48,14 @@ public class PyExtractSuperclassHelper {
       else if (element instanceof PyClass) superClasses.add(element.getName());
       else LOG.error("unmatched member class " + element.getClass());
     }
+
+    // 'object' superclass is always pulled up, even if not selected explicitly
+    for (PyExpression expr : clazz.getSuperClassExpressions()) {
+      if (PyNames.OBJECT.equals(expr.getText()) && !superClasses.contains(PyNames.OBJECT)) {
+        superClasses.add(PyNames.OBJECT);
+      }
+    }
+
     final Project project = clazz.getProject();
     final Ref<PyClass> newClassRef = new Ref<PyClass>();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -59,7 +67,7 @@ public class PyExtractSuperclassHelper {
             final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(PyClass.class, text);
             newClassRef.set(newClass);
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, newClass);
-            PyClassRefactoringUtil.addSuperclasses(project, clazz, Collections.singleton(superBaseName));
+            PyClassRefactoringUtil.addSuperclasses(project, clazz, null, Collections.singleton(superBaseName));
             PyPsiUtils.removeElements(elements);
             PyClassRefactoringUtil.insertPassIfNeeded(clazz);
             placeNewClass(project, newClass, clazz, targetFile);

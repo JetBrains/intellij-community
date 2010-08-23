@@ -24,28 +24,37 @@ public class PyClassRefactoringUtil {
   public static void moveSuperclasses(PyClass clazz, Set<String> superClasses, PyClass superClass) {
     if (superClasses.size() == 0) return;
     final Project project = clazz.getProject();
-    final List<PsiElement> toAdd = removeAndGetSuperClasses(clazz, superClasses);
+    final List<PyExpression> toAdd = removeAndGetSuperClasses(clazz, superClasses);
     addSuperclasses(project, superClass, toAdd, superClasses);
   }
 
-  public static void addSuperclasses(Project project, PyClass superClass, Collection<PsiElement> toAdd, Collection<String> superClasses) {
-    if (superClasses.size() == 0) return;
-    PsiElement[] elements = superClass.getSuperClassExpressions();
-    if (elements.length > 0) {
-      PsiElement parent = elements[elements.length - 1].getParent();
-      for (PsiElement element : toAdd) {
-        PyUtil.addListNode(parent, element, parent.getLastChild().getNode(), false, true);
+  public static void addSuperclasses(Project project, PyClass superClass,
+                                     @Nullable Collection<PyExpression> superClassesAsPsi,
+                                     Collection<String> superClassesAsStrings) {
+    if (superClassesAsStrings.size() == 0) return;
+    PyArgumentList argList = superClass.getSuperClassExpressionList();
+    if (argList != null) {
+      if (superClassesAsPsi != null) {
+        for (PyExpression element : superClassesAsPsi) {
+          argList.addArgument(element);
+        }
+      }
+      else {
+        for (String s : superClassesAsStrings) {
+          final PyExpression expr = PyElementGenerator.getInstance(project).createExpressionFromText(s);
+          argList.addArgument(expr);
+        }
       }
     } else {
-      addSuperclasses(project, superClass, superClasses);
+      addSuperclasses(project, superClass, superClassesAsStrings);
     }
   }
 
-  public static List<PsiElement> removeAndGetSuperClasses(PyClass clazz, Set<String> superClasses) {
+  public static List<PyExpression> removeAndGetSuperClasses(PyClass clazz, Set<String> superClasses) {
     if (superClasses.size() == 0) return Collections.emptyList();
-    final List<PsiElement> toAdd = new ArrayList<PsiElement>();
-    final PsiElement[] elements = clazz.getSuperClassExpressions();
-    for (PsiElement element : elements) {
+    final List<PyExpression> toAdd = new ArrayList<PyExpression>();
+    final PyExpression[] elements = clazz.getSuperClassExpressions();
+    for (PyExpression element : elements) {
       if (superClasses.contains(element.getText())) {
         toAdd.add(element);
         PyUtil.removeListNode(element);

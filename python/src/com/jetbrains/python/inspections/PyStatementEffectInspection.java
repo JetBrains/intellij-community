@@ -61,7 +61,8 @@ public class PyStatementEffectInspection extends PyInspection {
       }
       else if (expression instanceof PyBinaryExpression) {
         PyBinaryExpression binary = (PyBinaryExpression)expression;
-        String method = binary.getOperator().getSpecialMethodName();
+        final PyElementType operator = binary.getOperator();
+        String method = operator == null ? null : operator.getSpecialMethodName();
         if (method != null) {
           // maybe the op is overridden and may produce side effects, like cout << "hello"
           PyType type = binary.getLeftExpression().getType(TypeEvalContext.fast());

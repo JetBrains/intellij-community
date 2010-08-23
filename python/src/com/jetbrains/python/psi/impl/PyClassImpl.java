@@ -106,9 +106,18 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
   }
 
+  @Override
+  public PyArgumentList getSuperClassExpressionList() {
+    final PyArgumentList argList = PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
+    if (argList != null && argList.getFirstChild() != null) {
+      return argList;
+    }
+    return null;
+  }
+
   @NotNull
   public PyExpression[] getSuperClassExpressions() {
-    final PyArgumentList argList = PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
+    final PyArgumentList argList = getSuperClassExpressionList();
     if (argList != null) {
       return argList.getArguments();
     }

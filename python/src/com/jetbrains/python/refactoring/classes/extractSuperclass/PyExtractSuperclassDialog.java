@@ -67,6 +67,11 @@ public class PyExtractSuperclassDialog  extends UpDirectedMembersMovingDialog {
     super.doOKAction();
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myExtractedSuperNameField;
+  }
+
   protected JPanel createNorthPanel() {
     Box box = createBox();
     box.add(Box.createVerticalStrut(10));
