@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 
@@ -24,15 +23,18 @@ import java.util.List;
 
 public class CompositeFilter implements Filter {
   private final List<Filter> myFilters = new ArrayList<Filter>();
-  private final Project myProject;
+  private DumbService myDumbService;
 
   public CompositeFilter(Project project) {
-    myProject = project;
+    myDumbService = DumbService.getInstance(project);
   }
 
   public Result applyFilter(final String line, final int entireLength) {
-    final boolean dumb = DumbService.getInstance(myProject).isDumb();
-    for (final Filter filter : myFilters) {
+    final boolean dumb = myDumbService.isDumb();
+    List<Filter> filters = myFilters;
+    int count = filters.size();
+    for (int i = 0; i < count; i++) {
+      Filter filter = filters.get(i);
       if (!dumb || DumbService.isDumbAware(filter)) {
         final Result info = filter.applyFilter(line, entireLength);
         if (info != null) {
