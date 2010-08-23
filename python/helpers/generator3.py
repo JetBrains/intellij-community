@@ -1028,7 +1028,7 @@ class ModuleRedeclarator(object):
                     star_args = True
                     break
             if star_args: break
-            if optional:
+            if optional and not '=' in name:
                 params.append(name + '=None')
             else:
                 params.append(name)
