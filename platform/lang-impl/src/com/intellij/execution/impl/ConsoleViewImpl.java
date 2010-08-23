@@ -1436,7 +1436,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     prevAction.getTemplatePresentation().setText(getPreviousOccurenceActionName());
     AnAction nextAction = actionsManager.createNextOccurenceAction(this);
     nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
-    AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction();
+    AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction() {
+      @Override
+      protected Editor getEditor(AnActionEvent e) {
+        return myEditor;
+      }
+    };
 
     //Initializing custom actions
     AnAction[] consoleActions = new AnAction[3 + customActions.size()];

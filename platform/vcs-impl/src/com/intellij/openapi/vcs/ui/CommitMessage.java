@@ -18,11 +18,13 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SeparatorFactory;
-import com.intellij.ui.SpellCheckAwareEditorFieldProvider;
+import com.intellij.ui.EditorTextFieldProvider;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,7 +57,10 @@ public class CommitMessage extends JPanel implements Disposable {
   }
 
   private static EditorTextField createEditorField(final Project project) {
-    return ServiceManager.getService(SpellCheckAwareEditorFieldProvider.class).getEditorField(project);
+    EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
+    return service.getEditorField(
+      FileTypes.PLAIN_TEXT.getLanguage(), project, EditorCustomization.Feature.SOFT_WRAP, EditorCustomization.Feature.SPELL_CHECK
+    );
   }
 
   @Nullable

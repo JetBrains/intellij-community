@@ -50,29 +50,39 @@ public class ComparisonDetailsExtractor extends ExceptionPacketFactory {
 
   public static ExceptionPacketFactory create(Throwable assertion) {
     try {
-      String expected;
-      if (assertion instanceof ComparisonFailure) {
-        expected = (String)EXPECTED_FIELD.get(assertion);
-      }
-      else {
-        Field field = assertion.getClass().getDeclaredField("fExpected");
-        field.setAccessible(true);
-        expected = (String)field.get(assertion);
-      }
-      String actual;
-      if (assertion instanceof ComparisonFailure) {
-        actual = (String)ACTUAL_FIELD.get(assertion);
-      }
-      else {
-        Field field = assertion.getClass().getDeclaredField("fActual");
-        field.setAccessible(true);
-        actual = (String)field.get(assertion);
-      }
-      return new ComparisonDetailsExtractor(assertion, expected, actual);
+      return create(assertion, getExpected(assertion), getActual(assertion));
     }
     catch (Throwable e) {
       return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
     }
+  }
+
+  public static String getActual(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
+    String actual;
+    if (assertion instanceof ComparisonFailure) {
+      actual = (String)ACTUAL_FIELD.get(assertion);
+    }
+    else {
+      Field field = assertion.getClass().getDeclaredField("fActual");
+      field.setAccessible(true);
+      actual = (String)field.get(assertion);
+    }
+    return actual;
+  }
+
+  public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
+    if (assertion instanceof ComparisonFailure) {
+      return (String)EXPECTED_FIELD.get(assertion);
+    }
+    else {
+      Field field = assertion.getClass().getDeclaredField("fExpected");
+      field.setAccessible(true);
+      return (String)field.get(assertion);
+    }
+  }
+
+  public static ExceptionPacketFactory create(Throwable assertion, final String expected, String actual) {
+    return new ComparisonDetailsExtractor(assertion, expected, actual);
   }
 
   public Packet createPacket(OutputObjectRegistry registry, Object test) {

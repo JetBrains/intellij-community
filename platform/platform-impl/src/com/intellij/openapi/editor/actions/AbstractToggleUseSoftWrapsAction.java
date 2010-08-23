@@ -15,28 +15,36 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * {@link ToggleUseSoftWrapsMenuAction} extension that doesn't suppress configured icon (if any).
+ * Provides common functionality for <code>'toggle soft wraps usage'</code> actions.
  *
  * @author Denis Zhdanov
- * @since Aug 19, 2010 5:07:08 PM
+ * @since Aug 23, 2010 11:33:35 AM
  */
-public class ToggleUseSoftWrapsToolbarAction extends AbstractToggleUseSoftWrapsAction {
+public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
 
-  public ToggleUseSoftWrapsToolbarAction() {
-    super();
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS));
+  @Override
+  public boolean isSelected(AnActionEvent e) {
+    Editor editor = getEditor(e);
+    return editor != null && editor.getSettings().isUseSoftWraps();
   }
 
-  //TODO den remove
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    Editor editor = getEditor(e);
+    final Editor editor = getEditor(e);
     if (editor != null) {
       editor.getSettings().setUseSoftWraps(state);
     }
+  }
+
+  @Nullable
+  protected Editor getEditor(AnActionEvent e) {
+    return e.getData(PlatformDataKeys.EDITOR);
   }
 }

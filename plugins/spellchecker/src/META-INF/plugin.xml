@@ -53,6 +53,7 @@
                     serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
     <projectService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"
                     serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
+    <editorCustomization implementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomization"/>
     <projectConfigurable implementation="com.intellij.spellchecker.settings.SpellCheckerSettingsManager"/>
 
 
