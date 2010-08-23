@@ -48,6 +48,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -91,6 +93,12 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myInfoLabel.setPreferredSize(new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
 
     myComboComponent.setButtonIcon(IconLoader.findIcon("/actions/menu-find.png"));
+    myComboComponent.getButton().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        performSearch();
+      }
+    });
     myCombobox = myComboComponent.getComboBox();
     myCombobox.setModel(new CollectionComboBoxModel(myShownItems, null));
     myCombobox.setEditable(true);

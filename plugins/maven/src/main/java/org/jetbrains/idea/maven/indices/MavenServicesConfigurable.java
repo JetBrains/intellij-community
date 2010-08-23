@@ -51,7 +51,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
-public class MavenIndicesConfigurable extends BaseConfigurable implements SearchableConfigurable{
+public class MavenServicesConfigurable extends BaseConfigurable implements SearchableConfigurable{
   private final MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;
@@ -69,7 +69,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable implements Search
   private ArrayList<String> myServiceUrls = new ArrayList<String>();
   private final Project myProject;
 
-  public MavenIndicesConfigurable(Project project) {
+  public MavenServicesConfigurable(Project project) {
     myProject = project;
     myManager = MavenProjectIndicesManager.getInstance(project);
     configControls();
@@ -86,7 +86,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable implements Search
       @Override
       public void actionPerformed(ActionEvent e) {
         final String value = (String)myNexusList.getSelectedValue();
-        final String text = Messages.showInputDialog("Nexus Service URL", "Add Nexus URL", Messages.getQuestionIcon(), value == null? "http://": value, new URLInputVaslidator());
+        final String text = Messages.showInputDialog("Artifactory or Nexus Service URL", "Add Service URL", Messages.getQuestionIcon(), value == null? "http://": value, new URLInputVaslidator());
         ((CollectionListModel)myNexusList.getModel()).add(text);
         myNexusList.setSelectedValue(text, true);
       }
@@ -138,7 +138,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable implements Search
       @Override
       public boolean process(Collection<MavenRepositoryInfo> infos) {
         if (infos.isEmpty()) {
-          Messages.showMessageDialog("No repositories found", "Nexus Connection Failed", Messages.getWarningIcon());
+          Messages.showMessageDialog("No repositories found", "Service Connection Failed", Messages.getWarningIcon());
         }
         else {
           final StringBuilder sb = new StringBuilder();
@@ -147,7 +147,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable implements Search
             sb.append("\n  ");
             sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
           }
-          Messages.showMessageDialog(sb.toString(), "Nexus Connection Successfull", Messages.getInformationIcon());
+          Messages.showMessageDialog(sb.toString(), "Service Connection Successfull", Messages.getInformationIcon());
         }
         return true;
       }
@@ -188,7 +188,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable implements Search
   }
 
   public String getDisplayName() {
-    return IndicesBundle.message("maven.indices");
+    return IndicesBundle.message("maven.services.title");
   }
 
   public Icon getIcon() {

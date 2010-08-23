@@ -202,38 +202,36 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<Pair<MavenArtifactInfo, MavenRepositoryInfo>>> result
           = Ref.create(Collections.<Pair<MavenArtifactInfo, MavenRepositoryInfo>>emptyList());
-        final Ref<List<MavenRepositoryInfo>> result2 = Ref.create(Collections.<MavenRepositoryInfo>emptyList());
         final Ref<Boolean> tooManyRef = Ref.create(Boolean.FALSE);
         try {
           MavenFacadeManager facade = MavenFacadeManager.getInstance();
           final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
-          final List<MavenRepositoryInfo> result2List = new ArrayList<MavenRepositoryInfo>();
-          for (String nexusUrl : MavenServicesManager.getServiceUrls()) {
+          for (String serviceUrl : MavenServicesManager.getServiceUrls()) {
             final List<MavenArtifactInfo> artifacts;
             try {
-              artifacts = facade.findArtifacts(template, nexusUrl);
+              artifacts = facade.findArtifacts(template, serviceUrl);
             }
             catch (Exception ex) {
-              MavenLog.LOG.warn("Accessing Nexus at: " + nexusUrl, ex);
+              MavenLog.LOG.warn("Accessing Service at: " + serviceUrl, ex);
               continue;
             }
-            if (artifacts == null) {
-              tooManyRef.set(Boolean.TRUE);
-            }
-            else if (!artifacts.isEmpty()) {
-              final List<MavenRepositoryInfo> repositories = facade.getRepositories(nexusUrl);
+            if (!artifacts.isEmpty()) {
+              final List<MavenRepositoryInfo> repositories = facade.getRepositories(serviceUrl);
               final HashMap<String, MavenRepositoryInfo> map = new HashMap<String, MavenRepositoryInfo>();
               for (MavenRepositoryInfo repository : repositories) {
                 map.put(repository.getId(), repository);
               }
-              result2List.addAll(repositories);
               for (MavenArtifactInfo artifact : artifacts) {
-                resultList.add(Pair.create(artifact, map.get(artifact.getRepositoryId())));
+                if (artifact == null) {
+                  tooManyRef.set(Boolean.TRUE);
+                }
+                else {
+                  resultList.add(Pair.create(artifact, map.get(artifact.getRepositoryId())));
+                }
               }
             }
           }
           result.set(resultList);
-          result2.set(result2List);
         }
         catch (Exception e) {
           handleError(null, e);
@@ -263,7 +261,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
               repositories = manager.getRepositories(nexusUrl);
             }
             catch (Exception ex) {
-              MavenLog.LOG.warn("Accessing Nexus at: " + nexusUrl, ex);
+              MavenLog.LOG.warn("Accessing Service at: " + nexusUrl, ex);
               continue;
             }
             repoList.addAll(repositories);
