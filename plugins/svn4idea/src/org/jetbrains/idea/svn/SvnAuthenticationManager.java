@@ -16,17 +16,25 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.CalledInAwt;
+import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
-import com.intellij.ui.GuiUtils;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.auth.ProviderType;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationListener;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -37,43 +45,72 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
 
 /**
  * @author alex
  */
-public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
+public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements SvnAuthenticationListener {
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationManager.class.getName());
   private final Project myProject;
   private final File myConfigDirectory;
   private PersistentAuthenticationProviderProxy myPersistentAuthenticationProviderProxy;
   private SvnConfiguration myConfig;
-  private AtomicBoolean myStoreInPlainTextAnyway = new AtomicBoolean(false);
+  // instead of ThreadLocal
+  private final Map<Thread, Boolean> myPlainTextAllowed;
+  private static final ThreadLocal<Boolean> ourJustEntered = new ThreadLocal<Boolean>();
+  private SvnAuthenticationInteraction myInteraction;
+  private final EventDispatcher<SvnAuthenticationListener> myListener;
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
     super(configDirectory, true, null, null);
     myProject = project;
     myConfigDirectory = configDirectory;
+    myListener = EventDispatcher.create(SvnAuthenticationListener.class);
     myConfig = SvnConfiguration.getInstance(myProject);
     if (myPersistentAuthenticationProviderProxy != null) {
       myPersistentAuthenticationProviderProxy.setProject(myProject);
     }
+    myPlainTextAllowed = Collections.synchronizedMap(new HashMap<Thread, Boolean>());
+    myInteraction = new MySvnAuthenticationInteraction(myProject);
+  }
+
+  public void addListener(final SvnAuthenticationListener listener) {
+    myListener.addListener(listener);
+  }
+
+  public void actualSaveWillBeTried(ProviderType type, SVNURL url, String realm, String kind, boolean withCredentials) {
+    myListener.getMulticaster().actualSaveWillBeTried(type, url, realm, kind, withCredentials);
+  }
+
+  public void requested(ProviderType type, SVNURL url, String realm, String kind, boolean canceled) {
+    if (ProviderType.interactive.equals(type) && (! canceled)) {
+      ourJustEntered.set(true);
+    }
+    myListener.getMulticaster().requested(type, url, realm, kind, canceled);
   }
 
   @Override
   protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
-    myStoreInPlainTextAnyway = new AtomicBoolean(false);
     myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir, userName), authDir);
     return myPersistentAuthenticationProviderProxy;
   }
 
+  @Override
+  public void acknowledgeAuthentication(boolean accepted,
+                                        String kind,
+                                        String realm,
+                                        SVNErrorMessage errorMessage,
+                                        SVNAuthentication authentication) throws SVNException {
+    try {
+      super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, authentication);
+    } finally {
+      final Thread currentThread = Thread.currentThread();
+      myPlainTextAllowed.remove(currentThread);
+    }
+  }
+
   private class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
-    private final Map<SvnAuthWrapperEqualable, Long> myRewritePreventer;
-    private static final long ourRefreshInterval = 6000 * 1000;
     private final ISVNAuthenticationProvider myDelegate;
     private final File myAuthDir;
     private Project myProject;
@@ -81,17 +118,34 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     private PersistentAuthenticationProviderProxy(final ISVNAuthenticationProvider delegate, final File authDir) {
       myDelegate = delegate;
       myAuthDir = authDir;
-      myRewritePreventer = new SoftHashMap<SvnAuthWrapperEqualable, Long>();
     }
 
     public void setProject(Project project) {
       myProject = project;
     }
 
+    /*private boolean passwordSpecified(final SVNAuthentication authentication) {
+      final String kind = authentication.getKind();
+      if (ISVNAuthenticationManager.SSH.equals(kind)) {
+        if (((SVNSSHAuthentication) authentication).hasPrivateKey()) {
+          return ((((SVNSSHAuthentication) authentication).getPrivateKey() != null) || (((SVNSSHAuthentication) authentication).getPrivateKeyFile() != null));
+        } else {
+          return ((SVNSSHAuthentication) authentication).getPassword() != null;
+        }
+      } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+        return ((SVNPasswordAuthentication) authentication).getPassword() != null;
+      } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+        return ((SVNSSLAuthentication) authentication).getPassword() != null;
+      }
+      return true;
+    }*/
+
     public SVNAuthentication requestClientAuthentication(final String kind, final SVNURL url, final String realm, final SVNErrorMessage errorMessage,
-                                                         final SVNAuthentication previousAuth,
-                                                         final boolean authMayBeStored) {
-      return myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, false);
+                                                         final SVNAuthentication previousAuth, final boolean authMayBeStored) {
+      final SVNAuthentication svnAuthentication =
+        myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
+      myListener.getMulticaster().requested(ProviderType.persistent, url, realm, kind, svnAuthentication == null);
+      return svnAuthentication;
     }
 
     public int acceptServerAuthentication(final SVNURL url, final String realm, final Object certificate, final boolean resultMayBeStored) {
@@ -99,44 +153,44 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     }
 
     public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) throws SVNException {
-      try {
-        final SvnAuthWrapperEqualable newKey = new SvnAuthWrapperEqualable(auth);
-        final Long recent = myRewritePreventer.get(newKey);
-        final long currTime = System.currentTimeMillis();
-        File dir = new File(myAuthDir, kind);
-        String fileName = SVNFileUtil.computeChecksum(realm);
-        File authFile = new File(dir, fileName);
+      final Boolean fromInteractive = ourJustEntered.get();
+      ourJustEntered.set(null);
+      if (! Boolean.TRUE.equals(fromInteractive)) {
+        // not what user entered
+        return;
+      }
 
-        if ((! authFile.exists()) || recent == null || ((recent != null) && ((currTime - recent.longValue()) > ourRefreshInterval))) {
+      final String actualKind = auth.getKind();
+      final Runnable actualSave = new Runnable() {
+        public void run() {
+          File dir = new File(myAuthDir, actualKind);
+          String fileName = SVNFileUtil.computeChecksum(realm);
+          File authFile = new File(dir, fileName);
 
-        if (auth.isStorageAllowed() && ISVNAuthenticationManager.USERNAME != kind) {
-        try {
-          GuiUtils.runOrInvokeAndWait(new Runnable() {
-            public void run() {
-              checkContinueSaveCredentials(auth, kind, realm);
+          myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, actualKind, 
+                                                            ! Boolean.FALSE.equals(myPlainTextAllowed.get(Thread.currentThread())));
+          try {
+            ((IPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, actualKind, realm);
+          }
+          catch (SVNException e) {
+            if (myProject != null) {
+              ApplicationManager.getApplication().invokeLater(new ChangesViewBalloonProblemNotifier(myProject,
+                                                                                                    "<b>Problem when storing Subversion credentials:</b>&nbsp;" +
+                                                                                                    e.getMessage(), MessageType.ERROR));
             }
-          });
-        } catch (InvocationTargetException e) {
-          LOG.error(e);
-        } catch (InterruptedException e) {
-          LOG.error(e);
+          }
+          finally {
+            // do not make password file readonly
+            setWriteable(authFile);
+          }
         }
+      };
+      if (USERNAME.equals(actualKind)) {
+        actualSave.run();
+        return;
       }
-
-        ((DefaultSVNAuthenticationManager.IPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, kind, realm);
-
-          // do not make password file readonly
-          setWriteable(authFile);
-
-          myRewritePreventer.put(newKey, currTime);
-        }
-      }
-      catch (final SVNException e) {
-        // show notification so that user was aware his credentials were not saved
-        if (myProject == null) return;
-          ApplicationManager.getApplication().invokeLater(new ChangesViewBalloonProblemNotifier(myProject,
-                "<b>Problem when storing Subversion credentials:</b>&nbsp;" + e.getMessage(), MessageType.ERROR));
-      }
+      if (!auth.isStorageAllowed()) return;
+      saveCredentialsIfAllowed(auth, actualKind, realm, actualSave);
     }
 
     private final static int maxAttempts = 10;
@@ -161,13 +215,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
         }
       }
     }
-  }
-
-  public boolean haveStoredCredentials(final String kind, final SVNURL url, final String realm, final SVNErrorMessage errorMessage,
-                                                         final SVNAuthentication previousAuth) {
-    final SVNAuthentication result =
-      myPersistentAuthenticationProviderProxy.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, false);
-    return result != null;
   }
 
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
@@ -358,27 +405,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
       return null;
   }
 
-  private static class SvnAuthWrapperEqualable extends Wrapper<SVNAuthentication> {
-    private SvnAuthWrapperEqualable(SVNAuthentication svnAuthentication) {
-      super(svnAuthentication);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == null) return false;
-      if (this == obj) return true;
-      if (obj instanceof SvnAuthWrapperEqualable) {
-        return SvnAuthEquals.equals(this.getT(), ((SvnAuthWrapperEqualable) obj).getT());
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      return SvnAuthEquals.hashCode(getT());
-    }
-  }
-
   private void setPropertyForHost(final String host, final String property, final String value) {
     final SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "servers"));
 
@@ -418,84 +444,163 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
       return "yes".equalsIgnoreCase(storeAuthCreds) || "on".equalsIgnoreCase(storeAuthCreds) || "true".equalsIgnoreCase(storeAuthCreds);
   }
 
-  public boolean checkContinueSaveCredentials(final SVNAuthentication auth, final String kind, final String realm) {
+  public void saveCredentialsIfAllowed(final SVNAuthentication auth, final String kind, final String realm,
+                                                    final Runnable saveRunnable) {
     final SVNURL url = auth.getURL();
 
     final String storeCredentials = getConfigFile().getPropertyValue("auth", "store-auth-creds");
     if ((Boolean.FALSE.equals(isAuthStorageEnabledMy(url))) || (! isTurned(storeCredentials))) {
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
-      return false;
+      myInteraction.warnOnAuthStorageDisabled(url);
+      return;
     }
+    boolean passwordWillBeSaved = true;
     final boolean passwordStorageEnabled = isStorePasswords(url);
     // check can store
     if ((! ISVNAuthenticationManager.SSL.equals(kind)) && (! passwordStorageEnabled)) {
       // but it should be
-      //userConfig.setPropertyValue("auth", "store-passwords", "yes", true);
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store password: forbidden by \"store-passwords=no\"", MessageType.ERROR);
-      return false;
+      myInteraction.warnOnPasswordStorageDisabled(url);
+      passwordWillBeSaved = false;
     }
     if (ISVNAuthenticationManager.SSL.equals(kind) && (! isStoreSSLClientCertificatePassphrases(url))) {
-      //setPropertyForHost(url.getHost(), "store-ssl-client-cert-pp", "yes");
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp=no\"", MessageType.ERROR);
-      return false;
+      myInteraction.warnOnSSLPassphraseStorageDisabled(url);
+      passwordWillBeSaved = false;
     }
 
     // check can encrypt
-    if (!(SystemInfo.isWindows && SVNJNAUtil.isWinCryptEnabled())) {
-      if (ISVNAuthenticationManager.SSL.equals(kind)) {
-        try {
+    if (passwordWillBeSaved && ( !(SystemInfo.isWindows && SVNJNAUtil.isWinCryptEnabled()))) {
+      try {
+        if (ISVNAuthenticationManager.SSL.equals(kind)) {
           if (!isStorePlainTextPassphrases(realm, auth)) {
-            return askToStoreUnencrypted("Store the passphrase in plaintext?",
-                                         String.format("Your passphrase for client certificate:\n%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?",
-                                                      ((SVNSSLAuthentication)auth).getCertificateFile().getPath()));
+            promptAndSaveWhenWeLackEncryption(saveRunnable,
+                                              new Getter<Boolean>() {
+                                                public Boolean get() {
+                                                  return myInteraction.promptForSSLPlaintextPassphraseSaving(url, realm, ((SVNSSLAuthentication)auth).getCertificateFile());
+                                                }
+                                              });
+            return;
           }
-        } catch (SVNException e) {
-          LOG.error(e); // should not occur, anyway means not allowed
-        }
-      } else {
-        try {
+        } else {
           if (!isStorePlainTextPasswords(realm, auth)) {
-            return askToStoreUnencrypted("Store the password in plaintext?",
-                                         String.format("Your password for authentication realm:\n%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?",
-                                                      realm));
+            promptAndSaveWhenWeLackEncryption(saveRunnable,
+                                              new Getter<Boolean>() {
+                                                public Boolean get() {
+                                                  return myInteraction.promptForPlaintextPasswordSaving(url, realm);
+                                                }
+                                              });
+            return;
           }
-        } catch (SVNException e) {
-          LOG.error(e);
         }
+      } catch (SVNException e) {
+        LOG.info(e);
+        return;
       }
     }
-    return true;
+    saveRunnable.run();
   }
 
   @Override
   protected boolean isStorePlainTextPasswords(String realm, SVNAuthentication auth) throws SVNException {
-    // normally check user preferences, but the user may override them via the dialog from checkContinueSaveCredentials()
-    return myStoreInPlainTextAnyway.get() || super.isStorePlainTextPasswords(realm, auth);
+    return Boolean.TRUE.equals(myPlainTextAllowed.get(Thread.currentThread())) || super.isStorePlainTextPasswords(realm, auth);
   }
 
   @Override
   protected boolean isStorePlainTextPassphrases(String realm, SVNAuthentication auth) throws SVNException {
-    return myStoreInPlainTextAnyway.get() || super.isStorePlainTextPassphrases(realm, auth);
+    return Boolean.TRUE.equals(myPlainTextAllowed.get(Thread.currentThread())) || super.isStorePlainTextPassphrases(realm, auth);
+  }
+
+  private ModalityState getCurrent() {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return ModalityState.current();
+    }
+    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+    if (pi == null) {
+      return ModalityState.defaultModalityState();
+    }
+    return pi.getModalityState();
+  }
+
+  private void promptAndSaveWhenWeLackEncryption(
+    final Runnable saveRunnable,
+    final Getter<Boolean> prompt) {
+
+    final Boolean[] saveOnce = new Boolean[1];
+    final Runnable actualSave = new Runnable() {
+      public void run() {
+        final Thread currentThread = Thread.currentThread();
+        myPlainTextAllowed.put(currentThread, Boolean.TRUE.equals(saveOnce[0]));
+        try {
+          saveRunnable.run();
+        }
+        finally {
+          myPlainTextAllowed.remove(currentThread);
+        }
+      }
+    };
+
+    if (myInteraction.promptInAwt()) {
+      new AbstractCalledLater(myProject, getCurrent()) {
+        public void run() {
+          saveOnce[0] = Boolean.TRUE.equals(prompt.get());
+          ApplicationManager.getApplication().executeOnPooledThread(actualSave);
+        }
+      }.callMe();
+    } else {
+      saveOnce[0] = Boolean.TRUE.equals(prompt.get());
+      actualSave.run();
+    }
   }
 
   /**
    * Shows a yes/no question whether user wants to store his password in plain text and returns his answer.
-   * Also updates the 'myStoreInPlainTextAnyway' variable correspondingly.
-   * This method shuld be called from the event dispatching thread.
    * @param title   title of the questioning dialog.
    * @param message questioning message to be displayed.
    * @return true if user agrees to store his password in plaintext, false if he doesn't.
    */
+  @CalledInAwt
   private boolean askToStoreUnencrypted(String title, String message) {
     final int answer = Messages.showYesNoDialog(myProject, message, title, Messages.getQuestionIcon());
-    if (answer == 0) {
-      myStoreInPlainTextAnyway.set(true);
-    } else {
-      myStoreInPlainTextAnyway.set(false);
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store password", MessageType.ERROR);
-    }
-    return myStoreInPlainTextAnyway.get();
-
+    return answer == 0;
   }
 
+  public void setInteraction(SvnAuthenticationInteraction interaction) {
+    myInteraction = interaction;
+  }
+
+  private static class MySvnAuthenticationInteraction implements SvnAuthenticationInteraction {
+    private final Project myProject;
+
+    private MySvnAuthenticationInteraction(Project project) {
+      myProject = project;
+    }
+
+    public void warnOnAuthStorageDisabled(SVNURL url) {
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
+    }
+
+    public void warnOnPasswordStorageDisabled(SVNURL url) {
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store password: forbidden by \"store-passwords=no\"", MessageType.ERROR);
+    }
+
+    public void warnOnSSLPassphraseStorageDisabled(SVNURL url) {
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp=no\"", MessageType.ERROR);
+    }
+
+    public boolean promptForPlaintextPasswordSaving(SVNURL url, String realm) {
+      final int answer = Messages.showYesNoDialog(myProject, String.format("Your password for authentication realm:\n" +
+        "%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?", realm),
+        "Store the password in plaintext?", Messages.getQuestionIcon());
+      return answer == 0;
+    }
+
+    public boolean promptInAwt() {
+      return true;
+    }
+
+    public boolean promptForSSLPlaintextPassphraseSaving(SVNURL url, String realm, File certificateFile) {
+      final int answer = Messages.showYesNoDialog(myProject, String.format("Your passphrase for client certificate:\n%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?",
+                                                            certificateFile.getPath()),
+        "Store the passphrase in plaintext?", Messages.getQuestionIcon());
+      return answer == 0;
+    }
+  }
 }

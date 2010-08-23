@@ -63,7 +63,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildStructure(myRoot);
 
     runAndInterrupt(new Runnable() {
-      @Override
       public void run() {
         try {
           select(new Object[] {new NodeElement("openapi")}, false, true);

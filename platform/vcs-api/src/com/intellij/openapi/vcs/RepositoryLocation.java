@@ -29,4 +29,7 @@ public interface RepositoryLocation {
    * must uniquely identify this location
    */
   String getKey();
+
+  void onBeforeBatch() throws VcsException;
+  void onAfterBatch();
 }

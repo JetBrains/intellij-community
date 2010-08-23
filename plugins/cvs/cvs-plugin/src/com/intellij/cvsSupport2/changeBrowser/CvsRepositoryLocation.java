@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,5 +58,11 @@ public class CvsRepositoryLocation implements RepositoryLocation {
 
   public String getKey() {
     return myModuleName;
+  }
+
+  public void onBeforeBatch() throws VcsException {
+  }
+
+  public void onAfterBatch() {
   }
 }

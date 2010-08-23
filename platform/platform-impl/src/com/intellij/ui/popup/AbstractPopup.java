@@ -689,7 +689,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myWindow != null) {
-      if (!myMayBeParent) {
+      if (!myMayBeParent && !(myWindow instanceof Frame)) {
         WindowManager.getInstance().doNotSuggestAsParent(myWindow);  
       }
     }

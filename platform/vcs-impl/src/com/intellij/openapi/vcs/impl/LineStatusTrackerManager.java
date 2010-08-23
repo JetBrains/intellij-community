@@ -376,7 +376,6 @@ public class LineStatusTrackerManager implements ProjectComponent {
     }
 
     public void editorReleased(EditorFactoryEvent event) {
-      trackAwtThread();
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       final Document doc = editor.getDocument();

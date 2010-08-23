@@ -97,7 +97,7 @@ public abstract class BaseSplitter implements Splitter {
   }
 
   @Nullable
-  protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
+  static protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
     List<TextRange> toCheck = new ArrayList<TextRange>();
     int from = range.getStartOffset();
     int till;

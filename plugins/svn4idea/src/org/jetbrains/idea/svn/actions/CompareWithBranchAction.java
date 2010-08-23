@@ -133,6 +133,8 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
 
 
             SVNWCAccess wcAccess = vcs.createWCAccess();
+            SVNRepository repository = null;
+            SVNRepository repository2 = null;
             try {
               SVNAdminAreaInfo info = wcAccess.openAnchor(new File(myVirtualFile.getPath()), false, SVNWCAccess.INFINITE_DEPTH);
               File anchorPath = info.getAnchor().getRoot();
@@ -150,18 +152,25 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
               }
 
               SVNURL anchorURL = anchorEntry.getSVNURL();
-              SVNRepository repository = vcs.createRepository(anchorURL.toString());
+              repository = vcs.createRepository(anchorURL.toString());
               SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY, 
                                                      false, false, true, SVNDebugLog.getDefaultLog());
               long rev = repository.getLatestRevision();
+              repository2 = vcs.createRepository((target == null) ? url.toString() : url.removePathTail().toString());
               SvnDiffEditor diffEditor = new SvnDiffEditor((target == null) ? myVirtualFile : myVirtualFile.getParent(),
-                vcs.createRepository((target == null) ? url.toString() : url.removePathTail().toString()), rev, true);
+                repository2, rev, true);
               repository.diff(url, rev, rev, target, true, true, false, reporter,
                               SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
               changes.addAll(diffEditor.getChangesMap().values());
             }
             finally {
               wcAccess.close();
+              if (repository != null) {
+                repository.closeSession();
+              }
+              if (repository2 != null) {
+                repository2.closeSession();
+              }
             }
           }
           catch(SVNCancelException ex) {

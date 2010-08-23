@@ -25,7 +25,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyTextHelper;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

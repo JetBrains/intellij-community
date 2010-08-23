@@ -61,10 +61,10 @@ import org.jdom.*;
 
 import javax.xml.transform.Result;
 import java.io.*;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Outputs a JDOM document as a stream of bytes. The outputter can manage many

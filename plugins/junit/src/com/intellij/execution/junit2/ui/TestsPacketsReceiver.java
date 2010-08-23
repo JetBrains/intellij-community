@@ -95,7 +95,7 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     }
 
     else if (packet.startsWith(PoolOfDelimiters.CHANGE_STATE)) {
-      notifyTestResult(new ObjectReader(packet, PoolOfDelimiters.CHANGE_STATE.length(), myObjectRegistry));
+      notifyTestResult(new ObjectReader(packet, PoolOfDelimiters.CHANGE_STATE.length(), myObjectRegistry), myModel.getRoot());
     }
 
     else if (packet.startsWith(PoolOfDelimiters.TESTS_DONE)) {
@@ -149,8 +149,11 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     return dynamicParent;
   }
 
-  public static void notifyTestResult(ObjectReader reader) {
+  public static void notifyTestResult(ObjectReader reader, TestProxy root) {
     final TestProxy testProxy = reader.readObject();
+    if (testProxy.getParent() == null) {
+      root.addChild(testProxy);
+    }
     final int state = reader.readInt();
     final StateChanger stateChanger = STATE_CLASSES.get(new Integer(state));
     stateChanger.changeStateOf(testProxy, reader);

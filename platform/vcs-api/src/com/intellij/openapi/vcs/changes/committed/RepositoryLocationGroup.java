@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,6 +53,12 @@ public class RepositoryLocationGroup implements RepositoryLocation {
       sb.append(location.getKey());
     }
     return sb.toString();
+  }
+
+  public void onBeforeBatch() throws VcsException {
+  }
+
+  public void onAfterBatch() {
   }
 
   public List<RepositoryLocation> getLocations() {

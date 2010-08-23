@@ -101,6 +101,10 @@ public class JavaParameters extends SimpleJavaParameters {
       return;
     }
 
+    Charset encoding = EncodingProjectManager.getInstance(project).getDefaultCharset();
+    if (encoding != null) {
+      setCharset(encoding);
+    }
     ProjectRootsTraversing.collectRoots(project, getPolicy(project, null, classPathType), getClassPath());
   }
 

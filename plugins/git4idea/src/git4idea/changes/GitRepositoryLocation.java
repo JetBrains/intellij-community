@@ -17,6 +17,7 @@
 package git4idea.changes;
 
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 
 import java.io.File;
 
@@ -57,6 +58,12 @@ public class GitRepositoryLocation implements RepositoryLocation {
    */
   public String getKey() {
     return myUrl;
+  }
+
+  public void onBeforeBatch() throws VcsException {
+  }
+
+  public void onAfterBatch() {
   }
 
   /**

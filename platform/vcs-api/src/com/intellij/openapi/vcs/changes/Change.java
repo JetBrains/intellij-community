@@ -33,6 +33,8 @@ import java.io.File;
  * @author max
  */
 public class Change {
+  private int myHash;
+
   public enum Type {
     MODIFICATION,
     NEW,
@@ -58,6 +60,7 @@ public class Change {
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
+    myHash = -1;
   }
 
   private static FileStatus convertStatus(ContentRevision beforeRevision, ContentRevision afterRevision) {
@@ -121,12 +124,19 @@ public class Change {
   }
 
   public int hashCode() {
+    if (myHash == -1) {
+      myHash = calculateHash();
+    }
+    return myHash;
+  }
+
+  private int calculateHash() {
     return revisionHashCode(getBeforeRevision()) * 27 + revisionHashCode(getAfterRevision());
   }
 
   private static int revisionHashCode(ContentRevision rev) {
     if (rev == null) return 0;
-    return rev.getFile().hashCode();
+    return rev.getFile().getIOFile().getPath().hashCode();
   }
 
   public boolean affectsFile(File ioFile) {

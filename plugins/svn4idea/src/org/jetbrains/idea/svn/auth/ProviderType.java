@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.pointers;
+package org.jetbrains.idea.svn.auth;
 
-import com.intellij.util.messages.Topic;
-
-public interface VirtualFilePointerListener {
-  Topic<VirtualFilePointerListener> TOPIC = Topic.create("VirtualFilePointer", VirtualFilePointerListener.class);
-
-  void beforeValidityChanged(VirtualFilePointer[] pointers);
-  void validityChanged(VirtualFilePointer[] pointers);
+public enum ProviderType {
+  dumb,
+  interactive,
+  persistent,
+  memory_cache
 }
