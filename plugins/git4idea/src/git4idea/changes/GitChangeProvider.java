@@ -64,7 +64,7 @@ public class GitChangeProvider implements ChangeProvider {
       LOG.info("affected content roots size: " + affected.size() + " roots size: " + roots.size());
     }
 
-    final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand());
+    final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate);
 
     for (VirtualFile root : roots) {
       ChangeCollector c = new ChangeCollector(myProject, dirtyScope, root);
@@ -75,6 +75,7 @@ public class GitChangeProvider implements ChangeProvider {
       }
       for (VirtualFile f : c.unversioned()) {
         builder.processUnversionedFile(f);
+        holder.unversioned(f);
       }
       holder.feedBuilder(builder);
     }
@@ -83,10 +84,12 @@ public class GitChangeProvider implements ChangeProvider {
   private static class MyNonChangedHolder {
     private final Project myProject;
     private final Set<FilePath> myDirty;
+    private final ChangeListManagerGate myAddGate;
 
-    private MyNonChangedHolder(final Project project, final Set<FilePath> dirty) {
+    private MyNonChangedHolder(final Project project, final Set<FilePath> dirty, final ChangeListManagerGate addGate) {
       myProject = project;
       myDirty = dirty;
+      myAddGate = addGate;
     }
 
     public void changed(final Collection<Change> changes) {
@@ -102,14 +105,19 @@ public class GitChangeProvider implements ChangeProvider {
       }
     }
 
+    public void unversioned(final VirtualFile vf) {
+      myDirty.remove(new FilePathImpl(vf));
+    }
+
     public void feedBuilder(final ChangelistBuilder builder) throws VcsException {
       final VcsKey gitKey = GitVcs.getKey();
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
       final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+
       for (FilePath filePath : myDirty) {
         final VirtualFile vf = filePath.getVirtualFile();
         if (vf != null) {
-          if (fileDocumentManager.isFileModifiedAndDocumentUnsaved(vf)) {
+          if ((! FileStatus.ADDED.equals(myAddGate.getStatus(vf))) && fileDocumentManager.isFileModifiedAndDocumentUnsaved(vf)) {
             final VirtualFile root = vcsManager.getVcsRootFor(vf);
             if (root != null) {
               final GitRevisionNumber beforeRevisionNumber = GitChangeUtils.loadRevision(myProject, root, "HEAD");
