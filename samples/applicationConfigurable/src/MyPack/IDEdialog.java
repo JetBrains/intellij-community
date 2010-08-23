@@ -9,12 +9,12 @@ import java.awt.event.*;
 
 public class IDEdialog extends JDialog {
     private JPanel contentPane;
-    private JPanel Name;
+
     public JComboBox myFontCombo;
     public JComboBox myFontSize;
     public JLabel menuFontSettingsLabel;
     public JButton ButtonRestoreDefaultFont;
-    private String Buffer;
+
 
 
     public IDEdialog() {
@@ -26,7 +26,7 @@ public class IDEdialog extends JDialog {
         myFontCombo.setSelectedItem(settings.FONT_FACE);
         myFontSize.setSelectedItem( String.valueOf(settings.FONT_SIZE));
 
-// Configure the Set Default Font button.
+// Configure the Set Default Font button listener.
 
         MyButtonListener actionListener = new MyButtonListener();
         actionListener.button=ButtonRestoreDefaultFont;

@@ -1,6 +1,6 @@
 <idea-plugin version="2">
-  <name>Plugin name here</name>
-  <description>short description of the plugin</description>
+  <name>Plugin name</name>
+  <description></description>
   <version>1.0</version>
   <vendor>YourCompany</vendor>
   <idea-version since-build="8000"/>

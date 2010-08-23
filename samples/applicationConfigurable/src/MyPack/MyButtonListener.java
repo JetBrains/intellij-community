@@ -14,7 +14,7 @@ import java.awt.event.ActionListener;
  * User: Alexey.Chursin
  * Date: Aug 7, 2010
  * Time: 9:36:45 PM
- * To change this template use File | Settings | File Templates.
+
  */
 public class MyButtonListener implements ActionListener {
 
@@ -28,6 +28,7 @@ public class MyButtonListener implements ActionListener {
 
        UISettings settings = UISettings.getInstance();
        LafManager lafManager = LafManager.getInstance();
+        // Restore default font
        settings.FONT_FACE="Segoe UI";
        settings.FONT_SIZE=12;
        myFontCombo.setSelectedItem(settings.FONT_FACE);
