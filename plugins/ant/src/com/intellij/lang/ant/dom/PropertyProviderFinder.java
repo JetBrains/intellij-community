@@ -16,9 +16,11 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
@@ -115,17 +117,12 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           break;
 
         default:
-          if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
-            effectiveTargetName = declaredTargetName;
-          }
-          else {
-            duplicateTargetFound(myTargetsResolveMap.get(declaredTargetName), target, declaredTargetName);
-          }
+          effectiveTargetName = declaredTargetName;
           break;
       }
       if (effectiveTargetName != null) {
         final AntDomTarget existingTarget = myTargetsResolveMap.get(effectiveTargetName);
-        if (existingTarget != null) {
+        if (existingTarget != null && Comparing.equal(existingTarget.getAntProject(), target.getAntProject())) {
           duplicateTargetFound(existingTarget, target, effectiveTargetName);
         }
         else {
@@ -226,7 +223,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
     final PsiFileSystemItem item = directive.getFile().getValue();
     if (item instanceof PsiFile) {
-      final AntDomProject slaveProject = AntSupport.getAntDomProject((PsiFile)item);
+      final AntDomProject slaveProject = item instanceof XmlFile ? AntSupport.getAntDomProjectForceAntFile((XmlFile)item) : null;
       if (slaveProject != null) {
         myNameContext.pushPrefix(directive, kind, slaveProject);
         try {

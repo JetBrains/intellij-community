@@ -8,6 +8,6 @@ public class Test {
 }
 
 public class MyArrayList extends ArrayList {
-    public MyArrayList(int i, String s) {<caret>
+    public MyArrayList(int i, String test) {<caret>
     }
 }

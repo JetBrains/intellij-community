@@ -108,12 +108,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
         return o1.toString().compareTo(o2.toString());
       }
     });
-    String s = StringUtil.join(errors, new Function<HighlightInfo, String>() {
-      @Override
-      public String fun(HighlightInfo info) {
-        return info.toString();
-      }
-    }, "\n");
+    final String s = StringUtil.join(errors, StringUtil.createToStringFunction(HighlightInfo.class), "\n");
     System.out.println(msg+":\n-----------------------------------------");
     System.out.println(s);
     System.out.println("\n--------------------------------------------");

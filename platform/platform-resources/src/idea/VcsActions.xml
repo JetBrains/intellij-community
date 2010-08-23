@@ -46,7 +46,7 @@
 
         <action id="Vcs.QuickListPopupAction"
                 class = "com.intellij.openapi.vcs.actions.VcsQuickListPopupAction"
-                text = "VCS Quick List..." description="Context aware popup with list of commonly used VCS actions"/>
+                text = "VCS Operations Popup..." description="Context aware popup with list of commonly used VCS actions"/>
         <action id="Vcs.ChangesView" class="com.intellij.openapi.vcs.changes.ShowChangesViewAction"/>
         <reference ref="CheckinProject"/>
         <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="/_cvs/checkOut.png">

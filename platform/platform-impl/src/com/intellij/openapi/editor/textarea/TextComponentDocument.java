@@ -50,8 +50,9 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     }
   }
 
+  @NotNull
   @Override
-  public String getText(TextRange range) {
+  public String getText(@NotNull TextRange range) {
     try {
       final javax.swing.text.Document document = myTextComponent.getDocument();
       return document.getText(range.getStartOffset(), range.getLength());

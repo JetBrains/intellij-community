@@ -65,11 +65,7 @@ public class TestsPattern extends TestObject {
         }
       }
     }
-    addClassesListToJavaParameters(classNames, new Function<String, String>() {
-      public String fun(String className) {
-        return className;
-      }
-    }, "", true, isJUnit4);
+    addClassesListToJavaParameters(classNames, new Function.Self<String, String>(), "", true, isJUnit4);
   }
 
   @Override

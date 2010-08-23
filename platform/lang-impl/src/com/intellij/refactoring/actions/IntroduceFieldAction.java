@@ -40,8 +40,4 @@ public class IntroduceFieldAction extends BasePlatformRefactoringAction {
   protected boolean isEnabledOnElements(PsiElement[] elements) {
     return false;
   }
-
-  protected boolean isAvailableForLanguage(Language language) {
-    return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getIntroduceFieldHandler() != null;
-  }
 }

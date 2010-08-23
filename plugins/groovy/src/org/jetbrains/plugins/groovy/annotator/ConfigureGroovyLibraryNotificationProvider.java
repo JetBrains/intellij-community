@@ -16,20 +16,16 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.ProjectTopics;
-import com.intellij.ide.util.frameworkSupport.AddFrameworkSupportDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -64,20 +60,18 @@ public class ConfigureGroovyLibraryNotificationProvider implements EditorNotific
     final Module module = ModuleUtil.findModuleForFile(file, myProject);
     if (module == null) return null;
 
-    final Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module);
-    if (libraries.length > 0) return null;
+    GroovyFrameworkConfigNotification[] configNotifications = GroovyFrameworkConfigNotification.EP_NAME.getExtensions();
 
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText(GroovyBundle.message("groovy.library.is.not.configured.for.module", module.getName()));
-    panel.createActionLabel(GroovyBundle.message("configure.groovy.library"), new Runnable() {
-      @Override
-      public void run() {
-        AddFrameworkSupportDialog dialog = AddFrameworkSupportDialog.createDialog(module);
-        if (dialog != null) {
-          dialog.show();
+    for (GroovyFrameworkConfigNotification configNotification : configNotifications) {
+      if (configNotification.hasFrameworkStructure(module)) {
+        if (!configNotification.hasFrameworkLibrary(module)) {
+          return configNotification.createConfigureNotificationPanel(module);
         }
+        return null;
       }
-    });
-    return panel;
+    }
+
+    return null;
   }
+
 }

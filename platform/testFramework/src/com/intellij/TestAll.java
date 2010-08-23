@@ -42,6 +42,7 @@ import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -334,10 +335,12 @@ public class TestAll implements Test {
   private static String [] getClassRoots() {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
+      System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
       return testRoots.split(";");
     }
     final String[] roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {
+      System.out.println("Collecting tests from roots specified by classpath.file property: " + Arrays.toString(roots));
       return roots;
     }
     else {
@@ -353,6 +356,7 @@ public class TestAll implements Test {
             e.printStackTrace();
           }
         }
+        System.out.println("Collecting tests from classloader: " + Arrays.toString(urlsStrings));
         return urlsStrings;
       }
       return System.getProperty("java.class.path").split(File.pathSeparator);

@@ -17,14 +17,15 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.lang.LangBundle;
+import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.patterns.PsiJavaElementPattern;
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.TrueFilter;
@@ -36,9 +37,9 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.LangBundle;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author peter
@@ -56,6 +57,11 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   public JavaClassNameCompletionContributor() {
     extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>(false) {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
+        if (shouldShowSecondSmartCompletionHint(parameters) &&
+            CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
+          CompletionService.getCompletionService().setAdvertisementText(CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+        }
+
         PsiElement insertedElement = parameters.getPosition();
         String prefix = result.getPrefixMatcher().getPrefix();
 
@@ -122,15 +128,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       }
     });
 
-  }
-
-  public String advertise(@NotNull final CompletionParameters parameters) {
-    if (shouldShowSecondSmartCompletionHint(parameters) &&
-        CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
-      return CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION));
-    }
-
-    return null;
   }
 
   @Override

@@ -94,7 +94,7 @@ public class SaveAsTemplateAction extends AnAction {
                   String canonicalText = reference.getCanonicalText();
                   TextRange referenceRange = reference.getRangeInElement();
                   TextRange range = element.getTextRange().cutOut(referenceRange).shiftRight(-offsetDelta);
-                  final String oldText = range.substring(document.getText());
+                  final String oldText = document.getText(range);
                   if (!canonicalText.equals(oldText)) {
                     rangeToText.put(document.createRangeMarker(range), canonicalText);
                   }

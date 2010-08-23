@@ -172,11 +172,7 @@ public class SvnRenameTest extends SvnTestCase {
   }
 
   private String listToString(final List<Change> changes) {
-    return "{" + StringUtil.join(changes, new Function<Change, String>() {
-      public String fun(final Change change) {
-        return change.toString();
-      }
-    }, ",") + "}";
+    return "{" + StringUtil.join(changes, StringUtil.createToStringFunction(Change.class), ",") + "}";
   }
 
   // IDEADEV-19223

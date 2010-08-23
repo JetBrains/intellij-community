@@ -39,7 +39,7 @@ public class WordSplitter extends BaseSplitter {
     }
     List<CheckArea> results = new ArrayList<CheckArea>();
 
-    Matcher specialMatcher = SPECIAL.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
+    Matcher specialMatcher = SPECIAL.matcher(range.substring(text));
     if (specialMatcher.find()) {
       TextRange found = matcherRange(range, specialMatcher);
       addWord(text, results, true, found);

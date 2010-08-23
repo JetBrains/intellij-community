@@ -27,9 +27,9 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -679,7 +679,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
    */
   private final class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(Project project) {
-      FileEditorManager.getInstance(project).addFileEditorManagerListener(myEditorManagerListener, project);
+      project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
     }
 
     public void projectClosed(Project project) {

@@ -43,8 +43,4 @@ public class IntroduceVariableAction extends BasePlatformRefactoringAction {
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return provider.getIntroduceVariableHandler();
   }
-
-  protected boolean isAvailableForLanguage(Language language) {
-    return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getIntroduceVariableHandler() != null;
-  }
 }

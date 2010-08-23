@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -46,7 +47,11 @@ public class FirstWordMacro implements Macro {
     return execute(result);
   }
 
-  private Result execute(final Result result) {
+  @Nullable
+  private static Result execute(final Result result) {
+    if (result == null) {
+      return null;
+    }
     final String resultString = result.toString();
     final int index = resultString.indexOf(' ');
     return index >= 0 ? new TextResult(resultString.substring(0, index)) : result;

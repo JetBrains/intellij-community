@@ -37,8 +37,4 @@ public abstract class ExtractSuperActionBase extends BasePlatformRefactoringActi
     return false;
   }
 
-  protected boolean isAvailableForLanguage(final Language language) {
-    return getRefactoringHandler(LanguageRefactoringSupport.INSTANCE.forLanguage(language)) != null;
-  }
-
 }

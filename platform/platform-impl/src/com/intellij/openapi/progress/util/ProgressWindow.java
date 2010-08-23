@@ -159,8 +159,10 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   public void startBlocking() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(!isRunning());
-    LOG.assertTrue(!myStoppedAlready);
+    synchronized (this) {
+      LOG.assertTrue(!isRunning());
+      LOG.assertTrue(!myStoppedAlready);
+    }
 
     enterModality();
 

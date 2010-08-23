@@ -48,8 +48,4 @@ public class PushDownAction extends BasePlatformRefactoringAction {
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return provider.getPushDownHandler();
   }
-
-  protected boolean isAvailableForLanguage(final Language language) {
-    return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getPushDownHandler() != null;
-  }
 }

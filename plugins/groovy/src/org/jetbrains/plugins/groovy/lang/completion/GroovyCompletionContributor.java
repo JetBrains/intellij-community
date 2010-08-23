@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
@@ -37,13 +38,13 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -57,10 +58,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,11 +98,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static final String[] THIS_SUPER = {"this", "super"};
 
-  private static boolean isReferenceInNewExpression(PsiElement reference) {
+  public static boolean isReferenceInNewExpression(PsiElement reference) {
     if (!(reference instanceof GrCodeReferenceElement)) return false;
 
     PsiElement parent = reference.getParent();
     while (parent instanceof GrCodeReferenceElement) parent = parent.getParent();
+    if (parent instanceof GrAnonymousClassDefinition) parent = parent.getParent();
     return parent instanceof GrNewExpression;
   }
 
@@ -109,33 +115,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                     @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         final PsiElement reference = position.getParent();
-        if (reference == null) return;
-        if (isReferenceInNewExpression(reference)) {
-          //reference in new Expression
-          ((GrCodeReferenceElement)reference).processVariants(new Consumer<Object>() {
-            public void consume(Object element) {
-              if (element instanceof PsiClass) {
-                final PsiClass clazz = (PsiClass)element;
-                final LookupElement lookupElement = GroovyCompletionUtil.getLookupElement(clazz);
-                result.addElement(GroovyCompletionUtil.setTailTypeForConstructor(clazz, lookupElement));
-              } else if (element instanceof LookupElement && ((LookupElement)element).getObject() instanceof PsiClass) {
-                result.addElement(GroovyCompletionUtil
-                                    .setTailTypeForConstructor(((PsiClass)((LookupElement)element).getObject()), ((LookupElement)element)));
-              }
-              else {
-                result.addElement(GroovyCompletionUtil.getLookupElement(element));
-              }
-            }
-          });
-
-        }
-        else if (reference instanceof GrReferenceElement) {
-//          final boolean addGDKMethods = parameters.getInvocationCount() > 1;
+        if (reference instanceof GrReferenceElement) {
           ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
             public void consume(Object element) {
-              LookupElement lookupElement = GroovyCompletionUtil.getLookupElement(element);
-//              if (lookupElement.getObject() instanceof GrGdkMethod && !addGDKMethods) return;
-              result.addElement(lookupElement);
+              result.addElement(element instanceof PsiClass ? AllClassesGetter.createLookupItem((PsiClass)element) : GroovyCompletionUtil.getLookupElement(element));
             }
           });
         }
@@ -221,7 +204,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final PsiElement position = parameters.getPosition();
         if (!GroovyCompletionUtil.isFirstElementAfterModifiersInVariableDeclaration(position, true)) return;
 
-        for (Object variant : new ClassesGetter().get(parameters.getPosition(), null)) {
+        ResolverProcessor processor = CompletionProcessor.createClassCompletionProcessor(position);
+        ResolveUtil.treeWalkUp(position, processor, false);
+
+        for (Object variant : GroovyCompletionUtil.getCompletionVariants(processor.getCandidates())) {
           final String lookupString;
           if (variant instanceof PsiElement) {
             lookupString = PsiUtilBase.getName(((PsiElement)variant));
@@ -272,7 +258,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           }
         }
         else if (call instanceof GrApplicationStatement) {
-          final GrExpression element = ((GrApplicationStatement)call).getFunExpression();
+          final GrExpression element = ((GrApplicationStatement)call).getInvokedExpression();
           if (element instanceof GrReferenceElement) {
             ContainerUtil.addAll(results, ((GrReferenceElement)element).multiResolve(true));
           }
@@ -313,6 +299,27 @@ public class GroovyCompletionContributor extends CompletionContributor {
             addPropertiesForClass(result, usedClasses, usedNames, (PsiClass)element, call);
           }
         }
+      }
+    });
+
+    extend(CompletionType.BASIC, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull final CompletionResultSet result) {
+        final PsiElement position = parameters.getPosition();
+        if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
+
+        final String s = result.getPrefixMatcher().getPrefix();
+        if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return;
+
+        result.runRemainingContributors(new CompletionParameters(position, parameters.getOriginalFile(), CompletionType.CLASS_NAME, parameters.getOffset(), parameters.getInvocationCount()), new Consumer<LookupElement>() {
+          @Override
+          public void consume(LookupElement lookupElement) {
+            result.addElement(lookupElement);
+          }
+        });
+
       }
     });
   }
@@ -459,4 +466,18 @@ public class GroovyCompletionContributor extends CompletionContributor {
 //    return iterator.getTokenType() == GroovyTokenTypes.mASSIGN;
     return true;
   }
+
+  private static boolean shouldRunClassNameCompletion(CompletionResultSet result, PsiFile file, PsiElement position) {
+    if (!(file instanceof GroovyFileBase)) {
+      return false;
+    }
+
+    if (!(position.getParent() instanceof GrCodeReferenceElement)) return false;
+    if (((GrCodeReferenceElement)position.getParent()).getQualifier() != null) return false;
+
+    final String s = result.getPrefixMatcher().getPrefix();
+    if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return false;
+    return true;
+  }
+
 }

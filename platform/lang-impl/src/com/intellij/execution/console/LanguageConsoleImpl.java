@@ -354,7 +354,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
                                     HighlighterTargetArea.EXACT_RANGE);
 
     final int offset = history.getTextLength();
-    final String text = textRange.substring(consoleEditor.getDocument().getText());
+    final String text = consoleEditor.getDocument().getText(textRange);
     history.insertString(offset, text);
     final HighlighterIterator iterator = consoleEditor.getHighlighter().createIterator(0);
     while (!iterator.atEnd()) {

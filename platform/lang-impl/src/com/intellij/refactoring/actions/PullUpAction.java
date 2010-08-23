@@ -47,8 +47,4 @@ public class PullUpAction extends BasePlatformRefactoringAction {
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return provider.getPullUpHandler();
   }
-
-  protected boolean isAvailableForLanguage(final Language language) {
-    return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getPullUpHandler() != null;
-  }
 }

@@ -18,16 +18,11 @@ package com.intellij.util;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * 
  * @author peter
+ * @author Konstantin Bulenkov
  */
-public interface NotNullFunction<Dom, Img> extends Function<Dom,Img> {
-  NotNullFunction ID = new NotNullFunction() {
-    @NotNull
-    public Object fun(final Object o) {
-      return o;
-    }
-  };
-
+public interface NotNullFunction<Param, Result> extends NullableFunction<Param, Result> {
   @NotNull
-  Img fun(final Dom dom);
+  Result fun(final Param dom);
 }

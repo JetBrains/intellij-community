@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle;
+package com.intellij.util;
 
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author yole
+ * @author Konstantin Bulenkov
  */
-public class WrappingSettingsProvider extends CodeStyleSettingsProvider {
-  @NotNull
-  public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
-    return new WrappingConfigurable(settings, originalSettings);
+public final class NullableConstantFunction<Param, Result> implements NullableFunction<Param, Result> {
+  private final Result value;
+
+  public NullableConstantFunction(@Nullable Result value) {
+    this.value = value;
   }
 
+  @Nullable
   @Override
-  public String getConfigurableDisplayName() {
-    return ApplicationBundle.message("title.wrapping");
+  public Result fun(Param param) {
+    return value;
   }
 }

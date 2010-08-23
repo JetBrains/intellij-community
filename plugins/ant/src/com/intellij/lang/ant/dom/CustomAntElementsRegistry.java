@@ -56,6 +56,11 @@ import java.util.*;
  */
 public class CustomAntElementsRegistry {
 
+  public static ThreadLocal<Boolean> ourIsBuildingClasspathForCustomTagLoading = new ThreadLocal<Boolean>() {
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.CustomAntElementsRegistry");
   private static final Key<CustomAntElementsRegistry> REGISTRY_KEY = Key.create("_custom_element_registry_");
 
@@ -285,36 +290,31 @@ public class CustomAntElementsRegistry {
   }
 
   public static List<URL> collectUrls(AntDomClasspathElement typedef) {
-    final List<URL> urls = new ArrayList<URL>();
-    // check classpath attribute
-    final List<File> cpFiles = typedef.getClasspath().getValue();
-    if (cpFiles != null) {
-      for (File file : cpFiles) {
-        try {
-          urls.add(toLocalURL(file));
-        }
-        catch (MalformedURLException ignored) {
-          LOG.info(ignored);
-        }
-      }
+    boolean cleanupNeeded = false;
+    if (!ourIsBuildingClasspathForCustomTagLoading.get()) {
+      ourIsBuildingClasspathForCustomTagLoading.set(Boolean.TRUE);
+      cleanupNeeded = true;
     }
 
-    final HashSet<AntFilesProvider> processed = new HashSet<AntFilesProvider>();
-    final AntDomElement referencedPath = typedef.getClasspathRef().getValue();
-    if (referencedPath instanceof AntFilesProvider) {
-      for (File cpFile : ((AntFilesProvider)referencedPath).getFiles(processed)) {
-        try {
-          urls.add(toLocalURL(cpFile));
-        }
-        catch (MalformedURLException ignored) {
-          LOG.info(ignored);
+    try {
+      final List<URL> urls = new ArrayList<URL>();
+      // check classpath attribute
+      final List<File> cpFiles = typedef.getClasspath().getValue();
+      if (cpFiles != null) {
+        for (File file : cpFiles) {
+          try {
+            urls.add(toLocalURL(file));
+          }
+          catch (MalformedURLException ignored) {
+            LOG.info(ignored);
+          }
         }
       }
-    }
-    // check nested elements
-    for (AntDomElement child : typedef.getAntChildren()) {
-      if (child instanceof AntFilesProvider) {
-        for (File cpFile : ((AntFilesProvider)child).getFiles(processed)) {
+
+      final HashSet<AntFilesProvider> processed = new HashSet<AntFilesProvider>();
+      final AntDomElement referencedPath = typedef.getClasspathRef().getValue();
+      if (referencedPath instanceof AntFilesProvider) {
+        for (File cpFile : ((AntFilesProvider)referencedPath).getFiles(processed)) {
           try {
             urls.add(toLocalURL(cpFile));
           }
@@ -323,10 +323,28 @@ public class CustomAntElementsRegistry {
           }
         }
       }
+      // check nested elements
+      for (AntDomElement child : typedef.getAntChildren()) {
+        if (child instanceof AntFilesProvider) {
+          for (File cpFile : ((AntFilesProvider)child).getFiles(processed)) {
+            try {
+              urls.add(toLocalURL(cpFile));
+            }
+            catch (MalformedURLException ignored) {
+              LOG.info(ignored);
+            }
+          }
+        }
+  
+      }
 
+      return urls;
     }
-
-    return urls;
+    finally {
+      if (cleanupNeeded) {
+        ourIsBuildingClasspathForCustomTagLoading.remove();
+      }
+    }
   }
 
   private static URL toLocalURL(final File file) throws MalformedURLException {

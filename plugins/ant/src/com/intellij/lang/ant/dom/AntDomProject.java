@@ -220,13 +220,13 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
         appendProperty(destination, name, value);
       }
     }
-    final Map<String, String> envMap = System.getenv();
-    for (final String name : envMap.keySet()) {
-      if (name.length() > 0) {
-        final String value = envMap.get(name);
-        appendProperty(destination, DEFAULT_ENVIRONMENT_PREFIX + name, value);
-      }
-    }
+    //final Map<String, String> envMap = System.getenv();
+    //for (final String name : envMap.keySet()) {
+    //  if (name.length() > 0) {
+    //    final String value = envMap.get(name);
+    //    appendProperty(destination, DEFAULT_ENVIRONMENT_PREFIX + name, value);
+    //  }
+    //}
     if (externalProps != null) {
       for (final String name : externalProps.keySet()) {
         final String value = externalProps.get(name);

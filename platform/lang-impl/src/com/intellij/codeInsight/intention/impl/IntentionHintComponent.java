@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -199,10 +200,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private static Point getHintPosition(Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     final int offset = editor.getCaretModel().getOffset();
-    final LogicalPosition pos = editor.offsetToLogicalPosition(offset);
+    final VisualPosition pos = editor.offsetToVisualPosition(offset);
     int line = pos.line;
 
-    final Point position = editor.logicalPositionToXY(new LogicalPosition(line, 0));
+    final Point position = editor.visualPositionToXY(new VisualPosition(line, 0));
     LOG.assertTrue(editor.getComponent().isDisplayable());
 
     JComponent convertComponent = editor.getContentComponent();

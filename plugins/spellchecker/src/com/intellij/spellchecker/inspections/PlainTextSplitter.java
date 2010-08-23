@@ -38,7 +38,7 @@ public class PlainTextSplitter extends BaseSplitter {
     if (text == null || StringUtil.isEmpty(text)) {
       return null;
     }
-    if (Verifier.checkCharacterData(text.substring(range.getStartOffset(), range.getEndOffset())) != null) {
+    if (Verifier.checkCharacterData(range.substring(text)) != null) {
       return null;
     }
 

@@ -55,11 +55,7 @@ public class Function {
 
     public String buildSignature(String name) {
         final StringBuilder sb = new StringBuilder(name).append("(");
-        sb.append(StringUtil.join(Arrays.asList(parameters), new com.intellij.util.Function<Parameter, String>() {
-            public String fun(Parameter s) {
-                return s.toString();
-            }
-        }, ", "));
+        sb.append(StringUtil.join(Arrays.asList(parameters), StringUtil.createToStringFunction(Parameter.class), ", "));
         return sb.append(")").toString();
     }
 }

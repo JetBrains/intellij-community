@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.IdeView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -50,4 +51,6 @@ public class LangDataKeys extends PlatformDataKeys {
 
   public static final DataKey<PsiElement> TARGET_PSI_ELEMENT = DataKey.create("psi.TargetElement");
   public static final DataKey<PsiElement> PASTE_TARGET_PSI_ELEMENT = DataKey.create("psi.pasteTargetElement");
+
+  public static final DataKey<ConsoleView> CONSOLE_VIEW = DataKey.create("consoleView");
 }

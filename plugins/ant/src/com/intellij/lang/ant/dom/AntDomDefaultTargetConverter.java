@@ -17,6 +17,8 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.Converter;
@@ -42,7 +44,19 @@ public class AntDomDefaultTargetConverter extends Converter<TargetResolver.Resul
     final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
     if (element != null && s != null) {
       final AntDomProject project = element.getAntProject();
-      final TargetResolver.Result result = TargetResolver.resolve(project.getContextAntProject(), null, s);
+      AntDomProject projectToSearchFrom;
+      final AntDomAnt antDomAnt = element.getParentOfType(AntDomAnt.class, false);
+      if (antDomAnt != null) {
+        final PsiFileSystemItem antFile = antDomAnt.getAntFilePath().getValue();
+        projectToSearchFrom = antFile instanceof PsiFile? AntSupport.getAntDomProjectForceAntFile((PsiFile)antFile) : null; 
+      }
+      else {
+        projectToSearchFrom = project.getContextAntProject();
+      }
+      if (projectToSearchFrom == null) {
+        return null;
+      }
+      final TargetResolver.Result result = TargetResolver.resolve(projectToSearchFrom, null, s);
       result.setRefsString(s);
       return result;
     }
