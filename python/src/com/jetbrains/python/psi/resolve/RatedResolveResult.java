@@ -40,6 +40,11 @@ public class RatedResolveResult implements ResolveResult {
     return new RatedResolveResult(myRate, what);
   }
 
+  @Override
+  public String toString() {
+    return myWhat.toString() + "@" + myRate;
+  }
+
   /**
    * For unusual items that need to be on top.
    */
