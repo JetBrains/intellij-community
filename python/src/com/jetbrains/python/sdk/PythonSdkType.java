@@ -327,6 +327,17 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @Nullable
+  public static VirtualFile findSkeletonsDir(Sdk sdk) {
+    final VirtualFile[] virtualFiles = sdk.getRootProvider().getFiles(BUILTIN_ROOT_TYPE);
+    for (VirtualFile virtualFile : virtualFiles) {
+      if (virtualFile.getPath().contains(SKELETON_DIR_NAME)) {
+        return virtualFile;
+      }
+    }
+    return null;
+  }
+
   @NonNls
   public String getPresentableName() {
     return "Python SDK";

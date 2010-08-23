@@ -3,7 +3,9 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,8 +14,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -466,13 +470,7 @@ public class ResolveImportUtil {
       if (!root.isValid()) {
         return true;
       }
-      PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
-      for (String component : qualifiedName.getComponents()) {
-        if (component == null) {
-          return true;
-        }
-        module = resolveChild(module, component, foothold_file, false); // only files, we want a module
-      }
+      PsiElement module = resolveInRoot(root, qualifiedName, psiManager, foothold_file);
       if (module != null) {
         results.add(module);
       }
@@ -480,6 +478,18 @@ public class ResolveImportUtil {
     }
   }
 
+  @Nullable
+  private static PsiElement resolveInRoot(VirtualFile root, PyQualifiedName qualifiedName, PsiManager psiManager, PsiFile foothold_file) {
+    PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
+    for (String component : qualifiedName.getComponents()) {
+      if (component == null) {
+        module = null;
+        break;
+      }
+      module = resolveChild(module, component, foothold_file, false); // only files, we want a module
+    }
+    return module;
+  }
 
   /**
    * Tries to find referencedName under the parent element. Used to resolve any names that look imported.
@@ -534,6 +544,23 @@ public class ResolveImportUtil {
     if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
       return file;
     }
+
+    String binaryExt = SystemInfo.isWindows ? ".pyd" : ".so";
+    final PsiFile binaryModule = dir.findFile(referencedName + binaryExt);
+    if (binaryModule != null && FileUtil.getNameWithoutExtension(binaryModule.getName()).equals(referencedName)) {
+      // find mirror of binary module in skeletons
+      String qName = findShortestImportableName(binaryModule, binaryModule.getVirtualFile());
+      if (qName != null) {
+        VirtualFile root = findSkeletonsRoot(containingFile);
+        if (root != null) {
+          PsiElement skeleton = resolveInRoot(root, PyQualifiedName.fromDottedString(qName), dir.getManager(), containingFile);
+          if (skeleton instanceof PyFile) {
+            return skeleton;
+          }
+        }
+      }
+    }
+
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     if (subdir != null && subdir.findFile(PyNames.INIT_DOT_PY) != null) {
       return subdir;
@@ -549,6 +576,14 @@ public class ResolveImportUtil {
     return null;
   }
 
+  @Nullable
+  private static VirtualFile findSkeletonsRoot(PsiFile containingFile) {
+    Sdk sdk = PyBuiltinCache.findSdkForFile(containingFile);
+    if (sdk != null) {
+      return PythonSdkType.findSkeletonsDir(sdk);
+    }
+    return null;
+  }
 
   /**
    * Tries to find roots that contain given vfile, and among them the root that contains at the smallest depth.

@@ -62,40 +62,48 @@ public class PyBuiltinCache {
         return instance;
       }
       // actually create an instance
-      Sdk sdk = null;
-      if (module != null) {
-        sdk = PythonSdkType.findPythonSdk(module);
-      }
-      else {
-        final PsiFile psifile = reference.getContainingFile();
-        if (psifile != null) {  // formality
-          final VirtualFile vfile = psifile.getVirtualFile();
-          if (vfile != null) { // reality
-            final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-            sdk = projectRootManager.getProjectJdk();
-            if (sdk == null) {
-              final List<OrderEntry> orderEntries = projectRootManager.getFileIndex().getOrderEntriesForFile(vfile);
-              for (OrderEntry orderEntry : orderEntries) {
-                if (orderEntry instanceof JdkOrderEntry) {
-                  sdk = ((JdkOrderEntry) orderEntry).getJdk();
-                } else
-                  if (orderEntry instanceof ModuleLibraryOrderEntryImpl) {
-                    sdk = PythonSdkType.findPythonSdk(orderEntry.getOwnerModule());
-                  }
-              }
-            }
-          }
-          else if (ApplicationManager.getApplication().isUnitTestMode()) {
-            // did they store a test SDK for us?
-            sdk = project.getUserData(TEST_SDK);
-          }
-        }
-      }
+      Sdk sdk = findSdkForFile(reference.getContainingFile());
       if (sdk != null) {
         return getBuiltinsForSdk(project, instance_key, sdk);
       }
     }
     return DUD_INSTANCE; // a non-functional fail-fast instance, for a case when skeletons are not available
+  }
+
+  @Nullable
+  public static Sdk findSdkForFile(PsiFile psifile) {
+    if (psifile == null) {
+      return null;
+    }
+    Project project = psifile.getProject();
+    Module module = ModuleUtil.findModuleForPsiElement(psifile);
+    Sdk sdk = null;
+    if (module != null) {
+      sdk = PythonSdkType.findPythonSdk(module);
+    }
+    else {
+      final VirtualFile vfile = psifile.getVirtualFile();
+      if (vfile != null) { // reality
+        final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+        sdk = projectRootManager.getProjectJdk();
+        if (sdk == null) {
+          final List<OrderEntry> orderEntries = projectRootManager.getFileIndex().getOrderEntriesForFile(vfile);
+          for (OrderEntry orderEntry : orderEntries) {
+            if (orderEntry instanceof JdkOrderEntry) {
+              sdk = ((JdkOrderEntry)orderEntry).getJdk();
+            }
+            else if (orderEntry instanceof ModuleLibraryOrderEntryImpl) {
+              sdk = PythonSdkType.findPythonSdk(orderEntry.getOwnerModule());
+            }
+          }
+        }
+      }
+      else if (ApplicationManager.getApplication().isUnitTestMode()) {
+        // did they store a test SDK for us?
+        sdk = project.getUserData(TEST_SDK);
+      }
+    }
+    return sdk;
   }
 
   private static PyBuiltinCache getBuiltinsForSdk(Project project, ComponentManager instance_key, Sdk sdk) {
