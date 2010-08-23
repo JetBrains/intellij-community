@@ -26,6 +26,9 @@ import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class JUnit4TestResultsSender extends RunListener {
   private final OutputObjectRegistry myRegistry;
   private final PacketProcessor myErr;
@@ -96,6 +99,11 @@ public class JUnit4TestResultsSender extends RunListener {
       catch (Throwable ignore) {}
     }
 
+    final Matcher matcher =
+      Pattern.compile("\nExpected: \"(.*)\"\n     got: \"(.*)\"\n", Pattern.DOTALL).matcher(assertion.getMessage());
+    if (matcher.matches()){
+      return ComparisonDetailsExtractor.create(assertion, matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+    }
     return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
   }
 
