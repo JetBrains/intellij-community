@@ -27,7 +27,7 @@ import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.EmptyTextHelper;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable {
-  private EmptyTextHelper myEmptyTextHelper;
+  private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   private AsyncProcessIcon myBusyIcon;
@@ -71,9 +71,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   private void initTree_() {
-    myEmptyTextHelper = new EmptyTextHelper(this) {
+    myEmptyText = new StatusText(this) {
       @Override
-      protected boolean isEmpty() {
+      protected boolean isStatusVisible() {
         return Tree.this.isEmpty();
       }
     };
@@ -115,30 +115,43 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return true;
   }
 
-  public String getEmptyText() {
-    return myEmptyTextHelper.getEmptyText();
+  @NotNull
+  @Override
+  public String getText() {
+    return myEmptyText.getText();
   }
 
+  @Override
   public void setEmptyText(String emptyText) {
-    myEmptyTextHelper.setEmptyText(emptyText);
+    myEmptyText.setEmptyText(emptyText);
   }
 
+  @Override
   public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.setEmptyText(emptyText, attrs);
+    myEmptyText.setEmptyText(emptyText, attrs);
   }
 
+  @Override
   public void clearEmptyText() {
-    myEmptyTextHelper.clearEmptyText();
+    myEmptyText.clearEmptyText();
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.appendEmptyText(text, attrs);
+    myEmptyText.appendEmptyText(text, attrs);
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
-    myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+    myEmptyText.appendEmptyText(text, attrs, listener);
   }
 
+  @Override
+  public StatusText getEmptyText() {
+    return myEmptyText;
+  }
+
+  @Override
   @NotNull
   public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
@@ -266,7 +279,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     super.paintComponent(g);
-    myEmptyTextHelper.paint(g);
+    myEmptyText.paint(this, g);
   }
 
   /**
