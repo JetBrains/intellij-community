@@ -1177,6 +1177,11 @@ class ModuleRedeclarator(object):
         # if deco == "staticmethod":
         return None
 
+    def fullName(self, cls, p_modname):
+        m = cls.__module__
+        if m == p_modname or m == BUILTIN_MOD_NAME:
+            return cls.__name__
+        return m + "." + cls.__name__
 
     def redoClass(self, p_class, p_name, indent, p_modname=None):
         """
@@ -1188,7 +1193,7 @@ class ModuleRedeclarator(object):
         bases = getBases(p_class)
         base_def = ""
         if bases:
-            base_def = "(" + ", ".join([x.__name__ for x in bases]) + ")"
+            base_def = "(" + ", ".join([self.fullName(x, p_modname) for x in bases]) + ")"
         self.out("class " + p_name + base_def + ":", indent)
         self.outDocAttr(p_class, indent + 1)
         # inner parts
@@ -1260,7 +1265,7 @@ class ModuleRedeclarator(object):
         if not methods and not properties and not others:
             self.out("pass", indent + 1)
 
-    def redo(self, p_name):
+    def redo(self, p_name, old_modules):
         """
         Restores module declarations.
         Intended for built-in modules and thus does not handle import statements.
@@ -1283,6 +1288,11 @@ class ModuleRedeclarator(object):
                     self.out("import " + item.__name__ + " as " + item_name + " # refers to " + str(item))
                 else:
                     self.out(item_name + " = None # ??? name unknown, refers to " + str(item))
+        for module_name, module_obj in sys.modules.iteritems():
+            if module_name not in old_modules and module_obj != self.module and module_name not in self.imported_modules:
+                self.imported_modules[module_name] = module_obj
+                self.out("import " + module_name)
+                                
         self.out("", 0) # empty line after imports
         # group what else we have into buckets
         vars_simple = {}
@@ -1501,6 +1511,8 @@ if __name__ == "__main__":
             else:
                 fname = target_name + ".py"
             #
+
+            old_modules = list(sys.modules.iterkeys())
             action = "importing"
             try:
                 mod = __import__(name)
@@ -1530,7 +1542,7 @@ if __name__ == "__main__":
             outfile = fopen(fname, "w")
             action = "restoring"
             r = ModuleRedeclarator(mod, outfile, doing_builtins=doing_builtins)
-            r.redo(name)
+            r.redo(name, old_modules)
             action = "closing " + fname
             outfile.close()
         except:
