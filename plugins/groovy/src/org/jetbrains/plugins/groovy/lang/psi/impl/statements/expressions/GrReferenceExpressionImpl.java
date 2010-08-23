@@ -88,7 +88,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     boolean hasAt = hasAt();
     GroovyResolveResult[] classCandidates = GroovyResolveResult.EMPTY_ARRAY;
     if (!hasAt) {
-      ResolverProcessor classProcessor = new ClassResolverProcessor(getReferenceName(), this, kinds);
+      ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
       resolveImpl(classProcessor);
       classCandidates = classProcessor.getCandidates();
       for (GroovyResolveResult classCandidate : classCandidates) {
@@ -230,8 +230,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public String getReferenceName() {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
-      if (nameElement.getNode().getElementType() == GroovyElementTypes.mSTRING_LITERAL ||
-          nameElement.getNode().getElementType() == GroovyElementTypes.mGSTRING_LITERAL) {
+      IElementType nodeType = nameElement.getNode().getElementType();
+      if (nodeType == GroovyElementTypes.mSTRING_LITERAL || nodeType == GroovyElementTypes.mGSTRING_LITERAL) {
         return GrStringUtil.removeQuotes(nameElement.getText());
       }
 
