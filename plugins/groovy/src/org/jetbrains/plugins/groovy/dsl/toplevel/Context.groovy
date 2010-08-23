@@ -6,10 +6,10 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.ObjectPattern
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.Scope
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import static com.intellij.patterns.PlatformPatterns.psiFile
 import static com.intellij.patterns.PlatformPatterns.virtualFile
@@ -52,9 +52,10 @@ class Context {
     return new ClassContextFilter(new ObjectPattern<Pair<PsiType, PsiElement>, ObjectPattern>(PsiType) {
        @Override
        boolean accepts(Object o, ProcessingContext context) {
-         if (o instanceof Pair && o.second instanceof GroovyPsiElement && o.first instanceof PsiType) {
-           PsiType myType = JavaPsiFacade.getElementFactory(o.second.project).createTypeFromText(ctype, o.second)         
-           return TypesUtil.isAssignable(myType, o.first, ((GroovyPsiElement)o.second))
+         if (o instanceof Pair && o.second instanceof PsiFile && o.first instanceof PsiType) {
+           def place = (PsiFile) o.second
+           PsiType myType = JavaPsiFacade.getElementFactory(place.project).createTypeFromText(ctype, place)
+           return TypesUtil.isAssignable(myType, (PsiType)o.first, place.manager, place.resolveScope, false)
          }
          return false
        }

@@ -21,6 +21,7 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
@@ -32,7 +33,7 @@ public class ImmutableAnnotationProcessor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     GroovyPsiElement place,
                                      ResolveState state) {
     if (!(qualifierType instanceof PsiClassType)) return;
 
