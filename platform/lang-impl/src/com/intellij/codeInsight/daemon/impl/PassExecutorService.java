@@ -35,13 +35,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -49,7 +49,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -80,7 +83,7 @@ public abstract class PassExecutorService implements Disposable {
       for (Job<Void> job : mySubmittedPasses.values()) {
         try {
           JobImpl ji = (JobImpl)job;
-          if (!job.isDone()) ji.waitForTermination(ji.getTasks());
+          if (!job.isDone()) ji.waitForTermination();
         }
         catch (Throwable throwable) {
           LOG.error(throwable);
@@ -260,9 +263,24 @@ public abstract class PassExecutorService implements Disposable {
     return textEditorPass;
   }
 
-  private void submit(ScheduledPass pass) {
+  private void submit(final ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job<Void> job = JobUtil.submitToJobThread(pass, pass.myJobPriority);
+      Job<Void> job = JobUtil.submitToJobThread(pass, pass.myJobPriority, new Consumer<Future>() {
+        @Override
+        public void consume(Future future) {
+          mySubmittedPasses.remove(pass);
+          try {
+            future.get();
+          }
+          catch (CancellationException ignored) {
+          }
+          catch (InterruptedException ignored) {
+          }
+          catch (ExecutionException e) {
+            LOG.error(e.getCause());
+          }
+        }
+      });
       mySubmittedPasses.put(pass, job);
     }
   }
@@ -333,10 +351,12 @@ public abstract class PassExecutorService implements Disposable {
                 myUpdateProgress.cancel(); //in case when some smartasses throw PCE just for fun
               }
               catch (RuntimeException e) {
+                myUpdateProgress.cancel();
                 LOG.error(e);
                 throw e;
               }
               catch (Error e) {
+                myUpdateProgress.cancel();
                 LOG.error(e);
                 throw e;
               }
