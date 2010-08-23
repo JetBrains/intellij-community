@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
@@ -29,7 +30,7 @@ public class GrInheritConstructorContributor extends NonCodeMembersContributor {
   public static final String INHERIT_CONSTRUCTOR_NAME = "groovy.transform.InheritConstructors";
 
   @Override
-  public void processDynamicElements(@NotNull PsiType qualifierType, PsiScopeProcessor processor, PsiElement place, ResolveState state) {
+  public void processDynamicElements(@NotNull PsiType qualifierType, PsiScopeProcessor processor, GroovyPsiElement place, ResolveState state) {
     if (!(qualifierType instanceof PsiClassType)) return;
     final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)qualifierType).resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();

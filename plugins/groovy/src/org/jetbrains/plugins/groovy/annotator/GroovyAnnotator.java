@@ -390,7 +390,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         if (parent instanceof GrClosableBlock) {
           context = parent;
           duplicate = ResolveUtil
-            .resolveExistingElement(context, new DuplicateVariablesProcessor(variable), GrVariable.class, GrReferenceExpression.class);
+            .resolveExistingElement((GrClosableBlock)parent, new DuplicateVariablesProcessor(variable), GrVariable.class, GrReferenceExpression.class);
         }
       }
     }

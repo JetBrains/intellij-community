@@ -24,12 +24,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class XDebuggerActionBase extends AnAction {
+public abstract class XDebuggerActionBase extends AnAction implements AnAction.TransparentUpdate {
   private boolean myHideDisabledInPopup;
 
   protected XDebuggerActionBase() {
     this(false);
-    setTransparentUpdate(true);
   }
 
   protected XDebuggerActionBase(final boolean hideDisabledInPopup) {

@@ -133,7 +133,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiModifierList list = ((PsiModifierListOwner)member).getModifierList();
     PsiAnnotation[] gluedAnnos = list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
     for (PsiAnnotation anno : gluedAnnos) {
-      if (AnnotationsHighlightUtil.isAnnotationApplicableTo(anno, true, "TYPE_USE")) {
+      if (AnnotationsHighlightUtil.isAnnotationApplicableTo(anno, false, "TYPE_USE")) {
         typeAnnos.add(anno);
       }
     }

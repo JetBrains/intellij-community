@@ -24,7 +24,6 @@ package com.intellij.compiler.impl;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
-import com.intellij.openapi.compiler.generic.GenericCompiler;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.CacheUtils;
 import com.intellij.compiler.make.DependencyCache;
@@ -37,6 +36,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
+import com.intellij.openapi.compiler.generic.GenericCompiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
@@ -67,6 +67,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -195,7 +197,7 @@ public class CompileDriver {
     final CompilerTask task = new CompilerTask(myProject, true, "", true);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, createDependencyCache(), true, false);
 
-    checkCachesVersion(compileContext);
+    checkCachesVersion(compileContext, ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp());
     if (compileContext.isRebuildRequested()) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Rebuild requested, up-to-date=false");
@@ -250,21 +252,29 @@ public class CompileDriver {
   private static class CompileStatus {
     final int CACHE_FORMAT_VERSION;
     final boolean COMPILATION_IN_PROGRESS;
+    final long VFS_CREATION_STAMP;
 
-    private CompileStatus(int cacheVersion, boolean isCompilationInProgress) {
+    private CompileStatus(int cacheVersion, boolean isCompilationInProgress, long vfsStamp) {
       CACHE_FORMAT_VERSION = cacheVersion;
       COMPILATION_IN_PROGRESS = isCompilationInProgress;
+      VFS_CREATION_STAMP = vfsStamp;
     }
   }
 
   private CompileStatus readStatus() {
     final boolean isInProgress = getLockFile().exists();
     int version = -1;
+    long vfsStamp = -1L;
     try {
       final File versionFile = new File(myCachesDirectoryPath, VERSION_FILE_NAME);
       DataInputStream in = new DataInputStream(new FileInputStream(versionFile));
       try {
         version = in.readInt();
+        try {
+          vfsStamp = in.readLong();
+        }
+        catch (IOException ignored) {
+        }
       }
       finally {
         in.close();
@@ -277,7 +287,7 @@ public class CompileDriver {
       LOG.info(e);  // may happen in case of IDEA crashed and the file is not written properly
       return null;
     }
-    return new CompileStatus(version, isInProgress);
+    return new CompileStatus(version, isInProgress, vfsStamp);
   }
 
   private void writeStatus(CompileStatus status, CompileContext context) {
@@ -289,6 +299,7 @@ public class CompileDriver {
       DataOutputStream out = new DataOutputStream(new FileOutputStream(statusFile));
       try {
         out.writeInt(status.CACHE_FORMAT_VERSION);
+        out.writeLong(status.VFS_CREATION_STAMP);
       }
       finally {
         out.close();
@@ -458,14 +469,15 @@ public class CompileDriver {
                          final boolean trackDependencies) {
     ExitStatus status = ExitStatus.ERRORS;
     boolean wereExceptions = false;
+    final long vfsTimestamp = ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp();
     try {
       if (checkCachesVersion) {
-        checkCachesVersion(compileContext);
+        checkCachesVersion(compileContext, vfsTimestamp);
         if (compileContext.isRebuildRequested()) {
           return;
         }
       }
-      writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, true), compileContext);
+      writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, true, vfsTimestamp), compileContext);
       if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         return;
       }
@@ -505,7 +517,7 @@ public class CompileDriver {
       }
       else {
         final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
-        writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, wereExceptions), compileContext);
+        writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, wereExceptions, vfsTimestamp), compileContext);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
@@ -532,7 +544,7 @@ public class CompileDriver {
     }
   }
 
-  private void checkCachesVersion(final CompileContextImpl compileContext) {
+  private void checkCachesVersion(final CompileContextImpl compileContext, final long currentVFSTimestamp) {
     final CompileStatus compileStatus = readStatus();
     if (compileStatus == null) {
       compileContext.requestRebuildNextTime(CompilerBundle.message("error.compiler.caches.corrupted"));
@@ -543,6 +555,11 @@ public class CompileDriver {
     }
     else if (compileStatus.COMPILATION_IN_PROGRESS) {
       compileContext.requestRebuildNextTime(CompilerBundle.message("error.previous.compilation.failed"));
+    }
+    else if (compileStatus.VFS_CREATION_STAMP >= 0L){
+      if (currentVFSTimestamp != compileStatus.VFS_CREATION_STAMP) {
+        compileContext.requestRebuildNextTime(CompilerBundle.message("error.vfs.was.rebuilt"));
+      }
     }
   }
 

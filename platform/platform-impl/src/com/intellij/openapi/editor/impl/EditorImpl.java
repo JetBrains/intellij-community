@@ -4908,7 +4908,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               fontType = state.getMergedAttributes().getFontType();
             }
 
-            while (softWrapsIndex < softWraps.size()) {
+            while (softWrapsIndex < softWraps.size() && line < lineCount) {
               TextChange softWrap = softWraps.get(softWrapsIndex);
               if (softWrap.getStart() > offset) {
                 break;

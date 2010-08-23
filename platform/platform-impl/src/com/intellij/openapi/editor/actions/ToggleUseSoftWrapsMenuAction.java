@@ -15,28 +15,27 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /**
- * {@link ToggleUseSoftWrapsMenuAction} extension that doesn't suppress configured icon (if any).
+ * Action that toggles <code>'show soft wraps at editor'</code> option and is expected to be used at various menus.
  *
  * @author Denis Zhdanov
- * @since Aug 19, 2010 5:07:08 PM
+ * @since Aug 19, 2010 3:15:26 PM
  */
-public class ToggleUseSoftWrapsToolbarAction extends AbstractToggleUseSoftWrapsAction {
+public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsAction {
 
-  public ToggleUseSoftWrapsToolbarAction() {
-    super();
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS));
-  }
-
-  //TODO den remove
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    Editor editor = getEditor(e);
-    if (editor != null) {
-      editor.getSettings().setUseSoftWraps(state);
+  public void update(AnActionEvent e){
+    super.update(e);
+    e.getPresentation().setIcon(null);
+
+    if (getEditor(e) == null) {
+      e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
+    } else {
+      e.getPresentation().setEnabled(true);
+      e.getPresentation().setVisible(true);
     }
   }
 }

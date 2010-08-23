@@ -63,7 +63,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @NotNull private BackendCompiler myDefaultJavaCompiler;
 
   // extensions of the files considered as resource files
-  private final List<Pattern> myRegexpResourcePaterns = new ArrayList<Pattern>(getDefaultRegexpPatterns());
+  private final List<Pattern> myRegexpResourcePaterns = new ArrayList<Pattern>();
   // extensions of the files considered as resource files. If present, Overrides patterns in old regexp format stored in myRegexpResourcePaterns
   private final List<String> myWildcardPatterns = new ArrayList<String>();
   private final List<Pair<Pattern, Pattern>> myCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
@@ -156,16 +156,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     catch (MalformedPatternException e) {
       LOG.error(e);
     }
-  }
-
-  private static List<Pattern> getDefaultRegexpPatterns() {
-    try {
-      return Arrays.asList(compilePattern(".+\\.(properties|xml|html|dtd|tld)"), compilePattern(".+\\.(gif|png|jpeg|jpg)"));
-    }
-    catch (MalformedPatternException e) {
-      LOG.error(e);
-    }
-    return Collections.emptyList();
   }
 
   public static String getTestsExternalCompilerHome() {

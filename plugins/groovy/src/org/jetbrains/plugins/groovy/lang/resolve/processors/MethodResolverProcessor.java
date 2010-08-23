@@ -88,7 +88,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       GroovyPsiElement fileResolveContext = state.get(RESOLVE_CONTEXT);
       boolean isStaticsOK = isStaticsOK(method, fileResolveContext);
       if (!myAllVariants && PsiUtil.isApplicable(myArgumentTypes, method, substitutor, fileResolveContext instanceof GrMethodCallExpression, (GroovyPsiElement)myPlace) && isStaticsOK) {
-        myCandidates.add(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
+        addCandidate(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
         myInapplicableCandidates.add(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
       }
@@ -222,7 +222,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return myInapplicableCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
     }
 
-    if (!myCandidates.isEmpty()) {
+    if (super.hasCandidates()) {
       return filterCandidates();
     }
     if (!myInapplicableCandidates.isEmpty()) {
@@ -246,17 +246,21 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   private GroovyResolveResult[] filterCandidates() {
-    GroovyResolveResult[] array = myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
-    if (array.length == 1) return array;
+    Set<GroovyResolveResult> array = getCandidatesInternal();
+    if (array.size() == 1) return array.toArray(new GroovyResolveResult[array.size()]);
 
     List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
-    result.add(array[0]);
+
+    Iterator<GroovyResolveResult> itr = array.iterator();
+
+    result.add(itr.next());
 
     GlobalSearchScope scope = myPlace.getResolveScope();
 
     Outer:
-    for (int i = 1; i < array.length; i++) {
-      PsiElement currentElement = array[i].getElement();
+    while (itr.hasNext()) {
+      GroovyResolveResult resolveResult = itr.next();
+      PsiElement currentElement = resolveResult.getElement();
       if (currentElement instanceof PsiMethod) {
         PsiMethod currentMethod = (PsiMethod) currentElement;
         for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
@@ -264,7 +268,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
           PsiElement element = otherResolveResult.getElement();
           if (element instanceof PsiMethod) {
             PsiMethod method = (PsiMethod) element;
-            final int res = compareMethods(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor(), scope);
+            final int res = compareMethods(currentMethod, resolveResult.getSubstitutor(), method, otherResolveResult.getSubstitutor(), scope);
             if (res > 0) {
               continue Outer;
             }
@@ -275,7 +279,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         }
       }
 
-      result.add(array[i]);
+      result.add(resolveResult);
     }
 
     return result.toArray(new GroovyResolveResult[result.size()]);
@@ -380,7 +384,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   public boolean hasApplicableCandidates() {
-    return !myCandidates.isEmpty();
+    return super.hasCandidates();
   }
 
   @Nullable
@@ -391,7 +395,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   @Override
   public void handleEvent(Event event, Object associated) {
     super.handleEvent(event, associated);
-    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && myCandidates.size() > 0) {
+    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && super.hasCandidates()) {
       myStopExecuting = true;
     }
   }

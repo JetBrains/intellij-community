@@ -62,6 +62,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     }
     finally {
       myGlobalInspectionContext = null;
+      myExternalProfile = null;
     }
   }
 

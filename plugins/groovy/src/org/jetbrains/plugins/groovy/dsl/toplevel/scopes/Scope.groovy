@@ -71,7 +71,7 @@ class ClosureScope extends Scope {
 
     // Enhance only unqualified expressions
     if (!args.ctype) {
-      result << Context.getClassTypeFilter(GrClosableBlock.GROOVY_LANG_CLOSURE)
+      result << ClassContextFilter.subtypeOf(GrClosableBlock.GROOVY_LANG_CLOSURE)
     }
     result
   }
@@ -108,7 +108,7 @@ class ScriptScope extends Scope {
 
     // Process unqualified references only
     if (!args.ctype) {
-      result << new ClassContextFilter(TypeToClassPattern.create(PsiJavaPatterns.psiClass().and(StandardPatterns.instanceOf(SyntheticElement))))
+      result << ClassContextFilter.fromClassPattern(PsiJavaPatterns.psiClass().and(StandardPatterns.instanceOf(SyntheticElement)))
     }
 
     return result

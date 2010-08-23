@@ -45,7 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ThreadDumpAction extends AnAction {
+public class ThreadDumpAction extends AnAction implements AnAction.TransparentUpdate {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());

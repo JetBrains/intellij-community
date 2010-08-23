@@ -19,7 +19,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ScrollPaneUI;
 import java.awt.*;
@@ -69,6 +68,11 @@ public class JBScrollPane extends JScrollPane {
   @Override
   public JScrollBar createHorizontalScrollBar() {
     return new MyScrollBar(JScrollBar.HORIZONTAL);
+  }
+
+  @Override
+  protected JViewport createViewport() {
+    return new JBViewport();
   }
 
   private class MyScrollBar extends ScrollBar {

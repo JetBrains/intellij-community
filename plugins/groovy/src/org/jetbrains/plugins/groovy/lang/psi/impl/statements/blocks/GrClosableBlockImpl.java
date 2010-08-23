@@ -65,7 +65,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                      @NotNull ResolveState _state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (lastParent == null) return true;
+    if (lastParent == null || !(place instanceof GroovyPsiElement)) return true;
 
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
@@ -86,7 +86,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
       // Process non-code in closures
       PsiType clType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(closureClass, PsiSubstitutor.EMPTY);
-      if (!ResolveUtil.processNonCodeMethods(clType, processor, place)) return false;
+      if (!ResolveUtil.processNonCodeMethods(clType, processor, (GroovyPsiElement)place)) return false;
     }
 
     return true;

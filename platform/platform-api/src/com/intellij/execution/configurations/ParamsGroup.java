@@ -61,6 +61,15 @@ public class ParamsGroup implements Cloneable{
     }
   }
 
+  public void addParametersString(final String parameters) {
+    if (parameters != null) {
+      final String[] parms = ParametersList.parse(parameters);
+      for (String parm : parms) {
+        addParameter(parm);
+      }
+    }
+  }
+
   public List<String> getParameters() {
     return myGroupParams.getList();
   }

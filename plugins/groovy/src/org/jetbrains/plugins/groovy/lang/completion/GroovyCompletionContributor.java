@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -205,7 +206,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         if (!GroovyCompletionUtil.isFirstElementAfterModifiersInVariableDeclaration(position, true)) return;
 
         ResolverProcessor processor = CompletionProcessor.createClassCompletionProcessor(position);
-        ResolveUtil.treeWalkUp(position, processor, false);
+        ResolveUtil.treeWalkUp((GrVariable)position.getParent(), processor, false);
 
         for (Object variant : GroovyCompletionUtil.getCompletionVariants(processor.getCandidates())) {
           final String lookupString;

@@ -27,9 +27,9 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,7 @@ public class SemServiceImpl extends SemService{
       return o2.getUniqueId() - o1.getUniqueId();
     }
   };
-  private final ConcurrentMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>> myCache = new ConcurrentHashMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>>();
+  private final ConcurrentMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>> myCache = new StripedLockConcurrentHashMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>>();
   private final Map<SemKey, Collection<NullableFunction<PsiElement, ? extends SemElement>>> myProducers = new THashMap<SemKey, Collection<NullableFunction<PsiElement,? extends SemElement>>>();
   private final MultiMap<SemKey, SemKey> myInheritors = new MultiMap<SemKey, SemKey>();
   private final Project myProject;
@@ -252,7 +252,7 @@ public class SemServiceImpl extends SemService{
   private ConcurrentMap<SemKey, List<SemElement>> cacheOrGetMap(PsiElement psi) {
     ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(psi);
     if (map == null) {
-      map = ConcurrencyUtil.cacheOrGet(myCache, psi, new ConcurrentHashMap<SemKey, List<SemElement>>());
+      map = ConcurrencyUtil.cacheOrGet(myCache, psi, new StripedLockConcurrentHashMap<SemKey, List<SemElement>>());
     }
     return map;
   }

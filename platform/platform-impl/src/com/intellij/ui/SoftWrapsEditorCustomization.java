@@ -15,19 +15,29 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
- * Defines common contract for building {@link EditorTextField} with spell checking support.
+ * Editor customization that can make target editor soft wraps-aware.
+ * <p/>
+ * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Aug 18, 2010 1:37:55 PM
+ * @since Aug 20, 2010 4:54:48 PM
  */
-public interface SpellCheckAwareEditorFieldProvider {
+public class SoftWrapsEditorCustomization implements EditorCustomization {
 
-  /**
-   * @param project   target project
-   * @return          {@link EditorTextField} with spell checking support.
-   */
-  EditorTextField getEditorField(Project project);
+  @Override
+  public Set<Feature> getSupportedFeatures() {
+    return EnumSet.of(Feature.SOFT_WRAP);
+  }
+
+  @Override
+  public void customize(@NotNull EditorEx editor, @NotNull Feature feature) {
+    editor.getSettings().setUseSoftWraps(true);
+  }
 }

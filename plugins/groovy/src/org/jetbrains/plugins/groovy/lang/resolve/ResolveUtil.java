@@ -64,7 +64,7 @@ public class ResolveUtil {
   private ResolveUtil() {
   }
 
-  public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor, boolean processNonCodeMethods) {
+  public static boolean treeWalkUp(@NotNull GroovyPsiElement place, PsiScopeProcessor processor, boolean processNonCodeMethods) {
     PsiElement lastParent = null;
     PsiElement run = place;
 
@@ -129,7 +129,7 @@ public class ResolveUtil {
 
   public static boolean processNonCodeMethods(PsiType type,
                                               PsiScopeProcessor processor,
-                                              PsiElement place) {
+                                              GroovyPsiElement place) {
     if (!NonCodeMembersContributor.runContributors(type, processor, place, ResolveState.initial())) {
       return false;
     }
@@ -228,14 +228,15 @@ public class ResolveUtil {
   }
 
   @Nullable
-  public static <T> T resolveExistingElement(PsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
+  public static <T> T resolveExistingElement(GroovyPsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
     treeWalkUp(place, processor, true);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
       if (element == place) continue;
       for (Class<? extends T> clazz : classes) {
-        if (clazz.isInstance(element)) return (T)element;
+        if (clazz.isInstance(element)) //noinspection unchecked
+          return (T)element;
       }
     }
 
@@ -381,10 +382,10 @@ public class ResolveUtil {
           PsiElement element = otherResolveResult.getElement();
           if (element instanceof PsiMethod) {
             PsiMethod method = (PsiMethod)element;
-            if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor(), argumentCount)) {
+            if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor())) {
               continue Outer;
             }
-            else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor(), argumentCount)) {
+            else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor())) {
               iterator.remove();
             }
           }
@@ -400,8 +401,7 @@ public class ResolveUtil {
   public static boolean dominated(PsiMethod method1,
                                   PsiSubstitutor substitutor1,
                                   PsiMethod method2,
-                                  PsiSubstitutor substitutor2,
-                                  int argumentCount) {  //method1 has more general parameter types then method2
+                                  PsiSubstitutor substitutor2) {  //method1 has more general parameter types then method2
     if (!method1.getName().equals(method2.getName())) return false;
 
     PsiParameter[] params1 = method1.getParameterList().getParameters();
