@@ -50,12 +50,15 @@ public class PyResolveContext {
     PyResolveContext that = (PyResolveContext)o;
 
     if (myAllowImplicits != that.myAllowImplicits) return false;
+    if (myTypeEvalContext != null ? !myTypeEvalContext.equals(that.myTypeEvalContext) : that.myTypeEvalContext != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return (myAllowImplicits ? 1 : 0);
+    int result = (myAllowImplicits ? 1 : 0);
+    result = 31 * result + (myTypeEvalContext != null ? myTypeEvalContext.hashCode() : 0);
+    return result;
   }
 }
