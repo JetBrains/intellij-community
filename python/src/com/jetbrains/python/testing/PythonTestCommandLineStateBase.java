@@ -1,5 +1,6 @@
 package com.jetbrains.python.testing;
 
+import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -27,7 +28,10 @@ import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -78,7 +82,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected Collection<String> buildPythonPath() {
-    Collection<String> pythonPathList = new LinkedHashSet<String>();
+    Collection<String> pythonPathList = Sets.newLinkedHashSet();
     pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
     final Module module = myConfiguration.getModule();
     if (module != null) {
