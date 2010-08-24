@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -41,13 +42,14 @@ public class DefaultSoftWrapApplianceManagerTest {
   private static final String WRAP_MARKER            = "<WRAP>";
   private static final int    SOFT_WRAP_DRAWING_SIZE = 11;
 
-  private DefaultSoftWrapApplianceManager myManager;  
-  private Mockery myMockery;
-  private SoftWrapsStorage myStorage;
-  private EditorEx myEditor;
-  private SoftWrapPainter myPainter;
-  private Document myDocument;
-  private ScrollingModel myScrollingModel;
+  private DefaultSoftWrapApplianceManager myManager;
+  private Mockery                         myMockery;
+  private SoftWrapsStorage                myStorage;
+  private EditorEx                        myEditor;
+  private EditorSettings mySettings;
+  private SoftWrapPainter                 myPainter;
+  private Document                        myDocument;
+  private ScrollingModel                  myScrollingModel;
     
   @Before
   public void setUp() {
@@ -56,13 +58,19 @@ public class DefaultSoftWrapApplianceManagerTest {
     }};
     myStorage = myMockery.mock(SoftWrapsStorage.class);
     myEditor = myMockery.mock(EditorEx.class);
+    mySettings = myMockery.mock(EditorSettings.class);
     myPainter = myMockery.mock(SoftWrapPainter.class);
     myDocument = myMockery.mock(Document.class);
     myScrollingModel = myMockery.mock(ScrollingModel.class);
-    
+
     myMockery.checking(new Expectations() {{
       // Editor.
       allowing(myEditor).isViewer(); will(returnValue(false));
+      allowing(myEditor).getSettings(); will(returnValue(mySettings));
+
+      // Settings.
+      allowing(mySettings).isUseCustomSoftWrapIndent(); will(returnValue(false));
+      allowing(mySettings).getCustomSoftWrapIndent(); will(returnValue(0));
 
       // Document.
       allowing(myEditor).getDocument(); will(returnValue(myDocument));
