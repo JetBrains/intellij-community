@@ -136,7 +136,7 @@ public class ActionsTreeUtil {
       return name;
     }
     else {
-      final String id = ActionManager.getInstance().getId(action);
+      final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
       if (id != null) {
         return id;
       }
