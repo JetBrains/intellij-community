@@ -30,25 +30,26 @@ import javax.swing.*;
  * @author traff
  */
 public class SubstitutedFileType extends LanguageFileType{
-  private final FileType originalFileType;
-  private final FileType fileType;
+  private final @NotNull FileType originalFileType;
+  private final @NotNull FileType fileType;
 
-  private SubstitutedFileType(FileType originalFileType, LanguageFileType substitutionFileType) {
+  private SubstitutedFileType(@NotNull FileType originalFileType, @NotNull LanguageFileType substitutionFileType) {
     super(substitutionFileType.getLanguage());
     this.originalFileType = originalFileType;
     this.fileType = substitutionFileType;
   }
 
 
-  public static FileType substituteFileType(VirtualFile file, FileType fileType, Project project) {
+  public static FileType substituteFileType(VirtualFile file, @NotNull FileType fileType, Project project) {
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
     if (fileType instanceof LanguageFileType) {
       final Language language = ((LanguageFileType)fileType).getLanguage();
       final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
-      if (substitutedLanguage != null && !substitutedLanguage.equals(language)) {
-        return new SubstitutedFileType(fileType, substitutedLanguage.getAssociatedFileType());
+      LanguageFileType substFileType = substitutedLanguage.getAssociatedFileType();
+      if (!substitutedLanguage.equals(language) && substFileType != null) {
+        return new SubstitutedFileType(fileType, substFileType);
       }
     }
 
@@ -83,10 +84,12 @@ public class SubstitutedFileType extends LanguageFileType{
     return fileType.getCharset(file, content);
   }
 
+  @NotNull
   public FileType getOriginalFileType() {
     return originalFileType;
   }
 
+  @NotNull
   public FileType getFileType() {
     return fileType;
   }

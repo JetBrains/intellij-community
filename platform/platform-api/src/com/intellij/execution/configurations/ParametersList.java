@@ -121,11 +121,9 @@ public class ParametersList implements Cloneable{
   }
 
   @Nullable
-  public ParamsGroup getParamsGroup(String id) {
+  public ParamsGroup getParamsGroup(@NotNull final String name) {
     for (ParamsGroup group : myGroups) {
-      if (group.getId().equals(id)) {
-        return group;
-      }
+      if (name.equals(group.getId())) return group;
     }
     return null;
   }

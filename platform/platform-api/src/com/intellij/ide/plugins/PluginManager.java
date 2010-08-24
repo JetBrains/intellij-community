@@ -816,7 +816,7 @@ public class PluginManager {
       descriptor = new IdeaPluginDescriptorImpl(file);
 
       try {
-        descriptor.readExternal(descriptorFile.toURL());
+        descriptor.readExternal(descriptorFile.toURI().toURL());
       }
       catch (Exception e) {
         System.err.println("Cannot load: " + descriptorFile.getAbsolutePath());
@@ -872,7 +872,7 @@ public class PluginManager {
 
         for (File aClassPath : classPath) {
           final File file = aClassPath.getCanonicalFile();
-          addUrlMethod.invoke(loader,  file.toURL());
+          addUrlMethod.invoke(loader,  file.toURI().toURL());
         }
 
         return loader;
@@ -899,7 +899,7 @@ public class PluginManager {
       final List<URL> urls = new ArrayList<URL>(classPath.length);
       for (File aClassPath : classPath) {
         final File file = aClassPath.getCanonicalFile(); // it is critical not to have "." and ".." in classpath elements
-        urls.add(file.toURL());
+        urls.add(file.toURI().toURL());
       }
       return new PluginClassLoader(urls, parentLoaders, pluginId, pluginRoot);
     }

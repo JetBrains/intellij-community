@@ -502,7 +502,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (paramBound == null) return null;
       ConstraintType constrType = wildcardParam.isExtends() ? ConstraintType.SUPERTYPE : ConstraintType.SUBTYPE;
       if (arg instanceof PsiWildcardType) {
-        if (((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends()) {
+        if (((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends() && ((PsiWildcardType)arg).isBounded() == wildcardParam.isBounded()) {
           Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(paramBound, ((PsiWildcardType)arg).getBound(),
                                                                                    patternType, constrType, depth);
           if (res != null) return res;

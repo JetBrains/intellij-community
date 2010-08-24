@@ -99,7 +99,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
   @Override
   protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
-    return LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_SETTINGS;
+    return LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
   }
 
   protected void initTables() {

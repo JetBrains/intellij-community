@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -96,9 +97,8 @@ public class ShareProjectAction extends BasicAction {
     performImpl(project, activeVcs, file);
   }
 
-  private static boolean performImpl(final Project project, final SvnVcs activeVcs, final VirtualFile file) throws
-                                                                                                                              VcsException {
-    ShareDialog shareDialog = new ShareDialog(project);
+  private static boolean performImpl(final Project project, final SvnVcs activeVcs, final VirtualFile file) throws VcsException {
+    final ShareDialog shareDialog = new ShareDialog(project, file.getName());
     shareDialog.show();
 
     final String parent = shareDialog.getSelectedURL();
@@ -119,22 +119,35 @@ public class ShareProjectAction extends BasicAction {
                   actionStarted.set(Boolean.FALSE);
                   return;
                 }
-                SVNURL url = SVNURL.parseURIEncoded(parent).appendPath(file.getName(), false);
-                final String urlText = url.toString();
-                if (indicator != null) {
-                  indicator.checkCanceled();
-                  indicator.setText(SvnBundle.message("share.directory.create.dir.progress.text", urlText));
+                final SVNURL parenUrl = SVNURL.parseURIEncoded(parent);
+                final SVNURL checkoutUrl;
+                final SVNRevision revision;
+                
+                final ShareDialog.ShareTarget shareTarget = shareDialog.getShareTarget();
+                if (ShareDialog.ShareTarget.useSelected.equals(shareTarget)) {
+                  checkoutUrl = parenUrl;
+                  revision = SVNRevision.HEAD;
+                } else if (ShareDialog.ShareTarget.useProjectName.equals(shareTarget)) {
+                  final Pair<SVNRevision, SVNURL> pair = createRemoteFolder(activeVcs, parenUrl, file.getName());
+                  revision = pair.getFirst();
+                  checkoutUrl = pair.getSecond();
+                } else {
+                  final Pair<SVNRevision, SVNURL> pair = createRemoteFolder(activeVcs, parenUrl, file.getName());
+                  final Pair<SVNRevision, SVNURL> trunkPair = createRemoteFolder(activeVcs, pair.getSecond(), "trunk");
+                  checkoutUrl = trunkPair.getSecond();
+                  revision = trunkPair.getFirst();
+
+                  if (shareDialog.createStandardStructure()) {
+                    createRemoteFolder(activeVcs, pair.getSecond(), "branches");
+                    createRemoteFolder(activeVcs, pair.getSecond(), "tags");
+                  }
                 }
-                SVNCommitInfo info = activeVcs.createCommitClient().doMkDir(new SVNURL[] {url},
-                                                                            SvnBundle.message("share.directory.commit.message", file.getName(),
-                                                                                              ApplicationNamesInfo.getInstance().getFullProductName()));
-                SVNRevision revision = SVNRevision.create(info.getNewRevision());
 
                 if (indicator != null) {
                   indicator.checkCanceled();
-                  indicator.setText(SvnBundle.message("share.directory.checkout.back.progress.text", urlText));
+                  indicator.setText(SvnBundle.message("share.directory.checkout.back.progress.text", checkoutUrl.toString()));
                 }
-                activeVcs.createUpdateClient().doCheckout(url, path, SVNRevision.UNDEFINED, revision, true);
+                activeVcs.createUpdateClient().doCheckout(checkoutUrl, path, SVNRevision.UNDEFINED, revision, true);
                 SvnWorkingCopyFormatHolder.setPresetFormat(null);
 
                 addRecursively(activeVcs, file);
@@ -159,6 +172,20 @@ public class ShareProjectAction extends BasicAction {
       return true;
     }
     return false;
+  }
+
+  private static Pair<SVNRevision, SVNURL> createRemoteFolder(final SvnVcs vcs, final SVNURL parent, final String folderName) throws SVNException {
+    SVNURL url = parent.appendPath(folderName, false);
+    final String urlText = url.toString();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.checkCanceled();
+      indicator.setText(SvnBundle.message("share.directory.create.dir.progress.text", urlText));
+    }
+    final SVNCommitInfo info =
+      vcs.createCommitClient().doMkDir(new SVNURL[]{url}, SvnBundle.message("share.directory.commit.message", folderName,
+                                                                            ApplicationNamesInfo.getInstance().getFullProductName()));
+    return new Pair<SVNRevision, SVNURL>(SVNRevision.create(info.getNewRevision()), url);
   }
 
   @Override

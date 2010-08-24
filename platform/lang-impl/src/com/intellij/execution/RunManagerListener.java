@@ -15,6 +15,14 @@
  */
 package com.intellij.execution;
 
-public interface RunManagerListener {
+import java.util.EventListener;
+
+public interface RunManagerListener extends EventListener {
   void beforeRunTasksChanged();
+
+  void runConfigurationAdded(RunnerAndConfigurationSettings settings);
+
+  void runConfigurationRemoved(RunnerAndConfigurationSettings settings);
+
+  void runConfigurationChanged(RunnerAndConfigurationSettings settings);
 }

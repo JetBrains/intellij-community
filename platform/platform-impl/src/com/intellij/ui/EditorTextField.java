@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
@@ -23,16 +24,19 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +69,6 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   private boolean myIsSupplementary;
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor = null;
-  private boolean myUseTextFieldPreferredSize = true;
 
   public EditorTextField() {
     this("");
@@ -263,6 +266,13 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   void releaseEditor(final Editor editor) {
+    if (myProject != null && myIsViewer) {
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      if (psiFile != null) {
+        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, true);
+      }
+    }
+
     remove(editor.getComponent());
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
@@ -348,14 +358,43 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     settings.setVirtualSpace(false);
     editor.setHorizontalScrollbarVisible(false);
     editor.setVerticalScrollbarVisible(false);
+    editor.setCaretEnabled(!myIsViewer);
     settings.setLineCursorWidth(1);
 
     setupEditorFont(editor);
 
+    if (myProject != null && myIsViewer) {
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      if (psiFile != null) {
+        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, false);
+      }
+    }
+
     if (myProject != null && myFileType != null) {
       editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFileType));
     }
-    editor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, null);
+
+    final EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+    if (!isEnabled()) {
+      editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
+        @Override
+        public Color getColor(ColorKey key) {
+          return super.getColor(key);
+        }
+
+        @Override
+        public TextAttributes getAttributes(TextAttributesKey key) {
+          final TextAttributes attributes = super.getAttributes(key);
+          if (!isEnabled()) {
+            return new TextAttributes(UIUtil.getInactiveTextColor(), attributes.getBackgroundColor(), attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
+          }
+
+          return attributes;
+        }
+      });
+    }
+
     editor.setOneLineMode(true);
     editor.getCaretModel().moveToOffset(myDocument.getTextLength());
     if (!shouldHaveBorder()) {
@@ -370,10 +409,6 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     }
 
     editor.setBackgroundColor(getBackgroundColor(!myIsViewer));
-
-    if (myUseTextFieldPreferredSize && !UIUtil.isUnderQuaquaLookAndFeel()) {
-      editor.getComponent().setPreferredSize(new JTextField().getPreferredSize());
-    }
 
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
     editor.getContentComponent().setFocusCycleRoot(false);
@@ -425,19 +460,9 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
         preferredSize.height += insets.bottom;
       }
 
-      final Insets defaultInsets = new JTextField().getInsets();
-      if (defaultInsets != null) {
-        preferredSize.height -= defaultInsets.top;
-        preferredSize.width -= defaultInsets.left;
-      }
-
       return preferredSize;
     }
     return new Dimension(100, 20);
-  }
-
-  public void setUseTextFieldPreferredSize(final boolean b) {
-    myUseTextFieldPreferredSize = b;
   }
 
   public Component getNextFocusableComponent() {

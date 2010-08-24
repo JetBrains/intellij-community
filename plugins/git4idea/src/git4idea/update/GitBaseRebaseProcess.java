@@ -148,6 +148,7 @@ public abstract class GitBaseRebaseProcess {
             final Ref<Boolean> cancelled = new Ref<Boolean>(false);
             final Ref<Throwable> ex = new Ref<Throwable>();
             saveRootChangesBeforeUpdate(root);
+            boolean hadAbortErrors = false;
             try {
               markStart(root);
               try {
@@ -164,7 +165,7 @@ public abstract class GitBaseRebaseProcess {
                   }
                   cleanupHandler(root, h);
                 }
-                while (rebaseConflictDetector.isRebaseConflict() && !cancelled.get()) {
+                while (rebaseConflictDetector.isRebaseConflict() && !cancelled.get() && !hadAbortErrors) {
                   mergeFiles(root, cancelled, ex, true);
                   //noinspection ThrowableResultOfMethodCallIgnored
                   if (ex.get() != null) {
@@ -180,19 +181,21 @@ public abstract class GitBaseRebaseProcess {
                   if (cancelled.get()) {
                     break;
                   }
-                  doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
-                  while (rebaseConflictDetector.isNoChange()) {
+                  Collection<VcsException> exceptions = doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
+                  while (rebaseConflictDetector.isNoChange() && !hasAbortExceptions(exceptions)) {
                     if (skippedCommits == null) {
                       skippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
                       mySkippedCommits.put(root, skippedCommits);
                     }
                     skippedCommits.add(GitRebaseUtils.getCurrentRebaseCommit(root));
-                    doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
+                    exceptions = doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
                   }
+                  hadAbortErrors = hasAbortExceptions(exceptions);
                 }
-                if (cancelled.get()) {
+                if (cancelled.get() || hadAbortErrors) {
                   //noinspection ThrowableInstanceNeverThrown
-                  myExceptions.add(new VcsException("The update process was cancelled for " + root.getPresentableUrl()));
+                  myExceptions.add(new VcsException(
+                    "The update process was " + (hadAbortErrors ? "aborted" : "cancelled") + " for " + root.getPresentableUrl()));
                   doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
                   progressIndicator.setText2("Refreshing files for the root " + root.getPath());
                   root.refresh(false, true);
@@ -218,6 +221,23 @@ public abstract class GitBaseRebaseProcess {
     finally {
       projectManager.unblockReloadingProjectOnExternalChanges();
     }
+  }
+
+  /**
+   * Check if the exceptions should cause an abort for the rebase process
+   *
+   * @param exceptions the exceptions to check (it should be result of single operation)
+   * @return true if rebase process should be aborted
+   */
+  private static boolean hasAbortExceptions(Collection<VcsException> exceptions) {
+    if (exceptions.size() > 1) {
+      return true;
+    }
+    if (exceptions.size() == 1) {
+      @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"}) final VcsException ex = exceptions.iterator().next();
+      return !ex.getMessage().startsWith("Failed to merge in the changes");
+    }
+    return false;
   }
 
   /**
@@ -557,11 +577,12 @@ public abstract class GitBaseRebaseProcess {
    * @param root                   the vcs root
    * @param rebaseConflictDetector the detector of conflicts in rebase operation
    * @param action                 the rebase action to execute
+   * @return collected exceptions
    */
-  private void doRebase(ProgressIndicator progressIndicator,
-                        VirtualFile root,
-                        RebaseConflictDetector rebaseConflictDetector,
-                        final String action) {
+  private Collection<VcsException> doRebase(ProgressIndicator progressIndicator,
+                                            VirtualFile root,
+                                            RebaseConflictDetector rebaseConflictDetector,
+                                            final String action) {
     GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     // ignore failure for abort
     rh.ignoreErrorCode(1);
@@ -572,7 +593,7 @@ public abstract class GitBaseRebaseProcess {
       configureRebaseEditor(root, rh);
     }
     try {
-      GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator, GitHandlerUtil.formatOperationName("Rebasing ", root));
+      return GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator, GitHandlerUtil.formatOperationName("Rebasing ", root));
     }
     finally {
       cleanupHandler(root, rh);

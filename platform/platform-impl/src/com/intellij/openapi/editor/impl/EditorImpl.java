@@ -543,6 +543,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.dispose(myCaretModel);
     clearCaretThread();
     //myFoldingModel.dispose(); TODO range marker tree
+
+    myFocusListeners.clear();
   }
 
   private void clearCaretThread() {

@@ -41,7 +41,7 @@ public class TreeComboBox extends JComboBox {
     myTreeModel = model;
     setModel(new TreeModelWrapper(myTreeModel));
     setRenderer(new TreeListCellRenderer(this, model));
-    if (SystemInfo.isMac) setMaximumRowCount(25);
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
   public TreeModel getTreeModel() {

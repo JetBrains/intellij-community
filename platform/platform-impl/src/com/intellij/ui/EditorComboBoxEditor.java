@@ -34,13 +34,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
   @NonNls protected static final String NAME = "ComboBox.textField";
 
   public EditorComboBoxEditor(Project project, FileType fileType) {
-    myTextField = new EditorTextField((Document)null, project, fileType) {
-      @Override
-      protected boolean shouldHaveBorder() {
-        return UIManager.getBorder("ComboBox.border") == null;
-      }
-    };
-
+    myTextField = new ComboboxEditorTextField((Document)null, project, fileType);
     myTextField.setName(NAME);
   }
 

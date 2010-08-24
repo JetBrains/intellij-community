@@ -16,12 +16,16 @@
 
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiElement;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class EntryPoint implements JDOMExternalizable {
+public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
+  private static final Logger LOG = Logger.getInstance("#" + EntryPoint.class.getName());
+
   @NotNull
   public abstract String getDisplayName();
   public abstract boolean isEntryPoint(RefElement refElement, PsiElement psiElement);
@@ -36,5 +40,19 @@ public abstract class EntryPoint implements JDOMExternalizable {
   @Nullable
   public String [] getIgnoreAnnotations() {
     return null;
+  }
+
+  @Override
+  public EntryPoint clone() throws CloneNotSupportedException {
+    final EntryPoint clone = (EntryPoint)super.clone();
+    final Element element = new Element("root");
+    try {
+      writeExternal(element);
+      clone.readExternal(element);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return clone;
   }
 }

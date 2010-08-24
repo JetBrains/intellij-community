@@ -100,9 +100,9 @@ public interface EditorSettings {
 
   boolean isUseSoftWraps();
   void setUseSoftWraps(boolean use);
-
   boolean isAllSoftWrapsShown();
-  void setShowAllSoftWraps(boolean show);
+  boolean isUseCustomSoftWrapIndent();
+  int getCustomSoftWrapIndent();
 
   boolean isAllowSingleLogicalLineFolding();
   void setAllowSingleLogicalLineFolding(boolean allow);

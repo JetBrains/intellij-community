@@ -94,7 +94,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
     final List<String> parameters = new LinkedList<String>();
     if (useMaxCnt > 0) {
-      parameters.add("--max-count=" + useMaxCnt);
+      parameters.add("--max-count=" + (useMaxCnt + 1));
     }
 
     for (ChangesFilter.Filter filter : filters) {

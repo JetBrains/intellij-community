@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
+import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.ide.CommonActionsManager;
@@ -142,7 +143,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myKeymapListener = new KeymapListener();
 
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
+    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerAdapter() {
       public void beforeRunTasksChanged() {
         myBuilder.refresh();
       }

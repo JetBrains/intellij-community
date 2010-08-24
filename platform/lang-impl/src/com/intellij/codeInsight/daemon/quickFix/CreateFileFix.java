@@ -43,7 +43,7 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
   private final boolean myIsDirectory;
   private final String myNewFileName;
   private final PsiDirectory myDirectory;
-  private final @Nullable String myText;
+  private final String myText;
   private @NotNull String myKey;
   private boolean myIsAvailable;
   private long myIsAvailableTimeStamp;
@@ -63,10 +63,20 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
     myIsAvailableTimeStamp = System.currentTimeMillis();
   }
 
+  public CreateFileFix(final String newFileName,
+                                   final PsiDirectory directory, String text) {
+    this(false,newFileName,directory, text, "create.file.text" );
+  }
+
   public CreateFileFix(final boolean isDirectory,
                                    final String newFileName,
                                    final PsiDirectory directory) {
     this(isDirectory,newFileName,directory,null, isDirectory ? "create.directory.text":"create.file.text" );
+  }
+
+  @Nullable
+  protected String getFileText() {
+    return myText;
   }
 
   @NotNull
@@ -114,12 +124,11 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
       }
       else {
         final PsiFile newFile = myDirectory.createFile(myNewFileName);
-        String text = null;
+        String text = getFileText();
 
-        if (myText != null) {
-          final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("_" + myNewFileName, myText);
+        if (text != null) {
+          final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("_" + myNewFileName, text);
           final PsiElement psiElement = CodeStyleManager.getInstance(project).reformat(psiFile);
-
           text = psiElement.getText();
         }
 

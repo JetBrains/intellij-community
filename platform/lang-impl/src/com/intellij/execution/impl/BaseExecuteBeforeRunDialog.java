@@ -204,7 +204,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
       }
     }
 
-    ((RunManagerImpl)RunManagerEx.getInstanceEx(myProject)).fireBeforeRunTasksUpdated();
+    RunManagerImpl.getInstanceImpl(myProject).fireBeforeRunTasksUpdated();
     close(OK_EXIT_CODE);
   }
 
