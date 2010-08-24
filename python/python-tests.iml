@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="CSS" scope="RUNTIME" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="library" name="commons-lang" level="project" />
+    <orderEntry type="module" module-name="xdebugger-api" />
   </component>
 </module>
 

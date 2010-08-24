@@ -56,12 +56,40 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     final PythonCommandLineState pyState = (PythonCommandLineState)state;
-    final CommandLinePatcher debug_server_patcher = new CommandLinePatcher() {
+    final int serverLocalPort = serverSocket.getLocalPort();
+    RunProfile profile = env.getRunProfile();
+    final ExecutionResult result = pyState.execute(executor, createCommandLinePatchers(pyState, profile, serverLocalPort));
+
+    final XDebugSession session = XDebuggerManager.getInstance(project).
+      startSession(this, env, contentToReuse, new XDebugProcessStarter() {
+        @NotNull
+        public XDebugProcess start(@NotNull final XDebugSession session) {
+          return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler());
+        }
+      });
+    return session.getRunContentDescriptor();
+  }
+
+  private CommandLinePatcher createRunConfigPatcher(RunProfileState state, RunProfile profile) {
+    CommandLinePatcher runConfigPatcher = null;
+    if (state instanceof PythonCommandLineState && profile instanceof PythonRunConfiguration) {
+      runConfigPatcher = (PythonRunConfiguration)profile;
+    }
+    return runConfigPatcher;
+  }
+
+  public CommandLinePatcher[] createCommandLinePatchers(final PythonCommandLineState state, RunProfile profile, final int serverLocalPort) {
+    return new CommandLinePatcher[]{createDebugServerPatcher(state, serverLocalPort), createRunConfigPatcher(state, profile)};
+  }
+
+  private CommandLinePatcher createDebugServerPatcher(final PythonCommandLineState pyState, final int serverLocalPort) {
+    return new CommandLinePatcher() {
       public void patchCommandLine(GeneralCommandLine commandLine) {
+
         final String[] debugger_args = new String[]{
           PythonHelpersLocator.getHelperPath("pydev/pydevd.py"),
           "--client", "127.0.0.1",
-          "--port", String.valueOf(serverSocket.getLocalPort()),
+          "--port", String.valueOf(serverLocalPort),
           "--file"
         };
         // script name is the last parameter; all other params are for python interpreter; insert just before name
@@ -79,20 +107,5 @@ public class PyDebugRunner extends GenericProgramRunner {
         for (String s : debugger_args) debug_params.addParameter(s);
       }
     };
-    RunProfile profile = env.getRunProfile();
-    CommandLinePatcher run_config_patcher = null;
-    if (state instanceof PythonCommandLineState && profile instanceof PythonRunConfiguration) {
-      run_config_patcher = (PythonRunConfiguration)profile;
-    }
-    final ExecutionResult result = pyState.execute(executor, debug_server_patcher, run_config_patcher);
-
-    final XDebugSession session = XDebuggerManager.getInstance(project).
-      startSession(this, env, contentToReuse, new XDebugProcessStarter() {
-        @NotNull
-        public XDebugProcess start(@NotNull final XDebugSession session) {
-          return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler());
-        }
-      });
-    return session.getRunContentDescriptor();
   }
 }
