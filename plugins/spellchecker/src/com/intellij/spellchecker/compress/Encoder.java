@@ -1,8 +1,5 @@
 package com.intellij.spellchecker.compress;
 
-import com.intellij.spellchecker.compress.Alphabet;
-import com.intellij.spellchecker.compress.EncodingException;
-import com.intellij.spellchecker.compress.UnitBitSet;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +8,7 @@ import java.text.MessageFormat;
 public final class Encoder {
 
     private final Alphabet alphabet;
-    private final int offset = 2;
+    private static final int offset = 2;
 
     public Encoder() {
         alphabet = new Alphabet();
@@ -27,13 +24,13 @@ public final class Encoder {
 
     public UnitBitSet encode(@NotNull CharSequence letters, boolean force) throws EncodingException {
         UnitBitSet bs = new UnitBitSet(alphabet.getMaxIndex(), false);
-        bs.setUnitValue(0, letters.length());
-        bs.setUnitValue(1, alphabet.getIndex(letters.charAt(0), force));
-        for (int i = 0; i < letters.length(); i++) {
+        for (int i = letters.length() - 1; i >= 0; i--) {
             Character letter = letters.charAt(i);
             int index = alphabet.getIndex(letter, force);
             bs.setUnitValue(i + offset, index);
         }
+        bs.setUnitValue(0, letters.length());
+        bs.setUnitValue(1, alphabet.getIndex(letters.charAt(0), force));
         return bs;
     }
 
@@ -51,10 +48,11 @@ public final class Encoder {
         }, offset, true);
 
         final String word = result.toString();
-        if (word.length() != wordLength || !word.startsWith(String.valueOf(firstLetter))) {
+      final int actualLength = word.length();
+      if (actualLength != wordLength || !word.startsWith(String.valueOf(firstLetter))) {
             throw new EncodingException(
-                    new MessageFormat("Error during encoding: required length - {0}, starts with {1}, but decoded: {2}")
-                            .format(new Object[]{wordLength, firstLetter, word}));
+                    new MessageFormat("Error during encoding: required length - {0}, starts with {1}, but decoded: {2} ({3})")
+                            .format(new Object[]{wordLength, firstLetter, word, actualLength}));
         }
         return word;
     }
