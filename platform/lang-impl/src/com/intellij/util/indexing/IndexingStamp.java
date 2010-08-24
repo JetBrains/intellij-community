@@ -150,8 +150,8 @@ public class IndexingStamp {
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        FileBasedIndex.getInstance().requestRebuild(indexName, cause);
+      if (!(cause instanceof IOException)) {
+        throw e; // in case of IO exceptions consider file unindexed
       }
     }
 
