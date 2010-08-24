@@ -130,7 +130,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private class MarkSpots {
 
-    private List<MarkSpot> mySpots;
+    private List<MarkSpot> myWideSpots;
+    private List<MarkSpot> myNarrowSpots;
 
     private int myEditorScrollbarTop = -1;
 
@@ -147,7 +148,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void clear() {
-      mySpots = null;
+      myWideSpots = null;
+      myNarrowSpots = null;
       myEditorScrollbarTop = -1;
       myEditorSourceHeight = -1;
       myEditorTargetHeight = -1;
@@ -215,9 +217,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void recalcMarkSpots() {
-      if (mySpots != null) return;
+      if (myWideSpots != null) return;
+      myWideSpots = new ArrayList<MarkSpot>();
+      myNarrowSpots = new ArrayList<MarkSpot>();
+
+      buildSpots(false, myWideSpots);
+      buildSpots(true, myNarrowSpots);
+    }
+
+    private void buildSpots(boolean narrow, List<MarkSpot> spots) {
       final List<RangeHighlighter> sortedHighlighters = getSortedHighlighters();
-      mySpots = new ArrayList<MarkSpot>();
+
       if (sortedHighlighters.isEmpty()) return;
       Queue<PositionedRangeHighlighter> startQueue =
         new PriorityQueue<PositionedRangeHighlighter>(5, new Comparator<PositionedRangeHighlighter>() {
@@ -244,6 +254,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             sortedHighlighters.remove(index);
             continue;
           }
+          if (mark.isThinErrorStripeMark() != narrow) {
+            index++;
+            continue;
+          }
+
           PositionedRangeHighlighter positioned = getPositionedRangeHighlighter(mark);
           if (!endQueue.isEmpty() && endQueue.peek().yEnd <= positioned.yStart) {
             positionedMark = endQueue.peek();
@@ -270,21 +285,25 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           else {
             currentSpot.yEnd = positionedMark.yStart;
             if (currentSpot.yEnd != currentSpot.yStart) {
-              spitOutMarkSpot(currentSpot, startQueue);
+              spitOutMarkSpot(currentSpot, startQueue, spots);
             }
             currentSpot = new MarkSpot(positionedMark.yStart, -1);
           }
           while (index != sortedHighlighters.size()) {
-            PositionedRangeHighlighter positioned = getPositionedRangeHighlighter(sortedHighlighters.get(index));
-            if (positioned.yStart != positionedMark.yStart) break;
-            startQueue.add(positioned);
-            endQueue.add(positioned);
+            RangeHighlighter mark = sortedHighlighters.get(index);
+            if (mark.isThinErrorStripeMark() == narrow) {
+              PositionedRangeHighlighter positioned = getPositionedRangeHighlighter(mark);
+              if (positioned.yStart != positionedMark.yStart) break;
+              startQueue.add(positioned);
+              endQueue.add(positioned);
+            }
+
             index++;
           }
         }
         else {
           currentSpot.yEnd = positionedMark.yEnd;
-          spitOutMarkSpot(currentSpot, startQueue);
+          spitOutMarkSpot(currentSpot, startQueue, spots);
           currentSpot = new MarkSpot(positionedMark.yEnd, -1);
           while (!endQueue.isEmpty() && endQueue.peek().yEnd == positionedMark.yEnd) {
             final PositionedRangeHighlighter highlighter = endQueue.remove();
@@ -303,8 +322,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
     }
 
-    private void spitOutMarkSpot(final MarkSpot currentSpot, final Queue<PositionedRangeHighlighter> startQueue) {
-      mySpots.add(currentSpot);
+    private void spitOutMarkSpot(final MarkSpot currentSpot,
+                                 final Queue<PositionedRangeHighlighter> startQueue,
+                                 List<MarkSpot> spots) {
+      spots.add(currentSpot);
       currentSpot.highlighters = new RangeHighlighter[startQueue.size()];
       int i =0;
       for (PositionedRangeHighlighter positioned : startQueue) {
@@ -315,8 +336,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void repaint(Graphics g, final int width) {
       recalcMarkSpots();
-      for (int i = 0; i < mySpots.size(); i++) {
-        MarkSpot markSpot = mySpots.get(i);
+
+      int offset = 3;
+      paintSpots(g, offset,  width, myWideSpots);
+
+      int narrow = width / 2 + 1;
+      paintSpots(g, offset + narrow + 1, narrow, myNarrowSpots);
+    }
+
+    private void paintSpots(Graphics g, int x, int width, List<MarkSpot> spots) {
+      for (int i = 0; i < spots.size(); i++) {
+        MarkSpot markSpot = spots.get(i);
 
         int yStart = markSpot.yStart;
         RangeHighlighter mark = markSpot.highlighters[markSpot.highlighters.length - 1];
@@ -325,24 +355,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
         final Color color = mark.getErrorStripeMarkColor();
 
-        int x = 3;
-        int paintWidth = width;
-        if (mark.isThinErrorStripeMark()) {
-          paintWidth /= 2;
-          paintWidth += 1;
-          x  += paintWidth + 1;
-        }
 
         if (color == null) return;
         g.setColor(color);
-        g.fillRect(x + 1, yStart, paintWidth - 2, yEnd - yStart);
+        g.fillRect(x + 1, yStart, width - 2, yEnd - yStart);
 
 
         if (true) {// mark.isThinErrorStripeMark()) {
-          paintPullDecorations(g, i, markSpot, yStart, yEnd, color, x, paintWidth);
+          paintPullDecorations(g, i, markSpot, yStart, yEnd, color, x, width, spots);
         }
         else {
-        paintPushDecorations(g, i, markSpot, yStart, yEnd, color, x, paintWidth);
+          paintPushDecorations(g, i, markSpot, yStart, yEnd, color, x, width, spots);
         }
 
       }
@@ -355,19 +378,19 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                       int yEnd,
                                       Color color,
                                       int x,
-                                      int paintWidth) {
+                                      int paintWidth, List<MarkSpot> spots) {
       Color brighter = color.brighter();
       Color darker = ColorUtil.shift(color, 0.75);
 
       g.setColor(brighter);
       //left
       UIUtil.drawLine(g, x, yStart, x, yEnd - 1);
-      if (i == 0 || !isAdjacent(mySpots.get(i - 1), markSpot) || wider(markSpot, mySpots.get(i - 1))) {
+      if (i == 0 || !isAdjacent(spots.get(i - 1), markSpot) || wider(markSpot, spots.get(i - 1))) {
         //top decoration
         UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
       }
       g.setColor(darker);
-      if (i == mySpots.size() - 1 || !isAdjacent(markSpot, mySpots.get(i + 1)) || wider(markSpot, mySpots.get(i + 1))) {
+      if (i == spots.size() - 1 || !isAdjacent(markSpot, spots.get(i + 1)) || wider(markSpot, spots.get(i + 1))) {
         // bottom decoration
         UIUtil.drawLine(g, x + 1, yEnd - 1, x + paintWidth - 2, yEnd - 1);
       }
@@ -382,13 +405,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                       int yEnd,
                                       Color color,
                                       int x,
-                                      int paintWidth) {
+                                      int paintWidth, List<MarkSpot> spots) {
       Color brighter = ColorUtil.shift(color, 0.75);
 
       g.setColor(brighter);
       //left
       UIUtil.drawLine(g, x, yStart, x, yEnd - 1);
-      if (i == 0 || !isAdjacent(mySpots.get(i - 1), markSpot) || wider(markSpot, mySpots.get(i - 1))) {
+      if (i == 0 || !isAdjacent(spots.get(i - 1), markSpot) || wider(markSpot, spots.get(i - 1))) {
         //top decoration
         UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
       }
@@ -447,8 +470,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private List<MarkSpot> getNearestMarkSpots(final MouseEvent e, final double width) {
-      List<MarkSpot> nearestSpot = null;
-      for (MarkSpot markSpot : mySpots) {
+      List<MarkSpot> nearestSpot = findSpots(e, width, null, myWideSpots);
+      nearestSpot = findSpots(e, width, nearestSpot, myNarrowSpots);
+      return nearestSpot == null ? Collections.<MarkSpot>emptyList() : nearestSpot;
+    }
+
+    private List<MarkSpot> findSpots(MouseEvent e, double width, List<MarkSpot> nearestSpot, List<MarkSpot> spots) {
+      for (MarkSpot markSpot : spots) {
         if (markSpot.near(e, width)) {
           if (nearestSpot == null) {
             nearestSpot = new SmartList<MarkSpot>();
@@ -456,7 +484,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           nearestSpot.add(markSpot);
         }
       }
-      return nearestSpot == null ? Collections.<MarkSpot>emptyList() : nearestSpot;
+      return nearestSpot;
     }
 
   }
