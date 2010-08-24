@@ -61,6 +61,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   private Rectangle myForcedBounds;
 
+  private CloseButton myCloseRec;
+
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     public void eventDispatched(final AWTEvent event) {
       if (myHideOnMouse &&
@@ -89,7 +91,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         final boolean moveChanged = inside != myLastMoveWasInsideBalloon;
         myLastMoveWasInsideBalloon = inside;
         if (moveChanged) {
-          myComp.repaint();
+          myComp.repaintButton();
         }
       }
 
@@ -413,6 +415,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     Toolkit.getDefaultToolkit().removeAWTEventListener(myAwtActivityListener);
     if (myLayeredPane != null) {
       myLayeredPane.removeComponentListener(myComponentListener);
+      myLayeredPane.remove(myCloseRec);
       runAnimation(false, myLayeredPane);
     }
 
@@ -478,7 +481,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets);
       }
 
-      balloon.myComp.setBounds(bounds);
+      balloon.myComp._setBounds(bounds);
     }
 
     abstract Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize);
@@ -728,6 +731,33 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   private class CloseButton extends NonOpaquePanel {
 
+    private BaseButtonBehavior myButton;
+
+    private CloseButton() {
+      myButton = new BaseButtonBehavior(this, TimedDeadzone.NULL) {
+        protected void execute(MouseEvent e) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              BalloonImpl.this.hide();
+            }
+          });
+        }
+      };
+
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+
+      if (!myEnableCloseButton) return;
+
+      if (getWidth() > 0 && myLastMoveWasInsideBalloon) {
+        final boolean pressed = myButton.isPressedByMouse();
+        getCloseButton().paintIcon(this, g, (pressed ? 1 : 0), (pressed ? 1 : 0));
+      }
+    }
   }
 
   private class MyComponent extends JPanel {
@@ -735,8 +765,6 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     private BufferedImage myImage;
     private float myAlpha;
     private final BalloonImpl myBalloon;
-    private final CloseButton myCloseRec = new CloseButton();
-    private final BaseButtonBehavior myButton;
 
     private final Wrapper myContent;
 
@@ -751,21 +779,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
       add(myContent);
 
-      myButton = new BaseButtonBehavior(myCloseRec, TimedDeadzone.NULL) {
-        protected void execute(MouseEvent e) {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              myBalloon.hide();
-            }
-          });
-        }
-      };
-
-      add(myCloseRec);
-
-      setComponentZOrder(myContent, 1);
-      setComponentZOrder(myCloseRec, 0);
+      myCloseRec = new CloseButton();
     }
 
     public void clear() {
@@ -781,12 +795,6 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       }
 
       myContent.setBounds(insets.left, insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.top - insets.bottom);
-
-      if (myBalloon.myEnableCloseButton) {
-        final Icon icon = myBalloon.getCloseButton();
-        final Rectangle bounds = getBounds();
-        myCloseRec.setBounds(bounds.width - icon.getIconWidth(), 0, icon.getIconWidth(), icon.getIconHeight());
-      }
     }
 
     @Override
@@ -838,16 +846,35 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     protected void paintChildren(Graphics g) {
       super.paintChildren(g);
 
-      if (myCloseRec.getWidth() > 0 && myBalloon.myLastMoveWasInsideBalloon) {
-        final boolean pressed = myButton.isPressedByMouse();
-        myBalloon.getCloseButton().paintIcon(this, g, myCloseRec.getX() + (pressed ? 1 : 0), myCloseRec.getY() + (pressed ? 1 : 0));
-      }
-
     }
 
     public void setAlpha(float alpha) {
       myAlpha = alpha;
       paintImmediately(0, 0, getWidth(), getHeight());
+    }
+
+    public void _setBounds(Rectangle bounds) {
+      super.setBounds(bounds);
+      if (myCloseRec.getParent() == null && getParent() != null) {
+        myLayeredPane.add(myCloseRec, JLayeredPane.DRAG_LAYER);
+      }
+
+      if (isVisible() && myCloseRec.isVisible()) {
+        Rectangle lpBounds = SwingUtilities.convertRectangle(getParent(), bounds, myLayeredPane);
+        lpBounds = myPosition.getPointlessContentRec(lpBounds, myBalloon);
+
+        int iconWidth = myBalloon.myCloseButton.getIconWidth();
+        int iconHeight = myBalloon.myCloseButton.getIconHeight();
+        Rectangle r = new Rectangle(lpBounds.x + lpBounds.width - iconWidth + (int)(iconWidth * 0.3), lpBounds.y - (int)(iconHeight * 0.3), iconWidth, iconHeight);
+
+
+        myCloseRec.setBounds(r);
+      }
+
+    }
+
+    public void repaintButton() {
+      myCloseRec.repaint();
     }
   }
 
