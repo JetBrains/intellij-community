@@ -510,11 +510,17 @@ public class ResolveImportUtil {
     PsiDirectory dir = null;
     PsiElement ret = null;
     if (parent instanceof PyFile) {
+      if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
+        // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
+        // files before looking at names exported from __init__.py
+        dir = ((PyFile)parent).getContainingDirectory();
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, fileOnly);
+        if (result != null) {
+          return result;
+        }
+      }
       ret = ((PyFile)parent).getElementNamed(referencedName);
       if (ret != null) return ret;
-      if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
-        dir = ((PyFile)parent).getContainingDirectory();
-      }
     }
     else if (parent instanceof PsiDirectory) {
       dir = (PsiDirectory)parent;
