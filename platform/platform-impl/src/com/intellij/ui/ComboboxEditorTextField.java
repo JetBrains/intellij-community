@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 
 /**
  * User: spLeaner

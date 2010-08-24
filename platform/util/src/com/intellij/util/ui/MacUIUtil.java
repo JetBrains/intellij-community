@@ -15,7 +15,7 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.util.graph.Graph;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -106,12 +106,12 @@ public class MacUIUtil {
   }
 
   public static void drawComboboxFocusRing(@NotNull final JComboBox combobox, @NotNull final Graphics g) {
-    if (combobox.isEnabled() && combobox.isEditable() && UIUtil.isUnderAquaLookAndFeel()) {
+    if (SystemInfo.isMac && combobox.isEnabled() && combobox.isEditable() && UIUtil.isUnderAquaLookAndFeel()) {
       final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       if (focusOwner != null) {
         final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, focusOwner);
         if (ancestor == combobox) {
-          MacUIUtil.paintComboboxFocusRing((Graphics2D) g, combobox.getBounds());
+          paintComboboxFocusRing((Graphics2D) g, combobox.getBounds());
         }
       }
     }

@@ -20,7 +20,6 @@ import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -152,31 +151,16 @@ public class ComboBox extends ComboBoxWithWidePopup {
 
   public final Dimension getPreferredSize() {
     int width = myMinimumAndPreferredWidth;
+    final Dimension preferredSize = super.getPreferredSize();
     if (width < 0) {
-      width = super.getPreferredSize().width;
+      width = preferredSize.width;
     }
-    final int height = getPreferredHeight();
-    return new Dimension(width, height);
+
+    return new Dimension(width, preferredSize.height);
   }
 
   protected Dimension getOriginalPreferredSize() {
     return super.getPreferredSize();
-  }
-
-  private int getPreferredHeight() {
-    final Border border = getBorder();
-    final ComboBoxEditor editor = getEditor();
-    int height;
-    if (editor != null) {
-      height = editor.getEditorComponent().getPreferredSize().height;
-      if (border != null) {
-        height += border.getBorderInsets(this).top + border.getBorderInsets(this).bottom;
-      }
-    }
-    else {
-      height = super.getPreferredSize().height;
-    }
-    return height;
   }
 
   @Override
