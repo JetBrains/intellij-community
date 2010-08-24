@@ -431,7 +431,7 @@ public class PythonSdkType extends SdkType {
   }
 
   public static void addSdkRoot(SdkModificator sdkModificator, String path) {
-    VirtualFile child = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile child = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (child != null) {
       @NonNls String suffix = child.getExtension();
       if (suffix != null) suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
