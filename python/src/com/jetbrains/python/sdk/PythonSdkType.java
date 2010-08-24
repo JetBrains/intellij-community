@@ -344,33 +344,11 @@ public class PythonSdkType extends SdkType {
   }
 
   public void setupSdkPaths(final Sdk sdk) {
-    final Ref<SdkModificator> sdkModificatorRef = new Ref<SdkModificator>();
-    final Ref<Boolean> success = new Ref<Boolean>();
-    success.set(true);
-    final ProgressManager progman = ProgressManager.getInstance();
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    final Task.Modal setup_task = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
-
-      public void run(@NotNull final ProgressIndicator indicator) {
-        try {
-          final SdkModificator sdkModificator = sdk.getSdkModificator();
-          sdkModificator.removeAllRoots();
-          updateSdkRootsFromSysPath(sdkModificator, indicator, (PythonSdkType)sdk.getSdkType());
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            generateSkeletons(indicator, sdk.getHomePath(), getSkeletonsPath(sdk.getHomePath()));
-          }
-          //sdkModificator.commitChanges() must happen outside, in dispatch thread.
-          sdkModificatorRef.set(sdkModificator);
-        }
-        catch (InvalidSdkException e) {
-          success.set(false);
-        }
-      }
-
-    };
-    progman.run(setup_task);
-    if (success.get()) {
-      if (sdkModificatorRef.get() != null) sdkModificatorRef.get().commitChanges();
+    final SdkModificator sdkModificator = sdk.getSdkModificator();
+    final boolean success = setupSdkPaths(project, sdk, sdkModificator);
+    if (success) {
+      sdkModificator.commitChanges();
     }
     else {
       Messages.showErrorDialog(
@@ -381,6 +359,29 @@ public class PythonSdkType extends SdkType {
     }
   }
 
+  public static boolean setupSdkPaths(final Project project, final Sdk sdk, final SdkModificator sdkModificator) {
+    final ProgressManager progman = ProgressManager.getInstance();
+    final Ref<Boolean> success = new Ref<Boolean>();
+    success.set(true);
+    final Task.Modal setup_task = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
+
+      public void run(@NotNull final ProgressIndicator indicator) {
+        try {
+          sdkModificator.removeAllRoots();
+          updateSdkRootsFromSysPath(sdkModificator, indicator, (PythonSdkType)sdk.getSdkType());
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            generateSkeletons(indicator, sdk.getHomePath(), getSkeletonsPath(sdk.getHomePath()));
+          }
+          //sdkModificator.commitChanges() must happen outside, in dispatch thread.
+        }
+        catch (InvalidSdkException e) {
+          success.set(false);
+        }
+      }
+    };
+    progman.run(setup_task);
+    return success.get();
+  }
 
   /**
    * In which root type built-in skeletons are put.
