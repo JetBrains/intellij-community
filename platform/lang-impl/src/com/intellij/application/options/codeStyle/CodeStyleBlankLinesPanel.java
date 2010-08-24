@@ -99,8 +99,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
     createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.in.declarations"), "KEEP_BLANK_LINES_IN_DECLARATIONS");
     createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.in.code"), "KEEP_BLANK_LINES_IN_CODE");
-    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.before.rbrace"), "" +
-                                                                                                  "");
+    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.before.rbrace"), "KEEP_BLANK_LINES_BEFORE_RBRACE");
     initCustomOptions(optionGroup, BLANK_LINES_KEEP);
 
     return optionGroup.createPanel();
@@ -108,7 +107,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   private void initCustomOptions(OptionGroup optionGroup, String groupName) {
     for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> each : myCustomOptions.get(groupName)) {
-      doCreateOption(optionGroup, each.second, new IntOption(each.first, each.third));
+      doCreateOption(optionGroup, each.third, new IntOption(each.first, each.second));
     }
   }
 
@@ -188,7 +187,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     }
 
     for (IntOption option : myOptions) {
-      if (option.myTarget.getName().equals(optionName)) {
+      if (option.myTarget.getName().equals(fieldName)) {
         option.myTextField.setEnabled(true);
       }
     }
