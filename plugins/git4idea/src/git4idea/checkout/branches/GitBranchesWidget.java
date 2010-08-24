@@ -408,7 +408,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
         text = "Rebasing...";
         break;
       case NON_GIT:
-        tooltip = "No valid vcs roots are configuration for the project.";
+        tooltip = "No valid Git vcs roots are configured for the project.";
         text = "Non-Git project";
         break;
       case NORMAL:
