@@ -374,9 +374,8 @@ public class IdeaProjectLoader implements MacroExpansion {
             if (projectOutputPath == null) {
               project.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
             }
-            File compileOutput = new File(projectOutputPath, "classes")
-            currentModule.outputPath = new File(new File(compileOutput, "production"), currentModuleName).absolutePath
-            currentModule.testOutputPath = new File(new File(compileOutput, "test"), currentModuleName).absolutePath
+            currentModule.outputPath = new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath
+            currentModule.testOutputPath = new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath
           }
           else {
             currentModule.outputPath = expandMacro(pathFromUrl(componentTag.output[0]?.@url), moduleBasePath)
