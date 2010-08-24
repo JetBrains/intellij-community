@@ -19,8 +19,8 @@ import com.intellij.Patches;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -135,11 +135,28 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   /**
    * invoked by reflection
    */
-  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, final FileEditorManager fem) {
+  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, final FileEditorManager fem, ActionManager actionManager) {
     myProject = project;
     myWindowManager = windowManagerEx;
     myFileEditorManager = fem;
     myListenerList = new EventListenerList();
+
+    actionManager.addAnActionListener(new AnActionListener() {
+      @Override
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (myCurrentState != KeyState.hold) {
+          resetHoldState();
+        }
+      }
+
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      }
+
+      @Override
+      public void beforeEditorTyping(char c, DataContext dataContext) {
+      }
+    }, project);
 
     myLayout = new DesktopLayout();
     myLayout.copyFrom(windowManagerEx.getLayout());
@@ -182,8 +199,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         resetHoldState();
       }
       return false;
-    }
-
+    } 
     if (e.getID() != KeyEvent.KEY_PRESSED && e.getID() != KeyEvent.KEY_RELEASED) return false;
 
     Component parent = UIUtil.findUltimateParent(e.getComponent());
