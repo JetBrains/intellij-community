@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
@@ -68,7 +69,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private List<Element> myUnloadedElements = null;
   private JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
 
-  private final List<RunManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final EventDispatcher<RunManagerListener> myDispatcher = EventDispatcher.create(RunManagerListener.class);
 
   public RunManagerImpl(final Project project,
                         PropertiesComponent propertiesComponent) {
@@ -231,18 +232,22 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     mySharedConfigurations.put(configuration.getUniqueID(), shared);
     setBeforeRunTasks(configuration, tasks);
+    myDispatcher.getMulticaster().runConfigurationAdded(settings);
   }
 
   void checkRecentsLimit() {
+    List<RunnerAndConfigurationSettings> removed = new ArrayList<RunnerAndConfigurationSettings>();
     while (getTempConfigurations().length > getConfig().getRecentsLimit()) {
       for (Iterator<Map.Entry<String,RunnerAndConfigurationSettings>> it = myConfigurations.entrySet().iterator(); it.hasNext();) {
         Map.Entry<String, RunnerAndConfigurationSettings> entry = it.next();
         if (entry.getValue().isTemporary()) {
+          removed.add(entry.getValue());
           it.remove();
           break;
         }
       }
     }
+    fireRunConfigurationsRemoved(removed);
   }
 
   public static String getUniqueName(final RunConfiguration settings) {
@@ -268,20 +273,16 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void removeConfigurations(@NotNull final ConfigurationType type) {
-
-    //for (Iterator<Pair<RunConfiguration, JavaProgramRunner>> it = myRunnerPerConfigurationSettings.keySet().iterator(); it.hasNext();) {
-    //  final Pair<RunConfiguration, JavaProgramRunner> pair = it.next();
-    //  if (type.equals(pair.getFirst().getType())) {
-    //    it.remove();
-    //  }
-    //}
+    List<RunnerAndConfigurationSettings> removed = new ArrayList<RunnerAndConfigurationSettings>();
     for (Iterator<RunnerAndConfigurationSettings> it = getSortedConfigurations().iterator(); it.hasNext();) {
       final RunnerAndConfigurationSettings configuration = it.next();
       final ConfigurationType configurationType = configuration.getType();
       if (configurationType != null && type.getId().equals(configurationType.getId())) {
+        removed.add(configuration);
         it.remove();
       }
     }
+    fireRunConfigurationsRemoved(removed);
   }
 
   @Override
@@ -314,6 +315,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         }
 
         it.remove();
+        myDispatcher.getMulticaster().runConfigurationRemoved(configuration);
         break;
       }
     }
@@ -493,10 +495,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   private void clear() {
+    final List<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(myConfigurations.values());
     myConfigurations.clear();
     myUnloadedElements = null;
     myConfigurationToBeforeTasksMap.clear();
     mySharedConfigurations.clear();
+    fireRunConfigurationsRemoved(configurations);
   }
 
   @Nullable
@@ -765,29 +769,40 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void removeNotExistingSharedConfigurations(final Set<String> existing) {
+    List<RunnerAndConfigurationSettings> removed = new ArrayList<RunnerAndConfigurationSettings>();
     for (Iterator<Map.Entry<String,RunnerAndConfigurationSettings>> it = myConfigurations.entrySet().iterator(); it.hasNext();) {
       Map.Entry<String, RunnerAndConfigurationSettings> c = it.next();
       final RunnerAndConfigurationSettings o = c.getValue();
       if (!o.isTemplate() && isConfigurationShared(o) && !existing.contains(getUniqueName(o.getConfiguration()))) {
+        removed.add(o);
         it.remove();
       }
+    }
+    fireRunConfigurationsRemoved(removed);
+  }
+
+  public void fireRunConfigurationChanged(RunnerAndConfigurationSettings settings) {
+    myDispatcher.getMulticaster().runConfigurationChanged(settings);
+  }
+
+  private void fireRunConfigurationsRemoved(List<RunnerAndConfigurationSettings> removed) {
+    for (RunnerAndConfigurationSettings settings : removed) {
+      myDispatcher.getMulticaster().runConfigurationRemoved(settings);
     }
   }
 
   @Override
   public void addRunManagerListener(RunManagerListener listener) {
-    myListeners.add(listener);
+    myDispatcher.addListener(listener);
   }
 
   @Override
   public void removeRunManagerListener(RunManagerListener listener) {
-    myListeners.remove(listener);
+    myDispatcher.removeListener(listener);
   }
 
   public void fireBeforeRunTasksUpdated() {
-    for (RunManagerListener each : myListeners) {
-      each.beforeRunTasksChanged();
-    }
+    myDispatcher.getMulticaster().beforeRunTasksChanged();
   }
 
   private Map<Key<? extends BeforeRunTask>, BeforeRunTaskProvider> myBeforeStepsMap;

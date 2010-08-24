@@ -460,6 +460,12 @@ public class Test {
         }
 
     }
+
+    void testUnbounded() {
+      W<?> x = null;
+      W<? extends A> y = ( W<? extends A>) x;
+      W<?> y1 = (W<?>)x;
+    }
 }
 
 class W<T> {}

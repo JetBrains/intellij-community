@@ -15,14 +15,23 @@
  */
 package com.intellij.execution;
 
-import java.util.EventListener;
+/**
+ * @author nik
+ */
+public abstract class RunManagerAdapter implements RunManagerListener {
+  @Override
+  public void beforeRunTasksChanged() {
+  }
 
-public interface RunManagerListener extends EventListener {
-  void beforeRunTasksChanged();
+  @Override
+  public void runConfigurationAdded(RunnerAndConfigurationSettings settings) {
+  }
 
-  void runConfigurationAdded(RunnerAndConfigurationSettings settings);
+  @Override
+  public void runConfigurationRemoved(RunnerAndConfigurationSettings settings) {
+  }
 
-  void runConfigurationRemoved(RunnerAndConfigurationSettings settings);
-
-  void runConfigurationChanged(RunnerAndConfigurationSettings settings);
+  @Override
+  public void runConfigurationChanged(RunnerAndConfigurationSettings settings) {
+  }
 }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -65,11 +66,17 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     NONE,
 
     /**
+     * Indent soft wraps for the {@link EditorSettings#getCustomSoftWrapIndent() user-defined number of columns}
+     * to the start of the previous visual line.
+     */
+    CUSTOM,
+
+    /**
      * Tries to indents soft-wrapped line start to the location of the first non white-space symbols of the previous visual line.
      * <p/>
      * Falls back to {@link #NONE} if indentation to the previous visual line start is considered to be unappropriated.
      */
-    TO_PREV_LINE_NON_WS_START
+    AUTOMATIC
   }
 
   private static final int DEFAULT_INDENT_SIZE = 4;
@@ -144,6 +151,8 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
   private final EditorEx                       myEditor;
   private final SoftWrapPainter                myPainter;
 
+  private boolean myCustomIndentUsedLastTime;
+  private int myCustomIndentValueUsedLastTime;
   private int myVisibleAreaWidth;
 
   public DefaultSoftWrapApplianceManager(SoftWrapsStorage storage,
@@ -166,19 +175,31 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
       return;
     }
 
+    IndentType indent = getIndentToUse();
+    boolean useCustomIndent = indent == IndentType.CUSTOM;
+    int currentCustomIndent = myEditor.getSettings().getCustomSoftWrapIndent();
+    if (useCustomIndent ^ myCustomIndentUsedLastTime || (useCustomIndent && myCustomIndentValueUsedLastTime != currentCustomIndent)) {
+      myProcessedLogicalLines.clear();
+    }
+    myCustomIndentUsedLastTime = useCustomIndent;
+    myCustomIndentValueUsedLastTime = currentCustomIndent;
+
     Document document = myEditor.getDocument();
     int startLine = document.getLineNumber(start);
     int endLine = document.getLineNumber(end);
     for (int i = startLine; i <= endLine; i++) {
       if (!myProcessedLogicalLines.contains(i) || (!temporary && myProcessedLogicalLines.get(i))) {
-        IndentType indent = IndentType.NONE;
-        if (!myEditor.isViewer() && !document.isWritable()) {
-          indent = IndentType.TO_PREV_LINE_NON_WS_START;
-        }
         processLogicalLine(text, i, fontType, indent, temporary);
         myProcessedLogicalLines.put(i, temporary);
       }
     }
+  }
+
+  private IndentType getIndentToUse() {
+    if (myEditor.getSettings().isUseCustomSoftWrapIndent()) {
+      return IndentType.CUSTOM;
+    }
+    return !myEditor.isViewer() && !myEditor.getDocument().isWritable() ? IndentType.AUTOMATIC : IndentType.NONE;
   }
 
   public DocumentListener getDocumentListener() {
@@ -230,6 +251,15 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     }
 
     int spaceWidth = EditorUtil.getSpaceWidth(fontType, myEditor);
+    if (indentType == IndentType.CUSTOM) {
+      int indentInColumns = myEditor.getSettings().getCustomSoftWrapIndent();
+      TIntArrayList offsets = calculateSoftWrapOffsets(
+        text, startOffset, endOffset, fontType, (indentInColumns + prevLineIndentInColumns) * spaceWidth
+      );
+      registerSoftWraps(offsets, indentInColumns + prevLineIndentInColumns, temporary);
+      return;
+    }
+
     int indentInColumns = getIndentSize();
     int indentInColumnsToUse = 0;
     TIntArrayList softWrapOffsetsToUse = null;

@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Pair;
+
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -92,30 +94,28 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
     return rowIndex != -1 ? new Integer(rowIndex) : null;
   }
 
-  protected Rectangle getCellBounds(Integer key, Component rendererComponent) {
+  protected Pair<Component, Rectangle> getRendererAndBounds(Integer key) {
     int rowIndex = key.intValue();
-    Rectangle cellBounds = myComponent.getCellBounds(rowIndex, rowIndex);
-    cellBounds.width = rendererComponent.getPreferredSize().width;
-    return cellBounds;
-  }
 
-  protected Component getRendererComponent(Integer key) {
+    Rectangle bounds = myComponent.getCellBounds(rowIndex, rowIndex);
+    if (bounds == null) return null;
+
     ListCellRenderer renderer = myComponent.getCellRenderer();
-    if (renderer == null) {
-      return null;
-    }
-    ListModel model = myComponent.getModel();
-    int rowIndex = key.intValue();
-    if (rowIndex >= model.getSize()) {
-      return null;
-    }
+    if (renderer == null) return null;
 
-    return renderer.getListCellRendererComponent(
+    ListModel model = myComponent.getModel();
+    if (rowIndex >= model.getSize()) return null;
+
+    Component rendererComponent = renderer.getListCellRendererComponent(
       myComponent,
       model.getElementAt(rowIndex),
       rowIndex,
       myComponent.isSelectedIndex(rowIndex),
       myComponent.hasFocus()
     );
+
+    bounds.width = rendererComponent.getPreferredSize().width;
+
+    return Pair.create(rendererComponent, bounds);
   }
 }

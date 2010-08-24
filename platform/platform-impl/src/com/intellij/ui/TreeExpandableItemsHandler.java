@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -76,7 +77,7 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
         updateSelection(tree);
       }
     };
-    
+
     if (tree.getModel() != null) tree.getModel().addTreeModelListener(modelListener);
     tree.addPropertyChangeListener("model", new PropertyChangeListener() {
       @Override
@@ -103,39 +104,29 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
     return rowIndex != -1 ? new Integer(rowIndex) : null;
   }
 
-  protected Rectangle getCellBounds(Integer key, Component rendererComponent) {
-    final int rowIndex = key.intValue();
-    final TreePath path = myComponent.getPathForRow(rowIndex);
-    return myComponent.getPathBounds(path);
-  }
-
-  protected Component getRendererComponent(Integer key) {
+  protected Pair<Component, Rectangle> getRendererAndBounds(Integer key) {
     int rowIndex = key.intValue();
-    Component rComponent;
-    TreeCellRenderer renderer = myComponent.getCellRenderer();
-    if (renderer == null) {
-      rComponent = null;
-    }
-    else {
-      TreePath path = myComponent.getPathForRow(rowIndex);
-      if (path == null) {
-        rComponent = null;
-      }
-      else {
-        Object node = path.getLastPathComponent();
-        rComponent = renderer.getTreeCellRendererComponent(
-          myComponent,
-          node,
-          myComponent.isRowSelected(rowIndex),
-          myComponent.isExpanded(rowIndex),
-          myComponent.getModel().isLeaf(node),
-          rowIndex,
-          myComponent.hasFocus()
-        );
 
-      }
-    }
-    return rComponent;
+    TreePath path = myComponent.getPathForRow(rowIndex);
+    if (path == null) return null;
+
+    Rectangle bounds = myComponent.getPathBounds(path);
+    if (bounds == null) return null;
+
+    TreeCellRenderer renderer = myComponent.getCellRenderer();
+    if (renderer == null) return null;
+
+    Object node = path.getLastPathComponent();
+    Component rendererComponent = renderer.getTreeCellRendererComponent(
+      myComponent,
+      node,
+      myComponent.isRowSelected(rowIndex),
+      myComponent.isExpanded(rowIndex),
+      myComponent.getModel().isLeaf(node),
+      rowIndex,
+      myComponent.hasFocus()
+    );
+    return Pair.create(rendererComponent, bounds);
   }
 
   @Override
@@ -147,16 +138,21 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   @Override
   protected void doFillBackground(final int height, final int width, final Graphics2D g) {
     final TreeUI ui = myComponent.getUI();
-    super.doFillBackground(ui instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)ui).isWideSelection()? height - 1 : height, width, g);
+    super.doFillBackground(ui instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)ui).isWideSelection() ? height - 1 : height, width, g);
   }
 
   @Override
-  protected void doPaintTooltipImage(final Component rComponent, final Rectangle cellBounds, final int height, final Graphics2D g, Integer key) {
+  protected void doPaintTooltipImage(final Component rComponent,
+                                     final Rectangle cellBounds,
+                                     final int height,
+                                     final Graphics2D g,
+                                     Integer key) {
     if (myComponent.isRowSelected(key) && rComponent instanceof JComponent) {
       if (myComponent.hasFocus()) {
         ((JComponent)rComponent).setOpaque(true);
         rComponent.setBackground(UIUtil.getTreeSelectionBackground());
-      } else if (myComponent.getUI() instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)myComponent.getUI()).isWideSelection()) {
+      }
+      else if (myComponent.getUI() instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)myComponent.getUI()).isWideSelection()) {
         ((JComponent)rComponent).setOpaque(true);
         rComponent.setBackground(UIUtil.getListUnfocusedSelectionBackground());
       }

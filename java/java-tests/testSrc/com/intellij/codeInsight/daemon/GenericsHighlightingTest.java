@@ -85,6 +85,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEADEV23157() throws Exception { doTest(true); }
   public void testIDEADEV24166() throws Exception { doTest(true); }
   public void testIDEADEV25778() throws Exception { doTest(true); }
+  public void testIDEADEV57343() throws Exception { doTest(false); }
+
   public void testGenericExtendException() throws Exception { doTest(false); }
   public void testSameErasureDifferentReturnTypes() throws Exception { doTest(false); }
   public void testDeepConflictingReturnTypes() throws Exception { doTest(false); }
