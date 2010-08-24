@@ -129,6 +129,10 @@ public class TypesDistinctProver {
       }
       return true;
     }
+
+    if (!type1.isBounded() || !type2.isBounded()) {
+      return false;
+    }
     return !type1.equals(type2);
   }
 

@@ -374,10 +374,15 @@ public class GitHistoryUtils {
       final List<String> branches = refNames.length > 0 ? new LinkedList<String>() : Collections.<String>emptyList();
       for (String refName : refNames) {
         if (allBranchesSet.contains(refName)) {
-          branches.add(refName);
+        // also some gits can return ref name twice (like (HEAD, HEAD), so check we will show it only once)
+          if (! branches.contains(refName)) {
+            branches.add(refName);
+          }
         }
         else {
-          tags.add(refName);
+          if (! tags.contains(refName)) {
+            tags.add(refName);
+          }
         }
       }
 
