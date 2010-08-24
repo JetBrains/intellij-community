@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Pair;
+
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -89,32 +91,32 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
   private void updateSelection(JTable table) {
     int row = table.getSelectedRowCount() == 1 ? table.getSelectedRow() : -1;
     int column = table.getSelectedColumnCount() == 1 ? table.getSelectedColumn() : -1;
-    handleSelectionChange((row == -1  || column == -1) ? null : new TableCell(row, column));
-  }
-
-  public Rectangle getCellBounds(TableCell tableCellKey, Component rendererComponent) {
-    Rectangle cellRect = getCellRect(tableCellKey);
-    cellRect.width = rendererComponent.getPreferredSize().width;
-    return cellRect;
+    handleSelectionChange((row == -1 || column == -1) ? null : new TableCell(row, column));
   }
 
   private Rectangle getCellRect(TableCell tableCellKey) {
     return myComponent.getCellRect(tableCellKey.row, tableCellKey.column, false);
   }
 
-  public Component getRendererComponent(TableCell key) {
-    int modelColumnIndex = myComponent.convertColumnIndexToModel(key.column);
-    final TableModel model = myComponent.getModel();
-    if (key.row < 0 || key.row >= model.getRowCount()
-        || key.column < 0 || key.column >= model.getColumnCount()) return null;
+  public Pair<Component, Rectangle> getRendererAndBounds(TableCell key) {
+    Rectangle cellRect = getCellRect(key);
 
-    return myComponent.getCellRenderer(key.row, key.column).
-      getTableCellRendererComponent(myComponent,
-                                    myComponent.getModel().getValueAt(key.row, modelColumnIndex),
-                                    myComponent.getSelectionModel().isSelectedIndex(key.row),
-                                    myComponent.hasFocus(),
-                                    key.row,key.column
-      );
+    int modelColumnIndex = myComponent.convertColumnIndexToModel(key.column);
+    TableModel model = myComponent.getModel();
+    if (key.row < 0 || key.row >= model.getRowCount() || key.column < 0 || key.column >= model.getColumnCount()) {
+      return null;
+    }
+
+    Component renderer = myComponent
+      .getCellRenderer(key.row, key.column)
+      .getTableCellRendererComponent(myComponent,
+                                     model.getValueAt(key.row, modelColumnIndex),
+                                     myComponent.getSelectionModel().isSelectedIndex(key.row),
+                                     myComponent.hasFocus(),
+                                     key.row, key.column);
+    cellRect.width = renderer.getPreferredSize().width;
+
+    return Pair.create(renderer, cellRect);
   }
 
   public Rectangle getVisibleRect(TableCell key) {
