@@ -19,12 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.EditingSides;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
@@ -154,17 +152,19 @@ public class SyncScrollSupport implements Disposable {
 
 
     slave.getScrollingModel().disableAnimation();
-
-    if (scrollToLine <= 0) {
-      int offset = newRectangle.y - oldRectangle.y;
-      slave.getScrollingModel().scrollVertically(slaveVerticalScrollOffset + offset);
+    try {
+      if (scrollToLine <= 0) {
+        int offset = newRectangle.y - oldRectangle.y;
+        slave.getScrollingModel().scrollVertically(slaveVerticalScrollOffset + offset);
+      }
+      else {
+        int correction = (masterVerticalScrollOffset + middleY) % master.getLineHeight();
+        Point point = slave.logicalPositionToXY(new LogicalPosition(actualLine, masterPos.column));
+        slave.getScrollingModel().scrollVertically(point.y - middleY + correction);
+      }
+    } finally {
+      slave.getScrollingModel().enableAnimation();
     }
-
-    int correction = (masterVerticalScrollOffset + middleY) % master.getLineHeight();
-    int scrollOffset = actualLine * slave.getLineHeight() - middleY;
-    slave.getScrollingModel().scrollVertically(scrollOffset + correction);
-
-    slave.getScrollingModel().enableAnimation();
   }
 
   private static int getScrollOffset(final Editor editor) {
