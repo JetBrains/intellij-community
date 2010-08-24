@@ -50,7 +50,7 @@ public class PythonRunConfigurationTest extends PyLightFixtureTestCase {
     final GeneralCommandLine generalCommandLine =
       state.generateCommandLine(debugRunner.createCommandLinePatchers(state, configuration, PORT));
     final List<String> params = generalCommandLine.getParametersList().getList();
-    assertEquals("pydevd.py", params.get(0));
+    assertEquals(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"), params.get(0));
     assertEquals("--client", params.get(1));
     assertEquals("--port", params.get(3));
     assertEquals("" + PORT, params.get(4));

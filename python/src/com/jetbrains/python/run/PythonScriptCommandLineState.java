@@ -33,7 +33,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       script_parameters.addParameter(myConfig.getScriptName());
     }
 
-    script_parameters.addParametersString(myConfig.getScriptParameters());
+    final String script_options_string = myConfig.getScriptParameters();
+    if (script_options_string != null) script_parameters.addParametersString(script_options_string);
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
