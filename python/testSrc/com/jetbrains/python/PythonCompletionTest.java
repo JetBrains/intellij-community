@@ -180,5 +180,13 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testChainedCall() {  // PY-1565
     doTest();
   }
+
+  public void testFromImportBinary() {
+    myFixture.copyFileToProject("completion/root/binary_mod.pyd");
+    myFixture.copyFileToProject("completion/root/binary_mod.so");
+    myFixture.configureByFiles("completion/fromImportBinary.py", "completion/root/__init__.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/fromImportBinary.after.py");
+  }
   
 }

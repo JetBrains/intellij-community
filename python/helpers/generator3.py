@@ -894,7 +894,7 @@ class ModuleRedeclarator(object):
     SIG_DOC_NOTE = "restored from __doc__"
     SIG_DOC_UNRELIABLY = "NOTE: unreliably restored from __doc__ "
 
-    def restoreByDocString(self, signature_string, func_name, class_name, deco=None):
+    def restoreByDocString(self, signature_string, class_name, deco=None):
         """
         @param signature_string: parameter list extracted from the doc string.
         @param func_name: name of the function.
@@ -945,9 +945,10 @@ class ModuleRedeclarator(object):
         seq = makeNamesUnique(seq)
         return (seq, note)
 
-    def parseFuncDoc(self, func_doc, func_name, class_name, deco=None, sip_generated=False):
+    def parseFuncDoc(self, func_doc, func_id, func_name, class_name, deco=None, sip_generated=False):
         """
         @param func_doc: __doc__ of the function.
+        @param func_id: name to look for as identifier of the function in docstring
         @param func_name: name of the function.
         @param class_name: name of the containing class, or None
         @param deco: decorator to use
@@ -956,21 +957,21 @@ class ModuleRedeclarator(object):
         if sip_generated:
             overloads = []
             for l in func_doc.split('\n'):
-                signature = func_name + '('
+                signature = func_id + '('
                 i = l.find(signature)
                 if i >= 0:
                     overloads.append(l[i+len(signature):])
             if len(overloads) > 1:
-                param_lists = [self.restoreByDocString(s, func_name, class_name, deco)[0] for s in overloads]
+                param_lists = [self.restoreByDocString(s, class_name, deco)[0] for s in overloads]
                 spec = self.buildSignature(func_name, self.restoreParametersForOverloads(param_lists))
                 return (spec, "restored from __doc__ with multiple overloads")
 
         # find the first thing to look like a definition
-        prefix_re = re.compile(func_name + "\s*\(") # "foo(..."
+        prefix_re = re.compile(func_id + "\s*\(") # "foo(..."
         match = prefix_re.search(func_doc)
         # parse the part that looks right
         if match:
-            params, note = self.restoreByDocString(func_doc[match.end():], func_name, class_name, deco)
+            params, note = self.restoreByDocString(func_doc[match.end():], class_name, deco)
             spec = func_name + flatten(params)
             # if "NOTE" in note:
             # print "------\n", func_name, "@", match.end()
@@ -1028,7 +1029,7 @@ class ModuleRedeclarator(object):
                     star_args = True
                     break
             if star_args: break
-            if optional:
+            if optional and not '=' in name:
                 params.append(name + '=None')
             else:
                 params.append(name)
@@ -1141,7 +1142,9 @@ class ModuleRedeclarator(object):
                 funcdoc = p_func.__doc__
             sig_restored = False
             if isinstance(funcdoc, STR_TYPES):
-                (spec, more_notes) = self.parseFuncDoc(funcdoc, p_name, classname, deco, sip_generated)
+                (spec, more_notes) = self.parseFuncDoc(funcdoc, p_name, p_name, classname, deco, sip_generated)
+                if spec is None and p_name == '__init__' and classname:
+                    (spec, more_notes) = self.parseFuncDoc(funcdoc, classname, p_name, classname, deco, sip_generated)
                 sig_restored = spec is not None
                 if more_notes:
                     if sig_note:
@@ -1174,6 +1177,11 @@ class ModuleRedeclarator(object):
         # if deco == "staticmethod":
         return None
 
+    def fullName(self, cls, p_modname):
+        m = cls.__module__
+        if m == p_modname or m == BUILTIN_MOD_NAME:
+            return cls.__name__
+        return m + "." + cls.__name__
 
     def redoClass(self, p_class, p_name, indent, p_modname=None):
         """
@@ -1185,7 +1193,7 @@ class ModuleRedeclarator(object):
         bases = getBases(p_class)
         base_def = ""
         if bases:
-            base_def = "(" + ", ".join([x.__name__ for x in bases]) + ")"
+            base_def = "(" + ", ".join([self.fullName(x, p_modname) for x in bases]) + ")"
         self.out("class " + p_name + base_def + ":", indent)
         self.outDocAttr(p_class, indent + 1)
         # inner parts
@@ -1219,6 +1227,9 @@ class ModuleRedeclarator(object):
             # add fake __init__s to type and tuple to have the right sig
             if p_class in self.FAKE_BUILTIN_INITS:
                 methods["__init__"] = self.fake_builtin_init
+            elif '__init__' not in methods:
+                methods['__init__'] = getattr(p_class, '__init__')
+                
             #
             for item_name in sortedNoCase(methods.keys()):
                 item = methods[item_name]
@@ -1254,7 +1265,7 @@ class ModuleRedeclarator(object):
         if not methods and not properties and not others:
             self.out("pass", indent + 1)
 
-    def redo(self, p_name):
+    def redo(self, p_name, old_modules):
         """
         Restores module declarations.
         Intended for built-in modules and thus does not handle import statements.
@@ -1277,6 +1288,11 @@ class ModuleRedeclarator(object):
                     self.out("import " + item.__name__ + " as " + item_name + " # refers to " + str(item))
                 else:
                     self.out(item_name + " = None # ??? name unknown, refers to " + str(item))
+        for module_name, module_obj in sys.modules.items():
+            if module_name not in old_modules and module_obj != self.module and module_name not in self.imported_modules:
+                self.imported_modules[module_name] = module_obj
+                self.out("import " + module_name)
+                                
         self.out("", 0) # empty line after imports
         # group what else we have into buckets
         vars_simple = {}
@@ -1495,6 +1511,8 @@ if __name__ == "__main__":
             else:
                 fname = target_name + ".py"
             #
+
+            old_modules = list(sys.modules.keys())
             action = "importing"
             try:
                 mod = __import__(name)
@@ -1524,7 +1542,7 @@ if __name__ == "__main__":
             outfile = fopen(fname, "w")
             action = "restoring"
             r = ModuleRedeclarator(mod, outfile, doing_builtins=doing_builtins)
-            r.redo(name)
+            r.redo(name, old_modules)
             action = "closing " + fname
             outfile.close()
         except:

@@ -34,9 +34,10 @@ public class PyUnusedLocalInspection extends PyInspection {
   @Override
   public void inspectionFinished(LocalInspectionToolSession session) {
     final PyUnusedLocalInspectionVisitor visitor = myLastVisitor.get();
-    assert visitor != null;
-    visitor.registerProblems();
-    myLastVisitor.remove();
+    if (visitor != null) {
+      visitor.registerProblems();
+      myLastVisitor.remove();
+    }
   }
 
   @Override
