@@ -969,7 +969,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
   private static class MyEditor implements ComboBoxEditor {
     private KeymapImpl myKeymap = null;
-    private final JTextField myTextField = new JTextField();
+    private final JTextField myTextField = new JTextField() {
+      @Override
+      public void setBounds(int x, int y, int width, int height) {
+        UIUtil.setComboBoxEditorBounds(x, y, width, height, this);
+      }
+    };
 
     public MyEditor() {
       myTextField.getDocument().addDocumentListener(new DocumentAdapter() {

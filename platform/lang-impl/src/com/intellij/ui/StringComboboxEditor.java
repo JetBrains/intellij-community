@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -66,5 +67,8 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
         getDocument().setText(s);
       }
     }.execute();
+
+    final Editor editor = getEditor();
+    if (editor != null) editor.getCaretModel().moveToOffset(s.length());
   }
 }

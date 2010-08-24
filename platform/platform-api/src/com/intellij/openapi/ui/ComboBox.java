@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -76,7 +78,6 @@ public class ComboBox extends ComboBoxWithWidePopup {
     if (v && !wasVisible && !UIUtil.isUnderNativeMacLookAndFeel()) {
       reconfigureEditor();
     }
-
   }
 
   private void reconfigureEditor() {
@@ -131,11 +132,18 @@ public class ComboBox extends ComboBoxWithWidePopup {
           }
         }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   public final void setEditor(final ComboBoxEditor editor) {
-    super.setEditor(new MyEditor(this, editor));
+    ComboBoxEditor _editor = editor;
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
+      if ("AquaComboBoxEditor".equals(editor.getClass().getSimpleName())) {
+        _editor = new MacComboBoxEditor();
+      }
+    }
+
+    super.setEditor(new MyEditor(this, _editor));
   }
 
   public final Dimension getMinimumSize() {
@@ -169,6 +177,12 @@ public class ComboBox extends ComboBoxWithWidePopup {
       height = super.getPreferredSize().height;
     }
     return height;
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+    MacUIUtil.drawComboboxFocusRing(this, g);
   }
 
   private static final class MyEditor implements ComboBoxEditor {

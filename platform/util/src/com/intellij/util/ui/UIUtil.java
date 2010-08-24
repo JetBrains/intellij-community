@@ -1583,5 +1583,15 @@ public class UIUtil {
     }
   }
 
+  public static void setComboBoxEditorBounds(int x, int y, int width, int height, JComponent editor) {
+    if(SystemInfo.isMac && isUnderAquaLookAndFeel()) {
+      // fix for too wide combobox editor, see AquaComboBoxUI.layoutContainer:
+      // it adds +4 pixels to editor width. WTF?!
+      editor.reshape(x, y, width - 4, height - 1);
+    } else {
+      editor.reshape(x, y, width, height);
+    }
+  }
+
 }
 
