@@ -1288,7 +1288,7 @@ class ModuleRedeclarator(object):
                     self.out("import " + item.__name__ + " as " + item_name + " # refers to " + str(item))
                 else:
                     self.out(item_name + " = None # ??? name unknown, refers to " + str(item))
-        for module_name, module_obj in sys.modules.iteritems():
+        for module_name, module_obj in sys.modules.items():
             if module_name not in old_modules and module_obj != self.module and module_name not in self.imported_modules:
                 self.imported_modules[module_name] = module_obj
                 self.out("import " + module_name)
@@ -1512,7 +1512,7 @@ if __name__ == "__main__":
                 fname = target_name + ".py"
             #
 
-            old_modules = list(sys.modules.iterkeys())
+            old_modules = list(sys.modules.keys())
             action = "importing"
             try:
                 mod = __import__(name)
