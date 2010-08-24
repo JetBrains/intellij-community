@@ -54,7 +54,7 @@
     <lang.literalEscaper language="XML" implementationClass="com.intellij.lang.xml.XmlLiteralEscaper"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"
-                            order="first, before basic2ClassName"/>
+                            order="first"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.XmlCharFilter" id="xml"/>
 

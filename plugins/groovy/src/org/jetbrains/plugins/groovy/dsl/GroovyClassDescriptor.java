@@ -24,6 +24,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.codehaus.groovy.runtime.GroovyCategorySupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,7 +47,7 @@ public class GroovyClassDescriptor {
   private final boolean myPlaceDependent;
   private boolean myPlaceElementAccessed;
 
-  public GroovyClassDescriptor(@NotNull PsiType psiType, PsiElement place, boolean placeDependent, final PsiFile placeFile) {
+  public GroovyClassDescriptor(@NotNull PsiType psiType, GroovyPsiElement place, boolean placeDependent, final PsiFile placeFile) {
     myPsiType = psiType;
     myPlace = place;
     myPlaceDependent = placeDependent;

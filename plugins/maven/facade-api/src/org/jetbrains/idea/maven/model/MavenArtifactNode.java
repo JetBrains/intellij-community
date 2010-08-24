@@ -104,11 +104,7 @@ public class MavenArtifactNode implements Serializable {
   }
 
   public static String formatNodesList(List<MavenArtifactNode> nodes) {
-    return StringUtil.join(nodes, new Function<MavenArtifactNode, String>() {
-      public String fun(MavenArtifactNode each) {
-        return each.toString();
-      }
-    }, ",");
+    return StringUtil.join(nodes, StringUtil.createToStringFunction(MavenArtifactNode.class), ",");
   }
 
   @Override

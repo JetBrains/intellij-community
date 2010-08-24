@@ -19,7 +19,6 @@ package com.intellij.execution.impl;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.console.FoldLinesLikeThis;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
@@ -27,13 +26,13 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.actions.DiffActions;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
@@ -60,6 +59,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -78,6 +78,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -96,6 +97,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
+  private @NonNls String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
   private static final int FLUSH_DELAY = 200; //TODO : make it an option
@@ -585,6 +587,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
+    if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
+      return this;
+    }
     return null;
   }
 
@@ -798,11 +803,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ClearAllAction());
     group.add(new CopyAction());
-    group.add(new FoldLinesLikeThis(myEditor, this));
     group.addSeparator();
     final ActionManager actionManager = ActionManager.getInstance();
-    group.add(actionManager.getAction(DiffActions.COMPARE_WITH_CLIPBOARD));
-    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU));
     menu.getComponent().show(component, x, y);
   }
 
@@ -1035,32 +1038,50 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     hyperlinks.add(highlighter, hyperlinkInfo);
   }
 
-  private class ClearAllAction extends AnAction implements DumbAware {
-    private ClearAllAction() {
+  public static class ClearAllAction extends DumbAwareAction {
+    public ClearAllAction() {
       super(ExecutionBundle.message("clear.all.from.console.action.name"));
     }
 
+    @Override
+    public void update(AnActionEvent e) {
+      final boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
+      e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setVisible(enabled);
+    }
+
     public void actionPerformed(final AnActionEvent e) {
-      clear();
+      final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);
+      if (consoleView != null) {
+        consoleView.clear();
+      }
     }
   }
 
-  private class CopyAction extends AnAction implements DumbAware {
-    private CopyAction() {
-      super(myEditor != null && myEditor.getSelectionModel().hasSelection()
-            ? ExecutionBundle.message("copy.selected.content.action.name")
-            : ExecutionBundle.message("copy.content.action.name"));
+  public static class CopyAction extends DumbAwareAction {
+
+    @Override
+    public void update(AnActionEvent e) {
+      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      final boolean enabled = editor != null && e.getData(LangDataKeys.CONSOLE_VIEW) != null;
+      e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setVisible(enabled);
+
+      e.getPresentation().setText(editor != null && editor.getSelectionModel().hasSelection()
+                                  ? ExecutionBundle.message("copy.selected.content.action.name")
+                                  : ExecutionBundle.message("copy.content.action.name"));
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      if (myEditor == null) return;
-      if (myEditor.getSelectionModel().hasSelection()) {
-        myEditor.getSelectionModel().copySelectionToClipboard();
+      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      assert editor != null;
+      if (editor.getSelectionModel().hasSelection()) {
+        editor.getSelectionModel().copySelectionToClipboard();
       }
       else {
-        myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
-        myEditor.getSelectionModel().copySelectionToClipboard();
-        myEditor.getSelectionModel().removeSelection();
+        editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
+        editor.getSelectionModel().copySelectionToClipboard();
+        editor.getSelectionModel().removeSelection();
       }
     }
   }
@@ -1415,7 +1436,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     prevAction.getTemplatePresentation().setText(getPreviousOccurenceActionName());
     AnAction nextAction = actionsManager.createNextOccurenceAction(this);
     nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
-    AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction();
+    AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction() {
+      @Override
+      protected Editor getEditor(AnActionEvent e) {
+        return myEditor;
+      }
+    };
 
     //Initializing custom actions
     AnAction[] consoleActions = new AnAction[3 + customActions.size()];

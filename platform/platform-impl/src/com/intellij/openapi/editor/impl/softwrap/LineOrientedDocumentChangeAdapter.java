@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl.softwrap;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 
 /**
  * Adapter class for {@link DocumentListener} interface that allows to represent document change events
@@ -26,7 +27,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
  * @author Denis Zhdanov
  * @since Jul 7, 2010 4:24:52 PM
  */
-public abstract class LineOrientedDocumentChangeAdapter implements DocumentListener {
+public abstract class LineOrientedDocumentChangeAdapter implements PrioritizedDocumentListener {
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
@@ -44,6 +45,11 @@ public abstract class LineOrientedDocumentChangeAdapter implements DocumentListe
     int endLine = document.getLineNumber(normalize(event.getDocument(), event.getOffset() + event.getNewLength()));
     int symbolsDifference = event.getNewLength() - event.getOldLength();
     afterDocumentChange(startLine, endLine, symbolsDifference);
+  }
+
+  @Override
+  public int getPriority() {
+    return Integer.MAX_VALUE;
   }
 
   /**

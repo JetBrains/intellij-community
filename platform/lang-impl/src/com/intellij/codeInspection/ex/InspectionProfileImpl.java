@@ -34,7 +34,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.profile.*;
+import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.profile.DefaultProjectProfileManager;
+import com.intellij.profile.ProfileEx;
+import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
@@ -436,7 +439,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       myBaseProfile.initInspectionTools();
     }
 
-    final InspectionTool[] tools;
+    final List<InspectionTool> tools;
     try {
       tools = myRegistrar.createTools();
     }

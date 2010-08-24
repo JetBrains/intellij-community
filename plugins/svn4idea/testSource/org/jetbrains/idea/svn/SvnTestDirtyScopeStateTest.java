@@ -1,5 +1,6 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ObjectsConvertor;
@@ -65,5 +66,47 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
 
     Assert.assertTrue(! dirty3.contains(new FilePathImpl(fileC)));
     Assert.assertTrue(! dirty3.contains(new FilePathImpl(fileD)));
+  }
+
+  @Test
+  public void testOkToAddScopeUnderWriteAction() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+
+    final VcsDirtyScopeManagerImpl vcsDirtyScopeManager = (VcsDirtyScopeManagerImpl) VcsDirtyScopeManager.getInstance(myProject);
+
+    final VirtualFile file = createFileInCommand("a.txt", "old content");
+    final VirtualFile fileB = createFileInCommand("b.txt", "old content");
+    final VirtualFile fileC = createFileInCommand("c.txt", "old content");
+    final VirtualFile fileD = createFileInCommand("d.txt", "old content");
+
+    final List<FilePath> list = ObjectsConvertor.vf2fp(Arrays.asList(file, fileB, fileC, fileD));
+
+    vcsDirtyScopeManager.retrieveScopes();
+    vcsDirtyScopeManager.changesProcessed();
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        vcsDirtyScopeManager.fileDirty(file);
+        vcsDirtyScopeManager.fileDirty(fileB);
+      }
+    });
+
+    final FilePathImpl fp = new FilePathImpl(file);
+    final FilePathImpl fpB = new FilePathImpl(fileB);
+    final long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() < (start + 3000)) {
+      synchronized (this) {
+        try {
+          wait(50);
+        }
+        catch (InterruptedException e) {
+          //
+        }
+      }
+      final Collection<FilePath> dirty1 = vcsDirtyScopeManager.whatFilesDirty(list);
+      if (dirty1.contains(fp) && dirty1.contains(fpB)) return;
+    }
+    Assert.assertTrue(false);
   }
 }

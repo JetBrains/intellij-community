@@ -48,6 +48,12 @@ public abstract class CompletionResultSet {
     }
   }
 
+  public void addAll(@NotNull final Iterable<LookupElement> elements) {
+    for (LookupElement element : elements) {
+      addElement(element);
+    }
+  }
+
   @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull PrefixMatcher matcher);
 
   /**

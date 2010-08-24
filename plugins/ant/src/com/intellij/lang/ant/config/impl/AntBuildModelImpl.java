@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -46,12 +45,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   public String getDefaultTargetName() {
     final AntDomProject antDomProject = getAntProject();
     if (antDomProject != null) {
-      final GenericAttributeValue<TargetResolver.Result> attrib = antDomProject.getDefaultTarget();
-      final TargetResolver.Result result = attrib.getValue();
-      if (result != null) {
-        final Pair<AntDomTarget,String> targetWithName = result.getResolvedTarget(attrib.getRawText());
-        return targetWithName != null? targetWithName.getSecond() : null;
-      }
+      return antDomProject.getDefaultTarget().getRawText();
     }
     return "";
   }

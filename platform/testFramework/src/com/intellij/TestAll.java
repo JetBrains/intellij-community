@@ -30,6 +30,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.*;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtil;
@@ -39,9 +41,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -339,24 +341,19 @@ public class TestAll implements Test {
     }
     final String[] roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {
-      System.out.println("Collecting tests from roots specified by classpath.file property: " + roots);
+      System.out.println("Collecting tests from roots specified by classpath.file property: " + Arrays.toString(roots));
       return roots;
     }
     else {
       final ClassLoader loader = TestAll.class.getClassLoader();
       if (loader instanceof URLClassLoader) {
         final URL[] urls = ((URLClassLoader)loader).getURLs();
-        final String[] urlsStrings = new String[urls.length];
+        final String[] classLoaderRoots = new String[urls.length];
         for (int i = 0; i < urls.length; i++) {
-          try {
-            urlsStrings[i] = urls[i].toURI().toString();
-          }
-          catch (URISyntaxException e) {
-            e.printStackTrace();
-          }
+          classLoaderRoots[i] = VfsUtil.urlToPath(VfsUtil.convertFromUrl(urls[i]));
         }
-        System.out.println("Collecting tests from classloader: " + urlsStrings);
-        return urlsStrings;
+        System.out.println("Collecting tests from classloader: " + Arrays.toString(classLoaderRoots));
+        return classLoaderRoots;
       }
       return System.getProperty("java.class.path").split(File.pathSeparator);
     }
@@ -374,7 +371,7 @@ public class TestAll implements Test {
 
     for (String classRoot : classRoots) {
       int oldCount = myTestCaseLoader.getClasses().size();
-      ClassFinder classFinder = new ClassFinder(new File(classRoot), packageRoot);
+      ClassFinder classFinder = new ClassFinder(new File(FileUtil.toSystemDependentName(classRoot)), packageRoot);
       myTestCaseLoader.loadTestCases(classFinder.getClasses());
       int newCount = myTestCaseLoader.getClasses().size();
       if (newCount != oldCount) {

@@ -43,7 +43,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler");
   public static final PsiMethodInsertHandler INSTANCE = new PsiMethodInsertHandler();
 
-  public static void insertParentheses(final InsertionContext context, final LookupItem<? extends PsiElement> item, boolean overloadsMatter, boolean hasParams) {
+  public static void insertParentheses(final InsertionContext context, final LookupItem item, boolean overloadsMatter, boolean hasParams) {
     final Editor editor = context.getEditor();
     final TailType tailType = getTailType(item, context);
     final PsiFile file = context.getFile();
@@ -66,7 +66,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
 
     if (needLeftParenth && hasParams) {
       // Invoke parameters popup
-      AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : item.getObject());
+      AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }
     if (tailType == TailType.SMART_COMPLETION || needLeftParenth && needRightParenth) {
       tailType.processTail(editor, context.getTailOffset());

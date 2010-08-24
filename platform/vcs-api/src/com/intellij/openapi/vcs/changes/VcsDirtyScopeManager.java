@@ -91,10 +91,10 @@ public abstract class VcsDirtyScopeManager {
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract boolean filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty);
+  public abstract void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty);
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract boolean filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty);
+  public abstract void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty);
 }

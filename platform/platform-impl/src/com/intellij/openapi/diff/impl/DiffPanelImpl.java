@@ -371,7 +371,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     public void scrollEditors() {
       getOptions().onNewContent(myCurrentSide);
-      final DiffNavigationContext scrollContext = (DiffNavigationContext) myDiffRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
+      final DiffNavigationContext scrollContext = myDiffRequest == null ? null :
+        (DiffNavigationContext) myDiffRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
       if (scrollContext == null) {
         scrollCurrentToFirstDiff();
       } else {

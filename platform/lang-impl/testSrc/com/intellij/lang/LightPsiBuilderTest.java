@@ -22,9 +22,10 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
-import com.sun.tools.internal.xjc.util.NullStream;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
 
@@ -409,5 +410,9 @@ public class LightPsiBuilderTest {
     public int getBufferEnd() {
       return myBufferEnd;
     }
+  }
+
+  private static class NullStream extends OutputStream {
+    public void write(final int b) throws IOException { }
   }
 }

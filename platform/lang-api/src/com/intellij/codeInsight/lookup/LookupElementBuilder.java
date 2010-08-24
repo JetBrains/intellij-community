@@ -55,6 +55,10 @@ public class LookupElementBuilder extends LookupElement {
     myCaseSensitive = caseSensitive;
   }
 
+  private LookupElementBuilder(LookupElementBuilder other) {
+    this(other.myLookupString, other.myObject, other.myInsertHandler, other.myRenderer, other.myHardcodedPresentation, other.myAllLookupStrings, other.myCaseSensitive);
+  }
+
   private LookupElementBuilder(@NotNull String lookupString, @NotNull Object object) {
     this(lookupString, object, null, null, null, Collections.singleton(lookupString), true);
   }
@@ -166,6 +170,10 @@ public class LookupElementBuilder extends LookupElement {
     presentation.setTailText(tailText, grayed);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
+  }
+
+  public LookupElement setAutoCompletionPolicy(AutoCompletionPolicy policy) {
+    return policy.applyPolicy(this);
   }
 
   @NotNull

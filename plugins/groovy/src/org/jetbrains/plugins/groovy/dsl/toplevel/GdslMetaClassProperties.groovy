@@ -7,10 +7,6 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.AnnotatedScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
-import com.intellij.psi.PsiMethod
-import com.intellij.util.Function
-import org.jetbrains.plugins.groovy.gpp.GppGdkMethod
 
 /**
  * @author ilyas
@@ -58,9 +54,9 @@ class GdslMetaClassProperties {
     */
   Closure annotatedScope = {Map args -> return new AnnotatedScope(args)}
 
-  Closure hasAnnotation = { String annoQName -> TypeToClassPattern.create(PsiJavaPatterns.psiModifierListOwner().withAnnotation(annoQName)) }
-  Closure hasField = { ElementPattern fieldCondition -> TypeToClassPattern.create(PsiJavaPatterns.psiClass().withField(true, PsiJavaPatterns.psiField().and(fieldCondition))) }
-  Closure hasMethod = { ElementPattern methodCondition -> TypeToClassPattern.create(PsiJavaPatterns.psiClass().withMethod(true, PsiJavaPatterns.psiMethod().and(methodCondition))) }
+  Closure hasAnnotation = { String annoQName -> PsiJavaPatterns.psiModifierListOwner().withAnnotation(annoQName) }
+  Closure hasField = { ElementPattern fieldCondition -> PsiJavaPatterns.psiClass().withField(true, PsiJavaPatterns.psiField().and(fieldCondition)) }
+  Closure hasMethod = { ElementPattern methodCondition -> PsiJavaPatterns.psiClass().withMethod(true, PsiJavaPatterns.psiMethod().and(methodCondition)) }
 
 
 }

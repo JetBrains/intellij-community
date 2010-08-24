@@ -405,8 +405,13 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
-  public void setShowAllSoftWraps(boolean show) {
-    myIsAllSoftWrapsShown = Boolean.valueOf(show);
+  public boolean isUseCustomSoftWrapIndent() {
+    return EditorSettingsExternalizable.getInstance().isUseCustomSoftWrapIndent();
+  }
+
+  @Override
+  public int getCustomSoftWrapIndent() {
+    return EditorSettingsExternalizable.getInstance().getCustomSoftWrapIndent();
   }
 
   @Override

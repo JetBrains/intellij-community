@@ -40,6 +40,8 @@ import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 public class EditorOptionsPanel {
   private JPanel myBehaviourPanel;
@@ -73,6 +75,8 @@ public class EditorOptionsPanel {
   private JCheckBox myShowReformatCodeDialogCheckBox;
   private JCheckBox myShowOptimizeImportsDialogCheckBox;
   private JCheckBox myCbUseSoftWraps;
+  private JCheckBox myCbUseCustomSoftWrapIndent;
+  private JTextField myCustomSoftWrapIndent;
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private final MyConfigurable myConfigurable;
 
@@ -95,6 +99,7 @@ public class EditorOptionsPanel {
     myCbRenameLocalVariablesInplace.setVisible(OptionsApplicabilityFilter.isApplicable(OptionId.RENAME_IN_PLACE));
 
     myConfigurable = new MyConfigurable();
+    initSoftWrapsSettingsProcessing();
   }
 
 
@@ -117,6 +122,10 @@ public class EditorOptionsPanel {
     // Virtual space
 
     myCbUseSoftWraps.setSelected(editorSettings.isUseSoftWraps());
+    myCbUseCustomSoftWrapIndent.setSelected(editorSettings.isUseCustomSoftWrapIndent());
+    myCustomSoftWrapIndent.setText(Integer.toString(editorSettings.getCustomSoftWrapIndent()));
+    updateSoftWrapSettingsRepresentation();
+
     myCbVirtualSpace.setSelected(editorSettings.isVirtualSpace());
     myCbCaretInsideTabs.setSelected(editorSettings.isCaretInsideTabs());
     myCbVirtualPageAtBottom.setSelected(editorSettings.isAdditionalPageAtBottom());
@@ -178,6 +187,8 @@ public class EditorOptionsPanel {
     // Virtual space
 
     editorSettings.setUseSoftWraps(myCbUseSoftWraps.isSelected());
+    editorSettings.setUseCustomSoftWrapIndent(myCbUseCustomSoftWrapIndent.isSelected());
+    editorSettings.setCustomSoftWrapIndent(getCustomSoftWrapIndent());
     editorSettings.setVirtualSpace(myCbVirtualSpace.isSelected());
     editorSettings.setCaretInsideTabs(myCbCaretInsideTabs.isSelected());
     editorSettings.setAdditionalPageAtBottom(myCbVirtualPageAtBottom.isSelected());
@@ -296,6 +307,8 @@ public class EditorOptionsPanel {
 
     // Virtual space
     isModified |= isModified(myCbUseSoftWraps, editorSettings.isUseSoftWraps());
+    isModified |= isModified(myCbUseCustomSoftWrapIndent, editorSettings.isUseCustomSoftWrapIndent());
+    isModified |= editorSettings.getCustomSoftWrapIndent() != getCustomSoftWrapIndent();
     isModified |= isModified(myCbVirtualSpace, editorSettings.isVirtualSpace());
     isModified |= isModified(myCbCaretInsideTabs, editorSettings.isCaretInsideTabs());
     isModified |= isModified(myCbVirtualPageAtBottom, editorSettings.isAdditionalPageAtBottom());
@@ -354,6 +367,37 @@ public class EditorOptionsPanel {
     else {
       return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE;
     }
+  }
+
+  private int getCustomSoftWrapIndent() {
+    String indentAsString = myCustomSoftWrapIndent.getText();
+    int defaultIndent = 0;
+    if (indentAsString == null) {
+      return defaultIndent;
+    }
+    try {
+      int indent = Integer.parseInt(indentAsString.trim());
+      return indent >= 0 ? indent : defaultIndent;
+    } catch (IllegalArgumentException e) {
+      // Ignore
+    }
+    return defaultIndent;
+  }
+
+  private void initSoftWrapsSettingsProcessing() {
+    ItemListener listener = new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        updateSoftWrapSettingsRepresentation();
+      }
+    };
+    myCbUseSoftWraps.addItemListener(listener);
+    myCbUseCustomSoftWrapIndent.addItemListener(listener);
+  }
+
+  private void updateSoftWrapSettingsRepresentation() {
+    myCbUseCustomSoftWrapIndent.setEnabled(myCbUseSoftWraps.isSelected());
+    myCustomSoftWrapIndent.setEnabled(myCbUseCustomSoftWrapIndent.isEnabled() && myCbUseCustomSoftWrapIndent.isSelected());
   }
 
   public JComponent getComponent() {

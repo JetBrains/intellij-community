@@ -63,7 +63,7 @@ public class DomTarget extends DelegatePsiTarget implements PsiDeclaredTarget, P
       }
 
       final int length = attributeValue.getTextLength();
-      if (length > 2) {
+      if (length >= 2) {
         return new DomTarget(element, attributeValue, new TextRange(1, length - 1), nameElement);
       }
     }

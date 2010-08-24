@@ -166,13 +166,13 @@ public class CodeInsightTestUtil {
           editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
         }
       }.execute().throwException();
-    }
-    finally {
       assert renamer != null;
       renamer.finish();
 
       TemplateManagerImpl.getTemplateState(editor).gotoEnd();
       renamer.performAutomaticRename(newName, element);
+    }
+    finally {
       templateManager.setTemplateTesting(false);
     }
 

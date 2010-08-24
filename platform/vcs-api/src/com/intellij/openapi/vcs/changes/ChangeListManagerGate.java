@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -37,4 +39,5 @@ public interface ChangeListManagerGate {
   // must be allowed only for perforce change synchronizer, not during normal update
   void moveChanges(final String toList, final Collection<Change> changes);
   void setListsToDisappear(final Collection<String> names);
+  FileStatus getStatus(final VirtualFile file);
 }

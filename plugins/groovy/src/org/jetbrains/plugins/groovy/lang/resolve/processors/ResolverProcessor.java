@@ -22,6 +22,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -29,10 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 
@@ -50,12 +48,12 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   
   protected String myName;
   private final EnumSet<ResolveKind> myResolveTargetKinds;
-  private final Set<String> myProcessedClasses = new HashSet<String>();
+  @Nullable private Set<String> myProcessedClasses;
   protected PsiElement myPlace;
   private
   @NotNull final PsiType[] myTypeArguments;
 
-  protected Set<GroovyResolveResult> myCandidates = new LinkedHashSet<GroovyResolveResult>();
+  @Nullable private Set<GroovyResolveResult> myCandidates;
 
   protected ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
                               PsiElement place,
@@ -78,10 +76,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
       if (namedElement instanceof PsiClass) {
         final PsiClass aClass = (PsiClass)namedElement;
-        final String fqn = aClass.getQualifiedName();
-        if (!myProcessedClasses.contains(fqn)) {
-          myProcessedClasses.add(fqn);
-        } else {
+        if (myProcessedClasses == null) myProcessedClasses = new HashSet<String>();
+        if (!myProcessedClasses.add(aClass.getQualifiedName())) {
           return true;
         }
       }
@@ -89,11 +85,20 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       boolean isAccessible = isAccessible(namedElement);
       final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       boolean isStaticsOK = isStaticsOK(namedElement, resolveContext);
-      myCandidates.add(new GroovyResolveResultImpl(namedElement, resolveContext, substitutor, isAccessible, isStaticsOK));
+      addCandidate(new GroovyResolveResultImpl(namedElement, resolveContext, substitutor, isAccessible, isStaticsOK));
       return !isAccessible;
     }
 
     return true;
+  }
+
+  protected final void addCandidate(GroovyResolveResult candidate) {
+    if (myCandidates == null) myCandidates = new LinkedHashSet<GroovyResolveResult>();
+    myCandidates.add(candidate);
+  }
+
+  protected Set<GroovyResolveResult> getCandidatesInternal() {
+    return myCandidates == null ? Collections.<GroovyResolveResult>emptySet() : myCandidates;
   }
 
   protected boolean isAccessible(PsiNamedElement namedElement) {
@@ -112,16 +117,13 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   @NotNull
   public GroovyResolveResult[] getCandidates() {
+    if (myCandidates == null) return GroovyResolveResult.EMPTY_ARRAY;
     return myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
   }
 
   @SuppressWarnings({"unchecked"})
   public <T> T getHint(Key<T> hintKey) {
-    if (NameHint.KEY == hintKey && myName != null) {
-      return (T) this;
-    } else if (ClassHint.KEY == hintKey) {
-      return (T) this;
-    } else if (ElementClassHint.KEY == hintKey) {
+    if ((NameHint.KEY == hintKey && myName != null) || ClassHint.KEY == hintKey || ElementClassHint.KEY == hintKey) {
       return (T) this;
     }
 
@@ -160,16 +162,14 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   public boolean hasCandidates() {
-    return myCandidates.size() > 0;
+    return myCandidates != null;
   }
 
   private static ResolveKind getResolveKind(PsiElement element) {
     if (element instanceof PsiVariable) return PROPERTY;
     if (element instanceof GrReferenceExpression) return PROPERTY;
-
-    else if (element instanceof PsiMethod) return METHOD;
-
-    else if (element instanceof PsiPackage) return PACKAGE;
+    if (element instanceof PsiMethod) return METHOD;
+    if (element instanceof PsiPackage) return PACKAGE;
 
     return CLASS;
   }
@@ -177,5 +177,10 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   public String getName(ResolveState state) {
     //todo[DIANA] implement me!
     return myName;
+  }
+
+  @Override
+  public String toString() {
+    return "NameHint: '" + myName + "', " + myResolveTargetKinds.toString() + ", Candidates: " + (myCandidates == null ? 0 : myCandidates.size());
   }
 }

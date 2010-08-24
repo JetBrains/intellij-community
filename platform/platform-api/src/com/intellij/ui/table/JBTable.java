@@ -19,7 +19,7 @@ import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.*;
 import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.EmptyTextHelper;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,15 +38,8 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.EventObject;
 
-/**
- * The purpose of this class is to fix two Sun's bugs. There are #4503845 and #4330950.
- * When Sun fixes these bugs then the class should be immediately removed.
- * Also it adds "select row on first right click" functionality.
- *
- * @author Vladimir Kondratyev
- */
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
-  private EmptyTextHelper myEmptyTextHelper;
+  private StatusText myEmptyText;
   private ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 
   private MyCellEditorRemover myEditorRemover;
@@ -58,9 +51,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   public JBTable(final TableModel model) {
     super(model);
-    myEmptyTextHelper = new EmptyTextHelper(this) {
+    myEmptyText = new StatusText(this) {
       @Override
-      protected boolean isEmpty() {
+      protected boolean isStatusVisible() {
         return JBTable.this.isEmpty();
       }
     };
@@ -76,10 +69,18 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           cellEditor.stopCellEditing();
         }
       }
-      public void columnSelectionChanged(ListSelectionEvent e) {}
-      public void columnAdded(TableColumnModelEvent e) {}
-      public void columnMoved(TableColumnModelEvent e) {}
-      public void columnRemoved(TableColumnModelEvent e) {}
+
+      public void columnSelectionChanged(ListSelectionEvent e) {
+      }
+
+      public void columnAdded(TableColumnModelEvent e) {
+      }
+
+      public void columnMoved(TableColumnModelEvent e) {
+      }
+
+      public void columnRemoved(TableColumnModelEvent e) {
+      }
     });
     getTableHeader().setDefaultRenderer(new MyTableHeaderRenderer());
     //noinspection UnusedDeclaration
@@ -96,7 +97,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       UISettings.setupAntialiasing(g);
     }
     super.paintComponent(g);
-    myEmptyTextHelper.paint(g);
+    myEmptyText.paint(this, g);
   }
 
   public void setEnableAntialiasing(boolean flag) {
@@ -108,6 +109,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       {
         ((JCheckBox)getComponent()).setHorizontalAlignment(JCheckBox.CENTER);
       }
+
       @Override
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         Component component = super.getTableCellEditorComponent(table, value, isSelected, row, column);
@@ -120,37 +122,50 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void resetDefaultFocusTraversalKeys() {
     KeyboardFocusManager m = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     for (Integer each : Arrays.asList(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
-                                  KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
-                                  KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS,
-                                  KeyboardFocusManager.DOWN_CYCLE_TRAVERSAL_KEYS)) {
+                                      KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+                                      KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS,
+                                      KeyboardFocusManager.DOWN_CYCLE_TRAVERSAL_KEYS)) {
       setFocusTraversalKeys(each, m.getDefaultFocusTraversalKeys(each));
     }
   }
 
-  public String getEmptyText() {
-    return myEmptyTextHelper.getEmptyText();
+  @NotNull
+  @Override
+  public String getText() {
+    return myEmptyText.getText();
   }
 
+  @Override
   public void setEmptyText(String emptyText) {
-    myEmptyTextHelper.setEmptyText(emptyText);
+    myEmptyText.setEmptyText(emptyText);
   }
 
+  @Override
   public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.setEmptyText(emptyText, attrs);
+    myEmptyText.setEmptyText(emptyText, attrs);
   }
 
+  @Override
   public void clearEmptyText() {
-    myEmptyTextHelper.clearEmptyText();
+    myEmptyText.clearEmptyText();
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.appendEmptyText(text, attrs);
+    myEmptyText.appendEmptyText(text, attrs);
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
-    myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+    myEmptyText.appendEmptyText(text, attrs, listener);
   }
 
+  @Override
+  public StatusText getEmptyText() {
+    return myEmptyText;
+  }
+
+  @Override
   @NotNull
   public ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
     return myExpandableItemsHandler;

@@ -22,7 +22,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.EmptyTextHelper;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
-  private EmptyTextHelper myEmptyTextHelper;
+  private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   public JBList() {
@@ -60,16 +60,16 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    myEmptyTextHelper.paint(g);
+    myEmptyText.paint(this, g);
   }
 
   private void init() {
     setSelectionBackground(UIUtil.getListSelectionBackground());
     setSelectionForeground(UIUtil.getListSelectionForeground());
 
-    myEmptyTextHelper = new EmptyTextHelper(this) {
+    myEmptyText = new StatusText(this) {
       @Override
-      protected boolean isEmpty() {
+      protected boolean isStatusVisible() {
         return JBList.this.isEmpty();
       }
     };
@@ -86,30 +86,43 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     return model == null ? 0 : model.getSize();
   }
 
-  public String getEmptyText() {
-    return myEmptyTextHelper.getEmptyText();
+  @NotNull
+  @Override
+  public String getText() {
+    return myEmptyText.getText();
   }
 
+  @Override
   public void setEmptyText(String emptyText) {
-    myEmptyTextHelper.setEmptyText(emptyText);
+    myEmptyText.setEmptyText(emptyText);
   }
 
+  @Override
   public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.setEmptyText(emptyText, attrs);
+    myEmptyText.setEmptyText(emptyText, attrs);
   }
 
+  @Override
   public void clearEmptyText() {
-    myEmptyTextHelper.clearEmptyText();
+    myEmptyText.clearEmptyText();
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.appendEmptyText(text, attrs);
+    myEmptyText.appendEmptyText(text, attrs);
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
-    myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+    myEmptyText.appendEmptyText(text, attrs, listener);
   }
 
+  @Override
+  public StatusText getEmptyText() {
+    return myEmptyText;
+  }
+
+  @Override
   @NotNull
   public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;

@@ -15,19 +15,28 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
 
 /**
- * {@link ToggleUseSoftWrapsAction} extension that doesn't suppress configured icon (if any).
+ * {@link ToggleUseSoftWrapsMenuAction} extension that doesn't suppress configured icon (if any).
  *
  * @author Denis Zhdanov
  * @since Aug 19, 2010 5:07:08 PM
  */
-public class ToggleUseSoftWrapsToolbarAction extends ToggleUseSoftWrapsAction {
+public class ToggleUseSoftWrapsToolbarAction extends AbstractToggleUseSoftWrapsAction {
 
   public ToggleUseSoftWrapsToolbarAction() {
-    super(true);
+    super();
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS));
+  }
+
+  //TODO den remove
+  @Override
+  public void setSelected(AnActionEvent e, boolean state) {
+    Editor editor = getEditor(e);
+    if (editor != null) {
+      editor.getSettings().setUseSoftWraps(state);
+    }
   }
 }

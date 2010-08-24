@@ -37,13 +37,15 @@ public class RefCountingStorage extends AbstractStorage {
 
   @Override
   protected byte[] readBytes(int record) throws IOException {
-    byte[] result = super.readBytes(record);
-    InflaterInputStream in = new InflaterInputStream(new ByteArrayInputStream(result));
-    try {
-      return StreamUtil.loadFromStream(in);
-    }
-    finally {
-      in.close();
+    synchronized (myLock) {
+      byte[] result = super.readBytes(record);
+      InflaterInputStream in = new InflaterInputStream(new ByteArrayInputStream(result));
+      try {
+        return StreamUtil.loadFromStream(in);
+      }
+      finally {
+        in.close();
+      }
     }
   }
 
@@ -54,15 +56,17 @@ public class RefCountingStorage extends AbstractStorage {
 
   @Override
   protected void writeBytes(int record, byte[] bytes) throws IOException {
-    ByteArrayOutputStream s = new ByteArrayOutputStream();
-    DeflaterOutputStream out = new DeflaterOutputStream(s);
-    try {
-      out.write(bytes);
+    synchronized (myLock) {
+      ByteArrayOutputStream s = new ByteArrayOutputStream();
+      DeflaterOutputStream out = new DeflaterOutputStream(s);
+      try {
+        out.write(bytes);
+      }
+      finally {
+        out.close();
+      }
+      super.writeBytes(record, s.toByteArray());
     }
-    finally {
-      out.close();
-    }
-    super.writeBytes(record, s.toByteArray());
   }
 
   @Override

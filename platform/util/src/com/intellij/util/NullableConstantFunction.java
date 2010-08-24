@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.util;
 
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Defines common contract for building {@link EditorTextField} with spell checking support.
- *
- * @author Denis Zhdanov
- * @since Aug 18, 2010 1:37:55 PM
+ * @author Konstantin Bulenkov
  */
-public interface SpellCheckAwareEditorFieldProvider {
+public final class NullableConstantFunction<Param, Result> implements NullableFunction<Param, Result> {
+  private final Result value;
 
-  /**
-   * @param project   target project
-   * @return          {@link EditorTextField} with spell checking support.
-   */
-  EditorTextField getEditorField(Project project);
+  public NullableConstantFunction(@Nullable Result value) {
+    this.value = value;
+  }
+
+  @Nullable
+  @Override
+  public Result fun(Param param) {
+    return value;
+  }
 }

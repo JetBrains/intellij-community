@@ -61,6 +61,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -186,6 +187,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     setUpJdk();
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
 
     runStartupActivities();
   }

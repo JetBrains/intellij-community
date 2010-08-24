@@ -15,12 +15,9 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.OptionGroup;
@@ -31,22 +28,24 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 
-public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel implements CodeStyleCustomizationsConsumer {
+public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel");
 
   private List<IntOption> myOptions = new ArrayList<IntOption>();
   private Set<String> myAllowedOptions = new HashSet<String>();
   private boolean myAllOptionsAllowed = false;
-  private boolean myUpdateOnly = false;
+  private boolean myIsFirstUpdate = true;
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
   public CodeStyleBlankLinesPanel(CodeStyleSettings settings) {
     super(settings);
+    init();
+  }
 
-    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
-      provider.customizeBlankLinesOptions(this);
-    }
+  @Override
+  protected void init() {
+    super.init();
 
     myPanel
       .add(createKeepBlankLinesPanel(),
@@ -63,21 +62,12 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);
 
+    myIsFirstUpdate = false;
   }
 
   @Override
   protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
-    return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINE_SETTINGS;
-  }
-
-  @Override
-  protected void onLanguageChange(Language language) {
-    myUpdateOnly = true;
-    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
-      if (provider.getLanguage().is(language)) {
-        provider.customizeBlankLinesOptions(this);
-      }
-    }
+    return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINES_SETTINGS;
   }
 
   private JPanel createBlankLinesPanel() {
@@ -158,7 +148,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   }
 
   public void showStandardOptions(String... optionNames) {
-    if (!myUpdateOnly) {
+    if (myIsFirstUpdate) {
       Collections.addAll(myAllowedOptions, optionNames);
     }
     for (IntOption option : myOptions) {

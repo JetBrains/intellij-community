@@ -17,6 +17,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -90,7 +91,7 @@ public class StripeTable extends Table {
     return scrollPane;
   }
 
-  private static class StripedViewport extends JViewport {
+  private static class StripedViewport extends JBViewport {
     private final JTable myTable;
 
     public StripedViewport(JTable table) {

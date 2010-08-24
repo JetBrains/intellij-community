@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -94,6 +95,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     myDocumentChangeManager = documentChangeManager;
 
     myDocumentListeners.add(myDocumentChangeManager);
+    Collections.sort(myDocumentListeners, PrioritizedDocumentListener.COMPARATOR);
   }
 
   public boolean isSoftWrappingEnabled() {

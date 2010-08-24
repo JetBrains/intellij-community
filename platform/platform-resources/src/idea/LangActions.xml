@@ -738,6 +738,13 @@
       <reference ref="ViewSource"/>
     </group>
 
+    <group id="ConsoleView.PopupMenu">
+      <action id="ConsoleView.ClearAll" class="com.intellij.execution.impl.ConsoleViewImpl$ClearAllAction"/>
+      <action id="ConsoleView.Copy" class="com.intellij.execution.impl.ConsoleViewImpl$CopyAction"/>
+      <separator/>
+      <reference ref="CompareClipboardWithSelection"/>
+    </group>
+
     <!-- SM Test Runner Actions -->
     <group id="SMTestRunnerTestsTree">
       <separator/>

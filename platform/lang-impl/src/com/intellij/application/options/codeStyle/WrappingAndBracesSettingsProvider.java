@@ -19,24 +19,33 @@ import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class WrappingConfigurable extends CodeStyleAbstractConfigurable {
-  public WrappingConfigurable(CodeStyleSettings settings, CodeStyleSettings cloneSettings) {
-    super(settings, cloneSettings, ApplicationBundle.message("title.wrapping"));
+public class WrappingAndBracesSettingsProvider extends CodeStyleSettingsProvider {
+  @NotNull
+  public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("wrapping.and.braces")) {
+      public Icon getIcon() {
+        return StdFileTypes.JAVA.getIcon();
+      }
+
+      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+        return new WrappingAndBracesPanel(settings);
+      }
+
+      public String getHelpTopic() {
+        return "reference.settingsdialog.IDE.globalcodestyle.wrap";
+      }
+    };
   }
 
-  public Icon getIcon() {
-    return StdFileTypes.JAVA.getIcon();
-  }
-
-  protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-    return new WrappingPanel(settings);
-  }
-
-  public String getHelpTopic() {
-    return "reference.settingsdialog.IDE.globalcodestyle.wrap";
+  @Override
+  public String getConfigurableDisplayName() {
+    return ApplicationBundle.message("wrapping.and.braces");
   }
 }

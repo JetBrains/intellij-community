@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -21,6 +20,7 @@ import org.codehaus.groovy.runtime.InvokerInvocationException;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,7 +53,7 @@ public class GroovyDslScript {
 
   public boolean processExecutor(PsiScopeProcessor processor,
                                  final PsiType psiType,
-                                 final PsiElement place,
+                                 final GroovyPsiElement place,
                                  final PsiFile placeFile,
                                  final String qname) {
     final Pair<ConcurrentMap<String, Boolean>, ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder>> maps = myMaps.getValue();

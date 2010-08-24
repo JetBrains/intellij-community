@@ -13,25 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle;
+package com.intellij.ui;
 
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
- * @author yole
+ * Editor customization that can make target editor soft wraps-aware.
+ * <p/>
+ * Thread-safe.
+ *
+ * @author Denis Zhdanov
+ * @since Aug 20, 2010 4:54:48 PM
  */
-public class WrappingSettingsProvider extends CodeStyleSettingsProvider {
-  @NotNull
-  public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
-    return new WrappingConfigurable(settings, originalSettings);
+public class SoftWrapsEditorCustomization implements EditorCustomization {
+
+  @Override
+  public Set<Feature> getSupportedFeatures() {
+    return EnumSet.of(Feature.SOFT_WRAP);
   }
 
   @Override
-  public String getConfigurableDisplayName() {
-    return ApplicationBundle.message("title.wrapping");
+  public void customize(@NotNull EditorEx editor, @NotNull Feature feature) {
+    editor.getSettings().setUseSoftWraps(true);
   }
 }

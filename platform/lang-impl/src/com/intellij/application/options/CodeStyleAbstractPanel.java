@@ -265,10 +265,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected abstract void resetImpl(final CodeStyleSettings settings);
 
   protected static void fillWrappingCombo(final JComboBox wrapCombo) {
-    wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.do.not.wrap"));
-    wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.wrap.if.long"));
-    wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.chop.down.if.long"));
-    wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.wrap.always"));
+    wrapCombo.addItem(ApplicationBundle.message("wrapping.do.not.wrap"));
+    wrapCombo.addItem(ApplicationBundle.message("wrapping.wrap.if.long"));
+    wrapCombo.addItem(ApplicationBundle.message("wrapping.chop.down.if.long"));
+    wrapCombo.addItem(ApplicationBundle.message("wrapping.wrap.always"));
   }
 
   public static String readFromFile(final Class resourceContainerClass, @NonNls final String fileName) {

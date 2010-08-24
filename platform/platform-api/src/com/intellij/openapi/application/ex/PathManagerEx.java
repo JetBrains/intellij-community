@@ -118,8 +118,14 @@ public class PathManagerEx {
 
   static {
     TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.ULTIMATE, Collections.singletonList(toSystemDependentName("testData")));
-    TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.COMMUNITY, Collections.singletonList(toSystemDependentName("java/java-tests/testData")));
-    TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, Collections.singletonList(toSystemDependentName("community/java/java-tests/testData")));
+    TEST_DATA_RELATIVE_PATHS.put(
+      TestDataLookupStrategy.COMMUNITY,
+      Collections.singletonList(toSystemDependentName("java/java-tests/testData"))
+    );
+    TEST_DATA_RELATIVE_PATHS.put(
+      TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE,
+      Collections.singletonList(toSystemDependentName("community/java/java-tests/testData"))
+    );
   }
 
   /**

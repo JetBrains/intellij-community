@@ -142,11 +142,11 @@ public class AntResolveTest extends ResolveTestCase {
   }
 
   public void testEnvPropertyW() throws Exception {
-    if (SystemInfo.isWindows) doPropertyTest();
+    if (SystemInfo.isWindows) doPropertyTestExpectReferenceUnresolved();
   }
 
   public void testEnvPropertyU() throws Exception {
-    if (SystemInfo.isUnix) doPropertyTest();
+    if (SystemInfo.isUnix) doPropertyTestExpectReferenceUnresolved();
   }
 
   public void testEnvProperty1W() throws Exception {
@@ -277,6 +277,12 @@ public class AntResolveTest extends ResolveTestCase {
       (target instanceof PomTargetPsiElement && ((PomTargetPsiElement)target).getTarget().canNavigateToSource()) ||
       (target instanceof XmlTag && ("project".equalsIgnoreCase(((XmlTag)target).getName()) || "buildnumber".equalsIgnoreCase(((XmlTag)target).getName())))
     );
+  }
+
+  private void doPropertyTestExpectReferenceUnresolved() throws Exception {
+    PsiReference ref = configure();
+    PsiElement target = ref.resolve();
+    assertTrue(target == null);
   }
 
   private void doTaskTest() throws Exception {

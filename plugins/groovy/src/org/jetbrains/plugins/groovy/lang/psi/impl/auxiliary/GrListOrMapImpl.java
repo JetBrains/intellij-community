@@ -98,8 +98,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   @Override
   public GrNamedArgument findNamedArgument(@NotNull String labelName) {
     for (GrNamedArgument argument : getNamedArguments()) {
-      final GrArgumentLabel label = argument.getLabel();
-      if (label != null && labelName.equals(label.getName())) {
+      if (labelName.equals(argument.getLabelName())) {
         return argument;
       }
     }

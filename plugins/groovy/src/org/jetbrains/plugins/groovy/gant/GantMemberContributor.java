@@ -22,6 +22,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -36,7 +37,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     GroovyPsiElement place,
                                      ResolveState state) {
     if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place.getProject())) {
       processAntTasks(processor, place, state);

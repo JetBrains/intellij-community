@@ -41,6 +41,8 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public static class OptionSet implements Cloneable {
     public String LINE_SEPARATOR;
     public boolean USE_SOFT_WRAPS = false;
+    public boolean USE_CUSTOM_SOFT_WRAP_INDENT = false;
+    public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = true;
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = "Changed";
@@ -219,6 +221,22 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public void setUseSoftWraps(boolean use) {
     myOptions.USE_SOFT_WRAPS = use;
+  }
+
+  public boolean isUseCustomSoftWrapIndent() {
+    return myOptions.USE_CUSTOM_SOFT_WRAP_INDENT;
+  }
+
+  public void setUseCustomSoftWrapIndent(boolean use) {
+    myOptions.USE_CUSTOM_SOFT_WRAP_INDENT = use;
+  }
+
+  public int getCustomSoftWrapIndent() {
+    return myOptions.CUSTOM_SOFT_WRAP_INDENT;
+  }
+
+  public void setCustomSoftWrapIndent(int indent) {
+    myOptions.CUSTOM_SOFT_WRAP_INDENT = indent;
   }
 
   public boolean isVirtualSpace() {

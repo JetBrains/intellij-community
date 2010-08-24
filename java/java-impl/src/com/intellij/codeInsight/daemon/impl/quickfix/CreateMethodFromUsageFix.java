@@ -180,11 +180,9 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
       PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       doCreate(targetClass, method, shouldBeAbstract(targetClass),
-               ContainerUtil.map2List(arguments, new Function<PsiExpression, Pair<PsiExpression, PsiType>>() {
-        public Pair<PsiExpression, PsiType> fun(PsiExpression psiExpression) {
-          return Pair.create(psiExpression, null);
-        }
-      }), getTargetSubstitutor(expression), CreateFromUsageUtils.guessExpectedTypes(expression, true),
+               ContainerUtil.map2List(arguments, Pair.createFunction(PsiExpression.class, ((PsiType)null))),
+               getTargetSubstitutor(expression),
+               CreateFromUsageUtils.guessExpectedTypes(expression, true),
                context);
     }
     catch (IncorrectOperationException e) {

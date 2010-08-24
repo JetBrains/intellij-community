@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.Function;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -41,6 +43,15 @@ public class Pair<A, B> {
 
   public static <A, B> Pair<A, B> create(A first, B second) {
     return new Pair<A,B>(first, second);
+  }
+
+  public static <A, B> Function<A, Pair<A, B>> createFunction(Class<A> cls, @Nullable final B value) {
+    return new Function<A, Pair<A, B>>() {
+      @Override
+      public Pair<A, B> fun(A a) {
+        return Pair.create(a, value);
+      }
+    };
   }
 
   public final boolean equals(Object o){
