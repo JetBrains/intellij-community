@@ -17,10 +17,12 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.OptionGroup;
+import com.intellij.util.containers.MultiMap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,13 +30,16 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 
-public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel  {
+public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel");
 
   private List<IntOption> myOptions = new ArrayList<IntOption>();
   private Set<String> myAllowedOptions = new HashSet<String>();
   private boolean myAllOptionsAllowed = false;
   private boolean myIsFirstUpdate = true;
+
+  private MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>> myCustomOptions
+    = new MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>>();
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
@@ -71,40 +76,51 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   }
 
   private JPanel createBlankLinesPanel() {
-    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.blank.lines"));
+    OptionGroup optionGroup = new OptionGroup(BLANK_LINES);
 
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.package.statement"), "BLANK_LINES_BEFORE_PACKAGE");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.package.statement"), "BLANK_LINES_AFTER_PACKAGE");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.imports"), "BLANK_LINES_BEFORE_IMPORTS");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.imports"), "BLANK_LINES_AFTER_IMPORTS");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.class"), "BLANK_LINES_AROUND_CLASS");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.class.header"), "BLANK_LINES_AFTER_CLASS_HEADER");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.anonymous.class.header"), "BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.field"), "BLANK_LINES_AROUND_FIELD");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.method"), "BLANK_LINES_AROUND_METHOD");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.method.body"), "BLANK_LINES_BEFORE_METHOD_BODY");
     createOption(optionGroup, "Around field in interface:", "BLANK_LINES_AROUND_FIELD_IN_INTERFACE");
     createOption(optionGroup, "Around method in interface:", "BLANK_LINES_AROUND_METHOD_IN_INTERFACE");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.class.header"), "BLANK_LINES_AFTER_CLASS_HEADER");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.anonymous.class.header"), "BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER");
 
     return optionGroup.createPanel();
   }
 
   private JPanel createKeepBlankLinesPanel() {
-    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.keep.blank.lines"));
+    OptionGroup optionGroup = new OptionGroup(BLANK_LINES_KEEP);
 
     createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.in.declarations"), "KEEP_BLANK_LINES_IN_DECLARATIONS");
     createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.in.code"), "KEEP_BLANK_LINES_IN_CODE");
-    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.before.rbrace"), "KEEP_BLANK_LINES_BEFORE_RBRACE");
+    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.before.rbrace"), "" +
+                                                                                                  "");
+    initCustomOptions(optionGroup, BLANK_LINES_KEEP);
 
     return optionGroup.createPanel();
   }
 
+  private void initCustomOptions(OptionGroup optionGroup, String groupName) {
+    for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> each : myCustomOptions.get(groupName)) {
+      doCreateOption(optionGroup, each.second, new IntOption(each.first, each.third));
+    }
+  }
+
   private void createOption(OptionGroup optionGroup, String label, String fieldName) {
     if (myAllOptionsAllowed || myAllowedOptions.contains(fieldName)) {
-      IntOption option = new IntOption(CodeStyleSettings.class, fieldName);
-      optionGroup.add(new JLabel(label), option.myTextField);
-      myOptions.add(option);
+      doCreateOption(optionGroup, label, new IntOption(fieldName));
     }
+  }
+
+  private void doCreateOption(OptionGroup optionGroup, String label, IntOption option) {
+    optionGroup.add(new JLabel(label), option.myTextField);
+    myOptions.add(option);
   }
 
   protected void resetImpl(final CodeStyleSettings settings) {
@@ -167,16 +183,33 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
                                String fieldName,
                                String optionName,
                                String groupName) {
-    throw new UnsupportedOperationException();
+    if (myIsFirstUpdate) {
+      myCustomOptions.putValue(groupName, (Trinity)Trinity.create(settingsClass, fieldName, optionName));
+    }
+
+    for (IntOption option : myOptions) {
+      if (option.myTarget.getName().equals(optionName)) {
+        option.myTextField.setEnabled(true);
+      }
+    }
   }
 
   private static class IntOption {
     private final JTextField myTextField;
     private final Field myTarget;
+    private Class<? extends CustomCodeStyleSettings> myTargetClass;
 
-    private IntOption(Class targetClass, String fieldName) {
+    private IntOption(String fieldName) {
+      this(CodeStyleSettings.class, fieldName, false);
+    }
+    private IntOption(Class<? extends CustomCodeStyleSettings> targetClass, String fieldName) {
+      this(targetClass, fieldName, false);
+      myTargetClass = targetClass;
+    }
+
+    private IntOption(Class<?> fieldClass, String fieldName, boolean dummy) {
       try {
-        myTarget = targetClass.getField(fieldName);
+        myTarget = fieldClass.getField(fieldName);
       }
       catch (NoSuchFieldException e) {
         throw new RuntimeException(e);
@@ -187,7 +220,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
     private int getFieldValue(CodeStyleSettings settings) {
       try {
-        return myTarget.getInt(settings);
+        return myTarget.getInt(myTargetClass == null ? settings : settings.getCustomSettings(myTargetClass));
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);
@@ -196,7 +229,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
     public void setFieldValue(CodeStyleSettings settings, int value) {
       try {
-        myTarget.setInt(settings, value);
+        myTarget.setInt(myTargetClass == null ? settings : settings.getCustomSettings(myTargetClass), value);
       }
       catch (IllegalAccessException e) {
         LOG.error(e);
@@ -224,5 +257,5 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
       myTextField.setText(String.valueOf(fieldValue));
     }
   }
-
+  
 }
