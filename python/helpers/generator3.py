@@ -1280,7 +1280,7 @@ class ModuleRedeclarator(object):
         if not methods and not properties and not others:
             self.out("pass", indent + 1)
 
-    def redo(self, p_name, old_modules):
+    def redo(self, p_name, imported_module_names):
         """
         Restores module declarations.
         Intended for built-in modules and thus does not handle import statements.
@@ -1304,7 +1304,7 @@ class ModuleRedeclarator(object):
                 else:
                     self.out(item_name + " = None # ??? name unknown, refers to " + str(item))
         for module_name, module_obj in sys.modules.items():
-            if module_name not in old_modules and module_obj != self.module and module_name not in self.imported_modules and module_obj:
+            if module_name in imported_module_names and module_obj != self.module and module_name not in self.imported_modules and module_obj:
                 self.imported_modules[module_name] = module_obj
                 self.out("import " + module_name)
                                 
@@ -1434,7 +1434,63 @@ class ModuleRedeclarator(object):
                 self.out("", 0) # empty line after each item
 
 
-            # command-line interface
+def build_output_name(subdir, name):
+    quals = name.split(".")
+    dirname = subdir
+    if dirname:
+        dirname += os.path.sep # "a -> a/"
+    for pathindex in range(len(quals) - 1): # create dirs for all quals but last
+        subdirname = dirname + os.path.sep.join(quals[0: pathindex + 1])
+        if not os.path.isdir(subdirname):
+            action = "creating subdir " + subdirname
+            os.makedirs(subdirname)
+        init_py = os.path.join(subdirname, "__init__.py")
+        if os.path.isfile(subdirname + ".py"):
+            os.rename(subdirname + ".py", init_py)
+        elif not os.path.isfile(init_py):
+            init = fopen(init_py, "w")
+            init.close()
+    target_dir = dirname + os.path.sep.join(quals[0: len(quals) - 1])
+    #sys.stderr.write("target dir is " + repr(target_dir) + "\n")
+    target_name = target_dir + os.path.sep + quals[-1]
+    if os.path.isdir(target_name):
+        fname = os.path.join(target_name, "__init__.py")
+    else:
+        fname = target_name + ".py"
+    return fname
+
+action = None
+def redo_module(name, fname, imported_module_names):
+    global action
+    # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
+    # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
+    # sys.modules
+    mod = sys.modules[name]
+    if not mod:
+        sys.stderr.write("Failed to find imported module in sys.modules")
+        #sys.exit(0)
+
+    if update_mode and hasattr(mod, "__file__"):
+        action = "probing " + fname
+        mod_mtime = os.path.exists(mod.__file__) and os.path.getmtime(mod.__file__) or 0.0
+        file_mtime = os.path.exists(fname) and os.path.getmtime(fname) or 0.0
+        # skeleton's file is no older than module's, and younger than our script
+        if file_mtime >= mod_mtime and datetime.fromtimestamp(file_mtime) > OUR_OWN_DATETIME:
+            return # skip the file
+
+    if doing_builtins and name == BUILTIN_MOD_NAME:
+        action = "grafting"
+        setattr(mod, FAKE_CLASSOBJ_NAME, FakeClassObj)
+    action = "opening " + fname
+    outfile = fopen(fname, "w")
+    action = "restoring"
+    r = ModuleRedeclarator(mod, outfile, doing_builtins=doing_builtins)
+    r.redo(name, imported_module_names)
+    action = "closing " + fname
+    outfile.close()
+
+
+# command-line interface
 
 if __name__ == "__main__":
     from getopt import getopt
@@ -1506,31 +1562,23 @@ if __name__ == "__main__":
             sys.stdout.flush()
         action = "doing nothing"
         try:
-            quals = name.split(".")
-            dirname = subdir
-            if dirname:
-                dirname += os.path.sep # "a -> a/"
-            for pathindex in range(len(quals) - 1): # create dirs for all quals but last
-                subdirname = dirname + os.path.sep.join(quals[0: pathindex + 1])
-                if not os.path.isdir(subdirname):
-                    action = "creating subdir " + subdirname
-                    os.makedirs(subdirname)
-                init_py = os.path.join(subdirname, "__init__.py")
-                if os.path.isfile(subdirname + ".py"):
-                    os.rename(subdirname + ".py", init_py)
-                elif not os.path.isfile(init_py):
-                    init = fopen(init_py, "w")
-                    init.close()
-            target_dir = dirname + os.path.sep.join(quals[0: len(quals) - 1])
-            #sys.stderr.write("target dir is " + repr(target_dir) + "\n")
-            target_name = target_dir + os.path.sep + quals[-1]
-            if os.path.isdir(target_name):
-                fname = os.path.join(target_name, "__init__.py")
-            else:
-                fname = target_name + ".py"
-            #
+            fname = build_output_name(subdir, name)
 
             old_modules = list(sys.modules.keys())
+            imported_module_names = []
+            class MyFinder:
+                def find_module(self, fullname, path=None):
+                    if fullname != name:
+                        imported_module_names.append(fullname)
+                    return None
+
+            my_finder = None
+            if hasattr(sys, 'meta_path'):
+                my_finder = MyFinder()
+                sys.meta_path.append(my_finder)
+            else:
+                imported_module_names = None
+
             action = "importing"
             try:
                 mod = __import__(name)
@@ -1538,31 +1586,23 @@ if __name__ == "__main__":
                 sys.stderr.write("Name " + name + " failed to import\n")
                 continue
 
-            # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
-            # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
-            # sys.modules
-            mod = sys.modules[name]
-            if not mod:
-                sys.stderr.write("Failed to find imported module in sys.modules")
-                sys.exit(0)
+            if my_finder:
+                sys.meta_path.remove(my_finder)
+            if imported_module_names is None:
+                imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
 
-            if update_mode and hasattr(mod, "__file__"):
-                action = "probing " + fname
-                mod_mtime = os.path.exists(mod.__file__) and os.path.getmtime(mod.__file__) or 0.0
-                file_mtime = os.path.exists(fname) and os.path.getmtime(fname) or 0.0
-                # skeleton's file is no older than module's, and younger than our script
-                if file_mtime >= mod_mtime and datetime.fromtimestamp(file_mtime) > OUR_OWN_DATETIME:
-                    continue # skip the file
-            if doing_builtins and name == BUILTIN_MOD_NAME:
-                action = "grafting"
-                setattr(mod, FAKE_CLASSOBJ_NAME, FakeClassObj)
-            action = "opening " + fname
-            outfile = fopen(fname, "w")
-            action = "restoring"
-            r = ModuleRedeclarator(mod, outfile, doing_builtins=doing_builtins)
-            r.redo(name, old_modules)
-            action = "closing " + fname
-            outfile.close()
+            redo_module(name, fname, imported_module_names)
+            # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
+            # restore all of them
+            if imported_module_names:
+                for m in sys.modules.keys():
+                    # if module has __file__ defined, it has Python source code and doesn't need a skeleton 
+                    if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
+                        if not quiet:
+                            sys.stdout.write(m + "\n")
+                            sys.stdout.flush()
+                        fname = build_output_name(subdir, m)
+                        redo_module(m, fname, imported_module_names)
         except:
             sys.stderr.write("Failed to process " + name + " while " + action + "\n")
             if debug_mode:
