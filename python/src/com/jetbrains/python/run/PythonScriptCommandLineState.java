@@ -27,7 +27,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     assert exe_options != null;
     exe_options.addParametersString(myConfig.getInterpreterOptions());
 
-    ParamsGroup script_parameters = parametersList.getParamsGroup(GROUP_EXE_OPTIONS);
+    ParamsGroup script_parameters = parametersList.getParamsGroup(GROUP_SCRIPT);
     assert script_parameters != null;
     if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
       script_parameters.addParameter(myConfig.getScriptName());
