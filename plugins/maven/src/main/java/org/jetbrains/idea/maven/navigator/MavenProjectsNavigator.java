@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.ide.util.treeView.TreeState;
@@ -187,7 +188,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
       }
     });
 
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
+    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerAdapter() {
       public void beforeRunTasksChanged() {
         scheduleStructureRequest(new Runnable() {
           public void run() {
