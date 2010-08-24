@@ -78,20 +78,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private DocumentListener[] myCachedDocumentListeners;
   private final List<EditReadOnlyListener> myReadOnlyListeners = new ArrayList<EditReadOnlyListener>(1);
 
-  /**
-   * Comparator that sorts {@link DocumentListener} objects by their {@link PrioritizedDocumentListener#getPriority() priorities} (if any).
-   */
-  public static final Comparator<? super DocumentListener> ourListenersByPriorityComparator = new Comparator<Object>() {
-    public int compare(Object o1, Object o2) {
-      return getPriority(o1) - getPriority(o2);
-    }
-
-    private int getPriority(Object o) {
-      if (o instanceof PrioritizedDocumentListener) return ((PrioritizedDocumentListener)o).getPriority();
-      return Integer.MAX_VALUE;
-    }
-  };
-
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
@@ -648,7 +634,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private DocumentListener[] getCachedListeners() {
     if (myCachedDocumentListeners == null) {
-      Collections.sort(myDocumentListeners, ourListenersByPriorityComparator);
+      Collections.sort(myDocumentListeners, PrioritizedDocumentListener.COMPARATOR);
       myCachedDocumentListeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
     }
 
