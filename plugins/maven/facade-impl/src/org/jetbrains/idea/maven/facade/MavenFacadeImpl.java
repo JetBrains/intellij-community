@@ -15,23 +15,25 @@
  */
 package org.jetbrains.idea.maven.facade;
 
+import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.embedder.MavenFacadeEmbedderImpl;
 import org.jetbrains.idea.maven.facade.embedder.MavenFacadeIndexerImpl;
 import org.jetbrains.idea.maven.facade.embedder.MavenModelConverter;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
 import org.jetbrains.idea.maven.facade.nexus.Endpoint;
-import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 import org.jetbrains.idea.maven.facade.nexus.SearchResults;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
+import javax.xml.bind.JAXBException;
 import java.io.File;
 import java.math.BigInteger;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -102,45 +104,52 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
     }
   }
 
-  public List<MavenRepositoryInfo> getRepositories(String nexusUrl) throws RemoteException {
+  public List<MavenRepositoryInfo> getRepositories(String url) throws RemoteException {
     try {
-      List<RepositoryType> repos = new Endpoint.Repositories(nexusUrl).getRepolistAsRepositories().getData().getRepositoriesItem();
-      List<MavenRepositoryInfo> result = new ArrayList<MavenRepositoryInfo>(repos.size());
-      for (RepositoryType repo : repos) {
-        if (!"maven2".equals(repo.getProvider())) continue;
-        result.add(MavenModelConverter.convertRepositoryInfo(repo));
+      for (MavenManagementService service : MavenManagementService.getServices()) {
+        try {
+          final List<MavenRepositoryInfo> repositories = service.getRepositories(url);
+          if (repositories != null) {
+            return repositories;
+          }
+        }
+        catch (JAXBException e) {
+          // ignore
+        }
+        catch (JsonParseException e) {
+          // ignore
+        }
       }
-      return result;
     }
     catch (Exception e) {
       throw new RuntimeException(wrapException(e));
     }
+    throw new RuntimeException("Unknown Repository Service. Supported Services are "+ Arrays.asList(MavenManagementService.getServices()));
   }
 
   @Nullable
-  public List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String nexusUrl) throws RemoteException {
+  public List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String url) throws RemoteException {
     try {
-      SearchResults results = new Endpoint.DataIndex(nexusUrl)
-        .getArtifactlistAsSearchResults(null, template.getGroupId(), template.getArtifactId(), template.getVersion(),
-                                        template.getClassifier(), template.getClassNames());
-      final boolean canTrySwitchGAV = template.getArtifactId() == null && template.getGroupId() != null;
-      final boolean tooManyResults = results.isTooManyResults();
-      if (canTrySwitchGAV && (tooManyResults || BigInteger.ZERO.equals(results.getTotalCount()))) {
-        results = new Endpoint.DataIndex(nexusUrl)
-          .getArtifactlistAsSearchResults(null, null, template.getGroupId(), template.getVersion(),
-                                          template.getClassifier(), template.getClassNames());
+      List<MavenArtifactInfo> result = null;
+      for (MavenManagementService service : MavenManagementService.getServices()) {
+        try {
+          final List<MavenArtifactInfo> artifacts = service.findArtifacts(template, url);
+          if (result == null) result = artifacts;
+          result.addAll(artifacts);
+        }
+        catch (JAXBException e) {
+          // ignore
+        }
+        catch (JsonParseException e) {
+          // ignore
+        }
       }
-      if (tooManyResults || results.isTooManyResults()) return null;
-
-      ArrayList<MavenArtifactInfo> result = new ArrayList<MavenArtifactInfo>();
-      for (ArtifactType each : results.getData().getArtifact()) {
-        result.add(MavenModelConverter.convertArtifactInfo(each));
-      }
-      return result;
+      if (result != null) return result;
     }
     catch (Exception e) {
       throw new RuntimeException(wrapException(e));
     }
+    throw new RuntimeException("Unknown Repository Service. Supported Services are " + Arrays.asList(MavenManagementService.getServices()));
   }
 
   @Override

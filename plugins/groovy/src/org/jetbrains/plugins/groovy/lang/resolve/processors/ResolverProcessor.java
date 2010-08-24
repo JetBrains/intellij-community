@@ -178,4 +178,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     //todo[DIANA] implement me!
     return myName;
   }
+
+  @Override
+  public String toString() {
+    return "NameHint: '" + myName + "', " + myResolveTargetKinds.toString() + ", Candidates: " + (myCandidates == null ? 0 : myCandidates.size());
+  }
 }

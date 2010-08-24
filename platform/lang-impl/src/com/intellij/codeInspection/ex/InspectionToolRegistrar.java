@@ -16,8 +16,13 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -36,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -164,15 +171,24 @@ public class InspectionToolRegistrar {
     }, store);
   }
 
-  public InspectionTool[] createTools() {
+  public List<InspectionTool> createTools() {
     ensureInitialized();
-    InspectionTool[] tools = new InspectionTool[myInspectionToolFactories.size()];
-    for(int i=0; i<tools.length; i++) {
-      ProgressManager.checkCanceled();
-      tools [i] = myInspectionToolFactories.get(i).create();
-    }
-    buildInspectionIndex(tools);
 
+    final List<InspectionTool> tools = Lists.newArrayListWithCapacity(myInspectionToolFactories.size());
+    final Set<Factory<InspectionTool>> broken = Sets.newHashSet();
+    for (final Factory<InspectionTool> factory : myInspectionToolFactories) {
+      ProgressManager.checkCanceled();
+      final InspectionTool toolWrapper = factory.create();
+      if (checkTool(toolWrapper)) {
+        tools.add(toolWrapper);
+      }
+      else {
+        broken.add(factory);
+      }
+    }
+    myInspectionToolFactories.removeAll(broken);
+
+    buildInspectionIndex(tools);
     return tools;
   }
 
@@ -198,7 +214,7 @@ public class InspectionToolRegistrar {
     return null;
   }
 
-  private synchronized void buildInspectionIndex(final InspectionTool[] tools) {
+  private synchronized void buildInspectionIndex(final Collection<InspectionTool> tools) {
     if (!myToolsAreInitialized.getAndSet(true)) {
       final Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
@@ -228,4 +244,27 @@ public class InspectionToolRegistrar {
       myOptionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), InspectionToolsConfigurable.ID, InspectionToolsConfigurable.DISPLAY_NAME);
     }
   }
+
+  private static boolean checkTool(final InspectionTool toolWrapper) {
+    if (toolWrapper instanceof LocalInspectionToolWrapper) {
+      final LocalInspectionTool localTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
+      if (!LocalInspectionTool.isValidID(localTool.getID())) {
+        final String message = InspectionsBundle.message("inspection.disabled.wrong.id",
+                                                         localTool.getShortName(), localTool.getID(), LocalInspectionTool.VALID_ID_PATTERN);
+        showNotification(message);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static void showNotification(final String message) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Notifications.Bus.notify(new Notification(InspectionManager.INSPECTION_GROUP_ID, InspectionsBundle.message("inspection.disabled.title"),
+                                                  message, NotificationType.ERROR));
+      }
+    });
+  }
+
 }

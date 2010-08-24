@@ -40,23 +40,22 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @Language("RegExp")
   public static final String VALID_ID_PATTERN = "[a-zA-Z_0-9.-]+";
 
+  public static boolean isValidID(@NotNull String id) {
+    return id.length() > 0 && id.matches(VALID_ID_PATTERN);
+  }
+
   /**
-   * @return descriptive name to be used in "suppress" comments and annotations,
-   *         must satisfy [a-zA-Z_0-9.-]+ regexp pattern.
+   * <p>Inspection tool ID is a descriptive name to be used in "suppress" comments and annotations.
+   * <p>It must satisfy {@link #VALID_ID_PATTERN} regexp pattern.
+   * <p>If not defined {@link #getShortName()} is used as tool ID.
+   *
+   * @return inspection tool ID.
    */
   @Pattern(VALID_ID_PATTERN)
   @NonNls
   @NotNull
   public String getID() {
-    String id = getShortName();
-    if (!isValidID(id)) {
-      LOG.error("Inspection ID must satisfy " + VALID_ID_PATTERN + " pattern. Inspection: " + getClass() + "; ID: '" + id + "'");
-    }
-    return id;
-  }
-
-  private static boolean isValidID(@NotNull String id) {
-    return id.length() > 0 && id.matches(VALID_ID_PATTERN);
+    return getShortName();
   }
 
   @NonNls

@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes.pending;
 
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
 import java.util.List;
@@ -66,5 +68,10 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
   }
 
   public void setListsToDisappear(Collection<String> names) {
+  }
+
+  @Override
+  public FileStatus getStatus(VirtualFile file) {
+    return null;
   }
 }

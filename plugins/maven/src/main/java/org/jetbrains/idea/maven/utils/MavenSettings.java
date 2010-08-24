@@ -21,7 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.idea.maven.indices.MavenIndicesConfigurable;
+import org.jetbrains.idea.maven.indices.MavenServicesConfigurable;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.execution.MavenRunnerConfigurable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -57,7 +57,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     });
 
     if (!myProject.isDefault()) {
-      myChildren.add(new MavenIndicesConfigurable(myProject));
+      myChildren.add(new MavenServicesConfigurable(myProject));
     }
   }
 

@@ -132,7 +132,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
               }, true);
             }
           }
-        }, VcsBackgroundableActions.COMPARE_WITH, false);
+        }, VcsBackgroundableActions.COMPARE_WITH, false, null);
   }
 
   private static void showTreePopup(final List<TreeItem<VcsFileRevision>> roots, final VirtualFile file, final Project project, final DiffProvider diffProvider) {

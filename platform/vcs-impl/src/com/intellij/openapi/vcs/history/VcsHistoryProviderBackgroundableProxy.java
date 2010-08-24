@@ -45,11 +45,17 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   public void createSessionFor(final FilePath filePath, final Consumer<VcsHistorySession> continuation,
-                               @Nullable VcsBackgroundableActions actionKey, final boolean silent) {
+                               @Nullable VcsBackgroundableActions actionKey,
+                               final boolean silent,
+                               @Nullable final Consumer<VcsHistorySession> backgroundSpecialization) {
     final ThrowableComputable<VcsHistorySession, VcsException> throwableComputable =
       new ThrowableComputable<VcsHistorySession, VcsException>() {
         public VcsHistorySession compute() throws VcsException {
-          return myDelegate.createSessionFor(filePath);
+          final VcsHistorySession sessionFor = myDelegate.createSessionFor(filePath);
+          if (backgroundSpecialization != null) {
+            backgroundSpecialization.consume(sessionFor);
+          }
+          return sessionFor;
         }
       };
     final VcsBackgroundableActions resultingActionKey = actionKey == null ? VcsBackgroundableActions.CREATE_HISTORY_SESSION : actionKey;

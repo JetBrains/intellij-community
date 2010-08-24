@@ -72,7 +72,6 @@ import java.util.List;
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements GrReferenceExpression {
   public static final Key<Boolean> IS_RESOLVED_TO_GETTER = new Key<Boolean>("Is resolved to getter");
-  private static final IElementType[] REFERENCE_NAME_TYPES = TokenSets.REFERENCE_NAMES.getTypes();
 
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -210,8 +209,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public PsiElement getReferenceNameElement() {
     final ASTNode lastChild = getNode().getLastChildNode();
     if (lastChild == null) return null;
-    for (IElementType elementType : REFERENCE_NAME_TYPES) {
-      if (lastChild.getElementType() == elementType) return lastChild.getPsi();
+    if (TokenSets.REFERENCE_NAMES.contains(lastChild.getElementType())) {
+      return lastChild.getPsi();
     }
 
     return null;
