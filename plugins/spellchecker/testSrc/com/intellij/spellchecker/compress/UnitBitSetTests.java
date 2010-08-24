@@ -1,27 +1,8 @@
 package com.intellij.spellchecker.compress;
 
-import com.intellij.spellchecker.compress.UnitBitSet;
 import junit.framework.TestCase;
 
 public class UnitBitSetTests extends TestCase {
-
-    public void testInc0() {
-        UnitBitSet bs = UnitBitSet.create();
-        bs.inc();
-        assertEquals(UnitBitSet.create(0), bs);
-    }
-
-    public void testInc1() {
-        UnitBitSet bs = UnitBitSet.create(0);
-        bs.inc();
-        assertEquals(UnitBitSet.create(1), bs);
-    }
-
-    public void testInc2() {
-        UnitBitSet bs = UnitBitSet.create(1);
-        bs.inc();
-        assertEquals(UnitBitSet.create(0, 1), bs);
-    }
 
     public void testUnitValue() {
         int bitsPerUnit = 256;

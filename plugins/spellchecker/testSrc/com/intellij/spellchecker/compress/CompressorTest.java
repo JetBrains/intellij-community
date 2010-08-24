@@ -15,11 +15,8 @@
  */
 package com.intellij.spellchecker.compress;
 
-import com.intellij.spellchecker.compress.Compressor;
-import com.intellij.spellchecker.compress.UnitBitSet;
 import junit.framework.TestCase;
 
-import java.util.BitSet;
 import java.util.Random;
 
 public class CompressorTest extends TestCase {
@@ -45,7 +42,7 @@ public class CompressorTest extends TestCase {
                 bitSet.set(value);
             }
             final byte[] compressed = compressor.compress(bitSet);
-            final BitSet decompressed = compressor.decompress(compressed);
+            final UnitBitSet decompressed = compressor.decompress(compressed);
             boolean check = (bitSet.equals(decompressed));
             if (!check) {
                 System.out.println("bitSet: " + bitSet);
