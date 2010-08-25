@@ -516,6 +516,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
    */
   public boolean SPACE_AROUND_SHIFT_OPERATORS = true;
 
+  public boolean SPACE_AROUND_UNARY_OPERATOR = false;
+
   public boolean SPACE_AFTER_COMMA = true;
   public boolean SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
   public boolean SPACE_BEFORE_COMMA = false;
@@ -607,7 +609,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = false;
 
   public boolean SPACE_AFTER_TYPE_CAST = true;
-  public boolean SPACE_AFTER_UNARY_OPERATOR = false;
 
   /**
    * "f (x)"
@@ -1276,6 +1277,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
         JSP_INDENT_OPTIONS.SMART_TABS = value;
         XML_INDENT_OPTIONS.SMART_TABS = value;
         OTHER_INDENT_OPTIONS.SMART_TABS = value;
+      } else if ("SPACE_AFTER_UNARY_OPERATOR".equals(name)) {
+        final boolean value = Boolean.valueOf(option.getAttributeValue("value")).booleanValue();
+        SPACE_AROUND_UNARY_OPERATOR = value;
       }
     }
   }

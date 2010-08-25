@@ -65,6 +65,8 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
                      SPACES_AROUND_OPERATORS);
     initBooleanField("SPACE_AROUND_SHIFT_OPERATORS", ApplicationBundle.message("checkbox.spaces.shift.operators"),
                      SPACES_AROUND_OPERATORS);
+    initBooleanField("SPACE_AROUND_UNARY_OPERATOR", ApplicationBundle.message("checkbox.spaces.around.unary.operator"), 
+                     SPACES_AROUND_OPERATORS);
     initCustomOptions(SPACES_AROUND_OPERATORS);
 
     initBooleanField("SPACE_BEFORE_CLASS_LBRACE", ApplicationBundle.message("checkbox.spaces.class.left.brace"), SPACES_BEFORE_LEFT_BRACE);
@@ -120,7 +122,6 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_BEFORE_SEMICOLON", ApplicationBundle.message("checkbox.spaces.before.semicolon"), SPACES_OTHER);
     initBooleanField("SPACE_AFTER_SEMICOLON", ApplicationBundle.message("checkbox.spaces.after.semicolon"), SPACES_OTHER);
     initBooleanField("SPACE_AFTER_TYPE_CAST", ApplicationBundle.message("checkbox.spaces.after.type.cast"), SPACES_OTHER);
-    initBooleanField("SPACE_AFTER_UNARY_OPERATOR", ApplicationBundle.message("checkbox.spaces.after.unary.operator"), SPACES_OTHER);
     initCustomOptions(SPACES_OTHER);
   }
 }
