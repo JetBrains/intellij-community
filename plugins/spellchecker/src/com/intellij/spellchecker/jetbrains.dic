@@ -63,8 +63,6 @@ filename
 fileset
 filesets
 filesystem
-float4
-float8
 foreach
 formatter
 freelist
@@ -283,7 +281,6 @@ whitespace
 wildcard
 workflow
 wsdl
-x509
 xmlschema
 xmlschemas
 xmltype
