@@ -1,4 +1,4 @@
-package com.siyeh.igtest.performance;
+package com.siyeh.igtest.performance.manual_array_to_collection_copy;
 
 import java.util.List;
 import java.util.ArrayList;

@@ -420,6 +420,10 @@ public class ManualArrayToCollectionCopyInspection
                 return false;
             }
             final PsiExpression argument = arguments[0];
+            final PsiType argumentType = argument.getType();
+            if (argumentType instanceof PsiPrimitiveType) {
+                return false;
+            }
             if (SideEffectChecker.mayHaveSideEffects(argument)) {
                 return false;
             }
