@@ -68,7 +68,9 @@ public class PyExtractSuperclassHelper {
             newClassRef.set(newClass);
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, newClass);
             PyClassRefactoringUtil.addSuperclasses(project, clazz, null, Collections.singleton(superBaseName));
-            PyPsiUtils.removeElements(elements);
+            if (elements.length > 0) {
+              PyPsiUtils.removeElements(elements);
+            }
             PyClassRefactoringUtil.insertPassIfNeeded(clazz);
             placeNewClass(project, newClass, clazz, targetFile);
           }
