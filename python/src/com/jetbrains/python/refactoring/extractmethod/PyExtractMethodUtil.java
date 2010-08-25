@@ -58,13 +58,17 @@ public class PyExtractMethodUtil {
       return;
     }
 
+    // collect statements
+    final List<PsiElement> elementsRange = PyPsiUtils.collectElements(statement1, statement2);
+    if (elementsRange.isEmpty()) {
+      return;
+    }
+
     final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, statement1);
     if (data.first == null || data.second == null) {
       return;
     }
 
-    // collect statements
-    final List<PsiElement> elementsRange = PyPsiUtils.collectElements(statement1, statement2);
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
