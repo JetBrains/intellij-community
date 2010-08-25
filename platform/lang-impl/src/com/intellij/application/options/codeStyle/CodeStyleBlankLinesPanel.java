@@ -146,7 +146,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   }
 
   protected int getRightMargin() {
-    return 37;
+    return -1;
   }
 
   public JComponent getPanel() {
