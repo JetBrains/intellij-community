@@ -19,7 +19,6 @@ package com.intellij.ide.projectView;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -114,7 +113,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       updater.addSubtreeToUpdate(rootNode);
     }
     else if (propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)){
-      if (!updater.addSubtreeToUpdateByElement(element) && element instanceof PsiFile && ((PsiFile) element).getFileType() == StdFileTypes.JAVA) {
+      if (!updater.addSubtreeToUpdateByElement(element) && element instanceof PsiFile) {
         updater.addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
       }
     }
