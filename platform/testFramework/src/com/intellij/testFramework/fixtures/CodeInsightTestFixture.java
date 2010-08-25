@@ -24,6 +24,8 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -304,6 +306,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void type(final char c);
 
   void performEditorAction(String actionId);
+
+  /**
+   * If the action is visible and enabled, perform it
+   * @param action
+   * @return updated action's presentation
+   */
+  Presentation testAction(AnAction action);
 
   PsiFile configureFromTempProjectFile(String filePath);
 
