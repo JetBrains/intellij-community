@@ -227,12 +227,9 @@ def reliable_repr(value):
     # so we need to sanitize the output
     if isinstance(value, bool):
         return repr(bool(value))
-    elif isinstance(value, int):
-        return repr(int(value))
-    if isinstance(value, long):
-        return repr(long(value))
-    if isinstance(value, float):
-        return repr(float(value))
+    for t in NUM_TYPES:
+        if isinstance(value, t):
+            return repr(t(value))
     return repr(value)
 
 def sanitizeValue(p_value):
