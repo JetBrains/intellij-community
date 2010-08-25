@@ -8,11 +8,9 @@ import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
