@@ -438,7 +438,6 @@ public class CompileDriver {
             compileContext.getMessageCount(CompilerMessageCategory.WARNING),
             finish - start
           );
-          CompilerCacheManager.getInstance(myProject).flushCaches();
           //if (LOG.isDebugEnabled()) {
           //  LOG.debug("COMPILATION FINISHED");
           //}
