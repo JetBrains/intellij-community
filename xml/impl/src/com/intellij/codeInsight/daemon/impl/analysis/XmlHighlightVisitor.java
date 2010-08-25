@@ -600,7 +600,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
               if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
                 type = HighlightInfoType.WARNING;
               }
-              else if (name.equals("href")) {
+              else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
                 continue;
               }
             }
