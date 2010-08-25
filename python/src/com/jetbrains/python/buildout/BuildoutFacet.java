@@ -61,6 +61,23 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     return null;
   }
 
+  /**
+   * Generates a <code>sys.path[0:0] = [...]</code> with paths that buildout script wants.
+   * @param module to get a buildout facet from
+   * @return the statement, or null if there's no buildout facet.
+   */
+  @Nullable
+  public String getPathPrepenStatement() {
+    BuildoutFacet buildout_facet = this;
+    StringBuilder sb = new StringBuilder("sys.path[0:0]=[");
+    for (String s : buildout_facet.getAdditionalPythonPath()) {
+      sb.append("'").append(s).append("',");
+      // NOTE: we assume that quotes and spaces are escaped in paths back in the buildout script we extracted them from.
+    }
+    sb.append("]");
+    return sb.toString();
+  }
+
   @Override
   public void initFacet() {
     BuildoutFacetConfiguration config = getConfiguration();
