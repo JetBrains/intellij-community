@@ -870,6 +870,10 @@ public class FileUtil {
     return success;
   }
 
+  /**
+   * Has duplicate: {@link com.intellij.coverage.listeners.CoverageListener#sanitize(java.lang.String, java.lang.String)}
+   * as FileUtil is not available in client's vm 
+   */
   public static String sanitizeFileName(String name) {
     StringBuilder result = new StringBuilder();
 
