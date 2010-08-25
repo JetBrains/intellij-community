@@ -213,6 +213,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
       myTestsTotal = myTestsCurrentCount;
       myStatusLine.setFraction(1);
     }
+
     updateStatusLabel();
 
     if (myTestsRootNode.getChildren().size() == 0) {
@@ -443,9 +444,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     if (myTestsFailuresCount > 0) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
+    final boolean finished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
     myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
                                                                        myTestsTotal, myTestsCurrentCount,
-                                                                       myTestsFailuresCount, myMentionedCategories));
+                                                                       myTestsFailuresCount, myMentionedCategories,
+                                                                       finished));
   }
 
   /**
