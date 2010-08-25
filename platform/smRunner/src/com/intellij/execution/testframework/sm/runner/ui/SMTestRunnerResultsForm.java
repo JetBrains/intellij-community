@@ -188,7 +188,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
    */
   public void onTestingStarted(@NotNull SMTestProxy testsRoot) {
     myAnimator.setCurrentTestCase(myTestsRootNode);
-    
+
     // Status line
     myStatusLine.setStatusColor(ColorProgressBar.GREEN);
 
@@ -523,8 +523,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
       // if total is set
       myStatusLine.setFraction((double)myTestsCurrentCount / myTestsTotal);
     } else {
-      // just set progress in the middle to show user that tests are running
-      myStatusLine.setFraction(0.5);
+      // if at least one test was launcher than just set progress in the middle to show user that tests are running
+      myStatusLine.setFraction(myTestsCurrentCount > 1 ? 0.5 : 0); // > 1 because count already ++
     }
     updateStatusLabel();
   }
