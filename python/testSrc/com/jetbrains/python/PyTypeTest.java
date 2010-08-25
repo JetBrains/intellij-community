@@ -99,6 +99,13 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     }
   }
 
+  public void testPropertyType() {
+    PyType type = doTest("class C:\n" +
+                         "    x = property(lambda self: object(), None, None)\n" +
+                         "expr = C.x");
+    assertNull(type);
+  }
+
   private PyType doTest(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
