@@ -794,7 +794,7 @@ public class ContainerUtil {
     }
   }
 
-  public static <K, V> void putIfNotNull(final K key, final V value, @NotNull final Map<K, V> result) {
+  public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
     if (value != null) {
       result.put(key, value);
     }
