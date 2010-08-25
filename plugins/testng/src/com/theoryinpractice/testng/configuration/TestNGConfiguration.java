@@ -303,7 +303,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     listeners.clear();
     Element listenersElement = element.getChild("listeners");
     if (listenersElement != null) {
-      List<Element> children = listenersElement.getChildren("listeners");
+      List<Element> children = listenersElement.getChildren("listener");
       for (Element listenerClassName : children) {
         listeners.add(listenerClassName.getAttributeValue("class"));
       }
