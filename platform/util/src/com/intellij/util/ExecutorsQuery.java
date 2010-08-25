@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -43,6 +44,9 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
         }
       }
       catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (IndexNotReadyException e) {
         throw e;
       }
       catch (Exception e) {

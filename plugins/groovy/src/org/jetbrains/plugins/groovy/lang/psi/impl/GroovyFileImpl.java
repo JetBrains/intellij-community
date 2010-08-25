@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -252,10 +253,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Nullable
   public Icon getIcon(int flags) {
-    if (isScript()) {
-      return GroovyScriptType.getScriptType(this).getScriptIcon();
-    }
-    return GroovyIcons.GROOVY_ICON_16x16;
+    final Icon baseIcon = isScript() ? GroovyScriptType.getScriptType(this).getScriptIcon() : GroovyIcons.GROOVY_ICON_16x16;
+    return ElementBase.createLayeredIcon(baseIcon, ElementBase.transformFlags(this, flags));
   }
 
   public GrImportStatement addImportForClass(PsiClass aClass) {
@@ -332,8 +331,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     Boolean isScript = myScript;
     if (isScript == null) {
-      isScript = Boolean.FALSE;
-      for (GrTopStatement st : findChildrenByClass(GrTopStatement.class)) {
+      final GrTopStatement[] topStatements = findChildrenByClass(GrTopStatement.class);
+      isScript = topStatements.length == 0;
+      for (GrTopStatement st : topStatements) {
         if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition)) {
           isScript = Boolean.TRUE;
           break;

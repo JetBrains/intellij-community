@@ -21,7 +21,6 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
@@ -137,4 +135,9 @@ public interface EditorEx extends Editor {
   LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware);
 
   @NotNull LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware);
+
+  /**
+   * @return true if caret cursor is blinking in this editor
+   */
+  boolean isCaretActive();
 }

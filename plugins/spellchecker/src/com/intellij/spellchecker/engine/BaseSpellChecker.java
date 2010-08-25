@@ -90,7 +90,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   @NotNull
-  private static List<String> restore(@NotNull Character startFrom, int i, int j, @Nullable Collection dictionaries) {
+  private static List<String> restore(char startFrom, int i, int j, @Nullable Collection dictionaries) {
     if (dictionaries == null) {
       return Collections.emptyList();
     }
@@ -106,7 +106,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   @NotNull
-  private static List<String> restore(@NotNull final Character first, final int i, final int j, @Nullable Dictionary dictionary) {
+  private static List<String> restore(final char first, final int i, final int j, @Nullable Dictionary dictionary) {
     if (dictionary == null) {
       return Collections.emptyList();
     }

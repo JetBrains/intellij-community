@@ -33,7 +33,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
-  public static <T> List<T> mergeSortedLists(List<T> list1, List<T> list2, Comparator<? super T> comparator, boolean mergeEqualItems){
+  @NotNull
+  public static <T> List<T> mergeSortedLists(@NotNull List<T> list1, @NotNull List<T> list2, @NotNull Comparator<? super T> comparator, boolean mergeEqualItems){
     List<T> result = new ArrayList<T>(list1.size() + list2.size());
 
     int index1 = 0;
@@ -70,7 +71,8 @@ public class ContainerUtil {
 
     return result;
   }
-  public static <T> List<T> mergeSortedArrays(T[] list1, T[] list2, Comparator<? super T> comparator, boolean mergeEqualItems, @Nullable Processor<? super T> filter){
+  @NotNull
+  public static <T> List<T> mergeSortedArrays(@NotNull T[] list1, @NotNull T[] list2, @NotNull Comparator<? super T> comparator, boolean mergeEqualItems, @Nullable Processor<? super T> filter){
     int index1 = 0;
     int index2 = 0;
     List<T> result = new ArrayList<T>(list1.length + list2.length);
@@ -120,26 +122,28 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T> void addAll(Collection<T> collection, Iterator<T> iterator) {
+  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterator<T> iterator) {
     while (iterator.hasNext()) {
       T o = iterator.next();
       collection.add(o);
     }
   }
 
-  public static <T> ArrayList<T> collect(Iterator<T> iterator) {
+  public static <T> ArrayList<T> collect(@NotNull Iterator<T> iterator) {
     ArrayList<T> list = new ArrayList<T>();
     addAll(list, iterator);
     return list;
   }
 
-  public static <T> HashSet<T> collectSet(Iterator<T> iterator) {
+  @NotNull
+  public static <T> HashSet<T> collectSet(@NotNull Iterator<T> iterator) {
     HashSet<T> hashSet = new HashSet<T>();
     addAll(hashSet, iterator);
     return hashSet;
   }
 
-  public static <K, V> HashMap<K, V> assignKeys(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
+  @NotNull
+  public static <K, V> HashMap<K, V> assignKeys(@NotNull Iterator<V> iterator, @NotNull Convertor<V, K> keyConvertor) {
     HashMap<K, V> hashMap = new HashMap<K, V>();
     while (iterator.hasNext()) {
       V value = iterator.next();
@@ -148,7 +152,8 @@ public class ContainerUtil {
     return hashMap;
   }
 
-  public static <K, V> Map<K, Set<V>> classify(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
+  @NotNull
+  public static <K, V> Map<K, Set<V>> classify(@NotNull Iterator<V> iterator, @NotNull Convertor<V, K> keyConvertor) {
     Map<K, Set<V>> hashMap = new LinkedHashMap<K, Set<V>>();
     while (iterator.hasNext()) {
       V value = iterator.next();
@@ -162,7 +167,8 @@ public class ContainerUtil {
     return hashMap;
   }
 
-  public static <K, V> HashMap<K, V> assignValues(Iterator<K> iterator, Convertor<K, V> valueConvertor) {
+  @NotNull
+  public static <K, V> HashMap<K, V> assignValues(@NotNull Iterator<K> iterator, @NotNull Convertor<K, V> valueConvertor) {
     HashMap<K, V> hashMap = new HashMap<K, V>();
     while (iterator.hasNext()) {
       K key = iterator.next();
@@ -171,23 +177,25 @@ public class ContainerUtil {
     return hashMap;
   }
 
+  @NotNull
   public static <T> Iterator<T> emptyIterator() {
     return EmptyIterator.getInstance();
   }
 
+  @NotNull
   public static <T> Iterable<T> emptyIterable() {
     return EmptyIterable.getInstance();
   }
 
   @Nullable
-  public static <T> T find(T[] array, Condition<T> condition) {
+  public static <T> T find(@NotNull T[] array, @NotNull Condition<T> condition) {
     for (T element : array) {
       if (condition.value(element)) return element;
     }
     return null;
   }
 
-  public static <T> boolean process(Iterable<? extends T> iterable, Processor<T> processor) {
+  public static <T> boolean process(@NotNull Iterable<? extends T> iterable, @NotNull Processor<T> processor) {
     for (final T t : iterable) {
       if (!processor.process(t)) {
         return false;
@@ -196,7 +204,7 @@ public class ContainerUtil {
     return true;
   }
 
-  public static <T> boolean process(T[] iterable, Processor<? super T> processor) {
+  public static <T> boolean process(@NotNull T[] iterable, @NotNull Processor<? super T> processor) {
     for (final T t : iterable) {
       if (!processor.process(t)) {
         return false;
@@ -206,12 +214,12 @@ public class ContainerUtil {
   }
 
   @Nullable
-  public static <T, V extends T> V find(Iterable<V> iterable, Condition<T> condition) {
+  public static <T, V extends T> V find(@NotNull Iterable<V> iterable, @NotNull Condition<T> condition) {
     return find(iterable.iterator(), condition);
   }
 
   @Nullable
-  public static <T> T find(Iterable<? extends T> iterable, final T equalTo) {
+  public static <T> T find(@NotNull Iterable<? extends T> iterable, final T equalTo) {
     return find(iterable, new Condition<T>() {
       public boolean value(final T object) {
         return equalTo == object || equalTo.equals(object);
@@ -220,7 +228,7 @@ public class ContainerUtil {
   }
 
   @Nullable
-  public static <T, V extends T> V find(Iterator<V> iterator, Condition<T> condition) {
+  public static <T, V extends T> V find(@NotNull Iterator<V> iterator, @NotNull Condition<T> condition) {
     while (iterator.hasNext()) {
       V value = iterator.next();
       if (condition.value(value)) return value;
@@ -228,11 +236,13 @@ public class ContainerUtil {
     return null;
   }
 
-  public static <T, V> List<V> map2List(T[] array, Function<T, V> mapper) {
+  @NotNull
+  public static <T, V> List<V> map2List(@NotNull T[] array, @NotNull Function<T, V> mapper) {
     return map2List(Arrays.asList(array), mapper);
   }
 
-  public static <T, V> List<V> map2List(Collection<? extends T> collection, Function<T, V> mapper) {
+  @NotNull
+  public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
     final ArrayList<V> list = new ArrayList<V>(collection.size());
     for (final T t : collection) {
       list.add(mapper.fun(t));
@@ -240,11 +250,13 @@ public class ContainerUtil {
     return list;
   }
 
-  public static <T, V> Set<V> map2Set(T[] collection, Function<T, V> mapper) {
+  @NotNull
+  public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
     return map2Set(Arrays.asList(collection), mapper);
   }
 
-  public static <T, V> Set<V> map2Set(Collection<? extends T> collection, Function<T, V> mapper) {
+  @NotNull
+  public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
     final HashSet<V> set = new HashSet<V>(collection.size());
     for (final T t : collection) {
       set.add(mapper.fun(t));
@@ -252,32 +264,39 @@ public class ContainerUtil {
     return set;
   }
 
-  public static <T> Object[] map2Array(T[] array, Function<T, Object> mapper) {
+  @NotNull
+  public static <T> Object[] map2Array(@NotNull T[] array, @NotNull Function<T, Object> mapper) {
     return map2Array(array, Object.class, mapper);
   }
 
-  public static <T> Object[] map2Array(Collection<T> array, Function<T, Object> mapper) {
+  @NotNull
+  public static <T> Object[] map2Array(@NotNull Collection<T> array, @NotNull Function<T, Object> mapper) {
     return map2Array(array, Object.class, mapper);
   }
 
-  public static <T, V> V[] map2Array(T[] array, Class<? extends V> aClass, Function<T, V> mapper) {
+  @NotNull
+  public static <T, V> V[] map2Array(@NotNull T[] array, @NotNull Class<? extends V> aClass, @NotNull Function<T, V> mapper) {
     return map2Array(Arrays.asList(array), aClass, mapper);
   }
 
-  public static <T, V> V[] map2Array(Collection<? extends T> collection, Class<? extends V> aClass, Function<T, V> mapper) {
+  @NotNull
+  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<? extends V> aClass, @NotNull Function<T, V> mapper) {
     final List<V> list = map2List(collection, mapper);
     return list.toArray((V[])Array.newInstance(aClass, list.size()));
   }
 
-  public static <T, V> V[] map2Array(Collection<? extends T> collection, V[] to, Function<T, V> mapper) {
+  @NotNull
+  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull V[] to, @NotNull Function<T, V> mapper) {
     return map2List(collection, mapper).toArray(to);
   }
 
-  public static <T> List<T> findAll(T[] collection, Condition<? super T> condition) {
+  @NotNull
+  public static <T> List<T> findAll(@NotNull T[] collection, @NotNull Condition<? super T> condition) {
     return findAll(Arrays.asList(collection), condition);
   }
 
-  public static <T> List<T> findAll(Collection<? extends T> collection, Condition<? super T> condition) {
+  @NotNull
+  public static <T> List<T> findAll(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final T t : collection) {
       if (condition.value(t)) {
@@ -287,30 +306,36 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T> List<T> skipNulls(Collection<? extends T> collection) {
+  @NotNull
+  public static <T> List<T> skipNulls(@NotNull Collection<? extends T> collection) {
     return findAll(collection, Condition.NOT_NULL);
   }
 
-  public static <T, V> List<V> findAll(T[] collection, Class<V> instanceOf) {
+  @NotNull
+  public static <T, V> List<V> findAll(@NotNull T[] collection, @NotNull Class<V> instanceOf) {
     return findAll(Arrays.asList(collection), instanceOf);
   }
 
-  public static <T, V> V[] findAllAsArray(T[] collection, Class<V> instanceOf) {
+  @NotNull
+  public static <T, V> V[] findAllAsArray(@NotNull T[] collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(Arrays.asList(collection), instanceOf);
     return list.toArray((V[])Array.newInstance(instanceOf, list.size()));
   }
 
-  public static <T, V> V[] findAllAsArray(Collection<? extends T> collection, Class<V> instanceOf) {
+  @NotNull
+  public static <T, V> V[] findAllAsArray(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(collection, instanceOf);
     return list.toArray((V[])Array.newInstance(instanceOf, list.size()));
   }
 
-  public static <T> T[] findAllAsArray(T[] collection, Condition<? super T> instanceOf) {
+  @NotNull
+  public static <T> T[] findAllAsArray(@NotNull T[] collection, @NotNull Condition<? super T> instanceOf) {
     List<T> list = findAll(collection, instanceOf);
     return list.toArray((T[])Array.newInstance(collection.getClass().getComponentType(), list.size()));
   }
 
-  public static <T, V> List<V> findAll(Collection<? extends T> collection, Class<V> instanceOf) {
+  @NotNull
+  public static <T, V> List<V> findAll(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
     final ArrayList<V> result = new ArrayList<V>();
     for (final T t : collection) {
       if (instanceOf.isInstance(t)) {
@@ -320,7 +345,7 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T> void removeDuplicates(Collection<T> collection) {
+  public static <T> void removeDuplicates(@NotNull Collection<T> collection) {
     Set<T> collected = new HashSet<T>();
     for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {
       T t = iterator.next();
@@ -333,11 +358,13 @@ public class ContainerUtil {
     }
   }
 
-  public static <T> Iterator<T> iterate(T[] arrays) {
+  @NotNull
+  public static <T> Iterator<T> iterate(@NotNull T[] arrays) {
     return Arrays.asList(arrays).iterator();
   }
 
-  public static <T> Iterator<T> iterate(final Enumeration<T> enumeration) {
+  @NotNull
+  public static <T> Iterator<T> iterate(@NotNull final Enumeration<T> enumeration) {
     return new Iterator<T>() {
       public boolean hasNext() {
         return enumeration.hasMoreElements();
@@ -353,11 +380,13 @@ public class ContainerUtil {
     };
   }
 
-  public static <T> Iterable<T> iterate(T[] arrays, final Condition<? super T> condition) {
+  @NotNull
+  public static <T> Iterable<T> iterate(@NotNull T[] arrays, @NotNull Condition<? super T> condition) {
     return iterate(Arrays.asList(arrays), condition);
   }
 
-  public static <T> Iterable<T> iterate(final Collection<? extends T> collection, final Condition<? super T> condition) {
+  @NotNull
+  public static <T> Iterable<T> iterate(@NotNull final Collection<? extends T> collection, @NotNull final Condition<? super T> condition) {
     if (collection.isEmpty()) return emptyIterable();
     return new Iterable<T>() {
       public Iterator<T> iterator() {
@@ -393,7 +422,8 @@ public class ContainerUtil {
     };
   }
 
-  public static <T> Iterable<T> iterateBackward(final List<? extends T> list) {
+  @NotNull
+  public static <T> Iterable<T> iterateBackward(@NotNull final List<? extends T> list) {
     return new Iterable<T>() {
       public Iterator<T> iterator() {
         return new Iterator<T>() {
@@ -415,13 +445,14 @@ public class ContainerUtil {
     };
   }
 
-  public static <E> void swapElements(final List<E> list, final int index1, final int index2) {
+  public static <E> void swapElements(@NotNull List<E> list, int index1, int index2) {
     E e1 = list.get(index1);
     E e2 = list.get(index2);
     list.set(index1, e2);
     list.set(index2, e1);
   }
 
+  @NotNull
   public static <T> ArrayList<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
     return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
   }
@@ -440,26 +471,28 @@ public class ContainerUtil {
     }
   }
 
-  public static <T, U extends T> U findInstance(Iterable<T> iterable, Class<U> aClass) {
+  public static <T, U extends T> U findInstance(@NotNull Iterable<T> iterable, @NotNull Class<U> aClass) {
     return findInstance(iterable.iterator(), aClass);
   }
 
-  public static <T, U extends T> U findInstance(Iterator<T> iterator, Class<U> aClass) {
+  public static <T, U extends T> U findInstance(@NotNull Iterator<T> iterator, @NotNull Class<U> aClass) {
     // uncomment for 1.5
     //return (U)find(iterator, new FilteringIterator.InstanceOf<U>(aClass));
     return (U)find(iterator, new FilteringIterator.InstanceOf<T>((Class<T>)aClass));
   }
 
   @Nullable
-  public static <T, U extends T> U findInstance(T[] array, Class<U> aClass) {
+  public static <T, U extends T> U findInstance(@NotNull T[] array, @NotNull Class<U> aClass) {
     return findInstance(Arrays.asList(array), aClass);
   }
 
-  public static <T, V> List<T> concat(V[] array, Function<V, Collection<? extends T>> fun) {
+  @NotNull
+  public static <T, V> List<T> concat(@NotNull V[] array, @NotNull Function<V, Collection<? extends T>> fun) {
     return concat(Arrays.asList(array), fun);
   }
 
-  public static <T> List<T> concat(Iterable<? extends Collection<T>> list) {
+  @NotNull
+  public static <T> List<T> concat(@NotNull Iterable<? extends Collection<T>> list) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final Collection<T> ts : list) {
       result.addAll(ts);
@@ -467,10 +500,12 @@ public class ContainerUtil {
     return result;
   }
 
+  @NotNull
   public static <T> List<T> concat(@NotNull final List<? extends T> list1, @NotNull final List<? extends T> list2) {
     return concat(new List[]{list1, list2});
   }
 
+  @NotNull
   public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {
     return new Iterable<T>() {
       public Iterator<T> iterator() {
@@ -484,6 +519,7 @@ public class ContainerUtil {
     };
   }
 
+  @NotNull
   public static <T> List<T> concat(@NotNull final List<List<? extends T>> lists) {
     int size = 0;
     for (List<? extends T> each : lists) {
@@ -508,11 +544,13 @@ public class ContainerUtil {
     };
   }
 
+  @NotNull
   public static <T> List<T> concat(@NotNull final List<? extends T>... lists) {
     return concat(Arrays.asList(lists));
   }
 
-  public static <T, V> List<T> concat(Iterable<? extends V> list, Function<V, Collection<? extends T>> fun) {
+  @NotNull
+  public static <T, V> List<T> concat(@NotNull Iterable<? extends V> list, @NotNull Function<V, Collection<? extends T>> fun) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final V v : list) {
       result.addAll(fun.fun(v));
@@ -520,7 +558,7 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T> boolean intersects(Collection<? extends T> collection1, Collection<? extends T> collection2) {
+  public static <T> boolean intersects(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
     for (T t : collection1) {
       //noinspection SuspiciousMethodCalls
       if (collection2.contains(t)) {
@@ -534,13 +572,15 @@ public class ContainerUtil {
     return items == null || items.isEmpty() ? def : items.iterator().next();
   }
 
-  public static <T> Collection<T> subtract(Collection<T> from, Collection<T> what) {
+  @NotNull
+  public static <T> Collection<T> subtract(@NotNull Collection<T> from, @NotNull Collection<T> what) {
     final HashSet<T> set = new HashSet<T>(from);
     set.removeAll(what);
     return set;
   }
 
-  public static <T> T[] toArray(List<T> collection, T[] array) {
+  @NotNull
+  public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
     final int length = array.length;
     if (length < 20) {
       for (int i = 0; i < collection.size(); i++) {
@@ -557,7 +597,8 @@ public class ContainerUtil {
    * This is a replacement for {@link Collection#toArray(Object[])}. For small collections it is faster to stay at java level and refrain
    * from calling JNI {@link System#arraycopy(Object, int, Object, int, int)}
    */
-  public static <T> T[] toArray(Collection<T> c, T[] sample) {
+  @NotNull
+  public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull T[] sample) {
     final int size = c.size();
     if (size == sample.length && size < 20) {
       int i = 0;
@@ -570,7 +611,7 @@ public class ContainerUtil {
     return c.toArray(sample);
   }
 
-  public static <T extends Comparable<T>> void sort(List<T> list) {
+  public static <T extends Comparable<T>> void sort(@NotNull List<T> list) {
     int size = list.size();
 
     if (size < 2) return;
@@ -601,7 +642,7 @@ public class ContainerUtil {
     }
   }
 
-  public static <T> void sort(List<T> list, Comparator<T> comparator) {
+  public static <T> void sort(@NotNull List<T> list, @NotNull Comparator<T> comparator) {
     int size = list.size();
 
     if (size < 2) return;
@@ -632,7 +673,7 @@ public class ContainerUtil {
     }
   }
 
-  public static <T extends Comparable<T>> void sort(T[] a) {
+  public static <T extends Comparable<T>> void sort(@NotNull T[] a) {
     int size = a.length;
 
     if (size < 2) return;
@@ -663,7 +704,7 @@ public class ContainerUtil {
     }
   }
 
-  public static <T> void sort(T[] a, Comparator<T> comparator) {
+  public static <T> void sort(@NotNull T[] a, @NotNull Comparator<T> comparator) {
     int size = a.length;
 
     if (size < 2) return;
@@ -694,7 +735,8 @@ public class ContainerUtil {
     }
   }
 
-  public static <T,V> List<V> map(Iterable<? extends T> iterable, Function<T, V> mapping) {
+  @NotNull
+  public static <T,V> List<V> map(@NotNull Iterable<? extends T> iterable, @NotNull Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : iterable) {
       result.add(mapping.fun(t));
@@ -702,10 +744,12 @@ public class ContainerUtil {
     return result;
   }
 
+  @NotNull
   public static <T, V> List<V> mapNotNull(@NotNull T[] array, Function<T, V> mapping) {
     return mapNotNull(Arrays.asList(array), mapping);
   }
 
+  @NotNull
   public static <T, V> List<V> mapNotNull(Iterable<? extends T> iterable, Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : iterable) {
@@ -717,7 +761,8 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T> List<T> packNullables(T... elements) {
+  @NotNull
+  public static <T> List<T> packNullables(@NotNull T... elements) {
     ArrayList<T> list = new ArrayList<T>();
     for (T element : elements) {
       addIfNotNull(element, list);
@@ -725,7 +770,8 @@ public class ContainerUtil {
     return list;
   }
 
-  public static <T, V> List<V> map(T[] arr, Function<T, V> mapping) {
+  @NotNull
+  public static <T, V> List<V> map(@NotNull T[] arr, @NotNull Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : arr) {
       result.add(mapping.fun(t));
@@ -733,7 +779,8 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T, V> V[] map(T[] arr, Function<T, V> mapping, V[] emptyArray) {
+  @NotNull
+  public static <T, V> V[] map(@NotNull T[] arr, @NotNull Function<T, V> mapping, @NotNull V[] emptyArray) {
     List<V> result = new ArrayList<V>();
     for (T t : arr) {
       result.add(mapping.fun(t));
@@ -741,19 +788,19 @@ public class ContainerUtil {
     return result.toArray(emptyArray);
   }
 
-  public static <T> void addIfNotNull(final T element, final Collection<T> result) {
+  public static <T> void addIfNotNull(final T element, @NotNull Collection<T> result) {
     if (element != null) {
       result.add(element);
     }
   }
 
-  public static <K, V> void putIfNotNull(final K key, final V value, final Map<K, V> result) {
+  public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
     if (value != null) {
       result.put(key, value);
     }
   }
 
-  public static <T> void add(final T element, final Collection<T> result, final Disposable parentDisposable) {
+  public static <T> void add(final T element, @NotNull final Collection<T> result, @NotNull final Disposable parentDisposable) {
     if (result.add(element)) {
       Disposer.register(parentDisposable, new Disposable() {
         public void dispose() {
@@ -763,11 +810,12 @@ public class ContainerUtil {
     }
   }
 
+  @NotNull
   public static <T> List<T> createMaybeSingletonList(@Nullable T element) {
     return element == null ? Collections.<T>emptyList() : Arrays.asList(element);
   }
 
-  public static <T, V> V getOrCreate(final Map<T, V> result, final T key, final V defaultValue) {
+  public static <T, V> V getOrCreate(@NotNull Map<T, V> result, final T key, final V defaultValue) {
     V value = result.get(key);
     if (value == null) {
       result.put(key, value = defaultValue);
@@ -783,22 +831,22 @@ public class ContainerUtil {
     return value;
   }
 
-  public static <T> boolean and(T[] iterable, Condition<T> condition) {
+  public static <T> boolean and(@NotNull T[] iterable, @NotNull Condition<T> condition) {
     return and(Arrays.asList(iterable), condition);
   }
 
-  public static <T> boolean and(Iterable<T> iterable, Condition<T> condition) {
+  public static <T> boolean and(@NotNull Iterable<T> iterable, @NotNull Condition<T> condition) {
     for (final T t : iterable) {
       if (!condition.value(t)) return false;
     }
     return true;
   }
 
-  public static <T> boolean or(T[] iterable, Condition<T> condition) {
+  public static <T> boolean or(@NotNull T[] iterable, @NotNull Condition<T> condition) {
     return or(Arrays.asList(iterable), condition);
   }
 
-  public static <T> boolean or(Iterable<T> iterable, Condition<T> condition) {
+  public static <T> boolean or(@NotNull Iterable<T> iterable, @NotNull Condition<T> condition) {
     for (final T t : iterable) {
       if (condition.value(t)) return true;
     }
@@ -816,21 +864,23 @@ public class ContainerUtil {
     return list;
   }
 
-  public static <T> List<T> dropTail(List<T> items) {
+  @NotNull
+  public static <T> List<T> dropTail(@NotNull List<T> items) {
     return items.subList(0, items.size() - 1);
   }
 
-  public static <T> List<T> list(T... items) {
+  @NotNull
+  public static <T> List<T> list(@NotNull T... items) {
     return Arrays.asList(items);
   }
 
   // Generalized Quick Sort. Does neither array.clone() nor list.toArray()
 
-  public static <T> void quickSort(List<T> list, Comparator<? super T> comparator) {
+  public static <T> void quickSort(@NotNull List<T> list, @NotNull Comparator<? super T> comparator) {
     quickSort(list, comparator, 0, list.size());
   }
 
-  private static <T> void quickSort(List<T> x, Comparator<? super T> comparator, int off, int len) {
+  private static <T> void quickSort(@NotNull List<T> x, @NotNull Comparator<? super T> comparator, int off, int len) {
     // Insertion sort on smallest arrays
     if (len < 7) {
       for (int i = off; i < len + off; i++) {
@@ -893,7 +943,7 @@ public class ContainerUtil {
   /**
    * Returns the index of the median of the three indexed longs.
    */
-  private static <T> int med3(List<T> x, Comparator<? super T> comparator, int a, int b, int c) {
+  private static <T> int med3(@NotNull List<T> x, Comparator<? super T> comparator, int a, int b, int c) {
     return comparator.compare(x.get(a), x.get(b)) < 0 ? comparator.compare(x.get(b), x.get(c)) < 0
                                                         ? b
                                                         : comparator.compare(x.get(a), x.get(c)) < 0 ? c : a
@@ -911,11 +961,13 @@ public class ContainerUtil {
     }
   }
 
+  @NotNull
   public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
     // does not create garbage new Object[0]
     return new CopyOnWriteArrayList<T>(ContainerUtil.<T>emptyList());
   }
 
+  @NotNull
   public static <T> List<T> emptyList() {
     return (List<T>)EmptyList.INSTANCE;
   }
@@ -1021,7 +1073,8 @@ public class ContainerUtil {
     };
   }
 
-  public static <E> List<E> flatten(Collection<? extends Collection<E>> collections) {
+  @NotNull
+  public static <E> List<E> flatten(@NotNull Collection<? extends Collection<E>> collections) {
     List<E> result = new ArrayList<E>();
     for (Collection<E> list : collections) {
       result.addAll(list);

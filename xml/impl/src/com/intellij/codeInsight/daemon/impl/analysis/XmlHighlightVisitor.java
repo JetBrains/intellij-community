@@ -593,10 +593,16 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           }
 
           HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
-          if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && value instanceof XmlAttributeValue) {
+          if (value instanceof XmlAttributeValue) {
             PsiElement parent = value.getParent();
-            if (parent instanceof XmlAttribute && ((XmlAttribute)parent).getName().toLowerCase().endsWith("stylename")) {
-              type = HighlightInfoType.WARNING;
+            if (parent instanceof XmlAttribute) {
+              String name = ((XmlAttribute)parent).getName().toLowerCase();
+              if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
+                type = HighlightInfoType.WARNING;
+              }
+              else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
+                continue;
+              }
             }
           }
           HighlightInfo info = HighlightInfo.createHighlightInfo(

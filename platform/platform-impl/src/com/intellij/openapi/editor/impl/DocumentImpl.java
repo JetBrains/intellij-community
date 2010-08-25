@@ -38,6 +38,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,52 +138,54 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     isStripTrailingSpacesEnabled = isEnabled;
   }
 
-  public void stripTrailingSpaces(boolean inChangedLinesOnly) {
-    Editor[] editors = EditorFactory.getInstance().getEditors(this, null);
-    VisualPosition[] visualCarets = new VisualPosition[editors.length];
-    int[] caretLines = new int[editors.length];
-    for (int i = 0; i < editors.length; i++) {
-      visualCarets[i] = editors[i].getCaretModel().getVisualPosition();
-      caretLines[i] = editors[i].getCaretModel().getLogicalPosition().line;
+  public boolean stripTrailingSpaces(boolean inChangedLinesOnly) {
+    if (!isStripTrailingSpacesEnabled) {
+      return true;
     }
 
-    if (!isStripTrailingSpacesEnabled) {
-      return;
-    }
+    Editor editor = ContainerUtil.find(EditorFactory.getInstance().getEditors(this), new Condition<Editor>() {
+      @Override
+      public boolean value(Editor editor) {
+        return ((EditorEx)editor).isCaretActive();
+      }
+    });
+
+    // when virtual space enabled, we can strip whitespace anywhere
+    boolean isVirtualSpaceEnabled = editor == null || editor.getSettings().isVirtualSpace();
+
+    VisualPosition visualCaret = editor == null ? null : editor.getCaretModel().getVisualPosition();
+    int caretLine = editor == null ? -1 : editor.getCaretModel().getLogicalPosition().line;
 
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
-
-    lines:
-        for (int i = 0; i < myLineSet.getLineCount(); i++) {
-          if (!isTestMode) {
-            for (int caretLine : caretLines) {
-              if (caretLine == i) continue lines;
-            }
-          }
-
-          if (!inChangedLinesOnly || myLineSet.isModified(i)) {
-            int start = -1;
-            int lineEnd = myLineSet.getLineEnd(i) - myLineSet.getSeparatorLength(i);
-            int lineStart = myLineSet.getLineStart(i);
-            CharSequence text = myText.getCharArray();
-            for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
-              char c = text.charAt(offset);
-              if (c != ' ' && c != '\t') {
-                break;
-              }
-              start = offset;
-            }
-            if (start != -1) {
-              deleteString(start, lineEnd);
-            }
-          }
+    boolean markAsNeedsStrippingLater = false;
+    for (int line = 0; line < myLineSet.getLineCount(); line++) {
+      if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
+      int start = -1;
+      int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
+      int lineStart = myLineSet.getLineStart(line);
+      CharSequence text = myText.getCharArray();
+      for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
+        char c = text.charAt(offset);
+        if (c != ' ' && c != '\t') {
+          break;
         }
-
-    if (!ShutDownTracker.isShutdownHookRunning()) {
-      for (int i = 0; i < editors.length; i++) {
-        editors[i].getCaretModel().moveToVisualPosition(visualCarets[i]);
+        start = offset;
+      }
+      if (start == -1) continue;
+      if (!isTestMode && !isVirtualSpaceEnabled && caretLine == line) {
+        // mark this as a document that needs stripping later
+        // otherwise the caret would jump madly
+        markAsNeedsStrippingLater = true;
+      }
+      else {
+        deleteString(start, lineEnd);
       }
     }
+
+    if (!ShutDownTracker.isShutdownHookRunning() && editor != null) {
+      editor.getCaretModel().moveToVisualPosition(visualCaret);
+    }
+    return !markAsNeedsStrippingLater;
   }
 
   public void setReadOnly(boolean isReadOnly) {
@@ -530,8 +533,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText.toString();
   }
 
+  @NotNull
   @Override
-  public String getText(TextRange range) {
+  public String getText(@NotNull TextRange range) {
     assertReadAccessToDocumentsAllowed();
     return myText.substring(range.getStartOffset(), range.getEndOffset()).toString();
   }

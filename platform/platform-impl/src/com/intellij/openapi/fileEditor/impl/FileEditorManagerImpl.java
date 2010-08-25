@@ -102,8 +102,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    */
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
 
-  private final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
-
   public FileEditorManagerImpl(final Project project) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
     myProject = project;
@@ -767,26 +765,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  public void registerExtraEditorDataProvider(@NotNull final EditorDataProvider provider, Disposable parentDisposable) {
-    myDataProviders.add(provider);
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        public void dispose() {
-          myDataProviders.remove(provider);
-        }
-      });
-    }
-  }
-
-  @Nullable
-  public final Object getData(String dataId, Editor editor, final VirtualFile file) {
-    for (final EditorDataProvider dataProvider : myDataProviders) {
-      final Object o = dataProvider.getData(dataId, editor, file);
-      if (o != null) return o;
-    }
-    return null;
   }
 
   @Nullable

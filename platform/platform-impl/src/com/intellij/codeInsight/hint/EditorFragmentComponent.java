@@ -40,7 +40,7 @@ public class EditorFragmentComponent extends JPanel {
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
     int textWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), ScreenUtil.getScreenRectangle(1, 1).width);
 
-    FoldingModelEx foldingModel = (FoldingModelEx) editor.getFoldingModel();
+    FoldingModelEx foldingModel = editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
     if (!showFolding) {
       foldingModel.setFoldingEnabled(false);
@@ -173,13 +173,13 @@ public class EditorFragmentComponent extends JPanel {
 
   @Nullable
   public static LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
-    int x = -2;
-    int y = 0;
 
     JComponent editorComponent = editor.getComponent();
     final JRootPane rootPane = editorComponent.getRootPane();
     if (rootPane == null) return null;
     JLayeredPane layeredPane = rootPane.getLayeredPane();
+    int x = -2;
+    int y = 0;
     Point point = SwingUtilities.convertPoint(editorComponent, x, y, layeredPane);
 
     return showEditorFragmentHintAt(editor, range, point.x, point.y, true, showFolding, hideByAnyKey);

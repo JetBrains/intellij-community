@@ -434,8 +434,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
   }
 
-  public void stripTrailingSpaces(final boolean inChangedLinesOnly) {
-    myDelegate.stripTrailingSpaces(inChangedLinesOnly);
+  public boolean stripTrailingSpaces(final boolean inChangedLinesOnly) {
+    return myDelegate.stripTrailingSpaces(inChangedLinesOnly);
   }
 
   public void setStripTrailingSpacesEnabled(final boolean isEnabled) {

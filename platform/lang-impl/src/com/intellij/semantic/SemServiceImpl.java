@@ -18,6 +18,9 @@ package com.intellij.semantic;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -80,6 +83,18 @@ public class SemServiceImpl extends SemService{
     SemKey[] allKeys = collectProducers();
 
     cacheKeyHierarchy(allKeys);
+    
+    final LowMemoryWatcher watcher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
+      public void force() {
+        myCache.clear();
+        //System.out.println("SemService cache flushed");
+      }
+    });
+    ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerAdapter() {
+      public void projectClosing(Project project) {
+        watcher.stop();
+      }
+    });
   }
 
   private void cacheKeyHierarchy(SemKey[] allKeys) {

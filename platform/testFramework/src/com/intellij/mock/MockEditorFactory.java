@@ -61,7 +61,7 @@ public class MockEditorFactory extends EditorFactory {
 
   @NotNull
   public Editor[] getEditors(@NotNull Document document, Project project) {
-    return new Editor[0];
+    return Editor.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -71,7 +71,7 @@ public class MockEditorFactory extends EditorFactory {
 
   @NotNull
   public Editor[] getAllEditors() {
-    return new Editor[0];
+    return Editor.EMPTY_ARRAY;
   }
 
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {

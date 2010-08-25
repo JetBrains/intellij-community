@@ -43,6 +43,7 @@ public class ClassInnerStuffCache {
   private CachedValue<PsiMethod[]> myConstructorsCache;
   private CachedValue<PsiField[]> myFieldsCache;
   private CachedValue<PsiMethod[]> myMethodsCache;
+  private CachedValue<PsiClass[]> myInnerClassesCache;
   private CachedValue<Map<String, PsiField>> myFieldsMapCache;
   private CachedValue<Map<String, List<PsiMethod>>> myMethodsMapCache;
   private CachedValue<Map<String, PsiClass>> myInnerClassesMapCache;
@@ -69,6 +70,12 @@ public class ClassInnerStuffCache {
   public PsiMethod[] getMethods() {
     final PsiMethod[] methods = myMethodsCache.getValue();
     return methods != null ? methods : PsiMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiClass[] getInnerClasses() {
+    final PsiClass[] classes = myInnerClassesCache.getValue();
+    return classes != null ? classes : PsiClass.EMPTY_ARRAY;
   }
 
   @Nullable
@@ -126,6 +133,12 @@ public class ClassInnerStuffCache {
       }
     }, false);
 
+    myInnerClassesCache = manager.createCachedValue(new CachedValueProvider<PsiClass[]>() {
+      public Result<PsiClass[]> compute() {
+        return Result.create(getAllInnerClasses(), dependencies);
+      }
+    }, false);
+
     myFieldsMapCache = manager.createCachedValue(new CachedValueProvider<Map<String, PsiField>>() {
       public Result<Map<String, PsiField>> compute() {
         return Result.create(getFieldsMap(), dependencies);
@@ -161,6 +174,14 @@ public class ClassInnerStuffCache {
     return ArrayUtil.mergeArrayAndCollection(own, ext, PsiMethod.ARRAY_FACTORY);
   }
 
+  private PsiClass[] getAllInnerClasses() {
+    if (!(myClass instanceof PsiClassImpl)) return myClass.getInnerClasses();
+
+    final PsiClass[] own = ((PsiClassImpl)myClass).getInnerClassesRaw();
+    final List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class);
+    return ArrayUtil.mergeArrayAndCollection(own, ext, PsiClass.ARRAY_FACTORY);
+  }
+
   @Nullable
   private Map<String, PsiField> getFieldsMap() {
     final PsiField[] fields = getFields();
@@ -194,7 +215,7 @@ public class ClassInnerStuffCache {
 
   @Nullable
   private Map<String, PsiClass> getInnerClassesMap() {
-    final PsiClass[] classes = myClass.getInnerClasses();
+    final PsiClass[] classes = getInnerClasses();
     if (classes.length == 0) return null;
 
     final Map<String, PsiClass> cachedInners = new THashMap<String, PsiClass>();

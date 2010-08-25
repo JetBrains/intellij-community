@@ -321,6 +321,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @NotNull
   public PsiClass[] getInnerClasses() {
+    return myInnersCache.getInnerClasses();
+  }
+
+  @NotNull
+  public PsiClass[] getInnerClassesRaw() {
     return getStubOrPsiChildren(JavaStubElementTypes.CLASS, ARRAY_FACTORY);
   }
 

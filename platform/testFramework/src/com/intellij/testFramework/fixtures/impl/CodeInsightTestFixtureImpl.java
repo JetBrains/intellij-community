@@ -46,8 +46,10 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
@@ -605,6 +607,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     EditorActionManager actionManager = EditorActionManager.getInstance();
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
+  }
+
+  @Override
+  public Presentation testAction(AnAction action) {
+    DataContext context = DataManager.getInstance().getDataContext(getEditor().getComponent());
+    TestActionEvent e = new TestActionEvent(context, action);
+    action.update(e);
+    if (e.getPresentation().isVisible() && e.getPresentation().isVisible()) {
+      action.actionPerformed(e);
+    }
+    return e.getPresentation();
   }
 
   public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) {

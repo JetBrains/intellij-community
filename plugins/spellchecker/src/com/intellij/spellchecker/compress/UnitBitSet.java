@@ -1,123 +1,60 @@
 package com.intellij.spellchecker.compress;
 
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.BitSet;
+import java.util.Arrays;
 
-public class UnitBitSet extends BitSet {
+public class UnitBitSet {
 
-  public int bitsPerUnit = 10;
+  public static final int MAX_CHARS_IN_WORD = 64;
+  public static final int MAX_UNIT_VALUE = 255;
 
-  public UnitBitSet() {
-  }
-
-  public UnitBitSet(int value, boolean exact) {
-    if (exact) {
-      this.bitsPerUnit = value;
-    }
-    else {
-      while (value != 0) {
-        bitsPerUnit++;
-        value >>= 1;
-      }
-    }
-  }
-
-  public void inc() {
-    boolean t = true;
-    for (int i = 0; i <= size(); i++) {
-      if (!get(i) && t) {
-        set(i);
-        t = false;
-      }
-      else if (get(i) && t) {
-        set(i, false);
-      }
-    }
-  }
+  byte[] b = new byte[MAX_CHARS_IN_WORD];
 
   public int getUnitValue(int number) {
-    int startIndex = number * bitsPerUnit;
-    int result = 0;
-    for (int i = 0; i < bitsPerUnit; i++) {
-      if (get(startIndex + i)) {
-        result += (1 << i);
-      }
-    }
-    return result;
+    final int r = b[number] & 0xFF;
+    assert r >= 0 && r <= MAX_UNIT_VALUE : "invalid unit value";
+    return r;
   }
 
   public void setUnitValue(int number, int value) {
-    if (value > (1 << bitsPerUnit)  - 1) {
-      throw new IllegalArgumentException();
-    }
-    int startIndex = number * bitsPerUnit;
-    for (int i = 0; i < bitsPerUnit; i++) {
-      set(startIndex + i, value % 2 == 1);
-      value /= 2;
-    }
+    //assert value >= 0 : "unit value is negative" + value;
+    assert value <= MAX_UNIT_VALUE : "unit value is too big";
+    b[number] = (byte)value;
   }
 
-  public void setBits(int... bits) {
-    if (bits == null) {
-      return;
-    }
-    for (int bit : bits) {
-      set(bit);
-    }
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof UnitBitSet)) return false;
+    return Arrays.equals(b, ((UnitBitSet)obj).b);
   }
 
-  public void moveLeft(int n) {
-    if (n <= 0) {
-      return;
+  @Override
+  public String toString() {
+    final StringBuilder s = new StringBuilder();
+    for (int i = 0; i < b.length; i++) {
+      s.append(Integer.toHexString((int)b[i] & 0xFF));
     }
-    for (int i = 0; i < size() - n * bitsPerUnit; i++) {
-      set(i, get(n * bitsPerUnit + i));
-    }
-    for (int i = size() - n * bitsPerUnit; i < size(); i++) {
-      set(i, false);
-    }
+    return s.toString();
   }
 
-  public void moveRight(int n) {
-    if (n <= 0) {
-      return;
-    }
-    for (int i = size() - 1; i >= 0; i--) {
-      set(i + n * bitsPerUnit, get(i));
-    }
-    for (int i = 0; i < n * bitsPerUnit; i++) {
-      set(i, false);
-    }
+  public static UnitBitSet create(@NotNull UnitBitSet origin) {
+    UnitBitSet r = new UnitBitSet();
+    System.arraycopy(origin.b, 0, r.b, 0, r.b.length);
+    return r;
+  }
+
+  public static UnitBitSet create(byte[] value) {
+    final UnitBitSet r = new UnitBitSet();
+    System.arraycopy(value, 0, r.b, 0, value.length);
+    return r;
   }
 
 
-  public void iterateParUnits(@NotNull Consumer<Integer> consumer, int offset, boolean skipLastZero) {
-    int units = size() / bitsPerUnit;
-    for (int i = offset; i <= units; i++) {
-      consumer.consume(getUnitValue(i));
-      if (skipLastZero && nextSetBit(i) == -1) {
-        break;
-      }
-    }
+  static public byte[] getBytes(UnitBitSet origin) {
+    final byte[] r = new byte[origin.b[0] + 2];
+    System.arraycopy(origin.b, 0, r, 0, r.length);
+    return r;
   }
 
-  public static UnitBitSet create(int... bits) {
-    UnitBitSet bs = new UnitBitSet();
-    bs.setBits(bits);
-    return bs;
-  }
-
-  public static UnitBitSet create(int bitsPerUnit, boolean exact, int... bits) {
-    UnitBitSet bs = new UnitBitSet(bitsPerUnit, exact);
-    bs.setBits(bits);
-    return bs;
-  }
-
-  public static UnitBitSet create(@NotNull BitSet bitSet, int bitsPerUnit) {
-    UnitBitSet result = new UnitBitSet(bitsPerUnit, true);
-    result.or(bitSet);
-    return result;
-  }
 }

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -69,10 +70,16 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
 
   @Nullable
   public PsiElement resolve() {
-    ResolveResult[] resolveResults = multiResolve(false);
-    return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
+    final ResolveResult res = doResolve();
+    return res != null ? res.getElement() : null;
   }
 
+  @Nullable
+  private MyResolveResult doResolve() {
+    final ResolveResult[] resolveResults = multiResolve(false);
+    return resolveResults.length == 1 ? (MyResolveResult)resolveResults[0] : null;
+  }
+  
   @NotNull 
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     return ((PsiManagerEx)getElement().getManager()).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, incompleteCode);
@@ -97,17 +104,27 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final String refText = getCanonicalText();
-    if (refText.startsWith(ANT_FILE_PREFIX)) {
-      final PsiElement resolve = resolve();
-      if (resolve instanceof PomTargetPsiElement) {
-        final PomTarget target = ((PomTargetPsiElement)resolve).getTarget();
-        if(target instanceof DomTarget) {
-          final DomTarget domTarget = (DomTarget)target;
-          final String oldName = domTarget.getName();
-          if (oldName != null && (refText.length() == ANT_FILE_PREFIX.length() + oldName.length()) && refText.endsWith(oldName)) {
-            newElementName = ANT_FILE_PREFIX + newElementName;
+    final MyResolveResult resolveResult = doResolve();
+    if (resolveResult != null) {
+      final PsiElement resolve = resolveResult.getElement();
+      final String refText = getCanonicalText();
+      if (refText.startsWith(ANT_FILE_PREFIX)) {
+        if (resolve instanceof PomTargetPsiElement) {
+          final PomTarget target = ((PomTargetPsiElement)resolve).getTarget();
+          if(target instanceof DomTarget) {
+            final DomTarget domTarget = (DomTarget)target;
+            final String oldName = domTarget.getName();
+            if (oldName != null && (refText.length() == ANT_FILE_PREFIX.length() + oldName.length()) && refText.endsWith(oldName)) {
+              newElementName = ANT_FILE_PREFIX + newElementName;
+            }
           }
+        }
+      }
+      else {
+        final PropertiesProvider provider = resolveResult.getProvider();
+        final String prefix = provider instanceof AntDomProperty? ((AntDomProperty)provider).getPropertyPrefixValue() : null;
+        if (prefix != null) {
+          newElementName = prefix + newElementName;
         }
       }
     }
@@ -117,13 +134,20 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
   private static class MyResolveResult implements ResolveResult {
 
     private final PsiElement myElement;
+    private final PropertiesProvider myProvider;
 
-    public MyResolveResult(final PsiElement element) {
+    public MyResolveResult(final PsiElement element, PropertiesProvider provider) {
       myElement = element;
+      myProvider = provider;
     }
 
     public PsiElement getElement() {
       return myElement;
+    }
+
+    @Nullable
+    public PropertiesProvider getProvider() {
+      return myProvider;
     }
 
     public boolean isValidResult() {
@@ -140,15 +164,17 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
       if (project != null) {
         final AntDomProject contextAntProject = project.getContextAntProject();
         final String propertyName = antDomPropertyReference.getCanonicalText();
-        final PsiElement mainDeclaration = PropertyResolver.resolve(contextAntProject, propertyName, antDomPropertyReference.myInvocationContextElement).getFirst();
+        final Trinity<PsiElement,Collection<String>,PropertiesProvider> resolved = 
+          PropertyResolver.resolve(contextAntProject, propertyName, antDomPropertyReference.myInvocationContextElement);
+        final PsiElement mainDeclaration = resolved.getFirst();
     
         if (mainDeclaration != null) {
-          result.add(new MyResolveResult(mainDeclaration));
+          result.add(new MyResolveResult(mainDeclaration, resolved.getThird()));
         }
 
         final List<PsiElement> antCallParams = AntCallParamsFinder.resolve(project, propertyName);
         for (PsiElement param : antCallParams) {
-          result.add(new MyResolveResult(param));
+          result.add(new MyResolveResult(param, null));
         }
       }
       return ContainerUtil.toArray(result, new ResolveResult[result.size()]);

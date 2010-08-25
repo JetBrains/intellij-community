@@ -23,8 +23,10 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -172,6 +174,11 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       }
       else {
+        Editor editor = (Editor)getData(PlatformDataKeys.EDITOR.getName());
+        if (editor != null) {
+          FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
+          return manager.getData(dataId, editor, manager.getSelectedFiles()[0]);
+        }
         return null;
       }
     }

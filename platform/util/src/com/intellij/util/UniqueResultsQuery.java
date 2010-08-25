@@ -20,10 +20,7 @@ import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.*;
 
 /**
  * @author max
@@ -80,7 +77,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
       return (Collection<T>)collection;
     }
     else {
-      final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(new CopyOnWriteArrayList<T>());
+      final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(Collections.synchronizedList(new ArrayList<T>()));
       forEach(processor);
       return processor.getResults();
     }
