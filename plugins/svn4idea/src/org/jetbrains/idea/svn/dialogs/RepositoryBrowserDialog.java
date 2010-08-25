@@ -98,13 +98,16 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   @NonNls private static final String PLACE_TOOLBAR = "RepositoryBrowser.Toolbar";
   @NonNls private static final String PLACE_MENU = "RepositoryBrowser.Menu";
+  private final String myRepositoriesLabelText;
+  protected JLabel myRepositoriesLabel;
 
   public RepositoryBrowserDialog(Project project) {
-    this(project, true);
+    this(project, true, null);
   }
 
-  public RepositoryBrowserDialog(Project project, final boolean showFiles) {
+  public RepositoryBrowserDialog(Project project, final boolean showFiles, @Nullable final String repositoriesLabelText) {
     super(project, true);
+    myRepositoriesLabelText = repositoriesLabelText == null ? "Repositories:" : repositoriesLabelText;
     myShowFiles = showFiles;
     myProject = project;
     myVCS = SvnVcs.getInstance(project);
@@ -222,7 +225,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     JPanel parentPanel = new JPanel(new BorderLayout());
     JPanel top = new JPanel(new BorderLayout());
 
-    top.add(new JLabel("Repositories:"), BorderLayout.WEST);
+    myRepositoriesLabel = new JLabel(myRepositoriesLabelText);
+    top.add(myRepositoriesLabel, BorderLayout.WEST);
     top.add(createToolbar(true, null), BorderLayout.EAST);
     parentPanel.add(top, BorderLayout.NORTH);
 

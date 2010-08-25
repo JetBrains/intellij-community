@@ -150,6 +150,7 @@ public class QuickEditAction implements IntentionAction {
     private final Map<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>> myMarkers =
       new LinkedHashMap<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>>();
     private EditorWindow mySplittedWindow;
+    private boolean myReleased;
 
     private MyHandler(Project project, PsiFile injectedFile, final PsiFile origFile, Document origDocument) {
       myProject = project;
@@ -204,6 +205,7 @@ public class QuickEditAction implements IntentionAction {
         @Override
         public void editorReleased(EditorFactoryEvent event) {
           if (event.getEditor().getDocument() == myNewDocument) {
+            myReleased = true;
             event.getFactory().removeEditorFactoryListener(this);
             myOrigDocument.removeDocumentListener(MyHandler.this);
             myInjectedFile.putUserData(QUICK_EDIT_HANDLER, null);
@@ -288,7 +290,7 @@ public class QuickEditAction implements IntentionAction {
     private void commitToOriginal() {
       if (!isValid()) return;
       final PsiFile origFile = (PsiFile)myNewFile.getUserData(FileContextUtil.INJECTED_IN_ELEMENT).getElement();
-      myOrigDocument.removeDocumentListener(this);
+      if (!myReleased) myOrigDocument.removeDocumentListener(this);
       try {
         new WriteCommandAction.Simple(myProject, origFile) {
           @Override
@@ -303,7 +305,7 @@ public class QuickEditAction implements IntentionAction {
         }.execute();
       }
       finally {
-        myOrigDocument.addDocumentListener(this);
+        if (!myReleased) myOrigDocument.addDocumentListener(this);
       }
     }
 

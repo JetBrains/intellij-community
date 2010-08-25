@@ -43,12 +43,11 @@ import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretModelImpl");
   private final EditorImpl myEditor;
-  private final CopyOnWriteArrayList<CaretListener> myCaretListeners = ContainerUtil.createEmptyCOWList();
+  private final List<CaretListener> myCaretListeners = ContainerUtil.createEmptyCOWList();
   private LogicalPosition myLogicalCaret;
   private VerticalInfo myCaretInfo;
   private VisualPosition myVisibleCaret;
@@ -385,7 +384,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     int lineHeight = myEditor.getLineHeight();
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     final EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
-    final EditorComponentImpl content = (EditorComponentImpl)myEditor.getContentComponent();
+    final EditorComponentImpl content = myEditor.getContentComponent();
 
     int updateWidth = myEditor.getScrollPane().getHorizontalScrollBar().getValue() + visibleArea.width;
     if (Math.abs(myCaretInfo.y - oldCaretInfo.y) <= 2 * lineHeight) {

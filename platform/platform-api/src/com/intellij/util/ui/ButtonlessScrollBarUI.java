@@ -45,7 +45,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
         myAnimator.reset();
-        myAnimator.resume();
+        if (!scrollbar.getValueIsAdjusting()) {
+          myAnimator.resume();
+        }
+        else {
+          myAnimationColorShift = 40;
+        }
       }
     };
 

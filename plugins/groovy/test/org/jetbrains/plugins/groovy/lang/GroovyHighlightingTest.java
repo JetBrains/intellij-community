@@ -172,7 +172,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testDuplicateInnerClass() throws Throwable{doTest();}
 
   public void testThisInStaticContext() throws Throwable {doTest();}
-  public void testNonStaticFieldInStaticContext() throws Exception {doTest();}
   public void testLocalVariableInStaticContext() throws Exception {doTest();}
   
 

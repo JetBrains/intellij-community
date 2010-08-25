@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -35,7 +36,6 @@ import java.util.List;
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentHashMap");
-  private static final int APPEND_CACHE_DATA_THRESHOLD = 20 * 1024 * 1024; // 20 MB
   private PersistentHashMapValueStorage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
   private static final long NULL_ADDR = 0;
@@ -70,8 +70,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
-  private int myBytesInMemoryCount = 0;
-
   private final LimitedPool<AppendStream> myStreamPool = new LimitedPool<AppendStream>(10, new LimitedPool.ObjectFactory<AppendStream>() {
     public AppendStream create() {
       return new AppendStream();
@@ -101,8 +99,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
         updateValueId(id, headerRecord);
 
         myStreamPool.recycle(value);
-
-        myBytesInMemoryCount -= bytes.length;
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -110,6 +106,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   };
 
+  private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
+    public void force() {
+      //System.out.println("Flushing caches: " + myFile.getPath());
+      synchronized (PersistentHashMap.this) {
+        synchronized (ourLock) {
+          PersistentHashMap.this.clearAppenderCaches();
+        }
+      }
+    }
+  });
+  
   public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
     this(file, keyDescriptor, valueExternalizer, 1024 * 4);
   }
@@ -203,16 +210,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       markDirty(true);
       
       final AppendStream stream = myAppendCache.get(key);
-      final int sizeBefore = stream.getBufferSize();
       appender.append(stream);
-      myBytesInMemoryCount += (stream.getBufferSize() - sizeBefore);
-      
-      if (myBytesInMemoryCount > APPEND_CACHE_DATA_THRESHOLD) {
-        LOG.warn(
-          "PersistentHashMap: OVER " + APPEND_CACHE_DATA_THRESHOLD + " BYTES IN APPEND STREAM CACHE, FORCING CACHE FLUSH (not optimal serialization format?) File: " + getDataFile(myFile).getPath()
-        );
-        myAppendCache.clear();
-      }
     }
   }
 
@@ -321,8 +319,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   public synchronized void force() {
     synchronized (ourLock) {
       try {
-        myAppendCache.clear();
-        myValueStorage.force();
+        clearAppenderCaches();
       }
       finally {
         super.force();
@@ -330,8 +327,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
+  private void clearAppenderCaches() {
+    myAppendCache.clear();
+    myValueStorage.force();
+  }
+
   public synchronized void close() throws IOException {
     synchronized (ourLock) {
+      myAppendCacheFlusher.stop();
       myAppendCache.clear();
       try {
         myValueStorage.dispose();

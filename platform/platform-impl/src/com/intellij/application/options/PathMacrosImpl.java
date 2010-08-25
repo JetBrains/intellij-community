@@ -26,13 +26,13 @@ import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  *  @author dsl
@@ -42,7 +42,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   private final Map<String,String> myLegacyMacros = new HashMap<String,String>();
   private final Map<String,String> myMacros = new HashMap<String, String>();
   private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
-  private final List<String> myIgnoredMacros = new CopyOnWriteArrayList<String>();
+  private final List<String> myIgnoredMacros = ContainerUtil.createEmptyCOWList();
 
   @NonNls
   public static final String MACRO_ELEMENT = "macro";

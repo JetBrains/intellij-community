@@ -306,6 +306,10 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     return false;
   }
 
+  public boolean isMainModuleModel(@NotNull ModuleRootModel rootModel) {
+    return false;
+  }
+
   private class OrderEntryProcessor<R> implements Processor<OrderEntry> {
     private R myValue;
     private final RootPolicy<R> myPolicy;

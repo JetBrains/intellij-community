@@ -199,6 +199,15 @@ public class FormatterUtil {
 
   }
 
+  public static ASTNode getPreviousNonSpaceSibling(ASTNode node) {
+    ASTNode prevNode = node.getTreePrev();
+    while (prevNode != null && prevNode.getPsi() instanceof PsiWhiteSpace) {
+      prevNode = prevNode.getTreePrev();
+    }
+    return prevNode;
+  }
+
+
   public static boolean isIncompleted(final ASTNode treeNode) {
     ASTNode lastChild = treeNode.getLastChildNode();
     while (lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE) {

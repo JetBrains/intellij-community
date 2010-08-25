@@ -16,11 +16,11 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A default implementation of {@link ActionGroup}. Provides the ability
@@ -36,11 +36,11 @@ public class DefaultActionGroup extends ActionGroup {
   /**
    * Contains instances of AnAction
    */
-  private final List<AnAction> mySortedChildren = new CopyOnWriteArrayList<AnAction>();
+  private final List<AnAction> mySortedChildren = ContainerUtil.createEmptyCOWList();
   /**
    * Contains instances of Pair
    */
-  private final List<Pair<AnAction,Constraints>> myPairs = new CopyOnWriteArrayList<Pair<AnAction, Constraints>>();
+  private final List<Pair<AnAction,Constraints>> myPairs = ContainerUtil.createEmptyCOWList();
 
   public DefaultActionGroup(){
     this(null, false);

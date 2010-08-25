@@ -266,7 +266,7 @@ public class GenerateMembersUtil {
       for (PsiTypeParameter typeParam : method.getTypeParameters()) {
         final PsiElement copy = typeParam.copy();
         final Map<PsiElement, PsiElement> replacementMap = new HashMap<PsiElement, PsiElement>();
-        copy.accept(new JavaRecursiveElementWalkingVisitor(){
+        copy.accept(new JavaRecursiveElementVisitor(){
           @Override
           public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);

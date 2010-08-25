@@ -37,6 +37,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -47,6 +49,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.List;
 
 public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
@@ -145,6 +148,11 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       }
     });
 
+    final Dimension preferredSize = calcTypeListPreferredSize(ModuleBuilder.getAllBuilders());
+    final JBScrollPane pane = IJSwingUtilities.findParentOfType(myTypesList, JBScrollPane.class);
+    pane.setPreferredSize(preferredSize);
+    pane.setMinimumSize(preferredSize);
+
     myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         if (!myModuleNameChangedByUser) {
@@ -242,6 +250,21 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         myModuleName.setSelectionEnd(moduleName.length());
       }
     }
+  }
+
+  private Dimension calcTypeListPreferredSize(final List<ModuleBuilder> allModuleTypes) {
+    int width = 0;
+    int height = 0;
+    final FontMetrics fontMetrics = myTypesList.getFontMetrics(myTypesList.getFont());
+    final int fontHeight = fontMetrics.getMaxAscent() + fontMetrics.getMaxDescent();
+    for (final ModuleBuilder type : allModuleTypes) {
+      final Icon icon = type.getBigIcon();
+      final int iconHeight = icon != null ? icon.getIconHeight() : 0;
+      final int iconWidth = icon != null ? icon.getIconWidth() : 0;
+      height += Math.max(iconHeight, fontHeight) + 6;
+      width = Math.max(width, iconWidth + fontMetrics.stringWidth(type.getPresentableName()) + 10);
+    }
+    return new Dimension(width, height);
   }
 
   private String getDefaultBaseDir(WizardContext wizardContext) {

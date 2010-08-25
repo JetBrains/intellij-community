@@ -143,7 +143,6 @@ public abstract class DialogWrapper {
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   protected DialogWrapper(Project project, boolean canBeParent) {
-    ensureEventDispatchThread();
     myPeer = createPeer(project, canBeParent);
     createDefaultActions();
   }

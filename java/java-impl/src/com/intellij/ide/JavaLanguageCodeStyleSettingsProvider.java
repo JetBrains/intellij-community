@@ -35,7 +35,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   public String getCodeSample(@NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) return SPACING_SAMPLE;
     if (settingsType == SettingsType.BLANK_LINES_SETTINGS) return BLANK_LINE_SAMPLE;
-    if (settingsType == SettingsType.WRAPPING_SETTINGS) return WRAPPING_CODE_SAMPLE;
+    if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) return WRAPPING_CODE_SAMPLE;
 
     return GENERAL_CODE_SAMPLE;
   }

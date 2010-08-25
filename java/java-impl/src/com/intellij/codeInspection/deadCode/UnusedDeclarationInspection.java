@@ -41,6 +41,7 @@ import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -104,12 +105,23 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   @NonNls private static final String [] HINTS = {COMMENT, DELETE};
 
   public final EntryPoint[] myExtensions;
+  private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspection.class.getName());
 
   public UnusedDeclarationInspection() {
     ContainerUtil.addAll(ADDITIONAL_ANNOTATIONS, ADDITIONAL_ANNOS);
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    final EntryPoint[] deadCodeAddins = point.getExtensions();
+    final EntryPoint[] deadCodeAddins = new EntryPoint[point.getExtensions().length];
+    EntryPoint[] extensions = point.getExtensions();
+    for (int i = 0, extensionsLength = extensions.length; i < extensionsLength; i++) {
+      EntryPoint entryPoint = extensions[i];
+      try {
+        deadCodeAddins[i] = entryPoint.clone();
+      }
+      catch (CloneNotSupportedException e) {
+        LOG.error(e);
+      }
+    }
     Arrays.sort(deadCodeAddins, new Comparator<EntryPoint>() {
       public int compare(final EntryPoint o1, final EntryPoint o2) {
         return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());

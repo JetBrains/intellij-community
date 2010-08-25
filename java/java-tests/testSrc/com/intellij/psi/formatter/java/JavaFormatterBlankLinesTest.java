@@ -307,6 +307,7 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
   public void testAroundClassHeader() {
     // Inspired by IDEA-54746
     getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 2;
+    getSettings().BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 1;
     doTextTest(
       "public class FormattingTest {\n" +
       "    public void foo() {\n" +
@@ -321,7 +322,6 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "\n" +
       "    public void foo() {\n" +
       "        Object buzz = new Object() {\n" +
-      "\n" +
       "\n" +
       "            Object test = new Object();\n" +
       "        };\n" +

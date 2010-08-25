@@ -38,6 +38,9 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertClassRoots(orderEntries(myModule).withoutSdk().productionOnly(), output);
     assertSourceRoots(orderEntries(myModule), srcRoot, testRoot);
     assertSourceRoots(orderEntries(myModule).productionOnly(), srcRoot);
+
+    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().classes().withoutSelfModuleOutput(), output);
+    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().productionOnly().classes().withoutSelfModuleOutput());
   }
 
   public void testLibraryScope() throws Exception {
@@ -61,6 +64,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), testOutput, output, getJDomJar());
     assertSourceRoots(orderEntries(myModule), srcRoot, testRoot);
     assertSourceRoots(orderEntries(myModule).recursively(), srcRoot, testRoot, getJDomSources());
+    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().recursively().classes().withoutSelfModuleOutput(), testOutput, output, getJDomJar());
   }
 
   public void testModuleDependencyScope() throws Exception {

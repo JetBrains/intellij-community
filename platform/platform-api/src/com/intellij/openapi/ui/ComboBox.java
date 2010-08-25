@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -76,7 +77,6 @@ public class ComboBox extends ComboBoxWithWidePopup {
     if (v && !wasVisible && !UIUtil.isUnderNativeMacLookAndFeel()) {
       reconfigureEditor();
     }
-
   }
 
   private void reconfigureEditor() {
@@ -131,11 +131,18 @@ public class ComboBox extends ComboBoxWithWidePopup {
           }
         }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   public final void setEditor(final ComboBoxEditor editor) {
-    super.setEditor(new MyEditor(this, editor));
+    ComboBoxEditor _editor = editor;
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
+      if ("AquaComboBoxEditor".equals(editor.getClass().getSimpleName())) {
+        _editor = new MacComboBoxEditor();
+      }
+    }
+
+    super.setEditor(new MyEditor(this, _editor));
   }
 
   public final Dimension getMinimumSize() {
@@ -144,31 +151,22 @@ public class ComboBox extends ComboBoxWithWidePopup {
 
   public final Dimension getPreferredSize() {
     int width = myMinimumAndPreferredWidth;
+    final Dimension preferredSize = super.getPreferredSize();
     if (width < 0) {
-      width = super.getPreferredSize().width;
+      width = preferredSize.width;
     }
-    final int height = getPreferredHeight();
-    return new Dimension(width, height);
+
+    return new Dimension(width, preferredSize.height);
   }
 
   protected Dimension getOriginalPreferredSize() {
     return super.getPreferredSize();
   }
 
-  private int getPreferredHeight() {
-    final Border border = getBorder();
-    final ComboBoxEditor editor = getEditor();
-    int height;
-    if (editor != null) {
-      height = editor.getEditorComponent().getPreferredSize().height;
-      if (border != null) {
-        height += border.getBorderInsets(this).top + border.getBorderInsets(this).bottom;
-      }
-    }
-    else {
-      height = super.getPreferredSize().height;
-    }
-    return height;
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+    MacUIUtil.drawComboboxFocusRing(this, g);
   }
 
   private static final class MyEditor implements ComboBoxEditor {
