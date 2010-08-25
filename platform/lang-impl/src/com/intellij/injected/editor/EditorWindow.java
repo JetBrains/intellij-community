@@ -295,6 +295,11 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return new LogicalPosition(lineNumber, column);
   }
 
+  @Override
+  public boolean isCaretActive() {
+    return myDelegate.isCaretActive();
+  }
+
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
     assert isValid();

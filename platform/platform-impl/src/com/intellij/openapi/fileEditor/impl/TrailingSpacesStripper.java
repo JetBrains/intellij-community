@@ -15,15 +15,42 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.AppTopics;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.TestOnly;
 
-public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
-  public void beforeDocumentSaving(final Document document) {
+import java.util.Set;
+
+public final class TrailingSpacesStripper {
+  private final Set<DocumentEx> myDocumentsToStripLater = new THashSet<DocumentEx>();
+
+  public TrailingSpacesStripper(MessageBus bus) {
+    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+      @Override
+      public void beforeAllDocumentsSaving() {
+        Set<DocumentEx> documentsToStrip = new THashSet<DocumentEx>(myDocumentsToStripLater);
+        myDocumentsToStripLater.clear();
+        for (DocumentEx documentEx : documentsToStrip) {
+          strip(documentEx);
+        }
+      }
+
+      @Override
+      public void beforeDocumentSaving(Document document) {
+        strip(document);
+      }
+    });
+  }
+
+  private void strip(final Document document) {
     if (!document.isWritable()) return;
 
     final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
@@ -33,30 +60,44 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     final boolean ensureEOL = settings.isEnsureNewLineAtEOF();
     if (!doStrip && !ensureEOL) return;
 
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        if (doStrip) {
-          final boolean inChangedLinesOnly = !settings.getStripTrailingSpaces().equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-          ((DocumentEx)document).stripTrailingSpaces(inChangedLinesOnly);
-        }
-
-        if (ensureEOL) {
-          final int lines = document.getLineCount();
-          if (lines > 0) {
-            int start = document.getLineStartOffset(lines - 1);
-            int end = document.getLineEndOffset(lines - 1);
-            if (start != end) {
-              CharSequence content = document.getCharsSequence();
-              if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end))) {
-                document.deleteString(start, end);
+        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          public void run() {
+            if (doStrip) {
+              final boolean inChangedLinesOnly =
+                !settings.getStripTrailingSpaces().equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+              DocumentEx ex = (DocumentEx)document;
+              boolean success = ex.stripTrailingSpaces(inChangedLinesOnly);
+              if (!success) {
+                myDocumentsToStripLater.add(ex);
               }
-              else {
-                document.insertString(end, "\n");
+            }
+
+            if (ensureEOL) {
+              final int lines = document.getLineCount();
+              if (lines > 0) {
+                int start = document.getLineStartOffset(lines - 1);
+                int end = document.getLineEndOffset(lines - 1);
+                if (start != end) {
+                  CharSequence content = document.getCharsSequence();
+                  if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end))) {
+                    document.deleteString(start, end);
+                  }
+                  else {
+                    document.insertString(end, "\n");
+                  }
+                }
               }
             }
           }
-        }
+        });
       }
     });
+  }
+
+  @TestOnly
+  public void dropAll() {
+    myDocumentsToStripLater.clear();
   }
 }
