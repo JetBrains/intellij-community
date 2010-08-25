@@ -169,6 +169,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (element1 == null) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), myDialogTitle,
                                           "refactoring.extractMethod");
+      return;
     }
     if (!checkIntroduceContext(file, editor, element1)) {
       return;
@@ -236,7 +237,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private void performActionOnElement(Editor editor,
-                                      PsiElement element,
+                                      @NotNull PsiElement element,
                                       String name,
                                       boolean replaceAll,
                                       boolean hasConstructor,
