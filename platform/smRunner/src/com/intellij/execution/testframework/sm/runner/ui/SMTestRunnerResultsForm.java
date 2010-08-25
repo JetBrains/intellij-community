@@ -445,6 +445,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
       myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
     final boolean finished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
+    if (finished && myTestsTotal == 0) {
+      // => empty suite
+      myStatusLine.setStatusColor(Color.LIGHT_GRAY);
+    }
     myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
                                                                        myTestsTotal, myTestsCurrentCount,
                                                                        myTestsFailuresCount, myMentionedCategories,
