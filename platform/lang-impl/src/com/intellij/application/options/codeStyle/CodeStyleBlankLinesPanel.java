@@ -78,12 +78,13 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.imports"), "BLANK_LINES_BEFORE_IMPORTS");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.imports"), "BLANK_LINES_AFTER_IMPORTS");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.class"), "BLANK_LINES_AROUND_CLASS");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.class.header"), "BLANK_LINES_AFTER_CLASS_HEADER");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.field"), "BLANK_LINES_AROUND_FIELD");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.method"), "BLANK_LINES_AROUND_METHOD");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.method.body"), "BLANK_LINES_BEFORE_METHOD_BODY");
     createOption(optionGroup, "Around field in interface:", "BLANK_LINES_AROUND_FIELD_IN_INTERFACE");
     createOption(optionGroup, "Around method in interface:", "BLANK_LINES_AROUND_METHOD_IN_INTERFACE");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.class.header"), "BLANK_LINES_AFTER_CLASS_HEADER");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.anonymous.class.header"), "BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER");
 
     return optionGroup.createPanel();
   }
@@ -223,5 +224,5 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
       myTextField.setText(String.valueOf(fieldValue));
     }
   }
-  
+
 }

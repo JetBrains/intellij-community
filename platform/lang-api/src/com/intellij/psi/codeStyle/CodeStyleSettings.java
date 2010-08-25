@@ -471,6 +471,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 
   public int BLANK_LINES_AFTER_CLASS_HEADER = 0;
+  public int BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 0;
   //public int BLANK_LINES_BETWEEN_CASE_BLOCKS;
 
 //----------------- SPACES --------------------
@@ -812,6 +813,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 //----------------- WRAPPING ---------------------------
   public int RIGHT_MARGIN = 120;
+  public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN = false;
 
   public static final int DO_NOT_WRAP = 0x00;
   public static final int WRAP_AS_NEEDED = 0x01;
