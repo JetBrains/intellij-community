@@ -232,7 +232,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               actions.add(addImportAction);
             }
           }
-          if (ref_text.length() > 2 && Character.isUpperCase(ref_text.charAt(0)) && !Character.isUpperCase(ref_text.charAt(1))) {
+          if (ref_text.length() > 2 && Character.isUpperCase(ref_text.charAt(0)) && !Character.isUpperCase(ref_text.charAt(1)) &&
+              PsiTreeUtil.getParentOfType(ref_element, PyImportStatement.class, PyFromImportStatement.class) == null) {
             actions.add(new CreateClassQuickFix(ref_text, reference.getElement()));
           }
         }
