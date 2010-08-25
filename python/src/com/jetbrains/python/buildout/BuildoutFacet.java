@@ -9,14 +9,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.appengine.facet.AppEngineFacetType;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,7 +37,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
   }
 
   @Nullable
-  public static VirtualFile getBinDir(VirtualFile baseDir) {
+  public static VirtualFile getRunner(VirtualFile baseDir) {
     if (baseDir == null) return null;
     final VirtualFile cfg = baseDir.findChild("buildout.cfg");
     if (cfg != null && !cfg.isDirectory()) {
