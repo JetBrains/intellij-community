@@ -3,6 +3,7 @@ ajax
 anyschema
 appender
 archivelog
+args
 arity
 asensitive
 auth
@@ -65,6 +66,7 @@ filesystem
 float4
 float8
 foreach
+formatter
 freelist
 freelists
 freepools
@@ -81,7 +83,9 @@ href
 hsqldb
 html
 http
+https
 impl
+inbox
 indextype
 infile
 init
@@ -94,6 +98,7 @@ instantiable
 intellij
 isnull
 javadoc
+javascript
 jetbrains
 jquery
 json
@@ -127,6 +132,7 @@ maxvalue
 mediumblob
 mediumint
 mediumtext
+metadata
 middleint
 minextents
 minimizable
@@ -141,6 +147,7 @@ mutex
 mutexes
 mysql
 namespace
+namespaces
 nchar
 nclob
 ndbcluster
@@ -174,6 +181,8 @@ nvarchar
 oauth
 oidindex
 online
+openid
+openssl
 outfile
 param
 params
@@ -185,6 +194,7 @@ pctversion
 permalink
 petersburg
 pipelined
+playlist
 plsql
 plugin
 plugins
@@ -195,6 +205,7 @@ prepend
 preprocessor
 processlist
 profiler
+progressbar
 readonly
 refactor
 refactored
@@ -247,6 +258,7 @@ tokenize
 tokenizer
 tooltips
 trinary
+twitter
 uncomment
 underwave
 undofile
@@ -277,5 +289,6 @@ xmlschemas
 xmltype
 xpath
 xslt
+youtube
 zend
 zerofill
