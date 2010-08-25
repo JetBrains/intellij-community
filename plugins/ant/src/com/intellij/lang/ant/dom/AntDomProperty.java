@@ -54,7 +54,7 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
   public abstract GenericAttributeValue<String> getResource();
 
   @Attribute("file")
-  @Convert(value = AntPathConverter.class)
+  @Convert(value = AntPathValidatingConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
   @Attribute("url")
@@ -199,7 +199,7 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
       }
       else {
         final GenericAttributeValue<String> resourceValue = getResource();
-        final GenericAttributeValue<String> prefixValue = getPrefix();
+        final String prefixValue = getPropertyPrefixValue();
         // todo: try to load the resource from classpath
         // todo: consider Url attribute?
       }
@@ -208,9 +208,14 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
   }
 
   @Nullable
-  private String getPropertyPrefixValue() {
+  public String getPropertyPrefixValue() {
     final GenericAttributeValue<String> prefixValue = getPrefix();
     if (prefixValue == null) {
+      return null;
+    }
+    // prefix is only valid when loading from an url, file or resource
+    final boolean prefixIsApplicable = (getName().getRawText() == null) && (getUrl().getRawText() != null || getFile().getRawText() != null || getResource().getRawText() != null);
+    if (!prefixIsApplicable) {
       return null;
     }
     final String prefix = prefixValue.getRawText();
