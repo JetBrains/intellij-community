@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 
@@ -53,7 +54,7 @@ public class PyFunctionBuilder {
   public PyFunction buildFunction(Project project) {
     String text = buildText(project);
     PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    return generator.createFromText(PyFunction.class, text);
+    return generator.createFromText(LanguageLevel.getDefault(), PyFunction.class, text);
   }
 
   private String buildText(Project project) {

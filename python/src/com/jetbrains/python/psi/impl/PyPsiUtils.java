@@ -77,7 +77,7 @@ public class PyPsiUtils {
       final String parentText = parent.getText();
       final String prefix = parentText.substring(0, textRange.getStartOffset());
       final String suffix = parentText.substring(textRange.getEndOffset(), parent.getTextLength());
-      final PsiElement expression = PyElementGenerator.getInstance(project).createFromText(parent.getClass(),
+      final PsiElement expression = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), parent.getClass(),
                                                                                            prefix + newExpression.getText() + suffix);
       return parent.replace(expression);
     }
@@ -204,7 +204,7 @@ public class PyPsiUtils {
       }
     }
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
-    final PsiElement result = elementGenerator.createFromText(PsiElement.class, builder.toString());
+    final PsiElement result = elementGenerator.createFromText(LanguageLevel.getDefault(), PsiElement.class, builder.toString());
     if (result == null) {
       throw new RuntimeException("Failed to create element from text " + builder.toString());
     }

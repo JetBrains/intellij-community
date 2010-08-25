@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,7 @@ public class PyWithReturnSurrounder extends PyStatementSurrounder {
   protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
     throws IncorrectOperationException {
     PyReturnStatement returnStatement =
-      PyElementGenerator.getInstance(project).createFromText(PyReturnStatement.class, "return a");
+      PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyReturnStatement.class, "return a");
     PyExpression expression = returnStatement.getExpression();
     assert expression != null;
     PsiElement element = elements[0];

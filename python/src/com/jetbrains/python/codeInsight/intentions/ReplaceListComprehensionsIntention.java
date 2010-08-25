@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyTupleExpression;
@@ -41,7 +41,7 @@ public class ReplaceListComprehensionsIntention implements IntentionAction {
       return;
     }
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PyExpressionStatement statement = elementGenerator.createFromText(PyExpressionStatement.class,
+    PyExpressionStatement statement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpressionStatement.class,
                                                                       "(" + expression.getText() + ")");
     expression.replace(statement.getExpression());
   }

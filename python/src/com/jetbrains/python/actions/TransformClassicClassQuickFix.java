@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
@@ -37,7 +38,7 @@ public class TransformClassicClassQuickFix implements LocalQuickFix {
       PyExpression[] superClassExpressions = pyClass.getSuperClassExpressions();
       PyElementGenerator generator = PyElementGenerator.getInstance(project);
       if (superClassExpressions.length == 0) {
-        pyClass.replace(generator.createFromText(PyClass.class,
+        pyClass.replace(generator.createFromText(LanguageLevel.getDefault(), PyClass.class,
                                                  "class " + pyClass.getName() + "(" +
                                                  PyNames.OBJECT + "):\n    " + pyClass.getStatementList().getText()));
       } else {
@@ -48,7 +49,7 @@ public class TransformClassicClassQuickFix implements LocalQuickFix {
         }
         stringBuilder.append(PyNames.OBJECT).append(":\n    ");
         stringBuilder.append(pyClass.getStatementList().getText());
-        pyClass.replace(generator.createFromText(PyClass.class, stringBuilder.toString()));
+        pyClass.replace(generator.createFromText(LanguageLevel.getDefault(), PyClass.class, stringBuilder.toString()));
       }
     }
   }

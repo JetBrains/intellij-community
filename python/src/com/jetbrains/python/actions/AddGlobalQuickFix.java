@@ -1,27 +1,16 @@
 package com.jetbrains.python.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyClassScopeProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.python.core.PyMethod;
 
 /**
  * @author oleg
@@ -65,7 +54,7 @@ public class AddGlobalQuickFix implements LocalQuickFix {
         return;
       }
       final PyGlobalStatement globalStatement =
-        PyElementGenerator.getInstance(project).createFromText(PyGlobalStatement.class, "global " + name);
+        PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyGlobalStatement.class, "global " + name);
       if (owner instanceof PyClass){
         final PyStatementList statementList = ((PyClass)owner).getStatementList();
         statementList.addBefore(globalStatement, statementList.getStatements()[0]);

@@ -121,7 +121,8 @@ public class FieldIntroduceHandler extends IntroduceHandler {
         }
       }
     }
-    return PyElementGenerator.getInstance(project).createFromText(PyAssignmentStatement.class, selfName + "." + assignmentText);
+    final LanguageLevel langLevel = LanguageLevel.forElement(anchor);
+    return PyElementGenerator.getInstance(project).createFromText(langLevel, PyAssignmentStatement.class, selfName + "." + assignmentText);
   }
 
   @Override
@@ -170,7 +171,7 @@ public class FieldIntroduceHandler extends IntroduceHandler {
       }
       final String text = myDeclaration.getText();
       final Project project = myDeclaration.getProject();
-      return PyElementGenerator.getInstance(project).createFromText(PyStatement.class,
+      return PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyStatement.class,
                                                                     text.replaceFirst(PyNames.CANONICAL_SELF + "\\.", self_name + "."));
     }
   }

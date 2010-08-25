@@ -330,7 +330,9 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
 
     private void replace(final PsiElement psiElement) {
-      final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(psiElement.getProject()).createDummyFile("for _ in tuples:\n  pass");
+      final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(psiElement.getProject()).createDummyFile(LanguageLevel.getDefault(),
+                                                                                                             "for _ in tuples:\n  pass"
+      );
       final PyExpression target = ((PyForStatement)pyFile.getStatements().get(0)).getForPart().getTarget();
       CommandProcessor.getInstance().executeCommand(psiElement.getProject(), new Runnable() {
         public void run() {

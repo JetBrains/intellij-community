@@ -386,7 +386,7 @@ public class StatementMover extends LineMover {
     super.beforeMove(editor, info, down);
     if (myStatementListToAddPass != null) {
       final PyPassStatement passStatement =
-        PyElementGenerator.getInstance(editor.getProject()).createFromText(PyPassStatement.class, "pass");
+        PyElementGenerator.getInstance(editor.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, "pass");
       myStatementListToAddPass.add(passStatement);
       CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myStatementListToAddPass);
       if (down) {

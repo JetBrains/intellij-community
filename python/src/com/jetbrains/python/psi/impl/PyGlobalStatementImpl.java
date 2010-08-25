@@ -1,9 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
@@ -47,6 +44,6 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
   public void addGlobal(final String name) {
     final PyElementGenerator pyElementGenerator = PyElementGenerator.getInstance(getProject());
     add(pyElementGenerator.createComma().getPsi());
-    add(pyElementGenerator.createFromText(PyGlobalStatement.class, "global " + name).getGlobals()[0]);
+    add(pyElementGenerator.createFromText(LanguageLevel.getDefault(), PyGlobalStatement.class, "global " + name).getGlobals()[0]);
   }
 }

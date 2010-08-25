@@ -9,7 +9,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +54,7 @@ public class ConvertSetLiteralIntention implements IntentionAction {
           stringBuilder.append(", ");
           stringBuilder.append(expressions[i].getText());
         }
-        PyStatement newElement = elementGenerator.createFromText(PyExpressionStatement.class, "set([" + stringBuilder.toString() + "])");
+        PyStatement newElement = elementGenerator.createFromText(LanguageLevel.getDefault(), PyExpressionStatement.class, "set([" + stringBuilder.toString() + "])");
         setLiteral.replace(newElement);
       }
     }

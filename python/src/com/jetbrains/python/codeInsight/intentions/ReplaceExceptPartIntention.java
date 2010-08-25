@@ -12,16 +12,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 16.02.2010
- * Time: 18:07:55
+ * @author Alexey.Ivanov
  */
 public class ReplaceExceptPartIntention implements IntentionAction {
   @NotNull
@@ -54,7 +52,7 @@ public class ReplaceExceptPartIntention implements IntentionAction {
     }
     assert element != null;
     PyTryExceptStatement newElement =
-      elementGenerator.createFromText(PyTryExceptStatement.class, "try:  pass except a as b:  pass");
+      elementGenerator.createFromText(LanguageLevel.forElement(exceptPart), PyTryExceptStatement.class, "try:  pass except a as b:  pass");
     ASTNode node = newElement.getExceptParts()[0].getNode().findChildByType(PyTokenTypes.AS_KEYWORD);
     assert node != null;
     element.replace(node.getPsi());

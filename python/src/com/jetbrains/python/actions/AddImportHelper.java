@@ -89,7 +89,7 @@ public class AddImportHelper {
     if (asName == null) as_clause = "";
     else as_clause = " as " + asName;
     final PyFromImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createFromText(
-        PyFromImportStatement.class, "from " + from + " import " + name + as_clause + "\n\n");
+      LanguageLevel.getDefault(), PyFromImportStatement.class, "from " + from + " import " + name + as_clause + "\n\n");
     try {
       file.addBefore(importNodeToInsert, getInsertPosition(file));
     }

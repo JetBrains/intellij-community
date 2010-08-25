@@ -2,7 +2,6 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +14,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
+
 import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.findDefinitions;
 import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.showConflicts;
 import com.jetbrains.python.psi.*;
@@ -141,7 +140,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
         else {
           // add alias
           ASTNode my_ielt_node = sure(myImportElement.getNode());
-          PyImportElement fountain = generator.createFromText(PyImportElement.class, "import foo as "+target_name, new int[]{0,2});
+          PyImportElement fountain = generator.createFromText(LanguageLevel.getDefault(), PyImportElement.class, "import foo as "+target_name, new int[]{0,2});
           ASTNode graft_node = sure(fountain.getNode()); // at import elt
           graft_node = sure(graft_node.getFirstChildNode()); // at ref
           graft_node = sure(graft_node.getTreeNext()); // space

@@ -64,7 +64,7 @@ public class PyExtractSuperclassHelper {
           public void run() {
             final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
             final String text = PyClassRefactoringUtil.prepareClassText(clazz, elements, true, true, superBaseName) + "\n";
-            final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(PyClass.class, text);
+            final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
             newClassRef.set(newClass);
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, newClass);
             PyClassRefactoringUtil.addSuperclasses(project, clazz, null, Collections.singleton(superBaseName));
@@ -137,7 +137,7 @@ public class PyExtractSuperclassHelper {
     }
     text.append("import ").append(name).append("\n");
 
-    final PyStatement imp = PyElementGenerator.getInstance(project).createFromText(PyStatement.class, text.toString());
+    final PyStatement imp = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyStatement.class, text.toString());
     PyPsiUtils.addBeforeInParent(clazz, imp, imp.getNextSibling());
   }
 

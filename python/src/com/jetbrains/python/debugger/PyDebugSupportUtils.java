@@ -23,7 +23,7 @@ public class PyDebugSupportUtils {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
 
-        final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(expression);
+        final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
         return file.getFirstChild() instanceof PyExpressionStatement && file.getFirstChild() == file.getLastChild();
 
       }
@@ -66,7 +66,7 @@ public class PyDebugSupportUtils {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
 
-        final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(expression);
+        final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
         final PsiElement root = file.getFirstChild();
         return root instanceof PyExpressionStatement &&
                root.getFirstChild() instanceof PyReferenceExpression &&

@@ -285,7 +285,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected abstract String getHelpId();
 
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText, PsiElement anchor) {
-    return PyElementGenerator.getInstance(project).createFromText(PyAssignmentStatement.class, assignmentText);
+    return PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyAssignmentStatement.class, assignmentText);
   }
 
   protected boolean checkEnabled(Project project, Editor editor, PsiElement element1, String dialogTitle) {

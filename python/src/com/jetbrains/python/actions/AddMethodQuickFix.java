@@ -103,7 +103,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       PyFunction meth = builder.buildFunction(project);
       if (deco_name != null) {
         PyElementGenerator generator = PyElementGenerator.getInstance(project);
-        PyDecoratorList deco_list = generator.createFromText(PyDecoratorList.class, "@" + deco_name + "\ndef foo(): pass", new int[]{0, 0});
+        PyDecoratorList deco_list = generator.createFromText(LanguageLevel.getDefault(), PyDecoratorList.class, "@" + deco_name + "\ndef foo(): pass", new int[]{0, 0});
         meth.addBefore(deco_list, meth.getFirstChild()); // in the very beginning
       }
       

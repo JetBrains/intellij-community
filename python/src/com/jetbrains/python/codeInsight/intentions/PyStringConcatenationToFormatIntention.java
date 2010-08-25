@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,7 +88,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     PyStringLiteralExpression stringLiteralExpression =
       elementGenerator.createStringLiteralAlreadyEscaped("\"" + stringLiteral.toString() + "\"");
     PyParenthesizedExpression expression = (PyParenthesizedExpression)elementGenerator
-      .createFromText(PyExpressionStatement.class, parameters.substring(0, parameters.length() - 2) + ")").getExpression();
+      .createFromText(LanguageLevel.getDefault(), PyExpressionStatement.class, parameters.substring(0, parameters.length() - 2) + ")").getExpression();
     element.replace(elementGenerator.createBinaryExpression("%", stringLiteralExpression, expression));
   }
 }
