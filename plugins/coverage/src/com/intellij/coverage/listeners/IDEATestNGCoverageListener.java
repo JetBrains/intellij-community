@@ -13,28 +13,32 @@ public class IDEATestNGCoverageListener extends CoverageListener implements IDEA
   public void onTestStart(final ITestResult iTestResult) {
     final Object data = getData();
     if (data != null) {
-      ((com.intellij.rt.coverage.data.ProjectData)data).testStarted(iTestResult.getTestClass().getName() + "." + iTestResult.getName());
+      ((com.intellij.rt.coverage.data.ProjectData)data).testStarted(getSanitizeTestName(iTestResult));
     }
+  }
+
+  private static String getSanitizeTestName(ITestResult iTestResult) {
+    return sanitize(iTestResult.getTestClass().getName(), iTestResult.getName());
   }
 
   public void onTestSuccess(final ITestResult iTestResult) {
     final Object data = getData();
     if (data != null) {
-      ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(iTestResult.getTestClass().getName() + "." + iTestResult.getName());
+      ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(getSanitizeTestName(iTestResult));
     }
   }
 
   public void onTestFailure(final ITestResult iTestResult) {
     final Object data = getData();
     if (data != null) {
-      ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(iTestResult.getTestClass().getName() + "." + iTestResult.getName());
+      ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(getSanitizeTestName(iTestResult));
     }
   }
 
   public void onTestSkipped(final ITestResult iTestResult) {
     final Object data = getData();
     if (data != null) {
-      ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(iTestResult.getTestClass().getName() + "." + iTestResult.getName());
+      ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(getSanitizeTestName(iTestResult));
     }
   }
 

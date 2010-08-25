@@ -350,15 +350,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Nullable
   public String getTestMethodName(@NotNull final PsiElement element,
                                   @NotNull final AbstractTestProxy testProxy) {
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-      final PsiClass psiClass = method.getContainingClass();
-      assert psiClass != null;
-
-      return psiClass.getQualifiedName() + "." + method.getName();
-    }
-
-    return null;
+    return testProxy.toString();
   }
 
 
