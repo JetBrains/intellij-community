@@ -123,7 +123,7 @@ public class PyExtractSuperclassHelper {
 
     LOG.assertTrue(psiFile != null);
     insertImport(project, clazz, newClass, psiFile.getVirtualFile());
-    PyPsiUtils.addToEnd(psiFile, newClass, newClass.getNextSibling());
+    psiFile.add(newClass);
   }
 
   private static void insertImport(Project project, PyClass clazz, PyClass newClass, VirtualFile newFile) {

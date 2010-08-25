@@ -86,15 +86,6 @@ public class PyPsiUtils {
     }
   }
 
-  public static void addToEnd(@NotNull final PsiElement psiElement, @NotNull final PsiElement... newElements) {
-    final ASTNode psiNode = psiElement.getNode();
-    LOG.assertTrue(psiNode != null);
-    for (PsiElement newElement : newElements) {
-      //noinspection ConstantConditions
-      psiNode.addChild(newElement.getNode());
-    }
-  }
-
   public static void addBeforeInParent(@NotNull final PsiElement anchor, @NotNull final PsiElement... newElements) {
     final ASTNode anchorNode = anchor.getNode();
     LOG.assertTrue(anchorNode != null);
