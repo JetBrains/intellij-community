@@ -637,6 +637,20 @@ public class PyUtil {
     return expr;
   }
 
+  public static String getFirstParameterName(PyFunction container) {
+    String selfName = PyNames.CANONICAL_SELF;
+    if (container != null) {
+      final PyParameter[] params = container.getParameterList().getParameters();
+      if (params.length > 0) {
+        final PyNamedParameter named = params[0].getAsNamed();
+        if (named != null) {
+          selfName = named.getName();
+        }
+      }
+    }
+    return selfName;
+  }
+
   public static class UnderscoreFilter implements Condition<String> {
     private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
 

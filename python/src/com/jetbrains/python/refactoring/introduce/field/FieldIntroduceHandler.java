@@ -110,17 +110,8 @@ public class FieldIntroduceHandler extends IntroduceHandler {
 
   @Override
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText, PsiElement anchor) {
-    String selfName = PyNames.CANONICAL_SELF;
     final PyFunction container = PsiTreeUtil.getParentOfType(anchor, PyFunction.class);
-    if (container != null) {
-      final PyParameter[] params = container.getParameterList().getParameters();
-      if (params.length > 0) {
-        final PyNamedParameter named = params[0].getAsNamed();
-        if (named != null) {
-          selfName = named.getName();
-        }
-      }
-    }
+    String selfName = PyUtil.getFirstParameterName(container);
     final LanguageLevel langLevel = LanguageLevel.forElement(anchor);
     return PyElementGenerator.getInstance(project).createFromText(langLevel, PyAssignmentStatement.class, selfName + "." + assignmentText);
   }

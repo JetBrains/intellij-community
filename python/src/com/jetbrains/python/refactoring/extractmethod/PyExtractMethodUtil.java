@@ -91,7 +91,7 @@ public class PyExtractMethodUtil {
                 builder.append("return ");
               }
               if (isMethod){
-                builder.append("self.");
+                appendSelf(elementsRange.get(0), builder);
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
@@ -136,7 +136,7 @@ public class PyExtractMethodUtil {
               // Generate call element
               builder.append(" = ");
               if (isMethod){
-                builder.append("self.");
+                appendSelf(elementsRange.get(0), builder);
               }
               builder.append(methodName).append("(");
               builder.append(createCallArgsString(variableData)).append(")");
@@ -152,6 +152,10 @@ public class PyExtractMethodUtil {
         }
       }, "Extract method", null);
     }
+  }
+
+  private static void appendSelf(PsiElement firstElement, StringBuilder builder) {
+    builder.append(PyUtil.getFirstParameterName(PsiTreeUtil.getParentOfType(firstElement, PyFunction.class))).append(".");
   }
 
   public static void extractFromExpression(final Project project,
@@ -198,7 +202,7 @@ public class PyExtractMethodUtil {
                 builder.append("return ");
               }
               if (isMethod){
-                builder.append("self.");
+                appendSelf(expression, builder);
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
