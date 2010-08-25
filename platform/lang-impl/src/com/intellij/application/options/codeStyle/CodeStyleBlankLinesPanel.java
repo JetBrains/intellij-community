@@ -90,6 +90,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.method.body"), "BLANK_LINES_BEFORE_METHOD_BODY");
     createOption(optionGroup, "Around field in interface:", "BLANK_LINES_AROUND_FIELD_IN_INTERFACE");
     createOption(optionGroup, "Around method in interface:", "BLANK_LINES_AROUND_METHOD_IN_INTERFACE");
+    initCustomOptions(optionGroup, BLANK_LINES);
 
     return optionGroup.createPanel();
   }
