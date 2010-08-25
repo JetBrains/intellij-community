@@ -1496,7 +1496,7 @@ if __name__ == "__main__":
     if sys.version_info[0] > 2:
         import io  # in 3.0
 
-        fopen = io.open
+        fopen = lambda name, mode: io.open(name, mode, encoding='utf-8')
     else:
         fopen = open
 
