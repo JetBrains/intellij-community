@@ -36,5 +36,7 @@ public interface CodeStyleSettingsCustomizable {
 
   void showStandardOptions(String... optionNames);
 
-  void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, String fieldName, String optionName, String groupName);
+  void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, String fieldName, String title, String groupName);
+
+  void renameStandardOption(String fieldName, String newTitle);
 }

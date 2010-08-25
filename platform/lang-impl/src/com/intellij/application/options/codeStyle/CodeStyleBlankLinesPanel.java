@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.OptionGroup;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,6 +38,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   private Set<String> myAllowedOptions = new HashSet<String>();
   private boolean myAllOptionsAllowed = false;
   private boolean myIsFirstUpdate = true;
+  private final Map<String, String> myRenamedFields = new THashMap<String, String>();
 
   private MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>> myCustomOptions
     = new MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>>();
@@ -108,18 +110,22 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   private void initCustomOptions(OptionGroup optionGroup, String groupName) {
     for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> each : myCustomOptions.get(groupName)) {
-      doCreateOption(optionGroup, each.third, new IntOption(each.first, each.second));
+      doCreateOption(optionGroup, each.third, new IntOption(each.first, each.second), each.second);
     }
   }
 
-  private void createOption(OptionGroup optionGroup, String label, String fieldName) {
+  private void createOption(OptionGroup optionGroup, String title, String fieldName) {
     if (myAllOptionsAllowed || myAllowedOptions.contains(fieldName)) {
-      doCreateOption(optionGroup, label, new IntOption(fieldName));
+      doCreateOption(optionGroup, title, new IntOption(fieldName), fieldName);
     }
   }
 
-  private void doCreateOption(OptionGroup optionGroup, String label, IntOption option) {
-    optionGroup.add(new JLabel(label), option.myTextField);
+  private void doCreateOption(OptionGroup optionGroup, String title, IntOption option, String fieldName) {
+    String renamed = myRenamedFields.get(fieldName);
+    if (renamed != null) title = renamed;
+    
+    JLabel l = new JLabel(title);
+    optionGroup.add(l, option.myTextField);
     myOptions.add(option);
   }
 
@@ -181,16 +187,23 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
-                               String optionName,
+                               String title,
                                String groupName) {
     if (myIsFirstUpdate) {
-      myCustomOptions.putValue(groupName, (Trinity)Trinity.create(settingsClass, fieldName, optionName));
+      myCustomOptions.putValue(groupName, (Trinity)Trinity.create(settingsClass, fieldName, title));
     }
 
     for (IntOption option : myOptions) {
       if (option.myTarget.getName().equals(fieldName)) {
         option.myTextField.setEnabled(true);
       }
+    }
+  }
+
+  @Override
+  public void renameStandardOption(String fieldName, String newTitle) {
+    if (myIsFirstUpdate) {
+      myRenamedFields.put(fieldName, newTitle);
     }
   }
 

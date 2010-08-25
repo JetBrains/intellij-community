@@ -177,8 +177,13 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   @Override
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
-                               String optionName,
+                               String title,
                                String groupName) {
+    //TODO: IMPLEMENT
+  }
+
+  @Override
+  public void renameStandardOption(String fieldName, String newTitle) {
     //TODO: IMPLEMENT
   }
 
