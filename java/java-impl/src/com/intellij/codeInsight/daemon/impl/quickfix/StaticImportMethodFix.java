@@ -42,6 +42,7 @@ import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -139,7 +140,8 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   public static boolean isExcluded(PsiMethod method) {
-    String name = getQName(method);
+    String name = getMethodQualifiedName(method);
+    if (name == null) return false;
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     for (String excluded : cis.EXCLUDED_PACKAGES) {
       if (name.equals(excluded) || name.startsWith(excluded + ".")) {
@@ -199,7 +201,7 @@ public class StaticImportMethodFix implements IntentionAction {
             return FINAL_CHOICE;
           }
 
-          String qname = getQName(selectedValue);
+          String qname = getMethodQualifiedName(selectedValue);
           if (qname == null) return FINAL_CHOICE;
           List<String> excludableStrings = AddImportAction.getAllExcludableStrings(qname);
           return new BaseListPopupStep<String>(null, excludableStrings) {
@@ -264,12 +266,13 @@ public class StaticImportMethodFix implements IntentionAction {
     popup.showInBestPositionFor(editor);
   }
 
-  private static String getQName(PsiMethod selectedValue) {
-    PsiClass containingClass = selectedValue.getContainingClass();
+  @Nullable
+  public static String getMethodQualifiedName(PsiMethod method) {
+    PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return null;
     String className = containingClass.getQualifiedName();
     if (className == null) return null;
-    return className + "." + selectedValue.getName();
+    return className + "." + method.getName();
   }
 
   public boolean startInWriteAction() {
