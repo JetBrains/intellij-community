@@ -21,6 +21,8 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMName;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -37,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -44,6 +47,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHintTreeComponent;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
+import com.sun.jdi.Method;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +63,7 @@ import java.awt.*;
 public class ValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHint");
   private PsiExpression myCurrentExpression = null;
+  private Value myValueToShow = null;
 
   private ValueHint(Project project, Editor editor, Point point, ValueHintType type, final PsiExpression selectedExpression, final TextRange textRange) {
     super(project, editor, point, type, textRange);
@@ -66,8 +71,10 @@ public class ValueHint extends AbstractValueHint {
   }
 
   public static ValueHint createValueHint(Project project, Editor editor, Point point, ValueHintType type) {
-    Pair<PsiExpression, TextRange> pair = getSelectedExpression(project, editor, point, type);
-    return new ValueHint(project, editor, point, type, pair.getFirst(), pair.getSecond());
+    Trinity<PsiExpression, TextRange, Value> trinity = getSelectedExpression(project, editor, point, type);
+    final ValueHint hint = new ValueHint(project, editor, point, type, trinity.getFirst(), trinity.getSecond());
+    hint.myValueToShow = trinity.getThird();
+    return hint;
   }
 
   protected boolean canShowHint() {
@@ -94,11 +101,10 @@ public class ValueHint extends AbstractValueHint {
 
 
             final TextWithImports text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
-            final Value value = evaluator.evaluate(evaluationContext);
+            final Value value = myValueToShow != null? myValueToShow : evaluator.evaluate(evaluationContext);
 
             final WatchItemDescriptor descriptor = new WatchItemDescriptor(getProject(), text, value);
             if (!isActiveTootlipApplicable(value) || getType() == ValueHintType.MOUSE_OVER_HINT) {
-              descriptor.setContext(evaluationContext);
               if (getType() == ValueHintType.MOUSE_OVER_HINT) {
                 // force using default renderer for mouse over hint in order to not to call accidentaly methods while rendering
                 // otherwise, if the hint is invoked explicitly, show it with the right "auto" renderer
@@ -241,9 +247,10 @@ public class ValueHint extends AbstractValueHint {
     return null;
   }
 
-  private static Pair<PsiExpression, TextRange> getSelectedExpression(final Project project, final Editor editor, final Point point, final ValueHintType type) {
+  private static Trinity<PsiExpression, TextRange, Value> getSelectedExpression(final Project project, final Editor editor, final Point point, final ValueHintType type) {
     final Ref<PsiExpression> selectedExpression = Ref.create(null);
     final Ref<TextRange> currentRange = Ref.create(null);
+    final Ref<Value> preCalculatedValue = Ref.create(null);
 
     PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Runnable() {
       public void run() {
@@ -270,17 +277,51 @@ public class ValueHint extends AbstractValueHint {
           }
         }
 
+        
         if(currentRange.get() == null) {
           PsiElement elementAtCursor = psiFile.findElementAt(offset);
-          if (elementAtCursor == null) return;
+          if (elementAtCursor == null) {
+            return;
+          }
           Pair<PsiExpression, TextRange> pair = findExpression(elementAtCursor, type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT);
-          if (pair == null) return;
+          if (pair == null) {
+            if (type == ValueHintType.MOUSE_OVER_HINT) {
+              final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
+              if(debuggerSession != null && debuggerSession.isPaused()) {
+                final Pair<Method, Value> lastExecuted = debuggerSession.getProcess().getLastExecutedMethod();
+                if (lastExecuted != null) {
+                  final Method method = lastExecuted.getFirst();
+                  if (method != null) {
+                    final Pair<PsiExpression, TextRange> expressionPair = findExpression(elementAtCursor, true);
+                    if (expressionPair != null && expressionPair.getFirst() instanceof PsiMethodCallExpression) {
+                      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expressionPair.getFirst();
+                      final PsiMethod psiMethod = methodCallExpression.resolveMethod();
+                      if (psiMethod != null) {
+                        final JVMName jvmSignature = JVMNameUtil.getJVMSignature(psiMethod);
+                        try {
+                          if (method.name().equals(psiMethod.getName()) && method.signature().equals(jvmSignature.getName(debuggerSession.getProcess()))) {
+                            pair = expressionPair;
+                            preCalculatedValue.set(lastExecuted.getSecond());
+                          }
+                        }
+                        catch (EvaluateException ignored) {
+                        }
+                      }
+                    }
+                  }                                                                                      
+                }
+              }
+            }
+          }
+          if (pair == null) {
+            return;
+          }
           selectedExpression.set(pair.getFirst());
           currentRange.set(pair.getSecond());
         }
       }
     });
-    return Pair.create(selectedExpression.get(), currentRange.get());
+    return Trinity.create(selectedExpression.get(), currentRange.get(), preCalculatedValue.get());
   }
 
 }
