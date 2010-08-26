@@ -55,6 +55,7 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
         sectionHeader.done(SECTION_HEADER);
       }
       else {
+        error("Section name expected.");
         sectionHeader.drop();
         res = false;
       }
@@ -64,6 +65,14 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
         parseKeyValue();
       }
       section.done(SECTION);
+
+      if (is(VALUE_CHARACTERS)) {
+        advance();        
+        error("Key expected.");
+      }
+      while (is(VALUE_CHARACTERS) ) {
+        skipLine();
+      }
 
       return res;
     }
@@ -80,22 +89,10 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
       }
 
       PsiBuilder.Marker value = mark();
-      boolean done = false;
-      while (is(MULTILINE_VALUE_CHARACTERS)) {
+      while (is(VALUE_CHARACTERS)) {
         advance();
-        done = true;
       }
-      if (!done && is(VALUE_CHARACTERS)) {
-        advance();
-        done = true;
-      }
-      if (done) {
-        value.done(VALUE);
-      }
-      else {
-        error("Value expected.");
-        value.drop();
-      }
+      value.done(VALUE);
     }
 
     private boolean parseSectionHeader() {
@@ -108,7 +105,6 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
         }
         else {
           sectionName.drop();
-          error("Section name expected.");
           return false;
         }
 
@@ -149,7 +145,7 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
     }
 
     private void skipLine() {
-      while ((!is(null) && !is(LBRACKET) && !is(KEY_CHARACTERS) && !is(MULTILINE_VALUE_CHARACTERS))) {
+      while (!is(null) && !is(LBRACKET) && !is(KEY_CHARACTERS)) {
         myBuilder.advanceLexer();
       }
     }

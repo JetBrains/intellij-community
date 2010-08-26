@@ -18,8 +18,6 @@ public interface BuildoutCfgTokenTypes {
   BuildoutCfgElementType KEY_CHARACTERS = new BuildoutCfgElementType("KEY_CHARACTERS");
   BuildoutCfgElementType KEY_VALUE_SEPARATOR = new BuildoutCfgElementType("KEY_VALUE_SEPARATOR");
   BuildoutCfgElementType VALUE_CHARACTERS = new BuildoutCfgElementType("VALUE_CHARACTERS");
-  BuildoutCfgElementType MULTILINE_VALUE_CHARACTERS = new BuildoutCfgElementType("MULTILINE_VALUE_CHARACTERS");
-
 
   BuildoutCfgElementType LBRACKET = new BuildoutCfgElementType("[");
   BuildoutCfgElementType RBRACKET = new BuildoutCfgElementType("]");
