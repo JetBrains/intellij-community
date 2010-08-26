@@ -371,8 +371,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // NOTE: fast enough to be rerun every time
     Property prop = lookInDecoratedProperties(name_filter, property_filter, advanced);
     if (prop != null) return prop;
-    prop = lookInStubProperties(name_filter, property_filter);
-    if (prop != null) return prop;
+    if (getStub() != null) {
+      prop = lookInStubProperties(name_filter, property_filter);
+      if (prop != null) return prop;
+    }
     else {
       // name = property(...) assignments from PSI
       for (PyTargetExpression target : getClassAttributes()) {
@@ -737,8 +739,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (containingFile instanceof PyFile) {
       final PsiElement element = ((PyFile)containingFile).findExportedName(PyNames.METACLASS);
       if (element instanceof PyTargetExpression) {
-        final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
-        if (assignedValue != null && assignedValue.getText().equals("type")) {
+        final PyQualifiedName qName = ((PyTargetExpression)element).getAssignedQName();
+        if (qName != null && qName.matches("type")) {
           return true;
         }
       }
