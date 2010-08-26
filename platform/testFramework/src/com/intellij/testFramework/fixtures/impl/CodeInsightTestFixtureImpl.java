@@ -602,6 +602,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute();
   }
 
+  @Override
+  public void type(String s) {
+    for (int i = 0; i < s.length(); i++) {
+      type(s.charAt(i));
+    }
+  }
+
   public void performEditorAction(final String actionId) {
     assertInitialized();
     final DataContext dataContext = DataManager.getInstance().getDataContext();

@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="module" module-name="notNull" />
+    <orderEntry type="library" name="Groovy" level="project" />
   </component>
 </module>
 

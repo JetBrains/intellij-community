@@ -16,11 +16,12 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -63,6 +64,11 @@ public class InsertionContext {
   @NotNull
   public Editor getEditor() {
     return myEditor;
+  }
+
+  @NotNull
+  public Document getDocument() {
+    return getEditor().getDocument();
   }
 
   public OffsetMap getOffsetMap() {
