@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,43 +28,14 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor{
          * @noinspection StaticCollection
          */
     @NonNls private static final Set<String> queryNames =
-            new HashSet<String>(35);
+            new HashSet<String>(6);
     static{
-        queryNames.add("clone");
-        queryNames.add("contains");
-        queryNames.add("containsAll");
-        queryNames.add("containsKey");
-        queryNames.add("containsValue");
         queryNames.add("copyInto");
         queryNames.add("drainTo");
-        queryNames.add("entrySet");
-        queryNames.add("element");
-        queryNames.add("elements");
-        queryNames.add("empty");
-        queryNames.add("enumeration");
-        queryNames.add("firstElement");
-        queryNames.add("get");
-        queryNames.add("getFirst");
-        queryNames.add("getLast");
-        queryNames.add("getProperty");
-        queryNames.add("indexOf");
-        queryNames.add("isEmpty");
-        queryNames.add("iterator");
-        queryNames.add("keys");
-        queryNames.add("keySet");
-        queryNames.add("lastElement");
-        queryNames.add("lastIndexOf");
-        queryNames.add("peek");
-        queryNames.add("poll");
-        queryNames.add("pop");
         queryNames.add("propertyNames");
         queryNames.add("save");
-        queryNames.add("size");
         queryNames.add("store");
-        queryNames.add("storeToXML");
-        queryNames.add("subList");
-        queryNames.add("toArray");
-        queryNames.add("values");
+        queryNames.add("write");
     }
 
     private boolean queried = false;
@@ -114,12 +85,22 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor{
                 call.getParent() instanceof PsiExpressionStatement;
         if(isStatement){
             final String methodName = methodExpression.getReferenceName();
-            if(!queryNames.contains(methodName)){
+            if (methodName == null) {
                 return;
             }
+            if(!queryNames.contains(methodName)){
+                boolean found = false;
+                for (String queryName : queryNames) {
+                    if (methodName.startsWith(queryName)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    return;
+                }
+            }
         }
-        // !isStatement when the return values of updates
-        // are used as an implicit query
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
         checkQualifier(qualifier);
