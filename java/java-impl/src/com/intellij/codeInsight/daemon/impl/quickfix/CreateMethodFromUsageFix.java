@@ -35,7 +35,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -180,7 +179,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
       PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       doCreate(targetClass, method, shouldBeAbstract(targetClass),
-               ContainerUtil.map2List(arguments, Pair.createFunction(PsiExpression.class, ((PsiType)null))),
+               ContainerUtil.map2List(arguments, Pair.<PsiExpression, PsiType>createFunction(null)),
                getTargetSubstitutor(expression),
                CreateFromUsageUtils.guessExpectedTypes(expression, true),
                context);

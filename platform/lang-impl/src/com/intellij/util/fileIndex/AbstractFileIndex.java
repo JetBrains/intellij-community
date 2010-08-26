@@ -49,7 +49,6 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.fileIndex.AbstractFileIndex");
   private final Map<String, IndexEntry> myFileUrl2IndexEntry = new HashMap<String, IndexEntry>();
   private final ProjectFileIndex myProjectFileIndex;
-  private boolean myFormatChanged;
   private final Project myProject;
   private FileIndexCacheUpdater myRootsChangeCacheUpdater;
   private final StartupManagerEx myStartupManager;
@@ -66,8 +65,6 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
 
 
   protected abstract String getLoadingIndicesMessage();
-
-  protected abstract String getBuildingIndicesMessage(boolean formatChanged);
 
   public abstract boolean belongs(VirtualFile file);
 
@@ -170,7 +167,6 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
       input = new DataInputStream(new BufferedInputStream(new FileInputStream(cacheFile)));
       int version = input.readByte();
       if (version != getCurrentVersion()) {
-        myFormatChanged = true;
         return false;
       }
 
@@ -288,10 +284,6 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
   @Nullable
   protected Set<FileType> getFileTypesToRefresh() {
     return null;
-  }
-
-  protected void setFormatChanged() {
-    myFormatChanged = true;
   }
 
   private VirtualFile[] queryNeededFiles(final boolean includeChangedFiles, @Nullable Set<FileType> fileTypesToRefresh) {
