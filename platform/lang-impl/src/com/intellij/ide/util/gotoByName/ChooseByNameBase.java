@@ -597,7 +597,7 @@ public abstract class ChooseByNameBase {
         close(false);
         return Boolean.TRUE;
       }
-    }).setFocusable(true).setRequestFocus(true);
+    }).setFocusable(true).setRequestFocus(true).setForceHeavyweight(true);
 
     Point point = new Point(x, y);
     SwingUtilities.convertPointToScreen(point, layeredPane);

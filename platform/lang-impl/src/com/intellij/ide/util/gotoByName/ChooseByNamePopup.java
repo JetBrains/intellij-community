@@ -100,7 +100,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myListScrollPane.setBorder(null);
     if (myDropdownPopup == null) {
       ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myListScrollPane);
-      builder.setFocusable(false).setRequestFocus(false).setCancelKeyEnabled(false).setFocusOwners(new JComponent[] {myTextField}).setBelongsToGlobalPopupStack(false);
+      builder.setFocusable(false).setRequestFocus(false).setCancelKeyEnabled(false).setFocusOwners(new JComponent[] {myTextField}).setBelongsToGlobalPopupStack(false).setForceHeavyweight(true);
       builder.setCancelCallback(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
