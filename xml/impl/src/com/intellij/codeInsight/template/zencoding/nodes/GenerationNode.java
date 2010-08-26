@@ -112,7 +112,7 @@ public class GenerationNode {
     TemplateImpl parentTemplate;
     Map<String, String> predefinedValues;
     if (myTemplateToken instanceof TemplateToken && generator instanceof XmlZenCodingGenerator) {
-      TemplateToken xmlTemplateToken = (TemplateToken)myTemplateToken;
+      TemplateToken xmlTemplateToken = myTemplateToken;
       List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(xmlTemplateToken.getAttribute2Value());
       parentTemplate = invokeXmlTemplate(xmlTemplateToken, callback, myNumberInIteration, generator,
                                          hasChildren, attr2value);
@@ -167,7 +167,7 @@ public class GenerationNode {
       boolean blockTag = child.isBlockTag();
 
       if (blockTag && !isNewLineBefore(builder.getText(), offset)) {
-        builder.insertText(offset, "\n" + tabStr);
+        builder.insertText(offset, "\n" + tabStr, false);
         offset += tabStr.length() + 1;
       }
 
@@ -175,7 +175,7 @@ public class GenerationNode {
       offset = marker != null ? marker.getEndOffset() : builder.length();
 
       if (blockTag && !isNewLineAfter(builder.getText(), offset)) {
-        builder.insertText(offset, "\n" + tabStr);
+        builder.insertText(offset, "\n" + tabStr, false);
         offset += tabStr.length() + 1;
       }
 
@@ -183,9 +183,9 @@ public class GenerationNode {
         end = e;
       }
     }
-    if (end != -1) {
+    /*if (end != -1) {
       builder.insertVariableSegment(end, TemplateImpl.END);
-    }
+    }*/
     return builder.buildTemplate();
   }
 
@@ -245,10 +245,10 @@ public class GenerationNode {
     }
     int offset = builder.insertTemplate(0, template, predefinedVarValues);
     if (surroundedText != null) {
-      builder.insertText(offset, surroundedText);
-    }
-    if (offset < builder.length()) {
-      builder.insertVariableSegment(offset, TemplateImpl.END);
+      builder.insertText(offset, surroundedText, true);
+      /*if (offset < builder.length()) {
+        builder.insertVariableSegment(offset, TemplateImpl.END);
+      }*/
     }
     return builder.buildTemplate();
   }
@@ -369,5 +369,9 @@ public class GenerationNode {
 
   public TemplateToken getTemplateToken() {
     return myTemplateToken;
+  }
+
+  public String getSurroundedText() {
+    return mySurroundedText;
   }
 }
