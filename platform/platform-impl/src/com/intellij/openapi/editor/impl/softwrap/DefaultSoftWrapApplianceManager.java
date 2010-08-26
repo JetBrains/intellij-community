@@ -113,7 +113,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
         // Note: we don't update 'myProcessedLogicalLines' collection here, i.e. soft wraps will be recalculated precisely
         // during standard editor repainting iteration.
         if (i < document.getLineCount()) {
-          processLogicalLine(document.getCharsSequence(), i, Font.PLAIN, IndentType.NONE, true);
+          processLogicalLine(document.getCharsSequence(), i, Font.PLAIN, getIndentToUse(), true);
         }
       }
     }
