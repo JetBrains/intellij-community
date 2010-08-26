@@ -636,6 +636,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testUseIntConstantsFromTargetClass() throws Throwable { doTest(); }
   public void testUseIntConstantsFromTargetClassReturnValue() throws Throwable { doTest(); }
   public void testUseIntConstantsFromConstructedClass() throws Throwable { doTest(); }
+  public void testUseIntConstantsInPlus() throws Throwable { doTest(); }
+  public void testUseIntConstantsInOr() throws Throwable { doTest(); }
 
   public void testExtraSemicolonAfterMethodParam() throws Throwable {
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());

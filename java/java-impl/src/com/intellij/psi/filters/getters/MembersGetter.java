@@ -25,6 +25,7 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
@@ -40,31 +41,35 @@ public class MembersGetter {
 
   public static void addMembers(PsiElement position, PsiType expectedType, CompletionResultSet results) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(expectedType);
-    if (psiClass != null) {
-      processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null, expectedType);
-    }
+    processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null, expectedType);
 
     if (expectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(expectedType)) {
-      final PsiElement parent = position.getParent();
-      if (parent instanceof PsiReferenceExpression) {
-        final PsiElement refParent = parent.getParent();
-        if (refParent instanceof PsiExpressionList) {
-          final PsiClass aClass = getCalledClass(refParent.getParent());
-          if (aClass != null) {
-            processMembers(position, results, aClass, false, expectedType);
-          }
+      addConstantsFromTargetClass(position, expectedType, results);
+    }
+  }
+
+  private static void addConstantsFromTargetClass(PsiElement position, PsiType expectedType, CompletionResultSet results) {
+    PsiElement parent = position.getParent();
+    if (!(parent instanceof PsiReferenceExpression)) {
+      return;
+    }
+
+    PsiElement prev = parent;
+    parent = parent.getParent();
+    while (parent instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
+      final IElementType op = binaryExpression.getOperationSign().getTokenType();
+      if (JavaTokenType.EQEQ == op || JavaTokenType.NE == op) {
+        if (prev == binaryExpression.getROperand()) {
+          processMembers(position, results, getCalledClass(binaryExpression.getLOperand()), false, expectedType);
         }
-        else if (refParent instanceof PsiBinaryExpression) {
-          final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)refParent;
-          if (parent == binaryExpression.getROperand() &&
-              JavaTokenType.EQEQ == binaryExpression.getOperationSign().getTokenType()) {
-            final PsiClass aClass = getCalledClass(binaryExpression.getLOperand());
-            if (aClass != null) {
-              processMembers(position, results, aClass, false, expectedType);
-            }
-          }
-        }
+        return;
       }
+      prev = parent;
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiExpressionList) {
+      processMembers(position, results, getCalledClass(parent.getParent()), false, expectedType);
     }
   }
 
@@ -95,8 +100,10 @@ public class MembersGetter {
     return null;
   }
 
-  private static void processMembers(final PsiElement context, final CompletionResultSet results, final PsiClass where,
+  private static void processMembers(final PsiElement context, final CompletionResultSet results, @Nullable final PsiClass where,
                                      final boolean acceptMethods, PsiType expectedType) {
+    if (where == null) return;
+
     final FilterScopeProcessor<PsiElement> processor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
     where.processDeclarations(processor, ResolveState.initial(), null, context);
 
@@ -113,7 +120,9 @@ public class MembersGetter {
           item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
           JavaCompletionUtil.qualify(item);
           if (member instanceof PsiMethod) {
-            ((JavaMethodCallElement) item).setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor((PsiMethod) member, expectedType));
+            final PsiMethod method = (PsiMethod)member;
+            final PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType);
+            ((JavaMethodCallElement) item).setInferenceSubstitutor(substitutor);
           }
           results.addElement(item);
         }
