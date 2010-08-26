@@ -18,6 +18,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
@@ -141,6 +142,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (flavor != null) {
       flavor.addPredefinedEnvironmentVariables(envs);
     }
+    PythonEnvUtil.setPythonUnbuffered(envs);
   }
 
   protected void setRunnerPath(GeneralCommandLine commandLine) throws ExecutionException {
