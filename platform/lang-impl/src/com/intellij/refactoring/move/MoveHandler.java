@@ -85,7 +85,14 @@ public class MoveHandler implements RefactoringActionHandler {
    * called by an Action in AtomicAction
    */
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    doMove(project, elements, dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext), null);
+    final PsiElement targetContainer = dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
+    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+      if (delegate.canMove(dataContext)) {
+        delegate.doMove(project, elements, dataContext);
+        return;
+      }
+    }
+    doMove(project, elements, targetContainer, null);
   }
 
   /**
@@ -133,6 +140,14 @@ public class MoveHandler implements RefactoringActionHandler {
       for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
         if (delegate.isValidTarget(psiElement, elements)) return true;
       }
+    }
+
+    return false;
+  }
+
+  public static boolean canMove(DataContext dataContext) {
+     for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+      if (delegate.canMove(dataContext)) return true;
     }
 
     return false;

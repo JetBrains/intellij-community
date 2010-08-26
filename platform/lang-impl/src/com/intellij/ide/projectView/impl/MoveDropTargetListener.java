@@ -322,13 +322,7 @@ class MoveDropTargetListener implements DropTargetListener {
     }
 
     private RefactoringActionHandler getActionHandler(final DataContext dataContext) {
-      final MoveAction.MoveProvider moveProvider = MoveAction.MoveProvider.DATA_KEY.getData(dataContext);
-      if (moveProvider != null) {
-        return moveProvider.getHandler(dataContext);
-      }
-      else {
-        return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
-      }
+      return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     }
 
     public boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode) {

@@ -23,7 +23,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 
@@ -87,11 +86,6 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataName)) {
         if (element instanceof ResourceBundle) {
           return new ResourceBundleDeleteProvider((ResourceBundle)element);
-        }
-      }
-      if (MoveAction.MoveProvider.DATA_KEY.is(dataName)) {
-        if (element instanceof ResourceBundle) {
-          return new ResourceBundleMoveProvider();
         }
       }
     }
