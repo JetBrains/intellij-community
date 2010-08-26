@@ -76,6 +76,13 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
       return;
     }
 
+    processStaticMethods(result, position, STATIC_METHOD_INSERT_HANDLER);
+  }
+
+  public static void processStaticMethods(final CompletionResultSet result,
+                                          final PsiElement position,
+                                          final InsertHandler<LookupElement> insertHandler) {
+    PrefixMatcher matcher = result.getPrefixMatcher();
     final Project project = position.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiShortNamesCache namesCache = JavaPsiFacade.getInstance(project).getShortNamesCache();
@@ -101,7 +108,7 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
                   if (!JavaCompletionUtil.isInExcludedPackage(containingClass) && !StaticImportMethodFix.isExcluded(method)) {
                     result.addElement(LookupElementDecorator.withInsertHandler(
                       LookupElementDecorator.withRenderer(LookupElementBuilder.create(method), STATIC_METHOD_RENDERER),
-                      STATIC_METHOD_INSERT_HANDLER));
+                      insertHandler));
                   }
 
                 }
