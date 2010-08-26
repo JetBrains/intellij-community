@@ -377,18 +377,6 @@ public class _GroovyDocLexer implements FlexLexer, GroovyDocTokenTypes {
     yybegin(initialState);
   }
 
-  // For Demetra compatibility
-  public void reset(CharSequence buffer, int initialState){
-    zzBuffer = buffer;
-    zzBufferArray = null; 
-    zzCurrentPos = zzMarkedPos = zzStartRead = 0;
-    zzPushbackPos = 0;
-    zzAtEOF = false;
-    zzAtBOL = true;
-    zzEndRead = buffer.length();
-    yybegin(initialState);
-  }
-
   /**
    * Refills the input buffer.
    *
