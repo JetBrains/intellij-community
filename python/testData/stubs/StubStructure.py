@@ -3,6 +3,7 @@ def deco(fun):
 
 class FooClass:
   staticField = deco
+  globs = globals()
   def __init__(self):
     self.instanceField = 2
 

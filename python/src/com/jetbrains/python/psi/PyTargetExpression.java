@@ -27,6 +27,15 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
   @Nullable
   PyQualifiedName getAssignedQName();
 
+  /**
+   * If the value assigned to the target expression is a call, returns the (unqualified and unresolved) name of the
+   * callee. Otherwise, returns null.
+   *
+   * @return the name of the callee or null if the assigned value is not a call.
+   */
+  @Nullable
+  PyQualifiedName getCalleeName();
+
   @NotNull
   PsiReference getReference();
 }

@@ -669,10 +669,10 @@ public class PyUtil {
   }
 
   @Nullable
-  public static PyExpression getKeywordArgument(PyCallExpressionImpl expr, String keyword) {
+  public static PyExpression getKeywordArgument(PyCallExpression expr, String keyword) {
     for (PyExpression arg : expr.getArguments()) {
-      if (arg instanceof PyKeywordArgumentImpl) {
-        PyKeywordArgumentImpl kwarg = (PyKeywordArgumentImpl)arg;
+      if (arg instanceof PyKeywordArgument) {
+        PyKeywordArgument kwarg = (PyKeywordArgument)arg;
         if (keyword.equals(kwarg.getKeyword())) {
           return kwarg.getValueExpression();
         }
