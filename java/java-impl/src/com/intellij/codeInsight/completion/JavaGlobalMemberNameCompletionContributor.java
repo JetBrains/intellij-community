@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler;
+import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,7 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
                                                        PsiFormatUtil.SHOW_PARAMETERS,
                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
       if (containingClass != null) {
-        presentation.setTailText(params + " in (" + containingClass.getName() + ")");
+        presentation.setTailText(params + " in " + containingClass.getName());
       } else {
         presentation.setTailText(params);
       }
@@ -98,9 +99,12 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
               if (method.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(method, position, null)) {
                 final PsiClass containingClass = method.getContainingClass();
                 if (containingClass != null) {
-                  result.addElement(LookupElementDecorator.withInsertHandler(
-                    LookupElementDecorator.withRenderer(LookupElementBuilder.create(method), STATIC_METHOD_RENDERER),
-                    STATIC_METHOD_INSERT_HANDLER));
+                  if (!JavaCompletionUtil.isInExcludedPackage(containingClass) && !StaticImportMethodFix.isExcluded(method)) {
+                    result.addElement(LookupElementDecorator.withInsertHandler(
+                      LookupElementDecorator.withRenderer(LookupElementBuilder.create(method), STATIC_METHOD_RENDERER),
+                      STATIC_METHOD_INSERT_HANDLER));
+                  }
+
                 }
               }
             }

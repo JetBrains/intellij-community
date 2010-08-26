@@ -138,7 +138,7 @@ public class StaticImportMethodFix implements IntentionAction {
     return result;
   }
 
-  private static boolean isExcluded(PsiMethod method) {
+  public static boolean isExcluded(PsiMethod method) {
     String name = getQName(method);
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     for (String excluded : cis.EXCLUDED_PACKAGES) {
