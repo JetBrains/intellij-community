@@ -359,27 +359,7 @@ public class ResolveImportUtil {
     // real search
     final Module module = ModuleUtil.findModuleForPsiElement(elt);
     if (module != null) {
-      // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
-      // Module-based approach works only in the IDEA plugin.
-      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      // look in module sources
-      boolean sourceEntriesMissing = true;
-      for (ContentEntry entry : rootManager.getContentEntries()) {
-        VirtualFile rootFile = entry.getFile();
-
-        if (rootFile != null && !visitor.visitRoot(rootFile)) return;
-        for (VirtualFile folder : entry.getSourceFolderFiles()) {
-          sourceEntriesMissing = false;
-          if (!visitor.visitRoot(folder)) return;
-        }
-      }
-      if (sourceEntriesMissing) {
-        // fallback for a case without any source entries: use project root
-        VirtualFile projectRoot = module.getProject().getBaseDir();
-        if (projectRoot != null && !visitor.visitRoot(projectRoot)) return;
-      }
-      // else look in SDK roots
-      rootManager.orderEntries().process(new SdkRootVisitingPolicy(visitor), null);
+      visitRoots(module, visitor);
     }
     else {
       // no module, another way to look in SDK roots
@@ -393,6 +373,30 @@ public class ResolveImportUtil {
         }
       }
     }
+  }
+
+  private static void visitRoots(Module module, RootVisitor visitor) {
+    // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
+    // Module-based approach works only in the IDEA plugin.
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    // look in module sources
+    boolean sourceEntriesMissing = true;
+    for (ContentEntry entry : rootManager.getContentEntries()) {
+      VirtualFile rootFile = entry.getFile();
+
+      if (rootFile != null && !visitor.visitRoot(rootFile)) return;
+      for (VirtualFile folder : entry.getSourceFolderFiles()) {
+        sourceEntriesMissing = false;
+        if (!visitor.visitRoot(folder)) return;
+      }
+    }
+    if (sourceEntriesMissing) {
+      // fallback for a case without any source entries: use project root
+      VirtualFile projectRoot = module.getProject().getBaseDir();
+      if (projectRoot != null && !visitor.visitRoot(projectRoot)) return;
+    }
+    // else look in SDK roots
+    rootManager.orderEntries().process(new SdkRootVisitingPolicy(visitor), null);
   }
 
   private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
@@ -647,6 +651,12 @@ public class ResolveImportUtil {
     return visitor.getResult();
   }
 
+  @Nullable
+  public static String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
+    PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
+    visitRoots(module, visitor);
+    return visitor.getResult();
+  }
 
   public static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {
     private final RootVisitor myVisitor;
