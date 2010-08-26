@@ -21,11 +21,10 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 
 import java.util.HashSet;
@@ -47,8 +46,7 @@ public class FormMoveProvider extends MoveHandlerDelegate {
   public void doMove(Project project, PsiElement[] elements, DataContext dataContext) {
     final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();
     for (PsiElement element : elements) {
-      if (element instanceof PsiPackage) continue;
-      if (MoveClassesOrPackagesHandlerBase.isPackageOrDirectory(element)) {
+      if (element instanceof PsiDirectory) {
         filesOrDirs.add(element);
       } else {
         final PsiFile containingFile = element.getContainingFile();
