@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -23,7 +22,7 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
     public void renderElement(LookupElement element, LookupElementPresentation presentation) {
       PsiMethod method = (PsiMethod)element.getObject();
       final PsiClass containingClass = method.getContainingClass();
-      presentation.setIcon(method.getIcon(Iconable.ICON_FLAG_VISIBILITY)); //todo don't calculate if not a real presentation
+      presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(element, presentation.isReal()));
       presentation.setItemText(method.getName());
       final String params = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
                                                        PsiFormatUtil.SHOW_PARAMETERS,
