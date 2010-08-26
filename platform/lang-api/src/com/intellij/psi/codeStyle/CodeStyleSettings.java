@@ -757,6 +757,35 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
    */
   public boolean SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
 
+
+  /**
+   * "} else"
+   * or
+   * "}else"
+   */
+  public boolean SPACE_BEFORE_ELSE_KEYWORD  = true;
+
+  /**
+   * "} while (...)"
+   * or
+   * "}while (...)"
+   */
+  public boolean SPACE_BEFORE_WHILE_KEYWORD = true;
+
+  /**
+   * "} catch (...)"
+   * or
+   * "}catch (...)"
+   */
+  public boolean SPACE_BEFORE_CATCH_KEYWORD = true;
+
+  /**
+   * "} finally"
+   * or
+   * "}finally"
+   */
+  public boolean SPACE_BEFORE_FINALLY_KEYWORD = true;
+
   public boolean SPACE_BEFORE_QUEST = true;
   public boolean SPACE_AFTER_QUEST = true;
   public boolean SPACE_BEFORE_COLON = true;
