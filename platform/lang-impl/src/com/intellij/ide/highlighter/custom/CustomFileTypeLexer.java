@@ -20,6 +20,7 @@ import com.intellij.ide.highlighter.custom.tokens.*;
 import com.intellij.psi.CustomHighlighterTokenType;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,8 +35,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
     this(table, false);
   }
 
-  private static TokenParser[] buildTokenParsers(SyntaxTable table, boolean forHighlighting) {
-    final WhitespaceParser whitespaceParser = new WhitespaceParser();
+  private static List<TokenParser> buildTokenParsers(SyntaxTable table, boolean forHighlighting) {
     final LineCommentParser lineCommentParser = LineCommentParser.create(table.getLineComment());
     final MultilineCommentParser multilineCommentParser =
             MultilineCommentParser.create(table.getStartComment(), table.getEndComment());
@@ -55,7 +55,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
     );
 
     ArrayList<TokenParser> tokenParsers = new ArrayList<TokenParser>();
-    tokenParsers.add(whitespaceParser);
+    tokenParsers.add(new WhitespaceParser());
     tokenParsers.add(quotedStringParser);
     tokenParsers.add(quotedStringParser2);
     if (lineCommentParser != null) {
@@ -73,21 +73,18 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
     tokenParsers.add(identifierParser);
 
     if (table.isHasBraces()) {
-      tokenParsers.add(new BraceTokenParser("{", CustomHighlighterTokenType.L_BRACE));
-      tokenParsers.add(new BraceTokenParser("}", CustomHighlighterTokenType.R_BRACE));
+      tokenParsers.addAll(BraceTokenParser.BRACES);
     }
 
     if (table.isHasParens()) {
-      tokenParsers.add(new BraceTokenParser("(", CustomHighlighterTokenType.L_PARENTH));
-      tokenParsers.add(new BraceTokenParser(")", CustomHighlighterTokenType.R_PARENTH));
+      tokenParsers.addAll(BraceTokenParser.PARENS);
     }
 
     if (table.isHasBrackets()) {
-      tokenParsers.add(new BraceTokenParser("[", CustomHighlighterTokenType.L_BRACKET));
-      tokenParsers.add(new BraceTokenParser("]", CustomHighlighterTokenType.R_BRACKET));
+      tokenParsers.addAll(BraceTokenParser.BRACKETS);
     }
 
-    return tokenParsers.toArray(new TokenParser[tokenParsers.size()]);
+    return tokenParsers;
   }
 
 

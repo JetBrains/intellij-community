@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Maxim.Mossienko
  */
-class CustomFileTypeBraceMatcher implements BraceMatcher {
+public class CustomFileTypeBraceMatcher implements BraceMatcher {
   public int getBraceTokenGroupId(IElementType tokenType) {
     return 777;
   }
@@ -37,6 +37,7 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
     final IElementType tokenType = iterator.getTokenType();
 
     return tokenType == CustomHighlighterTokenType.L_BRACKET ||
+           tokenType == CustomHighlighterTokenType.L_ANGLE ||
            tokenType == CustomHighlighterTokenType.L_PARENTH ||
            tokenType == CustomHighlighterTokenType.L_BRACE;
   }
@@ -47,6 +48,7 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
 
   private static boolean isRBraceToken(IElementType tokenType) {
     return tokenType == CustomHighlighterTokenType.R_BRACKET ||
+           tokenType == CustomHighlighterTokenType.R_ANGLE ||
            tokenType == CustomHighlighterTokenType.R_PARENTH ||
            tokenType == CustomHighlighterTokenType.R_BRACE;
   }
@@ -56,6 +58,8 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
            (tokenType == CustomHighlighterTokenType.R_BRACE && tokenType2 == CustomHighlighterTokenType.L_BRACE) ||
            (tokenType == CustomHighlighterTokenType.L_BRACKET && tokenType2 == CustomHighlighterTokenType.R_BRACKET) ||
            (tokenType == CustomHighlighterTokenType.R_BRACKET && tokenType2 == CustomHighlighterTokenType.L_BRACKET) ||
+           (tokenType == CustomHighlighterTokenType.L_ANGLE && tokenType2 == CustomHighlighterTokenType.R_ANGLE) ||
+           (tokenType == CustomHighlighterTokenType.R_ANGLE && tokenType2 == CustomHighlighterTokenType.L_ANGLE) ||
            (tokenType == CustomHighlighterTokenType.L_PARENTH && tokenType2 == CustomHighlighterTokenType.R_PARENTH) ||
            (tokenType == CustomHighlighterTokenType.R_PARENTH && tokenType2 == CustomHighlighterTokenType.L_PARENTH);
   }
@@ -75,6 +79,8 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
 
     if (type == CustomHighlighterTokenType.L_BRACKET) return CustomHighlighterTokenType.R_BRACKET;
     if (type == CustomHighlighterTokenType.R_BRACKET) return CustomHighlighterTokenType.L_BRACKET;
+    if (type == CustomHighlighterTokenType.L_ANGLE) return CustomHighlighterTokenType.R_ANGLE;
+    if (type == CustomHighlighterTokenType.R_ANGLE) return CustomHighlighterTokenType.L_ANGLE;
     if (type == CustomHighlighterTokenType.L_PARENTH) return CustomHighlighterTokenType.R_PARENTH;
     if (type == CustomHighlighterTokenType.R_PARENTH) return CustomHighlighterTokenType.L_PARENTH;
 
