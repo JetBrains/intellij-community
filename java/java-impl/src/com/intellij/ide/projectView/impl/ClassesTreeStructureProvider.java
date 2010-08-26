@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
@@ -155,11 +154,5 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
       return result;
     }
     
-    protected void updateImpl(PresentationData data) {
-      super.updateImpl(data);
-      data.setPresentableText(getValue().getName());
-      data.setIcons(getValue().getViewProvider().getVirtualFile().getIcon());
-    }
-
   }
 }

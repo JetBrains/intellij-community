@@ -5,11 +5,9 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -33,7 +31,9 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   public void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
     final String text = CommonClassNames.JAVA_LANG_OBJECT + ".";
     myFile = getJavaFacade().getElementFactory().createReferenceCodeFragment(text, null, true, true);
-    myEditor = new EditorImpl(PsiDocumentManager.getInstance(getProject()).getDocument(myFile), false, getProject());
+    assertNotNull(myFile);
+    myVFile = myFile.getVirtualFile();
+    myEditor = createEditor(myVFile);
     myEditor.getCaretModel().moveToOffset(text.length());
     complete();
     assertEquals(text, myEditor.getDocument().getText());

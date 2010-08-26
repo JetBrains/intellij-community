@@ -131,6 +131,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     });
     final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, newClassName, myVisibilityPanel.getVisibility(), isGenerateAccessors(),
                                                                       isExtractAsEnum() ? enumConstants : Collections.<MemberInfo>emptyList());
+    if (processor.getCreatedClass() == null) return;
     invokeRefactoring(processor);
   }
 

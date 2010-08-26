@@ -46,15 +46,6 @@ public class SegmentArray {
       mySegmentCount = i + 1;
     }
 
-    // Check invariant: myStarts[start] <= offset && offset < myEnds[start]
-    // TODO[oleg] more investigation is required
-    //if (i > 0) {
-    //  assert myEnds[i - 1] == startOffset : "Invariant: myStarts[start] <= offset && offset < myEnds[start]";
-    //}
-    //if (i < mySegmentCount - 1){
-    //  assert myStarts[i + 1] == endOffset : "Invariant: myStarts[start] <= offset && offset < myEnds[start]";
-    //}
-
     myStarts = reallocateArray(myStarts, i);
     myStarts[i] = startOffset;
 
@@ -146,6 +137,7 @@ public class SegmentArray {
       }
     }
 
+    // This means that there is a gap at given offset
     assert myStarts[start] <= offset && offset < myEnds[start] : start;
 
     return start;

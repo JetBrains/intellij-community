@@ -9,21 +9,6 @@
     <display-name>JAXB attribute node</display-name>
     <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("node")).withParent(xmlTag().withLocalName(string().equalTo("bindings")).withNamespace(string().equalTo("http://java.sun.com/xml/ns/jaxb")))]]></place>
   </injection>
-  <injection language="JavaScript" injector-id="xml">
-    <display-name>*/@href</display-name>
-    <value-pattern>^javascript:(.+)</value-pattern>
-    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("href")).withParent(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
-  </injection>
-  <injection language="JavaScript" injector-id="xml">
-    <display-name>*/@on.*</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().startsWith("on")).withParent(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
-  </injection>
-  <injection language="CSS" injector-id="xml">
-    <display-name>*/@style</display-name>
-    <prefix>dummy_selector {</prefix>
-    <suffix>}</suffix>
-    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("style")).inside(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
-  </injection>
   <injection language="EJBQL" injector-id="xml">
     <display-name>ejb-ql</display-name>
     <place><![CDATA[xmlTag().withLocalName(string().equalTo("ejb-ql")).withNamespace(string().oneOf("http://java.sun.com/dtd/ejb-jar_2_0.dtd", "http://java.sun.com/j2ee/dtds/ejb-jar_1_0.dtd", "http://java.sun.com/j2ee/dtds/ejb-jar_1_1.dtd", "http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee"))]]></place>
@@ -62,10 +47,6 @@
     <display-name>query|update/@sql</display-name>
     <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("sql")).inside(xmlTag().withLocalName(string().oneOf("query", "update")).withNamespace(string().equalTo("http://java.sun.com/jsp/jstl/sql")))]]></place>
   </injection>
-  <injection language="JavaScript" injector-id="xml">
-    <display-name>script</display-name>
-    <place><![CDATA[xmlTag().withLocalName(string().equalTo("script")).withNamespace(string().equalTo("http://www.w3.org/1999/xhtml"))]]></place>
-  </injection>
   <injection language="SQL" injector-id="xml">
     <display-name>sql|select|insert|update|delete|statement</display-name>
     <place><![CDATA[xmlTag().withLocalName(string().oneOf("sql", "select", "insert", "update", "delete", "statement")).withNamespace(string().equalTo("http://ibatis.apache.org/dtd/sql-map-2.dtd"))]]></place>
@@ -75,10 +56,5 @@
     <display-name>iBatis3: sql|select|insert|update|delete</display-name>
     <place><![CDATA[xmlTag().withLocalName(string().oneOf("sql", "select", "insert", "update", "delete")).withNamespace(string().oneOf("http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd", "http://mybatis.org/dtd/mybatis-3-mapper.dtd"))]]></place>
     <apply-to-subtags />
-  </injection>
-  <injection language="CSS" injector-id="xml">
-    <display-name>style</display-name>
-    <place><![CDATA[xmlTag().withLocalName(string().equalTo("style")).withNamespace(string().equalTo("http://www.w3.org/1999/xhtml"))]]></place>
-    <xpath-condition>lower-case(@type)='text/css'</xpath-condition>
   </injection>
 </component>

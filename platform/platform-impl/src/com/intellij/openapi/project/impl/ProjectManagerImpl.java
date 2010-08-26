@@ -74,7 +74,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
   public static final int CURRENT_FORMAT_VERSION = 4;
 
-  private static final Key<ArrayList<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
+  private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
   @NonNls private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -83,7 +83,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
 
-  private final ArrayList<Project> myOpenProjects = new ArrayList<Project>();
+  private final List<Project> myOpenProjects = new ArrayList<Project>();
+  private Project[] myOpenProjectsArrayCache = {};
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private Project myCurrentTestProject = null;
@@ -98,7 +99,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private static final int MAX_LEAKY_PROJECTS = 42;
 
   private static ProjectManagerListener[] getListeners(Project project) {
-    ArrayList<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
+    List<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (array == null) return ProjectManagerListener.EMPTY_ARRAY;
     return ContainerUtil.toArray(array, new ProjectManagerListener[array.size()]);
   }
@@ -350,7 +351,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         return new Project[] {currentTestProject};
       }
     }
-    return ContainerUtil.toArray(myOpenProjects, new Project[myOpenProjects.size()]);
+    if (myOpenProjectsArrayCache.length != myOpenProjects.size()) {
+      LOG.error("Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
+    }
+    if (myOpenProjectsArrayCache.length > 0 && myOpenProjectsArrayCache[0] != myOpenProjects.get(0)) {
+      LOG.error("Open projects cache corrupted. Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
+    }
+    return myOpenProjectsArrayCache;
   }
 
   public boolean isProjectOpened(Project project) {
@@ -364,8 +371,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (myOpenProjects.contains(project)) return false;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectEx)project).getStateStore().checkVersion()) return false;
 
-
     myOpenProjects.add(project);
+    cacheOpenProjects();
+
     fireProjectOpened(project);
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
@@ -398,6 +406,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     return true;
+  }
+
+  private void cacheOpenProjects() {
+    myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
 
   public Project loadAndOpenProject(String filePath) throws IOException, JDOMException, InvalidDataException {
@@ -866,6 +878,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       fireProjectClosing(project);
 
       myOpenProjects.remove(project);
+      cacheOpenProjects();
+
       myChangedProjectFiles.remove(project);
       fireProjectClosed(project);
     }
@@ -901,7 +915,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public void addProjectManagerListener(Project project, ProjectManagerListener listener) {
-    ArrayList<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
+    List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
       listeners = new ArrayList<ProjectManagerListener>();
       project.putUserData(LISTENERS_IN_PROJECT_KEY, listeners);
@@ -910,7 +924,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public void removeProjectManagerListener(Project project, ProjectManagerListener listener) {
-    ArrayList<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
+    List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners != null) {
       boolean removed = listeners.remove(listener);
       LOG.assertTrue(removed);

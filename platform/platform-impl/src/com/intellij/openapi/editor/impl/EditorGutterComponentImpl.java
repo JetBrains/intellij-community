@@ -651,6 +651,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private VisualPosition offsetToLineStartPosition(int offset) {
+    offset = Math.max(myEditor.getDocument().getTextLength() - 1, offset);
     int line = myEditor.getDocument().getLineNumber(offset);
     return myEditor.logicalToVisualPosition(new LogicalPosition(line, 0));
   }

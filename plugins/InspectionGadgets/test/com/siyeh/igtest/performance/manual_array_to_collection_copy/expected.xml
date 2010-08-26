@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ManualArrayToCollectionCopy.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Manual array to collection copy</problem_class>
+    <description>Manual array to collection copy #loc</description>
+  </problem>
+
+  <problem>
+    <file>ManualArrayToCollectionCopy.java</file>
+    <line>20</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Manual array to collection copy</problem_class>
+    <description>Manual array to collection copy #loc</description>
+  </problem>
+
+  <problem>
+    <file>ManualArrayToCollectionCopy.java</file>
+    <line>41</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Manual array to collection copy</problem_class>
+    <description>Manual array to collection copy #loc</description>
+  </problem>
+
+  <problem>
+    <file>ManualArrayToCollectionCopy.java</file>
+    <line>48</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Manual array to collection copy</problem_class>
+    <description>Manual array to collection copy #loc</description>
+  </problem>
+</problems>

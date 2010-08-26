@@ -19,21 +19,23 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Gregory.Shrago
  */
 public class TemporaryPlacesRegistry {
   private final Project myProject;
-  private final List<TemporaryPlace> myTempPlaces = new CopyOnWriteArrayList<TemporaryPlace>();
+  private final List<TemporaryPlace> myTempPlaces = ContainerUtil.createEmptyCOWList();
 
   public static TemporaryPlacesRegistry getInstance(final Project project) {
     return ServiceManager.getService(project, TemporaryPlacesRegistry.class);

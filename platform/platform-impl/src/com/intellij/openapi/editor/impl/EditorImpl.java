@@ -77,6 +77,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -244,7 +245,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ourCaretBlinkingCommand.start();
   }
 
-  public EditorImpl(Document document, boolean viewer, Project project) {
+  EditorImpl(@NotNull Document document, boolean viewer, Project project) {
     myProject = project;
     myDocument = (DocumentImpl)document;
     myScheme = new MyColorSchemeDelegate();
@@ -1016,6 +1017,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int line = calcLogicalLineNumber(offset, false);
     int column = calcColumnNumber(offset, line, false);
     return new LogicalPosition(line, column);
+  }
+
+  @Override
+  public boolean isCaretActive() {
+    return myCaretCursor.isActive();
+  }
+
+  @TestOnly
+  public void setCaretActive() {
+    myCaretCursor.setActive();
   }
 
   public int offsetToVisualLine(int offset) {
@@ -3396,6 +3407,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public boolean isActive() {
       synchronized (ourCaretBlinkingCommand) {
         return myIsShown;
+      }
+    }
+    public void setActive() {
+      synchronized (ourCaretBlinkingCommand) {
+        myIsShown = true;
       }
     }
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,19 @@ public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersis
   public static ArtifactsCompiler getInstance(@NotNull Project project) {
     final ArtifactsCompiler[] compilers = CompilerManager.getInstance(project).getCompilers(ArtifactsCompiler.class);
     return compilers.length == 1 ? compilers[0] : null;
+  }
+
+  static void setAffectedArtifacts(final CompileContext context, Set<Artifact> artifacts) {
+    context.putUserData(AFFECTED_ARTIFACTS, artifacts);
+  }
+
+  static void addWrittenPaths(final CompileContext context, Set<String> writtenPaths) {
+    Set<String> paths = context.getUserData(WRITTEN_PATHS_KEY);
+    if (paths == null) {
+      paths = new THashSet<String>();
+      context.putUserData(WRITTEN_PATHS_KEY, paths);
+    }
+    paths.addAll(writtenPaths);
   }
 
   @NotNull
@@ -75,6 +89,7 @@ public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersis
     return "Artifacts Packaging Compiler";
   }
 
+  @Nullable
   public static Set<Artifact> getAffectedArtifacts(final CompileContext compileContext) {
     return compileContext.getUserData(AFFECTED_ARTIFACTS);
   }

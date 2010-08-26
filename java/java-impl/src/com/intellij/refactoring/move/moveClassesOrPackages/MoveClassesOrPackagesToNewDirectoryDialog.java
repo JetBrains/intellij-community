@@ -37,6 +37,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -140,6 +141,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
+    myRootPanel.setBorder(IdeBorderFactory.createRoundedBorder());
     return myRootPanel;
   }
 

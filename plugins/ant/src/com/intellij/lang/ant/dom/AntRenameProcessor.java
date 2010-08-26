@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -50,7 +50,7 @@ public class AntRenameProcessor extends RenamePsiElementProcessor{
         allRenames.put(psiElement, newName);
       }
       if (antElement instanceof AntDomAntCallParam) {
-        final Pair<PsiElement,Collection<String>> result = PropertyResolver.resolve(contextProject, propName, null);
+        final Trinity<PsiElement, Collection<String>, PropertiesProvider> result = PropertyResolver.resolve(contextProject, propName, null);
         if (result.getFirst() != null) {
           allRenames.put(result.getFirst(), newName);
         }

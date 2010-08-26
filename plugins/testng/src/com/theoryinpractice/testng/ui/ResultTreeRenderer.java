@@ -105,8 +105,11 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
         } else {
             if (node.getChildCount() == 0) {
               final TestProxy nodeParent = node.getParent();
-              if (nodeParent.getResultMessage().getResult() == MessageHelper.PASSED_TEST && nodeParent.isTearDownFailure()) {
-                return PoolOfTestIcons.FAILED_ICON;
+              if (nodeParent != null && nodeParent.isTearDownFailure()) {
+                final TestResultMessage resultMessage = nodeParent.getResultMessage();
+                if (resultMessage != null && resultMessage.getResult() == MessageHelper.PASSED_TEST) {
+                  return PoolOfTestIcons.FAILED_ICON;
+                }
               }
               return PoolOfTestIcons.NOT_RAN;
             }

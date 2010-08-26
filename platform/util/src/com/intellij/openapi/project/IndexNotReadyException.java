@@ -27,5 +27,5 @@ package com.intellij.openapi.project;
  * @see com.intellij.openapi.project.DumbAware
  * @author peter
  */
-public class IndexNotReadyException extends RuntimeException{
+public class IndexNotReadyException extends RuntimeException {
 }

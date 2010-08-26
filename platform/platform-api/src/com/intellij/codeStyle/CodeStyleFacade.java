@@ -42,7 +42,7 @@ public abstract class CodeStyleFacade {
    * editor.
    *
    * @param editor the editor for which the indent should be calculated.
-   * @return the indent string (containing of tabs and/or whitespaces), or null if it
+   * @return the indent string (containing of tabs and/or white spaces), or null if it
    *         was not possible to calculate the indent.
    */
   @Nullable
@@ -55,6 +55,8 @@ public abstract class CodeStyleFacade {
 
   public abstract int getRightMargin();
 
+  public abstract boolean isWrapWhenTypingReachesRightMargin();
+
   public abstract int getTabSize(final FileType fileType);
 
   public abstract boolean useTabCharacter(final FileType fileType);
@@ -63,5 +65,5 @@ public abstract class CodeStyleFacade {
 
   public abstract boolean projectUsesOwnSettings();
 
-  public abstract boolean isUnsuitableCodestyleConfigurable(Configurable c);
+  public abstract boolean isUnsuitableCodeStyleConfigurable(Configurable c);
 }

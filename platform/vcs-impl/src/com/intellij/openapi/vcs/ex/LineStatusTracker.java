@@ -51,7 +51,9 @@ import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredSideBorder;
+import com.intellij.ui.HintListener;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,6 +194,8 @@ public class LineStatusTracker {
     switch (range.getType()) {
       case Range.MODIFIED:
         return DiffColors.DIFF_MODIFIED;
+      case Range.DELETED:
+        return DiffColors.DIFF_DELETED;
       default:
         return DiffColors.DIFF_INSERTED;
     }

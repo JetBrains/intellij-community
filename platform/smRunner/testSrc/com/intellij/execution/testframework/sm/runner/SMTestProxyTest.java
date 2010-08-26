@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.Filter;
+
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude;
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.*;
 
@@ -217,7 +218,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
 
-    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.IGNORED_INDEX);    
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.IGNORED_INDEX);
   }
 
   public void testTestIgnored_InSuite() {
@@ -366,13 +367,13 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     mySuite.setTerminated();
 
     assertFalse(mySuite.isInProgress());
-    
+
     assertTrue(mySuite.wasLaunched());
     assertTrue(mySuite.isDefect());
     assertTrue(mySuite.wasTerminated());
 
     mySuite.setFinished();
-    assertTrue(mySuite.wasTerminated());    
+    assertTrue(mySuite.wasTerminated());
   }
 
   public void testSuiteTerminated_WithNotRunChild() {
@@ -775,7 +776,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertWeightsOrder(Magnitude.NOT_RUN_INDEX, Magnitude.SKIPPED_INDEX);
     assertWeightsOrder(Magnitude.SKIPPED_INDEX, Magnitude.IGNORED_INDEX);
     assertWeightsOrder(Magnitude.IGNORED_INDEX, Magnitude.COMPLETE_INDEX);
-    assertEquals(Magnitude.COMPLETE_INDEX.getSortWeight() , Magnitude.PASSED_INDEX.getSortWeight());
+    assertEquals(Magnitude.COMPLETE_INDEX.getSortWeight(), Magnitude.PASSED_INDEX.getSortWeight());
     assertWeightsOrder(Magnitude.PASSED_INDEX, Magnitude.FAILED_INDEX);
     assertWeightsOrder(Magnitude.FAILED_INDEX, Magnitude.ERROR_INDEX);
     assertWeightsOrder(Magnitude.ERROR_INDEX, Magnitude.TERMINATED_INDEX);
@@ -789,6 +790,111 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertEmpty(mySuite.getChildren());
     assertFalse(mySuite.isDefect());
     assertEquals(Magnitude.COMPLETE_INDEX, mySuite.getMagnitudeInfo());
+  }
+
+  public void testIsEmpty_EmptySuiteNotRun() {
+    final SMTestProxy root = createSuiteProxy("root");
+
+    assertEquals(Magnitude.NOT_RUN_INDEX, root.getMagnitudeInfo());
+    assertTrue(root.isEmptySuite());
+  }
+
+  public void testIsEmpty_SuiteNotRun() {
+    final SMTestProxy root = createSuiteProxy("root");
+
+    final SMTestProxy suite1 = createSuiteProxy("suite1", root);
+    createTestProxy("test11", suite1);
+
+    assertEquals(Magnitude.NOT_RUN_INDEX, root.getMagnitudeInfo());
+    assertFalse(root.isEmptySuite());
+  }
+
+  public void testIsEmpty_EmptySuiteInProgress() {
+    final SMTestProxy root = createSuiteProxy("root");
+    root.setStarted();
+
+    assertEquals(Magnitude.RUNNING_INDEX, root.getMagnitudeInfo());
+    assertTrue(root.isEmptySuite());
+  }
+
+  public void testIsEmpty_EmptySuiteFinished() {
+    final SMTestProxy root = createSuiteProxy("root");
+    root.setFinished();
+
+    assertEquals(Magnitude.COMPLETE_INDEX, root.getMagnitudeInfo());
+    assertTrue(root.isEmptySuite());
+  }
+
+  public void testIsEmpty_EmptySuiteWithSubSuite_NotRun() {
+    final SMTestProxy root = createSuiteProxy("root");
+
+    createSuiteProxy("suite1", root);
+
+    assertEquals(Magnitude.NOT_RUN_INDEX, root.getMagnitudeInfo());
+    assertTrue(root.isEmptySuite());
+  }
+
+  public void testIsEmpty_EmptySuiteWithSubSuite_InProgress() {
+    final SMTestProxy root = createSuiteProxy("root");
+    root.setStarted();
+
+    final SMTestProxy suite1 = createSuiteProxy("suite1", root);
+    suite1.setStarted();
+
+    assertEquals(Magnitude.RUNNING_INDEX, root.getMagnitudeInfo());
+    assertTrue(root.isEmptySuite());
+  }
+
+  public void testIsEmpty_EmptySuiteWithSubSuite_Finished() {
+    final SMTestProxy root = createSuiteProxy("root");
+    root.setStarted();
+
+    final SMTestProxy suite1 = createSuiteProxy("suite1", root);
+    suite1.setStarted();
+    suite1.setFinished();
+    root.setFinished();
+
+    assertEquals(Magnitude.COMPLETE_INDEX, root.getMagnitudeInfo());
+    assertTrue(root.isEmptySuite());
+  }
+
+
+  public void testIsEmpty_SuiteWithSubSuite_InProgress() {
+    final SMTestProxy root = createSuiteProxy("root");
+    root.setStarted();
+
+    final SMTestProxy suite1 = createSuiteProxy("suite1", root);
+    suite1.setStarted();
+
+    final SMTestProxy test11 = createTestProxy("test11", suite1);
+    test11.setStarted();
+
+    assertEquals(Magnitude.RUNNING_INDEX, root.getMagnitudeInfo());
+    assertFalse(root.isEmptySuite());
+  }
+
+  public void testIsEmpty_Caching() {
+    final SMTestProxy root = createSuiteProxy("root");
+    root.setStarted();
+
+    assertTrue(root.isEmptySuite());
+
+    final SMTestProxy suite1 = createSuiteProxy("suite1", root);
+    suite1.setStarted();
+
+    assertTrue(suite1.isEmptySuite());
+
+    final SMTestProxy test11 = createTestProxy("test11", suite1);
+    test11.setStarted();
+    test11.setFinished();
+
+    assertFalse(suite1.isEmptySuite());
+
+    suite1.setFinished();
+    root.setFinished();
+
+    assertEquals(Magnitude.PASSED_INDEX, root.getMagnitudeInfo());
+    assertFalse(root.isEmptySuite());
   }
 
   protected void assertWeightsOrder(final Magnitude previous, final Magnitude next) {

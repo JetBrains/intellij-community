@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 
 /**
  * @author Roman Chernyatchik
@@ -325,6 +326,25 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertEquals(3, myResultsViewer.getTestsCurrentCount());
     myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
     assertEquals(4, myResultsViewer.getTestsCurrentCount());
+  }
+
+  public void testCustomProgress_EmptySuite() {
+    myResultsViewer.onCustomProgressTestsCategory("foo", 0);
+
+    final SMTestProxy suite = createSuiteProxy("some_suite", myTestsRootNode);
+    myTestsRootNode.setStarted();
+
+    myResultsViewer.onSuiteStarted(suite);
+    suite.setStarted();
+    suite.setFinished();
+    myResultsViewer.onSuiteFinished(suite);
+
+    myTestsRootNode.setFinished();
+    myResultsViewer.onSuiteFinished(myTestsRootNode);
+    
+    myResultsViewer.onTestingFinished(myTestsRootNode);
+    assertEquals(0, myResultsViewer.getTestsTotal());
+    assertEquals(Color.LIGHT_GRAY, myResultsViewer.getTestsStatusColor());
   }
 
   public void testCustomProgress_Failure() {

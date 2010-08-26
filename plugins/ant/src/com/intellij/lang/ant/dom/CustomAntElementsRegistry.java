@@ -359,7 +359,7 @@ public class CustomAntElementsRegistry {
 
 
   private class CustomTagDefinitionFinder extends AntDomRecursiveVisitor {
-
+    private final Set<AntDomElement> myElementsOnThePath = new HashSet<AntDomElement>();
     private final Set<String> processedAntlibs = new HashSet<String>();
     private final AntDomProject myAntProject;
 
@@ -368,34 +368,39 @@ public class CustomAntElementsRegistry {
     }
 
     public void visitAntDomElement(AntDomElement element) {
-      if (element instanceof AntDomCustomElement) {
+      if (element instanceof AntDomCustomElement || myElementsOnThePath.contains(element)) {
         return; // avoid stack overflow
       }
-      
-      final String uri = element.getXmlElementNamespace();
-      if (!processedAntlibs.contains(uri)) {
-        processedAntlibs.add(uri);
-        final String antLibResource = AntDomAntlib.toAntlibResource(uri);
-        if (antLibResource != null) {
-          final XmlElement xmlElement = element.getXmlElement();
-          if (xmlElement != null) {
-            final ClassLoader loader = myAntProject.getClassLoader();
-            final InputStream stream = loader.getResourceAsStream(antLibResource);
-            if (stream != null) {
-              try {
-                final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, StdFileTypes.XML);
-                if (xmlFile != null) {
-                  loadDefinitionsFromAntlib(xmlFile, uri, loader, null);
+      myElementsOnThePath.add(element);
+      try {
+        final String uri = element.getXmlElementNamespace();
+        if (!processedAntlibs.contains(uri)) {
+          processedAntlibs.add(uri);
+          final String antLibResource = AntDomAntlib.toAntlibResource(uri);
+          if (antLibResource != null) {
+            final XmlElement xmlElement = element.getXmlElement();
+            if (xmlElement != null) {
+              final ClassLoader loader = myAntProject.getClassLoader();
+              final InputStream stream = loader.getResourceAsStream(antLibResource);
+              if (stream != null) {
+                try {
+                  final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, StdFileTypes.XML);
+                  if (xmlFile != null) {
+                    loadDefinitionsFromAntlib(xmlFile, uri, loader, null);
+                  }
                 }
-              }
-              catch (IOException e) {
-                LOG.info(e);
+                catch (IOException e) {
+                  LOG.info(e);
+                }
               }
             }
           }
         }
+        super.visitAntDomElement(element);
       }
-      super.visitAntDomElement(element);
+      finally {
+        myElementsOnThePath.remove(element);
+      }
     }
 
     public void visitMacroDef(AntDomMacroDef macrodef) {
