@@ -34,6 +34,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ProgressBarUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -1381,10 +1382,23 @@ public class UIUtil {
     protected void installKeyboardActions() {
       super.installKeyboardActions();
 
-      tree.getInputMap().put(KeyStroke.getKeyStroke("pressed LEFT"), "collapse_or_move_up");
-      tree.getInputMap().put(KeyStroke.getKeyStroke("pressed RIGHT"), "expand");
+      final InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
+      inputMap.put(KeyStroke.getKeyStroke("pressed LEFT"), "collapse_or_move_up");
+      inputMap.put(KeyStroke.getKeyStroke("pressed RIGHT"), "expand");
 
-      tree.getActionMap().put("collapse_or_move_up", new AbstractAction() {
+      final ActionMap actionMap = tree.getActionMap();
+
+      final Action expandAction = actionMap.get("expand");
+      if (expandAction != null) {
+        actionMap.put("expand", new TreeUIAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            expandAction.actionPerformed(e);
+          }
+        });
+      }
+
+      actionMap.put("collapse_or_move_up", new TreeUIAction() {
         public void actionPerformed(final ActionEvent e) {
           final Object source = e.getSource();
           if (source instanceof JTree) {
@@ -1408,6 +1422,9 @@ public class UIUtil {
           }
         }
       });
+    }
+
+    private abstract static class TreeUIAction extends AbstractAction implements UIResource {
     }
 
     @Override
@@ -1591,6 +1608,10 @@ public class UIUtil {
     } else {
       editor.reshape(x, y, width, height);
     }
+  }
+
+  public static int fixComboBoxHeight(final int height) {
+    return SystemInfo.isMac && isUnderAquaLookAndFeel() ? 28 : height;
   }
 
 }
