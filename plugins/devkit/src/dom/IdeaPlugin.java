@@ -103,6 +103,7 @@ public interface IdeaPlugin extends DomElement {
   @NotNull
   @SubTagList("extensionPoints")
   List<ExtensionPoints> getExtensionPoints();
+  ExtensionPoints addExtensionPoints();
 
 
   @NotNull
@@ -116,7 +117,9 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
-  Actions getActions();
+  @SubTagList("actions")
+  List<Actions> getActions();
+  Actions addActions();
 
 
   @NotNull
