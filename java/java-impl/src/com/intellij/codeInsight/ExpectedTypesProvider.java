@@ -645,9 +645,7 @@ public class ExpectedTypesProvider {
           myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
         else {
-          ExpectedTypeInfoImpl info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_BETWEEN,
-                                                     myExpr.getType(), TailType.NONE);
-          myResult = new ExpectedTypeInfo[]{info};
+          myResult = new ExpectedTypeInfo[]{createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_BETWEEN, PsiType.INT, TailType.NONE)};
         }
       }
       else if (i == JavaTokenType.OROR || i == JavaTokenType.ANDAND) {
