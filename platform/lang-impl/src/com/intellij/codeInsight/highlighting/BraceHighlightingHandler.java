@@ -98,8 +98,7 @@ public class BraceHighlightingHandler {
         if (isReallyDisposed(editor, project)) return;
         final PsiFile injected = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
           public PsiFile compute() {
-            Document document = editor.getDocument();
-            PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+            PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
             return null != psiFile ? getInjectedFileIfAny(editor, project, offset, psiFile, alarm) : null;
           }
         });

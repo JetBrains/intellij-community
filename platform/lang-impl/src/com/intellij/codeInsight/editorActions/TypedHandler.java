@@ -43,7 +43,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -182,8 +181,7 @@ public class TypedHandler implements TypedActionHandler {
       EditorModificationUtil.deleteSelectedText(editor);
     }
 
-    final VirtualFile virtualFile = file.getVirtualFile();
-    FileType fileType = virtualFile == null ? file.getFileType() : virtualFile.getFileType();
+    FileType fileType = file.getFileType();
 
     for(TypedHandlerDelegate delegate: delegates) {
       final TypedHandlerDelegate.Result result = delegate.beforeCharTyped(charTyped, project, editor, file, fileType);
@@ -428,8 +426,7 @@ public class TypedHandler implements TypedActionHandler {
         text = "}";
       }
       else {
-        LOG.error("Unknown char "+lparenChar);
-        return;
+        throw new AssertionError("Unknown char "+lparenChar);
       }
       editor.getDocument().insertString(offset, text);
     }
