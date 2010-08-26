@@ -144,7 +144,8 @@ public class PyStructureViewElement implements StructureViewTreeElement {
       public String getPresentableText() {
         if (myElement instanceof PyFunction) {
           PyParameterList argList = ((PyFunction) myElement).getParameterList();
-          StringBuilder result = new StringBuilder(myElement.getName());
+          final String name = myElement.getName();
+          StringBuilder result = new StringBuilder(name == null ? "<unnamed>" : name);
           ParamHelper.appendParameterList(argList, result);
           return result.toString();
         }
