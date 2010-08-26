@@ -189,12 +189,17 @@ public class PyResolveUtil {
    * @see com.jetbrains.python.psi.PyUtil#getConcealingParent(com.intellij.psi.PsiElement)
    */
   protected static boolean refersFromMethodToClass(final PsiElement inner, final PsiElement outer) {
-    return (
-      inner != null &&
-      PsiTreeUtil.isAncestor(outer, inner, false) &&
-      (PyUtil.getConcealingParent(outer) instanceof PyClass) && // outer is in a class context
-      (PsiTreeUtil.getParentOfType(inner, PyFunction.class, false) != null) // inner is a function or method within the class
-    );
+    if (inner == null) {
+      return false;
+    }
+    PsiElement outerClass = PyUtil.getConcealingParent(outer);
+    if (outerClass instanceof PyClass) {   // outer is in a class context
+      PyFunction innerFunction = PsiTreeUtil.getParentOfType(inner, PyFunction.class, false);
+      if (innerFunction != null && innerFunction.getContainingClass() == outerClass) {   // inner is a function or method within the class
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
