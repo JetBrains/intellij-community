@@ -41,7 +41,7 @@ public class Pair<A, B> {
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public static <A, B> Function<A, Pair<A, B>> createFunction(Class<A> cls, @Nullable final B value) {
+  public static <A, B> Function<A, Pair<A, B>> createFunction(@Nullable final B value) {
     return new Function<A, Pair<A, B>>() {
       public Pair<A, B> fun(A a) {
         return create(a, value);
