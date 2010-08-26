@@ -370,6 +370,15 @@ public class ActionsTree {
     final Object userObject = node.getUserObject();
     if (userObject instanceof String) {
       String actionId = (String)userObject;
+
+      final TreeNode parent = node.getParent();
+      if (parent instanceof DefaultMutableTreeNode) {
+        final Object object = ((DefaultMutableTreeNode)parent).getUserObject();
+        if (object instanceof Group) {
+          return ((Group)object).getActionQualifiedPath(actionId);
+        }
+      }
+
       return myMainGroup.getActionQualifiedPath(actionId);
     }
     if (userObject instanceof Group) {
@@ -419,7 +428,7 @@ public class ActionsTree {
         if (myTree.isPathSelected(path)) {
           mySelectionPaths.add(getPath(childNode));
         }
-        if (myTree.isExpanded(path) || childNode.getChildCount() == 0) {
+        if ((myTree.isExpanded(path) || childNode.getChildCount() == 0) && !childNode.isLeaf()) {
           myPathsToExpand.add(getPath(childNode));
           _storePaths(childNode);
         }

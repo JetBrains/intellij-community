@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -316,7 +317,9 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
       }
       return preferredSize;
     }
-    return new Dimension(100, 20);
+
+    //final int cbHeight = new JComboBox().getPreferredSize().height; // should be used actually
+    return new Dimension(100, UIUtil.fixComboBoxHeight(20));
   }
 
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {

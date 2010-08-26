@@ -46,6 +46,10 @@ public class ComboBox extends ComboBoxWithWidePopup {
     this(-1);
   }
 
+  public ComboBox(final ComboBoxModel model) {
+    this(model, -1);
+  }
+
   /**
    * @param minimumAndPreferredWidth preferred width of the combobox. Value <code>-1</code> means undefined.
    */
@@ -138,7 +142,7 @@ public class ComboBox extends ComboBoxWithWidePopup {
     ComboBoxEditor _editor = editor;
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
       if ("AquaComboBoxEditor".equals(editor.getClass().getSimpleName())) {
-        _editor = new MacComboBoxEditor();
+        _editor = new FixedComboBoxEditor();
       }
     }
 
