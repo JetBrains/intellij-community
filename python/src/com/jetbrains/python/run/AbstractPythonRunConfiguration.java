@@ -16,6 +16,7 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -252,41 +253,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
    * @param sdk_type
    */
   protected void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdk_home, SdkType sdk_type) {
-    String path_value;
-    if (sdk_type instanceof PythonSdkType) {
-      File virtualenv_root = PythonSdkType.getVirtualEnvRoot(sdk_home);
-      if (virtualenv_root != null) {
-        // prepend virtualenv bin if it's not already on PATH
-        String virtualenv_bin = new File(virtualenv_root, "bin").getPath();
-
-        // TODO: use system-dependent name of "PATH"
-        if (isPassParentEnvs()) {
-          // append to PATH
-          path_value = System.getenv("PATH");
-          path_value = appendToPathEnvVar(path_value, virtualenv_bin);
-        }
-        else path_value = virtualenv_bin;
-        Map<String, String> new_env = cloneEnv(commandLine.getEnvParams()); // we need a copy lest we change config's map.
-        String existing_path = new_env.get("PATH");
-        if (existing_path == null || existing_path.indexOf(virtualenv_bin) < 0) {
-          new_env.put("PATH", path_value);
-          commandLine.setEnvParams(new_env);
-        }
-      }
-    }
-  }
-
-  protected static String appendToPathEnvVar(@Nullable String previous_value, String what_to_append) {
-    if (previous_value != null) previous_value = what_to_append + File.pathSeparator + previous_value;
-    else previous_value = what_to_append;
-    return previous_value;
-  }
-
-  protected static Map<String, String> cloneEnv(Map<String, String> cmd_env) {
-    Map<String, String> new_env;
-    if (cmd_env != null) new_env = new com.intellij.util.containers.HashMap<String, String>(cmd_env);
-    else new_env = new com.intellij.util.containers.HashMap<String, String>();
-    return new_env;
+    PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk_home, isPassParentEnvs());
   }
 
   protected void setUnbufferedEnv() {

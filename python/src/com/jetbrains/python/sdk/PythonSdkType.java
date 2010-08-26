@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
@@ -213,6 +214,36 @@ public class PythonSdkType extends SdkType {
     }
     return null;
   }
+
+  /**
+   * Alters PATH so that a virtualenv is activated, if present.
+   * @param commandLine what to patch
+   * @param sdkHome home of SDK we're using
+   * @param passParentEnvs iff true, include system paths in PATH
+   */
+  public static void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome, boolean passParentEnvs) {
+    @NonNls final String PATH = "PATH";
+    String path_value;
+    File virtualenv_root = getVirtualEnvRoot(sdkHome);
+    if (virtualenv_root != null) {
+      // prepend virtualenv bin if it's not already on PATH
+      String virtualenv_bin = new File(virtualenv_root, "bin").getPath();
+
+      if (passParentEnvs) {
+        // append to PATH
+        path_value = System.getenv(PATH);
+        path_value = GeneralCommandLine.appendToPathEnvVar(path_value, virtualenv_bin);
+      }
+      else path_value = virtualenv_bin;
+      Map<String, String> new_env = PythonEnvUtil.cloneEnv(commandLine.getEnvParams()); // we need a copy lest we change config's map.
+      String existing_path = new_env.get(PATH);
+      if (existing_path == null || existing_path.indexOf(virtualenv_bin) < 0) {
+        new_env.put(PATH, path_value);
+        commandLine.setEnvParams(new_env);
+      }
+    }
+  }
+
 
   // /home/joe/foo -> ~/foo
   protected static String shortenDirName(String path) {
@@ -594,7 +625,7 @@ public class PythonSdkType extends SdkType {
         .append(", exit code ").append(run_result.getExitCode())
         .append(", stderr '")
       ;
-      for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
+      for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("'\n");
       throw new InvalidSdkException(sb.toString());
     }
   }

@@ -1,21 +1,29 @@
 package com.jetbrains.python.buildout;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
+import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,7 +72,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
    * @return the statement, or null if there's no buildout facet.
    */
   @Nullable
-  public String getPathPrepenStatement() {
+  public String getPathPrependStatement() {
     BuildoutFacet buildout_facet = this;
     StringBuilder sb = new StringBuilder("sys.path[0:0]=[");
     for (String s : buildout_facet.getAdditionalPythonPath()) {
@@ -128,6 +136,30 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
   @Nullable
   public static BuildoutFacet getInstance(Module module) {
     return FacetManager.getInstance(module).getFacetByType(BuildoutFacetType.ID);
+  }
+
+  public void patchCommandLineForBuildout(GeneralCommandLine commandLine) {
+    Map<String, String> new_env = PythonEnvUtil.cloneEnv(commandLine.getEnvParams()); // we need a copy lest we change config's map.
+    ParametersList params = commandLine.getParametersList();
+    // alter execution script
+    ParamsGroup script_params = params.getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
+    assert script_params != null;
+    String normal_script = script_params.getParameters().get(0); // expect DjangoUtil.MANAGE_FILE
+    String engulfer_path = PythonHelpersLocator.getHelperPath("pycharm/buildout_engulfer.py");
+    new_env.put("PYCHARM_ENGULF_SCRIPT", getConfiguration().getScriptName());
+    script_params.getParametersList().replaceOrPrepend(normal_script, engulfer_path);
+    // add pycharm helpers to pythonpath so that fixGetpass is importable
+    String PYTHONPATH = "PYTHONPATH";
+    new_env.put(PYTHONPATH, GeneralCommandLine.appendToPathEnvVar(new_env.get(PYTHONPATH), PythonHelpersLocator.getHelpersRoot().getAbsolutePath()));
+    /*
+    // set prependable paths
+    List<String> paths = facet.getAdditionalPythonPath();
+    if (paths != null) {
+      path_value = PyUtil.joinWith(File.pathSeparator, paths);
+      new_env.put("PYCHARM_PREPEND_SYSPATH", path_value);
+    }
+    */
+    commandLine.setEnvParams(new_env);
   }
 
 }

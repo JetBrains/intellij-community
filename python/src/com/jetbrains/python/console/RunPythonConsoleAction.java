@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.PathUtil;
-import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -63,7 +61,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       final String self_path_append = "sys.path.append('" + path + "')";
       BuildoutFacet facet = BuildoutFacet.getInstance(module);
       if (facet != null) {
-        setup_fragment = new String[]{facet.getPathPrepenStatement(), self_path_append};
+        setup_fragment = new String[]{facet.getPathPrependStatement(), self_path_append};
       }
       else setup_fragment = new String[]{self_path_append};
 
