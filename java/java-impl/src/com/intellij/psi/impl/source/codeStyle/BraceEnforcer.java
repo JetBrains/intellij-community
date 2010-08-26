@@ -47,6 +47,9 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
       final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(statement.getProject()).createSmartPsiElementPointer(statement);
       super.visitIfStatement(statement);
       statement = (PsiIfStatement)pointer.getElement();
+      if (statement == null) {
+        return;
+      }
       processStatement(statement, statement.getThenBranch(), myPostProcessor.mySettings.IF_BRACE_FORCE);
       final PsiStatement elseBranch = statement.getElseBranch();
       if (!(elseBranch instanceof PsiIfStatement) || !myPostProcessor.mySettings.SPECIAL_ELSE_IF_TREATMENT) {
@@ -110,13 +113,26 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     
     String oldText = blockCandidate.getText();
-    StringBuilder buf = new StringBuilder(oldText.length() + 3);
-    buf.append("{ ").append(oldText).append(" }");
+    StringBuilder buf = new StringBuilder(oldText.length() + 5);
+
+    // There is a possible case that target block to wrap ends with single-line comment. Example:
+    //     if (true) i = 1; // Cool assignement
+    // We can't just surround target block of code with curly braces because the closing one will be treated as comment as well.
+    // Hence, we perform a check if we have such situation at the moment and insert new line before the closing brace.
+    int lastLineFeedIndex = oldText.lastIndexOf("\n");
+    lastLineFeedIndex = Math.max(0, lastLineFeedIndex);
+    int lastLineCommentIndex = oldText.indexOf("//", lastLineFeedIndex);
+    buf.append("{ ").append(oldText);
+    if (lastLineCommentIndex >= 0) {
+      buf.append("\n");
+    }
+    buf.append(" }");
+
     final int oldTextLength = statement.getTextLength();
     try {
       CodeEditUtil.replaceChild(SourceTreeToPsiMap.psiElementToTree(statement),
                                 SourceTreeToPsiMap.psiElementToTree(blockCandidate),
-                                SourceTreeToPsiMap.psiElementToTree(factory.createStatementFromText(buf.toString(), null)));
+                                SourceTreeToPsiMap.psiElementToTree(factory.createCodeBlockFromText(buf.toString(), null)));
       CodeStyleManager.getInstance(statement.getProject()).reformat(statement, true);
     }
     catch (IncorrectOperationException e) {
