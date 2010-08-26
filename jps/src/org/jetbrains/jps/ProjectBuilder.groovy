@@ -1,23 +1,21 @@
 package org.jetbrains.jps
 
 import org.codehaus.gant.GantBinding
-import org.jetbrains.jps.dag.DagBuilder
-import org.jetbrains.jps.builders.*
-import org.jetbrains.jps.listeners.JpsBuildListener
-import org.jetbrains.jps.listeners.BuildStatisticsListener
 import org.jetbrains.jps.listeners.BuildInfoPrinter
+import org.jetbrains.jps.listeners.BuildStatisticsListener
 import org.jetbrains.jps.listeners.DefaultBuildInfoPrinter
+import org.jetbrains.jps.listeners.JpsBuildListener
+import org.jetbrains.jps.builders.*
 
-/**
+ /**
  * @author max
  */
 class ProjectBuilder {
-  final Map<Module, ModuleChunk> mapping = [:]
-  final Map<ModuleChunk, String> outputs = [:]
-  final Map<ModuleChunk, String> testOutputs = [:]
-  final Map<ClasspathKind, Map<ModuleChunk, List<String>>> cachedClasspaths = [:]
-  final Map<ModuleChunk, List<String>> testCp = [:]
-  List<ModuleChunk> chunks = null
+  private final Map<ModuleChunk, String> outputs = [:]
+  private final Map<ModuleChunk, String> testOutputs = [:]
+  private final Map<ClasspathKind, Map<ModuleChunk, List<String>>> cachedClasspaths = [:]
+  private ProjectChunks productionChunks
+  private ProjectChunks testChunks
 
   final Project project;
   final GantBinding binding;
@@ -41,30 +39,16 @@ class ProjectBuilder {
     translatingBuilders << new GroovycBuilder(project)
     translatingBuilders << new ResourceCopier()
     weavingBuilders << new JetBrainsInstrumentations(project)
+    productionChunks = new ProjectChunks(project, ClasspathKind.PRODUCTION_COMPILE)
+    testChunks = new ProjectChunks(project, ClasspathKind.TEST_COMPILE)
+  }
+
+  private def ProjectChunks getChunks(boolean includeTests) {
+    return includeTests ? testChunks : productionChunks
   }
 
   private def List<ModuleBuilder> builders() {
     [preTasksBuilder, sourceGeneratingBuilders, sourceModifyingBuilders, translatingBuilders, weavingBuilders, postTasksBuilder].flatten()
-  }
-
-  private def buildChunks() {
-    if (chunks == null) {
-      def iterator = { Module module, Closure processor ->
-        module.getFullClasspath().each {entry ->
-          if (entry instanceof Module) {
-            processor(entry)
-          }
-        }
-      }
-      def dagBuilder = new DagBuilder<Module>({new ModuleChunk()}, iterator)
-      chunks = dagBuilder.build(project, project.modules.values())
-      chunks.each { ModuleChunk chunk ->
-        chunk.modules.each {
-          mapping[it] = chunk
-        }
-      }
-      project.info("Total ${chunks.size()} chunks detected")
-    }
   }
 
   public def clean() {
@@ -83,14 +67,23 @@ class ProjectBuilder {
 
   private def buildAllModules(boolean includeTests) {
     listeners*.onBuildStarted(project)
-    buildChunks()
-    chunks.each {
-      makeChunk(it, false)
-      if (includeTests) {
-        makeChunk(it, true)
+    buildModules(project.modules.values(), includeTests)
+    listeners*.onBuildFinished(project)
+  }
+
+  private def buildModules(Collection<Module> modules, boolean includeTests) {
+    buildChunks(modules, false)
+    if (includeTests) {
+      buildChunks(modules, true)
+    }
+  }
+
+  private def buildChunks(Collection<Module> modules, boolean tests) {
+    getChunks(tests).getChunkList().each {
+      if (!modules.intersect(it.modules).isEmpty()) {
+        buildChunk(it, tests)
       }
     }
-    listeners*.onBuildFinished(project)
   }
 
   def preModuleBuildTask(String moduleName, Closure task) {
@@ -101,41 +94,38 @@ class ProjectBuilder {
     postTasksBuilder.registerTask(moduleName, task)
   }
 
-  private ModuleChunk chunkForModule(Module m) {
-    buildChunks();
-    mapping[m]
+  private ModuleChunk chunkForModule(Module m, boolean tests) {
+    return getChunks(tests).findChunk(m)
   }
 
   def makeModule(Module module) {
-    return makeChunkWithDependencies(chunkForModule(module), false);
+    return makeModuleWithDependencies(module, false);
   }
 
   def makeModuleTests(Module module) {
-    return makeChunkWithDependencies(chunkForModule(module), true);
+    return makeModuleWithDependencies(module, true);
   }
 
-  private def makeChunkWithDependencies(ModuleChunk chunk, boolean includeTests) {
+  private def makeModuleWithDependencies(Module module, boolean includeTests) {
+    def chunk = chunkForModule(module, includeTests)
     Set<Module> dependencies = new HashSet<Module>()
     chunk.modules.each {
       collectModulesFromClasspath(it, getCompileClasspathKind(includeTests), dependencies)
     }
-    buildChunks()
-    chunks.each {
-      if (!dependencies.intersect(it.modules).isEmpty()) {
-        makeChunk(it, false)
-        if (includeTests) {
-          makeChunk(it, true)
-        }
-      }
-    }
+
+    buildModules(dependencies, includeTests)
   }
 
-  private def makeChunk(ModuleChunk chunk, boolean tests) {
+  private def buildChunk(ModuleChunk chunk, boolean tests) {
     Map outputsMap = tests ? testOutputs : outputs
     String currentOutput = outputsMap[chunk]
     if (currentOutput != null) return currentOutput
 
     project.stage("Making${tests ? ' tests for' : ''} module ${chunk.name}")
+    if (project.targetFolder == null && chunk.modules.size() > 1) {
+      project.warning("Modules $chunk.modules with cyclic dependencies will be compiled to output of ${chunk.modules.toList().first()} module")
+    }
+
     def dst = folderForChunkOutput(chunk, tests)
     outputsMap[chunk] = dst
     compile(chunk, dst, tests)
@@ -143,8 +133,8 @@ class ProjectBuilder {
     return dst
   }
 
-  String getModuleOutputFolder(Module module, boolean tests) {
-    return folderForChunkOutput(chunkForModule(module), tests)
+  private String getModuleOutputFolder(Module module, boolean tests) {
+    return folderForChunkOutput(chunkForModule(module, tests), tests)
   }
 
   private String folderForChunkOutput(ModuleChunk chunk, boolean tests) {
@@ -159,11 +149,7 @@ class ProjectBuilder {
       return new File(basePath, chunk.name).absolutePath
     }
     else {
-      Set<Module> modules = chunk.modules
-      def module = modules.toList().first()
-      if (modules.size() > 1) {
-        project.warning("Modules $modules with cyclic dependencies will be compiled to output of $module")
-      }
+      def module = chunk.modules.toList().first()
       return tests ? module.testOutputPath : module.outputPath
     }
   }
@@ -226,10 +212,16 @@ class ProjectBuilder {
     collectPathTransitively(chunk, false, kind, set, processed)
 
     if (kind.isTestsIncluded()) {
-      set.add(folderForChunkOutput(chunk, false))
+      addModulesOutputs(chunk.modules, false, set)
     }
 
     map[chunk] = set.asList()
+  }
+
+  private def addModulesOutputs(Collection<Module> modules, boolean tests, Set<String> result) {
+    modules.each {
+      result.add(getModuleOutputFolder(it, tests))
+    }
   }
 
   List<String> transitiveModuleDependenciesSourcePaths(ModuleChunk chunk, boolean tests) {
@@ -239,16 +231,16 @@ class ProjectBuilder {
   }
 
   List<String> moduleRuntimeClasspath(Module module, boolean test) {
-    return chunkRuntimeClasspath(chunkForModule(module), test)
+    return chunkRuntimeClasspath(chunkForModule(module, test), test)
   }
 
-  List<String> chunkRuntimeClasspath(ModuleChunk chunk, boolean test) {
+  private List<String> chunkRuntimeClasspath(ModuleChunk chunk, boolean test) {
     Set<String> set = new LinkedHashSet()
     set.addAll(moduleClasspath(chunk, test ? ClasspathKind.TEST_RUNTIME : ClasspathKind.PRODUCTION_RUNTIME))
-    set.add(folderForChunkOutput(chunk, false))
+    addModulesOutputs(chunk.modules, false, set)
 
     if (test) {
-      set.add(folderForChunkOutput(chunk, true))
+      addModulesOutputs(chunk.modules, true, set)
     }
 
     return set.asList()
@@ -286,11 +278,11 @@ class ProjectBuilder {
   }
 
   String moduleOutput(Module module) {
-    return folderForChunkOutput(chunkForModule(module), false)
+    return getModuleOutputFolder(module, false)
   }
 
   String moduleTestsOutput(Module module) {
-    return folderForChunkOutput(chunkForModule(module), true)
+    return getModuleOutputFolder(module, true)
   }
 
   List<String> validatePaths(List<String> list) {
