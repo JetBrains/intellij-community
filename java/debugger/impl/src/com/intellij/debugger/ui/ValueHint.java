@@ -20,6 +20,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -190,17 +191,8 @@ public class ValueHint extends AbstractValueHint {
     return tree;
   }
 
-  // call inside ReadAction only
-  private static boolean canProcess(PsiExpression expression) {
-    if (expression instanceof PsiReferenceExpression) {
-      PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
-      return qualifier == null || canProcess(qualifier);
-    }
-    return !(expression instanceof PsiMethodCallExpression);
-  }
-
   @Nullable
-  private static Pair<PsiExpression, TextRange> findExpression(PsiElement element) {
+  private static Pair<PsiExpression, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
     if (!(element instanceof PsiIdentifier || element instanceof PsiKeyword)) {
       return null;
     }
@@ -210,21 +202,30 @@ public class ValueHint extends AbstractValueHint {
     if (parent instanceof PsiVariable) {
       expression = element;
     }
-    else if (parent instanceof PsiReferenceExpression && canProcess((PsiExpression)parent)) {
+    else if (parent instanceof PsiReferenceExpression) {
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof PsiMethodCallExpression) {
+        parent = pparent;
+      }
+      if (allowMethodCalls || !DebuggerUtils.hasSideEffects(parent)) {
+        expression = parent;
+      }
+    }
+    else if (parent instanceof PsiThisExpression) {
       expression = parent;
     }
-    if (parent instanceof PsiThisExpression) {
-      expression = parent;
-    }
-    try {
-      if (expression != null) {
+    
+    if (expression != null) {
+      try {
         PsiElement context = element;
         if(parent instanceof PsiParameter) {
           try {
             context = ((PsiMethod)((PsiParameter)parent).getDeclarationScope()).getBody();
           }
-          catch (Throwable e) {}
-        } else {
+          catch (Throwable ignored) {
+          }
+        } 
+        else {
           while(context != null  && !(context instanceof PsiStatement) && !(context instanceof PsiClass)) {
             context = context.getParent();
           }
@@ -233,8 +234,9 @@ public class ValueHint extends AbstractValueHint {
         PsiExpression psiExpression = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(expression.getText(), context);
         return Pair.create(psiExpression, textRange);
       }
-    } catch (IncorrectOperationException e) {
-      LOG.debug(e);
+      catch (IncorrectOperationException e) {
+        LOG.debug(e);
+      }
     }
     return null;
   }
@@ -271,7 +273,7 @@ public class ValueHint extends AbstractValueHint {
         if(currentRange.get() == null) {
           PsiElement elementAtCursor = psiFile.findElementAt(offset);
           if (elementAtCursor == null) return;
-          Pair<PsiExpression, TextRange> pair = findExpression(elementAtCursor);
+          Pair<PsiExpression, TextRange> pair = findExpression(elementAtCursor, type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT);
           if (pair == null) return;
           selectedExpression.set(pair.getFirst());
           currentRange.set(pair.getSecond());
