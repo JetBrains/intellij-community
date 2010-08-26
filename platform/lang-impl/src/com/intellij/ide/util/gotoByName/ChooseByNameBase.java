@@ -29,12 +29,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -124,6 +123,8 @@ public abstract class ChooseByNameBase {
 
   private final Alarm myHideAlarm = new Alarm();
   private boolean myShowListAfterCompletionKeyStroke = false;
+  protected JBPopup myTextPopup;
+  protected JBPopup myDropdownPopup;
 
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
@@ -481,10 +482,7 @@ public abstract class ChooseByNameBase {
     myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
     myListScrollPane.setViewportBorder(new EmptyBorder(0, 0, 0, 0));
 
-    if (!UIUtil.isMotifLookAndFeel()) {
-      UIUtil.installPopupMenuBorder(myTextFieldPanel);
-    }
-    UIUtil.installPopupMenuColorAndFonts(myTextFieldPanel);
+    myTextFieldPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
 
     showTextFieldPanel();
 
@@ -590,36 +588,25 @@ public abstract class ChooseByNameBase {
     final int paneHeight = layeredPane.getHeight();
     final int y = paneHeight / 3 - preferredTextFieldPanelSize.height / 2;
 
-
-    myTextFieldPanel.setBounds(x, y, preferredTextFieldPanelSize.width, preferredTextFieldPanelSize.height);
-    layeredPane.add(myTextFieldPanel, Integer.valueOf(500));
-    layeredPane.moveToFront(myTextFieldPanel);
     VISIBLE_LIST_SIZE_LIMIT = Math.max
       (10, (paneHeight - (y + preferredTextFieldPanelSize.height)) / (preferredTextFieldPanelSize.height / 2) - 1);
 
-    // I'm registering KeyListener to close popup only by KeyTyped event.
-    // If react on KeyPressed then sometime KeyTyped goes into underlying editor.
-    // It causes typing of Enter into it.
-    myTextFieldPanel.registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        doClose(false);
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myTextFieldPanel, myTextField);
+    builder.setCancelCallback(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        myTextPopup = null;
+        close(false);
+        return Boolean.TRUE;
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                            JComponent.WHEN_IN_FOCUSED_WINDOW
-    );
+    }).setFocusable(true).setRequestFocus(true);
 
-    myList.registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        doClose(false);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                  JComponent.WHEN_IN_FOCUSED_WINDOW
-    );
-
-    IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
-
-    myTextFieldPanel.validate();
-    myTextFieldPanel.paintImmediately(0, 0, myTextFieldPanel.getWidth(), myTextFieldPanel.getHeight());
+    Point point = new Point(x, y);
+    SwingUtilities.convertPointToScreen(point, layeredPane);
+    Rectangle bounds = new Rectangle(point, new Dimension(preferredTextFieldPanelSize.width, preferredTextFieldPanelSize.height));
+    myTextPopup = builder.createPopup();
+    myTextPopup.setSize(bounds.getSize());
+    myTextPopup.showCenteredInCurrentWindow(myProject);
   }
 
   private JLayeredPane getLayeredPane() {

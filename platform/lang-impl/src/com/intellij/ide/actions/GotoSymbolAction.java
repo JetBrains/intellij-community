@@ -41,8 +41,9 @@ public class GotoSymbolAction extends GotoActionBase {
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose ()
       {
-        if (GotoSymbolAction.class.equals (myInAction))
+        if (GotoSymbolAction.class.equals (myInAction)) {
           myInAction = null;
+        }
       }
       public void elementChosen(Object element) {
         ((NavigationItem)element).navigate(true);

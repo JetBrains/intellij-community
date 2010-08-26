@@ -66,7 +66,9 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     final FilterUI filterUI = new FilterUI(popup, gotoFileModel, project);
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose() {
-        if (GotoFileAction.class.equals(myInAction)) myInAction = null;
+        if (GotoFileAction.class.equals(myInAction)) {
+          myInAction = null;
+        }
         filterUI.close();
       }
 
