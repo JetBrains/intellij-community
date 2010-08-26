@@ -17,6 +17,8 @@ package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LanguageLineWrapPositionStrategy;
+import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -27,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,34 +81,6 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
   }
 
   private static final int DEFAULT_INDENT_SIZE = 4;
-
-  /** Contains white space characters (has special treatment during soft wrap position calculation). */
-  private static final TIntHashSet WHITE_SPACES = new TIntHashSet();
-  static {
-    WHITE_SPACES.add(' ');
-    WHITE_SPACES.add('\t');
-  }
-
-  /**
-   * Contains symbols that are special in that soft wrap is allowed to be performed only
-   * after them (not before).
-   */
-  private static final TIntHashSet SPECIAL_SYMBOLS_TO_WRAP_AFTER = new TIntHashSet();
-  static {
-    SPECIAL_SYMBOLS_TO_WRAP_AFTER.add(',');
-    SPECIAL_SYMBOLS_TO_WRAP_AFTER.add(';');
-    SPECIAL_SYMBOLS_TO_WRAP_AFTER.add(')');
-  }
-
-  /**
-   * Contains symbols that are special in that soft wrap is allowed to be performed only
-   * before them (not after).
-   */
-  private static final TIntHashSet SPECIAL_SYMBOLS_TO_WRAP_BEFORE = new TIntHashSet();
-  static {
-    SPECIAL_SYMBOLS_TO_WRAP_BEFORE.add('(');
-    SPECIAL_SYMBOLS_TO_WRAP_BEFORE.add('.');
-  }
 
   /**
    * Holds information about logical lines for which soft wrap is calculated as a set of
@@ -334,10 +307,6 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
 
   /**
    * Calculates offset to use for soft wrap appliance from the given <code>(min; max]</code> interval.
-   * <p/>
-   * <b>Note:</b> this method tries its best in order to define language/file type-agnostic mechanism for
-   * soft wrap position determination. Feel free to define it as extension point if it's not possible to use
-   * general algorithm.
    *
    * @param text        target text holder
    * @param preferred   preferred position to use for soft wrapping. Implies that all symbols from <code>(preferred; max)</code>
@@ -347,64 +316,8 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
    * @param max         max offset to use (inclusive)
    * @return            wrapping offset to use (given <code>'max'</code> value should be returned if no more suitable point is found)
    */
-  private static int calculateSoftWrapOffset(CharSequence text, int preferred, int min, int max) {
-    // Try to find target offset that is not greater than preferred position.
-    for (int i = preferred; i > min; i--) {
-      char c = text.charAt(i);
-
-      if (WHITE_SPACES.contains(c)) {
-        return i < preferred ? i + 1 : i;
-      }
-
-      // Don't wrap on the non-id symbol preceded by another non-id symbol. E.g. consider that we have a statement
-      // like 'foo(int... args)'. We don't want to wrap on the second or third dots then.
-      if (i > min + 1 && !isIdSymbol(c) && !isIdSymbol(text.charAt(i - 1))) {
-        continue;
-      }
-      if (SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c)) {
-        if (i < preferred) {
-          return i + 1;
-        }
-        continue;
-      }
-      if (SPECIAL_SYMBOLS_TO_WRAP_BEFORE.contains(c) || WHITE_SPACES.contains(c)) {
-        return i;
-      }
-
-      // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++.
-      // Also don't wrap before non-id symbol preceded by a space - wrap on space instead;
-      if (!isIdSymbol(c) && (i < min + 2 || (isIdSymbol(text.charAt(i - 1)) && !WHITE_SPACES.contains(text.charAt(i - 1))))) {
-        return i;
-      }
-    }
-
-    // Try to find target offset that is greater than preferred position.
-    for (int i = preferred + 1; i < max; i++) {
-      char c = text.charAt(i);
-      if (WHITE_SPACES.contains(c)) {
-        return i;
-      }
-      // Don't wrap on the non-id symbol preceded by another non-id symbol. E.g. consider that we have a statement
-      // like 'foo(int... args)'. We don't want to wrap on the second or third dots then.
-      if (i < max - 1 && !isIdSymbol(c) && !isIdSymbol(text.charAt(i + 1)) && !isIdSymbol(text.charAt(i - 1))) {
-        continue;
-      }
-      if (SPECIAL_SYMBOLS_TO_WRAP_BEFORE.contains(c)) {
-        return i;
-      }
-      if (SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c) && i < max - 1) {
-        return i + 1;
-      }
-
-      // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++;
-      if (!isIdSymbol(c) && (i >= max - 1 || isIdSymbol(text.charAt(i + 1)))) {
-        return i;
-      }
-    }
-    return max;
-  }
-
-  private static boolean isIdSymbol(char c) {
-    return c == '_' || c == '$' || (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+  private int calculateSoftWrapOffset(CharSequence text, int preferred, int min, int max) {
+    LineWrapPositionStrategy strategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
+    return strategy.calculateWrapPosition(text, min, max, preferred, true);
   }
 }

@@ -27,6 +27,8 @@ public interface EditorSettings {
   int getRightMargin(Project project);
   void setRightMargin(int myRightMargin);
 
+  boolean isWrapWhenTypingReachesRightMargin(Project project);
+
   boolean isLineNumbersShown();
   void setLineNumbersShown(boolean val);
 
