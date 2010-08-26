@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,38 +29,21 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor{
      * @noinspection StaticCollection
      */
     @NonNls private static final Set<String> updateNames =
-            new HashSet<String>(31);
+            new HashSet<String>(14);
     static{
         updateNames.add("add");
-        updateNames.add("addAll");
-        updateNames.add("addAllAbsent");
-        updateNames.add("addBefore");
-        updateNames.add("addElement");
-        updateNames.add("addFirst");
-        updateNames.add("addIfAbsent");
-        updateNames.add("addLast");
         updateNames.add("clear");
         updateNames.add("drainTo");
-        updateNames.add("insertElementAt");
+        updateNames.add("insert");
         updateNames.add("load");
-        updateNames.add("loadFromXML");
         updateNames.add("offer");
+        updateNames.add("poll");
         updateNames.add("push");
         updateNames.add("put");
-        updateNames.add("putAll");
-        updateNames.add("putIfAbsent");
         updateNames.add("remove");
-        updateNames.add("removeAll");
-        updateNames.add("removeAllElements");
         updateNames.add("replace");
-        updateNames.add("retainAll");
-        updateNames.add("removeElementAt");
-        updateNames.add("removeFirst");
-        updateNames.add("removeLast");
-        updateNames.add("removeRange");
+        updateNames.add("retain");
         updateNames.add("set");
-        updateNames.add("setElementAt");
-        updateNames.add("setProperty");
         updateNames.add("take");
     }
 
@@ -87,8 +70,21 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor{
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
-        if(!updateNames.contains(methodName)){
+        if (methodName == null) {
             return;
+        }
+        if(!updateNames.contains(methodName)){
+            boolean found = false;
+            for (String updateName : updateNames) {
+                if (!methodName.startsWith(updateName)) {
+                    continue;
+                }
+                found = true;
+                break;
+            }
+            if (!found) {
+                return;
+            }
         }
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();

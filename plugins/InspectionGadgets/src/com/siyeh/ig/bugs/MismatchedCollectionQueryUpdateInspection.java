@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,43 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.ui.IGTable;
+import com.siyeh.ig.ui.ListWrappingTableModel;
+import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MismatchedCollectionQueryUpdateInspection
         extends BaseInspection {
+
+    @NonNls public String queries = "copyInto,drainTo,propertyNames,save,store,write";
+    @NonNls public String updates = "add,clear,drainTo,insert,load,offer,poll,push,put,remove,replace,retain,set,take";
+
+    private final List<String> queryNames = new ArrayList();
+    private final List<String> updateNames = new ArrayList();
+
+    public MismatchedCollectionQueryUpdateInspection() {
+        parseString(queries, queryNames);
+        parseString(updates, updateNames);
+    }
 
     @Override
     @NotNull
@@ -52,6 +77,60 @@ public class MismatchedCollectionQueryUpdateInspection
             return InspectionGadgetsBundle.message(
                     "mismatched.update.collection.problem.description.queried.not.updated");
         }
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final IGTable table1 = new IGTable(new ListWrappingTableModel(
+                queryNames,
+                InspectionGadgetsBundle.message("query.column.name")));
+        final JScrollPane scrollPane1 =
+                ScrollPaneFactory.createScrollPane(table1);
+        final ActionToolbar toolbar1 = UiUtils.createAddRemoveToolbar(table1);
+
+        final IGTable table2 = new IGTable(new ListWrappingTableModel(
+                updateNames,
+                InspectionGadgetsBundle.message("update.column.name")));
+        final JScrollPane scrollPane2 =
+                ScrollPaneFactory.createScrollPane(table2);
+        final ActionToolbar toolbar2 = UiUtils.createAddRemoveToolbar(table2);
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(toolbar1.getComponent(), constraints);
+
+        constraints.gridx = 1;
+        panel.add(toolbar2.getComponent(), constraints);
+
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane1, constraints);
+
+        constraints.gridx = 1;
+        panel.add(scrollPane2, constraints);
+        return panel;
+    }
+
+    @Override
+    public void readSettings(Element node) throws InvalidDataException {
+        super.readSettings(node);
+        parseString(queries, queryNames);
+        parseString(updates, updateNames);
+    }
+
+    @Override
+    public void writeSettings(Element node) throws WriteExternalException {
+        queries = formatString(queryNames);
+        updates = formatString(updateNames);
+        super.writeSettings(node);
     }
 
     @Override

@@ -15,12 +15,11 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.Icons;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,12 +27,12 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.IGTable;
 import com.siyeh.ig.ui.ListWrappingTableModel;
+import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -57,17 +56,20 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
         parseString(assertionMethods, classNames, methodNamePatterns);
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "JUnitTestMethodWithNoAssertions";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "test.method.without.assertion.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -79,95 +81,13 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
         final JPanel panel = new JPanel(new GridBagLayout());
         final IGTable table = new IGTable(new ListWrappingTableModel(
                 Arrays.asList(classNames, methodNamePatterns),
-                "Class name", "method name pattern"));
+                InspectionGadgetsBundle.message("class.name"),
+                InspectionGadgetsBundle.message("method.name.pattern")));
         final JScrollPane scrollPane =
                 ScrollPaneFactory.createScrollPane(table);
 
-        final AnAction addAction =
-                new AnAction(InspectionGadgetsBundle.message("button.add"),
-                        "", Icons.ADD_ICON) {
-
-            @Override
-            public void actionPerformed(AnActionEvent anActionEvent) {
-                final ListWrappingTableModel tableModel = table.getModel();
-                tableModel.addRow();
-                EventQueue.invokeLater(new Runnable() {
-                    public void run() {
-                        final int lastRowIndex = tableModel.getRowCount() - 1;
-                        final Rectangle rectangle =
-                                table.getCellRect(lastRowIndex, 0, true);
-                        table.scrollRectToVisible(rectangle);
-                        table.editCellAt(lastRowIndex, 0);
-                        final ListSelectionModel selectionModel =
-                                table.getSelectionModel();
-                        selectionModel.setSelectionInterval(lastRowIndex,
-                                lastRowIndex);
-                        final TableCellEditor editor = table.getCellEditor();
-                        final Component component =
-                                editor.getTableCellEditorComponent(table,
-                                        null, true, lastRowIndex, 0);
-                        component.requestFocus();
-                    }
-                });
-            }
-
-            @Override
-            public void update(AnActionEvent e) {
-                e.getPresentation().setEnabled(table.isEnabled());
-            }
-        };
-        final AnAction removeAction =
-                new AnAction(InspectionGadgetsBundle.message("button.remove"),
-                        "", Icons.DELETE_ICON) {
-
-            @Override
-            public void actionPerformed(AnActionEvent anActionEvent) {
-                final ListSelectionModel selectionModel =
-                        table.getSelectionModel();
-                final int minIndex = selectionModel.getMinSelectionIndex();
-                final int maxIndex = selectionModel.getMaxSelectionIndex();
-                if (minIndex == -1 || maxIndex == -1) {
-                    return;
-                }
-                final ListWrappingTableModel tableModel = table.getModel();
-                for (int i = minIndex; i <= maxIndex; i++) {
-                    if (selectionModel.isSelectedIndex(i)) {
-                        tableModel.removeRow(i);
-                    }
-                }
-                final int count = tableModel.getRowCount();
-                if (count <= minIndex) {
-                    selectionModel.setSelectionInterval(count - 1,
-                            count - 1);
-                } else if (minIndex <= 0) {
-                    if (count > 0) {
-                        selectionModel.setSelectionInterval(0, 0);
-                    }
-                } else {
-                    selectionModel.setSelectionInterval(minIndex - 1,
-                            minIndex - 1);
-                }
-            }
-
-            @Override
-            public void update(AnActionEvent e) {
-                final ListSelectionModel selectionModel =
-                        table.getSelectionModel();
-                final int minIndex = selectionModel.getMinSelectionIndex();
-                final int maxIndex = selectionModel.getMaxSelectionIndex();
-                if (minIndex == -1 || maxIndex == -1 || !table.isEnabled()) {
-                    e.getPresentation().setEnabled(false);
-                } else {
-                    e.getPresentation().setEnabled(true);
-                }
-            }
-        };
-        final ActionGroup group =
-                new DefaultActionGroup(addAction, removeAction);
-        final ActionManager actionManager = ActionManager.getInstance();
         final ActionToolbar toolbar =
-                actionManager.createActionToolbar(ActionPlaces.UNKNOWN,
-                        group, true);
+                UiUtils.createAddRemoveToolbar(table);
 
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
@@ -196,6 +116,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
         super.writeSettings(element);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TestMethodWithoutAssertionVisitor();
     }

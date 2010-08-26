@@ -79,8 +79,8 @@ public class MismatchedCollectionQueryUpdateInspection {
             list.add(s);
         }
 
-        void bar(String s, boolean b, Set<String> set2) {
-            (b ? list : set2).contains(s);
+        boolean bar(String s, boolean b, Set<String> set2) {
+            return (b ? list : set2).contains(s);
         }
     }
 
@@ -93,6 +93,21 @@ public class MismatchedCollectionQueryUpdateInspection {
 
         void bar(String s, boolean b, Set<String> set2) {
             (b ? list : set2).add(s);
+        }
+    }
+
+    class C {
+        private final java.util.concurrent.BlockingDeque deque =
+        new java.util.concurrent.LinkedBlockingDeque();
+
+        {
+            try {
+                final Object o = deque.takeFirst();
+                deque.putLast(o);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
         }
     }
 }

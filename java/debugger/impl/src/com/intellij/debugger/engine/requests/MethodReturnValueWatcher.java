@@ -52,14 +52,20 @@ public class MethodReturnValueWatcher  {
       return false;
     }
     try {
-      myLastExecutedMethod = event.method();
+      final Method method = event.method();
       //myLastMethodReturnValue = event.returnValue();
       try {
         if (myReturnValueMethod == null) {
           //noinspection HardCodedStringLiteral
           myReturnValueMethod = MethodExitEvent.class.getDeclaredMethod("returnValue", ArrayUtil.EMPTY_CLASS_ARRAY);
         }
-        myLastMethodReturnValue = (Value)myReturnValueMethod.invoke(event);
+        final Value retVal = (Value)myReturnValueMethod.invoke(event);
+        
+        if (method == null || !"void".equals(method.returnTypeName())) {
+          // remember methods with non-void return types only
+          myLastExecutedMethod = method;
+          myLastMethodReturnValue = retVal;
+        }
       }
       catch (NoSuchMethodException ignored) {
       }

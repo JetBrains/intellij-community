@@ -95,6 +95,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myLookup.setCancelOnClickOutside(true);
       myLookup.setCancelOnOtherWindowOpen(true);
       myLookup.setResizable(false);
+      myLookup.setForceLightweightPopup(false);
     }
 
     myLookup.addLookupListener(new LookupAdapter() {

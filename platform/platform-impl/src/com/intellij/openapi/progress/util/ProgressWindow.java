@@ -487,7 +487,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
     public void cancel() {
       if (myShouldShowCancel) {
-        myCancelButton.setEnabled(false);
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            myCancelButton.setEnabled(false);
+          }
+        });
       }
     }
 

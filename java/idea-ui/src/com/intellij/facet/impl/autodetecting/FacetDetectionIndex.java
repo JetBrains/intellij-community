@@ -84,11 +84,6 @@ public class FacetDetectionIndex extends AbstractFileIndex<FacetDetectionIndexEn
     return ProjectBundle.message("progress.text.loading.facet.detection.indices");
   }
 
-  protected String getBuildingIndicesMessage(final boolean formatChanged) {
-    return formatChanged ? ProjectBundle.message("progress.text.facet.indices.format.has.changed.redetecting.facets") 
-           : ProjectBundle.message("progress.text.detecting.facets");
-  }
-
   public byte getCurrentVersion() {
     return CURRENT_VERSION;
   }
