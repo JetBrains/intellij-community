@@ -114,15 +114,25 @@ public abstract class PythonCommandLineState extends CommandLineState {
     setRunnerPath(commandLine);
 
     // define groups
-    ParametersList params = commandLine.getParametersList();
-    params.addParamsGroup(GROUP_EXE_OPTIONS);
-    params.addParamsGroup(GROUP_DEBUGGER);
-    params.addParamsGroup(GROUP_SCRIPT);
+    createStandardGroupsIn(commandLine);
 
     buildCommandLineParameters(commandLine);
 
     initEnvironment(commandLine);
     return commandLine;
+  }
+
+  /**
+   * Creates a number of parameter groups in the command line:
+   * GROUP_EXE_OPTIONS, GROUP_DEBUGGER, GROUP_SCRIPT.
+   * These are necessary for command line patchers to work properly. 
+   * @param commandLine
+   */
+  public static void createStandardGroupsIn(GeneralCommandLine commandLine) {
+    ParametersList params = commandLine.getParametersList();
+    params.addParamsGroup(GROUP_EXE_OPTIONS);
+    params.addParamsGroup(GROUP_DEBUGGER);
+    params.addParamsGroup(GROUP_SCRIPT);
   }
 
   protected void initEnvironment(GeneralCommandLine commandLine) {
