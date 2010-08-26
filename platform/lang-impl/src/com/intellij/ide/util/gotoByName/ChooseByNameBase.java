@@ -20,6 +20,7 @@ import com.intellij.Patches;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -283,64 +284,61 @@ public abstract class ChooseByNameBase {
     myActionListener = callback;
     myTextFieldPanel = new JPanelProvider();
     myTextFieldPanel.setLayout(new BoxLayout(myTextFieldPanel, BoxLayout.Y_AXIS));
+
     final JPanel hBox = new JPanel();
     hBox.setLayout(new BoxLayout(hBox, BoxLayout.X_AXIS));
 
+    JPanel caption2Tools = new JPanel(new BorderLayout());
+
     if (myModel.getPromptText() != null) {
-      JLabel label = new JLabel(" " + myModel.getPromptText());
+      JLabel label = new JLabel(myModel.getPromptText());
       label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-      hBox.add(label);
+      caption2Tools.add(label, BorderLayout.WEST);
     }
+
+    GridBagLayout gb = new GridBagLayout();
+    JPanel eastWrapper = new JPanel(gb);
+    gb.setConstraints(hBox, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.SOUTHEAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    eastWrapper.add(hBox);
+
+    caption2Tools.add(eastWrapper, BorderLayout.CENTER);
 
     myCard = new CardLayout();
     myCardContainer = new JPanel(myCard);
 
     final JPanel checkBoxPanel = new JPanel();
-    checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     myCheckBox = new JCheckBox(myModel.getCheckBoxName());
+    myCheckBox.setAlignmentX(SwingConstants.RIGHT);
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
     if (myModel.getPromptText() != null) {
       checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.X_AXIS));
-      checkBoxPanel.add(new JLabel("  ("));
       checkBoxPanel.add(myCheckBox);
-      checkBoxPanel.add(new JLabel(")"));
     }
     else {
       checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.LINE_AXIS));
       checkBoxPanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-      checkBoxPanel.add(new JLabel(")"));
       checkBoxPanel.add(myCheckBox);
-      checkBoxPanel.add(new JLabel("  ("));
     }
     checkBoxPanel.setVisible(myModel.getCheckBoxName() != null);
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(checkBoxPanel, BorderLayout.CENTER);
     myCardContainer.add(panel, CHECK_BOX_CARD);
-    myCardContainer.add(new JLabel("  (" + myModel.getNotInMessage() + ")"), NOT_FOUND_IN_PROJECT_CARD);
-    myCardContainer.add(new JLabel("  " + IdeBundle.message("label.choosebyname.no.matches.found")), NOT_FOUND_CARD);
-    myCardContainer.add(new JLabel("  " + IdeBundle.message("label.choosebyname.searching")), SEARCHING_CARD);
+
+    myCardContainer.add(new HintLabel(myModel.getNotInMessage()), NOT_FOUND_IN_PROJECT_CARD);
+    myCardContainer.add(new HintLabel(IdeBundle.message("label.choosebyname.no.matches.found")), NOT_FOUND_CARD);
+    myCardContainer.add(new HintLabel(IdeBundle.message("label.choosebyname.searching")), SEARCHING_CARD);
     myCard.show(myCardContainer, CHECK_BOX_CARD);
-
-    //myCaseCheckBox = new JCheckBox("Ignore case");
-    //myCaseCheckBox.setMnemonic('g');
-    //myCaseCheckBox.setSelected(true);
-
-    //myCamelCheckBox = new JCheckBox("Camel words");
-    //myCamelCheckBox.setMnemonic('w');
-    //myCamelCheckBox.setSelected(true);
 
     if (isCheckboxVisible()) {
       hBox.add(myCardContainer);
-      //hBox.add(myCheckBox);
-      //hBox.add(myCaseCheckBox);
-      //hBox.add(myCamelCheckBox);
     }
+
     if (myToolArea != null) {
-      // if too area was set, add it to hbox
+      hBox.add(Box.createHorizontalStrut(4));
       hBox.add(myToolArea);
     }
-    myTextFieldPanel.add(hBox);
+    myTextFieldPanel.add(caption2Tools);
 
     myHistory = new ArrayList<Pair<String, Integer>>();
     myFuture = new ArrayList<Pair<String, Integer>>();
@@ -603,10 +601,13 @@ public abstract class ChooseByNameBase {
 
     Point point = new Point(x, y);
     SwingUtilities.convertPointToScreen(point, layeredPane);
-    Rectangle bounds = new Rectangle(point, new Dimension(preferredTextFieldPanelSize.width, preferredTextFieldPanelSize.height));
+    Rectangle bounds = new Rectangle(point, new Dimension(preferredTextFieldPanelSize.width + 20, preferredTextFieldPanelSize.height));
     myTextPopup = builder.createPopup();
     myTextPopup.setSize(bounds.getSize());
-    myTextPopup.showCenteredInCurrentWindow(myProject);
+    myTextPopup.setLocation(bounds.getLocation());
+
+    new MnemonicHelper().register(myTextFieldPanel);
+    myTextPopup.show(layeredPane);
   }
 
   private JLayeredPane getLayeredPane() {
@@ -1373,6 +1374,13 @@ public abstract class ChooseByNameBase {
       if (rc != 0) return rc;
 
       return Comparing.compare(myModel.getFullName(o1), myModel.getFullName(o2));
+    }
+  }
+
+  private static class HintLabel extends JLabel {
+    private HintLabel(String text) {
+      super(text, RIGHT);
+      setForeground(Color.darkGray);
     }
   }
 }
