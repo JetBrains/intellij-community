@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     size.width = fontMetrics.charWidth('a') * charCount;
     comp.setPreferredSize(size);
     final Dimension preferredSize = myBrowseButton.getPreferredSize();
-    setPreferredSize(new Dimension(size.width + preferredSize.width + 2, preferredSize.height + 2));
+    setPreferredSize(new Dimension(size.width + preferredSize.width + 2, SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() ? preferredSize.height : preferredSize.height + 2));
   }
 
   public void setEnabled(boolean enabled) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,11 +24,9 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ComboBoxUI;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -37,17 +36,28 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
+ * Use this editor if you wish your combobox editor to look good on Macs.
+ *
  * User: spLeaner
  */
-public class MacComboBoxEditor implements ComboBoxEditor {
+public class FixedComboBoxEditor implements ComboBoxEditor {
   public static final Border EDITOR_BORDER = new MacComboBoxEditorBorder(false);
   public static final Border DISABLED_EDITOR_BORDER = new MacComboBoxEditorBorder(true);
 
-  private MacComboBoxTextField myField;
+  private JTextField myField;
   private Object oldValue;
 
-  public MacComboBoxEditor() {
-    myField = new MacComboBoxTextField();
+  public FixedComboBoxEditor() {
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
+      myField = new MacComboBoxTextField();
+    } else {
+      myField = new JTextField();
+      myField.setBorder(null);
+    }
+  }
+
+  protected JTextField getField() {
+    return myField;
   }
 
   @Override
@@ -175,7 +185,7 @@ public class MacComboBoxEditor implements ComboBoxEditor {
 
     private void repaintCombobox() {
       final Container parent = getParent();
-      assert parent != null;
+      if (parent == null) return;
       final Container grandParent = parent.getParent();
       if (grandParent != null) {
         myRepaintingParent = true;
@@ -314,155 +324,4 @@ public class MacComboBoxEditor implements ComboBoxEditor {
       return true;
     }
   }
-
-  private static abstract class MacComboBoxAction extends AbstractAction {
-
-    @Override
-    public void actionPerformed(final ActionEvent e) {
-      final Object source = e.getSource();
-      if (source instanceof JComboBox) {
-        final JComboBox comboBox = (JComboBox)source;
-        if (!comboBox.isEnabled() || !comboBox.isShowing()) return;
-
-        if (comboBox.isPopupVisible()) {
-          ComboPopup popup = getComboboxPopup(comboBox);
-          if (popup != null) {
-            performComboBoxAction(comboBox, popup);
-          }
-        }
-        else {
-          comboBox.setPopupVisible(true);
-        }
-      }
-    }
-
-    protected abstract void performComboBoxAction(final JComboBox comboBox, final ComboPopup popup);
-  }
-
-  private AbstractAction macEnterPressedAction = new AbstractAction() {
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      if (!myField.isEnabled() || !myField.isShowing()) return;
-
-      final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, myField);
-      if (ancestor == null) return;
-
-      final JComboBox comboBox = (JComboBox)ancestor;
-      if (!comboBox.isEnabled()) return;
-
-      if (!comboBox.isPopupVisible()) {
-        selectAll();
-        return;
-      }
-
-      ComboPopup popup = getComboboxPopup(comboBox);
-      if (popup != null) {
-        if (popup.getList().getSelectedIndex() < 0) {
-          comboBox.setPopupVisible(false);
-        }
-
-        if (Boolean.TRUE.equals(comboBox.getClientProperty("JComboBox.isTableCellEditor"))) {
-          comboBox.setSelectedIndex(popup.getList().getSelectedIndex());
-          return;
-        }
-
-        if (comboBox.isPopupVisible()) {
-          comboBox.setSelectedIndex(popup.getList().getSelectedIndex());
-          comboBox.setPopupVisible(false);
-
-          selectAll();
-        }
-      }
-    }
-  };
-
-  private MacComboBoxAction highlightNextAction = new MacComboBoxAction() {
-    @Override
-    protected void performComboBoxAction(final JComboBox comboBox, final ComboPopup popup) {
-      int i = comboBox.getSelectedIndex();
-
-      if (i < comboBox.getModel().getSize() - 1) {
-        comboBox.setSelectedIndex(i + 1);
-        //comboBox.ensureIndexIsVisible(i + 1);
-      }
-
-      comboBox.repaint();
-    }
-  };
-
-  private MacComboBoxAction highlightPreviousAction = new MacComboBoxAction() {
-    @Override
-    protected void performComboBoxAction(final JComboBox comboBox, final ComboPopup popup) {
-      final JList list = popup.getList();
-      int i = list.getSelectedIndex();
-      if (i > 0) {
-        list.setSelectedIndex(i - 1);
-        list.ensureIndexIsVisible(i - 1);
-      }
-
-      list.repaint();
-    }
-  };
-
-  private MacComboBoxAction highlightFirstAction = new MacComboBoxAction() {
-    @Override
-    protected void performComboBoxAction(final JComboBox comboBox, final ComboPopup popup) {
-      final JList list = popup.getList();
-      list.setSelectedIndex(0);
-      list.ensureIndexIsVisible(0);
-    }
-  };
-
-  private MacComboBoxAction highlightLastAction = new MacComboBoxAction() {
-    @Override
-    protected void performComboBoxAction(JComboBox comboBox, final ComboPopup popup) {
-      final JList list = popup.getList();
-      int i = list.getModel().getSize();
-      list.setSelectedIndex(i - 1);
-      list.ensureIndexIsVisible(i - 1);
-    }
-  };
-
-  MacComboBoxAction highlightPageUpAction = new MacComboBoxAction() {
-    @Override
-    protected void performComboBoxAction(final JComboBox comboBox, final ComboPopup popup) {
-      final JList list = popup.getList();
-      int i = list.getSelectedIndex();
-      int j = list.getFirstVisibleIndex();
-
-      if (i != j) {
-        list.setSelectedIndex(j);
-        return;
-      }
-
-      int k = list.getVisibleRect().height / list.getCellBounds(0, 0).height;
-      int l = j - k;
-      if (l < 0) l = 0;
-
-      list.ensureIndexIsVisible(l);
-      list.setSelectedIndex(l);
-    }
-  };
-
-  private MacComboBoxAction highlightPageDownAction = new MacComboBoxAction() {
-    @Override
-    protected void performComboBoxAction(JComboBox comboBox, final ComboPopup popup) {
-      final JList list = popup.getList();
-      int i = list.getSelectedIndex();
-      int j = list.getLastVisibleIndex();
-
-      if (i != j) {
-        list.setSelectedIndex(j);
-        return;
-      }
-
-      int k = list.getVisibleRect().height / list.getCellBounds(0, 0).height;
-      int l = list.getModel().getSize() - 1;
-      int i1 = j + k;
-      if (i1 > l) i1 = l;
-
-      list.ensureIndexIsVisible(i1);
-      list.setSelectedIndex(i1);
-    }
-  };
 }

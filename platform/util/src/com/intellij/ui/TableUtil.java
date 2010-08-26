@@ -15,17 +15,22 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.ui.ItemRemovable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class TableUtil {
+  private TableUtil() {
+  }
+
   public interface ItemChecker {
     boolean isOperationApplyable(TableModel model, int row);
   }
@@ -188,5 +193,52 @@ public class TableUtil {
   public static void ensureSelectionExists(JTable table) {
     if (table.getSelectedRow() != -1 || table.getRowCount() == 0) return;
     table.setRowSelectionInterval(0, 0);
+  }
+
+  public static void configureAllowedCellSelection(final JTable table, final Condition<Point> cellCondition) {
+    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("ENTER"));
+    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("TAB"));
+    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("shift TAB"));
+    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("RIGHT"));
+    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("LEFT"));
+    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("UP"));
+    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("DOWN"));
+  }
+
+  public static class MyFocusAction extends SwingActionWrapper<JTable> {
+
+    private final Condition<Point> myCellCondition;
+
+    public MyFocusAction(JTable table, Condition<Point> cellCondition, KeyStroke keyStroke) {
+      super(table, keyStroke);
+      myCellCondition = cellCondition;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      final JTable table = getComponent();
+      int originalRow = table.getSelectedRow();
+      int originalColumn = table.getSelectedColumn();
+
+      getDelegate().actionPerformed(e);
+
+      final Point coord = new Point(table.getSelectedColumn(), table.getSelectedRow());
+
+      while (!myCellCondition.value(coord)) {
+        getDelegate().actionPerformed(e);
+
+        if (coord.y == table.getSelectedRow()
+            && coord.x == table.getSelectedColumn()) {
+          table.changeSelection(originalRow, originalColumn, false, false);
+          break;
+        }
+
+        coord.y = table.getSelectedRow();
+        coord.x = table.getSelectedColumn();
+
+        if (coord.y == originalRow && coord.x == originalColumn) {
+          break;
+        }
+      }
+    }
   }
 }

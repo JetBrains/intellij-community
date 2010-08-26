@@ -187,6 +187,8 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     if (!items.contains(item)) return;
     int index = items.indexOf(item);
     getSelectionModel().addSelectionInterval(index, index);
+    // fix cell selection case
+    getColumnModel().getSelectionModel().addSelectionInterval(0, getColumnCount()-1);
   }
 
   public TableCellEditor getCellEditor(int row, int column) {

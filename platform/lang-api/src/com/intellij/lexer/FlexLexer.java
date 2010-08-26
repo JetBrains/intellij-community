@@ -30,10 +30,4 @@ import java.io.IOException;
   int getTokenEnd();
   IElementType advance() throws IOException;
   void reset(CharSequence buf, int start, int end, int initialState);
-
-  /**
-   * Method left for Demetra compatibility
-   */
-  @Deprecated
-  void reset(CharSequence buf, int initialState);
 }

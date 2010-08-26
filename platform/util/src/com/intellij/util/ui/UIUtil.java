@@ -78,6 +78,8 @@ public class UIUtil {
   // accessed only from EDT
   private static HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
+  public static final String CENTER_TOOLTIP = "ToCenterTooltip";
+
   private UIUtil() {
   }
 
