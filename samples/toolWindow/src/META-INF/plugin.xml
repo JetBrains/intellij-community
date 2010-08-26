@@ -21,7 +21,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->                       
-     <toolWindow id="Sample Calendar"   icon="/com/intellij/openapi/samples/plus.png" anchor="right" factoryClass="com.intellij.openapi.samples.MyToolWindowFactory"   >
+     <toolWindow id="Sample Calendar"   icon="/com/intellij/openapi/toolWindow/plus.png" anchor="right" factoryClass="com.intellij.openapi.toolWindow.MyToolWindowFactory"   >
          
      </toolWindow>
   </extensions>
