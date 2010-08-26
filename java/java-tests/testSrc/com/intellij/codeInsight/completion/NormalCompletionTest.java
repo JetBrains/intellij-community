@@ -645,5 +645,10 @@ public class NormalCompletionTest extends LightCompletionTestCase {
 
   public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
 
+  public void testRightShift() throws Throwable {
+    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    assertStringItems("myField1", "myField2");
+  }
+
 
 }
