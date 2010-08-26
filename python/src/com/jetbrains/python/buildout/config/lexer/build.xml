@@ -1,0 +1,29 @@
+<project name="Generate lexer from buildout.cfg.flex" default="dist">
+  <property name="jflex.dir" value="/usr/local/java/idea-8.1-dev/tools/jflex"/>
+
+  <property name="lexer.dir" value="."/>
+  <property name="lexer.file" value="${lexer.dir}/_BuildoutCfgFlexLexer.java"/>
+  <property name="lexer.log" value="${lexer.dir}/jflex.log"/>
+  <property name="lexer.source" value="${lexer.dir}/buildout.cfg.flex"/>
+  <property name="lexer.skeleton" value="${jflex.dir}/idea-flex.skeleton"/>
+  <property name="compiler.max.memory" value="256m"/>
+  <property name="jflex.file" value="${jflex.dir}/lib/JFlex.jar"/>
+
+  <target name="clean">
+    <delete file="${lexer.file}~"/>
+    <delete file="${lexer.file}"/>
+    <delete file="${lexer.log}"/>
+  </target>
+
+  <target name="jflex" description="Produces Jflex based lexer" depends="clean">
+    <java jar="${jflex.file}" output="${lexer.log}" fork="true" maxmemory="${compiler.max.memory}">
+      <arg value="--charat"/>
+      <arg value="-skel"/>
+      <arg value="${lexer.skeleton}"/>
+      <arg value="${lexer.source}"/>
+    </java>
+  </target>
+
+  <target name="dist" depends="clean, jflex" description="main target"/>
+
+</project>
