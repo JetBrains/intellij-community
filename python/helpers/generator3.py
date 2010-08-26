@@ -222,6 +222,16 @@ def sanitizeIdent(x):
     else:
         return x.replace("-", "_").replace(" ", "_").replace(".", "_") # for things like "list-or-tuple" or "list or tuple"
 
+def reliable_repr(value):
+    # some subclasses of built-in types (see PyGtk) may provide invalid __repr__ implementations,
+    # so we need to sanitize the output
+    if isinstance(value, bool):
+        return repr(bool(value))
+    for t in NUM_TYPES:
+        if isinstance(value, t):
+            return repr(t(value))
+    return repr(value)
+
 def sanitizeValue(p_value):
     "Returns p_value or its part if it represents a sane simple value, else returns 'None'"
     if isinstance(p_value, STR_TYPES):
@@ -231,7 +241,7 @@ def sanitizeValue(p_value):
         else:
             return 'None'
     elif isinstance(p_value, NUM_TYPES):
-        return repr(p_value)
+        return reliable_repr(p_value)
     elif p_value is None:
         return 'None'
     else:
@@ -807,7 +817,6 @@ class ModuleRedeclarator(object):
                         return mname + inner_name
         return None
 
-
     def fmtValue(self, p_value, indent, prefix="", postfix="", as_name=None):
         """
         Formats and outputs value (it occupies and entire line).
@@ -818,7 +827,7 @@ class ModuleRedeclarator(object):
         @param as_name hints which name are we trying to print; helps with circular refs.
         """
         if isinstance(p_value, SIMPLEST_TYPES):
-            self.out(prefix + repr(p_value) + postfix, indent)
+            self.out(prefix + reliable_repr(p_value) + postfix, indent)
         else:
             if sys.platform == "cli":
                 imported_name = None
@@ -1087,17 +1096,16 @@ class ModuleRedeclarator(object):
         if self.doing_builtins and p_modname == BUILTIN_MOD_NAME:
             deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
             if deco:
-            #self.out(deco + " # known case", indent)
                 deco_comment = " # known case"
-        elif p_class:
-        # detect native methods declared with METH_CLASS flag
-            if p_name != "__new__" and type(p_func).__name__.startswith('classmethod'
+        elif p_class and p_name in p_class.__dict__:
+            # detect native methods declared with METH_CLASS flag
+            descriptor = p_class.__dict__[p_name]
+            if p_name != "__new__" and type(descriptor).__name__.startswith('classmethod'
                                                                         ):  # 'classmethod_descriptor' in Python 2.x and 3.x, 'classmethod' in Jython
                 deco = "classmethod"
             elif type(p_func).__name__.startswith('staticmethod'):
                 deco = "staticmethod"
         if p_name == "__new__":
-        #self.out("@staticmethod # known case of __new__", indent)
             deco = "staticmethod"
             deco_comment = " # known case of __new__"
 
@@ -1161,7 +1169,9 @@ class ModuleRedeclarator(object):
                 decl.append("**kwargs")
                 spec = p_name + "(" + ", ".join(decl) + ")"
             self.out("def " + spec + ": # " + sig_note, indent)
-            self.outDocstring(funcdoc, indent + 1)
+            # to reduce size of stubs, don't output same docstring twice for class and its __init__ method
+            if not is_init or funcdoc != p_class.__doc__:
+                self.outDocstring(funcdoc, indent + 1)
         # empty body
         self.out("pass", indent + 1)
         if deco and not HAS_DECORATORS:
@@ -1179,7 +1189,7 @@ class ModuleRedeclarator(object):
 
     def fullName(self, cls, p_modname):
         m = cls.__module__
-        if m == p_modname or m == BUILTIN_MOD_NAME:
+        if m == p_modname or m == BUILTIN_MOD_NAME or m == 'exceptions':
             return cls.__name__
         return m + "." + cls.__name__
 
@@ -1228,7 +1238,8 @@ class ModuleRedeclarator(object):
             if p_class in self.FAKE_BUILTIN_INITS:
                 methods["__init__"] = self.fake_builtin_init
             elif '__init__' not in methods:
-                methods['__init__'] = getattr(p_class, '__init__')
+                init_method = getattr(p_class, '__init__')
+                if init_method: methods['__init__'] = init_method
                 
             #
             for item_name in sortedNoCase(methods.keys()):
@@ -1265,7 +1276,7 @@ class ModuleRedeclarator(object):
         if not methods and not properties and not others:
             self.out("pass", indent + 1)
 
-    def redo(self, p_name, old_modules):
+    def redo(self, p_name, imported_module_names):
         """
         Restores module declarations.
         Intended for built-in modules and thus does not handle import statements.
@@ -1289,7 +1300,7 @@ class ModuleRedeclarator(object):
                 else:
                     self.out(item_name + " = None # ??? name unknown, refers to " + str(item))
         for module_name, module_obj in sys.modules.items():
-            if module_name not in old_modules and module_obj != self.module and module_name not in self.imported_modules:
+            if module_name in imported_module_names and module_obj != self.module and module_name not in self.imported_modules and module_obj:
                 self.imported_modules[module_name] = module_obj
                 self.out("import " + module_name)
                                 
@@ -1310,7 +1321,10 @@ class ModuleRedeclarator(object):
                 item = self.module.__dict__[item_name] # have it raw
             # check if it has percolated from an imported module
             if sys.platform == "cli" and p_name != "System":
-            # IronPython has non-trivial reexports in System module, but not in others
+                # IronPython has non-trivial reexports in System module, but not in others
+                imported_name = None
+            elif p_name == 'gtk._gtk' or p_name == 'gobject._gobject':
+                # some weirdness with module references, can't figure it out, assume no reexports
                 imported_name = None
             else:
                 imported_name = self.findImportedName(item)
@@ -1416,7 +1430,63 @@ class ModuleRedeclarator(object):
                 self.out("", 0) # empty line after each item
 
 
-            # command-line interface
+def build_output_name(subdir, name):
+    quals = name.split(".")
+    dirname = subdir
+    if dirname:
+        dirname += os.path.sep # "a -> a/"
+    for pathindex in range(len(quals) - 1): # create dirs for all quals but last
+        subdirname = dirname + os.path.sep.join(quals[0: pathindex + 1])
+        if not os.path.isdir(subdirname):
+            action = "creating subdir " + subdirname
+            os.makedirs(subdirname)
+        init_py = os.path.join(subdirname, "__init__.py")
+        if os.path.isfile(subdirname + ".py"):
+            os.rename(subdirname + ".py", init_py)
+        elif not os.path.isfile(init_py):
+            init = fopen(init_py, "w")
+            init.close()
+    target_dir = dirname + os.path.sep.join(quals[0: len(quals) - 1])
+    #sys.stderr.write("target dir is " + repr(target_dir) + "\n")
+    target_name = target_dir + os.path.sep + quals[-1]
+    if os.path.isdir(target_name):
+        fname = os.path.join(target_name, "__init__.py")
+    else:
+        fname = target_name + ".py"
+    return fname
+
+action = None
+def redo_module(name, fname, imported_module_names):
+    global action
+    # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
+    # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
+    # sys.modules
+    mod = sys.modules[name]
+    if not mod:
+        sys.stderr.write("Failed to find imported module in sys.modules")
+        #sys.exit(0)
+
+    if update_mode and hasattr(mod, "__file__"):
+        action = "probing " + fname
+        mod_mtime = os.path.exists(mod.__file__) and os.path.getmtime(mod.__file__) or 0.0
+        file_mtime = os.path.exists(fname) and os.path.getmtime(fname) or 0.0
+        # skeleton's file is no older than module's, and younger than our script
+        if file_mtime >= mod_mtime and datetime.fromtimestamp(file_mtime) > OUR_OWN_DATETIME:
+            return # skip the file
+
+    if doing_builtins and name == BUILTIN_MOD_NAME:
+        action = "grafting"
+        setattr(mod, FAKE_CLASSOBJ_NAME, FakeClassObj)
+    action = "opening " + fname
+    outfile = fopen(fname, "w")
+    action = "restoring"
+    r = ModuleRedeclarator(mod, outfile, doing_builtins=doing_builtins)
+    r.redo(name, imported_module_names)
+    action = "closing " + fname
+    outfile.close()
+
+
+# command-line interface
 
 if __name__ == "__main__":
     from getopt import getopt
@@ -1425,7 +1495,7 @@ if __name__ == "__main__":
     if sys.version_info[0] > 2:
         import io  # in 3.0
 
-        fopen = io.open
+        fopen = lambda name, mode: io.open(name, mode, encoding='utf-8')
     else:
         fopen = open
 
@@ -1488,63 +1558,47 @@ if __name__ == "__main__":
             sys.stdout.flush()
         action = "doing nothing"
         try:
-            quals = name.split(".")
-            dirname = subdir
-            if dirname:
-                dirname += os.path.sep # "a -> a/"
-            for pathindex in range(len(quals) - 1): # create dirs for all quals but last
-                subdirname = dirname + os.path.sep.join(quals[0: pathindex + 1])
-                if not os.path.isdir(subdirname):
-                    action = "creating subdir " + subdirname
-                    os.makedirs(subdirname)
-                init_py = os.path.join(subdirname, "__init__.py")
-                if os.path.isfile(subdirname + ".py"):
-                    os.rename(subdirname + ".py", init_py)
-                elif not os.path.isfile(init_py):
-                    init = fopen(init_py, "w")
-                    init.close()
-            target_dir = dirname + os.path.sep.join(quals[0: len(quals) - 1])
-            #sys.stderr.write("target dir is " + repr(target_dir) + "\n")
-            target_name = target_dir + os.path.sep + quals[-1]
-            if os.path.isdir(target_name):
-                fname = os.path.join(target_name, "__init__.py")
-            else:
-                fname = target_name + ".py"
-            #
+            fname = build_output_name(subdir, name)
 
             old_modules = list(sys.modules.keys())
+            imported_module_names = []
+            class MyFinder:
+                def find_module(self, fullname, path=None):
+                    if fullname != name:
+                        imported_module_names.append(fullname)
+                    return None
+
+            my_finder = None
+            if hasattr(sys, 'meta_path'):
+                my_finder = MyFinder()
+                sys.meta_path.append(my_finder)
+            else:
+                imported_module_names = None
+
             action = "importing"
             try:
                 mod = __import__(name)
             except ImportError:
                 sys.stderr.write("Name " + name + " failed to import\n")
                 continue
-            # we can't really import a.b.c, only a, so follow the path
-            for q in quals[1:]:
-                action = "getting submodule " + q
-                try:
-                    mod = getattr(mod, q)
-                except AttributeError:
-                    sys.stderr.write("Name " + name + " is not really importable at point " + q + "\n")
-                    sys.exit(0)
-                #
-            if update_mode and hasattr(mod, "__file__"):
-                action = "probing " + fname
-                mod_mtime = os.path.exists(mod.__file__) and os.path.getmtime(mod.__file__) or 0.0
-                file_mtime = os.path.exists(fname) and os.path.getmtime(fname) or 0.0
-                # skeleton's file is no older than module's, and younger than our script
-                if file_mtime >= mod_mtime and datetime.fromtimestamp(file_mtime) > OUR_OWN_DATETIME:
-                    continue # skip the file
-            if doing_builtins and name == BUILTIN_MOD_NAME:
-                action = "grafting"
-                setattr(mod, FAKE_CLASSOBJ_NAME, FakeClassObj)
-            action = "opening " + fname
-            outfile = fopen(fname, "w")
-            action = "restoring"
-            r = ModuleRedeclarator(mod, outfile, doing_builtins=doing_builtins)
-            r.redo(name, old_modules)
-            action = "closing " + fname
-            outfile.close()
+
+            if my_finder:
+                sys.meta_path.remove(my_finder)
+            if imported_module_names is None:
+                imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
+
+            redo_module(name, fname, imported_module_names)
+            # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
+            # restore all of them
+            if imported_module_names:
+                for m in sys.modules.keys():
+                    # if module has __file__ defined, it has Python source code and doesn't need a skeleton 
+                    if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
+                        if not quiet:
+                            sys.stdout.write(m + "\n")
+                            sys.stdout.flush()
+                        fname = build_output_name(subdir, m)
+                        redo_module(m, fname, imported_module_names)
         except:
             sys.stderr.write("Failed to process " + name + " while " + action + "\n")
             if debug_mode:

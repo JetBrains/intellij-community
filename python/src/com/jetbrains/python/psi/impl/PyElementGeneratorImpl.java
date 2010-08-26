@@ -6,10 +6,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +32,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   public ASTNode createNameIdentifier(String name) {
-    final PsiFile dummyFile = createDummyFile(name);
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), name);
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     final PyReferenceExpression refExpression = (PyReferenceExpression)expressionStatement.getFirstChild();
 
@@ -37,12 +40,18 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public PsiFile createDummyFile(String contents) {
-    return PsiFileFactory.getInstance(myProject).createFileFromText("dummy." + PythonFileType.INSTANCE.getDefaultExtension(), contents);
+  public PsiFile createDummyFile(LanguageLevel langLevel, String contents) {
+    final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
+    final String name = "dummy." + PythonFileType.INSTANCE.getDefaultExtension();
+    final LightVirtualFile virtualFile = new LightVirtualFile(name, PythonFileType.INSTANCE, contents);
+    virtualFile.putUserData(LanguageLevel.KEY, langLevel);
+    final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), false, true);
+    assert psiFile != null;
+    return psiFile;
   }
 
   public PyStringLiteralExpression createStringLiteralAlreadyEscaped(String str) {
-    final PsiFile dummyFile = createDummyFile(str);
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), str);
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     return (PyStringLiteralExpression)expressionStatement.getFirstChild();
   }
@@ -113,20 +122,20 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   public PyListLiteralExpression createListLiteral() {
-    final PsiFile dummyFile = createDummyFile("[]");
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "[]");
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     return (PyListLiteralExpression)expressionStatement.getFirstChild();
   }
 
   public ASTNode createComma() {
-    final PsiFile dummyFile = createDummyFile("[0,]");
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "[0,]");
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     ASTNode zero = expressionStatement.getFirstChild().getNode().getFirstChildNode().getTreeNext();
     return zero.getTreeNext().copyElement();
   }
 
   public ASTNode createDot() {
-    final PsiFile dummyFile = createDummyFile("a.b");
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a.b");
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     ASTNode dot = expressionStatement.getFirstChild().getNode().getFirstChildNode().getTreeNext();
     return dot.copyElement();
@@ -172,7 +181,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   public PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral) {
-    final PsiFile dummyFile = createDummyFile("a " + s + " b");
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a " + s + " b");
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     PyBinaryExpression binExpr = (PyBinaryExpression)expressionStatement.getExpression();
     ASTNode binnode = binExpr.getNode();
@@ -182,41 +191,41 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   public PyExpression createExpressionFromText(final String text) {
-    final PsiFile dummyFile = createDummyFile(text);
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), text);
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     return expressionStatement.getExpression();
   }
 
   public PyCallExpression createCallExpression(String functionName) {
-    final PsiFile dummyFile = createDummyFile(functionName + "()");
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), functionName + "()");
     return (PyCallExpression)dummyFile.getFirstChild().getFirstChild();
   }
 
   public PyImportStatement createImportStatementFromText(final String text) {
-    final PsiFile dummyFile = createDummyFile(text);
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), text);
     return (PyImportStatement)dummyFile.getFirstChild();
   }
 
   @Override
   public PyImportElement createImportElement(String name) {
-    return createFromText(PyImportElement.class, "from foo import " + name, new int[]{0, 6});
+    return createFromText(LanguageLevel.getDefault(), PyImportElement.class, "from foo import " + name, new int[]{0, 6});
   }
 
   static final int[] FROM_ROOT = new int[]{0};
 
-  public <T> T createFromText(Class<T> aClass, final String text) {
-    return createFromText(aClass, text, FROM_ROOT);
+  public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text) {
+    return createFromText(langLevel, aClass, text, FROM_ROOT);
   }
 
   static int[] PATH_PARAMETER = {0, 3, 1};
 
   public PyNamedParameter createParameter(@NotNull String name) {
-    return createFromText(PyNamedParameter.class, "def f(" + name + "): pass", PATH_PARAMETER);
+    return createFromText(LanguageLevel.getDefault(), PyNamedParameter.class, "def f(" + name + "): pass", PATH_PARAMETER);
   }
 
   // TODO: use to generate most other things
-  public <T> T createFromText(Class<T> aClass, final String text, final int[] path) {
-    final PsiFile dummyFile = createDummyFile(text);
+  public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path) {
+    final PsiFile dummyFile = createDummyFile(langLevel, text);
     PsiElement ret = dummyFile;
     for (int skip : path) {
       ret = ret.getFirstChild();

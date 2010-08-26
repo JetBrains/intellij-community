@@ -64,11 +64,13 @@ public class PyExtractSuperclassHelper {
           public void run() {
             final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
             final String text = PyClassRefactoringUtil.prepareClassText(clazz, elements, true, true, superBaseName) + "\n";
-            final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(PyClass.class, text);
+            final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
             newClassRef.set(newClass);
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, newClass);
             PyClassRefactoringUtil.addSuperclasses(project, clazz, null, Collections.singleton(superBaseName));
-            PyPsiUtils.removeElements(elements);
+            if (elements.length > 0) {
+              PyPsiUtils.removeElements(elements);
+            }
             PyClassRefactoringUtil.insertPassIfNeeded(clazz);
             placeNewClass(project, newClass, clazz, targetFile);
           }
@@ -121,7 +123,7 @@ public class PyExtractSuperclassHelper {
 
     LOG.assertTrue(psiFile != null);
     insertImport(project, clazz, newClass, psiFile.getVirtualFile());
-    PyPsiUtils.addToEnd(psiFile, newClass, newClass.getNextSibling());
+    psiFile.add(newClass);
   }
 
   private static void insertImport(Project project, PyClass clazz, PyClass newClass, VirtualFile newFile) {
@@ -137,7 +139,7 @@ public class PyExtractSuperclassHelper {
     }
     text.append("import ").append(name).append("\n");
 
-    final PyStatement imp = PyElementGenerator.getInstance(project).createFromText(PyStatement.class, text.toString());
+    final PyStatement imp = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyStatement.class, text.toString());
     PyPsiUtils.addBeforeInParent(clazz, imp, imp.getNextSibling());
   }
 

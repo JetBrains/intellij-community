@@ -227,7 +227,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
       // Local function
       if (element instanceof PyFunction){
-        registerWarning(((PyFunction)element).getNameIdentifier(),
+        final PsiElement nameIdentifier = ((PyFunction)element).getNameIdentifier();
+        registerWarning(nameIdentifier == null ? element : nameIdentifier,
                         PyBundle.message("INSP.unused.locals.local.function.isnot.used",
                         ((PyFunction)element).getName()));
       } 
@@ -312,7 +313,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private void registerWarning(final PsiElement element, final String msg, LocalQuickFix... quickfixes) {
+  private void registerWarning(@NotNull final PsiElement element, final String msg, LocalQuickFix... quickfixes) {
     registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, quickfixes);
   }
 
@@ -330,7 +331,9 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
 
     private void replace(final PsiElement psiElement) {
-      final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(psiElement.getProject()).createDummyFile("for _ in tuples:\n  pass");
+      final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(psiElement.getProject()).createDummyFile(LanguageLevel.getDefault(),
+                                                                                                             "for _ in tuples:\n  pass"
+      );
       final PyExpression target = ((PyForStatement)pyFile.getStatements().get(0)).getForPart().getTarget();
       CommandProcessor.getInstance().executeCommand(psiElement.getProject(), new Runnable() {
         public void run() {

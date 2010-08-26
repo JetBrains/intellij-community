@@ -9,7 +9,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class ReplaceNotEqOperatorIntention implements IntentionAction {
     PsiElement operator = binaryExpression.getPsiOperator();
     if (operator != null) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      operator.replace(elementGenerator.createFromText(LeafPsiElement.class, "!="));
+      operator.replace(elementGenerator.createFromText(LanguageLevel.forElement(binaryExpression), LeafPsiElement.class, "!="));
     }
   }
 

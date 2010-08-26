@@ -169,6 +169,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (element1 == null) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), myDialogTitle,
                                           "refactoring.extractMethod");
+      return;
     }
     if (!checkIntroduceContext(file, editor, element1)) {
       return;
@@ -236,7 +237,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private void performActionOnElement(Editor editor,
-                                      PsiElement element,
+                                      @NotNull PsiElement element,
                                       String name,
                                       boolean replaceAll,
                                       boolean hasConstructor,
@@ -285,7 +286,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected abstract String getHelpId();
 
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText, PsiElement anchor) {
-    return PyElementGenerator.getInstance(project).createFromText(PyAssignmentStatement.class, assignmentText);
+    return PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyAssignmentStatement.class, assignmentText);
   }
 
   protected boolean checkEnabled(Project project, Editor editor, PsiElement element1, String dialogTitle) {

@@ -8,7 +8,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,11 +43,11 @@ public class ReplaceBuiltinsIntention implements IntentionAction {
       if (importReference != null) {
         if (LanguageLevel.forFile(file.getVirtualFile()).isPy3K()) {
           if ("__builtin__".equals(importReference.getName())) {
-            importReference.replace(elementGenerator.createFromText(PyReferenceExpression.class, "builtins"));
+            importReference.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, "builtins"));
           }
         } else {
           if ("builtins".equals(importReference.getName())) {
-            importReference.replace(elementGenerator.createFromText(PyReferenceExpression.class, "__builtin__"));
+            importReference.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, "__builtin__"));
           }
         }
       }

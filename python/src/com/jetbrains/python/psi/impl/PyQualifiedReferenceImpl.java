@@ -251,4 +251,9 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     }
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "PyQualifiedReference(" + myElement + "," + myContext + ")";
+  }
 }

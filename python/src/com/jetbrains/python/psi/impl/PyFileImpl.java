@@ -102,10 +102,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (virtualFile == null) {
       virtualFile = getUserData(FileBasedIndex.VIRTUAL_FILE);
     }
-    if (virtualFile != null) {
-      return LanguageLevel.forFile(virtualFile);
+    if (virtualFile == null) {
+      virtualFile = getViewProvider().getVirtualFile();
     }
-    return LanguageLevel.getDefault();
+    return LanguageLevel.forFile(virtualFile);
   }
 
   public Icon getIcon(int flags) {

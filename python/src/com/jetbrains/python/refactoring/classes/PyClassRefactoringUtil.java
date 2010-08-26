@@ -116,7 +116,7 @@ public class PyClassRefactoringUtil {
   public static void insertPassIfNeeded(PyClass clazz) {
     final PyStatementList statements = clazz.getStatementList();
     if (statements.getStatements().length == 0) {
-      statements.add(PyElementGenerator.getInstance(clazz.getProject()).createFromText(PyPassStatement.class, "pass"));
+      statements.add(PyElementGenerator.getInstance(clazz.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, "pass"));
     }
   }
 
@@ -127,7 +127,7 @@ public class PyClassRefactoringUtil {
 
     if (text == null) return;
 
-    final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(PyClass.class, text);
+    final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
     final PyStatementList statements = superClass.getStatementList();
     final PyStatementList newStatements = newClass.getStatementList();
     if (statements.getStatements().length != 0) {

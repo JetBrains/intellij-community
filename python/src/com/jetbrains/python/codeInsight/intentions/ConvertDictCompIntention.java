@@ -9,7 +9,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +61,7 @@ public class ConvertDictCompIntention implements IntentionAction {
       PyKeyValueExpression keyValueExpression = (PyKeyValueExpression)expression.getResultExpression();
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       assert keyValueExpression.getValue() != null;
-      expression.replace(elementGenerator.createFromText(PyExpressionStatement.class,
+      expression.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyExpressionStatement.class,
                                                          "dict([(" + keyValueExpression.getKey().getText() + ", " +
                                                          keyValueExpression.getValue().getText() + ") for " +
                                                          forComponents.get(0).getIteratorVariable().getText() + " in " +

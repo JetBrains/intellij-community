@@ -170,7 +170,7 @@ public class ImportFromToImportIntention implements IntentionAction {
   private static void qualifyTarget(ASTNode target_node, Project project, String qualifier) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
     target_node.addChild(generator.createDot(), target_node.getFirstChildNode());
-    target_node.addChild(sure(generator.createFromText(PyReferenceExpression.class, qualifier, new int[]{0,0}).getNode()), target_node.getFirstChildNode());
+    target_node.addChild(sure(generator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, qualifier, new int[]{0,0}).getNode()), target_node.getFirstChildNode());
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -268,10 +268,10 @@ public class ImportFromToImportIntention implements IntentionAction {
       // transform the import statement
       PyStatement new_import;
       if (info.myRelativeLevel == 0) {
-        new_import = sure(generator.createFromText(PyImportStatement.class, "import " + info.myModuleName));
+        new_import = sure(generator.createFromText(LanguageLevel.getDefault(), PyImportStatement.class, "import " + info.myModuleName));
       }
       else {
-        new_import = sure(generator.createFromText(PyFromImportStatement.class, "from " + relative_names[0] +  " import " + relative_names[1]));
+        new_import = sure(generator.createFromText(LanguageLevel.getDefault(), PyFromImportStatement.class, "from " + relative_names[0] +  " import " + relative_names[1]));
       }
       ASTNode parent = sure(info.myFromImportStatement.getParent().getNode());
       ASTNode old_node = sure(info.myFromImportStatement.getNode());

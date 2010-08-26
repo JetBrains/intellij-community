@@ -58,13 +58,17 @@ public class PyExtractMethodUtil {
       return;
     }
 
+    // collect statements
+    final List<PsiElement> elementsRange = PyPsiUtils.collectElements(statement1, statement2);
+    if (elementsRange.isEmpty()) {
+      return;
+    }
+
     final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, statement1);
     if (data.first == null || data.second == null) {
       return;
     }
 
-    // collect statements
-    final List<PsiElement> elementsRange = PyPsiUtils.collectElements(statement1, statement2);
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
@@ -87,11 +91,11 @@ public class PyExtractMethodUtil {
                 builder.append("return ");
               }
               if (isMethod){
-                builder.append("self.");
+                appendSelf(elementsRange.get(0), builder);
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
-              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(PyCallExpression.class, builder.toString());
+              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyCallExpression.class, builder.toString());
 
               //# replace statements with call
               callElement = replaceElements(elementsRange, callElement);
@@ -117,7 +121,7 @@ public class PyExtractMethodUtil {
               }
               final List<PsiElement> newMethodElements = new ArrayList<PsiElement>(elementsRange);
               final PsiElement returnStatement =
-                PyElementGenerator.getInstance(project).createFromText(PyElement.class, "return " + builder.toString());
+                PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyElement.class, "return " + builder.toString());
               newMethodElements.add(returnStatement);
 
               // Generate method
@@ -132,11 +136,11 @@ public class PyExtractMethodUtil {
               // Generate call element
               builder.append(" = ");
               if (isMethod){
-                builder.append("self.");
+                appendSelf(elementsRange.get(0), builder);
               }
               builder.append(methodName).append("(");
               builder.append(createCallArgsString(variableData)).append(")");
-              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(PyElement.class, builder.toString());
+              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyElement.class, builder.toString());
 
               // replace statements with call
               callElement = replaceElements(elementsRange, callElement);
@@ -148,6 +152,10 @@ public class PyExtractMethodUtil {
         }
       }, "Extract method", null);
     }
+  }
+
+  private static void appendSelf(PsiElement firstElement, StringBuilder builder) {
+    builder.append(PyUtil.getFirstParameterName(PsiTreeUtil.getParentOfType(firstElement, PyFunction.class))).append(".");
   }
 
   public static void extractFromExpression(final Project project,
@@ -194,11 +202,11 @@ public class PyExtractMethodUtil {
                 builder.append("return ");
               }
               if (isMethod){
-                builder.append("self.");
+                appendSelf(expression, builder);
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
-              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(PyElement.class, builder.toString());
+              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyElement.class, builder.toString());
 
               // replace statements with call
               callElement = PyPsiUtils.replaceExpression(project, expression, callElement);

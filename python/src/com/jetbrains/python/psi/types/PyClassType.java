@@ -172,6 +172,7 @@ public class PyClassType implements PyType {
     final VariantsProcessor processor = new VariantsProcessor(
       expressionHook, new PyResolveUtil.FilterNotInstance(myClass), underscoreFilter
     );
+    processor.setNotice(myClass.getName());
     ((PyClassImpl)myClass).processClassLevelDeclarations(processor);
 
     List<String> slots = myClass.isNewStyleClass() ? myClass.getSlots() : null;
@@ -200,13 +201,7 @@ public class PyClassType implements PyType {
     for (PyClass ancestor : myClass.getSuperClasses()) {
       Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(name, expressionHook, context);
       for (Object ob : ancestry) {
-        if (ob instanceof LookupElementBuilder) {
-          final LookupElementBuilder lookupElt = (LookupElementBuilder)ob;
-          if (!isClassPrivate(lookupElt.getLookupString())) ret.add(lookupElt.setTypeText(ancestor.getName()));
-        }
-        else {
-          if (!isClassPrivate(ob.toString())) ret.add(ob);
-        }
+        if (!isClassPrivate(ob.toString())) ret.add(ob);
       }
       ContainerUtil.addAll(ret, ancestry);
     }

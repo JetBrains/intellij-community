@@ -7,16 +7,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyRaiseStatement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   06.03.2010
- * Time:   16:50:53
+ * @author Alexey.Ivanov
  */
 public class ReplaceRaiseStatementIntention implements IntentionAction {
   @NotNull
@@ -43,9 +41,9 @@ public class ReplaceRaiseStatementIntention implements IntentionAction {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     String newExpressionText = expressions[0].getText() + "(" + expressions[1].getText() + ")";
     if (expressions.length == 2) {
-      raiseStatement.replace(elementGenerator.createFromText(PyRaiseStatement.class, "raise " + newExpressionText));
+      raiseStatement.replace(elementGenerator.createFromText(LanguageLevel.forElement(raiseStatement), PyRaiseStatement.class, "raise " + newExpressionText));
     } else if (expressions.length == 3) {
-      raiseStatement.replace(elementGenerator.createFromText(PyRaiseStatement.class,
+      raiseStatement.replace(elementGenerator.createFromText(LanguageLevel.forElement(raiseStatement), PyRaiseStatement.class,
                                                              "raise " + newExpressionText + ".with_traceback(" + expressions[2].getText() + ")"));
     }
   }

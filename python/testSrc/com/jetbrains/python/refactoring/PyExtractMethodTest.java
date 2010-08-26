@@ -28,7 +28,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
         handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), new FileDataContext(myFixture.getFile()));
       }
       catch (Exception e) {
-        e.printStackTrace();
+        if (result.endsWith(".py")) { // expected output file, not an exception
+          e.printStackTrace();
+        }
         assertEquals(result, e.getMessage());
         return;
       }

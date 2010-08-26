@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,6 +200,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           if (qualifier_type instanceof PyClassType) {
             Property property = ((PyClassType)qualifier_type).getPyClass().findProperty(name);
             if (property != null) {
+              final Maybe<PyFunction> accessor = property.getByDirection(AccessDirection.of(this));
+              if (!accessor.isDefined()) {
+                return null;
+              }
               PsiElement resolved = this.getReference().resolve(); // to a correct accessor
               if (resolved instanceof Callable) {
                 type = ((Callable)resolved).getReturnType();

@@ -153,7 +153,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
 
     return PyElementGenerator.getInstance(project).createFromText(
-      PyFunction.class, functionText,
+      LanguageLevel.getDefault(), PyFunction.class, functionText,
       new int[]{0}
     );
   }
@@ -170,7 +170,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
 
     public PyStatement fun(String self_name) {
-      return PyElementGenerator.getInstance(myProject).createFromText(PyStatement.class, self_name + "." + myItemName + " = " + myInitializer);
+      return PyElementGenerator.getInstance(myProject).createFromText(LanguageLevel.getDefault(), PyStatement.class, self_name + "." + myItemName + " = " + myInitializer);
     }
   }
 }

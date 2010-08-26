@@ -169,7 +169,7 @@ public class ImportToImportFromIntention implements IntentionAction {
       PyElementGenerator generator = PyElementGenerator.getInstance(project);
       StringBuilder builder = new StringBuilder("from ").append(getDots()).append(myModuleName).append(" import ");
       builder.append(StringUtil.join(used_names, ", "));
-      PyFromImportStatement from_import_stmt = generator.createFromText(PyFromImportStatement.class,  builder.toString());
+      PyFromImportStatement from_import_stmt = generator.createFromText(LanguageLevel.getDefault(), PyFromImportStatement.class,  builder.toString());
       PsiElement parent = import_statement.getParent();
       sure(parent);  sure(parent.isValid());
       if (import_elements.length == 1) {

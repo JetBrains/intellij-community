@@ -18,6 +18,6 @@ public class PythonFileTypeFactory extends FileTypeFactory {
   }
 
   public void createFileTypes(@NonNls @NotNull final FileTypeConsumer consumer) {
-    consumer.consume(PythonFileType.INSTANCE, "py");
+    consumer.consume(PythonFileType.INSTANCE, "py;pyw;");
   }
 }

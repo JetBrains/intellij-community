@@ -253,9 +253,10 @@ public class RemoteDebugger {
     }
   }
 
-  // todo: drop
   private static void logFrame(ProtocolFrame frame, boolean out) {
-    System.out.format("%1$tH:%1$tM:%1$tS.%1$tL %2$s %3$s\n", new Date(), (out ? "<<<" : ">>>"), frame);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("%1$tH:%1$tM:%1$tS.%1$tL %2$s %3$s\n", new Date(), (out ? "<<<" : ">>>"), frame));
+    }
   }
 
 
