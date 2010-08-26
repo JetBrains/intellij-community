@@ -17,6 +17,8 @@
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport"
                      config="/resources/javaInjections.xml"/>
+    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.xml.XmlLanguageInjectionSupport"
+                     config="/resources/xmlInjections-java.xml"/>
   </extensions>
 
 </idea-plugin>

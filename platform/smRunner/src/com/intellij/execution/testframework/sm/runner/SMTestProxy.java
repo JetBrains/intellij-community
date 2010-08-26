@@ -53,6 +53,8 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myHasErrorsCached = false;
 
   private final boolean myIsSuite;
+  private boolean myIsEmptyIsCached = false; // is used for separating unknown and unset values
+  private boolean myIsEmpty = true;
 
   public SMTestProxy(final String testName, final boolean isSuite,
                      @Nullable final String locationUrl) {
@@ -437,14 +439,14 @@ public class SMTestProxy extends AbstractTestProxy {
    */
   private AbstractState determineSuiteStateOnFinished() {
     final AbstractState state;
-    if (isLeaf()) {
+    if (isLeaf() || isEmptySuite()) {
       state = SuiteFinishedState.EMPTY_SUITE;
     } else {
       if (isDefect()) {
         // Test suit contains errors if at least one of its tests contains error
         if (containsErrorTests()) {
           state = SuiteFinishedState.ERROR_SUITE;
-        }else {
+        } else {
           // if suite contains failed tests - all suite should be
           // consider as failed
           state = containsFailedTests()
@@ -456,6 +458,44 @@ public class SMTestProxy extends AbstractTestProxy {
       }
     }
     return state;
+  }
+
+  public boolean isEmptySuite() {
+    if (myIsEmptyIsCached) {
+      return myIsEmpty;
+    }
+
+    if (!isSuite()) {
+      // test - no matter what we will return
+      myIsEmpty = true;
+      myIsEmptyIsCached = true;
+
+      return myIsEmpty;
+    }
+
+    myIsEmpty = true;
+    final List<? extends SMTestProxy> allTestCases = getChildren();
+    for (SMTestProxy testOrSuite : allTestCases) {
+      if (testOrSuite.isSuite()) {
+        // suite
+        if (!testOrSuite.isEmptySuite()) {
+          // => parent suite isn't empty
+          myIsEmpty = false;
+          myIsEmptyIsCached = true;
+          break;
+        }
+        // all suites are empty
+        myIsEmpty = true;
+        // we can cache only final state, otherwise test may be added
+        myIsEmptyIsCached = myState.isFinal();
+      } else {
+        // test => parent suite isn't empty
+        myIsEmpty = false;
+        myIsEmptyIsCached = true;
+        break;
+      }
+    }
+    return myIsEmpty;
   }
 
   @Nullable

@@ -210,7 +210,12 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   public void visitProject(AntDomProject project) {
     if (!myVisitedProjects.contains(project)) {
       myVisitedProjects.add(project);
-      super.visitProject(project);
+      try {
+        super.visitProject(project);
+      }
+      finally {
+        myVisitedProjects.remove(project);
+      }
     }
   }
 
