@@ -39,11 +39,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
 */
-public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMethod>> {
+public class PsiMethodInsertHandler implements InsertHandler<LookupElement> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler");
   public static final PsiMethodInsertHandler INSTANCE = new PsiMethodInsertHandler();
 
-  public static void insertParentheses(final InsertionContext context, final LookupItem item, boolean overloadsMatter, boolean hasParams) {
+  public static void insertParentheses(final InsertionContext context, final LookupElement item, boolean overloadsMatter, boolean hasParams) {
     final Editor editor = context.getEditor();
     final TailType tailType = getTailType(item, context);
     final PsiFile file = context.getFile();
@@ -73,12 +73,12 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     }
   }
 
-  public void handleInsert(final InsertionContext context, final LookupItem<PsiMethod> item) {
+  public void handleInsert(final InsertionContext context, final LookupElement item) {
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();
     final PsiFile file = context.getFile();
     final int offset = editor.getCaretModel().getOffset();
-    final PsiMethod method = item.getObject();
+    final PsiMethod method = (PsiMethod)item.getObject();
 
     final LookupElement[] allItems = context.getElements();
     final boolean overloadsMatter = allItems.length == 1 && item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) == null;
@@ -115,9 +115,9 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
   }
 
   @NotNull
-  private static TailType getTailType(final LookupItem item, InsertionContext context) {
+  private static TailType getTailType(final LookupElement item, InsertionContext context) {
     final char completionChar = context.getCompletionChar();
-    if (completionChar == '!') return item.getTailType();
+    if (completionChar == '!') return item instanceof LookupItem ? ((LookupItem)item).getTailType() : TailType.NONE;
     if (completionChar == '(') {
       final Object o = item.getObject();
       if (o instanceof PsiMethod) {
@@ -141,8 +141,8 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     return !(place.getParent() instanceof PsiImportStaticReferenceElement);
   }
 
-  private static void insertExplicitTypeParams(final LookupItem<PsiMethod> item, final Document document, final int offset, PsiFile file) {
-    final PsiMethod method = item.getObject();
+  private static void insertExplicitTypeParams(final LookupElement item, final Document document, final int offset, PsiFile file) {
+    final PsiMethod method = (PsiMethod)item.getObject();
     if (!SmartCompletionDecorator.hasUnboundTypeParams(method)) {
       return;
     }
