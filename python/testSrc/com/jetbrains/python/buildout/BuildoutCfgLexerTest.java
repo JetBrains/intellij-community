@@ -98,7 +98,7 @@ public class BuildoutCfgLexerTest extends TestCase {
 
   public static _BuildoutCfgFlexLexer createLexer(String text) {
     _BuildoutCfgFlexLexer lexer = new _BuildoutCfgFlexLexer((Reader)null);
-    lexer.reset(text, _BuildoutCfgFlexLexer.YYINITIAL);
+    lexer.reset(text, 0, text.length(), _BuildoutCfgFlexLexer.YYINITIAL);
     return lexer;
   }
 }
