@@ -218,7 +218,7 @@ public class ClasspathPanel extends JPanel {
       if (module != null) {
         rootConfigurable.select(module.getName(), null, true);
       }
-    } 
+    }
     else if (entry instanceof LibraryOrderEntry){
       if (!openLibraryEditor) {
         rootConfigurable.select((LibraryOrderEntry)entry, true);
@@ -242,13 +242,15 @@ public class ClasspathPanel extends JPanel {
     myEditButton = new JButton(ProjectBundle.message("button.edit"));
     final JButton upButton = new JButton(ProjectBundle.message("button.move.up"));
     final JButton downButton = new JButton(ProjectBundle.message("button.move.down"));
+    final JButton analyzeButton = new JButton(ProjectBundle.message("classpath.panel.analyze"));
 
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(addButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(removeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(myEditButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(upButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    panel.add(downButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
+    panel.add(downButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
+    panel.add(analyzeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
 
     myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -283,6 +285,12 @@ public class ClasspathPanel extends JPanel {
     downButton.addActionListener(new ButtonAction() {
       protected void executeImpl() {
         moveSelectedRows(+1);
+      }
+    });
+    analyzeButton.addActionListener(new ButtonAction() {
+      @Override
+      protected void executeImpl() {
+        AnalyzeDependenciesDialog.show(getRootModel().getModule());
       }
     });
 
@@ -331,7 +339,7 @@ public class ClasspathPanel extends JPanel {
           }
 
           getRootModel().removeOrderEntry(orderEntry);
-        }        
+        }
         final int[] selectedRows = myEntryTable.getSelectedRows();
         myModel.fireTableDataChanged();
         TableUtil.selectRows(myEntryTable, selectedRows);
@@ -339,7 +347,7 @@ public class ClasspathPanel extends JPanel {
         context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, getRootModel().getModule()));
       }
     });
-    
+
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final int row = myEntryTable.getSelectedRow();
@@ -1045,7 +1053,7 @@ public class ClasspathPanel extends JPanel {
     public void dispose() {
     }
   }
-  
+
   private static class ChooseModuleLibrariesDialog extends LibraryFileChooser implements ChooserDialog<Library> {
     private Pair<String, VirtualFile[]> myLastChosen;
     private final LibraryTable myLibraryTable;
@@ -1080,7 +1088,7 @@ public class ClasspathPanel extends JPanel {
         libModel.addRoot(file, OrderRootType.CLASSES);
         libModel.commit();
         addedLibraries.add(library);
-      }      
+      }
       return addedLibraries;
     }
 
