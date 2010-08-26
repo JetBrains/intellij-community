@@ -13,6 +13,8 @@ public interface BuildoutCfgElementTypes {
 
   BuildoutCfgElementType SECTION = new BuildoutCfgElementType("SECTION");
   BuildoutCfgElementType SECTION_HEADER = new BuildoutCfgElementType("SECTION_HEADER");
+  BuildoutCfgElementType OPTION = new BuildoutCfgElementType("OPTION");
   BuildoutCfgElementType KEY = new BuildoutCfgElementType("KEY");
   BuildoutCfgElementType VALUE = new BuildoutCfgElementType("VALUE");
+  BuildoutCfgElementType VALUE_LINE = new BuildoutCfgElementType("VALUE_LINE");
 }

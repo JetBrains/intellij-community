@@ -62,7 +62,7 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
 
       while (is(KEY_CHARACTERS)) {
         res = true;
-        parseKeyValue();
+        parseOption();
       }
       section.done(SECTION);
 
@@ -77,7 +77,8 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
       return res;
     }
 
-    private void parseKeyValue() {
+    private void parseOption() {
+      PsiBuilder.Marker option = myBuilder.mark();
       if (is(KEY_CHARACTERS)) {
         doneAdvance(mark(), KEY_CHARACTERS);
       }
@@ -90,9 +91,10 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
 
       PsiBuilder.Marker value = mark();
       while (is(VALUE_CHARACTERS)) {
-        advance();
+        doneAdvance(mark(), VALUE_LINE);
       }
       value.done(VALUE);
+      option.done(OPTION);
     }
 
     private boolean parseSectionHeader() {

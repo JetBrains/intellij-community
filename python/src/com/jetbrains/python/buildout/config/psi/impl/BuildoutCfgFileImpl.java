@@ -1,4 +1,4 @@
-package com.jetbrains.python.buildout.config;
+package com.jetbrains.python.buildout.config.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
@@ -6,6 +6,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.buildout.config.BuildoutCfgFileType;
+import com.jetbrains.python.buildout.config.BuildoutCfgLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLFileType;
