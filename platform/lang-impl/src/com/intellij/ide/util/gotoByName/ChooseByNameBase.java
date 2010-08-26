@@ -20,6 +20,7 @@ import com.intellij.Patches;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -29,12 +30,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -124,6 +124,8 @@ public abstract class ChooseByNameBase {
 
   private final Alarm myHideAlarm = new Alarm();
   private boolean myShowListAfterCompletionKeyStroke = false;
+  protected JBPopup myTextPopup;
+  protected JBPopup myDropdownPopup;
 
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
@@ -282,64 +284,61 @@ public abstract class ChooseByNameBase {
     myActionListener = callback;
     myTextFieldPanel = new JPanelProvider();
     myTextFieldPanel.setLayout(new BoxLayout(myTextFieldPanel, BoxLayout.Y_AXIS));
+
     final JPanel hBox = new JPanel();
     hBox.setLayout(new BoxLayout(hBox, BoxLayout.X_AXIS));
 
+    JPanel caption2Tools = new JPanel(new BorderLayout());
+
     if (myModel.getPromptText() != null) {
-      JLabel label = new JLabel(" " + myModel.getPromptText());
+      JLabel label = new JLabel(myModel.getPromptText());
       label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-      hBox.add(label);
+      caption2Tools.add(label, BorderLayout.WEST);
     }
+
+    GridBagLayout gb = new GridBagLayout();
+    JPanel eastWrapper = new JPanel(gb);
+    gb.setConstraints(hBox, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.SOUTHEAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    eastWrapper.add(hBox);
+
+    caption2Tools.add(eastWrapper, BorderLayout.CENTER);
 
     myCard = new CardLayout();
     myCardContainer = new JPanel(myCard);
 
     final JPanel checkBoxPanel = new JPanel();
-    checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     myCheckBox = new JCheckBox(myModel.getCheckBoxName());
+    myCheckBox.setAlignmentX(SwingConstants.RIGHT);
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
     if (myModel.getPromptText() != null) {
       checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.X_AXIS));
-      checkBoxPanel.add(new JLabel("  ("));
       checkBoxPanel.add(myCheckBox);
-      checkBoxPanel.add(new JLabel(")"));
     }
     else {
       checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.LINE_AXIS));
       checkBoxPanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-      checkBoxPanel.add(new JLabel(")"));
       checkBoxPanel.add(myCheckBox);
-      checkBoxPanel.add(new JLabel("  ("));
     }
     checkBoxPanel.setVisible(myModel.getCheckBoxName() != null);
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(checkBoxPanel, BorderLayout.CENTER);
     myCardContainer.add(panel, CHECK_BOX_CARD);
-    myCardContainer.add(new JLabel("  (" + myModel.getNotInMessage() + ")"), NOT_FOUND_IN_PROJECT_CARD);
-    myCardContainer.add(new JLabel("  " + IdeBundle.message("label.choosebyname.no.matches.found")), NOT_FOUND_CARD);
-    myCardContainer.add(new JLabel("  " + IdeBundle.message("label.choosebyname.searching")), SEARCHING_CARD);
+
+    myCardContainer.add(new HintLabel(myModel.getNotInMessage()), NOT_FOUND_IN_PROJECT_CARD);
+    myCardContainer.add(new HintLabel(IdeBundle.message("label.choosebyname.no.matches.found")), NOT_FOUND_CARD);
+    myCardContainer.add(new HintLabel(IdeBundle.message("label.choosebyname.searching")), SEARCHING_CARD);
     myCard.show(myCardContainer, CHECK_BOX_CARD);
-
-    //myCaseCheckBox = new JCheckBox("Ignore case");
-    //myCaseCheckBox.setMnemonic('g');
-    //myCaseCheckBox.setSelected(true);
-
-    //myCamelCheckBox = new JCheckBox("Camel words");
-    //myCamelCheckBox.setMnemonic('w');
-    //myCamelCheckBox.setSelected(true);
 
     if (isCheckboxVisible()) {
       hBox.add(myCardContainer);
-      //hBox.add(myCheckBox);
-      //hBox.add(myCaseCheckBox);
-      //hBox.add(myCamelCheckBox);
     }
+
     if (myToolArea != null) {
-      // if too area was set, add it to hbox
+      hBox.add(Box.createHorizontalStrut(4));
       hBox.add(myToolArea);
     }
-    myTextFieldPanel.add(hBox);
+    myTextFieldPanel.add(caption2Tools);
 
     myHistory = new ArrayList<Pair<String, Integer>>();
     myFuture = new ArrayList<Pair<String, Integer>>();
@@ -481,10 +480,7 @@ public abstract class ChooseByNameBase {
     myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
     myListScrollPane.setViewportBorder(new EmptyBorder(0, 0, 0, 0));
 
-    if (!UIUtil.isMotifLookAndFeel()) {
-      UIUtil.installPopupMenuBorder(myTextFieldPanel);
-    }
-    UIUtil.installPopupMenuColorAndFonts(myTextFieldPanel);
+    myTextFieldPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
 
     showTextFieldPanel();
 
@@ -590,36 +586,28 @@ public abstract class ChooseByNameBase {
     final int paneHeight = layeredPane.getHeight();
     final int y = paneHeight / 3 - preferredTextFieldPanelSize.height / 2;
 
-
-    myTextFieldPanel.setBounds(x, y, preferredTextFieldPanelSize.width, preferredTextFieldPanelSize.height);
-    layeredPane.add(myTextFieldPanel, Integer.valueOf(500));
-    layeredPane.moveToFront(myTextFieldPanel);
     VISIBLE_LIST_SIZE_LIMIT = Math.max
       (10, (paneHeight - (y + preferredTextFieldPanelSize.height)) / (preferredTextFieldPanelSize.height / 2) - 1);
 
-    // I'm registering KeyListener to close popup only by KeyTyped event.
-    // If react on KeyPressed then sometime KeyTyped goes into underlying editor.
-    // It causes typing of Enter into it.
-    myTextFieldPanel.registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        doClose(false);
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myTextFieldPanel, myTextField);
+    builder.setCancelCallback(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        myTextPopup = null;
+        close(false);
+        return Boolean.TRUE;
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                            JComponent.WHEN_IN_FOCUSED_WINDOW
-    );
+    }).setFocusable(true).setRequestFocus(true).setForceHeavyweight(true);
 
-    myList.registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        doClose(false);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                  JComponent.WHEN_IN_FOCUSED_WINDOW
-    );
+    Point point = new Point(x, y);
+    SwingUtilities.convertPointToScreen(point, layeredPane);
+    Rectangle bounds = new Rectangle(point, new Dimension(preferredTextFieldPanelSize.width + 20, preferredTextFieldPanelSize.height));
+    myTextPopup = builder.createPopup();
+    myTextPopup.setSize(bounds.getSize());
+    myTextPopup.setLocation(bounds.getLocation());
 
-    IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
-
-    myTextFieldPanel.validate();
-    myTextFieldPanel.paintImmediately(0, 0, myTextFieldPanel.getWidth(), myTextFieldPanel.getHeight());
+    new MnemonicHelper().register(myTextFieldPanel);
+    myTextPopup.show(layeredPane);
   }
 
   private JLayeredPane getLayeredPane() {
@@ -1386,6 +1374,13 @@ public abstract class ChooseByNameBase {
       if (rc != 0) return rc;
 
       return Comparing.compare(myModel.getFullName(o1), myModel.getFullName(o2));
+    }
+  }
+
+  private static class HintLabel extends JLabel {
+    private HintLabel(String text) {
+      super(text, RIGHT);
+      setForeground(Color.darkGray);
     }
   }
 }

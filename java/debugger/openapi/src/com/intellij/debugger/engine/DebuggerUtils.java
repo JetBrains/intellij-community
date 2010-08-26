@@ -33,9 +33,11 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -366,6 +368,69 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", child.getText()));
       }
     }
+  }
+
+  public static boolean hasSideEffects(PsiElement element) {
+    return hasSideEffectsOrReferencesMissingVars(element, null);
+  }
+  
+  public static boolean hasSideEffectsOrReferencesMissingVars(PsiElement element, @Nullable final Set<String> visibleLocalVariables) {
+    final Ref<Boolean> rv = new Ref<Boolean>(Boolean.FALSE);
+    element.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override 
+      public void visitPostfixExpression(final PsiPostfixExpression expression) {
+        rv.set(Boolean.TRUE);
+      }
+
+      @Override 
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        final PsiElement psiElement = expression.resolve();
+        if (psiElement instanceof PsiLocalVariable) {
+          if (visibleLocalVariables != null) {
+            if (!visibleLocalVariables.contains(((PsiLocalVariable)psiElement).getName())) {
+              rv.set(Boolean.TRUE);
+            }
+          }
+        }
+        else if (psiElement instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)psiElement;
+          if (!isSimpleGetter(method)) {
+            rv.set(Boolean.TRUE);
+          }
+        }
+        if (!rv.get().booleanValue()) {
+          super.visitReferenceExpression(expression);
+        }
+      }
+
+      @Override 
+      public void visitPrefixExpression(final PsiPrefixExpression expression) {
+        final IElementType op = expression.getOperationTokenType();
+        if (JavaTokenType.PLUSPLUS.equals(op) || JavaTokenType.MINUSMINUS.equals(op)) {
+          rv.set(Boolean.TRUE);
+        }
+        else {
+          super.visitPrefixExpression(expression);
+        }
+      }
+
+      @Override 
+      public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+        rv.set(Boolean.TRUE);
+      }
+
+      @Override 
+      public void visitCallExpression(final PsiCallExpression callExpression) {
+        final PsiMethod method = callExpression.resolveMethod();
+        if (method == null || !isSimpleGetter(method)) {
+          rv.set(Boolean.TRUE);
+        }
+        else {
+          super.visitCallExpression(callExpression);
+        }
+      }
+    });
+    return rv.get().booleanValue();
   }
 
   public abstract String findAvailableDebugAddress(boolean useSockets) throws ExecutionException;

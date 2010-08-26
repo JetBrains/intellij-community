@@ -50,10 +50,12 @@ public class NonFinalFieldInImmutableInspection extends BaseJavaLocalInspectionT
           return;
         }
         final PsiClass containingClass = field.getContainingClass();
-        if (!JCiPUtil.isImmutable(containingClass)) {
-          return;
+        if (containingClass != null) {
+          if (!JCiPUtil.isImmutable(containingClass)) {
+            return;
+          }
+          holder.registerProblem(field, "Non-final field #ref in @Immutable class  #loc");
         }
-        holder.registerProblem(field, "Non-final field #ref in @Immutable class  #loc");
       }
 
       public void visitReferenceExpression(PsiReferenceExpression expression) {

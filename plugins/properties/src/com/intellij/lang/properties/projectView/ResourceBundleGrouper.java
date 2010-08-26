@@ -19,12 +19,11 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 
@@ -85,20 +84,14 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
     if (selected == null) return null;
     for (AbstractTreeNode selectedElement : selected) {
       Object element = selectedElement.getValue();
-      if (PlatformDataKeys.VIRTUAL_FILE.is(dataName)) {
-        if (element instanceof ResourceBundle) {
-          return new ResourceBundleAsVirtualFile((ResourceBundle)element);
-        }
-      }
-      if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataName)) {
-        if (element instanceof ResourceBundle) {
-          List<PropertiesFile> propertiesFiles = ((ResourceBundle)element).getPropertiesFiles(myProject);
-          return propertiesFiles.toArray(new PropertiesFile[propertiesFiles.size()]);
-        }
-      }
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataName)) {
         if (element instanceof ResourceBundle) {
           return new ResourceBundleDeleteProvider((ResourceBundle)element);
+        }
+      }
+      if (MoveAction.MoveProvider.DATA_KEY.is(dataName)) {
+        if (element instanceof ResourceBundle) {
+          return new ResourceBundleMoveProvider();
         }
       }
     }

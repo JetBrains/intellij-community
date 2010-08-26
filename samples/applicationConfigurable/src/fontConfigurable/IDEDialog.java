@@ -1,38 +1,36 @@
-package MyPack;
+package fontConfigurable;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
 
-public class IDEdialog extends JDialog {
+public class IDEDialog extends JDialog {
     private JPanel contentPane;
-    public JPanel Name;
+    public JPanel name;
     public JComboBox myFontCombo;
     public JComboBox myFontSize;
     public JLabel menuFontSettingsLabel;
-    public JButton ButtonRestoreDefaultFont;
+    public JButton buttonRestoreDefaultFont;
 
 
-
-    public IDEdialog() {
+    public IDEDialog() {
         setContentPane(contentPane);
         setModal(true);
         UISettings settings = UISettings.getInstance();
         myFontCombo.setModel(new DefaultComboBoxModel(UIUtil.getValidFontNames(false)));
         myFontSize.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
         myFontCombo.setSelectedItem(settings.FONT_FACE);
-        myFontSize.setSelectedItem( String.valueOf(settings.FONT_SIZE));
+        myFontSize.setSelectedItem(String.valueOf(settings.FONT_SIZE));
 
-// Configure the Set Default Font button listener.
+// Configure the Set Default Font myButton listener.
 
         MyButtonListener actionListener = new MyButtonListener();
-        actionListener.button=ButtonRestoreDefaultFont;
-        actionListener.myFontCombo= myFontCombo;
-        actionListener.myFontSize= myFontSize;
-        ButtonRestoreDefaultFont.addActionListener(actionListener);
+        actionListener.myButton = buttonRestoreDefaultFont;
+        actionListener.myFontCombo = myFontCombo;
+        actionListener.myFontSize = myFontSize;
+        buttonRestoreDefaultFont.addActionListener(actionListener);
 
 
 // call onCancel() when cross is clicked
@@ -53,24 +51,15 @@ public class IDEdialog extends JDialog {
 
     private void onOK() {
 // add your code here
-       
+
 
         dispose();
     }
 
-    
+
     private void onCancel() {
 // add your code here if necessary
         dispose();
-    }
-
-
-
-    public static void main(String[] args) {
-        IDEdialog dialog = new IDEdialog();
-        dialog.pack();
-        dialog.setVisible(true);
-        System.exit(0);
     }
 
 

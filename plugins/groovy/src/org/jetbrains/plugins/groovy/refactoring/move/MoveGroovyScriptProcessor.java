@@ -70,7 +70,9 @@ public class MoveGroovyScriptProcessor extends MoveClassesOrPackagesProcessor {
     myMoveDestination
       .analyzeModuleConflicts(elements, conflicts, allUsages.toArray(new UsageInfo[allUsages.size()]));
     if (!conflicts.isEmpty()) {
-      allUsages.add(new ConflictsUsageInfo(elements.get(0), conflicts));
+      for (PsiElement element : conflicts.keySet()) {
+        allUsages.add(new ConflictsUsageInfo(element, conflicts.get(element)));
+      }
     }
 
     return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(new UsageInfo[allUsages.size()]));

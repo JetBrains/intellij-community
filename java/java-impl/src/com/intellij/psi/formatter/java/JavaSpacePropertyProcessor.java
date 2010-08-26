@@ -1020,7 +1020,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       processModifierList();
     }
     else if (myRole1 == ChildRole.OPERATION_SIGN) {
-      createSpaceInCode(mySettings.SPACE_AFTER_UNARY_OPERATOR);
+      createSpaceInCode(mySettings.SPACE_AROUND_UNARY_OPERATOR);
     }
     else if (myChild1.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN
              && myChild2.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN)

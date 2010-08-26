@@ -275,6 +275,8 @@
 
   <extensionPoint name="lang.implementationTextSelectioner"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.lineWrapStrategy"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="psi.includeHandler" interface="com.intellij.psi.PsiIncludeManager$PsiIncludeHandler" area="IDEA_PROJECT"/>
 
   <extensionPoint name="gotoDeclarationHandler"

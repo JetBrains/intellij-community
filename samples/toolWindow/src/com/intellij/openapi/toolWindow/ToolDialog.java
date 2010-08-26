@@ -1,4 +1,4 @@
-package com.intellij.openapi.samples;
+package com.intellij.openapi.toolWindow;
 
 import com.intellij.openapi.wm.ToolWindow;
 
@@ -10,12 +10,11 @@ public class ToolDialog extends JDialog {
     private JPanel contentPane;
     private JButton buttonRefresh;
     private JButton buttonHide;
-    
-    private JLabel Date22;
-    private JLabel Time22;
-    private JLabel TimeZone;
+
+    private JLabel cirrentDate;
+    private JLabel currentTime;
+    private JLabel timeZone;
     public ToolWindow toolWin;
-    
 
 
     public ToolDialog() {
@@ -23,9 +22,6 @@ public class ToolDialog extends JDialog {
         setModal(true);
         getRootPane().setDefaultButton(buttonRefresh);
 
-
-
-        
 
         buttonRefresh.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -63,7 +59,7 @@ public class ToolDialog extends JDialog {
 
     private void onCancel() {
 // Hide tool window.
-         toolWin.hide(null);
+        toolWin.hide(null);
         dispose();
     }
 
@@ -71,28 +67,28 @@ public class ToolDialog extends JDialog {
         return contentPane;
     }
 
-    public void currentDateTime()
-    {
-     // Get current date and time
-       Calendar instance = Calendar.getInstance();
-       Date22.setText(String.valueOf(instance.get(Calendar.DAY_OF_MONTH)) + "/"
-       + String.valueOf(instance.get(Calendar.MONTH)+1) + "/" +  String.valueOf(instance.get(Calendar.YEAR)) );
-       Date22.setIcon(new ImageIcon(getClass().getResource("/com/intellij/openapi/samples/Calendar-icon.png")));
-       int min = instance.get(Calendar.MINUTE);
-       String strMin;
-       if ( min < 10) {strMin = "0" + String.valueOf(min);}
-         else { strMin = String.valueOf(min);}
-       Time22.setText(instance.get(Calendar.HOUR_OF_DAY) + ":" + strMin);
-       Time22.setIcon(new ImageIcon(getClass().getResource("/com/intellij/openapi/samples/Time-icon.png")));
-     // Get time zone
-       long gmt_Offset = instance.get(Calendar.ZONE_OFFSET); // offset from GMT in milliseconds
-       String str_gmt_Offset = String.valueOf(gmt_Offset/3600000);
-       str_gmt_Offset = (gmt_Offset > 0) ? "GMT + " + str_gmt_Offset :  "GMT - " + str_gmt_Offset;
-       TimeZone.setText(str_gmt_Offset);
-       TimeZone.setIcon(new ImageIcon(getClass().getResource("/com/intellij/openapi/samples/Time-zone-icon.png"))); 
+    public void currentDateTime() {
+        // Get current date and time
+        Calendar instance = Calendar.getInstance();
+        cirrentDate.setText(String.valueOf(instance.get(Calendar.DAY_OF_MONTH)) + "/"
+                + String.valueOf(instance.get(Calendar.MONTH) + 1) + "/" + String.valueOf(instance.get(Calendar.YEAR)));
+        cirrentDate.setIcon(new ImageIcon(getClass().getResource("/com/intellij/openapi/toolWindow/Calendar-icon.png")));
+        int min = instance.get(Calendar.MINUTE);
+        String strMin;
+        if (min < 10) {
+            strMin = "0" + String.valueOf(min);
+        } else {
+            strMin = String.valueOf(min);
+        }
+        currentTime.setText(instance.get(Calendar.HOUR_OF_DAY) + ":" + strMin);
+        currentTime.setIcon(new ImageIcon(getClass().getResource("/com/intellij/openapi/toolWindow/Time-icon.png")));
+        // Get time zone
+        long gmt_Offset = instance.get(Calendar.ZONE_OFFSET); // offset from GMT in milliseconds
+        String str_gmt_Offset = String.valueOf(gmt_Offset / 3600000);
+        str_gmt_Offset = (gmt_Offset > 0) ? "GMT + " + str_gmt_Offset : "GMT - " + str_gmt_Offset;
+        timeZone.setText(str_gmt_Offset);
+        timeZone.setIcon(new ImageIcon(getClass().getResource("/com/intellij/openapi/toolWindow/Time-zone-icon.png")));
 
 
-
-        
     }
 }

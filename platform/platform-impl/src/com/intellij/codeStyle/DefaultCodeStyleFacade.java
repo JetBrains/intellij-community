@@ -43,6 +43,11 @@ public class DefaultCodeStyleFacade extends CodeStyleFacade {
     return 80;
   }
 
+  @Override
+  public boolean isWrapWhenTypingReachesRightMargin() {
+    return false;
+  }
+
   public int getTabSize(final FileType fileType) {
     return 4;
   }
@@ -55,7 +60,7 @@ public class DefaultCodeStyleFacade extends CodeStyleFacade {
     return false;
   }
 
-  public boolean isUnsuitableCodestyleConfigurable(final Configurable c) {
+  public boolean isUnsuitableCodeStyleConfigurable(final Configurable c) {
     return false;
   }
 

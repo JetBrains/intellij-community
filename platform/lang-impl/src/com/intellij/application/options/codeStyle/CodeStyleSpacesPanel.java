@@ -35,13 +35,13 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_BEFORE_METHOD_PARENTHESES", ApplicationBundle.message("checkbox.spaces.method.declaration.parentheses"),
                      SPACES_BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_IF_PARENTHESES", ApplicationBundle.message("checkbox.spaces.if.parentheses"), SPACES_BEFORE_PARENTHESES);
-    initBooleanField("SPACE_BEFORE_WHILE_PARENTHESES", ApplicationBundle.message("checkbox.spaces.while.parentheses"),
-                     SPACES_BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_FOR_PARENTHESES", ApplicationBundle.message("checkbox.spaces.for.parentheses"),
                      SPACES_BEFORE_PARENTHESES);
-    initBooleanField("SPACE_BEFORE_CATCH_PARENTHESES", ApplicationBundle.message("checkbox.spaces.catch.parentheses"),
+    initBooleanField("SPACE_BEFORE_WHILE_PARENTHESES", ApplicationBundle.message("checkbox.spaces.while.parentheses"),
                      SPACES_BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_SWITCH_PARENTHESES", ApplicationBundle.message("checkbox.spaces.switch.parentheses"),
+                     SPACES_BEFORE_PARENTHESES);
+    initBooleanField("SPACE_BEFORE_CATCH_PARENTHESES", ApplicationBundle.message("checkbox.spaces.catch.parentheses"),
                      SPACES_BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_SYNCHRONIZED_PARENTHESES", ApplicationBundle.message("checkbox.spaces.synchronized.parentheses"),
                      SPACES_BEFORE_PARENTHESES);
@@ -65,14 +65,16 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
                      SPACES_AROUND_OPERATORS);
     initBooleanField("SPACE_AROUND_SHIFT_OPERATORS", ApplicationBundle.message("checkbox.spaces.shift.operators"),
                      SPACES_AROUND_OPERATORS);
+    initBooleanField("SPACE_AROUND_UNARY_OPERATOR", ApplicationBundle.message("checkbox.spaces.around.unary.operator"), 
+                     SPACES_AROUND_OPERATORS);
     initCustomOptions(SPACES_AROUND_OPERATORS);
 
     initBooleanField("SPACE_BEFORE_CLASS_LBRACE", ApplicationBundle.message("checkbox.spaces.class.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initBooleanField("SPACE_BEFORE_METHOD_LBRACE", ApplicationBundle.message("checkbox.spaces.method.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initBooleanField("SPACE_BEFORE_IF_LBRACE", ApplicationBundle.message("checkbox.spaces.if.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initBooleanField("SPACE_BEFORE_ELSE_LBRACE", ApplicationBundle.message("checkbox.spaces.else.left.brace"), SPACES_BEFORE_LEFT_BRACE);
-    initBooleanField("SPACE_BEFORE_WHILE_LBRACE", ApplicationBundle.message("checkbox.spaces.while.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initBooleanField("SPACE_BEFORE_FOR_LBRACE", ApplicationBundle.message("checkbox.spaces.for.left.brace"), SPACES_BEFORE_LEFT_BRACE);
+    initBooleanField("SPACE_BEFORE_WHILE_LBRACE", ApplicationBundle.message("checkbox.spaces.while.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initBooleanField("SPACE_BEFORE_DO_LBRACE", ApplicationBundle.message("checkbox.spaces.do.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initBooleanField("SPACE_BEFORE_SWITCH_LBRACE", ApplicationBundle.message("checkbox.spaces.switch.left.brace"), SPACES_BEFORE_LEFT_BRACE);
     initBooleanField("SPACE_BEFORE_TRY_LBRACE", ApplicationBundle.message("checkbox.spaces.try.left.brace"), SPACES_BEFORE_LEFT_BRACE);
@@ -94,10 +96,10 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_WITHIN_METHOD_PARENTHESES", ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.declaration.parentheses"),
                      SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_IF_PARENTHESES", ApplicationBundle.message("checkbox.spaces.if.parentheses"), SPACES_WITHIN);
-    initBooleanField("SPACE_WITHIN_WHILE_PARENTHESES", ApplicationBundle.message("checkbox.spaces.while.parentheses"), SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_FOR_PARENTHESES", ApplicationBundle.message("checkbox.spaces.for.parentheses"), SPACES_WITHIN);
-    initBooleanField("SPACE_WITHIN_CATCH_PARENTHESES", ApplicationBundle.message("checkbox.spaces.catch.parentheses"), SPACES_WITHIN);
+    initBooleanField("SPACE_WITHIN_WHILE_PARENTHESES", ApplicationBundle.message("checkbox.spaces.while.parentheses"), SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_SWITCH_PARENTHESES", ApplicationBundle.message("checkbox.spaces.switch.parentheses"), SPACES_WITHIN);
+    initBooleanField("SPACE_WITHIN_CATCH_PARENTHESES", ApplicationBundle.message("checkbox.spaces.catch.parentheses"), SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_SYNCHRONIZED_PARENTHESES", ApplicationBundle.message("checkbox.spaces.synchronized.parentheses"),
                      SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_CAST_PARENTHESES", ApplicationBundle.message("checkbox.spaces.type.cast.parentheses"), SPACES_WITHIN);
@@ -115,12 +117,11 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
                      SPACES_WITHIN_TYPE_ARGUMENTS);
     initCustomOptions(SPACES_WITHIN_TYPE_ARGUMENTS);
 
-    initBooleanField("SPACE_AFTER_COMMA", ApplicationBundle.message("checkbox.spaces.after.comma"), SPACES_OTHER);
     initBooleanField("SPACE_BEFORE_COMMA", ApplicationBundle.message("checkbox.spaces.before.comma"), SPACES_OTHER);
-    initBooleanField("SPACE_AFTER_SEMICOLON", ApplicationBundle.message("checkbox.spaces.after.semicolon"), SPACES_OTHER);
+    initBooleanField("SPACE_AFTER_COMMA", ApplicationBundle.message("checkbox.spaces.after.comma"), SPACES_OTHER);
     initBooleanField("SPACE_BEFORE_SEMICOLON", ApplicationBundle.message("checkbox.spaces.before.semicolon"), SPACES_OTHER);
+    initBooleanField("SPACE_AFTER_SEMICOLON", ApplicationBundle.message("checkbox.spaces.after.semicolon"), SPACES_OTHER);
     initBooleanField("SPACE_AFTER_TYPE_CAST", ApplicationBundle.message("checkbox.spaces.after.type.cast"), SPACES_OTHER);
-    initBooleanField("SPACE_AFTER_UNARY_OPERATOR", ApplicationBundle.message("checkbox.spaces.after.unary.operator"), SPACES_OTHER);
     initCustomOptions(SPACES_OTHER);
   }
 }

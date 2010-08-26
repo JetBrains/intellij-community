@@ -66,7 +66,9 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     final FilterUI filterUI = new FilterUI(popup, gotoFileModel, project);
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose() {
-        if (GotoFileAction.class.equals(myInAction)) myInAction = null;
+        if (GotoFileAction.class.equals(myInAction)) {
+          myInAction = null;
+        }
         filterUI.close();
       }
 
@@ -145,8 +147,10 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       };
       actionGroup.add(action);
       myToolbar = ActionManager.getInstance().createActionToolbar("gotfile.filter", actionGroup, true);
+      myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
       myToolbar.updateActionsImmediately();
       myToolbar.getComponent().setFocusable(false);
+      myToolbar.getComponent().setBorder(null);
       myProject = project;
       myChooser = createFileTypeChooser(gotoFileModel);
       myChooserPanel = createChooserPanel();

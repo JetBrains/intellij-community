@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="MyPack.IDEdialog">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="fontConfigurable.IDEDialog">
   <grid id="cbd77" binding="contentPane" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="10" left="10" bottom="10" right="10"/>
     <constraints>
@@ -17,7 +17,7 @@
         <border type="none"/>
         <children/>
       </grid>
-      <grid id="e3588" binding="Name" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="e3588" binding="name" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -65,7 +65,7 @@
               <text value="Font Size:"/>
             </properties>
           </component>
-          <component id="a38e1" class="javax.swing.JButton" binding="ButtonRestoreDefaultFont">
+          <component id="a38e1" class="javax.swing.JButton" binding="buttonRestoreDefaultFont">
             <constraints>
               <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="5" height="50"/>
@@ -76,6 +76,11 @@
               <text value="Default Font"/>
             </properties>
           </component>
+          <vspacer id="de61d">
+            <constraints>
+              <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </vspacer>
         </children>
       </grid>
     </children>

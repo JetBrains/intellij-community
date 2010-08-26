@@ -136,6 +136,10 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     myExtractEnumProcessor = new ExtractEnumProcessor(myProject, this.enumConstants, fields, myClass);
   }
 
+  public PsiClass getCreatedClass() {
+    return myClass;
+  }
+
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();

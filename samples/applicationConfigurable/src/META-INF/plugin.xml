@@ -22,6 +22,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
-      <applicationConfigurable implementation="MyPack.MyExtensConfigurable"></applicationConfigurable>
+      <applicationConfigurable implementation="fontConfigurable.MyExtensConfigurable"></applicationConfigurable>
   </extensions>
 </idea-plugin>

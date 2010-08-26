@@ -65,6 +65,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JTextField myRightMarginField;
   private JComboBox myLineSeparatorCombo;
   private JPanel myPanel;
+  private JCheckBox myCbWrapWhenTypingReachesRightMargin;
   private int myRightMargin;
   private int myLastSelectedTab = 0;
 
@@ -220,7 +221,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (rightMarginImpl > 0) {
       settings.RIGHT_MARGIN = rightMarginImpl;
     }
-
+    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN = myCbWrapWhenTypingReachesRightMargin.isSelected();
   }
 
   private IndentOptionsEditor findEditorForSameIndents() {
@@ -280,6 +281,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       }
     }
 
+    if (settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN ^ myCbWrapWhenTypingReachesRightMargin.isSelected()) {
+      return true;
+    }
+
     return !myRightMarginField.getText().equals(String.valueOf(settings.RIGHT_MARGIN));
   }
 
@@ -320,6 +325,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     }
 
     myRightMarginField.setText(String.valueOf(settings.RIGHT_MARGIN));
+    myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN);
     update();
   }
 

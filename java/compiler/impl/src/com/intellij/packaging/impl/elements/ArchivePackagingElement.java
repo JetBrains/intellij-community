@@ -45,7 +45,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     super(PackagingElementFactoryImpl.ARCHIVE_ELEMENT_TYPE);
   }
 
-  public ArchivePackagingElement(String archiveFileName) {
+  public ArchivePackagingElement(@NotNull String archiveFileName) {
     super(PackagingElementFactoryImpl.ARCHIVE_ELEMENT_TYPE);
     myArchiveFileName = archiveFileName;
   }

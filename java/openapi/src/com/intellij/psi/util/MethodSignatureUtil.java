@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -226,14 +227,16 @@ public class MethodSignatureUtil {
     for (int i = 0; i < methoTypeParameters.length; i++) {
       PsiTypeParameter methoTypeParameter = methoTypeParameters[i];
       PsiTypeParameter superTypeParameter = superTypeParameters[i];
-      final PsiClassType[] methoSupers = methoTypeParameter.getSuperTypes();
-      final PsiClassType[] superSupers = superTypeParameter.getSuperTypes();
-      if (methoSupers.length != superSupers.length) return null;
-      for (int j = 0; j < methoSupers.length; j++) {
-        PsiType type1 = methodSubstitutor.substitute(methoSupers[j]);
-        PsiType type2 = methodSubstitutor.substitute(PsiUtil.captureToplevelWildcards(result.substitute(superSupers[j]), methoTypeParameter));
-        if (!type1.equals(type2)) return null;
+      final Set<PsiType> methoSupers = new HashSet<PsiType>();
+      for (PsiClassType methoSuper : methoTypeParameter.getSuperTypes()) {
+        methoSupers.add(methodSubstitutor.substitute(methoSuper));
       }
+
+      final Set<PsiType> superSupers = new HashSet<PsiType>();
+      for (PsiClassType superSuper : superTypeParameter.getSuperTypes()) {
+        superSupers.add(methodSubstitutor.substitute(PsiUtil.captureToplevelWildcards(result.substitute(superSuper), methoTypeParameter)));
+      }
+      if (!methoSupers.equals(superSupers)) return null;
     }
     return result;
   }
