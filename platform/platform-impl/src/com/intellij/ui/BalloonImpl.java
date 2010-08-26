@@ -117,6 +117,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private final CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<JBPopupListener>();
   private boolean myVisible;
   private PositionTracker<Balloon> myTracker;
+  private int myAnimationCycle = 500;
 
   private boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
@@ -160,7 +161,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                      long fadeoutTime,
                      boolean hideOnFrameResize,
                      ActionListener clickHandler,
-                     boolean closeOnClick) {
+                     boolean closeOnClick,
+                     int animationCycle) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
     myContent = content;
@@ -173,6 +175,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myCloseOnClick = closeOnClick;
 
     myFadeoutTime = fadeoutTime;
+    myAnimationCycle = animationCycle;
   }
 
   public void show(final RelativePoint target, final Balloon.Position position) {
@@ -325,7 +328,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     if (myAnimator != null) {
       Disposer.dispose(myAnimator);
     }
-    myAnimator = new Animator("Balloon", 10, 500, false, 0, 1, forward) {
+    myAnimator = new Animator("Balloon", 10, myAnimationCycle, false, 0, 1, forward) {
       public void paintNow(final float frame, final float totalFrames, final float cycle) {
         if (myComp.getParent() == null) return;
         myComp.setAlpha(frame / totalFrames);
@@ -389,7 +392,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   }
 
   int getPointerLength() {
-    return 16;
+    return 12;
   }
 
   public void hide() {
@@ -998,7 +1001,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
           pane.setBorder(new LineBorder(Color.blue));
 
-          balloon.set(new BalloonImpl(pane, Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 0, true, null, false));
+          balloon.set(new BalloonImpl(pane, Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 0, true, null, false, 500));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {

@@ -29,6 +29,7 @@ import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.ui.Centerizer;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -66,6 +67,7 @@ public class TabLabel extends JPanel {
     setOpaque(false);
     setLayout(new BorderLayout());
 
+    putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
 
     myLabelPlaceholder.setOpaque(false);
     add(myLabelPlaceholder, BorderLayout.CENTER);
