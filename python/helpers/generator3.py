@@ -525,6 +525,10 @@ class ModuleRedeclarator(object):
         "*":   (BUILTIN_MOD_NAME,)
     }
 
+    ADD_VALUE_IN_MODULE = {
+      "sys": ("exc_value = Exception()", "exc_traceback=None"), # only present after an exception in current thread
+    }
+
     # Some values are special and are better represented by hand-crafted constructs.
     # Dict is keyed by (module name, member name) and value is the replacement.
     REPLACE_MODULE_VALUES = {
@@ -1428,6 +1432,11 @@ class ModuleRedeclarator(object):
                     self.fmtValue(item, 0, prefix=item_name + " = ", as_name=item_name)
                 self._defined[item_name] = True
                 self.out("", 0) # empty line after each item
+        values_to_add = self.ADD_VALUE_IN_MODULE.get(p_name, None)
+        if values_to_add:
+            self.out("# intermittent names", 0)
+            for v in values_to_add:
+                self.out(v, 0)
 
 
 def build_output_name(subdir, name):
