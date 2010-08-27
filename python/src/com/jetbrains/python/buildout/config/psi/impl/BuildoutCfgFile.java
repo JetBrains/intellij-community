@@ -1,5 +1,6 @@
 package com.jetbrains.python.buildout.config.psi.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +11,6 @@ import com.jetbrains.python.buildout.config.BuildoutCfgLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -18,8 +18,8 @@ import java.util.List;
 /**
  * @author traff
  */
-public class BuildoutCfgFileImpl extends PsiFileBase {
-  public BuildoutCfgFileImpl(FileViewProvider viewProvider) {
+public class BuildoutCfgFile extends PsiFileBase {
+  public BuildoutCfgFile(FileViewProvider viewProvider) {
     super(viewProvider, BuildoutCfgLanguage.INSTANCE);
   }
 
@@ -33,14 +33,14 @@ public class BuildoutCfgFileImpl extends PsiFileBase {
     return "buildout.cfg file";
   }
 
-  public Collection<BuildoutCfgSectionImpl> getSections() {
-    return PsiTreeUtil.collectElementsOfType(this, BuildoutCfgSectionImpl.class);
+  public Collection<BuildoutCfgSection> getSections() {
+    return PsiTreeUtil.collectElementsOfType(this, BuildoutCfgSection.class);
   }
 
   @Nullable
-  public BuildoutCfgSectionImpl findSectionByName(String name) {
-    final Collection<BuildoutCfgSectionImpl> sections = getSections();
-    for (BuildoutCfgSectionImpl section : sections) {
+  public BuildoutCfgSection findSectionByName(String name) {
+    final Collection<BuildoutCfgSection> sections = getSections();
+    for (BuildoutCfgSection section : sections) {
       if (name.equals(section.getHeaderName())) {
         return section;
       }
@@ -49,15 +49,15 @@ public class BuildoutCfgFileImpl extends PsiFileBase {
   }
 
   public List<String> getParts() {
-    BuildoutCfgSectionImpl buildoutSection = findSectionByName("buildout");
+    BuildoutCfgSection buildoutSection = findSectionByName("buildout");
     if (buildoutSection == null) {
       return Collections.emptyList();
     }
-    final BuildoutCfgOptionImpl option = buildoutSection.findOptionByName("parts");
+    final BuildoutCfgOption option = buildoutSection.findOptionByName("parts");
     if (option == null) {
       return Collections.emptyList();
     }
-    List<String> result = new ArrayList<String>();
+    List<String> result = Lists.newArrayList();
     for (String value : option.getValues()) {
       result.addAll(StringUtil.split(value, " "));
     }

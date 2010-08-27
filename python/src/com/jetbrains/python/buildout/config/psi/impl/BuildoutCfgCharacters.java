@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author traff
  */
-public class BuildoutCfgCharactersImpl extends BuildoutCfgPsiElementImpl{
-  public BuildoutCfgCharactersImpl(@NotNull final ASTNode node) {
+public class BuildoutCfgCharacters extends BuildoutCfgPsiElement {
+  public BuildoutCfgCharacters(@NotNull final ASTNode node) {
     super(node);
   }
 
@@ -18,6 +18,6 @@ public class BuildoutCfgCharactersImpl extends BuildoutCfgPsiElementImpl{
 
   @Override
   public String toString() {
-    return "BuildoutCfgCharactersImpl:" + getNode().getElementType().toString();
+    return "BuildoutCfgCharacters:" + getNode().getElementType().toString();
   }
 }

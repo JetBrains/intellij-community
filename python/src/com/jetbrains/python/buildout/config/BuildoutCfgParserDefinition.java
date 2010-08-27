@@ -8,13 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.buildout.config.lexer.BuildoutCfgFlexLexer;
 import com.jetbrains.python.buildout.config.psi.BuildoutCfgASTFactory;
-import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFileImpl;
-import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgPsiElementImpl;
+import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +57,7 @@ public class BuildoutCfgParserDefinition implements ParserDefinition, BuildoutCf
   }
 
   public PsiFile createFile(final FileViewProvider viewProvider) {
-    return new BuildoutCfgFileImpl(viewProvider);
+    return new BuildoutCfgFile(viewProvider);
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(final ASTNode left, final ASTNode right) {

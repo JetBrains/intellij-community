@@ -6,13 +6,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author traff
  */
-public class BuildoutCfgKeyImpl extends BuildoutCfgPsiElementImpl{
-  public BuildoutCfgKeyImpl(@NotNull final ASTNode node) {
+public class BuildoutCfgKey extends BuildoutCfgPsiElement {
+  public BuildoutCfgKey(@NotNull final ASTNode node) {
     super(node);
   }
 
   @Override
   public String toString() {
-    return "BuildoutCfgKeyImpl:" + getNode().getElementType().toString();
+    return "BuildoutCfgKey:" + getNode().getElementType().toString();
   }
 }

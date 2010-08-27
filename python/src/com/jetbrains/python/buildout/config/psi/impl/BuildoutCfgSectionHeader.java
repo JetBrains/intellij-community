@@ -7,8 +7,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author traff
  */
-public class BuildoutCfgSectionHeaderImpl extends BuildoutCfgPsiElementImpl{
-  public BuildoutCfgSectionHeaderImpl(@NotNull final ASTNode node) {
+public class BuildoutCfgSectionHeader extends BuildoutCfgPsiElement {
+  public BuildoutCfgSectionHeader(@NotNull final ASTNode node) {
     super(node);
   }
 
@@ -23,6 +23,6 @@ public class BuildoutCfgSectionHeaderImpl extends BuildoutCfgPsiElementImpl{
 
   @Override
   public String toString() {
-    return "BuildoutCfgSectionHeaderImpl:" + getNode().getElementType().toString();
+    return "BuildoutCfgSectionHeader:" + getNode().getElementType().toString();
   }
 }

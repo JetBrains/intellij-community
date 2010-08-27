@@ -12,14 +12,14 @@ import java.util.List;
 /**
  * @author traff
  */
-public class BuildoutCfgOptionImpl extends BuildoutCfgPsiElementImpl {
-  public BuildoutCfgOptionImpl(@NotNull final ASTNode node) {
+public class BuildoutCfgOption extends BuildoutCfgPsiElement {
+  public BuildoutCfgOption(@NotNull final ASTNode node) {
     super(node);
   }
 
   @Nullable
   public String getKey() {
-    BuildoutCfgKeyImpl key = PsiTreeUtil.findChildOfType(this, BuildoutCfgKeyImpl.class);
+    BuildoutCfgKey key = PsiTreeUtil.findChildOfType(this, BuildoutCfgKey.class);
     String result = key != null ? key.getText() : null;
 
     return result != null ? result.trim() : null;
@@ -27,8 +27,8 @@ public class BuildoutCfgOptionImpl extends BuildoutCfgPsiElementImpl {
 
   public List<String> getValues() {
     List<String> result = Lists.newArrayList();
-    Collection<BuildoutCfgValueLineImpl> lines = PsiTreeUtil.collectElementsOfType(this, BuildoutCfgValueLineImpl.class);
-    for (BuildoutCfgValueLineImpl line : lines) {
+    Collection<BuildoutCfgValueLine> lines = PsiTreeUtil.collectElementsOfType(this, BuildoutCfgValueLine.class);
+    for (BuildoutCfgValueLine line : lines) {
       String text = line.getText();
       if (text != null) {
         result.add(text.trim());
@@ -39,7 +39,7 @@ public class BuildoutCfgOptionImpl extends BuildoutCfgPsiElementImpl {
 
   @Override
   public String toString() {
-    return "BuildoutCfgOptionImpl:" + getNode().getElementType().toString();
+    return "BuildoutCfgOption:" + getNode().getElementType().toString();
   }
 
 }

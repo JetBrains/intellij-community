@@ -11,25 +11,25 @@ import java.util.List;
 /**
  * @author traff
  */
-public class BuildoutCfgSectionImpl extends BuildoutCfgPsiElementImpl {
-  public BuildoutCfgSectionImpl(@NotNull final ASTNode node) {
+public class BuildoutCfgSection extends BuildoutCfgPsiElement {
+  public BuildoutCfgSection(@NotNull final ASTNode node) {
     super(node);
   }
 
   @Nullable
   public String getHeaderName() {
-    BuildoutCfgSectionHeaderImpl header = PsiTreeUtil.findChildOfType(this, BuildoutCfgSectionHeaderImpl.class);
+    BuildoutCfgSectionHeader header = PsiTreeUtil.findChildOfType(this, BuildoutCfgSectionHeader.class);
     return header != null ? header.getName() : null;
   }
 
 
-  public List<BuildoutCfgOptionImpl> getOptions() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BuildoutCfgOptionImpl.class);
+  public List<BuildoutCfgOption> getOptions() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BuildoutCfgOption.class);
   }
 
   @Nullable
-  public BuildoutCfgOptionImpl findOptionByName(String name) {
-    for (BuildoutCfgOptionImpl option : getOptions()) {
+  public BuildoutCfgOption findOptionByName(String name) {
+    for (BuildoutCfgOption option : getOptions()) {
       if (name.equals(option.getKey())) {
         return option;
       }
@@ -39,7 +39,7 @@ public class BuildoutCfgSectionImpl extends BuildoutCfgPsiElementImpl {
 
   @Nullable
   public String getOptionValue(String name) {
-    final BuildoutCfgOptionImpl option = findOptionByName(name);
+    final BuildoutCfgOption option = findOptionByName(name);
     if (option != null) {
       return StringUtil.join(option.getValues(), " ");
     }
@@ -48,6 +48,6 @@ public class BuildoutCfgSectionImpl extends BuildoutCfgPsiElementImpl {
 
   @Override
   public String toString() {
-    return "BuildoutCfgSectionImpl:" + getNode().getElementType().toString();
+    return "BuildoutCfgSection:" + getNode().getElementType().toString();
   }
 }

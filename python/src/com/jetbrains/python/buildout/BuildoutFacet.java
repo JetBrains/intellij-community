@@ -16,8 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFileImpl;
+import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -171,7 +170,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
 
   @Nullable
-  public BuildoutCfgFileImpl getConfigFile() {
+  public BuildoutCfgFile getConfigFile() {
     final String scriptName = getConfiguration().getScriptName();
     if (!StringUtil.isEmpty(scriptName)) {
       File cfg = new File(new File(scriptName).getParentFile().getParentFile(), BUILDOUT_CFG);
@@ -179,8 +178,8 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
         final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(cfg);
         if (vFile != null) {
           final PsiFile psiFile = PsiManager.getInstance(getModule().getProject()).findFile(vFile);
-          if (psiFile instanceof BuildoutCfgFileImpl) {
-            return (BuildoutCfgFileImpl) psiFile;
+          if (psiFile instanceof BuildoutCfgFile) {
+            return (BuildoutCfgFile) psiFile;
           }
         }
       }

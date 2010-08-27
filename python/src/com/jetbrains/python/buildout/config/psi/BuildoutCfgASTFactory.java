@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.buildout.config.BuildoutCfgElementTypes;
 import com.jetbrains.python.buildout.config.BuildoutCfgTokenTypes;
 import com.jetbrains.python.buildout.config.psi.impl.*;
+import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgPsiElement;
 
 /**
  * @author traff
@@ -15,30 +16,30 @@ public class BuildoutCfgASTFactory implements BuildoutCfgElementTypes, BuildoutC
   public PsiElement create(ASTNode node) {
     IElementType type = node.getElementType();
     if (type == SECTION) {
-      return new BuildoutCfgSectionImpl(node);
+      return new BuildoutCfgSection(node);
     }
     if (type == SECTION_HEADER) {
-      return new BuildoutCfgSectionHeaderImpl(node);
+      return new BuildoutCfgSectionHeader(node);
     }
     if (type == OPTION) {
-      return new BuildoutCfgOptionImpl(node);
+      return new BuildoutCfgOption(node);
     }
     if (type == KEY) {
-      return new BuildoutCfgKeyImpl(node);
+      return new BuildoutCfgKey(node);
     }
     if (type == VALUE) {
-      return new BuildoutCfgValueImpl(node);
+      return new BuildoutCfgValue(node);
     }
     if (type == VALUE_LINE) {
-      return new BuildoutCfgValueLineImpl(node);
+      return new BuildoutCfgValueLine(node);
     }
     if (type == SECTION_NAME) {
-      return new BuildoutCfgSectionHeaderNameImpl(node);
+      return new BuildoutCfgSectionHeaderName(node);
     }
     //if (type == KEY_CHARACTERS || type == VALUE_CHARACTERS) {
-    //  return new BuildoutCfgCharactersImpl(node);
+    //  return new BuildoutCfgCharacters(node);
     //}
 
-    return new BuildoutCfgPsiElementImpl(node);
+    return new BuildoutCfgPsiElement(node);
   }
 }
