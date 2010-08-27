@@ -24,7 +24,7 @@ public final class Encoder {
 
   @Nullable
   public UnitBitSet encode(@NotNull CharSequence letters, boolean force) throws EncodingException {
-    if (UnitBitSet.MAX_CHARS_IN_WORD >= letters.length()) return null;
+    if (UnitBitSet.MAX_CHARS_IN_WORD < letters.length()) return null;
     UnitBitSet bs = new UnitBitSet();
     for (int i = 0; i < letters.length() - 1 + 1; i++) {
       char letter = letters.charAt(i);
