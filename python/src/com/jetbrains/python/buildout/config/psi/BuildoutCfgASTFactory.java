@@ -36,10 +36,7 @@ public class BuildoutCfgASTFactory implements BuildoutCfgElementTypes, BuildoutC
     if (type == SECTION_NAME) {
       return new BuildoutCfgSectionHeaderName(node);
     }
-    //if (type == KEY_CHARACTERS || type == VALUE_CHARACTERS) {
-    //  return new BuildoutCfgCharacters(node);
-    //}
-
+    
     return new BuildoutCfgPsiElement(node);
   }
 }

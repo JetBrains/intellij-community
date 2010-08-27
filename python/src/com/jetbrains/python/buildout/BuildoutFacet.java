@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
  * User: dcheryasov
  * Date: Jul 25, 2010 3:23:50 PM
  */
-public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements PythonPathContributingFacet  {
+public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");
   @NonNls private static final String BUILDOUT_CFG = "buildout.cfg";
@@ -60,10 +60,14 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
         VirtualFile bin = baseDir.findChild("bin");
         if (bin != null && bin.isDirectory()) {
           final String exe;
-          if (SystemInfo.isWindows || SystemInfo.isOS2) exe = "buildout.exe";
-          else exe = "buildout";
+          if (SystemInfo.isWindows || SystemInfo.isOS2) {
+            exe = "buildout.exe";
+          }
+          else {
+            exe = "buildout";
+          }
           VirtualFile runner = bin.findChild(exe);
-          if (runner != null && ! runner.isDirectory()) {
+          if (runner != null && !runner.isDirectory()) {
             return runner;
           }
         }
@@ -97,6 +101,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
   /**
    * Extracts paths from given script, assuming sys.path[0:0] assignment.
+   *
    * @param script
    * @return extracted paths, or null if extraction fails.
    */
@@ -120,7 +125,9 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
             ret.add(value);
             pos = scanner.end();
           }
-          else break; // we've matched the ']', it's group(4)
+          else {
+            break;
+          } // we've matched the ']', it's group(4)
         }
         if (did_nothing) return null;
       }
@@ -170,19 +177,26 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
 
   @Nullable
-  public BuildoutCfgFile getConfigFile() {
+  public File getConfigFile() {
     final String scriptName = getConfiguration().getScriptName();
     if (!StringUtil.isEmpty(scriptName)) {
-      File cfg = new File(new File(scriptName).getParentFile().getParentFile(), BUILDOUT_CFG);
-      if (cfg.exists()) {
-        final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(cfg);
-        if (vFile != null) {
-          final PsiFile psiFile = PsiManager.getInstance(getModule().getProject()).findFile(vFile);
-          if (psiFile instanceof BuildoutCfgFile) {
-            return (BuildoutCfgFile) psiFile;
-          }
+      return new File(new File(scriptName).getParentFile().getParentFile(), BUILDOUT_CFG);
+    }
+    return null;
+  }
+
+  @Nullable
+  public BuildoutCfgFile getConfigPsiFile() {
+    File cfg = getConfigFile();
+    if (cfg.exists()) {
+      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(cfg);
+      if (vFile != null) {
+        final PsiFile psiFile = PsiManager.getInstance(getModule().getProject()).findFile(vFile);
+        if (psiFile instanceof BuildoutCfgFile) {
+          return (BuildoutCfgFile)psiFile;
         }
       }
+
     }
     return null;
   }
