@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
@@ -89,7 +90,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
 
     Rectangle bounds = new Rectangle(myTextFieldPanel.getLocationOnScreen(), myTextField.getSize());
-    bounds.y += myTextFieldPanel.getHeight() + 3;
+    bounds.y += myTextFieldPanel.getHeight() + (SystemInfo.isMac ? 3 : 1);
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
