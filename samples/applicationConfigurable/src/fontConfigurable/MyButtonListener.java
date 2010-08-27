@@ -16,8 +16,7 @@ import java.awt.event.ActionListener;
 public class MyButtonListener implements ActionListener {
 
 
-    public JButton myButton;
-    public JComboBox myFontCombo;
+    public JComboBox myFontName;
     public JComboBox myFontSize;
 
 
@@ -28,7 +27,7 @@ public class MyButtonListener implements ActionListener {
         // Restore default font
         settings.FONT_FACE = "Segoe UI";
         settings.FONT_SIZE = 12;
-        myFontCombo.setSelectedItem(settings.FONT_FACE);
+        myFontName.setSelectedItem(settings.FONT_FACE);
         myFontSize.setSelectedItem(String.valueOf(settings.FONT_SIZE));
         settings.fireUISettingsChanged();
         lafManager.updateUI();
