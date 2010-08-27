@@ -84,8 +84,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 
       "if (true) {\n" +
       "    i = 1; // Cool if\n" +
-      "}\n" +
-      "else {\n" +
+      "} else {\n" +
       "    i = 2;\n" +
       "}"
     );
