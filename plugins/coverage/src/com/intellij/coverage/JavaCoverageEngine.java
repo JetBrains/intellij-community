@@ -212,6 +212,17 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @NotNull
+  @Override
+  public Set<String> getQualifiedNames(@NotNull PsiFile sourceFile) {
+    final PsiClass[] classes = ((PsiClassOwner)sourceFile).getClasses();
+    final Set<String> qNames = new HashSet<String>();
+    for (PsiClass aClass : classes) {
+      qNames.add(aClass.getQualifiedName());
+    }
+    return qNames;
+  }
+
+  @NotNull
   public Set<VirtualFile> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile,
                                                       @Nullable final Module module,
                                                       @NotNull final CoverageSuite suite) {
