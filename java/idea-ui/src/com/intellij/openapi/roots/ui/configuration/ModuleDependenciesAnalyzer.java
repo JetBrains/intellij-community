@@ -112,8 +112,7 @@ public class ModuleDependenciesAnalyzer {
     if (myCompile) {
       classes.withoutSelfModuleOutput();
     }
-    for (VirtualFile r : classes.getRoots()) {
-      final String url = r.getUrl();
+    for (String url : classes.getUrls()) {
       if (!urlExplanations.containsKey(url)) {
         urlExplanations.put(url, new ArrayList<OrderPath>());
       }
