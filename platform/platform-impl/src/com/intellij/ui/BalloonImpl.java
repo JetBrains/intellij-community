@@ -29,19 +29,22 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Range;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class BalloonImpl implements Disposable, Balloon, LightweightWindow, PositionTracker.Client<Balloon> {
@@ -55,7 +58,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private final Color myBorderColor;
   private final Color myFillColor;
 
-  private final Insets myContainerInsets = new Insets(4, 4, 4, 4);
+  private final Insets myContainerInsets = new Insets(2, 2, 2, 2);
 
   private boolean myLastMoveWasInsideBalloon;
 
@@ -118,6 +121,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private boolean myVisible;
   private PositionTracker<Balloon> myTracker;
   private int myAnimationCycle = 500;
+
+  private boolean myFadedIn;
+  private boolean myFadedOut;
 
   private boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
@@ -232,17 +238,17 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myTracker = tracker;
     myTracker.init(this);
 
-    final Window window = SwingUtilities.getWindowAncestor(tracker.getComponent());
-
     JRootPane root = null;
-    if (window instanceof JFrame) {
-      root = ((JFrame)window).getRootPane();
-    }
-    else if (window instanceof JDialog) {
-      root = ((JDialog)window).getRootPane();
-    }
-    else {
-      assert false : window;
+    JDialog dialog = IJSwingUtilities.findParentOfType(tracker.getComponent(), JDialog.class);
+    if (dialog != null) {
+      root = dialog.getRootPane();
+    } else {
+      JFrame frame = IJSwingUtilities.findParentOfType(tracker.getComponent(), JFrame.class);
+      if (frame != null) {
+        root = frame.getRootPane();
+      } else {
+        assert false;
+      }
     }
 
     myVisible = true;
@@ -252,19 +258,51 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     myLayeredPane.addComponentListener(myComponentListener);
 
+    myTargetPoint = myTracker.recalculateLocation(this).getPoint(myLayeredPane);
+
+
+    if (myShowPointer) {
+      Rectangle rec = getRecForPosition(myPosition, true);
+
+      if (!myPosition.isOkToHavePointer(myTargetPoint, rec, getPointerLength(myPosition), getPointerWidth(myPosition), getArc(), getNormalInset())) {
+        rec = getRecForPosition(myPosition, false);
+
+        Rectangle lp = new Rectangle(new Point(myContainerInsets.left, myContainerInsets.top), myLayeredPane.getSize());
+        lp.width -= myContainerInsets.right;
+        lp.height -= myContainerInsets.bottom;
+
+        if (!lp.contains(rec)) {
+          Rectangle2D currentSquare = lp.createIntersection(rec);
+
+          double maxSquare = currentSquare.getWidth() * currentSquare.getHeight();
+          Position targetPosition = myPosition;
+
+          for (Position eachPosition : myPosition.getOtherPositions()) {
+            Rectangle2D eachIntersection = lp.createIntersection(getRecForPosition(eachPosition, false));
+            double eachSquare = eachIntersection.getWidth() * eachIntersection.getHeight();
+            if (maxSquare < eachSquare) {
+              maxSquare = eachSquare;
+              targetPosition = eachPosition;
+            }
+          }
+
+          myPosition = targetPosition;
+        }
+      }
+    }
+
     createComponent();
 
     myComp.validate();
-    Rectangle compBounds = myComp.getBounds();
 
-    Rectangle contentRec = SwingUtilities.convertRectangle(myContent.getParent(), myContent.getBounds(), myLayeredPane);
+    Rectangle rec = myComp.getBounds();
 
-    if (myShowPointer && !myPosition.isOkToHavePointer(myTargetPoint, contentRec, this)) {
+    if (myShowPointer && !myPosition.isOkToHavePointer(myTargetPoint, rec, getPointerLength(myPosition), getPointerWidth(myPosition), getArc(), getNormalInset())) {
       myShowPointer = false;
       myComp.removeAll();
       myLayeredPane.remove(myComp);
 
-      myForcedBounds = myPosition.getPointlessContentRec(compBounds, this);
+      myForcedBounds = rec;
       createComponent();
     }
 
@@ -283,19 +321,46 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                                                                            KeyEvent.KEY_EVENT_MASK);
   }
 
+  private Rectangle getRecForPosition(Position position, boolean adjust) {
+    Dimension size = getContentSizeFor(position);
+
+    Rectangle rec = new Rectangle(new Point(0, 0), size);
+
+    position.setRecToRelativePosition(rec, myTargetPoint);
+
+    if (adjust) {
+      rec = myPosition
+        .getUpdatedBounds(myLayeredPane.getSize(), myForcedBounds, rec.getSize(), myShowPointer, myTargetPoint, myContainerInsets);
+    }
+
+    return rec;
+  }
+
+  private Dimension getContentSizeFor(Position position) {
+    Insets insets = position.createBorder(this).getBorderInsets();
+    if (insets == null) {
+      insets = new Insets(0, 0, 0, 0);
+    }
+
+    Dimension size = myContent.getPreferredSize();
+    size.width += insets.left + insets.right;
+    size.height += insets.top + insets.bottom;
+
+    return size;
+  }
+
   private void createComponent() {
     myComp = new MyComponent(myContent, this, myShowPointer
                                ? myPosition.createBorder(this)
                                : getPointlessBorder());
 
-    myTargetPoint = myTracker.recalculateLocation(this).getPoint(myLayeredPane);
 
     myComp.clear();
     myComp.myAlpha = 0f;
 
 
     myLayeredPane.add(myComp, JLayeredPane.POPUP_LAYER);
-    myPosition.updateLocation(this);
+    myPosition.updateBounds(this);
   }
 
 
@@ -308,7 +373,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     if (newPosition != null) {
       myTargetPoint = newPosition.getPoint(myLayeredPane);
-      myPosition.updateLocation(this);
+      myPosition.updateBounds(this);
     }
   }
 
@@ -341,6 +406,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         if (isForward()) {
           myComp.clear();
           myComp.repaint();
+
+          myFadedIn = true;
 
           startFadeoutTimer();
         }
@@ -376,23 +443,19 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
 
   int getArc() {
-    return 6;
+    return 3;
   }
 
-  int getPointerWidth() {
-    return 12;
+  int getPointerWidth(Position position) {
+    return position.isTopBottomPointer() ? 14 : 11;
   }
 
   int getNormalInset() {
-    return 4;
+    return 3;
   }
 
-  int getShadowShift() {
-    return 10;
-  }
-
-  int getPointerLength() {
-    return 12;
+  int getPointerLength(Position position) {
+    return position.isTopBottomPointer() ? 10 : 8;
   }
 
   public void hide() {
@@ -402,6 +465,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     for (JBPopupListener each : myListeners) {
       each.onClosed(new LightweightWindowEvent(this));
     }
+
+    myFadedOut = true;
   }
 
   public void addListener(JBPopupListener listener) {
@@ -447,7 +512,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   public void setBounds(Rectangle bounds) {
     myForcedBounds = bounds;
     if (myPosition != null) {
-      myPosition.updateLocation(this);
+      myPosition.updateBounds(this);
     }
   }
 
@@ -469,22 +534,36 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     abstract EmptyBorder createBorder(final BalloonImpl balloon);
 
 
-    public void updateLocation(final BalloonImpl balloon) {
-      Rectangle bounds = balloon.myForcedBounds;
+    abstract void setRecToRelativePosition(Rectangle rec, Point targetPoint);
+
+
+    public void updateBounds(final BalloonImpl balloon) {
+      balloon.myComp._setBounds(getUpdatedBounds(balloon.myLayeredPane.getSize(),
+                                                 balloon.myForcedBounds,
+                                                 balloon.myComp.getPreferredSize(),
+                                                 balloon.myShowPointer,
+                                                 balloon.myTargetPoint,
+                                                 balloon.myContainerInsets));
+    }
+
+    public Rectangle getUpdatedBounds(Dimension layeredPaneSize,
+                                      Rectangle forcedBounds,
+                                      Dimension preferredSize,
+                                      boolean showPointer,
+                                      Point targetPoint, Insets containerInsets) {
+
+      Rectangle bounds = forcedBounds;
 
       if (bounds == null) {
-        final Dimension size = balloon.myComp.getPreferredSize();
-        balloon.myComp.setSize(size);
-        final Dimension layeredPaneSize = balloon.myLayeredPane.getSize();
-        Point location = balloon.myShowPointer
-                         ? getLocation(layeredPaneSize, balloon.myTargetPoint, size)
-                         : new Point(balloon.myTargetPoint.x - size.width / 2, balloon.myTargetPoint.y - size.height / 2);
-        bounds = new Rectangle(location.x, location.y, size.width, size.height);
+        Point location = showPointer
+                         ? getLocation(layeredPaneSize, targetPoint, preferredSize)
+                         : new Point(targetPoint.x - preferredSize.width / 2, targetPoint.y - preferredSize.height / 2);
+        bounds = new Rectangle(location.x, location.y, preferredSize.width, preferredSize.height);
 
-        ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets);
+        ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), containerInsets);
       }
 
-      balloon.myComp._setBounds(bounds);
+      return bounds;
     }
 
     abstract Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize);
@@ -513,31 +592,21 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                                               final Point pointTarget,
                                               final BalloonImpl balloon);
 
-    public boolean isOkToHavePointer(Point targetPoint, Rectangle bounds, BalloonImpl balloon) {
-      if (bounds.contains(targetPoint)) {
-        return false;
-      }
+    public boolean isOkToHavePointer(Point targetPoint, Rectangle bounds, int pointerLength, int pointerWidth, int arc, int normalInset) {
+      if (bounds.x < targetPoint.x && bounds.x + bounds.width > targetPoint.x && bounds.y < targetPoint.y && bounds.y + bounds.height < targetPoint.y) return false;
 
-      Rectangle pointless = getPointlessContentRec(bounds, balloon);
+      Rectangle pointless = getPointlessContentRec(bounds, pointerLength);
 
-      pointless.x += (balloon.getArc() + 1);
-      pointless.width -= (balloon.getArc() * 2 + 2);
-      pointless.y += (balloon.getArc() + 1);
-      pointless.height -= (balloon.getArc() * 2 + 2);
-
-
-      int size = getDistanceToTarget(bounds, targetPoint);
-      if (size < balloon.getPointerLength() + balloon.getNormalInset()) return false;
-
-      int pointerWidth = balloon.getPointerWidth();
+      int size = getDistanceToTarget(pointless, targetPoint);
+      if (size < pointerLength) return false;
 
       Range<Integer> balloonRange;
       Range<Integer> pointerRange;
       if (isTopBottomPointer()) {
-        balloonRange = new Range<Integer>(bounds.x, bounds.x + bounds.width);
+        balloonRange = new Range<Integer>(bounds.x + arc, bounds.x + bounds.width - arc * 2);
         pointerRange = new Range<Integer>(targetPoint.x - pointerWidth / 2, targetPoint.x + pointerWidth / 2);
       } else {
-        balloonRange = new Range<Integer>(bounds.y, bounds.y + bounds.height);
+        balloonRange = new Range<Integer>(bounds.y + arc, bounds.y + bounds.height - arc * 2);
         pointerRange = new Range<Integer>(targetPoint.y - pointerWidth / 2, targetPoint.y + pointerWidth / 2);
       }
 
@@ -550,8 +619,19 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       return this instanceof Below || this instanceof Above;
     }
 
-    protected abstract Rectangle getPointlessContentRec(Rectangle bounds, BalloonImpl balloon);
+    protected abstract Rectangle getPointlessContentRec(Rectangle bounds, int pointerLength);
 
+    public Set<Position> getOtherPositions() {
+      HashSet<Position> all = new HashSet<Position>();
+      all.add(BELOW);
+      all.add(ABOVE);
+      all.add(AT_RIGHT);
+      all.add(AT_LEFT);
+
+      all.remove(this);
+
+      return all;
+    }
   }
 
   public static final Position BELOW = new Below();
@@ -569,12 +649,17 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
-    protected Rectangle getPointlessContentRec(Rectangle bounds, BalloonImpl balloon) {
-      return new Rectangle(bounds.x, bounds.y + balloon.getPointerLength(), bounds.width, bounds.height - balloon.getPointerLength());
+    protected Rectangle getPointlessContentRec(Rectangle bounds, int pointerLength) {
+      return new Rectangle(bounds.x, bounds.y + pointerLength, bounds.width, bounds.height - pointerLength);
     }
 
     EmptyBorder createBorder(final BalloonImpl balloon) {
-      return new EmptyBorder(balloon.getPointerLength() + balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset());
+      return new EmptyBorder(balloon.getPointerLength(this) + balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset());
+    }
+
+    @Override
+    void setRecToRelativePosition(Rectangle rec, Point targetPoint) {
+      rec.setLocation(new Point(targetPoint.x - rec.width / 2, targetPoint.y));
     }
 
     Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize) {
@@ -583,23 +668,23 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
-      bounds.y += balloon.getPointerLength();
-      bounds.height -= balloon.getPointerLength() - 1;
+      bounds.y += balloon.getPointerLength(this);
+      bounds.height -= balloon.getPointerLength(this) - 1;
     }
 
     protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.TOP);
-      shaper.line(balloon.getPointerWidth() / 2, balloon.getPointerLength()).toRightCurve().roundRightDown().toBottomCurve().roundLeftDown()
+      shaper.line(balloon.getPointerWidth(this) / 2, balloon.getPointerLength(this)).toRightCurve().roundRightDown().toBottomCurve().roundLeftDown()
         .toLeftCurve().roundLeftUp().toTopCurve().roundUpRight()
-        .lineTo(pointTarget.x - balloon.getPointerWidth() / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y);
+        .lineTo(pointTarget.x - balloon.getPointerWidth(this) / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y);
       shaper.close();
 
       return shaper.getShape();
     }
 
     protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
-      bounds.y += balloon.getPointerLength();
-      bounds.height += balloon.getPointerLength();
+      bounds.y += balloon.getPointerLength(this);
+      bounds.height += balloon.getPointerLength(this);
       return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, balloon.getArc(), balloon.getArc());
     }
 
@@ -613,12 +698,20 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
-    protected Rectangle getPointlessContentRec(Rectangle bounds, BalloonImpl balloon) {
-      return new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height - balloon.getPointerLength());
+    protected Rectangle getPointlessContentRec(Rectangle bounds, int pointerLength) {
+      return new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height - pointerLength);
     }
 
     EmptyBorder createBorder(final BalloonImpl balloon) {
-      return new EmptyBorder(balloon.getNormalInset(), balloon.getNormalInset(), balloon.getPointerLength() + balloon.getNormalInset(), balloon.getNormalInset());
+      return new EmptyBorder(balloon.getNormalInset(),
+                             balloon.getNormalInset(),
+                             balloon.getPointerLength(this),
+                             balloon.getNormalInset());
+    }
+
+    @Override
+    void setRecToRelativePosition(Rectangle rec, Point targetPoint) {
+      rec.setLocation(targetPoint.x - rec.width / 2, targetPoint.y - rec.height);
     }
 
     Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize) {
@@ -627,21 +720,21 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
-      bounds.height -= balloon.getPointerLength() - 1;
+      bounds.height -= balloon.getPointerLength(this) - 1;
     }
 
     protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
-      bounds.y -= balloon.getPointerLength();
-      bounds.height -= balloon.getPointerLength();
+      bounds.y -= balloon.getPointerLength(this);
+      bounds.height -= balloon.getPointerLength(this);
       return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, balloon.getArc(), balloon.getArc());
     }
 
     @Override
     protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.BOTTOM);
-      shaper.line(-balloon.getPointerWidth() / 2, -balloon.getPointerLength() + 1);
+      shaper.line(-balloon.getPointerWidth(this) / 2, -balloon.getPointerLength(this) + 1);
       shaper.toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown().toBottomCurve().line(0, 2)
-        .roundLeftDown().lineTo(pointTarget.x + balloon.getPointerWidth() / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y)
+        .roundLeftDown().lineTo(pointTarget.x + balloon.getPointerWidth(this) / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y)
         .close();
 
 
@@ -657,12 +750,17 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
-    protected Rectangle getPointlessContentRec(Rectangle bounds, BalloonImpl balloon) {
-      return new Rectangle(bounds.x + balloon.getPointerLength(), bounds.y, bounds.width - balloon.getPointerLength(), bounds.height);
+    protected Rectangle getPointlessContentRec(Rectangle bounds, int pointerLength) {
+      return new Rectangle(bounds.x + pointerLength, bounds.y, bounds.width - pointerLength, bounds.height);
     }
 
     EmptyBorder createBorder(final BalloonImpl balloon) {
-      return new EmptyBorder(balloon.getNormalInset(), balloon.getPointerLength() + balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset());
+      return new EmptyBorder(balloon.getNormalInset(), balloon.getPointerLength(this) + balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset());
+    }
+
+    @Override
+    void setRecToRelativePosition(Rectangle rec, Point targetPoint) {
+      rec.setLocation(targetPoint.x, targetPoint.y - rec.height / 2);
     }
 
     Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize) {
@@ -673,21 +771,21 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     @Override
     protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.LEFT);
-      shaper.line(balloon.getPointerLength(), -balloon.getPointerWidth() / 2).toTopCurve().roundUpRight().toRightCurve().roundRightDown()
+      shaper.line(balloon.getPointerLength(this), -balloon.getPointerWidth(this) / 2).toTopCurve().roundUpRight().toRightCurve().roundRightDown()
         .toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp()
-        .lineTo(shaper.getCurrent().x, pointTarget.y + balloon.getPointerWidth() / 2).lineTo(pointTarget.x, pointTarget.y).close();
+        .lineTo(shaper.getCurrent().x, pointTarget.y + balloon.getPointerWidth(this) / 2).lineTo(pointTarget.x, pointTarget.y).close();
 
       return shaper.getShape();
     }
 
     protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
-      bounds.x += balloon.getPointerLength();
-      bounds.width -= balloon.getPointerLength();
+      bounds.x += balloon.getPointerLength(this);
+      bounds.width -= balloon.getPointerLength(this);
     }
 
     protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
-      bounds.x += balloon.getPointerLength();
-      bounds.width -= balloon.getPointerLength();
+      bounds.x += balloon.getPointerLength(this);
+      bounds.width -= balloon.getPointerLength(this);
       return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, balloon.getArc(), balloon.getArc());
     }
   }
@@ -700,12 +798,17 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
-    protected Rectangle getPointlessContentRec(Rectangle bounds, BalloonImpl balloon) {
-      return new Rectangle(bounds.x, bounds.y, bounds.width - balloon.getPointerLength(), bounds.height);
+    protected Rectangle getPointlessContentRec(Rectangle bounds, int pointerLength) {
+      return new Rectangle(bounds.x, bounds.y, bounds.width - pointerLength, bounds.height);
     }
 
     EmptyBorder createBorder(final BalloonImpl balloon) {
-      return new EmptyBorder(balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset(), balloon.getPointerLength() + balloon.getNormalInset());
+      return new EmptyBorder(balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset(), balloon.getPointerLength(this) + balloon.getNormalInset());
+    }
+
+    @Override
+    void setRecToRelativePosition(Rectangle rec, Point targetPoint) {
+      rec.setLocation(targetPoint.x - rec.width, targetPoint.y - rec.height / 2);
     }
 
     Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize) {
@@ -714,20 +817,20 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
-      bounds.width -= balloon.getPointerLength();
+      bounds.width -= balloon.getPointerLength(this);
     }
 
     @Override
     protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.RIGHT);
-      shaper.line(-balloon.getPointerLength(), balloon.getPointerWidth() / 2);
+      shaper.line(-balloon.getPointerLength(this), balloon.getPointerWidth(this) / 2);
       shaper.toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown()
-        .lineTo(shaper.getCurrent().x, pointTarget.y - balloon.getPointerWidth() / 2).lineTo(pointTarget.x, pointTarget.y).close();
+        .lineTo(shaper.getCurrent().x, pointTarget.y - balloon.getPointerWidth(this) / 2).lineTo(pointTarget.x, pointTarget.y).close();
       return shaper.getShape();
     }
 
     protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
-      bounds.width -= balloon.getPointerLength();
+      bounds.width -= balloon.getPointerLength(this);
       return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, balloon.getArc(), balloon.getArc());
     }
   }
@@ -864,7 +967,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
       if (isVisible() && myCloseRec.isVisible()) {
         Rectangle lpBounds = SwingUtilities.convertRectangle(getParent(), bounds, myLayeredPane);
-        lpBounds = myPosition.getPointlessContentRec(lpBounds, myBalloon);
+        lpBounds = myPosition.getPointlessContentRec(lpBounds, myBalloon.getPointerLength(myPosition));
 
         int iconWidth = myBalloon.myCloseButton.getIconWidth();
         int iconHeight = myBalloon.myCloseButton.getIconHeight();
@@ -939,7 +1042,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
 
     private int getTargetDelta(int effectiveSide) {
-      return effectiveSide == myTargetSide ? myBalloon.getPointerLength() : 0;
+      return effectiveSide == myTargetSide ? myBalloon.getPointerLength(myBalloon.myPosition) : 0;
     }
 
     public Shaper toRightCurve() {
@@ -1001,7 +1104,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
           pane.setBorder(new LineBorder(Color.blue));
 
-          balloon.set(new BalloonImpl(pane, Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 0, true, null, false, 500));
+          balloon.set(new BalloonImpl(pane, Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, false, 0, true, null, false, 500));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {
@@ -1020,8 +1123,24 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       }
     });
 
+    tree.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        System.out.println(e.getPoint());
+      }
+    });
+
     frame.setBounds(300, 300, 300, 300);
     frame.show();
   }
 
+  @Override
+  public boolean wasFadedIn() {
+    return myFadedIn;
+  }
+
+  @Override
+  public boolean wasFadedOut() {
+    return myFadedOut;
+  }
 }
