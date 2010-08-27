@@ -31,10 +31,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -560,15 +557,48 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       names3 = null;
     }
 
-    LinkedHashSet<String> names = new LinkedHashSet<String>();
+    final LinkedHashSet<String> names = new LinkedHashSet<String>();
+    final String[] fromLiterals = suggestVariableNameFromLiterals(expr, variableKind);
+    if (fromLiterals != null) {
+      ContainerUtil.addAll(names, fromLiterals);
+    }
     ContainerUtil.addAll(names, names1.names);
     ContainerUtil.addAll(names, names2.names);
     if (names3 != null) {
       ContainerUtil.addAll(names, names3);
     }
+
     String[] namesArray = ArrayUtil.toStringArray(names);
     String propertyName = names1.propertyName != null ? names1.propertyName : names2.propertyName;
     return new NamesByExprInfo(propertyName, namesArray);
+  }
+
+  @Nullable
+  private String[] suggestVariableNameFromLiterals(PsiExpression expr, VariableKind variableKind) {
+    final PsiElement[] literals = PsiTreeUtil.collectElements(expr, new PsiElementFilter() {
+      @Override
+      public boolean isAccepted(PsiElement element) {
+        if (isStringPsiLiteral(element) && StringUtil.isJavaIdentifier(StringUtil.unquoteString(element.getText()))) {
+          final PsiElement exprList = element.getParent();
+          if (exprList instanceof PsiExpressionList) {
+            final PsiElement call = exprList.getParent();
+            if (call instanceof PsiNewExpression) {
+              return true;
+            } else if (call instanceof PsiMethodCallExpression) {
+              //TODO: exclude or not getA().getB("name").getC(); or getA(getB("name").getC()); It works fine for now in the most cases
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+    });
+
+    if (literals.length == 1) {
+      final String text = StringUtil.unquoteString(literals[0].getText());
+      return getSuggestionsByName(text, variableKind, expr.getType() instanceof PsiArrayType);
+    }
+    return null;
   }
 
   private NamesByExprInfo suggestVariableNameByExpressionOnly(PsiExpression expr, final VariableKind variableKind) {
@@ -1044,5 +1074,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   private CodeStyleSettings getSettings() {
     return CodeStyleSettingsManager.getSettings(myProject);
+  }
+
+  public static boolean isStringPsiLiteral(PsiElement element) {
+    if (element instanceof PsiLiteralExpression) {
+      final String text = element.getText();
+      return text.length() > 1 && StringUtil.isQuotedString(text);
+    }
+    return false;
   }
 }
