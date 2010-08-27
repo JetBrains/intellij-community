@@ -49,10 +49,12 @@ public class ToggleBooleanProperty extends ToggleAction {
     }
 
     protected abstract boolean isEnabled();
+    protected abstract boolean isVisible();
 
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(isEnabled());
+      e.getPresentation().setVisible(isVisible());
     }
   }
 }
