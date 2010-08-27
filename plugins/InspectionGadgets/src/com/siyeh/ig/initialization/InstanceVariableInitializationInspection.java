@@ -169,12 +169,27 @@ public class InstanceVariableInitializationInspection extends BaseInspection{
             }
             final PsiClassInitializer[] initializers = aClass.getInitializers();
             for(final PsiClassInitializer initializer : initializers){
-                if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
-                    final PsiCodeBlock body = initializer.getBody();
-                    if(InitializationUtils.blockAssignsVariableOrFails(body,
-                            field)){
-                        return true;
-                    }
+                if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+                    continue;
+                }
+                final PsiCodeBlock body = initializer.getBody();
+                if(InitializationUtils.blockAssignsVariableOrFails(body,
+                        field)){
+                    return true;
+                }
+            }
+            final PsiField[] fields = aClass.getFields();
+            for (PsiField otherField : fields) {
+                if (field.equals(otherField)) {
+                    continue;
+                }
+                if (otherField.hasModifierProperty(PsiModifier.STATIC)) {
+                    continue;
+                }
+                final PsiExpression initializer = otherField.getInitializer();
+                if (InitializationUtils.expressionAssignsVariableOrFails(
+                        initializer, field)) {
+                    return true;
                 }
             }
             return false;

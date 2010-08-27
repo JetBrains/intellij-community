@@ -3,7 +3,7 @@ package com.siyeh.igtest.initialization.field;
 import junit.framework.TestCase;
 
 public class InstanceVariableInitialization extends TestCase { // needs junit.jar for testcase to work
-    
+
     private String javaHome;
 
     InstanceVariableInitialization() {
@@ -70,4 +70,11 @@ class Test {
             throw new IllegalArgumentException();
         }
     }
+}
+class A {
+  private int n=k=0;
+  private int k; // instance variable 'k' may not be initialized during object construction (false positive)
+
+  private String s = t = "";
+  private String t;
 }
