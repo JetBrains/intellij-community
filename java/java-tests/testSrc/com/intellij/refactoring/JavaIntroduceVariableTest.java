@@ -40,7 +40,7 @@ public class JavaIntroduceVariableTest extends LightCodeInsightTestCase {
     final PsiExpression expr = factory.createExpressionFromText(expression, null);
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(getProject());
     final SuggestedNameInfo info = codeStyleManager.suggestVariableName(kind, null, expr, type);
-    assert info.names.length >= results.length : msg("Not found some variants", info.names, results);
+    assert info.names.length >= results.length : msg("Can't find some variants", info.names, results);
     for (int i = 0; i < results.length; i++) {
       if (!results[i].equals(info.names[i])) {
         throw new Exception(msg("", info.names, results));
