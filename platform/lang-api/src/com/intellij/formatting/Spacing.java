@@ -19,7 +19,7 @@ import com.intellij.openapi.util.TextRange;
 
 /**
  * The spacing setting for a formatting model block. Indicates the number of spaces and/or
- *  line breaks that should be inserted between the specified children of the specified block.
+ * line breaks that should be inserted between the specified children of the specified block.
  *
  * @see Block#getSpacing(Block, Block)
  */
@@ -83,6 +83,7 @@ public abstract class Spacing {
   /**
    * Returns a spacing setting instance indicating that no line breaks or spaces can be
    * inserted or removed by the formatter between the specified two blocks.
+   *
    * @return the spacing setting instance.
    */
   public static Spacing getReadOnlySpacing() {

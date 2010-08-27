@@ -72,6 +72,10 @@ class InitialInfoBuilder {
     final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset);
     final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, null, true);
     wrapper.setIndent((IndentImpl)Indent.getNoneIndent());
+
+    if (System.currentTimeMillis() > 1) {
+      System.out.println();
+    }
     return builder;
   }
 
