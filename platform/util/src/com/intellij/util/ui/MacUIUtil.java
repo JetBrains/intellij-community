@@ -27,6 +27,8 @@ import java.awt.geom.GeneralPath;
  */
 public class MacUIUtil {
 
+  public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
+
   private MacUIUtil() {
   }
 
@@ -52,11 +54,7 @@ public class MacUIUtil {
     final Object oldStrokeControlValue = g2d.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);
 
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-    final boolean useQuartz = true; // TODO:
-    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, useQuartz ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
-    //g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
     final GeneralPath path1 = new GeneralPath();
     path1.moveTo(2, 4);
