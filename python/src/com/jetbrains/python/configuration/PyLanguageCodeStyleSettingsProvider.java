@@ -59,6 +59,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
                                    "KEEP_BLANK_LINES_IN_CODE");
     }
+    else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
+      consumer.showAllStandardOptions();
+    }
   }
 
   private static String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
