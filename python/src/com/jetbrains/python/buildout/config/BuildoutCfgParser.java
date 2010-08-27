@@ -80,7 +80,7 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
     private void parseOption() {
       PsiBuilder.Marker option = myBuilder.mark();
       if (is(KEY_CHARACTERS)) {
-        doneAdvance(mark(), KEY_CHARACTERS);
+        doneAdvance(mark(), KEY);
       }
       if (is(KEY_VALUE_SEPARATOR)) {
         advance();
