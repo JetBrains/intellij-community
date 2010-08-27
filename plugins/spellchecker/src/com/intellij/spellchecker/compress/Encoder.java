@@ -1,6 +1,7 @@
 package com.intellij.spellchecker.compress;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 
@@ -21,8 +22,9 @@ public final class Encoder {
     return alphabet;
   }
 
+  @Nullable
   public UnitBitSet encode(@NotNull CharSequence letters, boolean force) throws EncodingException {
-    assert UnitBitSet.MAX_CHARS_IN_WORD >= letters.length() : "Word is too long ";
+    if (UnitBitSet.MAX_CHARS_IN_WORD >= letters.length()) return null;
     UnitBitSet bs = new UnitBitSet();
     for (int i = 0; i < letters.length() - 1 + 1; i++) {
       char letter = letters.charAt(i);

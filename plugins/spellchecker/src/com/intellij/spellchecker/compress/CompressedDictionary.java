@@ -121,6 +121,7 @@ public final class CompressedDictionary implements Dictionary {
     }
     try {
       UnitBitSet bs = encoder.encode(word, false);
+      if (bs == null) return false;
       byte[] compressed = UnitBitSet.getBytes(bs);
       int index = -1;
       for (int i = 0; i < lengths.length; i++) {
@@ -179,6 +180,7 @@ public final class CompressedDictionary implements Dictionary {
         String transformed = transform.transform(s);
         if (transformed != null) {
           UnitBitSet bs = encoder.encode(transformed, true);
+          if (bs == null) return;
           byte[] compressed = UnitBitSet.getBytes(bs);
           dictionary.addToDictionary(compressed);
         }
