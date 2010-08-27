@@ -4,8 +4,6 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * @author traff
  */
@@ -16,8 +14,11 @@ public class BuildoutCfgSectionHeaderImpl extends BuildoutCfgPsiElementImpl{
 
   @Nullable
   public String getName() {
-    String name =  getText();
-    return  name != null? name.trim(): null;
+    String name = getText().trim();
+    if (name.startsWith("[") && name.endsWith("]")) {
+      return name.substring(1, name.length()-1).trim();
+    }
+    return name;
   }
 
   @Override
