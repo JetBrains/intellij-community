@@ -62,7 +62,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -597,7 +596,7 @@ public abstract class ChooseByNameBase {
         close(false);
         return Boolean.TRUE;
       }
-    }).setFocusable(true).setRequestFocus(true).setForceHeavyweight(true);
+    }).setFocusable(true).setRequestFocus(true).setForceHeavyweight(true).setModalContext(false);
 
     Point point = new Point(x, y);
     SwingUtilities.convertPointToScreen(point, layeredPane);
