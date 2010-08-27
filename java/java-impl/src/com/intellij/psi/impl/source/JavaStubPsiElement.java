@@ -137,12 +137,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
 
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     CompositeElement treeElement = calcTreeElement();
-    LOG.assertTrue(treeElement.getTreeParent() != null);
-    CheckUtil.checkWritable(this);
-    TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
-    treeElement.getTreeParent().replaceChildInternal(treeElement, elementCopy);
-    elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+    return SharedImplUtil.doReplace(this, treeElement, newElement);
   }
 
   public void navigate(boolean requestFocus) {

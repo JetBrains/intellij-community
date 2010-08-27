@@ -26,12 +26,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -246,13 +246,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   public FileStatus getFileStatus() {
-    if (!isPhysical()) return FileStatus.NOT_CHANGED;
-    PsiFile contFile = getContainingFile();
-    if (contFile == null) return FileStatus.NOT_CHANGED;
-    VirtualFile vFile = contFile.getVirtualFile();
-    return vFile != null
-           ? FileStatusManager.getInstance(getProject()).getStatus(vFile)
-           : FileStatus.NOT_CHANGED;
+    return SharedImplUtil.getFileStatus(this);
   }
 
   public void navigate(boolean requestFocus) {

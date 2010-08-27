@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
@@ -783,12 +782,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     CompositeElement treeElement = calcTreeElement();
-    LOG.assertTrue(treeElement.getTreeParent() != null);
-    CheckUtil.checkWritable(this);
-    TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
-    treeElement.getTreeParent().replaceChildInternal(treeElement, elementCopy);
-    elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+    return SharedImplUtil.doReplace(this, treeElement, newElement);
   }
 
   public PsiReference getReference() {
@@ -854,11 +848,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public FileStatus getFileStatus() {
-    if (!isPhysical()) return FileStatus.NOT_CHANGED;
-    PsiFile contFile = getContainingFile();
-    if (contFile == null) return FileStatus.NOT_CHANGED;
-    VirtualFile vFile = contFile.getVirtualFile();
-    return vFile != null ? FileStatusManager.getInstance(getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
+    return SharedImplUtil.getFileStatus(this);
   }
 
   @NotNull
