@@ -29,6 +29,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Range;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.*;
@@ -234,17 +235,17 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myTracker = tracker;
     myTracker.init(this);
 
-    final Window window = SwingUtilities.getWindowAncestor(tracker.getComponent());
-
     JRootPane root = null;
-    if (window instanceof JFrame) {
-      root = ((JFrame)window).getRootPane();
-    }
-    else if (window instanceof JDialog) {
-      root = ((JDialog)window).getRootPane();
-    }
-    else {
-      assert false : window;
+    JDialog dialog = IJSwingUtilities.findParentOfType(tracker.getComponent(), JDialog.class);
+    if (dialog != null) {
+      root = dialog.getRootPane();
+    } else {
+      JFrame frame = IJSwingUtilities.findParentOfType(tracker.getComponent(), JFrame.class);
+      if (frame != null) {
+        root = frame.getRootPane();
+      } else {
+        assert false;
+      }
     }
 
     myVisible = true;
@@ -263,7 +264,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       if (!myPosition.isOkToHavePointer(myTargetPoint, rec, getPointerLength(), getPointerWidth(), getArc(), getNormalInset())) {
         rec = getRecForPosition(myPosition, false);
 
-        Rectangle lp = new Rectangle(new Point(0, 0), myLayeredPane.getSize());
+        Rectangle lp = new Rectangle(new Point(myContainerInsets.left, myContainerInsets.top), myLayeredPane.getSize());
+        lp.width -= myContainerInsets.right;
+        lp.height -= myContainerInsets.bottom;
 
         if (!lp.contains(rec)) {
           Rectangle2D currentSquare = lp.createIntersection(rec);
@@ -435,15 +438,15 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
 
   int getArc() {
-    return 6;
+    return 3;
   }
 
   int getPointerWidth() {
-    return 12;
+    return 11;
   }
 
   int getNormalInset() {
-    return 4;
+    return 3;
   }
 
   int getShadowShift() {
@@ -451,7 +454,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   }
 
   int getPointerLength() {
-    return 12;
+    return 8;
   }
 
   public void hide() {
@@ -587,17 +590,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                                               final BalloonImpl balloon);
 
     public boolean isOkToHavePointer(Point targetPoint, Rectangle bounds, int pointerLength, int pointerWidth, int arc, int normalInset) {
-      if (bounds.contains(targetPoint)) {
-        return false;
-      }
+      if (bounds.x < targetPoint.x && bounds.x + bounds.width > targetPoint.x && bounds.y < targetPoint.y && bounds.y + bounds.height < targetPoint.y) return false;
 
       Rectangle pointless = getPointlessContentRec(bounds, pointerLength);
-
-      pointless.x += (arc + 1);
-      pointless.width -= (arc * 2 + 2);
-      pointless.y += (arc + 1);
-      pointless.height -= (arc * 2 + 2);
-
 
       int size = getDistanceToTarget(pointless, targetPoint);
       if (size < pointerLength) return false;
@@ -605,10 +600,10 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       Range<Integer> balloonRange;
       Range<Integer> pointerRange;
       if (isTopBottomPointer()) {
-        balloonRange = new Range<Integer>(bounds.x, bounds.x + bounds.width);
+        balloonRange = new Range<Integer>(bounds.x + arc, bounds.x + bounds.width - arc * 2);
         pointerRange = new Range<Integer>(targetPoint.x - pointerWidth / 2, targetPoint.x + pointerWidth / 2);
       } else {
-        balloonRange = new Range<Integer>(bounds.y, bounds.y + bounds.height);
+        balloonRange = new Range<Integer>(bounds.y + arc, bounds.y + bounds.height - arc * 2);
         pointerRange = new Range<Integer>(targetPoint.y - pointerWidth / 2, targetPoint.y + pointerWidth / 2);
       }
 
