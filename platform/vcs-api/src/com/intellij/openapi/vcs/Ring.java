@@ -22,9 +22,8 @@ import java.util.LinkedList;
  * @author irengrig
  */
 public abstract class Ring<T extends Comparable<T>> {
-  private final static int ourStep = 10;
-  private final LinkedList<T> myFreeNumbers;
-  private T myNextAvailable;
+  protected final LinkedList<T> myFreeNumbers;
+  protected T myNextAvailable;
 
   public Ring(final T first) {
     myFreeNumbers = new LinkedList<T>();
@@ -41,11 +40,25 @@ public abstract class Ring<T extends Comparable<T>> {
 
   public T getFree() {
     if (myFreeNumbers.isEmpty()) {
-      for (int i = 0; i < ourStep; i++) {
-        myFreeNumbers.add(myNextAvailable);
-        myNextAvailable = getNext(myNextAvailable);
-      }
+      final T tmp = myNextAvailable;
+      myNextAvailable = getNext(myNextAvailable);
+      return tmp;
     }
     return myFreeNumbers.removeFirst();
+  }
+  
+  public static class IntegerRing extends Ring<Integer> {
+    public IntegerRing() {
+      super(0);
+    }
+
+    @Override
+    protected Integer getNext(Integer integer) {
+      return integer + 1;
+    }
+
+    public int size() {
+      return myNextAvailable - myFreeNumbers.size();
+    }
   }
 }
