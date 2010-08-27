@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -52,6 +51,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   private int myX;
   private int myY;
+  private RegistryValue myMode;
 
   @NotNull
   @Override
@@ -65,6 +65,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   @Override
   public void initComponent() {
+    myMode = Registry.get("ide.tooltip.mode");
+
     myIsEnabled = Registry.get("ide.tooltip.callout");
     myIsEnabled.addListener(new RegistryValueListener.Adapter() {
       @Override
@@ -98,8 +100,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     } else if (me.getID() == MouseEvent.MOUSE_MOVED) {
       if (me.getComponent() == myCurrentComponent) {
-        myX = me.getX();
-        myY = me.getY();
+        if (myCurrentTip != null && myCurrentTip.wasFadedIn()) {
+          hideCurrent();
+        } else {
+          myX = me.getX();
+          myY = me.getY();
+        }
       } else if (myCurrentComponent == null) {
         maybeShowFor(c, me);
       }
@@ -137,7 +143,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       public void run() {
         show(c, e, tooltipText, toCenter);
       }
-    }, myShowDelay ? 1200 : 750);
+    }, myShowDelay ? 1500 : 900);
   }
 
   private void show(Component c, MouseEvent e, String tooltipText, boolean toCenter) {
@@ -145,7 +151,17 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     myTipLabel.setText(tooltipText);
 
-    boolean useSystem = Registry.is("ide.tooltip.useSystemColors") || (!UIUtil.isUnderAquaLookAndFeel());
+    boolean useSystem;
+
+    if ("default".equalsIgnoreCase(myMode.asString())) {
+      useSystem = false;
+    } else if ("system".equalsIgnoreCase(myMode.asString())) {
+      useSystem = true;
+    } else if ("graphite".equalsIgnoreCase(myMode.asString())) {
+      useSystem = false;
+    } else {
+      useSystem = false;
+    }
 
     Color bg = useSystem ? UIManager.getColor("ToolTip.background") : new Color(100, 100, 100, 230);
     Color fg = useSystem ? UIManager.getColor("ToolTip.foreground") : Color.white;
