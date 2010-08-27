@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
