@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.rt.coverage.instrumentation.ClassFinder;
-import com.intellij.rt.coverage.instrumentation.ClassPathEntry;
+import com.intellij.rt.coverage.util.classFinder.ClassFinder;
+import com.intellij.rt.coverage.util.classFinder.ClassPathEntry;
 import com.intellij.util.lang.UrlClassLoader;
 
 import java.net.MalformedURLException;
