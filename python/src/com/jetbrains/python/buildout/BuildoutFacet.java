@@ -8,7 +8,6 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -96,6 +95,10 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
   @Override
   public void initFacet() {
+    updatePaths();
+  }
+
+  public void updatePaths() {
     BuildoutFacetConfiguration config = getConfiguration();
     config.setPaths(extractFromScript(LocalFileSystem.getInstance().findFileByPath(config.getScriptName())));
   }

@@ -5,12 +5,15 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
@@ -25,8 +28,6 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionImpl;
-import com.jetbrains.python.psi.impl.PyKeywordArgumentImpl;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -36,8 +37,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyFunction.Flag.*;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
@@ -649,6 +652,27 @@ public class PyUtil {
       }
     }
     return selfName;
+  }
+
+  @Nullable
+  public static VirtualFile findInRoots(Module module, String path) {
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    VirtualFile result = findInRoots(moduleRootManager.getContentRoots(), path);
+    if (result == null) {
+      result = findInRoots(moduleRootManager.getSourceRoots(), path);
+    }
+    return result;
+  }
+
+  @Nullable
+  public static VirtualFile findInRoots(VirtualFile[] roots, String path) {
+    for (VirtualFile root : roots) {
+      VirtualFile settingsFile = root.findFileByRelativePath(path);
+      if (settingsFile != null) {
+        return settingsFile;
+      }
+    }
+    return null;
   }
 
   public static class UnderscoreFilter implements Condition<String> {

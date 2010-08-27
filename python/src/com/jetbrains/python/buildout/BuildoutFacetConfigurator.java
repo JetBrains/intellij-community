@@ -53,5 +53,6 @@ public class BuildoutFacetConfigurator implements DirectoryProjectConfigurator {
         model.commit();
       }
     }.execute();
+    BuildoutConfigurable.attachLibrary(module);
   }
 }

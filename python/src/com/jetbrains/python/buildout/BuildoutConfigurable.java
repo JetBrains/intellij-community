@@ -129,15 +129,20 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     }
     if (facet_is_desired && ! got_facet) addFacet(mySettingsPanel.getConfiguration());
     if (! facet_is_desired && got_facet) removeFacet(facet);
-    if (facet_is_desired) attachLibrary(paths_from_script);
+    if (facet_is_desired) attachLibrary(myModule);
     else detachLibrary();
   }
 
-  private void attachLibrary(final List<String> paths) throws ConfigurationException {
+  public static void attachLibrary(final Module module) {
+    final BuildoutFacet facet = BuildoutFacet.getInstance(module);
+    if (facet == null) {
+      return;
+    }
+    final List<String> paths = facet.getConfiguration().getPaths();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         // add all paths to library
-        final LibraryOrderEntry orderEntry = findEggsOrderEntry(ModuleRootManager.getInstance(myModule));
+        final LibraryOrderEntry orderEntry = findEggsOrderEntry(ModuleRootManager.getInstance(module));
         if (orderEntry != null) {
           // update existing
           Library lib = orderEntry.getLibrary();
@@ -147,7 +152,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
           }
         }
         // create new
-        final ModifiableRootModel root_model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        final ModifiableRootModel root_model = ModuleRootManager.getInstance(module).getModifiableModel();
         Library lib = LibraryTablesRegistrar
           .getInstance()
           .getLibraryTable(root_model.getProject())
