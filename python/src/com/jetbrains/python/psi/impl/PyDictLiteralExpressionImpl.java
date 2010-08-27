@@ -17,6 +17,7 @@ public class PyDictLiteralExpressionImpl extends PyElementImpl implements PyDict
     super(astNode);
   }
 
+  @NotNull
   public PyKeyValueExpression[] getElements() {
     return childrenToPsi(KEY_VALUE_EXPRESSIONS, PyKeyValueExpression.EMPTY_ARRAY);
   }
