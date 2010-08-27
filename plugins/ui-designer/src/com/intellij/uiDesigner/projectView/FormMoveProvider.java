@@ -19,17 +19,13 @@ package com.intellij.uiDesigner.projectView;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.actions.MoveAction;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase;
+import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -37,27 +33,20 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringActionHandler {
+public class FormMoveProvider extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.projectView.FormMoveProvider");
 
-  public boolean isEnabledOnDataContext(DataContext dataContext) {
+  @Override
+  public boolean canMove(DataContext dataContext) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     return forms != null && forms.length > 0;
   }
 
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
-    return this;
-  }
-
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    LOG.debug("invoked FormMoveProvider on file");
-  }
-
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  @Override
+  public void doMove(Project project, PsiElement[] elements, DataContext dataContext) {
     final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();
     for (PsiElement element : elements) {
-      if (element instanceof PsiPackage) continue;
-      if (MoveClassesOrPackagesHandlerBase.isPackageOrDirectory(element)) {
+      if (element instanceof PsiDirectory) {
         filesOrDirs.add(element);
       } else {
         final PsiFile containingFile = element.getContainingFile();

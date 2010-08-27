@@ -34,6 +34,10 @@ public abstract class MoveHandlerDelegate {
     return targetContainer == null || isValidTarget(targetContainer, elements);
   }
 
+  public boolean canMove(DataContext dataContext){
+    return false;
+  }
+
   public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
     return false;
   }
@@ -50,5 +54,8 @@ public abstract class MoveHandlerDelegate {
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext,
                            @Nullable final PsiReference reference, final Editor editor) {
     return false;
+  }
+
+  public void doMove(Project project, PsiElement[] elements, DataContext dataContext){
   }
 }

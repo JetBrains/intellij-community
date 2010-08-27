@@ -73,4 +73,20 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "if (x > y) { System.out.println(\"foo!\"); }"
     );
   }
+
+  public void testEnforcingBracesForExpressionEndingWithLineComment() throws Exception {
+    // Inspired by IDEA-57936
+    getSettings().IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+
+    doMethodTest(
+      "if (true) i = 1; // Cool if\n" +
+      "else i = 2;",
+
+      "if (true) {\n" +
+      "    i = 1; // Cool if\n" +
+      "} else {\n" +
+      "    i = 2;\n" +
+      "}"
+    );
+  }
 }

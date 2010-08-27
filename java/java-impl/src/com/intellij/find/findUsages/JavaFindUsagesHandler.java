@@ -43,6 +43,8 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider;
+import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -649,10 +651,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   protected boolean isSearchForTextOccurencesAvailable(PsiElement psiElement, boolean isSingleFile) {
     if (isSingleFile) return false;
-    if (psiElement instanceof PsiClass) {
-      return ((PsiClass)psiElement).getQualifiedName() != null;
-    }
-    return psiElement instanceof PsiPackage;
+    return new JavaNonCodeSearchElementDescriptionProvider().getElementDescription(psiElement, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
+
   }
 
   public Collection<PsiReference> findReferencesToHighlight(final PsiElement target, final SearchScope searchScope) {
