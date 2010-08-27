@@ -21,6 +21,7 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutStateDefaults;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -318,7 +319,8 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
         return myContentUI;
       }
 
-      return null;
+      final DataProvider provider = (DataProvider)getClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER);
+      return provider != null ? provider.getData(dataId) : null;
     }
   }
 
