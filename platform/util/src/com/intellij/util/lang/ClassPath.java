@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -162,7 +163,13 @@ class ClassPath {
 
   @Nullable
   private Loader getLoader(final URL url) throws IOException {
-    String s = url.getFile();
+    String s;
+    try {
+      s = url.toURI().getSchemeSpecificPart();
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+      s = url.getFile();
+    }
 
     Loader loader = null;
     if (s != null  && new File(s).isDirectory()) {
