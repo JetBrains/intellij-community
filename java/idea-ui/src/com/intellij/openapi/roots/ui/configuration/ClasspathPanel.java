@@ -18,6 +18,8 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -238,20 +240,24 @@ public class ClasspathPanel extends JPanel {
 
 
   private JComponent createButtonsBlock() {
+    final boolean isAnalyzeShown = ((ApplicationEx)ApplicationManager.getApplication()).isInternal();
+
     final JButton addButton = new JButton(ProjectBundle.message("button.add"));
     final JButton removeButton = new JButton(ProjectBundle.message("button.remove"));
     myEditButton = new JButton(ProjectBundle.message("button.edit"));
     final JButton upButton = new JButton(ProjectBundle.message("button.move.up"));
     final JButton downButton = new JButton(ProjectBundle.message("button.move.down"));
-    final JButton analyzeButton = new JButton(ProjectBundle.message("classpath.panel.analyze"));
+    final JButton analyzeButton = isAnalyzeShown ? new JButton(ProjectBundle.message("classpath.panel.analyze")) : null;
 
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(addButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(removeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(myEditButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(upButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    panel.add(downButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    panel.add(analyzeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
+    panel.add(downButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, isAnalyzeShown ? 0.0 : 0.1, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
+    if( isAnalyzeShown) {
+      panel.add(analyzeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
+    }
 
     myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -288,12 +294,14 @@ public class ClasspathPanel extends JPanel {
         moveSelectedRows(+1);
       }
     });
-    analyzeButton.addActionListener(new ButtonAction() {
-      @Override
-      protected void executeImpl() {
-        AnalyzeDependenciesDialog.show(getRootModel().getModule());
-      }
-    });
+    if( isAnalyzeShown) {
+      analyzeButton.addActionListener(new ButtonAction() {
+        @Override
+        protected void executeImpl() {
+          AnalyzeDependenciesDialog.show(getRootModel().getModule());
+        }
+      });
+    }
 
     addKeyboardShortcut(myEntryTable, removeButton, KeyEvent.VK_DELETE, 0);
     addKeyboardShortcut(myEntryTable, addButton, KeyEvent.VK_INSERT, 0);
