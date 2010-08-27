@@ -42,6 +42,10 @@ public class MoveClassTest extends CodeInsightTestCase {
     doTest("nonJava", new String[]{"pack1.Class1"}, "pack2");
   }
 
+  public void testRefInPropertiesFile() throws Exception{
+    doTest("refInPropertiesFile", new String[]{"p1.MyClass"}, "p");
+  }
+
   /* IMPLEMENT: getReferences() in JspAttributeValueImpl should be dealed with (soft refs?)
 
   public void testJsp() throws Exception{
