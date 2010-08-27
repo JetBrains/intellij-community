@@ -48,6 +48,11 @@ public class InternalResourceProvider implements StandardResourceProvider{
     // Plugins DTDs // stathik
     impl.addInternalResource("http://plugins.intellij.net/plugin.dtd", "plugin.dtd");
     impl.addInternalResource("http://plugins.intellij.net/plugin-repository.dtd", "plugin-repository.dtd");
-    
+
+    // mobile
+    impl.addInternalResource("http://www.wapforum.org/DTD/xhtml-mobile10.dtd", "xhtml-mobile/xhtml-mobile10.dtd");
+    impl.addInternalResource("http://www.wapforum.org/DTD/xhtml-mobile10-flat.dtd", "xhtml-mobile/xhtml-mobile10-flat.dtd");
+    impl.addInternalResource("http://www.wapforum.org/DTD/xhtml-mobile12.dtd", "xhtml-mobile/xhtml-mobile12.dtd");
+
   }
 }
