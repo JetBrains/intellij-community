@@ -172,6 +172,9 @@
     <internalFileTemplate name="Python Script"/>
     <internalFileTemplate name="Python Unit Test"/>
 
+    <moduleService serviceInterface="com.jetbrains.python.psi.resolve.PythonPathCache"
+                   serviceImplementation="com.jetbrains.python.psi.resolve.PythonPathCache"/>
+
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>

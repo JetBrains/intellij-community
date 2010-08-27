@@ -2,12 +2,9 @@ package com.jetbrains.python.buildout.config.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.buildout.config.psi.BuildoutCfgPsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.psi.YAMLPsiElement;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,8 +15,12 @@ public class BuildoutCfgPsiElementImpl extends ASTWrapperPsiElement implements B
     super(node);
   }
 
+  public List<BuildoutCfgSectionImpl> getSections() {
+         return null;
+  }
+
   @Override
   public String toString() {
-    return "Buildout.cfg element";
+    return "BuildoutCfgPsiElementImpl:" + getNode().getElementType().toString();
   }
 }

@@ -361,4 +361,9 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testStarUnpackingInLoop() {  // PY-1525
     assertResolvesTo(LanguageLevel.PYTHON30, PyTargetExpression.class, "bbb");
   }
+
+  public void testBuiltinVsClassMember() {  // PY-1654
+    final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "eval");
+    assertEquals("__builtin__.py", pyFunction.getContainingFile().getName());
+  }
 }

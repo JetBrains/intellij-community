@@ -40,26 +40,33 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       return new PyTargetExpressionStubImpl(name, prop, parentStub);
     }
     else {
-      final PyQualifiedName initializer = assignedValue instanceof PyReferenceExpression
-                                          ? ((PyReferenceExpression) assignedValue).asQualifiedName()
-                                          : null;
-      return new PyTargetExpressionStubImpl(name, initializer, parentStub);
+      PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.Other;
+      PyQualifiedName initializer = null;
+      if (assignedValue instanceof PyReferenceExpression) {
+        initializerType = PyTargetExpressionStub.InitializerType.ReferenceExpression;
+        initializer = ((PyReferenceExpression) assignedValue).asQualifiedName();
+      }
+      else if (assignedValue instanceof PyCallExpression) {
+        initializerType = PyTargetExpressionStub.InitializerType.CallExpression;
+        final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
+        if (callee instanceof PyReferenceExpression) {
+          initializer = ((PyReferenceExpression) callee).asQualifiedName();
+        }
+      }
+      return new PyTargetExpressionStubImpl(name, initializerType, initializer, parentStub);
     }
   }
-
-  private static final int SIMPLE = 0; // stream stores a PyTargetExpressionStubImpl
-  private static final int PROPERTY = 1; // stream stores a PyTargetExpressionPropertyStubImpl
 
   public void serialize(final PyTargetExpressionStub stub, final StubOutputStream stream)
       throws IOException {
     stream.writeName(stub.getName());
-    PropertyStubStorage prop = stub.getPropertyPack();
-    if (prop != null) {
-      stream.writeVarInt(PROPERTY);
-      prop.serialize(stream);
+    stream.writeVarInt(stub.getInitializerType().getIndex());
+    if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.Property) {
+      final PropertyStubStorage propertyPack = stub.getPropertyPack();
+      assert propertyPack != null;
+      propertyPack.serialize(stream);
     }
     else {
-      stream.writeVarInt(SIMPLE);
       PyQualifiedName.serialize(stub.getInitializer(), stream);
     }
   }
@@ -67,19 +74,13 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   public PyTargetExpressionStub deserialize(final StubInputStream stream, final StubElement parentStub)
       throws IOException {
     String name = StringRef.toString(stream.readName());
-    int code = stream.readVarInt();
-    if (code == SIMPLE) {
-      PyQualifiedName initializer = PyQualifiedName.deserialize(stream);
-      return new PyTargetExpressionStubImpl(name, initializer, parentStub);
-    }
-    else if (code == PROPERTY) {
+    PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.fromIndex(stream.readVarInt());
+    if (initializerType == PyTargetExpressionStub.InitializerType.Property) {
       PropertyStubStorage prop = PropertyStubStorage.deserialize(stream);
       return new PyTargetExpressionStubImpl(name, prop, parentStub);
     }
-    else {
-      assert false : "Unknown code in stream: " + code;
-      return null; // to keep inspections safe
-    }
+    PyQualifiedName initializer = PyQualifiedName.deserialize(stream);
+    return new PyTargetExpressionStubImpl(name, initializerType, initializer, parentStub);
   }
 
   public boolean shouldCreateStub(final ASTNode node) {

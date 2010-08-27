@@ -55,22 +55,32 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
         sectionHeader.done(SECTION_HEADER);
       }
       else {
+        error("Section name expected.");
         sectionHeader.drop();
         res = false;
       }
 
       while (is(KEY_CHARACTERS)) {
         res = true;
-        parseKeyValue();
+        parseOption();
       }
       section.done(SECTION);
+
+      if (is(VALUE_CHARACTERS)) {
+        advance();        
+        error("Key expected.");
+      }
+      while (is(VALUE_CHARACTERS) ) {
+        skipLine();
+      }
 
       return res;
     }
 
-    private void parseKeyValue() {
+    private void parseOption() {
+      PsiBuilder.Marker option = myBuilder.mark();
       if (is(KEY_CHARACTERS)) {
-        doneAdvance(mark(), KEY_CHARACTERS);
+        doneAdvance(mark(), KEY);
       }
       if (is(KEY_VALUE_SEPARATOR)) {
         advance();
@@ -80,22 +90,11 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
       }
 
       PsiBuilder.Marker value = mark();
-      boolean done = false;
-      while (is(MULTILINE_VALUE_CHARACTERS)) {
-        advance();
-        done = true;
+      while (is(VALUE_CHARACTERS)) {
+        doneAdvance(mark(), VALUE_LINE);
       }
-      if (!done && is(VALUE_CHARACTERS)) {
-        advance();
-        done = true;
-      }
-      if (done) {
-        value.done(VALUE);
-      }
-      else {
-        error("Value expected.");
-        value.drop();
-      }
+      value.done(VALUE);
+      option.done(OPTION);
     }
 
     private boolean parseSectionHeader() {
@@ -108,7 +107,6 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
         }
         else {
           sectionName.drop();
-          error("Section name expected.");
           return false;
         }
 
@@ -149,7 +147,7 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
     }
 
     private void skipLine() {
-      while ((!is(null) && !is(LBRACKET) && !is(KEY_CHARACTERS) && !is(MULTILINE_VALUE_CHARACTERS))) {
+      while (!is(null) && !is(LBRACKET) && !is(KEY_CHARACTERS)) {
         myBuilder.advanceLexer();
       }
     }

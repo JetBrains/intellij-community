@@ -9,6 +9,34 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression> {
+  enum InitializerType {
+    ReferenceExpression(1),
+    CallExpression(2),
+    Property(3),
+    Other(0);
+
+    private int myIndex;
+
+    InitializerType(int index) {
+      myIndex = index;
+    }
+
+    public int getIndex() {
+      return myIndex;
+    }
+
+    public static InitializerType fromIndex(int index) {
+      switch (index) {
+        case 1: return ReferenceExpression;
+        case 2: return CallExpression;
+        case 3: return Property;
+        default: return Other;
+      }
+    }
+  }
+
+  InitializerType getInitializerType();
+
   @Nullable
   PyQualifiedName getInitializer();
 

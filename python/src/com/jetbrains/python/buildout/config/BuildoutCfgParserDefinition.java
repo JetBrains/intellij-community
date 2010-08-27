@@ -12,15 +12,17 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.buildout.config.lexer.BuildoutCfgFlexLexer;
+import com.jetbrains.python.buildout.config.psi.BuildoutCfgASTFactory;
+import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFileImpl;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgPsiElementImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.psi.impl.*;
 
 /**
  * @author traff
  */
 public class BuildoutCfgParserDefinition implements ParserDefinition, BuildoutCfgElementTypes, BuildoutCfgTokenTypes {
+  private final BuildoutCfgASTFactory astFactory = new BuildoutCfgASTFactory();
 
   @NotNull
   public Lexer createLexer(final Project project) {
@@ -53,9 +55,7 @@ public class BuildoutCfgParserDefinition implements ParserDefinition, BuildoutCf
 
   @NotNull
   public PsiElement createElement(final ASTNode node) {
-    final IElementType type = node.getElementType();
-    
-    return new BuildoutCfgPsiElementImpl(node);
+    return astFactory.create(node);
   }
 
   public PsiFile createFile(final FileViewProvider viewProvider) {

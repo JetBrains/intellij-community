@@ -214,10 +214,30 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   public PyQualifiedName getAssignedQName() {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null) {
-      return stub.getInitializer();
+      if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.ReferenceExpression) {
+        return stub.getInitializer();
+      }
+      return null;
     }
     final PyExpression value = findAssignedValue();
     return value instanceof PyReferenceExpression ? ((PyReferenceExpression) value).asQualifiedName() : null;
+  }
+
+  @Override
+  public PyQualifiedName getCalleeName() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
+        return stub.getInitializer();
+      }
+      return null;
+    }
+    final PyExpression value = findAssignedValue();
+    if (value instanceof PyCallExpression) {
+      final PyExpression callee = ((PyCallExpression)value).getCallee();
+      return callee instanceof PyReferenceExpression ? ((PyReferenceExpression) callee).asQualifiedName() : null;
+    }
+    return null;
   }
 
   @NotNull

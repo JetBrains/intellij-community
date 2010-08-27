@@ -22,18 +22,16 @@ public class BuildoutCfgLexerTest extends TestCase {
            "[buildout, SECTION_NAME]",
            "[], ]]",
            "[\n, WHITESPACE]",
-           "[develop, KEY_CHARACTERS]",
-           "[ = , KEY_VALUE_SEPARATOR]",
-           "[., VALUE_CHARACTERS]",
+           "[develop , KEY_CHARACTERS]",
+           "[=, KEY_VALUE_SEPARATOR]",
+           "[ ., VALUE_CHARACTERS]",
            "[\n, WHITESPACE]",
-           "[parts, KEY_CHARACTERS]",
-           "[ =, KEY_VALUE_SEPARATOR]",
+           "[parts , KEY_CHARACTERS]",
+           "[=, KEY_VALUE_SEPARATOR]",
            "[\n, WHITESPACE]",
-           "[  , WHITESPACE]",
-           "[xprompt, MULTILINE_VALUE_CHARACTERS]",
+           "[  xprompt, VALUE_CHARACTERS]",
            "[\n, WHITESPACE]",
-           "[  , WHITESPACE]",
-           "[test, MULTILINE_VALUE_CHARACTERS]",
+           "[  test, VALUE_CHARACTERS]",
            "[\n, WHITESPACE]");
   }
 
@@ -42,20 +40,16 @@ public class BuildoutCfgLexerTest extends TestCase {
            "; comment\n" +
            "[buildout]\n" +
            "develop = value ; comment\n",
-           "[# comment, COMMENT]",
-           "[\n, WHITESPACE]",
-           "[; comment, COMMENT]",
-           "[\n, WHITESPACE]",
+           "[# comment\n, COMMENT]",
+           "[; comment\n, COMMENT]",
            "[[, []",
            "[buildout, SECTION_NAME]",
            "[], ]]",
            "[\n, WHITESPACE]",
-           "[develop, KEY_CHARACTERS]",
-           "[ = , KEY_VALUE_SEPARATOR]",
-           "[value, VALUE_CHARACTERS]",
-           "[ , WHITESPACE]",
-           "[; comment, COMMENT]",
-           "[\n, WHITESPACE]"
+           "[develop , KEY_CHARACTERS]",
+           "[=, KEY_VALUE_SEPARATOR]",
+           "[ value, VALUE_CHARACTERS]",
+           "[ ; comment\n, COMMENT]"
            );
   }
 
@@ -66,9 +60,9 @@ public class BuildoutCfgLexerTest extends TestCase {
            "[buildout, SECTION_NAME]",
            "[], ]]",
            "[\n, WHITESPACE]",
-           "[parts, KEY_CHARACTERS]",
-           "[ = , KEY_VALUE_SEPARATOR]",
-           "[python django console_scripts, VALUE_CHARACTERS]",
+           "[parts , KEY_CHARACTERS]",
+           "[=, KEY_VALUE_SEPARATOR]",
+           "[ python django console_scripts, VALUE_CHARACTERS]",
            "[\n, WHITESPACE]"
            );
   }
@@ -98,7 +92,7 @@ public class BuildoutCfgLexerTest extends TestCase {
 
   public static _BuildoutCfgFlexLexer createLexer(String text) {
     _BuildoutCfgFlexLexer lexer = new _BuildoutCfgFlexLexer((Reader)null);
-    lexer.reset(text, _BuildoutCfgFlexLexer.YYINITIAL);
+    lexer.reset(text, 0, text.length(), _BuildoutCfgFlexLexer.YYINITIAL);
     return lexer;
   }
 }

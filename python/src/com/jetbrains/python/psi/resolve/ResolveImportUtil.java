@@ -282,8 +282,20 @@ public class ResolveImportUtil {
 
     if (moduleQualifiedName.getComponentCount() < 1) return Collections.emptyList();
 
+    PythonPathCache cache = null;
+    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
+    if (module != null) {
+      cache = PythonPathCache.getInstance(module);
+      final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
+      if (cachedResults != null) {
+        return cachedResults;
+      }
+    }
     ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, foothold.getManager(), footholdFile);
     visitRoots(foothold, visitor);
+    if (cache != null) {
+      cache.put(moduleQualifiedName, visitor.results);
+    }
     return visitor.results;
   }
 
@@ -362,14 +374,19 @@ public class ResolveImportUtil {
       visitRoots(module, visitor);
     }
     else {
-      // no module, another way to look in SDK roots
-      final PsiFile elt_psifile = elt.getContainingFile();
-      if (elt_psifile != null) {  // formality
-        final VirtualFile elt_vfile = elt_psifile.getVirtualFile();
-        if (elt_vfile != null) { // reality
-          for (OrderEntry entry : ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile)) {
-            if (!visitOrderEntryRoots(visitor, entry)) break;
-          }
+      visitSdkRoots(elt, visitor);
+
+    }
+  }
+
+  private static void visitSdkRoots(PsiElement elt, RootVisitor visitor) {
+    // no module, another way to look in SDK roots
+    final PsiFile elt_psifile = elt.getContainingFile();
+    if (elt_psifile != null) {  // formality
+      final VirtualFile elt_vfile = elt_psifile.getVirtualFile();
+      if (elt_vfile != null) { // reality
+        for (OrderEntry entry : ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile)) {
+          if (!visitOrderEntryRoots(visitor, entry)) break;
         }
       }
     }

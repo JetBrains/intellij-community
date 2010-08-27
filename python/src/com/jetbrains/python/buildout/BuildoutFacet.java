@@ -10,16 +10,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFileImpl;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +42,7 @@ import java.util.regex.Pattern;
 public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements PythonPathContributingFacet  {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");
+  @NonNls private static final String BUILDOUT_CFG = "buildout.cfg";
 
   public BuildoutFacet(@NotNull final FacetType facetType,
                        @NotNull final Module module,
@@ -47,7 +54,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
   @Nullable
   public static VirtualFile getRunner(VirtualFile baseDir) {
     if (baseDir == null) return null;
-    final VirtualFile cfg = baseDir.findChild("buildout.cfg");
+    final VirtualFile cfg = baseDir.findChild(BUILDOUT_CFG);
     if (cfg != null && !cfg.isDirectory()) {
       VirtualFile eggs = baseDir.findChild("eggs");
       if (eggs != null && eggs.isDirectory()) {
@@ -160,6 +167,25 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     }
     */
     commandLine.setEnvParams(new_env);
+  }
+
+
+  @Nullable
+  public BuildoutCfgFileImpl getConfigFile() {
+    final String scriptName = getConfiguration().getScriptName();
+    if (!StringUtil.isEmpty(scriptName)) {
+      File cfg = new File(new File(scriptName).getParentFile().getParentFile(), BUILDOUT_CFG);
+      if (cfg.exists()) {
+        final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(cfg);
+        if (vFile != null) {
+          final PsiFile psiFile = PsiManager.getInstance(getModule().getProject()).findFile(vFile);
+          if (psiFile instanceof BuildoutCfgFileImpl) {
+            return (BuildoutCfgFileImpl) psiFile;
+          }
+        }
+      }
+    }
+    return null;
   }
 
 }

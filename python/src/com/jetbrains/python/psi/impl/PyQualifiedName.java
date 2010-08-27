@@ -85,6 +85,10 @@ public class PyQualifiedName {
     return true;
   }
 
+  public boolean endsWith(@NotNull String suffix) {
+    return suffix.equals(getLastComponent());
+  }
+
   public static void serialize(@Nullable PyQualifiedName qName, StubOutputStream dataStream) throws IOException {
     if (qName == null) {
       dataStream.writeVarInt(0);
