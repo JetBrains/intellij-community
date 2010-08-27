@@ -467,7 +467,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int BLANK_LINES_BEFORE_METHOD_BODY = 0;
 
   public int BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 0;
-  public int BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 1;
+  public int BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 0;
 
 
   public int BLANK_LINES_AFTER_CLASS_HEADER = 0;
@@ -758,32 +758,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
 
 
-  /**
-   * "} else"
-   * or
-   * "}else"
-   */
   public boolean SPACE_BEFORE_ELSE_KEYWORD  = true;
-
-  /**
-   * "} while (...)"
-   * or
-   * "}while (...)"
-   */
   public boolean SPACE_BEFORE_WHILE_KEYWORD = true;
-
-  /**
-   * "} catch (...)"
-   * or
-   * "}catch (...)"
-   */
   public boolean SPACE_BEFORE_CATCH_KEYWORD = true;
-
-  /**
-   * "} finally"
-   * or
-   * "}finally"
-   */
   public boolean SPACE_BEFORE_FINALLY_KEYWORD = true;
 
   public boolean SPACE_BEFORE_QUEST = true;
