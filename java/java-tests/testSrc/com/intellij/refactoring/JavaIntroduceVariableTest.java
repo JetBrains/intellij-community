@@ -30,9 +30,18 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  * @author Konstantin Bulenkov
  */
 public class JavaIntroduceVariableTest extends LightCodeInsightTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void testIntroduceBasedOnLiterals() throws Exception {
+    doTest("getA(\"simple\")", "simple");
+    doTest("getA(\"SimpleName\")", "simpleName", "name");
+    doTest("getA(\"simpleName\")", "simpleName", "name");
+    doTest("getA(\"simpleClass\")", "simpleClass", "aClass");
+    doTest("getA(\"short\")", "aShort");
+    doTest("getA(\"boolean\")", "aBoolean");
+    doTest("getA().getB(1, \"name\")", "name");
+    doTest("getA(\"NAME\")", "name");
+    doTest("getA(\"name\")", VariableKind.STATIC_FINAL_FIELD, "NAME");
+    doTest("getA(\"SimpleName\")", VariableKind.STATIC_FINAL_FIELD, "SIMPLE_NAME");
+    doTest("get(getB().getA(\"SimpleName\").getC())", "simpleName", "name");
   }
 
   protected static void doTest(String expression, VariableKind kind, PsiType type, String...results) throws Exception {
@@ -58,19 +67,5 @@ public class JavaIntroduceVariableTest extends LightCodeInsightTestCase {
 
   protected static void doTest(String expression, VariableKind kind, String...results) throws Exception {
     doTest(expression, kind, PsiType.getJavaLangString(getPsiManager(), GlobalSearchScope.allScope(getProject())), results);
-  }
-
-  public void testIntroduceBasedOnLiterals() throws Exception {
-    doTest("getA(\"simple\")", "simple");
-    doTest("getA(\"SimpleName\")", "simpleName", "name");
-    doTest("getA(\"simpleName\")", "simpleName", "name");
-    doTest("getA(\"simpleClass\")", "simpleClass", "aClass");
-    doTest("getA(\"short\")", "aShort");
-    doTest("getA(\"boolean\")", "aBoolean");
-    doTest("getA().getB(1, \"name\")", "name");
-    doTest("getA(\"NAME\")", "name");
-    doTest("getA(\"name\")", VariableKind.STATIC_FINAL_FIELD, "NAME");
-    doTest("getA(\"SimpleName\")", VariableKind.STATIC_FINAL_FIELD, "SIMPLE_NAME");
-    doTest("get(getB().getA(\"SimpleName\").getC())", "simpleName", "name");
   }
 }
