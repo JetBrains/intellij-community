@@ -305,6 +305,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void type(final char c);
 
+  void type(final String s);
+
   void performEditorAction(String actionId);
 
   /**

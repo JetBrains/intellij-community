@@ -1383,7 +1383,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
       hint.setIgnoreFilters(mySession.shouldIgnoreSteppingFilters());
       if (myReturnValueWatcher != null) {
-        myReturnValueWatcher.setTrackingEnabled(true);
+        myReturnValueWatcher.enable(thread.getThreadReference());
       }
       doStep(suspendContext, thread, StepRequest.STEP_OUT, hint);
       super.contextAction();
@@ -1441,7 +1441,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       hint.setIgnoreFilters(myIsIgnoreBreakpoints || mySession.shouldIgnoreSteppingFilters());
 
       if (myReturnValueWatcher != null) {
-        myReturnValueWatcher.setTrackingEnabled(true);
+        myReturnValueWatcher.enable(steppingThread.getThreadReference());
       }
       doStep(suspendContext, steppingThread, StepRequest.STEP_OVER, hint);
 

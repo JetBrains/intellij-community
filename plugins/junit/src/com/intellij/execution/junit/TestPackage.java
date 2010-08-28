@@ -108,7 +108,7 @@ public class TestPackage extends TestObject {
     }
 
     try {
-      final ServerSocket serverSocket = new ServerSocket(0);
+      final ServerSocket serverSocket = new ServerSocket(0, 0, InetAddress.getByName(null));
       myJavaParameters.getProgramParametersList().add("-socket" + serverSocket.getLocalPort());
       findTestsWithProgress(new FindCallback() {
         public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {

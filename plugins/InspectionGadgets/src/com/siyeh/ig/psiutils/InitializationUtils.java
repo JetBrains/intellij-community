@@ -33,6 +33,12 @@ public class InitializationUtils{
         return methodAssignsVariableOrFails(method, variable, false);
     }
 
+    public static boolean expressionAssignsVariableOrFails(
+            @Nullable PsiExpression expression, @NotNull PsiVariable variable) {
+        return expressionAssignsVariableOrFails(expression, variable,
+                new HashSet(), true);
+    }
+
     public static boolean methodAssignsVariableOrFails(
             @Nullable PsiMethod method, @NotNull PsiVariable variable,
             boolean strict) {

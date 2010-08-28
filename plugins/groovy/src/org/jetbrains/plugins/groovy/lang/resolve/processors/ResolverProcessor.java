@@ -22,7 +22,6 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -48,12 +47,12 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   
   protected String myName;
   private final EnumSet<ResolveKind> myResolveTargetKinds;
-  @Nullable private Set<String> myProcessedClasses;
+  private Set<String> myProcessedClasses;
   protected PsiElement myPlace;
   private
   @NotNull final PsiType[] myTypeArguments;
 
-  @Nullable private Set<GroovyResolveResult> myCandidates;
+  private Set<GroovyResolveResult> myCandidates;
 
   protected ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
                               PsiElement place,

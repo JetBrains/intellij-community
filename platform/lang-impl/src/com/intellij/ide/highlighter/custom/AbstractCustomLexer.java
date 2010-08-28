@@ -23,10 +23,12 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 
+import java.util.List;
+
 /**
  * @author dsl
  */
-public abstract class AbstractCustomLexer extends LexerBase {
+public class AbstractCustomLexer extends LexerBase {
   protected CharSequence myBuffer = ArrayUtil.EMPTY_CHAR_SEQUENCE;
   protected int myStartOffset = 0;
   protected int myEndOffset = 0;
@@ -34,8 +36,8 @@ public abstract class AbstractCustomLexer extends LexerBase {
   private TokenInfo myCurrentToken;
   private int myPosition;
 
-  public AbstractCustomLexer(TokenParser[] tokenParsers) {
-    myTokenParsers = tokenParsers;
+  public AbstractCustomLexer(List<TokenParser> tokenParsers) {
+    myTokenParsers = tokenParsers.toArray(new TokenParser[tokenParsers.size()]);
 
     int smartUpdateShift = 0;
     for (TokenParser tokenParser : myTokenParsers) {

@@ -344,9 +344,16 @@ public class ExpectedTypesProvider {
 
     @Override
     public void visitAssertStatement(PsiAssertStatement statement) {
-      ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
-                                                 PsiType.BOOLEAN, TailType.SEMICOLON);
-      myResult = new ExpectedTypeInfo[]{info};
+      if (statement.getAssertDescription() == myExpr) {
+        final PsiClassType stringType = PsiType.getJavaLangString(myExpr.getManager(), myExpr.getResolveScope());
+        ExpectedTypeInfoImpl info = createInfoImpl(stringType, ExpectedTypeInfo.TYPE_STRICTLY,
+                                                   stringType, TailType.SEMICOLON);
+        myResult = new ExpectedTypeInfo[]{info};
+      } else {
+        ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
+                                                   PsiType.BOOLEAN, TailType.SEMICOLON);
+        myResult = new ExpectedTypeInfo[]{info};
+      }
     }
 
     @Override public void visitForeachStatement(PsiForeachStatement statement) {
@@ -645,9 +652,7 @@ public class ExpectedTypesProvider {
           myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
         else {
-          ExpectedTypeInfoImpl info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_BETWEEN,
-                                                     myExpr.getType(), TailType.NONE);
-          myResult = new ExpectedTypeInfo[]{info};
+          myResult = new ExpectedTypeInfo[]{createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_BETWEEN, PsiType.SHORT, TailType.NONE)};
         }
       }
       else if (i == JavaTokenType.OROR || i == JavaTokenType.ANDAND) {

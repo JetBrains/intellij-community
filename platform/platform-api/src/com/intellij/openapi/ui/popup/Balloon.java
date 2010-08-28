@@ -38,6 +38,9 @@ public interface Balloon extends Disposable {
 
   void hide();
 
+  boolean wasFadedIn();
+  boolean wasFadedOut();
+
   enum Position {
     below, above, atLeft, atRight
   }

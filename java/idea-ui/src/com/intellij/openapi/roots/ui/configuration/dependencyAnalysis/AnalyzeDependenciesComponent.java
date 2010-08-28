@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration;
+package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.DataManager;

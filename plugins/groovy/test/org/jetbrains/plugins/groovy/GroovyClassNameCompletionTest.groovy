@@ -107,4 +107,17 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     myFixture.checkResult "a.FooBarGooDoo<caret>"
   }
 
+  public void testStaticMethod() throws Exception {
+    myFixture.addFileToProject("b.groovy", """
+class Foo {
+  static def abcmethod(int a) {}
+}""")
+    myFixture.configureByText("a.groovy", "abcme<caret>")
+    myFixture.complete(CompletionType.CLASS_NAME)
+    myFixture.checkResult """import static Foo.abcmethod
+
+abcmethod(<caret>)"""
+
+  }
+
 }

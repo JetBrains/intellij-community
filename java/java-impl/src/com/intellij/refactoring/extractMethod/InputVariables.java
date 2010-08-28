@@ -112,7 +112,10 @@ public class InputVariables {
           }
         }
         if (currentType != null) {
-          type = currentType;
+          currentType = checkTopLevelInstanceOf(currentType);
+          if (currentType != null) {
+            type = currentType;
+          }
         }
       }
 
@@ -138,6 +141,32 @@ public class InputVariables {
 
 
     return inputData;
+  }
+
+  @Nullable
+  private PsiType checkTopLevelInstanceOf(final PsiType currentType) {
+    final PsiElement[] scope = myScope.getScope();
+    if (scope.length == 1 && scope[0] instanceof PsiIfStatement) {
+      final PsiExpression condition = ((PsiIfStatement)scope[0]).getCondition();
+      if (condition != null) {
+        class CheckInstanceOf {
+          boolean check(PsiInstanceOfExpression expr) {
+            final PsiTypeElement checkType = expr.getCheckType();
+            return checkType == null || !checkType.getType().equals(currentType);
+          }
+        }
+        CheckInstanceOf checker = new CheckInstanceOf();
+        final PsiInstanceOfExpression[] expressions = PsiTreeUtil.getChildrenOfType(condition, PsiInstanceOfExpression.class);
+        if (expressions != null) {
+          for (PsiInstanceOfExpression instanceOfExpression : expressions) {
+            if (!checker.check(instanceOfExpression)) return null;
+          }
+        } else if (condition instanceof PsiInstanceOfExpression) {
+           if (!checker.check((PsiInstanceOfExpression)condition)) return null;
+        }
+      }
+    }
+    return currentType;
   }
 
   @Nullable

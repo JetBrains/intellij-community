@@ -229,7 +229,8 @@
                             order="first, before javaMemberName, after xml"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor" id="javaLegacy"
                             order="last, before legacy, before default, before javaClassName"/>
-    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor" id="javaClassReference"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor"
+                            id="javaClassReference"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaMethodMergingContributor" id="methodMerger"
                             order="before javaLegacy, before default"/>
@@ -237,6 +238,8 @@
                             order="before javaLegacy"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor" id="javaClassName"
                             order="last, before default"/>
+    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaGlobalMemberNameCompletionContributor"
+                            id="javaGlobalMemberName" order="last, after javaClassName"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor" id="javadoc"
                             order="last, before javaLegacy"/>
@@ -450,8 +453,8 @@
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.IdeaFrameTitleBuilder"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.AnalyzeDependenciesSettings"
-                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.AnalyzeDependenciesSettings"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"
+                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 

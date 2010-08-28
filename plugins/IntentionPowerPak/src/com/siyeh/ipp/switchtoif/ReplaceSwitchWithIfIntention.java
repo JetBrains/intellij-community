@@ -194,10 +194,9 @@ public class ReplaceSwitchWithIfIntention extends Intention {
             final PsiStatement ifStatement =
                     factory.createStatementFromText(ifStatementText.toString(),
                             switchStatement);
-            final PsiElement ifElement = switchStatement.replace(ifStatement);
-            final PsiElement parent = ifElement.getParent();
-            assert parent != null;
-            parent.addBefore(declarationStatement, ifElement);
+            final PsiElement parent = switchStatement.getParent();
+            parent.addBefore(declarationStatement, switchStatement);
+            switchStatement.replace(ifStatement);
         } else {
             final PsiStatement newStatement =
                     factory.createStatementFromText(ifStatementText.toString(),

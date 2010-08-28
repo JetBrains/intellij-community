@@ -44,7 +44,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   }
 
   @Nullable
-  public static Icon getRawIcon(final LookupItem item, boolean real) {
+  public static Icon getRawIcon(final LookupElement item, boolean real) {
     final Icon icon = _getRawIcon(item, real);
     if (icon != null && icon.getIconHeight() > SAMPLE_ICON.getIconHeight()) {
       return new SizedIcon(icon, icon.getIconWidth(), SAMPLE_ICON.getIconHeight());
@@ -53,9 +53,11 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   }
 
   @Nullable
-  private static Icon _getRawIcon(LookupItem item, boolean real) {
-    Icon icon = (Icon)item.getAttribute(LookupItem.ICON_ATTR);
-    if (icon != null) return icon;
+  private static Icon _getRawIcon(LookupElement item, boolean real) {
+    if (item instanceof LookupItem) {
+      Icon icon = (Icon)((LookupItem)item).getAttribute(LookupItem.ICON_ATTR);
+      if (icon != null) return icon;
+    }
 
     Object o = item.getObject();
 

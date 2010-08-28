@@ -21,6 +21,8 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
@@ -211,10 +213,18 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
     public String getElementText(final PsiElement element) {
+      if (element instanceof PsiNamedElement) {
+        return ((PsiNamedElement)element).getName();
+      }
       return element.getContainingFile().getName();
     }
 
     protected String getContainerText(final PsiElement element, final String name) {
+      if (element instanceof NavigationItem) {
+        final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
+        return presentation != null ? presentation.getLocationString():null;
+      }
+
       return null;
     }
 

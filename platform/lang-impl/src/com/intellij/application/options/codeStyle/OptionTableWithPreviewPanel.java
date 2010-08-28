@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -89,7 +90,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
 
     public boolean isCellEditable(Object o) {
-      return o instanceof MyTreeNode;
+      return (o instanceof MyTreeNode) && (((MyTreeNode)o).isEnabled());
     }
 
     public void setValue(Object o, Object o1) {
@@ -115,10 +116,12 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         myLabel.setText(node.getText());
         myLabel.setFont(
           myLabel.getFont().deriveFont(node.getKey().groupName == null ? Font.BOLD : Font.PLAIN));
+        myLabel.setEnabled(node.isEnabled());
       }
       else {
         myLabel.setText(value.toString());
         myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
+        myLabel.setEnabled(true);
       }
 
       Color foreground = selected
@@ -138,8 +141,6 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   public OptionTableWithPreviewPanel(CodeStyleSettings settings) {
     super(settings);
-
-
   }
 
   @Override
@@ -165,13 +166,28 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   }
 
   @Override
+  protected void onLanguageChange(Language language) {
+    myTreeTable.repaint();
+  }
+
+  @Override
   public void showAllStandardOptions() {
-    //TODO: IMPLEMENT
+    for (OptionKey each : myKeys) {
+      each.setEnabled(true);
+    }
   }
 
   @Override
   public void showStandardOptions(String... optionNames) {
-    //TODO: IMPLEMENT
+    for (OptionKey each : myKeys) {
+      each.setEnabled(false);
+      Field field = (Field)myKeyToFieldMap.get(each);
+      for (String optionName : optionNames) {
+        if (field.getName().equals(optionName)) {
+          each.setEnabled(true);
+        }
+      }
+    }
   }
 
   @Override
@@ -369,6 +385,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   private static abstract class OptionKey {
     @NotNull final String title;
     @Nullable final String groupName;
+    private boolean myEnabled = false;
 
     public OptionKey(@NotNull String title, @Nullable String groupName) {
       this.title = title;
@@ -393,6 +410,14 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       int result = title.hashCode();
       result = 31 * result + (groupName != null ? groupName.hashCode() : 0);
       return result;
+    }
+
+    public void setEnabled(boolean enabled) {
+      myEnabled = enabled;
+    }
+
+    public boolean isEnabled() {
+      return myEnabled;
     }
   }
 
@@ -514,6 +539,10 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     public void apply(final CodeStyleSettings settings) {
       setSettingsValue(myKey, myValue, settings);
     }
+
+    public boolean isEnabled() {
+      return myKey.isEnabled();
+    }
   }
 
   private class MyValueRenderer implements TableCellRenderer {
@@ -527,10 +556,18 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
                                                    boolean hasFocus,
                                                    int row,
                                                    int column) {
+      boolean isEnabled = true;
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)((TreeTable)table).getTree().
+        getPathForRow(row).getLastPathComponent();
+      if (node instanceof MyTreeNode)  {
+        isEnabled = ((MyTreeNode)node).isEnabled();
+      }
+
       Color background = table.getBackground();
       if (value instanceof Boolean) {
         myCheckBox.setSelected(((Boolean)value).booleanValue());
         myCheckBox.setBackground(background);
+        myCheckBox.setEnabled(isEnabled);
         return myCheckBox;
       }
       else if (value instanceof String) {
@@ -540,6 +577,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         */
         myComboBox.setText((String)value);
         myComboBox.setBackground(background);
+        myComboBox.setEnabled(isEnabled);
         return myComboBox;
       }
 
@@ -593,6 +631,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         if (node.getKey() instanceof BooleanOptionKey) {
           myCurrentEditor = myCheckBox;
           myCheckBox.setSelected(node.getValue() == Boolean.TRUE);
+          myCheckBox.setEnabled(node.isEnabled());
         }
         else {
           myCurrentEditor = myComboBox;
@@ -603,6 +642,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
             myComboBox.addItem(values[i]);
           }
           myComboBox.setSelectedItem(node.getValue());
+          myComboBox.setEnabled(node.isEnabled());
         }
         myCurrentNode = node;
       }

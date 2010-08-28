@@ -24,6 +24,7 @@ public interface CodeStyleSettingsCustomizable {
   String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
   String SPACES_BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
   String SPACES_BEFORE_LEFT_BRACE = ApplicationBundle.message("group.spaces.before.left.brace");
+  String SPACES_BEFORE_KEYWORD = ApplicationBundle.message("group.spaces.after.right.brace");
   String SPACES_WITHIN = ApplicationBundle.message("group.spaces.within");
   String SPACES_IN_TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
   String SPACES_WITHIN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");

@@ -110,13 +110,6 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
           }
         }
       }
-      else if (MoveAction.MoveProvider.DATA_KEY.is(dataId)) {
-        for(AbstractTreeNode node: selected) {
-          if (node.getValue() instanceof Form) {
-            return new FormMoveProvider();
-          }
-        }
-      }
     }
     return null;
   }

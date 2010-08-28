@@ -63,6 +63,15 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
                                            boolean includeSelf,
                                            MoveCallback moveCallback) {
     super(project);
+    if (targetDirectory != null) {
+      final List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(Arrays.asList(directories));
+      for (Iterator<PsiDirectory> iterator = dirs.iterator(); iterator.hasNext();) {
+        if (targetDirectory.equals(iterator.next().getParentDirectory())) {
+          iterator.remove();
+        }
+      }
+      directories = dirs.toArray(new PsiDirectory[dirs.size()]);
+    }
     myDirectories = directories;
     myTargetDirectory = targetDirectory;
     mySearchInComments = searchInComments;

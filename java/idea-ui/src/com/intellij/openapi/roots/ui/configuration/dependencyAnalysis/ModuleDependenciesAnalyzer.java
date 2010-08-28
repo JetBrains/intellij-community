@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration;
+package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -112,8 +112,7 @@ public class ModuleDependenciesAnalyzer {
     if (myCompile) {
       classes.withoutSelfModuleOutput();
     }
-    for (VirtualFile r : classes.getRoots()) {
-      final String url = r.getUrl();
+    for (String url : classes.getUrls()) {
       if (!urlExplanations.containsKey(url)) {
         urlExplanations.put(url, new ArrayList<OrderPath>());
       }

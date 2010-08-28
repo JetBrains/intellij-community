@@ -45,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -98,6 +97,22 @@ public class GroovyCompletionContributor extends CompletionContributor {
     psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
 
   private static final String[] THIS_SUPER = {"this", "super"};
+  private static final InsertHandler<LookupElement> STATIC_IMPORT_INSERT_HANDLER = new InsertHandler<LookupElement>() {
+    @Override
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      new GroovyInsertHandler().handleInsert(context, item);
+      final PsiClass containingClass = ((PsiMethod)item.getObject()).getContainingClass();
+      if (containingClass != null) {
+        PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
+        final GrReferenceExpression ref = PsiTreeUtil
+          .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GrReferenceExpression.class, false);
+        if (ref != null) {
+          ref.bindToElementViaStaticImport(containingClass);
+        }
+      }
+
+    }
+  };
 
   public static boolean isReferenceInNewExpression(PsiElement reference) {
     if (!(reference instanceof GrCodeReferenceElement)) return false;
@@ -303,7 +318,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.BASIC, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>(false) {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
@@ -321,6 +336,20 @@ public class GroovyCompletionContributor extends CompletionContributor {
           }
         });
 
+      }
+    });
+    extend(CompletionType.CLASS_NAME, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>(false) {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull final CompletionResultSet result) {
+        final PsiElement position = parameters.getPosition();
+        if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
+
+        final String s = result.getPrefixMatcher().getPrefix();
+        if (StringUtil.isEmpty(s) || !Character.isLowerCase(s.charAt(0))) return;
+
+        JavaGlobalMemberNameCompletionContributor.processStaticMethods(result, position, STATIC_IMPORT_INSERT_HANDLER);
       }
     });
   }

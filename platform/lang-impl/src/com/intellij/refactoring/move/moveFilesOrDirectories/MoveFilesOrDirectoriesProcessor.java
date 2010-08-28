@@ -80,19 +80,26 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       for (PsiReference reference : ReferencesSearch.search(element)) {
         result.add(new MyUsageInfo(reference.getElement(), i, reference));
       }
-      if (element instanceof PsiFile) {
-        final List<UsageInfo> usages = MoveFileHandler.forElement((PsiFile)element)
-          .findUsages(((PsiFile)element), myNewParent, mySearchInComments, mySearchInNonJavaFiles);
-        if (usages != null) {
-          result.addAll(usages);
-          myFoundUsages.put((PsiFile)element, usages);
-        }
-      }
+      findElementUsages(result, element);
     }
 
     return result.toArray(new UsageInfo[result.size()]);
   }
 
+  private void findElementUsages(ArrayList<UsageInfo> result, PsiElement element) {
+    if (element instanceof PsiFile) {
+      final List<UsageInfo> usages = MoveFileHandler.forElement((PsiFile)element)
+        .findUsages(((PsiFile)element), myNewParent, mySearchInComments, mySearchInNonJavaFiles);
+      if (usages != null) {
+        result.addAll(usages);
+        myFoundUsages.put((PsiFile)element, usages);
+      }
+    } else if (element instanceof PsiDirectory) {
+      for (PsiElement childElement : element.getChildren()) {
+        findElementUsages(result, childElement);
+      }
+    }
+  }
 
 
   protected void refreshElements(PsiElement[] elements) {
@@ -119,6 +126,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       for (final PsiElement element : myElementsToMove) {
         if (element instanceof PsiDirectory) {
           MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, myNewParent);
+          for (PsiElement psiElement : element.getChildren()) {
+            processDirectoryFiles(movedFiles, oldToNewMap, psiElement);
+          }
         }
         else if (element instanceof PsiFile) {
           final PsiFile movedFile = (PsiFile)element;
@@ -171,6 +181,20 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       }
       else {
         LOG.error(e);
+      }
+    }
+  }
+
+  private static void processDirectoryFiles(List<PsiFile> movedFiles, Map<PsiElement, PsiElement> oldToNewMap, PsiElement psiElement) {
+    if (psiElement instanceof PsiFile) {
+      final PsiFile movedFile = (PsiFile)psiElement;
+      FileReferenceContextUtil.encodeFileReferences(psiElement);
+      MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, movedFile.getParent(), oldToNewMap);
+      movedFiles.add(movedFile);
+    }
+    else if (psiElement instanceof PsiDirectory) {
+      for (PsiElement element : psiElement.getChildren()) {
+        processDirectoryFiles(movedFiles, oldToNewMap, element);
       }
     }
   }
