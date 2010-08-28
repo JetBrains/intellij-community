@@ -24,11 +24,16 @@
  */
 package com.intellij;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public class ClassFinder {
   private final List<String> classNameList = new ArrayList<String>();
@@ -40,15 +45,13 @@ public class ClassFinder {
     findAndStoreTestClasses(new File(classPathRoot, directoryOffset));
   }
 
+  @Nullable
   private String computeClassName(final File file) {
     String absPath = file.getAbsolutePath();
     if (absPath.endsWith("Test.class")) {
-      String packageBase = absPath.substring(startPackageName, absPath.length() - ".class".length());
-      return packageBase.replace(File.separatorChar, '.');
+      return StringUtil.trimEnd(absPath.substring(startPackageName), ".class").replace(File.separatorChar, '.');
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   private void findAndStoreTestClasses(final File current) throws IOException {
@@ -58,10 +61,7 @@ public class ClassFinder {
       }
     }
     else {
-      String className = computeClassName(current);
-      if (className != null) {
-        classNameList.add(className);
-      }
+      addIfNotNull(classNameList, computeClassName(current));
     }
   }
 
