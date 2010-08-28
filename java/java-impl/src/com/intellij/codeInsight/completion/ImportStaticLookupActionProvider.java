@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
@@ -23,6 +24,8 @@ public class ImportStaticLookupActionProvider implements LookupActionProvider {
     consumer.consume(new LookupElementAction(icon, "Import statically") {
       @Override
       public Result performLookupAction() {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.IMPORT_STATIC);
+
         item.setShouldImport(!item.isShouldImport());
         return Result.REFRESH_ITEM;
       }

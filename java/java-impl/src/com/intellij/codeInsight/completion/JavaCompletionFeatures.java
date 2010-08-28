@@ -25,4 +25,5 @@ public interface JavaCompletionFeatures {
   @NonNls String SECOND_SMART_COMPLETION_TOAR = "editing.completion.second.smarttype.toar";
   @NonNls String SECOND_SMART_COMPLETION_ASLIST = "editing.completion.second.smarttype.aslist";
   @NonNls String SECOND_SMART_COMPLETION_ARRAY_MEMBER = "editing.completion.second.smarttype.array.member";
+  @NonNls String IMPORT_STATIC = "editing.completion.import.static";
 }

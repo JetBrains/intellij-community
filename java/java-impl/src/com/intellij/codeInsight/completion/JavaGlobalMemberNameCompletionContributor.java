@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -91,8 +92,13 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
                 final PsiClass containingClass = method.getContainingClass();
                 if (containingClass != null) {
                   if (!JavaCompletionUtil.isInExcludedPackage(containingClass) && !StaticImportMethodFix.isExcluded(method)) {
-                    if (!hintShown[0] && CompletionService.getCompletionService().getAdvertisementText() == null) {
-                      CompletionService.getCompletionService().setAdvertisementText("To import the method statically, press Left");
+                    if (!hintShown[0] &&
+                        FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, project) &&
+                        CompletionService.getCompletionService().getAdvertisementText() == null) {
+                      final String shortcut = getActionShortcut("EditorRight");
+                      if (shortcut != null) {
+                        CompletionService.getCompletionService().setAdvertisementText("To import the method statically, press " + shortcut);
+                      }
                       hintShown[0] = true;
                     }
 
