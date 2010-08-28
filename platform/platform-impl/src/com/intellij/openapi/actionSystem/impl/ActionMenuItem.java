@@ -27,6 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +43,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ActionMenuItem extends JMenuItem {
-  private static final Icon ourCheckedIcon = new SizedIcon(IconLoader.getIcon("/actions/check.png"), 18, 18);
+  private static final Icon ourCheckedIcon = new SizedIcon(Icons.CHECK_ICON, 18, 18);
   private static final Icon ourUncheckedIcon = new EmptyIcon(18, 18);
 
   private final AnAction myAction;
