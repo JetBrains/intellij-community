@@ -98,9 +98,13 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
   }
 
   public int getVersion() {
-    return 0;
+    final DomApplicationComponent component = DomApplicationComponent.getInstance();
+    int result = 0;
+    for (DomFileDescription description : component.getAllFileDescriptions()) {
+      result += description.getVersion();
+      result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+    }
+    return result;
   }
 
-  private static class RootTagReachedException extends RuntimeException{
-  }
 }
