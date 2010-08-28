@@ -109,6 +109,8 @@ public abstract class Icons {
   public static final Icon PROPERTIES_ICON = IconLoader.getIcon("/actions/properties.png");
   public static final Icon SYNCHRONIZE_ICON = IconLoader.getIcon("/actions/sync.png");
 
+  public static final Icon CHECK_ICON = IconLoader.getIcon("/actions/check.png");
+
   public static final Icon OPEN_EDIT_DIALOG_ICON = IconLoader.getIcon("/actions/showViewer.png");
   public static final Icon FLATTEN_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/flattenPackages.png");
   public static final Icon ADD_TO_SECTION_ICON = IconLoader.getIcon("/general/addItemToSection.png");
