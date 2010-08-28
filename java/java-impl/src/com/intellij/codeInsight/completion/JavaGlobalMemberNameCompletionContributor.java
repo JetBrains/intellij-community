@@ -76,6 +76,7 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
         return namesCache.getAllMethodNames();
       }
     });
+    final boolean[] hintShown = {false};
     for (final String methodName : methodNames) {
       if (matcher.prefixMatches(methodName)) {
         final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
@@ -90,6 +91,11 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
                 final PsiClass containingClass = method.getContainingClass();
                 if (containingClass != null) {
                   if (!JavaCompletionUtil.isInExcludedPackage(containingClass) && !StaticImportMethodFix.isExcluded(method)) {
+                    if (!hintShown[0] && CompletionService.getCompletionService().getAdvertisementText() == null) {
+                      CompletionService.getCompletionService().setAdvertisementText("To import the method statically, press Left");
+                      hintShown[0] = true;
+                    }
+
                     result.addElement(new JavaGlobalMemberLookupElement(method, containingClass, qualifiedInsert, importInsert));
                   }
 
