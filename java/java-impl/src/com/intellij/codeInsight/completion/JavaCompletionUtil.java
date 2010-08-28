@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -25,8 +26,12 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1062,18 +1067,113 @@ public class JavaCompletionUtil {
 
   @Nullable
   static ElementFilter recursionFilter(PsiElement element) {
-    if (com.intellij.patterns.PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
+    if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
       return new ExcludeDeclaredFilter(ElementClassFilter.METHOD);
     }
 
-    if (com.intellij.patterns.PsiJavaPatterns.psiElement().inside(
+    if (PsiJavaPatterns.psiElement().inside(
         PsiJavaPatterns.or(
             PsiJavaPatterns.psiElement(PsiAssignmentExpression.class),
             PsiJavaPatterns.psiElement(PsiVariable.class))).
-        andNot(com.intellij.patterns.PsiJavaPatterns.psiElement().afterLeaf(".")).accepts(element)) {
+        andNot(PsiJavaPatterns.psiElement().afterLeaf(".")).accepts(element)) {
       return new AndFilter(new ExcludeSillyAssignment(),
                                                    new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class)));
     }
     return null;
+  }
+
+  public static int insertClassReference(@NotNull PsiClass psiClass, @NotNull PsiFile file, int offset) {
+    return insertClassReference(psiClass, file, offset, offset);
+  }
+
+  public static int insertClassReference(PsiClass psiClass, PsiFile file, int startOffset, int endOffset) {
+    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+    if (!psiClass.isValid()) {
+      return startOffset;
+    }
+
+    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(psiClass);
+    LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
+    LOG.assertTrue(
+      ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
+
+    final PsiManager manager = file.getManager();
+
+    final Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
+
+    final PsiReference reference = file.findReferenceAt(startOffset);
+    if (reference != null) {
+      final PsiElement resolved = reference.resolve();
+      if (resolved instanceof PsiClass) {
+        if (((PsiClass)resolved).getQualifiedName() == null || manager.areElementsEquivalent(psiClass, resolved)) {
+          return startOffset;
+        }
+      }
+    }
+
+    String name = psiClass.getName();
+    document.replaceString(startOffset, endOffset, name);
+
+    final RangeMarker toDelete = insertSpace(startOffset + name.length(), document);
+
+    PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
+
+    int newStartOffset = startOffset;
+    PsiElement element = file.findElementAt(startOffset);
+    if (element instanceof PsiIdentifier) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified() && !(parent.getParent() instanceof PsiPackageStatement)) {
+        PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
+
+        if (!psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
+          final PsiElement pointerElement = pointer.getElement();
+          if (pointerElement instanceof PsiClass) {
+            PsiElement newElement;
+            if (!(ref instanceof PsiImportStaticReferenceElement)) {
+              newElement = ref.bindToElement(pointerElement);
+            }
+            else {
+              newElement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass)pointerElement);
+            }
+            RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
+            CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
+            newStartOffset = marker.getStartOffset();
+          }
+        }
+      }
+    }
+
+    if (toDelete.isValid()) {
+      document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+    }
+
+    return newStartOffset;
+  }
+
+  @Nullable
+  static PsiElement resolveReference(final PsiReference psiReference) {
+    if (psiReference instanceof PsiPolyVariantReference) {
+      final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(true);
+      if (results.length == 1) return results[0].getElement();
+    }
+    return psiReference.resolve();
+  }
+
+  public static RangeMarker insertSpace(final int endOffset, final Document document) {
+    final CharSequence chars = document.getCharsSequence();
+    final int length = chars.length();
+    final RangeMarker toDelete;
+    if (endOffset < length && Character.isJavaIdentifierPart(chars.charAt(endOffset))){
+      document.insertString(endOffset, " ");
+      toDelete = document.createRangeMarker(endOffset, endOffset + 1);
+    } else if (endOffset >= length) {
+      toDelete = document.createRangeMarker(length, length);
+    }
+    else {
+      toDelete = document.createRangeMarker(endOffset, endOffset);
+    }
+    toDelete.setGreedyToLeft(true);
+    toDelete.setGreedyToRight(true);
+    return toDelete;
   }
 }

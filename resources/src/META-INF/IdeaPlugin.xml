@@ -223,7 +223,9 @@
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.DefaultFileTypeFactory"/>
 
-    <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"/>
+    <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
+    <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"
+                           id="excludeFromCompletion" order="last"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.BasicToClassNameDelegator" id="basic2ClassName"
                             order="first, before javaMemberName, after xml"/>

@@ -19,11 +19,9 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.AllClassesGetter;
-import com.intellij.codeInsight.completion.DefaultInsertHandler;
-import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -397,7 +395,7 @@ public class GroovyCompletionUtil {
     String name = aClass.getName();
     document.replaceString(startOffset, endOffset, name);
 
-    final RangeMarker toDelete = DefaultInsertHandler.insertSpace(endOffset, document);
+    final RangeMarker toDelete = JavaCompletionUtil.insertSpace(endOffset, document);
 
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 

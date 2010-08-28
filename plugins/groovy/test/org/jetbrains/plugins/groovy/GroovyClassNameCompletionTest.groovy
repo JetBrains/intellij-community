@@ -24,7 +24,8 @@ import com.intellij.codeInsight.lookup.impl.TestLookupManager;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.JavaGlobalMemberLookupElement;
 
 /**
  * @author Maxim.Medvedev
@@ -107,16 +108,32 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     myFixture.checkResult "a.FooBarGooDoo<caret>"
   }
 
-  public void testStaticMethod() throws Exception {
+  public void testImportedStaticMethod() throws Exception {
     myFixture.addFileToProject("b.groovy", """
+class Foo {
+  static def abcmethod1(int a) {}
+  static def abcmethod2(int a) {}
+}""")
+    myFixture.configureByText("a.groovy", "abcme<caret>")
+    def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    ((JavaGlobalMemberLookupElement) item).shouldImport = true
+    myFixture.type('\n')
+    myFixture.checkResult """import static Foo.abcmethod1
+
+abcmethod1(<caret>)"""
+
+  }
+
+  public void testQualifiedStaticMethod() throws Exception {
+    myFixture.addFileToProject("foo/b.groovy", """package foo
 class Foo {
   static def abcmethod(int a) {}
 }""")
     myFixture.configureByText("a.groovy", "abcme<caret>")
     myFixture.complete(CompletionType.CLASS_NAME)
-    myFixture.checkResult """import static Foo.abcmethod
+    myFixture.checkResult """import foo.Foo
 
-abcmethod(<caret>)"""
+Foo.abcmethod(<caret>)"""
 
   }
 
