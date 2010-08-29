@@ -9,13 +9,15 @@ import com.intellij.facet.FacetType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFileFactory;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.buildout.config.BuildoutCfgLanguage;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -149,7 +151,6 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     return cfg.getPaths();
   }
 
-
   @Nullable
   public static BuildoutFacet getInstance(Module module) {
     return FacetManager.getInstance(module).getFacetByType(BuildoutFacetType.ID);
@@ -179,7 +180,6 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     commandLine.setEnvParams(new_env);
   }
 
-
   @Nullable
   public File getConfigFile() {
     final String scriptName = getConfiguration().getScriptName();
@@ -192,17 +192,21 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
   @Nullable
   public BuildoutCfgFile getConfigPsiFile() {
     File cfg = getConfigFile();
-    if (cfg.exists()) {
-      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(cfg);
-      if (vFile != null) {
-        final PsiFile psiFile = PsiManager.getInstance(getModule().getProject()).findFile(vFile);
-        if (psiFile instanceof BuildoutCfgFile) {
-          return (BuildoutCfgFile)psiFile;
+    if (cfg != null && cfg.exists()) {
+      try {
+        // this method is called before the project initialization is complete, so it has to use createFileFromText() instead
+        // of PsiManager.findFile()
+        char[] scriptText = FileUtil.loadFileText(cfg);
+        final PsiFile configFile = PsiFileFactory
+          .getInstance(getModule().getProject()).createFileFromText("buildout.cfg",
+                                                                                  BuildoutCfgLanguage.INSTANCE, new String(scriptText));
+        if (configFile != null && configFile instanceof BuildoutCfgFile) {
+          return (BuildoutCfgFile)configFile;
         }
       }
-
+      catch (Exception ignored) {
+      }
     }
     return null;
   }
-
 }
