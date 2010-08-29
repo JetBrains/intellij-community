@@ -100,11 +100,9 @@
 
     <projectConfigurable implementation="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
     <projectConfigurable implementation="org.jetbrains.plugins.groovy.gradle.GradleConfigurable"/>
-    <!--<projectConfigurable implementation="org.jetbrains.plugins.groovy.settings.GroovyProjectConfigurable"/>-->
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.GradleSettings" serviceImplementation="org.jetbrains.plugins.groovy.gradle.GradleSettings"/>
-    <!--<projectService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyProjectSettings" serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyProjectSettings"/>-->
 
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
@@ -216,10 +214,7 @@
     <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
     <superMethodsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GDKSuperMethodSearcher"/>
 
-    <!--<gotoDeclarationHandler implementation="org.jetbrains.plugins.groovy.actions.GotoConstructorDeclarationHandler"/>-->
     <targetElementEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator"/>
-
-    <!--<compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>-->
 
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 
