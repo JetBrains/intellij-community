@@ -4,18 +4,17 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,7 +36,7 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
 
   @Override
   public FacetEditorTab[] createEditorTabs(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
-    return new FacetEditorTab[] {new Tab()};
+    return new FacetEditorTab[] {new Tab(editorContext.getModule())};
   }
 
   public String getScriptName() {
@@ -78,8 +77,8 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
 
     private BuildoutConfigPanel myPanel;
 
-    private Tab() {
-      myPanel = new BuildoutConfigPanel(BuildoutFacetConfiguration.this);
+    private Tab(Module module) {
+      myPanel = new BuildoutConfigPanel(module, BuildoutFacetConfiguration.this);
     }
 
     @Nls

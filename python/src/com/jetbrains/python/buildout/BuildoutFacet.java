@@ -8,6 +8,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,10 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -221,6 +221,46 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
         }
       }
       catch (Exception ignored) {
+      }
+    }
+    return null;
+  }
+  
+  public static List<File> getScripts(Project project, @Nullable BuildoutFacet buildoutFacet) {
+    File rootPath = null;
+    if (buildoutFacet != null) {
+      final File configIOFile = buildoutFacet.getConfigFile();
+      if (configIOFile != null) {
+        rootPath = configIOFile.getParentFile();
+      }
+    }
+    if (rootPath == null || !rootPath.exists()) {
+      final VirtualFile baseDir = project.getBaseDir();
+      if (baseDir != null) {
+        rootPath = new File(baseDir.getPath());
+      }
+    }
+    if (rootPath != null) {
+      final File[] scripts = new File(rootPath, "bin").listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return SystemInfo.isWindows ? name.endsWith("-script.py") : name.endsWith(".py");
+        }
+      });
+      if (scripts != null) {
+        return Arrays.asList(scripts);
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  public static File findScript(Project project, @Nullable BuildoutFacet buildoutFacet, String name) {
+    String scriptName = SystemInfo.isWindows ? name + "-script.py" : name + ".py";
+    final List<File> scripts = getScripts(project, buildoutFacet);
+    for (File script : scripts) {
+      if (script.getName().equals(scriptName)) {
+        return script;
       }
     }
     return null;

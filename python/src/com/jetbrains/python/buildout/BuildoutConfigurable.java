@@ -51,7 +51,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
       if (facet != null) config = facet.getConfiguration();
     }
     if (config == null) config = new BuildoutFacetConfiguration(null);
-    mySettingsPanel = new BuildoutConfigPanel(config);
+    mySettingsPanel = new BuildoutConfigPanel(myModule, config);
     myPlaceholder.add(mySettingsPanel, BorderLayout.CENTER);
     myEnabledCheckbox.setSelected(! StringUtil.isEmptyOrSpaces(config.getScriptName()));
     myEnabledCheckbox.addActionListener(new ActionListener() {
@@ -246,7 +246,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   }
 
   private void switchNoticeText() {
-    mySettingsPanel.showNoticeText(DjangoFacet.getInstance(myModule) != null);
+    mySettingsPanel.showNoticeText(/*DjangoFacet.getInstance(myModule) != null*/ false);
   }
 
   @Override

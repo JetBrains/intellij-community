@@ -2,11 +2,18 @@ package com.jetbrains.python.buildout;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.util.List;
 
 /**
  * Panel to choose target buildout script
@@ -14,12 +21,14 @@ import java.awt.*;
  * Date: Jul 26, 2010 5:09:23 PM
  */
 public class BuildoutConfigPanel extends JPanel {
-  private TextFieldWithBrowseButton myScript;
+  private ComboboxWithBrowseButton myScript;
   private JPanel myPanel;
   private JTextArea myNoticeTextArea;
+  private final Module myModule;
   private BuildoutFacetConfiguration myConfiguration;
 
-  public BuildoutConfigPanel(BuildoutFacetConfiguration config) {
+  public BuildoutConfigPanel(Module module, BuildoutFacetConfiguration config) {
+    myModule = module;
     myConfiguration = config;
     setLayout(new BorderLayout());
     add(myPanel);
@@ -28,27 +37,36 @@ public class BuildoutConfigPanel extends JPanel {
     //descriptor.setRoot(myConfiguration.getRoot());
     myScript.addBrowseFolderListener(
       "Choose a buildout script", "Select the target script that will invoke your code",
-      null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT, false
+      null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT, false
     );
+    myScript.getComboBox().setEditable(true);
   }
 
   public boolean isModified(BuildoutFacetConfiguration configuration) {
     final String their = configuration.getScriptName();
-    final String ours = myScript.getText();
-    if (their == null && ours == null) return false;
-    else return their == null || ! their.equals(ours); 
+    final String ours = getScriptName();
+    return !Comparing.strEqual(their, ours);
   }
 
   public String getScriptName() {
-    return myScript.getText();
+    return (String) myScript.getComboBox().getEditor().getItem();
   }
 
   public void reset() {
-    myScript.setText(myConfiguration.getScriptName());
+    final List<File> scriptFiles = BuildoutFacet.getScripts(myModule.getProject(), BuildoutFacet.getInstance(myModule));
+    final List<String> scripts = ContainerUtil.map(scriptFiles, new Function<File, String>() {
+      @Override
+      public String fun(File file) {
+        return file.getPath();
+      }
+    });
+    myScript.getComboBox().setModel(new CollectionComboBoxModel(scripts, myConfiguration.getScriptName()));
+    myScript.getComboBox().getEditor().setItem(myConfiguration.getScriptName());
   }
 
   public void apply() {
-    myConfiguration.setScriptName(getScriptName());
+    final String scriptName = getScriptName();
+    myConfiguration.setScriptName(scriptName);
   }
 
   BuildoutFacetConfiguration getConfiguration() {
