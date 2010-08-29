@@ -19,11 +19,11 @@ import java.util.List;
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath();
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
   }
 
   public void testSimple() throws Exception {
-    configureByFile("/codeInsight/completion/normal/Simple.java");
+    configureByFile("Simple.java");
     assertStringItems("_local1", "_local2", "_field", "_method", "_baseField", "_baseMethod");
   }
 
@@ -41,7 +41,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testCastToPrimitive1() throws Exception {
-    configureByFile("/codeInsight/completion/normal/CastToPrimitive1.java");
+    configureByFile("CastToPrimitive1.java");
 
     for (final LookupElement item : myItems) {
       if (item.getLookupString().equals("int")) return;
@@ -50,7 +50,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testCastToPrimitive2() throws Exception {
-    configureByFile("/codeInsight/completion/normal/CastToPrimitive2.java");
+    configureByFile("CastToPrimitive2.java");
 
     for (final LookupElement item : myItems) {
       if (item.getLookupString().equals("int")) return;
@@ -59,7 +59,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testCastToPrimitive3() throws Exception {
-    configureByFile("/codeInsight/completion/normal/CastToPrimitive3.java");
+    configureByFile("CastToPrimitive3.java");
 
     for (final LookupElement item : myItems) {
       if (item.getLookupString().equals("int")) return;
@@ -68,11 +68,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testWriteInInvokeLater() throws Exception {
-    configureByFile("/codeInsight/completion/normal/WriteInInvokeLater.java");
+    configureByFile("WriteInInvokeLater.java");
   }
 
   public void testQualifiedNew1() throws Exception {
-    configureByFile("/codeInsight/completion/normal/QualifiedNew1.java");
+    configureByFile("QualifiedNew1.java");
 
     assertEquals(2, myItems.length);
     assertEquals("IInner", myItems[0].getLookupString());
@@ -80,7 +80,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testQualifiedNew2() throws Exception {
-    configureByFile("/codeInsight/completion/normal/QualifiedNew2.java");
+    configureByFile("QualifiedNew2.java");
 
     assertEquals(2, myItems.length);
     assertEquals("AnInner", myItems[0].getLookupString());
@@ -88,17 +88,17 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testKeywordsInName() throws Exception {
-    configureByFile("/codeInsight/completion/normal/KeywordsInName.java");
-    checkResultByFile("/codeInsight/completion/normal/KeywordsInName_after.java");
+    configureByFile("KeywordsInName.java");
+    checkResultByFile("KeywordsInName_after.java");
   }
 
   public void testSimpleVariable() throws Exception {
-    configureByFile("/codeInsight/completion/normal/SimpleVariable.java");
-    checkResultByFile("/codeInsight/completion/normal/SimpleVariable_after.java");
+    configureByFile("SimpleVariable.java");
+    checkResultByFile("SimpleVariable_after.java");
   }
 
   public void testPreferLongerNamesOption() throws Exception {
-    configureByFile("/codeInsight/completion/normal/PreferLongerNamesOption.java");
+    configureByFile("PreferLongerNamesOption.java");
 
     assertEquals(3, myItems.length);
     assertEquals("abcdEfghIjk", myItems[0].getLookupString());
@@ -109,7 +109,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
     CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = false;
     try{
-      configureByFile("/codeInsight/completion/normal/PreferLongerNamesOption.java");
+      configureByFile("PreferLongerNamesOption.java");
 
       assertEquals(3, myItems.length);
       assertEquals("ijk", myItems[0].getLookupString());
@@ -122,30 +122,30 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testSCR7208() throws Exception {
-    configureByFile("/codeInsight/completion/normal/SCR7208.java");
+    configureByFile("SCR7208.java");
   }
 
   public void testProtectedFromSuper() throws Exception {
-    configureByFile("/codeInsight/completion/normal/ProtectedFromSuper.java");
+    configureByFile("ProtectedFromSuper.java");
     Arrays.sort(myItems);
     assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0);
   }
 
   public void testBeforeInitialization() throws Exception {
-    configureByFile("/codeInsight/completion/normal/BeforeInitialization.java");
+    configureByFile("BeforeInitialization.java");
     assertNotNull(myItems);
     assertTrue(myItems.length > 0);
   }
 
   public void testProtectedFromSuper2() throws Exception {
 
-    configureByFile("/codeInsight/completion/normal/ProtectedFromSuper.java");
+    configureByFile("ProtectedFromSuper.java");
     Arrays.sort(myItems);
     assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0);
   }
 
   public void testReferenceParameters() throws Exception {
-    configureByFile("/codeInsight/completion/normal/ReferenceParameters.java");
+    configureByFile("ReferenceParameters.java");
     assertNotNull(myItems);
     assertEquals(myItems.length, 2);
     assertEquals(myItems[0].getLookupString(), "AAAA");
@@ -156,7 +156,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     final boolean autocomplete_on_code_completion = settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
     settings.AUTOCOMPLETE_ON_CODE_COMPLETION = false;
-    configureByFile("/codeInsight/completion/normal/ConstructorName1.java");
+    configureByFile("ConstructorName1.java");
     assertNotNull(myItems);
     boolean failed = true;
     for (final LookupElement item : myItems) {
@@ -172,7 +172,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     final boolean autocomplete_on_code_completion = settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
     settings.AUTOCOMPLETE_ON_CODE_COMPLETION = false;
-    configureByFile("/codeInsight/completion/normal/ConstructorName2.java");
+    configureByFile("ConstructorName2.java");
     assertNotNull(myItems);
     boolean failed = true;
     for (final LookupElement item : myItems) {
@@ -185,7 +185,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testObjectsInThrowsBlock() throws Exception {
-    configureByFile("/codeInsight/completion/normal/InThrowsCompletion.java");
+    configureByFile("InThrowsCompletion.java");
 
     Arrays.sort(myItems);
     assertTrue("Exception not found", Arrays.binarySearch(myItems, "C") > 0);
@@ -193,7 +193,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testAfterInstanceof() throws Exception {
-    configureByFile("/codeInsight/completion/normal/AfterInstanceof.java");
+    configureByFile("AfterInstanceof.java");
 
     assertNotNull(myItems);
     Arrays.sort(myItems);
@@ -201,93 +201,93 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testAfterCast1() throws Exception {
-    configureByFile("/codeInsight/completion/normal/AfterCast1.java");
+    configureByFile("AfterCast1.java");
 
     assertNotNull(myItems);
     assertEquals(2, myItems.length);
   }
 
   public void testAfterCast2() throws Exception {
-    configureByFile("/codeInsight/completion/normal/AfterCast2.java");
-    checkResultByFile("/codeInsight/completion/normal/AfterCast2-result.java");
+    configureByFile("AfterCast2.java");
+    checkResultByFile("AfterCast2-result.java");
   }
 
   public void testMethodCallForTwoLevelSelection() throws Exception {
-    configureByFile("/codeInsight/completion/normal/MethodLookup.java");
+    configureByFile("MethodLookup.java");
     assertEquals(2, myItems.length);
   }
 
    public void testMethodCallBeforeAnotherStatementWithParen() throws Exception {
-     configureByFile("/codeInsight/completion/normal/MethodLookup2.java");
-     checkResultByFile("/codeInsight/completion/normal/MethodLookup2_After.java");
+     configureByFile("MethodLookup2.java");
+     checkResultByFile("MethodLookup2_After.java");
   }
 
    public void testMethodCallBeforeAnotherStatementWithParen2() throws Exception {
      CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
      boolean oldvalue = settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE;
      settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-     configureByFile("/codeInsight/completion/normal/MethodLookup2.java");
-     checkResultByFile("/codeInsight/completion/normal/MethodLookup2_After2.java");
+     configureByFile("MethodLookup2.java");
+     checkResultByFile("MethodLookup2_After2.java");
      settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = oldvalue;
   }
 
   public void testSwitchEnumLabel() throws Exception {
-    configureByFile("/codeInsight/completion/normal/SwitchEnumLabel.java");
+    configureByFile("SwitchEnumLabel.java");
     assertEquals(3, myItems.length);
   }
 
   public void testMethodInAnnotation() throws Exception {
-    configureByFile("/codeInsight/completion/normal/Annotation.java");
-    checkResultByFile("/codeInsight/completion/normal/Annotation_after.java");
+    configureByFile("Annotation.java");
+    checkResultByFile("Annotation_after.java");
   }
 
   public void testMethodInAnnotation2() throws Exception {
-    configureByFile("/codeInsight/completion/normal/Annotation2.java");
-    checkResultByFile("/codeInsight/completion/normal/Annotation2_after.java");
+    configureByFile("Annotation2.java");
+    checkResultByFile("Annotation2_after.java");
   }
 
   public void testMethodInAnnotation3() throws Exception {
 
-    configureByFile("/codeInsight/completion/normal/Annotation3.java");
-    checkResultByFile("/codeInsight/completion/normal/Annotation3_after.java");
+    configureByFile("Annotation3.java");
+    checkResultByFile("Annotation3_after.java");
   }
 
   public void testMethodInAnnotation5() throws Exception {
 
-    configureByFile("/codeInsight/completion/normal/Annotation5.java");
-    checkResultByFile("/codeInsight/completion/normal/Annotation5_after.java");
+    configureByFile("Annotation5.java");
+    checkResultByFile("Annotation5_after.java");
   }
 
   public void testMethodInAnnotation7() throws Exception {
 
-    configureByFile("/codeInsight/completion/normal/Annotation7.java");
+    configureByFile("Annotation7.java");
     selectItem(myItems[0]);
-    checkResultByFile("/codeInsight/completion/normal/Annotation7_after.java");
+    checkResultByFile("Annotation7_after.java");
   }
 
   public void testEnumInAnnotation() throws Exception {
-    configureByFile("/codeInsight/completion/normal/Annotation4.java");
-    checkResultByFile("/codeInsight/completion/normal/Annotation4_after.java");
+    configureByFile("Annotation4.java");
+    checkResultByFile("Annotation4_after.java");
   }
 
   public void testSecondAttribute() throws Exception {
-    configureByFile("/codeInsight/completion/normal/Annotation6.java");
-    checkResultByFile("/codeInsight/completion/normal/Annotation6_after.java");
+    configureByFile("Annotation6.java");
+    checkResultByFile("Annotation6_after.java");
   }
 
   public void testIDEADEV6408() throws Exception {
-    configureByFile("/codeInsight/completion/normal/IDEADEV6408.java");
+    configureByFile("IDEADEV6408.java");
     assertEquals(2, myItems.length);
   }
 
   public void testMethodWithLeftParTailType() throws Exception {
-    configureByFile("/codeInsight/completion/normal/MethodWithLeftParTailType.java");
+    configureByFile("MethodWithLeftParTailType.java");
     selectItem(myItems[0], '(');
-    checkResultByFile("/codeInsight/completion/normal/MethodWithLeftParTailType_after.java");
+    checkResultByFile("MethodWithLeftParTailType_after.java");
 
-    configureByFile("/codeInsight/completion/normal/MethodWithLeftParTailType2.java");
+    configureByFile("MethodWithLeftParTailType2.java");
     selectItem(myItems[0], '(');
-    checkResultByFile("/codeInsight/completion/normal/MethodWithLeftParTailType2_after.java");
+    checkResultByFile("MethodWithLeftParTailType2_after.java");
   }
 
   public void testMethodWithLeftParTailTypeNoPairBrace() throws Exception {
@@ -295,9 +295,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
 
     try {
-      configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+      configureByFile(getTestName(false) + ".java");
       selectItem(myItems[0], '(');
-      checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+      checkResultByFile(getTestName(false) + "_after.java");
     }
     finally {
       CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
@@ -310,9 +310,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
     try {
       //no tail type should work the normal way
-      configureByFile("/codeInsight/completion/normal/MethodWithLeftParTailTypeNoPairBrace.java");
+      configureByFile("MethodWithLeftParTailTypeNoPairBrace.java");
       selectItem(myItems[0]);
-      checkResultByFile("/codeInsight/completion/normal/MethodWithLeftParTailTypeNoPairBrace_after2.java");
+      checkResultByFile("MethodWithLeftParTailTypeNoPairBrace_after2.java");
     }
     finally {
       CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
@@ -320,9 +320,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testExcessSpaceInTypeCast() throws Throwable {
-   configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+   configureByFile(getTestName(false) + ".java");
    selectItem(myItems[0]);
-   checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+   checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testPackageInAnnoParam() throws Throwable {
@@ -344,14 +344,14 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testLastExpressionInFor() throws Throwable { doTest(); }
 
   public void testUndoCommonPrefixOnHide() throws Throwable {//actually don't undo
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    configureByFile(getTestName(false) + ".java");
+    checkResultByFile(getTestName(false) + "_after.java");
     LookupManager.getInstance(getProject()).hideActiveLookup();
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testOnlyKeywordsInsideSwitch() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     assertStringItems("case", "default");
   }
 
@@ -364,32 +364,32 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testChainedCallOnNextLine() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     selectItem(myItems[0]);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java"); 
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testFinishWithDot() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     selectItem(myItems[0], '.');
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testEnclosingThis() throws Throwable { doTest(); }
 
   public void testSeamlessConstant() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     selectItem(myItems[0]);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testDefaultAnnoParam() throws Throwable { doTest(); }
 
   public void testSpaceAfterLookupString() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     type(' ');
     assertNull(getLookup());
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testNoSpaceInParensWithoutParams() throws Throwable {
@@ -413,17 +413,17 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testFillCommonPrefixOnSecondCompletion() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     type('g');
     complete();
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
     assertStringItems("getBar", "getFoo", "getClass");
   }
 
   public void testQualifierAsPackage() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     selectItem(myItems[0]);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testQualifierAsPackage2() throws Throwable {
@@ -443,9 +443,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testMethodReturnTypeNoSpace() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     selectItem(myItems[0]);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testEnumWithoutConstants() throws Throwable {
@@ -465,35 +465,35 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testNoAllClassesOnQualifiedReference() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     assertEmpty(myItems);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    checkResultByFile(getTestName(false) + ".java");
   }
 
   public void testFinishClassNameWithDot() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     type('.');
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testFinishClassNameWithLParen() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     type('(');
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testSelectNoParameterSignature() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     final int parametersCount = ((PsiMethod)getLookup().getCurrentItem().getObject()).getParameterList().getParametersCount();
     assertEquals(0, parametersCount);
     getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testCompletionInsideClassLiteral() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testSuperInConstructor() throws Throwable {
@@ -535,20 +535,20 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testSecondMethodParameter() throws Throwable { doTest(); }
 
   public void testAnnotationWithoutValueMethod() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     assertStringItems("bar", "foo");
   }
 
   public void testUnnecessaryMethodMerging() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     assertStringItems("fofoo", "fofoo");
   }
 
   public void testDontCancelPrefixOnTyping() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     type('~');
     assertNull(getLookup());
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testAnnotationQualifiedName() throws Throwable {
@@ -556,7 +556,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testDoubleFalse() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     assertStringItems("false", "finalize");
   }
 
@@ -572,52 +572,52 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testCaseTailType() throws Throwable { doTest(); }
 
   public void testSecondInvocationToFillCommonPrefix() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     type('a');
     complete();
     assertStringItems("fai1", "fai2", "fai3");
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testSuggestInaccessibleOnSecondInvocation() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     assertStringItems("_bar", "_goo");
     complete();
     assertStringItems("_bar", "_goo", "_foo");
     getLookup().setCurrentItem(getLookup().getItems().get(2));
     getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testNoCommonPrefixInsideIdentifier() throws Throwable {
-    final String path = "/codeInsight/completion/normal/" + getTestName(false) + ".java";
+    final String path = getTestName(false) + ".java";
     configureByFile(path);
     checkResultByFile(path);
     assertStringItems("fai1", "fai2");
   }
 
   public void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
-    myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testPropertyReferencePrefix() throws Throwable {
     myFixture.addFileToProject("test.properties", "foo.bar=Foo! Bar!").getVirtualFile();
 
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
+    checkResultByFile(getTestName(false) + ".java");
     assertNull(getLookup());
   }
 
   private void doTest() throws Exception {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    configureByFile(getTestName(false) + ".java");
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
   private void doAntiTest() throws Exception {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
+    checkResultByFile(getTestName(false) + ".java");
     assertEmpty(myItems);
     assertNull(getLookup());
   }
@@ -631,7 +631,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testDontCastInstanceofedQualifier() throws Throwable { doTest(); }
 
   public void testWildcardsInLookup() throws Exception {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     assertNotNull(getLookup());
     type('*');
     type('f');
@@ -648,7 +648,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
 
   public void testRightShift() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
     assertStringItems("myField1", "myField2");
   }
 
