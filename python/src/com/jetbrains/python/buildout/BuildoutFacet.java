@@ -244,7 +244,11 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       final File[] scripts = new File(rootPath, "bin").listFiles(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
-          return SystemInfo.isWindows ? name.endsWith("-script.py") : name.endsWith(".py");
+          if (SystemInfo.isWindows) {
+            return name.endsWith("-script.py");
+          }
+          String ext = FileUtil.getExtension(name);
+          return ext.length() == 0 || ext.equals("py");
         }
       });
       if (scripts != null) {
@@ -256,10 +260,10 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
   @Nullable
   public static File findScript(Project project, @Nullable BuildoutFacet buildoutFacet, String name) {
-    String scriptName = SystemInfo.isWindows ? name + "-script.py" : name + ".py";
+    String scriptName = SystemInfo.isWindows ? name + "-script" : name;
     final List<File> scripts = getScripts(project, buildoutFacet);
     for (File script : scripts) {
-      if (script.getName().equals(scriptName)) {
+      if (FileUtil.getNameWithoutExtension(script.getName()).equals(scriptName)) {
         return script;
       }
     }
