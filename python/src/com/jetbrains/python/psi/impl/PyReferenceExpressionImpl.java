@@ -325,12 +325,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return null;
   }
 
-  public Object[] getTypeCompletionVariants(PyType type) {
-    ProcessingContext context = new ProcessingContext();
-    context.put(PyType.CTX_NAMES, new HashSet<String>());
-    return type.getCompletionVariants(this.getName(), this, context);
-  }
-
   private static class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {
     // a trivial implementation
     private PyExpression myLastQualifier;

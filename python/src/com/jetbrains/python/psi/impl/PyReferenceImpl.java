@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -633,5 +634,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Override
   public int hashCode() {
     return myElement.hashCode();
+  }
+
+  protected static Object[] getTypeCompletionVariants(PyExpression pyExpression, PyType type) {
+    ProcessingContext context = new ProcessingContext();
+    context.put(PyType.CTX_NAMES, new HashSet<String>());
+    return type.getCompletionVariants(pyExpression.getName(), pyExpression, context);
   }
 }

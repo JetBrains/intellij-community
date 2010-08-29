@@ -173,7 +173,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         classes = filterByImports(classes, myElement.getContainingFile());
         if (classes.size() == 1) {
           final PyClassType classType = new PyClassType(classes.iterator().next(), false);
-          return ((PyReferenceExpressionImpl)myElement).getTypeCompletionVariants(classType);
+          return getTypeCompletionVariants(myElement, classType);
         }
         return collectSeenMembers(qualifier.getText());
       }
