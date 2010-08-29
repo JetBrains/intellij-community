@@ -284,9 +284,6 @@
     <lang.syntaxHighlighterFactory key="BuildoutCfg"
                                    implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
 
-    <psi.referenceContributor implementation="com.jetbrains.python.buildout.config.ref.BuildoutReferenceContributor"/>
-
-
   </extensions>
 
   <extensionPoints>
