@@ -283,6 +283,7 @@
     <fileTypeFactory implementation="com.jetbrains.python.buildout.config.BuildoutCfgFileTypeFactory"/>
     <lang.syntaxHighlighterFactory key="BuildoutCfg"
                                    implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
+    <inspectionToolProvider implementation="com.jetbrains.python.buildout.config.inspection.BuildoutInspectionToolProvider"/>
 
   </extensions>
 
