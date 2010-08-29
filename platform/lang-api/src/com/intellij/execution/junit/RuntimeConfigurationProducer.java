@@ -103,7 +103,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     }
   }
 
-  protected RunnerAndConfigurationSettings cloneTemplateConfiguration(final Project project, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings cloneTemplateConfiguration(final Project project, @Nullable final ConfigurationContext context) {
     if (context != null) {
       final RuntimeConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
       if (original != null){
@@ -121,11 +121,12 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     return myConfigurationFactory.getType();
   }
 
-  public static RuntimeConfigurationProducer getInstance(final Class aClass) {
+  public static <T extends RuntimeConfigurationProducer> T getInstance(final Class<T> aClass) {
     final RuntimeConfigurationProducer[] configurationProducers = Extensions.getExtensions(RUNTIME_CONFIGURATION_PRODUCER);
     for (RuntimeConfigurationProducer configurationProducer : configurationProducers) {
       if (configurationProducer.getClass() == aClass) {
-        return configurationProducer;
+        //noinspection unchecked
+        return (T) configurationProducer;
       }
     }
     return null;
