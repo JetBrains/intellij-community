@@ -41,5 +41,10 @@ public abstract class LookupElementAction {
     return myText;
   }
 
-  public abstract void performLookupAction();
+  public abstract Result performLookupAction();
+
+  public static enum Result {
+    HIDE_LOOKUP,
+    REFRESH_ITEM
+  }
 }

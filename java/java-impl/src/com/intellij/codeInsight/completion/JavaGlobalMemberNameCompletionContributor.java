@@ -2,14 +2,13 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 
 /**
@@ -17,40 +16,25 @@ import com.intellij.psi.util.PsiTreeUtil;
  */
 public class JavaGlobalMemberNameCompletionContributor extends CompletionContributor {
 
-  private static final LookupElementRenderer<LookupElement> STATIC_METHOD_RENDERER = new LookupElementRenderer<LookupElement>() {
+  private static final InsertHandler<JavaGlobalMemberLookupElement> STATIC_METHOD_INSERT_HANDLER = new InsertHandler<JavaGlobalMemberLookupElement>() {
     @Override
-    public void renderElement(LookupElement element, LookupElementPresentation presentation) {
-      PsiMethod method = (PsiMethod)element.getObject();
-      final PsiClass containingClass = method.getContainingClass();
-      presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(element, presentation.isReal()));
-      presentation.setItemText(method.getName());
-      final String params = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                       PsiFormatUtil.SHOW_PARAMETERS,
-                                                       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
-      if (containingClass != null) {
-        presentation.setTailText(params + " in " + containingClass.getName());
-      } else {
-        presentation.setTailText(params);
-      }
-      final PsiType type = method.getReturnType();
-      if (type != null) {
-        presentation.setTypeText(type.getPresentableText());
+    public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
+      PsiMethodInsertHandler.INSTANCE.handleInsert(context, item);
+      final PsiClass containingClass = item.getContainingClass();
+      PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
+      final PsiReferenceExpression ref = PsiTreeUtil
+        .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
+      if (ref != null) {
+        ref.bindToElementViaStaticImport(containingClass);
       }
     }
   };
-  private static final InsertHandler<LookupElement> STATIC_METHOD_INSERT_HANDLER = new InsertHandler<LookupElement>() {
+  private static final InsertHandler<JavaGlobalMemberLookupElement> QUALIFIED_METHOD_INSERT_HANDLER = new InsertHandler<JavaGlobalMemberLookupElement>() {
     @Override
-    public void handleInsert(InsertionContext context, LookupElement item) {
+    public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
       PsiMethodInsertHandler.INSTANCE.handleInsert(context, item);
-      final PsiClass containingClass = ((PsiMethod)item.getObject()).getContainingClass();
-      if (containingClass != null) {
-        PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
-        final PsiReferenceExpression ref = PsiTreeUtil
-          .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
-        if (ref != null) {
-          ref.bindToElementViaStaticImport(containingClass);
-        }
-      }
+      context.getDocument().insertString(context.getStartOffset(), ".");
+      JavaCompletionUtil.insertClassReference(item.getContainingClass(), context.getFile(), context.getStartOffset());
     }
   };
 
@@ -76,12 +60,13 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
       return;
     }
 
-    processStaticMethods(result, position, STATIC_METHOD_INSERT_HANDLER);
+    processStaticMethods(result, position, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_METHOD_INSERT_HANDLER);
   }
 
   public static void processStaticMethods(final CompletionResultSet result,
                                           final PsiElement position,
-                                          final InsertHandler<LookupElement> insertHandler) {
+                                          final InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsert, 
+                                          final InsertHandler<JavaGlobalMemberLookupElement> importInsert) {
     PrefixMatcher matcher = result.getPrefixMatcher();
     final Project project = position.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -92,6 +77,7 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
         return namesCache.getAllMethodNames();
       }
     });
+    final boolean[] hintShown = {false};
     for (final String methodName : methodNames) {
       if (matcher.prefixMatches(methodName)) {
         final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
@@ -106,9 +92,17 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
                 final PsiClass containingClass = method.getContainingClass();
                 if (containingClass != null) {
                   if (!JavaCompletionUtil.isInExcludedPackage(containingClass) && !StaticImportMethodFix.isExcluded(method)) {
-                    result.addElement(LookupElementDecorator.withInsertHandler(
-                      LookupElementDecorator.withRenderer(LookupElementBuilder.create(method), STATIC_METHOD_RENDERER),
-                      insertHandler));
+                    if (!hintShown[0] &&
+                        FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, project) &&
+                        CompletionService.getCompletionService().getAdvertisementText() == null) {
+                      final String shortcut = getActionShortcut("EditorRight");
+                      if (shortcut != null) {
+                        CompletionService.getCompletionService().setAdvertisementText("To import the method statically, press " + shortcut);
+                      }
+                      hintShown[0] = true;
+                    }
+
+                    result.addElement(new JavaGlobalMemberLookupElement(method, containingClass, qualifiedInsert, importInsert));
                   }
 
                 }

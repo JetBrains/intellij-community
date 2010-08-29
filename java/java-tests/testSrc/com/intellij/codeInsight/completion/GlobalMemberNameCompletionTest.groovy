@@ -24,6 +24,20 @@ public class Foo {
 class Bar {{ abcmethod()<caret> }}"""
   }
 
+  public void testQualifiedMethodName() throws Exception {
+    myFixture.addClass("""
+package foo;
+
+public class Foo {
+  public static int abcmethod() {}
+}
+""")
+
+    doTest "class Bar {{ abcm<caret> }}", false, """import foo.Foo;
+
+class Bar {{ Foo.abcmethod()<caret> }}"""
+  }
+
   @Override protected void tearDown() {
     CodeInsightSettings.instance.EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY
     super.tearDown()
@@ -64,9 +78,14 @@ class Bar {{ abcmethod1()<caret> }}"""
   }
 
   private void doTest(String input, String output) {
+    doTest input, true, output
+  }
+
+  private void doTest(String input, boolean importStatic, String output) {
     myFixture.configureByText("a.java", input)
 
-    assertOneElement myFixture.complete(CompletionType.CLASS_NAME)
+    def item = assertOneElement(myFixture.complete(CompletionType.CLASS_NAME))
+    item.'as'(JavaGlobalMemberLookupElement).shouldImport = importStatic
     myFixture.type('\n')
     myFixture.checkResult output
   }

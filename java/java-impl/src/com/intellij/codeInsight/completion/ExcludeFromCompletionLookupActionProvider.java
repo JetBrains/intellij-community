@@ -62,8 +62,9 @@ public class ExcludeFromCompletionLookupActionProvider implements LookupActionPr
     }
 
     @Override
-    public void performLookupAction() {
+    public Result performLookupAction() {
       AddImportAction.excludeFromImport(myProject, myToExclude);
+      return Result.HIDE_LOOKUP;
     }
   }
 }

@@ -793,6 +793,11 @@ public class ContainerUtil {
       result.add(element);
     }
   }
+  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable final T element) {
+    if (element != null) {
+      result.add(element);
+    }
+  }
 
   public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
     if (value != null) {

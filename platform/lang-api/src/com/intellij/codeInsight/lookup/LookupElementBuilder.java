@@ -172,7 +172,7 @@ public class LookupElementBuilder extends LookupElement {
                                     myAllLookupStrings, myCaseSensitive);
   }
 
-  public LookupElement setAutoCompletionPolicy(AutoCompletionPolicy policy) {
+  public LookupElement withAutoCompletionPolicy(AutoCompletionPolicy policy) {
     return policy.applyPolicy(this);
   }
 

@@ -44,7 +44,6 @@ import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsert
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -97,20 +96,32 @@ public class GroovyCompletionContributor extends CompletionContributor {
     psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
 
   private static final String[] THIS_SUPER = {"this", "super"};
-  private static final InsertHandler<LookupElement> STATIC_IMPORT_INSERT_HANDLER = new InsertHandler<LookupElement>() {
+  private static final InsertHandler<JavaGlobalMemberLookupElement> STATIC_IMPORT_INSERT_HANDLER = new InsertHandler<JavaGlobalMemberLookupElement>() {
     @Override
-    public void handleInsert(InsertionContext context, LookupElement item) {
+    public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
       new GroovyInsertHandler().handleInsert(context, item);
-      final PsiClass containingClass = ((PsiMethod)item.getObject()).getContainingClass();
-      if (containingClass != null) {
-        PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
-        final GrReferenceExpression ref = PsiTreeUtil
-          .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GrReferenceExpression.class, false);
-        if (ref != null) {
-          ref.bindToElementViaStaticImport(containingClass);
-        }
+      final PsiClass containingClass = item.getContainingClass();
+      PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
+      final GrReferenceExpression ref = PsiTreeUtil
+        .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GrReferenceExpression.class, false);
+      if (ref != null) {
+        ref.bindToElementViaStaticImport(containingClass);
       }
 
+    }
+  };
+  private static final InsertHandler<JavaGlobalMemberLookupElement> QUALIFIED_METHOD_INSERT_HANDLER = new InsertHandler<JavaGlobalMemberLookupElement>() {
+    @Override
+    public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
+      new GroovyInsertHandler().handleInsert(context, item);
+      final PsiClass containingClass = item.getContainingClass();
+      context.getDocument().insertString(context.getStartOffset(), containingClass.getName() + ".");
+      PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
+      final GrReferenceExpression ref = PsiTreeUtil
+        .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GrReferenceExpression.class, false);
+      if (ref != null) {
+        ref.bindToElement(containingClass);
+      }
     }
   };
 
@@ -349,7 +360,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final String s = result.getPrefixMatcher().getPrefix();
         if (StringUtil.isEmpty(s) || !Character.isLowerCase(s.charAt(0))) return;
 
-        JavaGlobalMemberNameCompletionContributor.processStaticMethods(result, position, STATIC_IMPORT_INSERT_HANDLER);
+        JavaGlobalMemberNameCompletionContributor.processStaticMethods(result, position, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER);
       }
     });
   }
@@ -491,22 +502,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
     while (!iterator.atEnd() && GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
       iterator.advance();
     }
-//    if (iterator.atEnd()) return true;
-
-//    return iterator.getTokenType() == GroovyTokenTypes.mASSIGN;
-    return true;
-  }
-
-  private static boolean shouldRunClassNameCompletion(CompletionResultSet result, PsiFile file, PsiElement position) {
-    if (!(file instanceof GroovyFileBase)) {
-      return false;
-    }
-
-    if (!(position.getParent() instanceof GrCodeReferenceElement)) return false;
-    if (((GrCodeReferenceElement)position.getParent()).getQualifier() != null) return false;
-
-    final String s = result.getPrefixMatcher().getPrefix();
-    if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return false;
     return true;
   }
 
