@@ -1736,8 +1736,9 @@ public class StringUtil {
     return EOL_SPLIT_PATTERN.split(string);
   }
 
-  public static List<Pair<String, Integer>> getWordsWithOffset(final String s) {
+  public static List<Pair<String, Integer>> getWordsWithOffset(String s) {
     List<Pair<String, Integer>> res = Lists.newArrayList();
+    s += " ";
     StringBuilder name = new StringBuilder();
     int startInd = -1;
     for (int i = 0; i < s.length(); i++) {
