@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 /**
  * Detects and configures a buildout facet.
  * User: dcheryasov
@@ -27,7 +29,7 @@ public class BuildoutFacetConfigurator implements DirectoryProjectConfigurator {
         final VirtualFile runner = BuildoutFacet.getRunner(baseDir);
         if (runner != null) {
           // TODO parse buildout.cfg and find out the part to use for the default script
-          VirtualFile script = runner.getParent().findChild("buildout-script.py");
+          final File script = BuildoutFacet.findScript(project, null, "buildout");
           if (script != null) {
             final ProjectFacetManager facetManager = ProjectFacetManager.getInstance(module.getProject());
             final BuildoutFacetConfiguration config = facetManager.createDefaultConfiguration(BuildoutFacetType.getInstance());
