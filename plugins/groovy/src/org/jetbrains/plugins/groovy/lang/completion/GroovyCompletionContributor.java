@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -360,7 +361,27 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final String s = result.getPrefixMatcher().getPrefix();
         if (StringUtil.isEmpty(s) || !Character.isLowerCase(s.charAt(0))) return;
 
-        JavaGlobalMemberNameCompletionContributor.processStaticMethods(result, position, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER);
+        final StaticMemberProcessor processor = new StaticMemberProcessor();
+        final PsiFile file = position.getContainingFile();
+        if (file instanceof GroovyFile) {
+          for (GrImportStatement statement : ((GroovyFile)file).getImportStatements()) {
+            if (statement.isStatic()) {
+              GrCodeReferenceElement importReference = statement.getImportReference();
+              if (importReference != null) {
+                if (!statement.isOnDemand()) {
+                  importReference = importReference.getQualifier();
+                }
+                if (importReference != null) {
+                  final PsiElement target = importReference.resolve();
+                  if (target instanceof PsiClass) {
+                    processor.importMembersOf((PsiClass)target);
+                  }
+                }
+              }
+            }
+          }
+        }
+        processor.processStaticMethods(result, position, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER);
       }
     });
   }

@@ -24,11 +24,12 @@ public class JavaGlobalMemberLookupElement extends LookupElement {
   public JavaGlobalMemberLookupElement(PsiMethod method,
                                        PsiClass containingClass,
                                        InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsertion,
-                                       InsertHandler<JavaGlobalMemberLookupElement> importInsertion) {
+                                       InsertHandler<JavaGlobalMemberLookupElement> importInsertion, boolean shouldImport) {
     myMethod = method;
     myContainingClass = containingClass;
     myQualifiedInsertion = qualifiedInsertion;
     myImportInsertion = importInsertion;
+    myShouldImport = shouldImport;
   }
 
   @NotNull

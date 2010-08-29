@@ -137,4 +137,26 @@ Foo.abcmethod(<caret>)"""
 
   }
 
+  public void testQualifiedStaticMethodIfThereAreAlreadyStaticImportsFromThatClass() throws Exception {
+    myFixture.addFileToProject("foo/b.groovy", """package foo
+class Foo {
+  static def abcMethod() {}
+  static def anotherMethod() {}
+}""")
+    myFixture.configureByText("a.groovy", """
+import static foo.Foo.anotherMethod
+
+anotherMethod()
+abcme<caret>x""")
+    assertOneElement myFixture.complete(CompletionType.CLASS_NAME)[0]
+    myFixture.type('\t')
+    myFixture.checkResult """
+import static foo.Foo.anotherMethod
+import static foo.Foo.abcMethod
+
+anotherMethod()
+abcMethod()<caret>"""
+
+  }
+
 }
