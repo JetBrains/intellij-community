@@ -292,6 +292,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @Nullable LookupElement[] complete(CompletionType type);
 
+  @Nullable LookupElement[] complete(CompletionType type, int invocationCount);
+
   void checkResult(final String text);
 
   void checkResult(final String text, boolean stripTrailingSpaces);

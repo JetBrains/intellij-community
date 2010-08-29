@@ -1,13 +1,14 @@
 package com.intellij.codeInsight.completion;
 
+
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -15,35 +16,33 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import java.util.Arrays;
 import java.util.List;
 
-public class NormalCompletionTest extends LightCompletionTestCase {
-
+public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath();
   }
 
-  public void testSimple() throws Exception {                              
+  public void testSimple() throws Exception {
     configureByFile("/codeInsight/completion/normal/Simple.java");
-    assertEquals("_", myPrefix);
-    testByCount(6, "_local2", "_local1", "_field", "_method", "_baseField", "_baseMethod");
+    assertStringItems("_local1", "_local2", "_field", "_method", "_baseField", "_baseMethod");
   }
 
   public void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
-    final String text = CommonClassNames.JAVA_LANG_OBJECT + ".";
-    myFile = getJavaFacade().getElementFactory().createReferenceCodeFragment(text, null, true, true);
-    assertNotNull(myFile);
-    myVFile = myFile.getVirtualFile();
-    myEditor = createEditor(myVFile);
-    myEditor.getCaretModel().moveToOffset(text.length());
+    final String text = CommonClassNames.JAVA_LANG_OBJECT + ".<caret>";
+    PsiFile file = getJavaFacade().getElementFactory().createReferenceCodeFragment(text, null, true, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     complete();
-    assertEquals(text, myEditor.getDocument().getText());
-    assertNull(myItems);
+    myFixture.checkResult(text);
+    assertEmpty(myItems);
+  }
+
+  private JavaPsiFacade getJavaFacade() {
+    return JavaPsiFacade.getInstance(getProject());
   }
 
   public void testCastToPrimitive1() throws Exception {
     configureByFile("/codeInsight/completion/normal/CastToPrimitive1.java");
 
-    assertEquals("", myPrefix);
     for (final LookupElement item : myItems) {
       if (item.getLookupString().equals("int")) return;
     }
@@ -53,7 +52,6 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   public void testCastToPrimitive2() throws Exception {
     configureByFile("/codeInsight/completion/normal/CastToPrimitive2.java");
 
-    assertEquals("", myPrefix);
     for (final LookupElement item : myItems) {
       if (item.getLookupString().equals("int")) return;
     }
@@ -63,7 +61,6 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   public void testCastToPrimitive3() throws Exception {
     configureByFile("/codeInsight/completion/normal/CastToPrimitive3.java");
 
-    assertEquals("", myPrefix);
     for (final LookupElement item : myItems) {
       if (item.getLookupString().equals("int")) return;
     }
@@ -77,7 +74,6 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   public void testQualifiedNew1() throws Exception {
     configureByFile("/codeInsight/completion/normal/QualifiedNew1.java");
 
-    assertEquals("I", myPrefix);
     assertEquals(2, myItems.length);
     assertEquals("IInner", myItems[0].getLookupString());
     assertEquals("Inner", myItems[1].getLookupString());
@@ -86,7 +82,6 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   public void testQualifiedNew2() throws Exception {
     configureByFile("/codeInsight/completion/normal/QualifiedNew2.java");
 
-    assertEquals("", myPrefix);
     assertEquals(2, myItems.length);
     assertEquals("AnInner", myItems[0].getLookupString());
     assertEquals("Inner", myItems[1].getLookupString());
@@ -105,7 +100,6 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   public void testPreferLongerNamesOption() throws Exception {
     configureByFile("/codeInsight/completion/normal/PreferLongerNamesOption.java");
 
-    assertEquals("", myPrefix);
     assertEquals(3, myItems.length);
     assertEquals("abcdEfghIjk", myItems[0].getLookupString());
     assertEquals("efghIjk", myItems[1].getLookupString());
@@ -117,7 +111,6 @@ public class NormalCompletionTest extends LightCompletionTestCase {
     try{
       configureByFile("/codeInsight/completion/normal/PreferLongerNamesOption.java");
 
-      assertEquals("", myPrefix);
       assertEquals(3, myItems.length);
       assertEquals("ijk", myItems[0].getLookupString());
       assertEquals("efghIjk", myItems[1].getLookupString());
@@ -194,7 +187,6 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   public void testObjectsInThrowsBlock() throws Exception {
     configureByFile("/codeInsight/completion/normal/InThrowsCompletion.java");
 
-    assertEquals("", myPrefix);
     Arrays.sort(myItems);
     assertTrue("Exception not found", Arrays.binarySearch(myItems, "C") > 0);
     assertFalse("Found not an Exception", Arrays.binarySearch(myItems, "B") > 0);
@@ -203,7 +195,6 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   public void testAfterInstanceof() throws Exception {
     configureByFile("/codeInsight/completion/normal/AfterInstanceof.java");
 
-    assertEquals("", myPrefix);
     assertNotNull(myItems);
     Arrays.sort(myItems);
     assertTrue("Classes not found after instanceof", Arrays.binarySearch(myItems, "A") >= 0);
@@ -229,7 +220,9 @@ public class NormalCompletionTest extends LightCompletionTestCase {
    public void testMethodCallBeforeAnotherStatementWithParen() throws Exception {
      configureByFile("/codeInsight/completion/normal/MethodLookup2.java");
      checkResultByFile("/codeInsight/completion/normal/MethodLookup2_After.java");
+  }
 
+   public void testMethodCallBeforeAnotherStatementWithParen2() throws Exception {
      CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
      boolean oldvalue = settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE;
      settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
@@ -305,11 +298,21 @@ public class NormalCompletionTest extends LightCompletionTestCase {
       configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
       selectItem(myItems[0], '(');
       checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
+    }
+  }
 
+  public void testMethodWithLeftParTailTypeNoPairBrace2() throws Exception {
+    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
+    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
+
+    try {
       //no tail type should work the normal way
-      configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+      configureByFile("/codeInsight/completion/normal/MethodWithLeftParTailTypeNoPairBrace.java");
       selectItem(myItems[0]);
-      checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after2.java");
+      checkResultByFile("/codeInsight/completion/normal/MethodWithLeftParTailTypeNoPairBrace_after2.java");
     }
     finally {
       CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
@@ -463,7 +466,7 @@ public class NormalCompletionTest extends LightCompletionTestCase {
 
   public void testNoAllClassesOnQualifiedReference() throws Throwable {
     configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    assertNull(myItems);
+    assertEmpty(myItems);
     checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
   }
 
@@ -594,14 +597,13 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   }
 
   public void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
-    configureByFileNoComplete("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    complete(2);
+    myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    myFixture.complete(CompletionType.BASIC, 2);
     checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
   }
 
   public void testPropertyReferencePrefix() throws Throwable {
-    final VirtualFile data = getSourceRoot().createChildData(this, "test.properties");
-    VfsUtil.saveText(data, "foo.bar=Foo! Bar!");
+    myFixture.addFileToProject("test.properties", "foo.bar=Foo! Bar!").getVirtualFile();
 
     configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
@@ -616,7 +618,7 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   private void doAntiTest() throws Exception {
     configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    assertNull(myItems);
+    assertEmpty(myItems);
     assertNull(getLookup());
   }
 
@@ -649,6 +651,5 @@ public class NormalCompletionTest extends LightCompletionTestCase {
     configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     assertStringItems("myField1", "myField2");
   }
-
 
 }
