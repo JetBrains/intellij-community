@@ -11,9 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -50,6 +48,16 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
                        @NotNull final String name,
                        @NotNull final BuildoutFacetConfiguration configuration, Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
+
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      @Override
+      public void contentsChanged(VirtualFileEvent event) {
+        if (event.getFile() == getScript()) {
+          updatePaths();
+          BuildoutConfigurable.attachLibrary(module);
+        }
+      }
+    }, this);
   }
 
   @Nullable
@@ -102,7 +110,15 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
   public void updatePaths() {
     BuildoutFacetConfiguration config = getConfiguration();
-    config.setPaths(extractFromScript(LocalFileSystem.getInstance().findFileByPath(config.getScriptName())));
+    final VirtualFile script = getScript();
+    if (script != null) {
+      config.setPaths(extractFromScript(script));
+    }
+  }
+
+  @Nullable
+  public VirtualFile getScript() {
+    return LocalFileSystem.getInstance().findFileByPath(getConfiguration().getScriptName());
   }
 
   /**
