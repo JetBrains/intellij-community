@@ -42,6 +42,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private ActionListener myClickHandler;
   private boolean myCloseOnClick;
   private int myAnimationCycle = 500;
+  private int myCalloutShift;
 
   public BalloonPopupBuilderImpl(@NotNull final JComponent content) {
     myContent = content;
@@ -104,7 +105,8 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   public Balloon createBalloon() {
-    return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myShowCalllout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick, myAnimationCycle);
+    return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myShowCalllout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick, myAnimationCycle,
+                           myCalloutShift);
   }
 
   @NotNull
@@ -117,6 +119,12 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   public BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick) {
     myClickHandler = listener;
     myCloseOnClick = closeOnClick;
+    return this;
+  }
+
+  @Override
+  public BalloonBuilder setCalloutShift(int length) {
+    myCalloutShift = length;
     return this;
   }
 }

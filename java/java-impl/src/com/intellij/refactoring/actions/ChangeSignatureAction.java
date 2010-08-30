@@ -37,7 +37,7 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
     return elements.length == 1 && (elements[0] instanceof PsiMethod || elements[0] instanceof PsiClass);
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file) {
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
     PsiElement targetMember = findTargetMember(file, editor);
     if (targetMember == null) return false;
     final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(targetMember.getLanguage());

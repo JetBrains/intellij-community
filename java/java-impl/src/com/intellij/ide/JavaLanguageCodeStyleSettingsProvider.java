@@ -15,7 +15,7 @@
  */
 package com.intellij.ide;
 
-import com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;

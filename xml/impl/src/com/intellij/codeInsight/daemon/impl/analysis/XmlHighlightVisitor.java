@@ -124,12 +124,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         if (i != -1) {                              // TODO: fix
           TextRange textRange = token.getTextRange();
           int start = textRange.getStartOffset() + i;
-          addToResults(HighlightInfo.createHighlightInfo(
-            PsiTreeUtil.getParentOfType(token, XmlTag.class) instanceof HtmlTag ? 
-              HighlightInfoType.WARNING:HighlightInfoType.ERROR, 
-            start, start + marker.length(), 
+          HighlightInfoType type = PsiTreeUtil.getParentOfType(token, XmlTag.class) instanceof HtmlTag ?
+                                   HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+          HighlightInfo info = HighlightInfo.createHighlightInfo(
+            type,
+            start, start + marker.length(),
             XmlErrorMessages.message("cdata.end.should.not.appear.in.content.unless.to.mark.end.of.cdata.section")
-          ));
+          );
+          addToResults(info);
         }
       }
     }
@@ -382,8 +384,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private static boolean isInjectedHtmlTagForWhichNoProblemsReporting(HtmlTag tag) {
     PsiElement context = tag.getContainingFile().getContext();
-    if (context != null && skipValidation(context)) return true;
-    return false;
+    return context != null && skipValidation(context);
   }
 
   private static boolean skipValidation(PsiElement context) {
@@ -579,42 +580,40 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       if (reference == null) {
         continue;
       }
-      if (!reference.isSoft()) {
-        if(hasBadResolve(reference)) {
-          String description = getErrorDescription(reference);
+      if(hasBadResolve(reference, false)) {
+        String description = getErrorDescription(reference);
 
-          final int startOffset = reference.getElement().getTextRange().getStartOffset();
-          final TextRange referenceRange = reference.getRangeInElement();
+        final int startOffset = reference.getElement().getTextRange().getStartOffset();
+        final TextRange referenceRange = reference.getRangeInElement();
 
-          // logging for IDEADEV-29655
-          if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
-            LOG.error("Reference range start offset > end offset:  " + reference +
-            ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
-          }
+        // logging for IDEADEV-29655
+        if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
+          LOG.error("Reference range start offset > end offset:  " + reference +
+          ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
+        }
 
-          HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
-          if (value instanceof XmlAttributeValue) {
-            PsiElement parent = value.getParent();
-            if (parent instanceof XmlAttribute) {
-              String name = ((XmlAttribute)parent).getName().toLowerCase();
-              if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
-                type = HighlightInfoType.WARNING;
-              }
-              else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
-                continue;
-              }
+        HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
+        if (value instanceof XmlAttributeValue) {
+          PsiElement parent = value.getParent();
+          if (parent instanceof XmlAttribute) {
+            String name = ((XmlAttribute)parent).getName().toLowerCase();
+            if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
+              type = HighlightInfoType.WARNING;
+            }
+            else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
+              continue;
             }
           }
-          HighlightInfo info = HighlightInfo.createHighlightInfo(
-            type,
-            startOffset + referenceRange.getStartOffset(),
-            startOffset + referenceRange.getEndOffset(),
-            description
-          );
-          addToResults(info);
-          if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
-          UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
         }
+        HighlightInfo info = HighlightInfo.createHighlightInfo(
+          type,
+          startOffset + referenceRange.getStartOffset(),
+          startOffset + referenceRange.getEndOffset(),
+          description
+        );
+        addToResults(info);
+        if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
+        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
       }
     }
   }
@@ -640,7 +639,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return description;
   }
 
-  public static boolean hasBadResolve(final PsiReference reference) {
+  public static boolean hasBadResolve(final PsiReference reference, boolean checkSoft) {
+    if (!checkSoft && reference.isSoft()) return false;
     if (reference instanceof PsiPolyVariantReference) {
       return ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
     }
@@ -664,7 +664,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   public void addMessage(PsiElement context, String message, int type) {
     if (message != null && message.length() > 0) {
       if (context instanceof XmlTag && XmlExtension.getExtension(context.getContainingFile()).shouldBeHighlightedAsTag((XmlTag)context)) {
-        addElementsForTag((XmlTag)context, message, type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO, null);
+        HighlightInfoType infoType = type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO;
+        addElementsForTag((XmlTag)context, message, infoType, null);
       }
       else {
         addToResults(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message));

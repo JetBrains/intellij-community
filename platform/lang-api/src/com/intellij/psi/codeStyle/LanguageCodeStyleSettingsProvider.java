@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle;
+package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +40,19 @@ public abstract class LanguageCodeStyleSettingsProvider {
   public abstract String getCodeSample(@NotNull SettingsType settingsType);
 
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
+  }
+
+  /**
+   * Creates an instance of <code>CommonCodeStyleSettings</code> and sets initial default values for those
+   * settings which differ from the original.
+   *
+   * @param settings Main settings containing the common code style settings.
+   * @return Created instance of <code>CommonCodeStyleSettings</code> or null if associated language doesn't
+   *         use its own language-specific common settings (the settings are shared with other languages).
+   */
+  @Nullable
+  public CommonCodeStyleSettings getDefaultCommonSettings(CodeStyleSettings settings) {
+    return null;
   }
 
   @NotNull

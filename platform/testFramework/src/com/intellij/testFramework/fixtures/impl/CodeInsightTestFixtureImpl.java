@@ -29,7 +29,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -166,6 +166,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
     if (!fromFile.exists()) {
       fromFile = new File(sourceFilePath);
+//      assert fromFile.exists(): "cannot find " + getTestDataPath() + "/" + sourceFilePath;
     }
 
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
@@ -620,7 +621,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public Presentation testAction(AnAction action) {
     DataContext context = DataManager.getInstance().getDataContext(getEditor().getComponent());
     TestActionEvent e = new TestActionEvent(context, action);
-    action.update(e);
+    action.beforeActionPerformedUpdate(e);
     if (e.getPresentation().isVisible() && e.getPresentation().isVisible()) {
       action.actionPerformed(e);
     }
@@ -652,8 +653,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public RangeHighlighter[] testHighlightUsages(final String... files) {
     configureByFiles(files);
+    testAction(new HighlightUsagesAction());
     final Editor editor = getEditor();
-    HighlightUsagesHandler.invoke(getProject(), editor, getFile());
+    //final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+    //assert editor != null;
+    //HighlightUsagesHandler.invoke(getProject(), editor, getFile());
     return editor.getMarkupModel().getAllHighlighters();
   }
 

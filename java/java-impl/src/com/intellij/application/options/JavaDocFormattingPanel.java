@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.application.options.codeStyle.OptionTreeWithPreviewPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;

@@ -49,10 +49,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   /**
    * Holds types of the elements for which <code>'align in column'</code> rule may be preserved.
    *
-   * @see CodeStyleSettings#ALIGN_GROUP_FIELDS_VARIABLES
+   * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
   protected static final Set<IElementType> ALIGN_IN_COLUMNS_ELEMENT_TYPES = Collections.unmodifiableSet(new HashSet<IElementType>(asList(
-    JavaElementType.FIELD, JavaElementType.DECLARATION_STATEMENT, JavaElementType.LOCAL_VARIABLE
+    JavaElementType.FIELD
   )));
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.AbstractJavaBlock");
@@ -60,11 +60,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   /**
    * Shared thread-safe config object to use during <code>'align in column'</code> processing.
    *
-   * @see CodeStyleSettings#ALIGN_GROUP_FIELDS_VARIABLES
+   * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
   private static final AlignmentInColumnsConfig ALIGNMENT_IN_COLUMNS_CONFIG = new AlignmentInColumnsConfig(
     JavaTokenType.IDENTIFIER, ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET, JavaTokenType.EQ,
-    JavaElementType.FIELD, JavaElementType.LOCAL_VARIABLE
+    JavaElementType.FIELD
   );
 
   /**
@@ -874,14 +874,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    *
    * @param child   variable declaration child node which alignment is to be defined
    * @return        alignment to use for the given node
-   * @see CodeStyleSettings#ALIGN_GROUP_FIELDS_VARIABLES
+   * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
   @Nullable
   private Alignment getVariableDeclarationSubElementAlignment(ASTNode child) {
     // The whole idea of variable declarations alignment is that complete declaration blocks which children are to be aligned hold
     // reference to the same AlignmentStrategy object, hence, reuse the same Alignment objects. So, there is no point in checking
     // if it's necessary to align sub-blocks if shared strategy is not defined.
-    if (myAlignmentStrategy == null || !mySettings.ALIGN_GROUP_FIELDS_VARIABLES) {
+    if (myAlignmentStrategy == null || !mySettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
       return null;
     }
 
@@ -1265,7 +1265,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * @return
    */
   protected boolean shouldUseVarDeclarationAlignment(ASTNode node) {
-    return mySettings.ALIGN_GROUP_FIELDS_VARIABLES && ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(node.getElementType())
+    return mySettings.ALIGN_GROUP_FIELD_DECLARATIONS && ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(node.getElementType())
            && !myAlignmentInColumnsHelper.useDifferentVarDeclarationAlignment(node, ALIGNMENT_IN_COLUMNS_CONFIG);
   }
 

@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,10 +60,13 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   @Override
   public int textWidth(@NotNull CharSequence text, int start, int end, int fontType, int x) {
     int startToUse = start;
-    int lastLineFeedIndex = StringUtil.lastIndexOf(text, '\n', start, end);
-    if (lastLineFeedIndex > 0) {
-      startToUse = lastLineFeedIndex + 1;
+    for (int i = end - 1; i >= start; i--) {
+      if (text.charAt(i) == '\n') {
+        startToUse = i + 1;
+        break;
+      }
     }
+
     int result = 0;
 
     // Symbol width retrieval is detected to be a bottleneck, hence, we perform a caching here in assumption that every representation

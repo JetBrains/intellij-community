@@ -33,7 +33,7 @@ public class InvertBooleanAction extends BaseRefactoringAction {
     return elements.length == 1 && (elements[0] instanceof PsiMethod || elements[0] instanceof PsiVariable);
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file) {
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
     if (element instanceof PsiVariable) {
       return PsiType.BOOLEAN.equals(((PsiVariable) element).getType());
     }

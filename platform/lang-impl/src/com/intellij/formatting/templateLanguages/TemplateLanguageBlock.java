@@ -35,7 +35,7 @@ import java.util.List;
  */
 public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent {
   private final TemplateLanguageBlockFactory myBlockFactory;
-  protected final CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
   private List<DataLanguageBlockWrapper> myForeignChildren;
   private boolean myChildrenBuilt = false;
   private BlockWithParent myParent;
@@ -137,6 +137,10 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
 
   protected Alignment createChildAlignment(ASTNode child) {
     return null;
+  }
+
+  public CodeStyleSettings getSettings() {
+    return mySettings;
   }
 }
 

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ComponentPtrDescriptor extends NodeDescriptor{
+final class ComponentPtrDescriptor extends NodeDescriptor<ComponentPtr> {
   private ComponentPtr myPtr;
   /**
    * RadComponent.getBinding() or RadRootContainer.getClassToBind()
@@ -63,7 +63,7 @@ final class ComponentPtrDescriptor extends NodeDescriptor{
     return myPtr != null ? myPtr.getComponent() : null;
   }
 
-  public Object getElement(){
+  public ComponentPtr getElement() {
     return myPtr;
   }
 }

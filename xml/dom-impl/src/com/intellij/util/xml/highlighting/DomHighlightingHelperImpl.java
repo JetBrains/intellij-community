@@ -25,12 +25,14 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -39,7 +41,6 @@ import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.xml.XmlBundle;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,12 +124,12 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         }
       }
       final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
-      final boolean domReferenceResolveOK = domReference != null && !hasBadResolve(element, domReference)
+      final boolean domReferenceResolveOK = domReference != null && !hasBadResolve(domReference)
         || domReference != null && converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants(domReference.getConvertContext()).contains(element.getStringValue());
       boolean hasBadResolve = false;
       if (!domReferenceResolveOK) {
         for (final PsiReference reference : psiReferences) {
-          if (reference != domReference && hasBadResolve(element, reference)) {
+          if (reference != domReference && hasBadResolve(reference)) {
             hasBadResolve = true;
             list.add(holder.createResolveProblem(element, reference));
           }
@@ -136,7 +137,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         final boolean isResolvingConverter = converter instanceof ResolvingConverter;
         if (!hasBadResolve &&
             (domReference != null || isResolvingConverter &&
-                                     hasBadResolve(element, domReference = new GenericDomValueReference(element)))) {
+                                     hasBadResolve(domReference = new GenericDomValueReference(element)))) {
           hasBadResolve = true;
           final String errorMessage = converter
             .getErrorMessage(element.getStringValue(), new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
@@ -176,8 +177,8 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     return Collections.emptyList();
   }
 
-  private static boolean hasBadResolve(GenericDomValue value, PsiReference reference) {
-    return XmlHighlightVisitor.hasBadResolve(reference);
+  private static boolean hasBadResolve(PsiReference reference) {
+    return XmlHighlightVisitor.hasBadResolve(reference, true);
   }
 
   private static boolean isSoftReference(GenericDomValue value) {
@@ -188,9 +189,8 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (convert != null && convert.soft()) return true;
 
     final Referencing referencing = value.getAnnotation(Referencing.class);
-    if (referencing != null && referencing.soft()) return true;
+    return referencing != null && referencing.soft();
 
-    return false;
   }
 
   @Nullable

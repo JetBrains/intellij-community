@@ -81,6 +81,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
       myComboBox.setSelectedIndex(0);
     }
 
+    myComboBox.getEditor().setItem(item);
     myItem = item;
   }
 
@@ -158,6 +159,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
 
     setText(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
     myItem =  createText("");
+    setEnabled(true);
   }
 
   public JComponent getPreferredFocusedComponent() {

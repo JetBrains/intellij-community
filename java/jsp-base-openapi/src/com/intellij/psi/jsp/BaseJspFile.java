@@ -49,5 +49,6 @@ public interface BaseJspFile extends XmlFile {
   @NotNull
   JspxFileViewProvider getViewProvider();
 
+  @NotNull
   XmlTag getRootTag();
 }
