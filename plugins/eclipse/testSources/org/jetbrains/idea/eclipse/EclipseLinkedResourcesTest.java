@@ -20,7 +20,7 @@
  */
 package org.jetbrains.idea.eclipse;
 
-public class EclipseLinkedSrcTest extends EclipseVarsTest{
+public class EclipseLinkedResourcesTest extends EclipseVarsTest{
   @Override
   protected String getRelativeTestPath() {
     return "linked";
@@ -30,7 +30,15 @@ public class EclipseLinkedSrcTest extends EclipseVarsTest{
     EclipseClasspathTest.doTest("/test", getProject());
   }
 
+  public void testResolvedVarsInOutput() throws Exception {
+    EclipseClasspathTest.doTest("/test", getProject());
+  }
+
   public void testResolvedVarsInIml() throws Exception {
+    EclipseImlTest.doTest("/test", getProject());
+  }
+
+  public void testResolvedVarsInOutputImlCheck() throws Exception {
     EclipseImlTest.doTest("/test", getProject());
   }
 }

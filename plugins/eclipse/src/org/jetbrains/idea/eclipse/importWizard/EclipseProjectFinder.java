@@ -106,4 +106,29 @@ public class EclipseProjectFinder implements EclipseXml {
     }
     return independentPath;
   }
+
+  public static String replaceLinkedPathLocationVariable(@NotNull String projectPath, @NotNull String relativePath) {
+    relativePath = FileUtil.toSystemIndependentName(relativePath);
+    String independentPath = extractPathVariableName(relativePath);
+    final File file = new File(projectPath, DOT_PROJECT_EXT);
+    if (file.isFile()) {
+      try {
+        for (Object o : JDOMUtil.loadDocument(file).getRootElement().getChildren(LINKED_RESOURCES)) {
+          for (Object l : ((Element)o).getChildren(LINK)) {
+            if (Comparing.strEqual(((Element)l).getChildText(NAME_TAG), independentPath)) {
+              final Element locationURI = ((Element)l).getChild("locationURI");
+              if (locationURI != null) {
+                String text = FileUtil.toSystemIndependentName(locationURI.getText());
+                return text + (relativePath.length() > independentPath.length() ? relativePath.substring(independentPath.length()) : "");
+              }
+            }
+          }
+        }
+      }
+      catch (Exception e) {
+        return relativePath;
+      }
+    }
+    return relativePath;
+  }
 }

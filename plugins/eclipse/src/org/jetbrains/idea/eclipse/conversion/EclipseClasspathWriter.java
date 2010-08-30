@@ -62,15 +62,18 @@ public class EclipseClasspathWriter {
     }
 
     @NonNls String outputPath = "bin";
-    final VirtualFile contentRoot = EPathUtil.getContentRoot(myModel);
-    final VirtualFile output = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-    if (contentRoot != null && output != null && VfsUtil.isAncestor(contentRoot, output, false)) {
-      outputPath = EPathUtil.collapse2EclipsePath(output.getUrl(), myModel);
-    }
-    else if (output == null) {
-      final String url = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
-      if (url != null) {
-        outputPath = EPathUtil.collapse2EclipsePath(url, myModel);
+    final String compilerOutputUrl = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
+    final String linkedPath = EclipseModuleManager.getInstance(myModel.getModule()).getEclipseLinkedVarPath(compilerOutputUrl);
+    if (linkedPath != null) {
+      outputPath = linkedPath;
+    } else {
+      final VirtualFile contentRoot = EPathUtil.getContentRoot(myModel);
+      final VirtualFile output = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
+      if (contentRoot != null && output != null && VfsUtil.isAncestor(contentRoot, output, false)) {
+        outputPath = EPathUtil.collapse2EclipsePath(output.getUrl(), myModel);
+      }
+      else if (output == null && compilerOutputUrl != null) {
+        outputPath = EPathUtil.collapse2EclipsePath(compilerOutputUrl, myModel);
       }
     }
     final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement);
