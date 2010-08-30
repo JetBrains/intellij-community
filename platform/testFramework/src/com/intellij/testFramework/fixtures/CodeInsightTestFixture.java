@@ -288,10 +288,19 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   PsiManager getPsiManager();
 
+  /**
+   * @return null if the only item was auto-completed
+   */
   @Nullable LookupElement[] completeBasic();
 
+  /**
+   * @return null if the only item was auto-completed
+   */
   @Nullable LookupElement[] complete(CompletionType type);
 
+  /**
+   * @return null if the only item was auto-completed
+   */
   @Nullable LookupElement[] complete(CompletionType type, int invocationCount);
 
   void checkResult(final String text);
@@ -326,6 +335,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   List<String> getCompletionVariants(String... filesBefore);
 
+  /**
+   * @return null if the only item was auto-completed
+   */
   @Nullable
   LookupElement[] getLookupElements();
 
