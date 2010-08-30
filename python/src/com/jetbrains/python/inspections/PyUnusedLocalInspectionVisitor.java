@@ -134,22 +134,17 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
           // Check out of scope resolve elements, processes nested scopes
           if (element instanceof PyReferenceExpression){
-            boolean outOfScope = false;
             for (ResolveResult result : ((PyReferenceExpression)element).getReference().multiResolve(false)) {
               final PsiElement resolveElement = result.getElement();
+              // in case when we resolve out of the scope we still can have imported statements with write accesses inside
               if (resolveElement != null && !PsiTreeUtil.isAncestor(owner, resolveElement, false)){
-                outOfScope = true;
                 myUsedElements.add(element);
                 myUsedElements.add(resolveElement);
                 myUnusedElements.remove(element);
                 myUnusedElements.remove(resolveElement);
               }
             }
-            if (outOfScope){
-              continue;
-            }
           }
-
           ControlFlowUtil
             .iteratePrev(number, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
               public ControlFlowUtil.Operation fun(final Instruction inst) {
