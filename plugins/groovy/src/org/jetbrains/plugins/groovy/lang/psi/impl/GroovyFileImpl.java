@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
@@ -139,14 +138,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     final String expectedName = ResolveUtil.getNameHint(processor);
 
-    PsiScopeProcessor importProcessor = !processClasses || expectedName == null ? processor : new BaseScopeProcessor() {
+    PsiScopeProcessor importProcessor = !processClasses || expectedName == null ? processor : new DelegatingScopeProcessor(processor) {
       public boolean execute(PsiElement element, ResolveState state) {
-        return isImplicitlyImported(element, expectedName) || processor.execute(element, state);
-      }
-
-      @Override
-      public <T> T getHint(Key<T> hintKey) {
-        return processor.getHint(hintKey);
+        return isImplicitlyImported(element, expectedName) || super.execute(element, state);
       }
     };
     for (GrImportStatement importStatement : getImportStatements()) {

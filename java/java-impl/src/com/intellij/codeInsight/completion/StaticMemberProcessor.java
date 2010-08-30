@@ -21,21 +21,15 @@ import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 /**
 * @author peter
 */
-public class StaticMemberProcessor {
+public abstract class StaticMemberProcessor {
   private final Set<PsiClass> myStaticImportedClasses = hashSet();
   private final PsiElement myPosition;
-  private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsert;
-  private final InsertHandler<JavaGlobalMemberLookupElement> myImportInsert;
   private final Project myProject;
   private final PsiResolveHelper myResolveHelper;
   private boolean myHintShown = false;
 
-  public StaticMemberProcessor(final PsiElement position,
-                               final InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsert,
-                               final InsertHandler<JavaGlobalMemberLookupElement> importInsert) {
+  public StaticMemberProcessor(final PsiElement position) {
     myPosition = position;
-    myQualifiedInsert = qualifiedInsert;
-    myImportInsert = importInsert;
     myProject = myPosition.getProject();
     myResolveHelper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
   }
@@ -124,7 +118,5 @@ public class StaticMemberProcessor {
   }
 
   @NotNull
-  protected LookupElement createLookupElement(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport) {
-    return new JavaGlobalMemberLookupElement(method, containingClass, myQualifiedInsert, myImportInsert, shouldImport);
-  }
+  protected abstract LookupElement createLookupElement(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport);
 }

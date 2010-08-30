@@ -48,7 +48,7 @@ public abstract class CompletionResultSet {
     }
   }
 
-  public void addAll(@NotNull final Iterable<LookupElement> elements) {
+  public void addAllElements(@NotNull final Iterable<LookupElement> elements) {
     for (LookupElement element : elements) {
       addElement(element);
     }

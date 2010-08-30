@@ -73,6 +73,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.util.containers.CollectionFactory.hashMap;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces;
 
 /**
@@ -144,11 +145,29 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final PsiElement position = parameters.getPosition();
         final PsiElement reference = position.getParent();
         if (reference instanceof GrReferenceElement) {
+          final Map<PsiMethod, LookupElement> staticMethods = hashMap();
+
           ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
             public void consume(Object element) {
-              result.addElement(element instanceof PsiClass ? AllClassesGetter.createLookupItem((PsiClass)element) : GroovyCompletionUtil.getLookupElement(element));
+              final LookupElement lookupElement = element instanceof PsiClass
+                                                  ? AllClassesGetter.createLookupItem((PsiClass)element)
+                                                  : GroovyCompletionUtil.getLookupElement(element);
+              if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) {
+                staticMethods.put((PsiMethod)element, lookupElement);
+              } else {
+                result.addElement(lookupElement);
+              }
             }
           });
+
+          completeStaticMembers(position).processMethodsOfRegisteredClasses(result.getPrefixMatcher(), new Consumer<LookupElement>() {
+            @Override
+            public void consume(LookupElement element) {
+              result.addElement(element);
+              staticMethods.remove(element.getObject());
+            }
+          });
+          result.addAllElements(staticMethods.values());
         }
       }
     });
@@ -361,29 +380,39 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final String s = result.getPrefixMatcher().getPrefix();
         if (StringUtil.isEmpty(s) || !Character.isLowerCase(s.charAt(0))) return;
 
-        final StaticMemberProcessor processor = new StaticMemberProcessor(position, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER);
-        final PsiFile file = position.getContainingFile();
-        if (file instanceof GroovyFile) {
-          for (GrImportStatement statement : ((GroovyFile)file).getImportStatements()) {
-            if (statement.isStatic()) {
-              GrCodeReferenceElement importReference = statement.getImportReference();
-              if (importReference != null) {
-                if (!statement.isOnDemand()) {
-                  importReference = importReference.getQualifier();
-                }
-                if (importReference != null) {
-                  final PsiElement target = importReference.resolve();
-                  if (target instanceof PsiClass) {
-                    processor.importMembersOf((PsiClass)target);
-                  }
-                }
+        completeStaticMembers(position).processStaticMethodsGlobally(result);
+      }
+    });
+  }
+
+  private static StaticMemberProcessor completeStaticMembers(PsiElement position) {
+    final StaticMemberProcessor processor = new StaticMemberProcessor(position) {
+      @NotNull
+      @Override
+      protected LookupElement createLookupElement(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport) {
+        return new JavaGlobalMemberLookupElement(method, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
+      }
+    };
+    final PsiFile file = position.getContainingFile();
+    if (file instanceof GroovyFile) {
+      for (GrImportStatement statement : ((GroovyFile)file).getImportStatements()) {
+        if (statement.isStatic()) {
+          GrCodeReferenceElement importReference = statement.getImportReference();
+          if (importReference != null) {
+            if (!statement.isOnDemand()) {
+              importReference = importReference.getQualifier();
+            }
+            if (importReference != null) {
+              final PsiElement target = importReference.resolve();
+              if (target instanceof PsiClass) {
+                processor.importMembersOf((PsiClass)target);
               }
             }
           }
         }
-        processor.processStaticMethodsGlobally(result);
       }
-    });
+    }
+    return processor;
   }
 
   private static void addPropertiesForClass(CompletionResultSet result,
