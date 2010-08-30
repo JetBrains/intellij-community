@@ -40,6 +40,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   private Component myCurrentComponent;
   private Balloon myCurrentTip;
+  private MouseEvent myCurrentEvent;
 
   private JBPopupFactory myPopupFactory;
   private JLabel myTipLabel;
@@ -116,40 +117,44 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
   }
 
-  private void maybeShowFor(Component c, MouseEvent e) {
-    String tooltipText = null;
-    boolean toCenter = false;
-    if (c instanceof JComponent) {
-      JComponent jc = (JComponent)c;
-      tooltipText = jc.getToolTipText(e);
-      toCenter = Boolean.TRUE.equals(jc.getClientProperty(UIUtil.CENTER_TOOLTIP));
-    }
+  private void maybeShowFor(Component c, MouseEvent me) {
+    if (!(c instanceof JComponent)) return;
+
+    JComponent comp = (JComponent)c;
+
+    String tooltipText = comp.getToolTipText(me);
+    boolean toCenter = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP));
 
     if (tooltipText == null || tooltipText.trim().length() == 0) return;
 
 
-    queueShow(c, e, tooltipText, toCenter);
+    queueShow(comp, me, toCenter);
   }
 
-  private void queueShow(final Component c, final MouseEvent e, final String tooltipText, final boolean toCenter) {
+  private void queueShow(final JComponent c, MouseEvent me, final boolean toCenter) {
     myShowAlarm.cancelAllRequests();
     hideCurrent();
 
     myCurrentComponent = c;
-    myX = e.getX();
-    myY = e.getY();
+    myCurrentEvent = me;
+    myX = me.getX();
+    myY = me.getY();
     myShowAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        show(c, e, tooltipText, toCenter);
+        show(c, toCenter);
       }
     }, myShowDelay ? 1500 : 900);
   }
 
-  private void show(Component c, MouseEvent e, String tooltipText, boolean toCenter) {
+  private void show(JComponent c, boolean toCenter) {
     if (myCurrentComponent != c || !c.isShowing()) return;
 
-    myTipLabel.setText(tooltipText);
+    String text = c.getToolTipText(myCurrentEvent);
+
+    if (text == null || text.trim().length() == 0) return;
+
+    myTipLabel.setText(text);
 
     boolean useSystem;
 
@@ -172,7 +177,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setFillColor(bg)
       .setBorderColor(border)
       .setAnimationCycle(150)
-      .setShowCallout(true);
+      .setShowCallout(true)
+      .setCalloutShift(0); //todo
     myTipLabel.setForeground(fg);
     myTipLabel.setBorder(new EmptyBorder(1, 3, 2, 3));
     myTipLabel.setFont(UIManager.getFont("ToolTip.font"));
@@ -193,7 +199,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     Point point = new Point(myX, myY);
     if (toCenter) {
-      Rectangle bounds = e.getComponent().getBounds();
+      Rectangle bounds = c.getBounds();
       point.x = toCenterX ? bounds.width / 2 : point.x;
       point.y = toCenterY ? (bounds.height / 2) : point.y;
     }
@@ -214,6 +220,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
     myCurrentTip = null;
     myCurrentComponent = null;
+    myCurrentEvent = null;
     myX = -1;
     myY = -1;
   }

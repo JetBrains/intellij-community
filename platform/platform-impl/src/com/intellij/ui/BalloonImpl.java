@@ -124,6 +124,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   private boolean myFadedIn;
   private boolean myFadedOut;
+  private int myCalloutshift;
 
   private boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
@@ -168,7 +169,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                      boolean hideOnFrameResize,
                      ActionListener clickHandler,
                      boolean closeOnClick,
-                     int animationCycle) {
+                     int animationCycle,
+                     int calloutShift) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
     myContent = content;
@@ -179,6 +181,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myHideOnFrameResize = hideOnFrameResize;
     myClickHandler = clickHandler;
     myCloseOnClick = closeOnClick;
+    myCalloutshift = calloutShift;
 
     myFadeoutTime = fadeoutTime;
     myAnimationCycle = animationCycle;
@@ -326,11 +329,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     Rectangle rec = new Rectangle(new Point(0, 0), size);
 
-    position.setRecToRelativePosition(rec, myTargetPoint);
+    position.setRecToRelativePosition(rec, position.getShiftedPoint(myTargetPoint, myCalloutshift));
 
     if (adjust) {
       rec = myPosition
-        .getUpdatedBounds(myLayeredPane.getSize(), myForcedBounds, rec.getSize(), myShowPointer, myTargetPoint, myContainerInsets);
+        .getUpdatedBounds(myLayeredPane.getSize(), myForcedBounds, rec.getSize(), myShowPointer, myTargetPoint, myContainerInsets, myCalloutshift);
     }
 
     return rec;
@@ -542,21 +545,24 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                                                  balloon.myComp.getPreferredSize(),
                                                  balloon.myShowPointer,
                                                  balloon.myTargetPoint,
-                                                 balloon.myContainerInsets));
+                                                 balloon.myContainerInsets,
+                                                 balloon.myCalloutshift));
     }
 
     public Rectangle getUpdatedBounds(Dimension layeredPaneSize,
                                       Rectangle forcedBounds,
                                       Dimension preferredSize,
                                       boolean showPointer,
-                                      Point targetPoint, Insets containerInsets) {
+                                      Point targetPoint, Insets containerInsets, int calloutShift) {
 
       Rectangle bounds = forcedBounds;
 
+      Point point = showPointer ? getShiftedPoint(targetPoint, calloutShift) : targetPoint;
+
       if (bounds == null) {
         Point location = showPointer
-                         ? getLocation(layeredPaneSize, targetPoint, preferredSize)
-                         : new Point(targetPoint.x - preferredSize.width / 2, targetPoint.y - preferredSize.height / 2);
+                         ? getLocation(layeredPaneSize, point, preferredSize)
+                         : new Point(point.x - preferredSize.width / 2, point.y - preferredSize.height / 2);
         bounds = new Rectangle(location.x, location.y, preferredSize.width, preferredSize.height);
 
         ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), containerInsets);
@@ -631,6 +637,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
       return all;
     }
+
+    public abstract Point getShiftedPoint(Point targetPoint, int shift);
   }
 
   public static final Position BELOW = new Below();
@@ -641,6 +649,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   private static class Below extends Position {
 
+
+    @Override
+    public Point getShiftedPoint(Point targetPoint, int shift) {
+      return new Point(targetPoint.x, targetPoint.y + shift);
+    }
 
     @Override
     protected int getDistanceToTarget(Rectangle rectangle, Point targetPoint) {
@@ -690,6 +703,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   }
 
   private static class Above extends Position {
+
+    @Override
+    public Point getShiftedPoint(Point targetPoint, int shift) {
+      return new Point(targetPoint.x, targetPoint.y - shift);
+    }
 
     @Override
     protected int getDistanceToTarget(Rectangle rectangle, Point targetPoint) {
@@ -744,6 +762,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private static class AtRight extends Position {
 
     @Override
+    public Point getShiftedPoint(Point targetPoint, int shift) {
+      return new Point(targetPoint.x + shift, targetPoint.y);
+    }
+
+    @Override
     protected int getDistanceToTarget(Rectangle rectangle, Point targetPoint) {
       return rectangle.x - targetPoint.x;
     }
@@ -790,6 +813,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   }
 
   private static class AtLeft extends Position {
+
+    @Override
+    public Point getShiftedPoint(Point targetPoint, int shift) {
+      return new Point(targetPoint.x - shift, targetPoint.y);
+    }
 
     @Override
     protected int getDistanceToTarget(Rectangle rectangle, Point targetPoint) {
@@ -1113,7 +1141,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
           //pane.setBorder(new LineBorder(Color.blue));
 
-          balloon.set(new BalloonImpl(new JLabel("f"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 0, true, null, false, 500));
+          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 0, true, null, false, 500, 5));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {

@@ -67,8 +67,6 @@ public class TabLabel extends JPanel {
     setOpaque(false);
     setLayout(new BorderLayout());
 
-    putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
-
     myLabelPlaceholder.setOpaque(false);
     add(myLabelPlaceholder, BorderLayout.CENTER);
 

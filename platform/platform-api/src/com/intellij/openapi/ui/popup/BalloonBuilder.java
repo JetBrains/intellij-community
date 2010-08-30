@@ -61,4 +61,5 @@ public interface BalloonBuilder {
   @NotNull
   BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick);
 
+  BalloonBuilder setCalloutShift(int length);
 }
