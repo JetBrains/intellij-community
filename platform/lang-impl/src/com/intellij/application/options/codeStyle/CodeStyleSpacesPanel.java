@@ -95,6 +95,8 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initCustomOptions(SPACES_BEFORE_KEYWORD);
 
     initBooleanField("SPACE_WITHIN_BRACKETS", ApplicationBundle.message("checkbox.spaces.within.brackets"), SPACES_WITHIN);
+    initBooleanField("SPACE_WITHIN_BRACES", ApplicationBundle.message("checkbox.spaces.within.braces"),
+                     SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_ARRAY_INITIALIZER_BRACES", ApplicationBundle.message("checkbox.spaces.within.array.initializer.braces"),
                      SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_PARENTHESES", ApplicationBundle.message("checkbox.spaces.within.parentheses"), SPACES_WITHIN);
