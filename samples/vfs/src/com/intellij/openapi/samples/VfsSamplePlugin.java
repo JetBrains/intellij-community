@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -60,7 +61,7 @@ public class VfsSamplePlugin implements ProjectComponent {
     // empty
   }
 
-  @NotNull
+ @NotNull
   public String getComponentName() {
     return "VfsSample.VfsSamplePlugin";
   }
@@ -77,10 +78,12 @@ public class VfsSamplePlugin implements ProjectComponent {
   private static void countJavaFiles(VirtualFile virtualFile) {
     VirtualFile[] children = virtualFile.getChildren();
     if (children == null) return;
+
     for (VirtualFile child : children) {
       updateCount(child, +1);
       countJavaFiles(child);
     }
+    
   }
 
   // -------------------------------------------------------------------------
@@ -90,10 +93,14 @@ public class VfsSamplePlugin implements ProjectComponent {
   private static class MyVfsListener extends VirtualFileAdapter {
     public void fileCreated(VirtualFileEvent event) {
       updateCount(event.getFile(), +1);
+        Messages.showMessageDialog("A new Java file added. Now " + String.valueOf(ourJavaFilesCount) +
+                                   " Java files in this project.","Notification", Messages.getInformationIcon() );
     }
 
     public void fileDeleted(VirtualFileEvent event) {
       updateCount(event.getFile(), -1);
+         Messages.showMessageDialog("A Java file deleted. Now " + String.valueOf(ourJavaFilesCount) +
+                                   " Java files in this project.","Notification", Messages.getInformationIcon() );
     }
   }
 }
