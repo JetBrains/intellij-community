@@ -36,7 +36,8 @@ target('default': 'The default target') {
     jvmarg (value: "-XX:+HeapDumpOnOutOfMemoryError")
     jvmarg (value: "-Didea.system.path=${p("teamcity.build.tempDir")}/system")
     jvmarg (value: "-Didea.config.path=${p("teamcity.build.tempDir")}/config")
-    jvmarg (value: "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005")
+    jvmarg (value: "-Xdebug")
+    jvmarg (value: "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005")
 
     if (isDefined("jvm_args")) {
       jvm_args.each { jvmarg(value: it) }

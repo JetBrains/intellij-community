@@ -83,7 +83,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -171,7 +170,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PersistentFS)ManagingFS.getInstance()).cleanPersistedContents();
   }
 
-  private static void initProject(final LightProjectDescriptor descriptor, final UsefulTestCase usefulTestCase) throws Exception {
+  private static void initProject(final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
     final File projectFile = File.createTempFile("lighttemp", ProjectFileType.DOT_DEFAULT_EXTENSION);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -189,7 +188,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
 
-        ourProject = PlatformTestCase.createProject(projectFile, buffer.toString(), usefulTestCase);
+        ourProject = PlatformTestCase.createProject(projectFile, buffer.toString());
 
         if (!ourHaveShutdownHook) {
           ourHaveShutdownHook = true;
@@ -289,8 +288,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void setUp() throws Exception {
     super.setUp();
     initApplication(this);
-    doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools,
-            this);
+    doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools);
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
 
     storeSettings();
@@ -299,14 +297,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doSetup(final LightProjectDescriptor descriptor,
-                             final LocalInspectionTool[] localInspectionTools,
-                             final Map<String, InspectionTool> availableInspectionTools,
-                             UsefulTestCase usefulTestCase) throws Exception {
+                             final LocalInspectionTool[] localInspectionTools, final Map<String, InspectionTool> availableInspectionTools) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overriden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
 
     if (ourProject == null || !ourProjectDescriptor.equals(descriptor)) {
-      initProject(descriptor, usefulTestCase);
+      initProject(descriptor);
     }
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(ourProject);
@@ -465,12 +461,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     if (checkForEditors) {
       checkEditorsReleased();
-    }
-    if (SwingUtilities.isEventDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    else {
-      UIUtil.pump();
     }
   }
 

@@ -70,13 +70,15 @@ public class PsiJavaPatterns extends StandardPatterns{
     });
   }
 
-  public static PsiJavaElementPattern.Capture<PsiNewExpression> psiNewExpression(@NotNull final String fqn) {
+  public static PsiJavaElementPattern.Capture<PsiNewExpression> psiNewExpression(@NotNull final String... fqns) {
     return new PsiJavaElementPattern.Capture<PsiNewExpression>(new InitialPatternCondition<PsiNewExpression>(PsiNewExpression.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if(o instanceof PsiNewExpression) {
           PsiJavaCodeReferenceElement reference = ((PsiNewExpression)o).getClassOrAnonymousClassReference();
           if (reference != null) {
-            return fqn.equals(reference.getQualifiedName());
+            for (String fqn : fqns) {
+              if( fqn.equals(reference.getQualifiedName())) return true;
+            }
           }
         }
         return  false;

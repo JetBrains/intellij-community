@@ -56,7 +56,9 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -66,7 +68,6 @@ import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -179,7 +180,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     File projectFile = getIprFile();
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
-    myProject = createProject(projectFile, getClass().getName() + "." + getName(), this);
+    myProject = createProject(projectFile, getClass().getName() + "." + getName());
 
     setUpModule();
 
@@ -192,21 +193,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @Nullable
-  public static Project createProject(@NotNull File projectFile, @NotNull String creationPlace, @NotNull final UsefulTestCase usefulTestCase) {
+  public static Project createProject(File projectFile, String creationPlace) {
     try {
-      Project project = ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+      Project project =
+        ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
       assert project != null;
 
       project.putUserData(CREATION_PLACE, creationPlace);
-
-
-      PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
-        @Override
-        public void childrenChanged(PsiTreeChangeEvent event) {
-          PsiFile psiFile = event.getFile();
-          usefulTestCase.checkPsiElementsAreStillValid(psiFile);
-        }
-      });
       return project;
     }
     catch (TooManyProjectLeakedException e) {

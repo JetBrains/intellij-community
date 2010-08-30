@@ -39,6 +39,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
 
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
+
+  @Override
+  public CodeStyleSettings getMainSettings() {
+    return this;
+  }
+
   @NonNls private static final String FILETYPE = "fileType";
   private final CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
 
@@ -47,6 +53,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   }
 
   public CodeStyleSettings(boolean loadExtensions) {
+    super(null);
     initTypeToName();
     initImportsByDefault();
 
@@ -616,22 +623,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   //----------------------------------------------------------------------------------------
 
-  //-------------- Annotation formatting settings-------------------------------------------
-
-  public int METHOD_ANNOTATION_WRAP = WRAP_ALWAYS;
-  public int CLASS_ANNOTATION_WRAP = WRAP_ALWAYS;
-  public int FIELD_ANNOTATION_WRAP = WRAP_ALWAYS;
-  public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;
-  public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;
-
-  public boolean SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
-  public boolean SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
-
-  //----------------------------------------------------------------------------------------
-
-
-  //-------------------------Enums----------------------------------------------------------
-  public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
   //----------------------------------------------------------------------------------------
 
   private CodeStyleSettings myParentSettings;
@@ -996,5 +987,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public CommonCodeStyleSettings getCommonSettings(Language lang) {
     return myCommonSettingsManager.getCommonSettings(lang);
+  }
+
+  public CommonCodeStyleSettings createCommonSettings(Language lang) {
+    return new CommonCodeStyleSettings(this);
   }
 }

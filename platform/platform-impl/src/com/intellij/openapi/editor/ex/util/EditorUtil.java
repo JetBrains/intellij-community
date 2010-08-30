@@ -419,15 +419,19 @@ public class EditorUtil {
 
   public static int textWidthInColumns(@NotNull Editor editor, CharSequence text, int start, int end, int x) {
     int startToUse = start;
+    int lastTabSymbolIndex = -1;
 
     // Skip all lines except the last.
-    for (int i = StringUtil.lastIndexOf(text, '\n', startToUse, end); i >= 0; i = StringUtil.lastIndexOf(text, '\n', startToUse, end)) {
-      startToUse = i + 1;
+    loop:
+    for (int i = end - 1; i >= start; i--) {
+      switch (text.charAt(i)) {
+        case '\n': startToUse = i + 1; break loop;
+        case '\t': lastTabSymbolIndex = i;
+      }
     }
 
     // Tabulation is assumed to be the only symbol which representation may take various number of visual columns, hence,
     // we return eagerly if no such symbol is found.
-    int lastTabSymbolIndex = StringUtil.lastIndexOf(text, '\t', startToUse, end);
     if (lastTabSymbolIndex < 0) {
       return end - startToUse;
     }

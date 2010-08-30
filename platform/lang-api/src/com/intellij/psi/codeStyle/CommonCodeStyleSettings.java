@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of <code>CommonCodeStyleSettings</code>.
@@ -22,6 +24,16 @@ package com.intellij.psi.codeStyle;
  * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
+
+  private final CodeStyleSettings myMainSettings;
+
+  CommonCodeStyleSettings(@Nullable CodeStyleSettings mainSettings) {
+    myMainSettings = mainSettings;
+  }
+
+  public CodeStyleSettings getMainSettings() {
+    return myMainSettings;
+  }
 
 //----------------- GENERAL --------------------
 
@@ -41,6 +53,39 @@ public class CommonCodeStyleSettings {
    * Does not control "if (..) { .. }"
    */
   public boolean KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true;
+
+//----------------- BLANK LINES --------------------
+
+  /**
+   * Keep up to this amount of blank lines between declarations
+   */
+  public int KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
+
+  /**
+   * Keep up to this amount of blank lines in code
+   */
+  public int KEEP_BLANK_LINES_IN_CODE = 2;
+
+  public int KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
+
+  public int BLANK_LINES_BEFORE_PACKAGE = 0;
+  public int BLANK_LINES_AFTER_PACKAGE = 1;
+  public int BLANK_LINES_BEFORE_IMPORTS = 1;
+  public int BLANK_LINES_AFTER_IMPORTS = 1;
+
+  public int BLANK_LINES_AROUND_CLASS = 1;
+  public int BLANK_LINES_AROUND_FIELD = 0;
+  public int BLANK_LINES_AROUND_METHOD = 1;
+  public int BLANK_LINES_BEFORE_METHOD_BODY = 0;
+
+  public int BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 0;
+  public int BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 1;
+
+
+  public int BLANK_LINES_AFTER_CLASS_HEADER = 0;
+  public int BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 0;
+  //public int BLANK_LINES_BETWEEN_CASE_BLOCKS;
+
 
 //----------------- BRACES & INDENTS --------------------
 
@@ -196,37 +241,6 @@ public class CommonCodeStyleSettings {
 
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
 
-//----------------- BLANK LINES --------------------
-
-  /**
-   * Keep up to this amount of blank lines between declarations
-   */
-  public int KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
-
-  /**
-   * Keep up to this amount of blank lines in code
-   */
-  public int KEEP_BLANK_LINES_IN_CODE = 2;
-
-  public int KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
-
-  public int BLANK_LINES_BEFORE_PACKAGE = 0;
-  public int BLANK_LINES_AFTER_PACKAGE = 1;
-  public int BLANK_LINES_BEFORE_IMPORTS = 1;
-  public int BLANK_LINES_AFTER_IMPORTS = 1;
-
-  public int BLANK_LINES_AROUND_CLASS = 1;
-  public int BLANK_LINES_AROUND_FIELD = 0;
-  public int BLANK_LINES_AROUND_METHOD = 1;
-  public int BLANK_LINES_BEFORE_METHOD_BODY = 0;
-
-  public int BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 0;
-  public int BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 0;
-
-
-  public int BLANK_LINES_AFTER_CLASS_HEADER = 0;
-  public int BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 0;
-  //public int BLANK_LINES_BETWEEN_CASE_BLOCKS;
 
 //----------------- SPACES --------------------
 
@@ -590,5 +604,23 @@ public class CommonCodeStyleSettings {
   public int DOWHILE_BRACE_FORCE = DO_NOT_FORCE;
   public int WHILE_BRACE_FORCE = DO_NOT_FORCE;
   public int FOR_BRACE_FORCE = DO_NOT_FORCE;
+
+  //-------------- Annotation formatting settings-------------------------------------------
+
+  public int METHOD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  public int CLASS_ANNOTATION_WRAP = WRAP_ALWAYS;
+  public int FIELD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;
+  public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;
+
+  public boolean SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
+  public boolean SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
+
+  //----------------------------------------------------------------------------------------
+
+
+  //-------------------------Enums----------------------------------------------------------
+  public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
+  
 
 }

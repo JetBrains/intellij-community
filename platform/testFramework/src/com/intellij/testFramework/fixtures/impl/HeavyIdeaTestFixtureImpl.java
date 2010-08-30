@@ -133,7 +133,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
-    myProject = PlatformTestCase.createProject(projectFile, buffer.toString(), this);
+    myProject = PlatformTestCase.createProject(projectFile, buffer.toString());
 
     for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().setUp();
