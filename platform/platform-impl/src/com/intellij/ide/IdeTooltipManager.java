@@ -165,7 +165,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     Color bg = useSystem ? UIManager.getColor("ToolTip.background") : new Color(100, 100, 100, 230);
     Color fg = useSystem ? UIManager.getColor("ToolTip.foreground") : Color.white;
-    Color border = useSystem ? Color.darkGray : bg;
+    Color border = useSystem ? Color.darkGray : bg.darker();
 
     BalloonBuilder builder = myPopupFactory.createBalloonBuilder(myTipLabel)
       .setPreferredPosition(Balloon.Position.above)
@@ -175,8 +175,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setShowCallout(true);
     myTipLabel.setForeground(fg);
     myTipLabel.setBorder(new EmptyBorder(1, 3, 2, 3));
-    Font font = UIManager.getFont("Label.font");
-    myTipLabel.setFont(font.deriveFont(Font.PLAIN, font.getSize() - 2));
+    myTipLabel.setFont(UIManager.getFont("ToolTip.font"));
     myCurrentTip = builder.createBalloon();
 
     boolean toCenterX;

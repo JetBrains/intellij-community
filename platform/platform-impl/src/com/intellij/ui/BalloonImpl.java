@@ -483,7 +483,6 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     Toolkit.getDefaultToolkit().removeAWTEventListener(myAwtActivityListener);
     if (myLayeredPane != null) {
       myLayeredPane.removeComponentListener(myComponentListener);
-      myLayeredPane.remove(myCloseRec);
       runAnimation(false, myLayeredPane);
     }
 
@@ -948,10 +947,20 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       }
     }
 
-    @Override
-    protected void paintChildren(Graphics g) {
-      super.paintChildren(g);
 
+    @Override
+    public void removeNotify() {
+      super.removeNotify();
+
+      if (myLayeredPane != null) {
+        final JLayeredPane pane = myLayeredPane;
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            pane.remove(myCloseRec);
+          }
+        });
+      }
     }
 
     public void setAlpha(float alpha) {
@@ -1096,15 +1105,15 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
           balloon.get().dispose();
         }
         else {
-          JLabel pane1 = new JLabel("Hello, world!");
-          JLabel pane2 = new JLabel("Hello, again");
-          JPanel pane = new JPanel(new BorderLayout());
-          pane.add(pane1, BorderLayout.CENTER);
-          pane.add(pane2, BorderLayout.SOUTH);
+          //JLabel pane1 = new JLabel("Hello, world!");
+          //JLabel pane2 = new JLabel("Hello, again");
+          //JPanel pane = new JPanel(new BorderLayout());
+          //pane.add(pane1, BorderLayout.CENTER);
+          //pane.add(pane2, BorderLayout.SOUTH);
 
-          pane.setBorder(new LineBorder(Color.blue));
+          //pane.setBorder(new LineBorder(Color.blue));
 
-          balloon.set(new BalloonImpl(pane, Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, false, 0, true, null, false, 500));
+          balloon.set(new BalloonImpl(new JLabel("f"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 0, true, null, false, 500));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {
