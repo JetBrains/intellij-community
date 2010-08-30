@@ -31,9 +31,9 @@ import java.util.Map;
 public class CommonCodeStyleSettingsManager {
 
   private Map<Language, CommonCodeStyleSettings> myCommonSettingsMap;
-  private final CommonCodeStyleSettings myParentSettings;
+  private final CodeStyleSettings myParentSettings;
 
-  public CommonCodeStyleSettingsManager(CommonCodeStyleSettings parentSettings) {
+  public CommonCodeStyleSettingsManager(CodeStyleSettings parentSettings) {
     myParentSettings = parentSettings;
   }
 
@@ -60,7 +60,7 @@ public class CommonCodeStyleSettingsManager {
     final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME);
     for (final LanguageCodeStyleSettingsProvider provider : providers) {
       if (!myCommonSettingsMap.containsKey(provider.getLanguage())) {
-        CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings();
+        CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings(myParentSettings);
         if (initialSettings != null) {
           registerCommonSettings(provider.getLanguage(), initialSettings);
         }
