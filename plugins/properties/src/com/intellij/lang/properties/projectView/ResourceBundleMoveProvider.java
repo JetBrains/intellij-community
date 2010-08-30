@@ -17,16 +17,11 @@ package com.intellij.lang.properties.projectView;
 
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -38,30 +33,16 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
 
   @Override
   public boolean canMove(DataContext dataContext) {
-    final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
-    return bundles != null;
+    return ResourceBundle.ARRAY_DATA_KEY.getData(dataContext) != null;
   }
 
   @Override
-  public void doMove(Project project, PsiElement[] elements, DataContext dataContext) {
-    final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();
-    for (PsiElement element : elements) {
-      final PsiFile file = element.getContainingFile();
-      if (file != null) {
-        filesOrDirs.add(file);
-      } else if (element instanceof PsiDirectory) {
-        filesOrDirs.add(element);
-      }
-    }
+  public void collectFilesOrDirsFromContext(DataContext dataContext, Set<PsiElement> filesOrDirs) {
 
     final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
     LOG.assertTrue(bundles != null);
     for (ResourceBundle bundle : bundles) {
-      filesOrDirs.addAll(bundle.getPropertiesFiles(project));
+      filesOrDirs.addAll(bundle.getPropertiesFiles(PlatformDataKeys.PROJECT.getData(dataContext)));
     }
-
-    final PsiElement initialTargetElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
-    MoveFilesOrDirectoriesUtil
-      .doMove(project, filesOrDirs.toArray(new PsiElement[filesOrDirs.size()]), new PsiElement[]{initialTargetElement}, null);
   }
 }

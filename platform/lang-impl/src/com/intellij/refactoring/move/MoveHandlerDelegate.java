@@ -24,6 +24,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 /**
  * @author yole
  */
@@ -56,6 +58,6 @@ public abstract class MoveHandlerDelegate {
     return false;
   }
 
-  public void doMove(Project project, PsiElement[] elements, DataContext dataContext){
+  public void collectFilesOrDirsFromContext(DataContext dataContext, Set<PsiElement> filesOrDirs){
   }
 }

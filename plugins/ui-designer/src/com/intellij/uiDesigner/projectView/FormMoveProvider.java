@@ -17,17 +17,12 @@
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -43,18 +38,7 @@ public class FormMoveProvider extends MoveHandlerDelegate {
   }
 
   @Override
-  public void doMove(Project project, PsiElement[] elements, DataContext dataContext) {
-    final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();
-    for (PsiElement element : elements) {
-      if (element instanceof PsiDirectory) {
-        filesOrDirs.add(element);
-      } else {
-        final PsiFile containingFile = element.getContainingFile();
-        if (containingFile != null) {
-          filesOrDirs.add(containingFile);
-        }
-      }
-    }
+  public void collectFilesOrDirsFromContext(DataContext dataContext, Set<PsiElement> filesOrDirs) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     LOG.assertTrue(forms != null);
     PsiClass[] classesToMove = new PsiClass[forms.length];
@@ -69,10 +53,6 @@ public class FormMoveProvider extends MoveHandlerDelegate {
         filesOrDirs.add(filesToMove[i]);
       }
     }
-
-    final PsiElement initialTargetElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
-    MoveFilesOrDirectoriesUtil
-      .doMove(project, filesOrDirs.toArray(new PsiElement[filesOrDirs.size()]), new PsiElement[]{initialTargetElement}, null);
   }
 
 }
