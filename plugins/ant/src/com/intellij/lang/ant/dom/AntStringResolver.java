@@ -29,14 +29,22 @@ import java.util.Map;
  */
 public class AntStringResolver extends PropertyProviderFinder{
   private final PropertyExpander myExpander;
+  private final boolean mySkipCustomTags;
 
   private AntStringResolver(DomElement contextElement, PropertyExpander expander) {
     super(contextElement);
     myExpander = expander;
+    mySkipCustomTags = CustomAntElementsRegistry.ourIsBuildingClasspathForCustomTagLoading.get();
   }
 
   private static final Key<Map<String, String>> RESOLVED_STRINGS_MAP_KEY = new Key<Map<String, String>>("_ant_resolved_strings_cache_");
-  
+
+  public void visitAntDomCustomElement(AntDomCustomElement custom) {
+    if (!mySkipCustomTags) {
+      super.visitAntDomCustomElement(custom);
+    }
+  }
+
   @NotNull
   public static String computeString(@NotNull DomElement context, @NotNull String valueString) {
     PropertyExpander expander = new PropertyExpander(valueString);

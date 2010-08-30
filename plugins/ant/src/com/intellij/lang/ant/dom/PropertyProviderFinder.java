@@ -163,7 +163,8 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
     if (!myStopped) {
       //super.visitAntDomElement(element);
-      for (AntDomElement child : element.getAntChildren()) {
+      for (Iterator<AntDomElement> iterator = element.getAntChildrenIterator(); iterator.hasNext();) {
+        AntDomElement child = iterator.next();
         child.accept(this);
         if (myStage == Stage.TARGETS_WALKUP_STAGE) {
           if (myStopped) {
