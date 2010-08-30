@@ -33,7 +33,7 @@ public class ConvertToInstanceMethodAction extends BaseRefactoringAction {
     return elements.length == 1 && elements[0] instanceof PsiMethod;
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, final Editor editor, PsiFile file) {
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, final Editor editor, PsiFile file, DataContext context) {
     if (element instanceof PsiIdentifier) element = element.getParent();
     return element instanceof PsiMethod && ((PsiMethod) element).hasModifierProperty(PsiModifier.STATIC);
   }

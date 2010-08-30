@@ -45,7 +45,7 @@ public class SafeDeleteAction extends BaseRefactoringAction {
     return true;
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file) {
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
     return SafeDeleteProcessor.validElement(element);
   }
 
