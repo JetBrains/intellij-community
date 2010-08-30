@@ -27,7 +27,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
@@ -234,16 +233,34 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           PyNamedParameter namedParameter = element instanceof PyNamedParameter
                                             ? (PyNamedParameter) element
                                             : (PyNamedParameter) element.getParent();
-          name = namedParameter.getName();
-          // Ignore unused self or cls parameters
-          if (("self".equals(name) || "cls".equals(name)) && PyPsiUtils.isMethodContext(element)) {
-            continue;
-          }
-          // cls for @classmethod decorated methods
-          if ("cls".equals(name)) {
-            final Set<PyFunction.Flag> flagSet = PyUtil.detectDecorationsAndWrappersOf(PsiTreeUtil.getParentOfType(element, PyFunction.class));
-            if (flagSet.contains(PyFunction.Flag.CLASSMETHOD)) {
-              continue;
+          if (((PyParameterList)namedParameter.getParent()).getParameters()[0] == namedParameter){
+            final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+            if (function != null){
+              final PyClass clazzz = PsiTreeUtil.getParentOfType(function, PyClass.class);
+              if (clazzz != null) {
+                // Ignore unused self
+                if ("self".equals(name)) {
+                  continue;
+                }
+                if ("cls".equals(name)) {
+                  // cls for @classmethod decorated methods
+                  final Set<PyFunction.Flag> flagSet = PyUtil.detectDecorationsAndWrappersOf(function);
+                  if (flagSet.contains(PyFunction.Flag.CLASSMETHOD)) {
+                    continue;
+                  }
+                  // Check for metaclass
+                  boolean metaClass = false;
+                  for (PyClass superClass : clazzz.getSuperClasses()) {
+                    if ("Type".equals(superClass.getName())){
+                      metaClass = true;
+                      break;
+                    }
+                  }
+                  if (metaClass) {
+                    continue;
+                  }
+                }
+              }
             }
           }
           boolean isInitMethod = false;
