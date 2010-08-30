@@ -60,5 +60,9 @@ public abstract class Ring<T extends Comparable<T>> {
     public int size() {
       return myNextAvailable - myFreeNumbers.size();
     }
+
+    public boolean isNumUsed(final int num) {
+      return (num < myNextAvailable) && (! myFreeNumbers.contains(num));
+    }
   }
 }
