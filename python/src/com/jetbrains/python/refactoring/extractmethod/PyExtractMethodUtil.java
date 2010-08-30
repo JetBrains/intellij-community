@@ -198,15 +198,15 @@ public class PyExtractMethodUtil {
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
-              if (fragment.isReturnInstructionInside()) {
-                builder.append("return ");
-              }
+              builder.append("return ");
               if (isMethod){
                 appendSelf(expression, builder);
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
-              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyElement.class, builder.toString());
+              final PyReturnStatement returnStatement =
+                (PyReturnStatement) PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyElement.class, builder.toString());
+              PsiElement callElement = fragment.isReturnInstructionInside() ? returnStatement : returnStatement.getExpression();
 
               // replace statements with call
               callElement = PyPsiUtils.replaceExpression(project, expression, callElement);

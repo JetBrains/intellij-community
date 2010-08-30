@@ -133,4 +133,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("conditionalreturn.before.py", "bar", "Cannot perform refactoring when execution flow is interrupted");
   }
 
+  public void testReturnTuple() throws Throwable {
+    doTest("return_tuple.before.py", "bar", "return_tuple.after.py");
+  }
+
 }
