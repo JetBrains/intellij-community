@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -49,7 +50,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n";
   private Helper myHelper;
   private int currentPythonIndentSize;
-  private int myCurrentIndentSize;
+  private int myCurrentIndentSize = -1;
+  private StringBuilder myInputBuffer;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -142,10 +144,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     // Make executed statements visible to developers
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     PyConsoleHighlightingUtil.processOutput(console, PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
-    sendInput(PYTHON_ENV_COMMAND);
+    processInput(PYTHON_ENV_COMMAND);
     for (String statement : statements2execute) {
       PyConsoleHighlightingUtil.processOutput(console, statement + "\n", ProcessOutputTypes.SYSTEM);
-      sendInput(statement+"\n");
+      processInput(statement+"\n");
     }
   }
 
@@ -179,38 +181,54 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   @Override
-  public void sendInput(final String input) {
+  public void processInput(final String input) {
+    final LanguageConsoleImpl console = myConsoleView.getConsole();
+    final Editor currentEditor = console.getCurrentEditor();
+
+
+    if (myInputBuffer == null){
+      myInputBuffer = new StringBuilder();
+    }
+    myInputBuffer.append(input).append("\n");
+
+    if (myCurrentIndentSize != -1) {
+      final int indent = myHelper.getIndent(input, false);
+      if (indent >= myCurrentIndentSize) {
+        indentEditor(currentEditor, indent);
+        scrollDown(currentEditor);
+        return;
+      }
+    }
+
     if (myPydevConsoleCommunication != null){
       final boolean waitedForInputBefore = myPydevConsoleCommunication.waitingForInput;
-      myPydevConsoleCommunication.execInterpreter(input, new ICallback<Object, InterpreterResponse>() {
+      myPydevConsoleCommunication.execInterpreter(myInputBuffer.toString(), new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
-          final LanguageConsoleImpl console = myConsoleView.getConsole();
-          final Editor currentEditor = console.getCurrentEditor();
+          // clear
+          myInputBuffer = null;
           // Handle prompt
           if (interpreterResponse.need_input){
             if (!PyConsoleHighlightingUtil.INPUT_PROMPT.equals(console.getPrompt())){
               console.setPrompt(PyConsoleHighlightingUtil.INPUT_PROMPT);
-              currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
+              scrollDown(currentEditor);
             }
+            myCurrentIndentSize = -1;
           }
           else if (interpreterResponse.more) {
             if (!PyConsoleHighlightingUtil.INDENT_PROMPT.equals(console.getPrompt())){
               console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
-              currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
+              scrollDown(currentEditor);
+              // compute current indentation
               myCurrentIndentSize = myHelper.getIndent(input, false) + currentPythonIndentSize;
+              // In this case we can insert indent automatically
+              indentEditor(currentEditor, myCurrentIndentSize);
             }
-            // In this case we can insert indent automatically
-            new WriteCommandAction(myProject) {
-              @Override
-              protected void run(Result result) throws Throwable {
-                EditorModificationUtil.insertStringAtCaret(console.getConsoleEditor(), myHelper.fillIndent(myCurrentIndentSize));
-              }
-            }.execute();
           } else {
             if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())){
               console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
-              currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
+              scrollDown(currentEditor);
             }
+            myCurrentIndentSize = -1;
           }
 
           // Handle output
@@ -224,10 +242,28 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       });
       // After requesting input we got no call back to change prompt, change it manually
       if (waitedForInputBefore && !myPydevConsoleCommunication.waitingForInput){
-        final LanguageConsoleImpl console = myConsoleView.getConsole();
         console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+        scrollDown(currentEditor);
       }
     }
+  }
+
+  private void indentEditor(final Editor editor, final int indentSize) {
+    new WriteCommandAction(myProject) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        EditorModificationUtil.insertStringAtCaret(editor, myHelper.fillIndent(indentSize));
+      }
+    }.execute();
+  }
+
+  private void scrollDown(final Editor currentEditor) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
+      }
+    });
   }
 
   public static boolean isInPydevConsole(final PsiElement element){
