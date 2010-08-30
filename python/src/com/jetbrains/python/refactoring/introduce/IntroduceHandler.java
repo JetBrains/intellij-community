@@ -183,7 +183,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (!checkIntroduceContext(file, editor, elementAtCaret)) return true;
     final List<PyExpression> expressions = new ArrayList<PyExpression>();
     while (elementAtCaret != null) {
-      if (elementAtCaret instanceof PyStatement) {
+      if (elementAtCaret instanceof PyStatement || elementAtCaret instanceof PyFile) {
         break;
       }
       if (elementAtCaret instanceof PyExpression && isValidIntroduceVariant(elementAtCaret)) {
