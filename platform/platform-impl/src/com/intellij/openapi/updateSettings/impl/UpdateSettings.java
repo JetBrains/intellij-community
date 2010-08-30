@@ -47,7 +47,6 @@ public class UpdateSettings implements PersistentStateComponent<Element> {
   public JDOMExternalizableStringList myKnownUpdateChannels = new JDOMExternalizableStringList();
 
   public boolean CHECK_NEEDED = true;
-  public String CHECK_PERIOD = UpdateSettingsConfigurable.WEEKLY;
   public long LAST_TIME_CHECKED = 0;
 
   public static UpdateSettings getInstance() {
@@ -72,9 +71,5 @@ public class UpdateSettings implements PersistentStateComponent<Element> {
     catch (InvalidDataException e) {
       LOG.info(e);
     }
-  }
-  
-  public boolean isUpdateOnExit() {
-    return UpdateSettingsConfigurable.ON_EXIT.equals(CHECK_PERIOD);
   }
 }
