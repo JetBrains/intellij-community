@@ -1,6 +1,6 @@
 package com.jetbrains.python.configuration;
 
-import com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
