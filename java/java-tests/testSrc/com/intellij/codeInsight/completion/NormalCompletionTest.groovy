@@ -1,20 +1,17 @@
 package com.intellij.codeInsight.completion;
 
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-
-import java.util.Arrays;
-import java.util.List;
+import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -282,11 +279,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testMethodWithLeftParTailType() throws Exception {
     configureByFile("MethodWithLeftParTailType.java");
-    selectItem(myItems[0], '(');
+    type('(');
     checkResultByFile("MethodWithLeftParTailType_after.java");
 
     configureByFile("MethodWithLeftParTailType2.java");
-    selectItem(myItems[0], '(');
+    type('(');
     checkResultByFile("MethodWithLeftParTailType2_after.java");
   }
 
@@ -296,7 +293,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
     try {
       configureByFile(getTestName(false) + ".java");
-      selectItem(myItems[0], '(');
+      type('(');
       checkResultByFile(getTestName(false) + "_after.java");
     }
     finally {
@@ -371,7 +368,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testFinishWithDot() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    selectItem(myItems[0], '.');
+    type('.');
     checkResultByFile(getTestName(false) + "_after.java");
   }
 
@@ -650,6 +647,33 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testRightShift() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     assertStringItems("myField1", "myField2");
+  }
+
+  public void testSuggestMembersOfStaticallyImportedClasses() throws Exception {
+    myFixture.addClass("""package foo;
+    public class Foo {
+      public static void foo() {}
+      public static void bar() {}
+    }
+    """)
+    myFixture.configureByText("a.java", """
+    import static foo.Foo.foo;
+
+    class Bar {{
+      foo();
+      ba<caret>
+    }}
+    """)
+    complete()
+    myFixture.checkResult """
+    import static foo.Foo.bar;
+    import static foo.Foo.foo;
+
+    class Bar {{
+      foo();
+      bar();<caret>
+    }}
+    """
   }
 
 }

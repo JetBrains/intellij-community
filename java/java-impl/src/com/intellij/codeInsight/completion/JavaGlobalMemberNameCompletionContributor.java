@@ -1,8 +1,12 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -13,6 +17,9 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
     @Override
     public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
       PsiMethodInsertHandler.INSTANCE.handleInsert(context, item);
+      if (item.getObject().getReturnType() == PsiType.VOID) {
+        TailType.SEMICOLON.processTail(context.getEditor(), context.getTailOffset());
+      }
       final PsiClass containingClass = item.getContainingClass();
       PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
       final PsiReferenceExpression ref = PsiTreeUtil
@@ -26,6 +33,9 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
     @Override
     public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
       PsiMethodInsertHandler.INSTANCE.handleInsert(context, item);
+      if (item.getObject().getReturnType() == PsiType.VOID) {
+        TailType.SEMICOLON.processTail(context.getEditor(), context.getTailOffset());
+      }
       context.getDocument().insertString(context.getStartOffset(), ".");
       JavaCompletionUtil.insertClassReference(item.getContainingClass(), context.getFile(), context.getStartOffset());
     }
@@ -53,18 +63,34 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
       return;
     }
 
-    final StaticMemberProcessor processor = new StaticMemberProcessor();
-    final PsiFile file = position.getContainingFile();
-    if (file instanceof PsiJavaFile) {
-      final PsiImportList importList = ((PsiJavaFile)file).getImportList();
-      if (importList != null) {
-        for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
-          processor.importMembersOf(statement.resolveTargetClass());
+    completeStaticMembers(position).processStaticMethodsGlobally(result);
+  }
+
+  public static StaticMemberProcessor completeStaticMembers(final PsiElement position) {
+    final StaticMemberProcessor processor = new StaticMemberProcessor(position, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_METHOD_INSERT_HANDLER) {
+      @NotNull
+      @Override
+      protected LookupElement createLookupElement(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport) {
+        final JavaMethodCallElement element = new JavaMethodCallElement(method, true);
+        element.setShouldBeImported(shouldImport);
+        return element;
+      }
+    };
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final PsiFile file = position.getContainingFile();
+        if (file instanceof PsiJavaFile) {
+          final PsiImportList importList = ((PsiJavaFile)file).getImportList();
+          if (importList != null) {
+            for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+              processor.importMembersOf(statement.resolveTargetClass());
+            }
+          }
         }
       }
-    }
+    });
 
-    processor.processStaticMethods(result, position, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_METHOD_INSERT_HANDLER);
+    return processor;
   }
 
 }

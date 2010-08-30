@@ -15,17 +15,18 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.TestLookupManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.StaticallyImportable
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.TestLookupManager
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.completion.JavaGlobalMemberLookupElement;
 
 /**
  * @author Maxim.Medvedev
@@ -116,7 +117,7 @@ class Foo {
 }""")
     myFixture.configureByText("a.groovy", "abcme<caret>")
     def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
-    ((JavaGlobalMemberLookupElement) item).shouldImport = true
+    ((StaticallyImportable) item).shouldBeImported = true
     myFixture.type('\n')
     myFixture.checkResult """import static Foo.abcmethod1
 

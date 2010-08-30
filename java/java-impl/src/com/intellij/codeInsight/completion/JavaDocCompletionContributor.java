@@ -82,7 +82,13 @@ public class JavaDocCompletionContributor extends CompletionContributor {
           ((PsiJavaReference) ref).processVariants(processor);
 
           for (final CompletionElement _item : processor.getResults()) {
-            LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(_item.getElement());
+            final Object element = _item.getElement();
+            LookupItem item = element instanceof PsiMethod ? new JavaMethodCallElement((PsiMethod)element) {
+              @Override
+              public void handleInsert(InsertionContext context) {
+                new MethodSignatureInsertHandler().handleInsert(context, this);
+              }
+            } : (LookupItem)LookupItemUtil.objectToLookupItem(element);
             if (onlyConstants) {
               Object o = item.getObject();
               if (!(o instanceof PsiField)) continue;
@@ -95,7 +101,6 @@ public class JavaDocCompletionContributor extends CompletionContributor {
             if (isArg) {
               item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
             }
-            item.setInsertHandler(new MethodSignatureInsertHandler());
             result.addElement(item);
           }
         }

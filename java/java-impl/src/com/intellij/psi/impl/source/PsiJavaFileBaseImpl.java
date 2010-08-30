@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -309,15 +310,16 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       if(rootPackage != null) rootPackage.processDeclarations(processor, state, null, place);
     }
 
-    // todo[dsl] class processing
     final PsiImportList importList = getImportList();
     final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
     if (importStaticStatements.length > 0) {
       final StaticImportFilteringProcessor staticImportProcessor = new StaticImportFilteringProcessor(processor, null);
 
+      boolean forCompletion = name == null && processor.getHint(JavaCompletionProcessor.NAME_FILTER) != null;
+
       // single member processing
       for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
-        if (!importStaticStatement.isOnDemand()) {
+        if (!importStaticStatement.isOnDemand() && !forCompletion) {
           final String referenceName = importStaticStatement.getReferenceName();
           final PsiClass targetElement = importStaticStatement.resolveTargetClass();
           if (targetElement != null) {

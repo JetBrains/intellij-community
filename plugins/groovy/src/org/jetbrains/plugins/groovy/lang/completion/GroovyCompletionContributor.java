@@ -361,7 +361,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final String s = result.getPrefixMatcher().getPrefix();
         if (StringUtil.isEmpty(s) || !Character.isLowerCase(s.charAt(0))) return;
 
-        final StaticMemberProcessor processor = new StaticMemberProcessor();
+        final StaticMemberProcessor processor = new StaticMemberProcessor(position, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER);
         final PsiFile file = position.getContainingFile();
         if (file instanceof GroovyFile) {
           for (GrImportStatement statement : ((GroovyFile)file).getImportStatements()) {
@@ -381,7 +381,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
             }
           }
         }
-        processor.processStaticMethods(result, position, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER);
+        processor.processStaticMethodsGlobally(result);
       }
     });
   }

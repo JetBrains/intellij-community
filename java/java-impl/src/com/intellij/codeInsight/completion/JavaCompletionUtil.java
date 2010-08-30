@@ -59,6 +59,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -885,6 +886,13 @@ public class JavaCompletionUtil {
         set.add(mayHighlight ? highlightIfNeeded(qualifierType, item) : item);
       }
     }
+
+    JavaGlobalMemberNameCompletionContributor.completeStaticMembers(element).processMethodsOfRegisteredClasses(matcher, new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement element) {
+        set.add(element);
+      }
+    });
 
     return set;
   }

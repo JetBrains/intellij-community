@@ -103,7 +103,7 @@ class Bar {{ abcmethod1()<caret> }}"""
 
     def item = assertOneElement(myFixture.complete(CompletionType.CLASS_NAME))
     if (importStatic) {
-      item.'as'(JavaGlobalMemberLookupElement).shouldImport = true
+      item.'as'(StaticallyImportable).shouldBeImported = true
     }
     myFixture.type('\n')
     myFixture.checkResult output
