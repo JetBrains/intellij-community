@@ -168,6 +168,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
                               e.getPresentation(), e.getActionManager(), e.getModifiers());
           try {
             myPydevConsoleCommunication.close();
+            // waiting for REPL communication before destroying process handler
+            Thread.sleep(300);
           }
           catch (Exception e1) {
             // Ignore
