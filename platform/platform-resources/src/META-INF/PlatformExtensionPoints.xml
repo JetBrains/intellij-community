@@ -60,7 +60,7 @@
                   interface="com.intellij.projectImport.ProjectOpenProcessor"/>
 
   <extensionPoint name="codeInsight.linkHandler"
-                  interface="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
+                  beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
 
   <extensionPoint name="directoryProjectConfigurator"
                   interface="com.intellij.platform.DirectoryProjectConfigurator"/>

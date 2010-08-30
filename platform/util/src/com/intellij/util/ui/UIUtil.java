@@ -721,6 +721,20 @@ public class UIUtil {
     }
   }
 
+  public static void drawSearchMatch(final Graphics2D g,
+                                        final int startX,
+                                        final int endX,
+                                        final int height) {
+    g.setColor(new Color(100, 100, 100, 50));
+    g.fillRoundRect(startX - 2, 2, endX - startX + 4, height - 4, 4, 4);
+
+    g.setPaint(new GradientPaint(startX, 2, new Color(255, 234, 162), startX, height - 5, new Color(255, 208, 66)));
+    g.fillRoundRect(startX - 2, 2, endX - startX + 3, height - 5, 6, 6);
+
+    g.setColor(new Color(170, 170, 170, 200));
+    g.drawRoundRect(startX - 2, 2, endX - startX + 3, height - 5, 4, 4);
+  }
+
   private static void drawBoringDottedLine(final Graphics2D g,
                                            final int startX,
                                            final int endX,

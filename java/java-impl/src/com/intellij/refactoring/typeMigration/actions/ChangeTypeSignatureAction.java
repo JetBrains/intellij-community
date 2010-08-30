@@ -34,7 +34,7 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
     return true;
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file) {
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
     final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.getParentOfType(psiElement, PsiReferenceParameterList.class);
     if (referenceParameterList != null) {

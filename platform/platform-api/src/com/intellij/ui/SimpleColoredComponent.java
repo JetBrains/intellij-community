@@ -31,6 +31,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -284,8 +285,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
     for (int i = 0; i < myAttributes.size(); i++) {
       SimpleTextAttributes attributes = myAttributes.get(i);
-      if (font.getStyle() != attributes.getStyle()) { // derive font only if it is necessary
-        font = font.deriveFont(attributes.getStyle());
+      if (font.getStyle() != attributes.getFontStyle()) { // derive font only if it is necessary
+        font = font.deriveFont(attributes.getFontStyle());
       }
       final FontMetrics metrics = getFontMetrics(font);
       width += metrics.stringWidth(myFragments.get(i));
@@ -332,8 +333,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
     for (int i = 0; i < myAttributes.size(); i++) {
       SimpleTextAttributes attributes = myAttributes.get(i);
-      if (font.getStyle() != attributes.getStyle()) { // derive font only if it is necessary
-        font = font.deriveFont(attributes.getStyle());
+      if (font.getStyle() != attributes.getFontStyle()) { // derive font only if it is necessary
+        font = font.deriveFont(attributes.getFontStyle());
       }
       final FontMetrics metrics = getFontMetrics(font);
       final int curWidth = metrics.stringWidth(myFragments.get(i));
@@ -401,16 +402,18 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     int textStart = xOffset;
     xOffset += myBorder.getBorderInsets(this).left;
 
+    final List<Object[]> searchMatches = new ArrayList<Object[]>();
+
     // Paint text
     UIUtil.applyRenderingHints(g);
     for (int i = 0; i < myFragments.size(); i++) {
       final SimpleTextAttributes attributes = myAttributes.get(i);
-      Font font = getFont();
-      if (font.getStyle() != attributes.getStyle()) { // derive font only if it is necessary
-        font = font.deriveFont(attributes.getStyle());
+      Font font = g.getFont();
+      if (font.getStyle() != attributes.getFontStyle()) { // derive font only if it is necessary
+        font = font.deriveFont(attributes.getFontStyle());
       }
       g.setFont(font);
-      final FontMetrics metrics = getFontMetrics(font);
+      final FontMetrics metrics = g.getFontMetrics(font);
 
       final String fragment = myFragments.get(i);
       final int fragmentWidth = metrics.stringWidth(fragment);
@@ -431,7 +434,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       g.setColor(color);
 
       final int textBaseline = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
-      g.drawString(fragment, xOffset, textBaseline);
+
+      if (!attributes.isSearchMatch()) g.drawString(fragment, xOffset, textBaseline);
 
       // 1. Strikeout effect
       if (attributes.isStrikeout()) {
@@ -461,6 +465,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
         UIUtil.drawBoldDottedLine((Graphics2D)g, xOffset, xOffset + fragmentWidth, dottedAt, bgColor, lineColor, isOpaque());
       }
 
+      if (attributes.isSearchMatch()) {
+        searchMatches.add(new Object[] {xOffset, xOffset + fragmentWidth, textBaseline, fragment, g.getFont()});
+      }
+
       final Integer fixedWidth = myAligns.get(i);
       if (fixedWidth != null && fragmentWidth < fixedWidth.intValue()) {
       //if (fixedWidth != null) {
@@ -478,6 +486,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       else {
         myBorder.paintBorder(this, g, textStart, 0, getWidth() - textStart, getHeight());
       }
+    }
+
+    // draw search matches after all
+    for (final Object[] info: searchMatches) {
+      UIUtil.drawSearchMatch((Graphics2D)g, (Integer) info[0], (Integer) info[1], getHeight());
+      g.setFont((Font) info[4]);
+      g.setColor(new Color(50, 50, 50));
+      g.drawString((String) info[3], (Integer) info[0], (Integer) info[2]);
     }
   }
 

@@ -233,8 +233,6 @@
     <syntaxHighlighter key="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="GUI_DESIGNER_FORM" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
 
-    <psi.includeHandler implementation="com.intellij.xml.util.XmlIncludeHandler"/>
-
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.EnterBetweenXmlTagsHandler" id="xmlEnter"/>
 
     <declarationRangeHandler key="com.intellij.psi.xml.XmlTag"

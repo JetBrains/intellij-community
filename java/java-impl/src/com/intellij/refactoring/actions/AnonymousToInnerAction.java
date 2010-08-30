@@ -34,7 +34,7 @@ public class AnonymousToInnerAction extends BaseRefactoringAction {
     return false;
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file) {
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
     final PsiElement targetElement = file.findElementAt(editor.getCaretModel().getOffset());
     if (PsiTreeUtil.getParentOfType(targetElement, PsiAnonymousClass.class) != null) {
       return true;

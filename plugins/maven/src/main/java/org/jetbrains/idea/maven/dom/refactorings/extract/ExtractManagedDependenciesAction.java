@@ -72,8 +72,8 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file) {
-    if (!super.isAvailableOnElementInEditorAndFile(element, editor, file)) return false;
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+    if (!super.isAvailableOnElementInEditorAndFile(element, editor, file, context)) return false;
     return findDependencyAndParent(file, editor) != null;
   }
 
