@@ -166,7 +166,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
     if (!fromFile.exists()) {
       fromFile = new File(sourceFilePath);
-      assert fromFile.exists(): "cannot find " + getTestDataPath() + "/" + sourceFilePath;
+//      assert fromFile.exists(): "cannot find " + getTestDataPath() + "/" + sourceFilePath;
     }
 
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
