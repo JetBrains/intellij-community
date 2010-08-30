@@ -61,6 +61,9 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
     assertOrderedEquals(myFixture.getLookupElementStrings(), items);
   }
 
+  protected void type(String s) {
+    myFixture.type(s);
+  }
   protected void type(char c) {
     myFixture.type(c);
   }
