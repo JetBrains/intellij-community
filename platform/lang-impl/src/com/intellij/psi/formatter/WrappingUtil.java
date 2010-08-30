@@ -19,6 +19,7 @@ import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 
 /**
@@ -51,7 +52,7 @@ public class WrappingUtil {
     }
   }
 
-  public static WrapType getArrayInitializerWrapType(CodeStyleSettings settings,
+  public static WrapType getArrayInitializerWrapType(CommonCodeStyleSettings settings,
                                                      ASTNode node,
                                                      IElementType lBraceType,
                                                      IElementType rBraceType) {

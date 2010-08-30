@@ -431,7 +431,7 @@
 
   <extensionPoint name="filePropertyPusher" interface="com.intellij.openapi.roots.impl.FilePropertyPusher"/>
 
-  <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider"/>
+  <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider"/>
 
   <extensionPoint name="semContributor"
                   interface="com.intellij.semantic.SemContributor" area="IDEA_PROJECT"/>

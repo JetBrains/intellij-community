@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   private static final String[] FULL_WRAP_OPTIONS = new String[] {

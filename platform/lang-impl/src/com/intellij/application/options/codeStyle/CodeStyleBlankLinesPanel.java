@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.OptionGroup;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
