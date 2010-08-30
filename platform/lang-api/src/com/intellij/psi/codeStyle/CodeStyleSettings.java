@@ -434,12 +434,10 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 //----------------- Group alignments ---------------
 
   /**
-   * Specifies if subsequent fields/variables declarations and initialisations should be aligned in columns like below:
+   * Specifies if subsequent fields declarations and initialisations should be aligned in columns like below:
    *     int start = 1;
    *     int end   = 10;
    */
-  public boolean ALIGN_GROUP_FIELDS_VARIABLES = false;
-
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
 
 //----------------- BLANK LINES --------------------

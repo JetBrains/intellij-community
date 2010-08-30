@@ -48,13 +48,14 @@ class WhiteSpace {
   private static final char LINE_FEED = '\n';
 
   private final int myStart;
-  private int myEnd;
+  private       int myEnd;
 
   private int mySpaces;
   private int myIndentSpaces;
 
   private CharSequence myInitial;
-  private int myFlags;
+  private int          myFlags;
+  private boolean      myForceSkipTabulationsUsage;
 
   private static final byte FIRST = 1;
   private static final byte SAFE = 0x2;
@@ -238,7 +239,7 @@ class WhiteSpace {
    *                    {@link WhiteSpace} object
    */
   public String generateWhiteSpace(CodeStyleSettings.IndentOptions options) {
-    return new IndentInfo(getLineFeeds(), myIndentSpaces, mySpaces).generateNewWhiteSpace(options);
+    return new IndentInfo(getLineFeeds(), myIndentSpaces, mySpaces, myForceSkipTabulationsUsage).generateNewWhiteSpace(options);
   }
 
   /**
@@ -399,6 +400,28 @@ class WhiteSpace {
       }
     });
 
+  }
+
+  /**
+   * There is a possible case that particular indent info is applied to the code block that is not the first block on a line.
+   * E.g. we may want to align field name during <code>'align fields in columns'</code> processing:
+   *     <pre>
+   *         public class Test {
+   *             private Object o;
+   *             private int {@code <white space to align>}i;
+   *         }
+   *     </pre>
+   * We may not want to use tabulation characters then even if user configured
+   * {@link CodeStyleSettings.IndentOptions#USE_TAB_CHARACTER their usage} because we can't be sure how many visual columns
+   * will be used for tab representation if there are non-white space symbols before it (IJ editor may use different number of columns
+   * for single tabulation symbol representation).
+   * <p/>
+   * Hence, we can ask current white space object to avoid using tabulation symbols.
+   *
+   * @param skip   indicates if tabulations symbols usage should be suppressed
+   */
+  public void setForceSkipTabulationsUsage(boolean skip) {
+    myForceSkipTabulationsUsage = skip;
   }
 
   /**

@@ -17,36 +17,34 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 public class IndentInfo {
+
   private final int mySpaces;
   private final int myIndentSpaces;
   private final int myLineFeeds;
-  private boolean myIsChanged = true;
-  private TextRange myInitialTextRange;
+
+  /** @see WhiteSpace#setForceSkipTabulationsUsage(boolean)  */
+  private boolean   myForceSkipTabulationsUsage;
 
   public IndentInfo(final int lineFeeds, final int indentSpaces, final int spaces) {
+    this(lineFeeds, indentSpaces, spaces, false);
+  }
+
+  public IndentInfo(final int lineFeeds, final int indentSpaces, final int spaces, final boolean forceSkipTabulationsUsage) {
     mySpaces = spaces;
     myIndentSpaces = indentSpaces;
     myLineFeeds = lineFeeds;
+    myForceSkipTabulationsUsage = forceSkipTabulationsUsage;
   }
 
   public int getSpaces() {
     return mySpaces;
   }
 
-  public void setInitialTextRange(final TextRange initialTextRange) {
-    myInitialTextRange = initialTextRange;
-  }
-
   public int getIndentSpaces() {
     return myIndentSpaces;
-  }
-
-  public int getLineFeeds() {
-    return myLineFeeds;
   }
 
   /**
@@ -58,7 +56,7 @@ public class IndentInfo {
     StringBuffer buffer = new StringBuffer();
     StringUtil.repeatSymbol(buffer, '\n', myLineFeeds);
 
-    if (options.USE_TAB_CHARACTER) {
+    if (options.USE_TAB_CHARACTER && !myForceSkipTabulationsUsage) {
       if (options.SMART_TABS) {
         int tabCount = myIndentSpaces / options.TAB_SIZE;
         int leftSpaces = myIndentSpaces - tabCount * options.TAB_SIZE;
@@ -89,27 +87,5 @@ public class IndentInfo {
 
   public int getTotalSpaces() {
     return myIndentSpaces + mySpaces;
-  }
-
-  public int getIndentCount(final CodeStyleSettings.IndentOptions indentOptions) {
-    return myIndentSpaces/indentOptions.INDENT_SIZE;
-  }
-
-  public int getSpacesCount(final CodeStyleSettings.IndentOptions indentOptions) {
-    final int indentSpaces = getIndentCount(indentOptions);
-    return myIndentSpaces - indentSpaces * indentOptions.INDENT_SIZE + mySpaces;
-
-  }
-
-  public boolean isChanged() {
-    return myIsChanged;
-  }
-
-  public void setIsChanged(final boolean value) {
-    myIsChanged = value;
-  }
-
-  public TextRange getInitialTextRange() {
-    return myInitialTextRange;
   }
 }

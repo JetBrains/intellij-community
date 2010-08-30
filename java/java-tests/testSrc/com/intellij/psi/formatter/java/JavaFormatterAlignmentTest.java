@@ -150,9 +150,9 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doMethodTest(method, method);
   }
 
-  public void testVariableDeclarationAlignment() {
+  public void testFieldInColumnsAlignment() {
     // Inspired by IDEA-55147
-    getSettings().ALIGN_GROUP_FIELDS_VARIABLES = true;
+    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
     getSettings().FIELD_ANNOTATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
     getSettings().VARIABLE_ANNOTATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
 
@@ -179,15 +179,6 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "    private transient int iiii5 = 1;\n" +
       "    /*sdf*/\n" +
       "    @MyAnnotation(value = 1, text = 2) float f5 = 1;\n" +
-      "\n" +
-      "    public void foo() {\n" +
-      "        int start = 1;\n" +
-      "        int start2 = 1;\n" +
-      "        @NotNull int end = 2;\n" +
-      "        @NotNull long longValue = 1;\n" +
-      "        Serializable serializable;\n" +
-      "        Object o;\n" +
-      "    }\n" +
       "}",
 
       "public class FormattingTest {\n" +
@@ -212,15 +203,26 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "    private transient                  int    iiii5 = 1;\n" +
       "    /*sdf*/\n" +
       "    @MyAnnotation(value = 1, text = 2) float  f5    = 1;\n" +
-      "\n" +
-      "    public void foo() {\n" +
-      "        int start = 1;\n" +
-      "        int start2 = 1;\n" +
-      "        @NotNull int end = 2;\n" +
-      "        @NotNull long longValue = 1;\n" +
-      "        Serializable serializable;\n" +
-      "        Object o;\n" +
-      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testTabsAndFieldsInColumnsAlignment() throws Exception {
+    // Inspired by IDEA-56242
+    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    getIndentOptions().USE_TAB_CHARACTER = true;
+
+    doTextTest(
+      "public class Test {\n" +
+        "\tprivate Long field2 = null;\n" +
+        "\tprivate final Object field1 = null;\n" +
+        "\tprivate int i = 1;\n" +
+      "}",
+
+      "public class Test {\n" +
+        "\tprivate       Long   field2 = null;\n" +
+        "\tprivate final Object field1 = null;\n" +
+        "\tprivate       int    i      = 1;\n" +
       "}"
     );
   }
