@@ -218,11 +218,11 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
   }
 
-  public void sendInput(final String input) {
+  public void processInput(final String input) {
     final Charset charset = myProcessHandler.getCharset();
     final OutputStream outputStream = myProcessHandler.getProcessInput();
     try {
-      byte[] bytes = input.getBytes(charset.name());
+      byte[] bytes = (input + "\n").getBytes(charset.name());
       outputStream.write(bytes);
       outputStream.flush();
     }
@@ -248,8 +248,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
       myHistory.addToHistory(line);
     }
     // Send to interpreter / server
-    final String text2send = line.length() == 0 ? "\n\n" : line + "\n";
-    sendInput(text2send);
+    processInput(line);
   }
 
   protected static String getProviderCommandLine(final CommandLineArgumentsProvider provider) {
