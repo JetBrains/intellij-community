@@ -19,8 +19,6 @@ public class OpenFileInBrowserAction extends DumbAwareAction {
 
     if (file != null) {
       presentation.setVisible(true);
-      presentation.setText(XmlBundle.message("action.OpenInBrowser.text"));
-      presentation.setDescription(XmlBundle.message("action.open.file.in.browser.description"));
 
       final WebBrowserUrlProvider browserUrlProvider = WebBrowserUrlProviders.getProvider(file);
       presentation.setEnabled(browserUrlProvider != null);
