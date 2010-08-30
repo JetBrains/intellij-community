@@ -16,10 +16,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.project.Project;
@@ -36,6 +33,12 @@ import com.intellij.reference.SoftReference;
  * To change this template use Options | File Templates.
  */
 public abstract class CachedEvaluator {
+  private final CodeFragmentFactory myDefaultFragmentFactory;
+
+  public CachedEvaluator() {
+    myDefaultFragmentFactory = new CodeFragmentFactoryContextWrapper(DefaultCodeFragmentFactory.getInstance());
+  }
+
   private static class Cache {
     protected ExpressionEvaluator myEvaluator;
     protected EvaluateException   myException;
@@ -69,7 +72,7 @@ public abstract class CachedEvaluator {
       }
       final PsiType contextType = DebuggerUtils.getType(getClassName(), project);
       cache.myPsiChildrenExpression = null;
-      JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(myReferenceExpression, contextClass, project);
+      JavaCodeFragment codeFragment = myDefaultFragmentFactory.createCodeFragment(myReferenceExpression, contextClass, project);
       codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
       codeFragment.setThisType(contextType);
       DebuggerUtils.checkSyntax(codeFragment);

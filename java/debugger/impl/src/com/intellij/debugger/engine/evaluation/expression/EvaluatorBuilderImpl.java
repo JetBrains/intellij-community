@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -48,8 +49,10 @@ import java.util.Set;
 
 public class EvaluatorBuilderImpl implements EvaluatorBuilder {
   private static final EvaluatorBuilderImpl ourInstance = new EvaluatorBuilderImpl();
+  private final CodeFragmentFactory myCodeFactory;
 
   private EvaluatorBuilderImpl() {
+    myCodeFactory = new CodeFragmentFactoryContextWrapper(DefaultCodeFragmentFactory.getInstance());
   }
 
   public static EvaluatorBuilder getInstance() {
@@ -63,7 +66,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     final Project project = contextElement.getProject();
 
-    PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(text, contextElement, project);
+    PsiCodeFragment codeFragment = myCodeFactory.createCodeFragment(text, contextElement, project);
     if(codeFragment == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", text.getText()));
     }
@@ -569,6 +572,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiElement element = expression.resolve();
 
       if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+        final Value labeledValue = element.getUserData(CodeFragmentFactoryContextWrapper.LABEL_VARIABLE_VALUE_KEY);
+        if (labeledValue != null) {
+          myResult = new IdentityEvaluator(labeledValue);
+          return;
+        }
         //synthetic variable
         final PsiFile containingFile = element.getContainingFile();
         if(containingFile instanceof PsiCodeFragment && myCurrentFragmentEvaluator != null && myVisitedFragments.contains(((PsiCodeFragment)containingFile))) {
