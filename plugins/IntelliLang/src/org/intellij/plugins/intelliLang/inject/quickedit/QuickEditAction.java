@@ -17,6 +17,7 @@ package org.intellij.plugins.intelliLang.inject.quickedit;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -158,13 +159,14 @@ public class QuickEditAction implements IntentionAction {
       myOrigDocument = origDocument;
       final Place shreds = InjectedLanguageUtil.getShreds(myInjectedFile);
       final FileType fileType = injectedFile.getFileType();
+      final Language language = injectedFile.getLanguage();
 
       final PsiFileFactory factory = PsiFileFactory.getInstance(project);
       final String text = InjectedLanguageManager.getInstance(project).getUnescapedText(injectedFile);
       final String newFileName =
-        StringUtil.notNullize(((LanguageFileType)fileType).getLanguage().getDisplayName(), "Injected") + " Fragment " + "(" +
+        StringUtil.notNullize(language.getDisplayName(), "Injected") + " Fragment " + "(" +
         origFile.getName() + ":" + shreds.get(0).host.getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
-      myNewFile = factory.createFileFromText(newFileName, fileType, text, LocalTimeCounter.currentTime(), true);
+      myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
       myNewVirtualFile = (LightVirtualFile)myNewFile.getVirtualFile();
       assert myNewVirtualFile != null;
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
