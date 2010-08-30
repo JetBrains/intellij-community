@@ -26,6 +26,7 @@ public class BuildoutFacetConfigurator implements DirectoryProjectConfigurator {
     if (modules.length > 0) {
       final Module module = modules[0];
       if (BuildoutFacet.getInstance(module) == null) {
+        baseDir.refresh(false, false);
         final VirtualFile runner = BuildoutFacet.getRunner(baseDir);
         if (runner != null) {
           // TODO parse buildout.cfg and find out the part to use for the default script

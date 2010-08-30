@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
 public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");
-  @NonNls private static final String BUILDOUT_CFG = "buildout.cfg";
+  @NonNls public static final String BUILDOUT_CFG = "buildout.cfg";
 
   public BuildoutFacet(@NotNull final FacetType facetType,
                        @NotNull final Module module,
@@ -69,6 +69,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       if (eggs != null && eggs.isDirectory()) {
         VirtualFile bin = baseDir.findChild("bin");
         if (bin != null && bin.isDirectory()) {
+          bin.refresh(false, false);
           final String exe;
           if (SystemInfo.isWindows || SystemInfo.isOS2) {
             exe = "buildout.exe";
