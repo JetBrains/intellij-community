@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
+ *
+ * @deprecated use {@link com.intellij.psi.impl.include.FileIncludeManager} instead
  */
 public interface PsiIncludeManager {
   ExtensionPointName<PsiIncludeHandler> EP_NAME = new ExtensionPointName<PsiIncludeHandler>("com.intellij.psi.includeHandler");
