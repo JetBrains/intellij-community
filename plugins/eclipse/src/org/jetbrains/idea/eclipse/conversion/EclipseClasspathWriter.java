@@ -34,6 +34,7 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -77,20 +78,24 @@ public class EclipseClasspathWriter {
   }
 
   private void createClasspathEntry(OrderEntry entry, Element classpathRoot) throws ConversionException {
+    final EclipseModuleManager eclipseModuleManager = EclipseModuleManager.getInstance(entry.getOwnerModule());
     if (entry instanceof ModuleSourceOrderEntry) {
-      final ModuleRootModel rootModel = ((ModuleSourceOrderEntry)entry).getRootModel();
-      final ContentEntry[] entries = rootModel.getContentEntries();
+      final boolean shouldPlaceSeparately =
+        eclipseModuleManager.isExpectedModuleSourcePlace(Arrays.binarySearch(myModel.getOrderEntries(), entry));
+      final ContentEntry[] entries = myModel.getContentEntries();
       for (final ContentEntry contentEntry : entries) {
         final VirtualFile contentRoot = contentEntry.getFile();
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-          String relativePath = EPathUtil.collapse2EclipsePath(sourceFolder.getUrl(), myModel);
-          if (contentRoot != EPathUtil.getContentRoot(rootModel)) {
-            final String linkedPath = EclipseModuleManager.getInstance(entry.getOwnerModule()).getEclipseLinkedSrcVariablePath(sourceFolder.getUrl());
+          final String srcUrl = sourceFolder.getUrl();
+          String relativePath = EPathUtil.collapse2EclipsePath(srcUrl, myModel);
+          if (contentRoot != EPathUtil.getContentRoot(myModel)) {
+            final String linkedPath = EclipseModuleManager.getInstance(entry.getOwnerModule()).getEclipseLinkedSrcVariablePath(srcUrl);
             if (linkedPath != null) {
               relativePath = linkedPath;
             }
           }
-          addOrderEntry(EclipseXml.SRC_KIND, relativePath, classpathRoot);
+          final Integer idx = eclipseModuleManager.getSrcPlace(srcUrl);
+          addOrderEntry(EclipseXml.SRC_KIND, relativePath, classpathRoot, shouldPlaceSeparately && idx != null ? idx.intValue() : -1);
         }
       }
     }
@@ -102,7 +107,6 @@ public class EclipseClasspathWriter {
     else if (entry instanceof LibraryOrderEntry) {
       final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
       final String libraryName = libraryOrderEntry.getLibraryName();
-      final EclipseModuleManager eclipseModuleManager = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule());
       if (libraryOrderEntry.isModuleLevel()) {
         final String[] files = libraryOrderEntry.getRootUrls(OrderRootType.CLASSES);
         if (files.length > 0) {
@@ -207,10 +211,18 @@ public class EclipseClasspathWriter {
   }
 
   private Element addOrderEntry(String kind, String path, Element classpathRoot) {
+    return addOrderEntry(kind, path, classpathRoot, -1);
+  }
+
+  private Element addOrderEntry(String kind, String path, Element classpathRoot, int idx) {
     final Element element = myOldEntries.get(kind + getJREKey(path));
     if (element != null){
       final Element clonedElement = (Element)element.clone();
-      classpathRoot.addContent(clonedElement);
+      if (idx == -1) {
+        classpathRoot.addContent(clonedElement);
+      } else {
+        classpathRoot.addContent(idx, clonedElement);
+      }
       return clonedElement;
     }
     Element orderEntry = new Element(EclipseXml.CLASSPATHENTRY_TAG);
@@ -218,7 +230,11 @@ public class EclipseClasspathWriter {
     if (path != null) {
       orderEntry.setAttribute(EclipseXml.PATH_ATTR, path);
     }
-    classpathRoot.addContent(orderEntry);
+    if (idx == -1) {
+      classpathRoot.addContent(orderEntry);
+    } else {
+      classpathRoot.addContent(idx, orderEntry);
+    }
     return orderEntry;
   }
 

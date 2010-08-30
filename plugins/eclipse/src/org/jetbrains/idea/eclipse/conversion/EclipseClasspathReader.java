@@ -104,9 +104,10 @@ public class EclipseClasspathReader {
         model.removeOrderEntry(orderEntry);
       }
     }
+    int idx = 0;
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
-        readClasspathEntry(model, unknownLibraries, unknownJdks, usedVariables, refsToModules, testPattern, (Element)o);
+        readClasspathEntry(model, unknownLibraries, unknownJdks, usedVariables, refsToModules, testPattern, (Element)o, idx++);
       }
       catch (ConversionException e) {
         ErrorLog.rethrow(ErrorLog.Level.Warning, null, EclipseXml.CLASSPATH_FILE, e);
@@ -124,7 +125,7 @@ public class EclipseClasspathReader {
                                   final Set<String> usedVariables,
                                   Set<String> refsToModules,
                                   final String testPattern,
-                                  Element element) throws ConversionException {
+                                  Element element, int idx) throws ConversionException {
     String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
     if (kind == null) {
       throw new ConversionException("Missing classpathentry/@kind");
@@ -161,7 +162,8 @@ public class EclipseClasspathReader {
         } else {
           getContentEntry().addSourceFolder(srcUrl, isTestFolder);
         }
-        rearrangeOrderEntryOfType(rootModel, ModuleSourceOrderEntry.class);
+        eclipseModuleManager.setExpectedModuleSourcePlace(rearrangeOrderEntryOfType(rootModel, ModuleSourceOrderEntry.class));
+        eclipseModuleManager.registerSrcPlace(srcUrl, idx);
       }
     }
 
@@ -257,7 +259,7 @@ public class EclipseClasspathReader {
     }
   }
 
-  private static void rearrangeOrderEntryOfType(ModifiableRootModel rootModel, Class<? extends OrderEntry> orderEntryClass) {
+  private static int rearrangeOrderEntryOfType(ModifiableRootModel rootModel, Class<? extends OrderEntry> orderEntryClass) {
     OrderEntry[] orderEntries = rootModel.getOrderEntries();
     int moduleSourcesIdx = 0;
     for (OrderEntry orderEntry : orderEntries) {
@@ -267,7 +269,9 @@ public class EclipseClasspathReader {
       moduleSourcesIdx++;
     }
     orderEntries = ArrayUtil.append(orderEntries, orderEntries[moduleSourcesIdx]);
-    rootModel.rearrangeOrderEntries(ArrayUtil.remove(orderEntries, moduleSourcesIdx));
+    orderEntries = ArrayUtil.remove(orderEntries, moduleSourcesIdx);
+    rootModel.rearrangeOrderEntries(orderEntries);
+    return orderEntries.length - 1;
   }
 
   public static void setupOutput(ModifiableRootModel rootModel, final String path) {
