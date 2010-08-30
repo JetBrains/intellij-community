@@ -124,11 +124,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
         ContainerUtil.findInstance(nameCondition.getNamePattern().getCondition().getConditions(), ValuePatternCondition.class);
       if (valueCondition != null) {
         final Collection<String> strings = valueCondition.getValues();
-        registerNamedReferenceProvider(ArrayUtil.toStringArray(strings), new NamedObjectProviderBinding() {
-          protected String getName(final PsiElement position) {
-            return nameCondition.getPropertyValue(position);
-          }
-        }, scope, true, provider, priority, pattern);
+        registerNamedReferenceProvider(ArrayUtil.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern);
         return;
       }
 
@@ -136,12 +132,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
         ContainerUtil
           .findInstance(nameCondition.getNamePattern().getCondition().getConditions(), CaseInsensitiveValuePatternCondition.class);
       if (ciCondition != null) {
-        registerNamedReferenceProvider(ciCondition.getValues(), new NamedObjectProviderBinding() {
-          @Nullable
-          protected String getName(final PsiElement position) {
-            return nameCondition.getPropertyValue(position);
-          }
-        }, scope, false, provider, priority, pattern);
+        registerNamedReferenceProvider(ciCondition.getValues(), nameCondition, scope, false, provider, priority, pattern);
         return;
       }
     }
@@ -179,14 +170,18 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
   }
 
 
-  private void registerNamedReferenceProvider(final String[] names, final NamedObjectProviderBinding binding,
+  private void registerNamedReferenceProvider(final String[] names, final PsiNamePatternCondition<?> nameCondition,
                                               final Class scopeClass,
                                               final boolean caseSensitive,
                                               final PsiReferenceProvider provider, final double priority, final ElementPattern pattern) {
     NamedObjectProviderBinding providerBinding = myNamedBindingsMap.get(scopeClass);
 
     if (providerBinding == null) {
-      providerBinding = ConcurrencyUtil.cacheOrGet(myNamedBindingsMap, scopeClass, binding);
+      providerBinding = ConcurrencyUtil.cacheOrGet(myNamedBindingsMap, scopeClass, new NamedObjectProviderBinding() {
+        protected String getName(final PsiElement position) {
+          return nameCondition.getPropertyValue(position);
+        }
+      });
     }
 
     providerBinding.registerProvider(names, pattern, caseSensitive, provider, priority);
