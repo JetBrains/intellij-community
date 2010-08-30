@@ -26,6 +26,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -53,18 +54,36 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
       if (thenBranch == null) return false;
       PsiElement block = PsiTreeUtil.getParentOfType(ifStatement, PsiCodeBlock.class);
       if (block != null) {
-        try {
-          ControlFlow controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-          int startOffset = controlFlow.getStartOffset(thenBranch);
-          int endOffset = controlFlow.getEndOffset(thenBranch);
-          return startOffset != -1 && endOffset != -1 && !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset,endOffset);
+        while (cantCompleteNormally(thenBranch, block)) {
+          thenBranch = getPrevThenBranch(thenBranch);
+          if (thenBranch == null) return true;
         }
-        catch (AnalysisCanceledException e) {
-          return false;
-        }
+        return false;
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static PsiStatement getPrevThenBranch(@NotNull PsiElement thenBranch) {
+    final PsiElement ifStatement = thenBranch.getParent();
+    final PsiElement parent = ifStatement.getParent();
+    if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() == ifStatement) {
+      return ((PsiIfStatement)parent).getThenBranch();
+    }
+    return null;
+  }
+
+  private static boolean cantCompleteNormally(@NotNull PsiStatement thenBranch, PsiElement block) {
+    try {
+      ControlFlow controlFlow = ControlFlowFactory.getInstance(thenBranch.getProject()).getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+      int startOffset = controlFlow.getStartOffset(thenBranch);
+      int endOffset = controlFlow.getEndOffset(thenBranch);
+      return startOffset != -1 && endOffset != -1 && !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset);
+    }
+    catch (AnalysisCanceledException e) {
+      return false;
+    }
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
