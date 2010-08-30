@@ -2,17 +2,13 @@ package com.jetbrains.python.console;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
-import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -149,32 +145,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       PyConsoleHighlightingUtil.processOutput(console, statement + "\n", ProcessOutputTypes.SYSTEM);
       sendInput(statement+"\n");
     }
-  }
-
-  @Override
-  protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
-    final AnAction generalCloseAction = super.createCloseAction(defaultExecutor, myDescriptor);
-    final AnAction closeAction = new AnAction() {
-      @Override
-      public void update(AnActionEvent e) {
-        generalCloseAction.update(e);
-      }
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (myPydevConsoleCommunication != null) {
-          try {
-            myPydevConsoleCommunication.close();
-          }
-          catch (Exception e1) {
-            // Ignore
-          }
-          generalCloseAction.actionPerformed(e);
-        }
-      }
-    };
-    closeAction.copyFrom(generalCloseAction);
-    return closeAction;
   }
 
   @Override
