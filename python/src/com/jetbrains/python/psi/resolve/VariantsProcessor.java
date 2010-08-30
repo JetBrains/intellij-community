@@ -55,7 +55,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
 
 
   protected LookupElementBuilder setupItem(LookupElementBuilder item) {
-    if (! myPlainNamesOnly) {
+    if (!myPlainNamesOnly) {
       if (item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null) {
         item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
       }
