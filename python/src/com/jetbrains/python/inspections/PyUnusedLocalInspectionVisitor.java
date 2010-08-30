@@ -235,8 +235,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                                             ? (PyNamedParameter) element
                                             : (PyNamedParameter) element.getParent();
           name = namedParameter.getName();
-          // Ignore unused self parameters as obligatory
-          if ("self".equals(name) && PyPsiUtils.isMethodContext(element)) {
+          // Ignore unused self or cls parameters
+          if (("self".equals(name) || "cls".equals(name)) && PyPsiUtils.isMethodContext(element)) {
             continue;
           }
           // cls for @classmethod decorated methods
