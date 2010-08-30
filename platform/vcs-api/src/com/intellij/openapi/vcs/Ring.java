@@ -16,24 +16,54 @@
 package com.intellij.openapi.vcs;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author irengrig
  */
 public abstract class Ring<T extends Comparable<T>> {
   protected final LinkedList<T> myFreeNumbers;
+  protected final T myFirst;
   protected T myNextAvailable;
 
   public Ring(final T first) {
     myFreeNumbers = new LinkedList<T>();
     myNextAvailable = first;
+    myFirst = first;
   }
 
   public void back(final T number) {
     final int idx = Collections.binarySearch(myFreeNumbers, number);
     assert idx < 0;
     myFreeNumbers.add(- idx - 1, number);
+  }
+
+  public boolean minus(final T t) {
+    return myFreeNumbers.remove(t);
+  }
+
+  public List<T> getUsed() {
+    final List<T> result = new LinkedList<T>();
+
+    T current = myFirst;
+    final Iterator<T> iterator = myFreeNumbers.iterator();
+    T currentUsed = iterator.hasNext() ? iterator.next() : null;
+    while (current.compareTo(myNextAvailable) < 0) {
+      final int compResult = (currentUsed == null) ? -1 : current.compareTo(currentUsed);
+      if (compResult < 0) {
+        result.add(current);
+      } else if (compResult == 0) {
+        if (iterator.hasNext()) {
+          currentUsed = iterator.next();
+        } else {
+          currentUsed = null;
+        }
+      }
+      current = getNext(current);
+    }
+    return result;
   }
 
   protected abstract T getNext(final T t);
