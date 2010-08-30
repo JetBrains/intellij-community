@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -48,6 +49,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n";
   private Helper myHelper;
   private int currentPythonIndentSize;
+  private int myCurrentIndentSize;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -183,27 +185,31 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       myPydevConsoleCommunication.execInterpreter(input, new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
           final LanguageConsoleImpl console = myConsoleView.getConsole();
+          final Editor currentEditor = console.getCurrentEditor();
           // Handle prompt
           if (interpreterResponse.need_input){
             if (!PyConsoleHighlightingUtil.INPUT_PROMPT.equals(console.getPrompt())){
               console.setPrompt(PyConsoleHighlightingUtil.INPUT_PROMPT);
+              currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
             }
           }
-          else if (interpreterResponse.more){
+          else if (interpreterResponse.more) {
             if (!PyConsoleHighlightingUtil.INDENT_PROMPT.equals(console.getPrompt())){
               console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
-              // In this case we can insert indent automatically
-              final int indent = myHelper.getIndent(input, false);
-              new WriteCommandAction(myProject) {
-                @Override
-                protected void run(Result result) throws Throwable {
-                  EditorModificationUtil.insertStringAtCaret(console.getConsoleEditor(), myHelper.fillIndent(indent + currentPythonIndentSize));
-                }
-              }.execute();
+              currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
+              myCurrentIndentSize = myHelper.getIndent(input, false) + currentPythonIndentSize;
             }
+            // In this case we can insert indent automatically
+            new WriteCommandAction(myProject) {
+              @Override
+              protected void run(Result result) throws Throwable {
+                EditorModificationUtil.insertStringAtCaret(console.getConsoleEditor(), myHelper.fillIndent(myCurrentIndentSize));
+              }
+            }.execute();
           } else {
             if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())){
               console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+              currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
             }
           }
 
