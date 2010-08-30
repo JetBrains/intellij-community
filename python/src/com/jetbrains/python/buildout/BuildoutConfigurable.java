@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.django.facet.DjangoFacet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,7 +169,11 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     for (String root : lib.getUrls(OrderRootType.CLASSES)) {
       modifiableModel.removeRoot(root, OrderRootType.CLASSES);
     }
-    for (String dir : paths) modifiableModel.addRoot("file://"+dir, OrderRootType.CLASSES);
+    if (paths != null) {
+      for (String dir : paths) {
+        modifiableModel.addRoot("file://"+dir, OrderRootType.CLASSES);
+      }
+    }
     modifiableModel.commit();
   }
 
