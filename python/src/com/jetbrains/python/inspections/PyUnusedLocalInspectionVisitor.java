@@ -233,6 +233,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           PyNamedParameter namedParameter = element instanceof PyNamedParameter
                                             ? (PyNamedParameter) element
                                             : (PyNamedParameter) element.getParent();
+          name = namedParameter.getName();
           if (((PyParameterList)namedParameter.getParent()).getParameters()[0] == namedParameter){
             final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
             if (function != null){
@@ -250,8 +251,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                   }
                   // Check for metaclass
                   boolean metaClass = false;
-                  for (PyClass superClass : clazzz.getSuperClasses()) {
-                    if ("Type".equals(superClass.getName())){
+                  for (PyClass superClass : clazzz.iterateAncestors()) {
+                    if ("type".equals(superClass.getName())){
                       metaClass = true;
                       break;
                     }
