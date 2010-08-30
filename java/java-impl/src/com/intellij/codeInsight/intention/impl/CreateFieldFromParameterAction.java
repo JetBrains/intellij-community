@@ -56,6 +56,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     if (parameter == null) return null;
     PsiType type = parameter.getType();
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
+    if (type instanceof PsiArrayType) return new PsiType[]{type};
     final PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass psiClass = result.getElement();
     if (psiClass == null) return new PsiType[] {type};
