@@ -730,21 +730,26 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testComment1() throws Exception {
-    doTextTest("class Foo {\n" +
-               "    public boolean mErrorFlage;\n" +
-               "    /**\n" +
-               "     * Reference to New Member Message Source\n" +
-               "     */\n" +
-               "    private NewMemberMessageSource newMemberMessageSource;" +
-               "\n" +
-"}", "class Foo {\n" +
-     "    public boolean mErrorFlage;\n" +
-     "    /**\n" +
-     "     * Reference to New Member Message Source\n" +
-     "     */\n" +
-     "    private NewMemberMessageSource newMemberMessageSource;" +
-     "\n" +
-     "}");
+    doTextTest(
+      "class Foo {\n" +
+      "    public boolean mErrorFlage;\n" +
+      "\n" +
+      "    /**\n" +
+      "     * Reference to New Member Message Source\n" +
+      "     */\n" +
+      "    private NewMemberMessageSource newMemberMessageSource;" +
+      "\n" +
+      "}",
+
+      "class Foo {\n" +
+      "    public boolean mErrorFlage;\n" +
+      "\n" +
+      "    /**\n" +
+      "     * Reference to New Member Message Source\n" +
+      "     */\n" +
+      "    private NewMemberMessageSource newMemberMessageSource;" +
+      "\n" +
+      "}");
   }
 
   public void testElseAfterComment() throws Exception {

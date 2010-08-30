@@ -16,6 +16,8 @@
     <lang.documentationProvider language="Properties" implementationClass="com.intellij.lang.properties.PropertiesDocumentationProvider"/>
     <lang.findUsagesProvider language="Properties"
                                  implementationClass="com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider"/>
+    <lang.elementManipulator forClass="com.intellij.lang.properties.psi.impl.PropertyValueImpl"
+                             implementationClass="com.intellij.lang.properties.PropertyValueManipulator"/>
     <applicationService serviceInterface="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"
                             serviceImplementation="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"/>
     <codeInsight.wordCompletionFilter language="Properties"

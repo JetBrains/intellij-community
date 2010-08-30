@@ -528,7 +528,7 @@ public class ShowUsagesAction extends AnAction {
       }
 
       public int getColumnCount() {
-        return data.get(0) instanceof UsageNode ? 3 : 1;
+        return !data.isEmpty() && data.get(0) instanceof UsageNode ? 3 : 1;
       }
 
       public Object getValueAt(int rowIndex, int columnIndex) {

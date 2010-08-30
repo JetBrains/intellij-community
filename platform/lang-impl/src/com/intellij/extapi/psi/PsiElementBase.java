@@ -22,13 +22,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -215,11 +214,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   public FileStatus getFileStatus() {
-    if (!isPhysical()) return FileStatus.NOT_CHANGED;
-    PsiFile contFile = getContainingFile();
-    if (contFile == null) return FileStatus.NOT_CHANGED;
-    VirtualFile vFile = contFile.getVirtualFile();
-    return vFile != null ? FileStatusManager.getInstance(getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
+    return SharedImplUtil.getFileStatus(this);
   }
 
   @NotNull

@@ -1,6 +1,7 @@
 class FormattingTest {
 
     private static FormattingTest staticFoo;
+
     private FormattingTest instanceFoo;
 
     @SuppressWarnings({"AccessStaticViaInstance"})

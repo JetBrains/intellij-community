@@ -28,6 +28,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -602,4 +605,15 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public void checkPsiElementsAreStillValid(PsiFile psiFile) {
+    if (psiFile == null || !psiFile.isValid() || isPerformanceTest()) return;
+
+    psiFile.accept(new PsiRecursiveElementVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        assertTrue(element.toString(), element.isValid());
+        super.visitElement(element);
+      }
+    });
+  }
 }
