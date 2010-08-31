@@ -93,6 +93,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("name", false, false, true, "int"));
   }
 
+  public void testNonConflictingField() throws Exception {
+     doTest(new MockIntroduceVariableHandler("name", false, false, true, "int"));
+  }
+
   public void testScr16910() throws Exception {
     doTest(new MockIntroduceVariableHandler("i", true, true, false, "int"));
   }
