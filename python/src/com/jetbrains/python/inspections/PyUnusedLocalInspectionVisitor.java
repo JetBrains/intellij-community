@@ -233,36 +233,10 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           PyNamedParameter namedParameter = element instanceof PyNamedParameter
                                             ? (PyNamedParameter) element
                                             : (PyNamedParameter) element.getParent();
-          name = namedParameter.getName();
-          if (((PyParameterList)namedParameter.getParent()).getParameters()[0] == namedParameter){
-            final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-            if (function != null){
-              final PyClass clazzz = PsiTreeUtil.getParentOfType(function, PyClass.class);
-              if (clazzz != null) {
-                // Ignore unused self
-                if ("self".equals(name)) {
-                  continue;
-                }
-                if ("cls".equals(name)) {
-                  // cls for @classmethod decorated methods
-                  final Set<PyFunction.Flag> flagSet = PyUtil.detectDecorationsAndWrappersOf(function);
-                  if (flagSet.contains(PyFunction.Flag.CLASSMETHOD)) {
-                    continue;
-                  }
-                  // Check for metaclass
-                  boolean metaClass = false;
-                  for (PyClass superClass : clazzz.iterateAncestors()) {
-                    if ("type".equals(superClass.getName())){
-                      metaClass = true;
-                      break;
-                    }
-                  }
-                  if (metaClass) {
-                    continue;
-                  }
-                }
-              }
-            }
+          // In case when function is declared inside the class first parameter is either self or class and shouldn't be processed
+          if (((PyParameterList)namedParameter.getParent()).getParameters()[0] == namedParameter &&
+              PsiTreeUtil.getParentOfType(element, PyClass.class) != null){
+            continue;
           }
           boolean isInitMethod = false;
           PyClass containingClass = null;
