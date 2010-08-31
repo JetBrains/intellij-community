@@ -52,6 +52,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private int currentPythonIndentSize;
   private int myCurrentIndentSize = -1;
   private StringBuilder myInputBuffer;
+  private boolean myMultilineStringSeen;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -187,6 +188,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     final Editor currentEditor = console.getCurrentEditor();
 
+    myMultilineStringSeen = input.trim().endsWith("\"\"\"");
 
     if (myInputBuffer == null){
       myInputBuffer = new StringBuilder();
@@ -223,7 +225,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
               // compute current indentation
               myCurrentIndentSize = myHelper.getIndent(input, false) + currentPythonIndentSize;
               // In this case we can insert indent automatically
-              indentEditor(currentEditor, myCurrentIndentSize);
+              if (!myMultilineStringSeen) {
+                indentEditor(currentEditor, myCurrentIndentSize);
+              }
             }
           } else {
             if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())){
