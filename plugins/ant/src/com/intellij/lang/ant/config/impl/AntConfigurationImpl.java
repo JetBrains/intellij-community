@@ -212,9 +212,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     AntBuildFileBase[] result = myBuildFilesArray;
     if (result == null) {
       synchronized (myBuildFiles) {
-        if (myBuildFilesArray == null) {
-          result = myBuildFiles.toArray(new AntBuildFileBase[myBuildFiles.size()]);
-          myBuildFilesArray = result;
+        result = myBuildFilesArray;
+        if (result == null) {
+          myBuildFilesArray = result = myBuildFiles.toArray(new AntBuildFileBase[myBuildFiles.size()]);
         }
       }
     }
