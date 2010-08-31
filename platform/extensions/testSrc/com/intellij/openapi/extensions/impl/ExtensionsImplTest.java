@@ -256,7 +256,7 @@ public class ExtensionsImplTest extends TestCase {
 
   public void testExtensionsNamespaces() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
-    extensionsArea.registerExtensionPoint("plugin.ep1", TestExtensionClassOne.class.getName());
+    extensionsArea.registerExtensionPoint("plugin.ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     extensionsArea.registerExtension("plugin", ExtensionComponentAdapterTest.readElement(
         "<plugin:ep1 xmlns:plugin=\"plugin\" order=\"LAST\"><text>3</text></plugin:ep1>"));
     extensionsArea.registerExtension("plugin", ExtensionComponentAdapterTest.readElement(
@@ -273,7 +273,7 @@ public class ExtensionsImplTest extends TestCase {
 
   public void testExtensionsWithOrdering() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
-    extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName());
+    extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
         "<extension point=\"ep1\" order=\"LAST\"><text>3</text></extension>"));
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
@@ -290,7 +290,7 @@ public class ExtensionsImplTest extends TestCase {
 
   public void testExtensionsWithOrderingUpdate() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
-    extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName());
+    extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
         "<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>"));
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
