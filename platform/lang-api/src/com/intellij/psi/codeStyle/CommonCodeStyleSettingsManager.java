@@ -56,11 +56,11 @@ public class CommonCodeStyleSettingsManager {
   }
 
   private void initCommonSettings() {
-    myCommonSettingsMap = new LinkedHashMap<Language, CommonCodeStyleSettings>();
+    initCommonSettingsMap();
     final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME);
     for (final LanguageCodeStyleSettingsProvider provider : providers) {
       if (!myCommonSettingsMap.containsKey(provider.getLanguage())) {
-        CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings(myParentSettings);
+        CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings();
         if (initialSettings != null) {
           registerCommonSettings(provider.getLanguage(), initialSettings);
         }
@@ -68,9 +68,24 @@ public class CommonCodeStyleSettingsManager {
     }
   }
 
+  private void initCommonSettingsMap() {
+    myCommonSettingsMap = new LinkedHashMap<Language, CommonCodeStyleSettings>();
+  }
+
   private void registerCommonSettings(@NotNull Language lang, @NotNull CommonCodeStyleSettings settings) {
     if (!myCommonSettingsMap.containsKey(lang)) {
       myCommonSettingsMap.put(lang, settings);
     }
+  }
+
+  public CommonCodeStyleSettingsManager clone(CodeStyleSettings parentSettings) {
+    CommonCodeStyleSettingsManager settingsManager = new CommonCodeStyleSettingsManager(parentSettings);
+    if (myCommonSettingsMap != null) {
+      settingsManager.initCommonSettingsMap();
+      for (Map.Entry<Language, CommonCodeStyleSettings> entry : myCommonSettingsMap.entrySet()) {
+        settingsManager.registerCommonSettings(entry.getKey(), entry.getValue().clone(parentSettings));
+      }
+    }
+    return settingsManager;
   }
 }

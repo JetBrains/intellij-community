@@ -11,7 +11,6 @@ import java.awt.*;
  * @author oleg
  */
 public class ConsoleHighlighter {
-  @NonNls static final String OUT_ID = "CONSOLE_OUTPUT";
   @NonNls static final String RED_ID = "CONSOLE_RED_OUTPUT";
   @NonNls static final String GREEN_ID = "CONSOLE_GREEN_OUTPUT";
   @NonNls static final String YELLOW_ID = "CONSOLE_YELLOW_OUTPUT";
@@ -20,7 +19,6 @@ public class ConsoleHighlighter {
   @NonNls static final String CYAN_ID = "CONSOLE_CYAN_OUTPUT";
   @NonNls static final String GRAY_ID = "CONSOLE_GRAY_OUTPUT";
 
-  public static final TextAttributes OUT_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
   public static final TextAttributes RED_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
   public static final TextAttributes GREEN_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
   public static final TextAttributes YELLOW_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
@@ -30,7 +28,6 @@ public class ConsoleHighlighter {
   public static final TextAttributes GRAY_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
 
   static {
-    OUT_DEFAULT_ATTRS.setBackgroundColor(new Color(230, 230, 230));
     RED_DEFAULT_ATTRS.setForegroundColor(Color.RED);
     GREEN_DEFAULT_ATTRS.setForegroundColor(new Color(0, 128, 0));
     YELLOW_DEFAULT_ATTRS.setForegroundColor(new Color(255, 204, 0));
@@ -40,7 +37,6 @@ public class ConsoleHighlighter {
     GRAY_DEFAULT_ATTRS.setForegroundColor(Color.GRAY.darker());
   }
 
-  public static final TextAttributesKey OUT = TextAttributesKey.createTextAttributesKey(OUT_ID, OUT_DEFAULT_ATTRS);
   public static final TextAttributesKey RED = TextAttributesKey.createTextAttributesKey(RED_ID, RED_DEFAULT_ATTRS);
   public static final TextAttributesKey GREEN = TextAttributesKey.createTextAttributesKey(GREEN_ID, GREEN_DEFAULT_ATTRS);
   public static final TextAttributesKey YELLOW = TextAttributesKey.createTextAttributesKey(YELLOW_ID, YELLOW_DEFAULT_ATTRS);

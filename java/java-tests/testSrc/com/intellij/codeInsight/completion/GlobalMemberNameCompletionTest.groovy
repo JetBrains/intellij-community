@@ -19,7 +19,7 @@ public class Foo {
 }
 """)
 
-    doTest "class Bar {{ abcm<caret> }}", """import static foo.Foo.abcmethod;
+    doTest "class Bar {{ abcm<caret> }}", true, """import static foo.Foo.abcmethod;
 
 class Bar {{ abcmethod()<caret> }}"""
   }
@@ -37,6 +37,27 @@ public class Foo {
 
 class Bar {{ Foo.abcmethod()<caret> }}"""
   }
+
+  public void testIfThereAreAlreadyStaticImportsWithThatClass() throws Exception {
+    myFixture.addClass("""
+package foo;
+
+public class Foo {
+  public static int anotherMethod(int a) {}
+  public static int abcmethod() {}
+  void methodThatsNotVisible() {}
+}
+""")
+
+    doTest """import static foo.Foo.abcmethod;
+
+class Bar {{ abcmethod(); anoMe<caret> }}""", false,
+           """import static foo.Foo.abcmethod;
+import static foo.Foo.anotherMethod;
+
+class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
+  }
+
 
   @Override protected void tearDown() {
     CodeInsightSettings.instance.EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY
@@ -57,7 +78,7 @@ class Bar {{ Foo.abcmethod()<caret> }}"""
 
     CodeInsightSettings.instance.EXCLUDED_PACKAGES = ["foo.Excl"] as String[]
 
-    doTest "class Bar {{ abcm<caret> }}", """import static foo.Foo.abcmethod;
+    doTest "class Bar {{ abcm<caret> }}", true, """import static foo.Foo.abcmethod;
 
 class Bar {{ abcmethod()<caret> }}"""
   }
@@ -72,20 +93,18 @@ class Bar {{ abcmethod()<caret> }}"""
 
     CodeInsightSettings.instance.EXCLUDED_PACKAGES = ["foo.Foo.abcmethodExcluded"] as String[]
 
-    doTest "class Bar {{ abcm<caret> }}", """import static foo.Foo.abcmethod1;
+    doTest "class Bar {{ abcm<caret> }}", true, """import static foo.Foo.abcmethod1;
 
 class Bar {{ abcmethod1()<caret> }}"""
-  }
-
-  private void doTest(String input, String output) {
-    doTest input, true, output
   }
 
   private void doTest(String input, boolean importStatic, String output) {
     myFixture.configureByText("a.java", input)
 
     def item = assertOneElement(myFixture.complete(CompletionType.CLASS_NAME))
-    item.'as'(JavaGlobalMemberLookupElement).shouldImport = importStatic
+    if (importStatic) {
+      item.'as'(StaticallyImportable).shouldBeImported = true
+    }
     myFixture.type('\n')
     myFixture.checkResult output
   }

@@ -39,7 +39,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private final AreaInstance myArea;
   private final String myName;
-  private final String myBeanClassName;
+  private final String myClassName;
+  private final Kind myKind;
 
   private final List<T> myExtensions = new ArrayList<T>();
   private volatile T[] myExtensionsCache;
@@ -54,13 +55,15 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private Class<T> myExtensionClass;
 
   public ExtensionPointImpl(String name,
-                            String beanClassName,
+                            String className,
+                            Kind kind,
                             ExtensionsAreaImpl owner,
                             AreaInstance area,
                             LogProvider logger,
                             PluginDescriptor descriptor) {
     myName = name;
-    myBeanClassName = beanClassName;
+    myClassName = className;
+    myKind = kind;
     myOwner = owner;
     myArea = area;
     myLogger = logger;
@@ -76,7 +79,17 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   public String getBeanClassName() {
-    return myBeanClassName;
+    return myClassName;
+  }
+
+  @Override
+  public String getClassName() {
+    return myClassName;
+  }
+
+  @Override
+  public Kind getKind() {
+    return myKind;
   }
 
   public void registerExtension(@NotNull T extension) {
@@ -322,8 +335,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         ClassLoader pluginClassLoader = myDescriptor.getPluginClassLoader();
         //noinspection unchecked
         myExtensionClass = extensionClass = pluginClassLoader == null
-                                            ? (Class<T>)Class.forName(myBeanClassName)
-                                            : (Class<T>)Class.forName(myBeanClassName, true, pluginClassLoader);
+                                            ? (Class<T>)Class.forName(myClassName)
+                                            : (Class<T>)Class.forName(myClassName, true, pluginClassLoader);
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);

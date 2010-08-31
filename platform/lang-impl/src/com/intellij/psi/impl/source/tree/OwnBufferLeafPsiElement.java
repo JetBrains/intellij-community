@@ -221,6 +221,7 @@ public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
   public PsiElement getPsi() {
     return this;
   }
+
   public boolean isEquivalentTo(final PsiElement another) {
     return this == another;
   }

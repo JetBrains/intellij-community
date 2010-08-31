@@ -63,7 +63,7 @@ public class SearchUtil {
   }
 
   public static void processProjectConfigurables(Project project, HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options) {
-    processConfigurables(new ProjectConfigurablesGroup(project, false).getConfigurables(), options);
+    processConfigurables(new ProjectConfigurablesGroup(project).getConfigurables(), options);
     processConfigurables(new IdeConfigurablesGroup().getConfigurables(), options);
   }
 

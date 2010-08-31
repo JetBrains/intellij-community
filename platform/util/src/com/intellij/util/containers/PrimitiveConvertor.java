@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util.containers;
 
-/*
- * User: anna
- * Date: 29-Mar-2010
+/**
+ * @author irengrig
  */
-package org.jetbrains.idea.eclipse;
-
-public class EclipseLinkedSrcTest extends EclipseVarsTest{
-  @Override
-  protected String getRelativeTestPath() {
-    return "linked";
+public interface PrimitiveConvertor<T> {
+  interface Int<T> extends PrimitiveConvertor<T> {
+    T convert(final int value);
   }
-
-  public void testResolvedVars() throws Exception {
-    EclipseClasspathTest.doTest("/test", getProject());
-  }
-
-  public void testResolvedVarsInIml() throws Exception {
-    EclipseImlTest.doTest("/test", getProject());
+  interface Long<T> extends PrimitiveConvertor<T> {
+    T convert(final long value);
   }
 }

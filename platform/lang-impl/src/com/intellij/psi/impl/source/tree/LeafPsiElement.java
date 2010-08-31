@@ -225,7 +225,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   public PsiElement getPsi() {
     return this;
   }
-  
+
   public ItemPresentation getPresentation() {
     return null;
   }

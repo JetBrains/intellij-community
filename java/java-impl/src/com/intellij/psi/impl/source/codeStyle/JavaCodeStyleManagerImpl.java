@@ -890,7 +890,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   public String suggestUniqueVariableName(String baseName, PsiElement place, boolean lookForward) {
     int index = 0;
-    final PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class);
+    PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     NextName:
     while (true) {
       String name = baseName;

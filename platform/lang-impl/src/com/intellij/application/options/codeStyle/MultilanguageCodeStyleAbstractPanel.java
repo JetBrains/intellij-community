@@ -79,7 +79,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   public void setPanelLanguage(Language language) {
     myLanguage = language;
-    updatePreviewEditor();
 
     for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
       if (provider.getLanguage().is(language)) {
@@ -87,6 +86,11 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
       }
     }
     onLanguageChange(language);
+    updatePreviewEditor();
+  }
+
+  public Language getSelectedLanguage() {
+    return myLanguage;
   }
 
   protected abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();

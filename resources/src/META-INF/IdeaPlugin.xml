@@ -621,20 +621,18 @@
 
 
     <!-- Project Configurables -->
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable" id="project"
-                         order="first"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
 
     <!-- Errors -->
     <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
     <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable"/>
 
-    <!--<projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>-->
     <!-- Project Structure -->
     <projectConfigurable implementation="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>
     <!-- Compiler -->

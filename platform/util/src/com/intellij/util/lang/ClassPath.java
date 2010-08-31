@@ -50,6 +50,7 @@ class ClassPath {
   private static final long NS_THRESHOLD = 10000000L;
 
   private static PrintStream ourOrder;
+  private volatile boolean myAcceptUnescapedUrls;
 
   @SuppressWarnings({"UnusedDeclaration"})
   private static void printOrder(Loader loader, String resource) {
@@ -164,11 +165,15 @@ class ClassPath {
   @Nullable
   private Loader getLoader(final URL url) throws IOException {
     String s;
-    try {
-      s = url.toURI().getSchemeSpecificPart();
-    } catch (URISyntaxException e) {
-      e.printStackTrace();
+    if (myAcceptUnescapedUrls) {
       s = url.getFile();
+    } else {
+      try {
+        s = url.toURI().getSchemeSpecificPart();
+      } catch (URISyntaxException thisShouldNotHappen) {
+        thisShouldNotHappen.printStackTrace();
+        s = url.getFile();
+      }
     }
 
     Loader loader = null;
@@ -198,6 +203,10 @@ class ClassPath {
       for (int i = urls.length - 1; i >= 0; i--) myUrls.push(urls[i]);
 
     }
+  }
+
+  public void setAcceptUnescapedUrls(boolean acceptUnescapedUrls) {
+    myAcceptUnescapedUrls = acceptUnescapedUrls;
   }
 
   private class MyEnumeration implements Enumeration<URL> {

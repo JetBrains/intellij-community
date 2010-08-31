@@ -18,10 +18,10 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -187,7 +187,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   public static JdkListConfigurable getInstance(Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, JdkListConfigurable.class);
+    return ServiceManager.getService(project, JdkListConfigurable.class);
   }
 
   public AbstractAddGroup createAddAction() {

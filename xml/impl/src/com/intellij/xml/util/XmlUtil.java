@@ -320,7 +320,16 @@ public class XmlUtil {
                                            final boolean deepFlag,
                                            final boolean wideFlag,
                                            final PsiFile baseFile) {
-    return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag);
+    return processXmlElements(element, processor, deepFlag, wideFlag, baseFile, true);
+  }
+
+  public static boolean processXmlElements(final XmlElement element,
+                                           final PsiElementProcessor processor,
+                                           final boolean deepFlag,
+                                           final boolean wideFlag,
+                                           final PsiFile baseFile,
+                                           boolean processIncludes) {
+    return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag, processIncludes);
   }
 
   public static boolean processXmlElementChildren(final XmlElement element, final PsiElementProcessor processor, final boolean deepFlag) {
@@ -328,7 +337,7 @@ public class XmlUtil {
 
     final boolean wideFlag = false;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (!p.processElement(child, deepFlag, wideFlag) && !wideFlag) return false;
+      if (!p.processElement(child, deepFlag, wideFlag, true) && !wideFlag) return false;
     }
 
     return true;
@@ -557,7 +566,7 @@ public class XmlUtil {
       targetFile = _targetFile;
     }
 
-    private boolean processXmlElements(PsiElement element, boolean deepFlag, boolean wideFlag) {
+    private boolean processXmlElements(PsiElement element, boolean deepFlag, boolean wideFlag, boolean processIncludes) {
       if (deepFlag) if (!processor.execute(element)) return false;
 
       PsiElement startFrom = element.getFirstChild();
@@ -575,7 +584,7 @@ public class XmlUtil {
         //}
 
         while (newElement != null) {
-          if (!processElement(newElement, deepFlag, wideFlag)) return false;
+          if (!processElement(newElement, deepFlag, wideFlag, processIncludes)) return false;
           newElement = newElement.getNextSibling();
         }
 
@@ -586,13 +595,13 @@ public class XmlUtil {
         if (!xmlConditionalSection.isIncluded(targetFile)) return true;
         startFrom = xmlConditionalSection.getBodyStart();
       }
-      else if (XmlIncludeHandler.isXInclude(element)) {
+      else if (processIncludes && XmlIncludeHandler.isXInclude(element)) {
         XmlTag tag = (XmlTag)element;
         if (!processXInclude(deepFlag, wideFlag, tag)) return false;
       }
 
       for (PsiElement child = startFrom; child != null; child = child.getNextSibling()) {
-        if (!processElement(child, deepFlag, wideFlag) && !wideFlag) return false;
+        if (!processElement(child, deepFlag, wideFlag, processIncludes) && !wideFlag) return false;
       }
 
       return true;
@@ -610,7 +619,7 @@ public class XmlUtil {
 
       if (inclusion != null) {
         for (PsiElement psiElement : inclusion) {
-          if (!processElement(psiElement, deepFlag, wideFlag)) return false;
+          if (!processElement(psiElement, deepFlag, wideFlag, true)) return false;
         }
       }
 
@@ -666,21 +675,21 @@ public class XmlUtil {
       return new XmlTag[]{rootTag};
     }
 
-    private boolean processElement(PsiElement child, boolean deepFlag, boolean wideFlag) {
+    private boolean processElement(PsiElement child, boolean deepFlag, boolean wideFlag, boolean processIncludes) {
       if (deepFlag) {
-        if (!processXmlElements(child, true, wideFlag)) {
+        if (!processXmlElements(child, true, wideFlag, processIncludes)) {
           return false;
         }
       }
       else {
         if (child instanceof XmlEntityRef) {
-          if (!processXmlElements(child, false, wideFlag)) return false;
+          if (!processXmlElements(child, false, wideFlag, processIncludes)) return false;
         }
         else if (child instanceof XmlConditionalSection) {
-          if (!processXmlElements(child, false, wideFlag)) return false;
+          if (!processXmlElements(child, false, wideFlag, processIncludes)) return false;
         }
-        else if (XmlIncludeHandler.isXInclude(child)) {
-          if (!processXmlElements(child, false, wideFlag)) return false;
+        else if (processIncludes && XmlIncludeHandler.isXInclude(child)) {
+          if (!processXmlElements(child, false, wideFlag, processIncludes)) return false;
         }
         else if (!processor.execute(child)) return false;
       }
@@ -984,7 +993,8 @@ public class XmlUtil {
 
   private static void computeTag(XmlTag tag,
                                  final Map<String, List<String>> tagsMap,
-                                 final Map<String, List<MyAttributeInfo>> attributesMap) {
+                                 final Map<String, List<MyAttributeInfo>> attributesMap,
+                                 final boolean processIncludes) {
     if (tag == null) {
       return;
     }
@@ -1042,7 +1052,17 @@ public class XmlUtil {
     attributesMap.put(tagName, list);
     final List<String> tags = tagsMap.get(tagName) != null ? tagsMap.get(tagName) : new ArrayList<String>();
     tagsMap.put(tagName, tags);
-    tag.processElements(new FilterElementProcessor(XmlTagFilter.INSTANCE) {
+    PsiFile file = tag.isValid() ? tag.getContainingFile() : null;
+    processXmlElements(tag, new FilterElementProcessor(XmlTagFilter.INSTANCE) {
+      public void add(PsiElement element) {
+        XmlTag tag = (XmlTag)element;
+        if (!tags.contains(tag.getName())) {
+          tags.add(tag.getName());
+        }
+        computeTag(tag, tagsMap, attributesMap, processIncludes);
+      }
+    }, false, false, file, processIncludes);
+    /*tag.processElements(new FilterElementProcessor(XmlTagFilter.INSTANCE) {
       public void add(PsiElement element) {
         XmlTag tag = (XmlTag)element;
         if (!tags.contains(tag.getName())) {
@@ -1050,7 +1070,7 @@ public class XmlUtil {
         }
         computeTag(tag, tagsMap, attributesMap);
       }
-    }, tag);
+    }, tag);*/
   }
 
   @Nullable
@@ -1332,19 +1352,19 @@ public class XmlUtil {
     }
   }
 
-  public static String generateDocumentDTD(XmlDocument doc) {
+  public static String generateDocumentDTD(XmlDocument doc, boolean full) {
     final Map<String, List<String>> tags = new LinkedHashMap<String, List<String>>();
     final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<String, List<MyAttributeInfo>>();
 
     try {
       XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, true);
       final XmlTag rootTag = doc.getRootTag();
-      computeTag(rootTag, tags, attributes);
+      computeTag(rootTag, tags, attributes, full);
 
       // For supporting not welformed XML
       for (PsiElement element = rootTag != null ? rootTag.getNextSibling() : null; element != null; element = element.getNextSibling()) {
         if (element instanceof XmlTag) {
-          computeTag((XmlTag)element, tags, attributes);
+          computeTag((XmlTag)element, tags, attributes, full);
         }
       }
     }

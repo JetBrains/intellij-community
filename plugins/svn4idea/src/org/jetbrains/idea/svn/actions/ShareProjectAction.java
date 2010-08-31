@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -31,10 +32,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnStatusUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -106,9 +104,23 @@ public class ShareProjectAction extends BasicAction {
       final Ref<Boolean> actionStarted = new Ref<Boolean>(Boolean.TRUE);
       final SVNException[] error = new SVNException[1];
 
+      final ShareDialog.ShareTarget shareTarget = shareDialog.getShareTarget();
+      final ProgressManager progressManager = ProgressManager.getInstance();
+
+      if (ShareDialog.ShareTarget.useSelected.equals(shareTarget)) {
+        final boolean folderEmpty = checkRemoteFolder(project, activeVcs, parent, progressManager);
+
+        if (! folderEmpty) {
+          final int promptAnswer =
+            Messages.showYesNoDialog(project, "Remote folder \"" + parent + "\" is not empty.\nDo you want to continue sharing?",
+                                     "Share directory", Messages.getWarningIcon());
+          if (DialogWrapper.OK_EXIT_CODE != promptAnswer) return false;
+        }
+      }
+
       ExclusiveBackgroundVcsAction.run(project, new Runnable() {
         public void run() {
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          progressManager.runProcessWithProgressSynchronously(new Runnable() {
             public void run() {
               try {
                 final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -123,7 +135,6 @@ public class ShareProjectAction extends BasicAction {
                 final SVNURL checkoutUrl;
                 final SVNRevision revision;
                 
-                final ShareDialog.ShareTarget shareTarget = shareDialog.getShareTarget();
                 if (ShareDialog.ShareTarget.useSelected.equals(shareTarget)) {
                   checkoutUrl = parenUrl;
                   revision = SVNRevision.HEAD;
@@ -172,6 +183,30 @@ public class ShareProjectAction extends BasicAction {
       return true;
     }
     return false;
+  }
+
+  private static boolean checkRemoteFolder(Project project,
+                                        final SvnVcs activeVcs,
+                                        final String parent,
+                                        ProgressManager progressManager) throws VcsException {
+    final SVNException[] exc = new SVNException[1];
+    final boolean[] folderEmpty = new boolean[1];
+
+    progressManager.runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          folderEmpty[0] = SvnUtil.remoteFolderIsEmpty(activeVcs, parent);
+        }
+        catch (SVNException e) {
+          exc[0] = e;
+        }
+      }
+    }, "Check remote folder contents", false, project);
+    if (exc[0] != null) {
+      throw new VcsException(exc[0]);
+    }
+    return folderEmpty[0];
   }
 
   private static Pair<SVNRevision, SVNURL> createRemoteFolder(final SvnVcs vcs, final SVNURL parent, final String folderName) throws SVNException {

@@ -17,6 +17,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
@@ -75,7 +76,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     myContext = context;
     myRecentsId = recentsId;
     PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener);
-    myFactory = factory;
+    setFactory(factory);
   }
 
   protected TextWithImports createItem(Document document, Project project) {
@@ -178,8 +179,8 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiListener);
   }
 
-  public void setFactory(final CodeFragmentFactory factory) {
-    myFactory = factory;
+  public final void setFactory(final CodeFragmentFactory factory) {
+    myFactory = factory != null && !(factory instanceof CodeFragmentFactoryContextWrapper)? new CodeFragmentFactoryContextWrapper(factory) : factory;
   }
 
   public void revalidate() {

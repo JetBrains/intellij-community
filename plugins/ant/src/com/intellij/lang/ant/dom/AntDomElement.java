@@ -24,7 +24,9 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * @author Eugene Zhuravlev
@@ -68,8 +70,60 @@ public abstract class AntDomElement implements DomElement {
     return AntSupport.getAntDomProject(contextFile);
   }
 
+  /*
   public final List<AntDomElement> getAntChildren() {
-    return DomUtil.getDefinedChildrenOfType(this, AntDomElement.class, true, false);
+    final List<DomElement> children = DomUtil.getDefinedChildren(this, true, false);
+    final int size = children.size();
+    if (size == 0) {
+      return Collections.emptyList();
+    }
+    final List<AntDomElement> antChildren = new ArrayList<AntDomElement>(size);
+    for (DomElement child : children) {
+      if (child instanceof AntDomElement) {
+        antChildren.add((AntDomElement)child);
+      }
+    }
+    return antChildren;
+  }
+  */
+
+  public final Iterator<AntDomElement> getAntChildrenIterator() {
+    final List<DomElement> children = DomUtil.getDefinedChildren(this, true, false);
+    final Iterator<DomElement> it = children.iterator();
+    return new Iterator<AntDomElement>() {
+      private DomElement myUnprocessedElement;
+      public boolean hasNext() {
+        findNextAntElement();
+        return myUnprocessedElement != null;
+      }
+
+      public AntDomElement next() {
+        findNextAntElement();
+        if (myUnprocessedElement == null) {
+          throw new NoSuchElementException();
+        }
+        final AntDomElement antElement = (AntDomElement)myUnprocessedElement;
+        myUnprocessedElement = null;
+        return antElement;
+      }
+
+      private void findNextAntElement() {
+        if (myUnprocessedElement != null) {
+          return;
+        }
+        do {
+          if (!it.hasNext()) {
+            break;
+          }
+          myUnprocessedElement = it.next();
+        }
+        while (!(myUnprocessedElement instanceof AntDomElement));
+      }
+      
+      public void remove() {
+        throw new UnsupportedOperationException("remove");
+      }
+    };
   }
 
   public final boolean isTask() {

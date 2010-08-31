@@ -17,10 +17,7 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.OptionalConfigurable;
-import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.*;
 
 import java.util.List;
 
@@ -32,6 +29,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class IdeConfigurablesGroup implements ConfigurableGroup {
+
   public String getDisplayName() {
     return OptionsBundle.message("ide.settings.display.name");
   }
@@ -42,16 +40,10 @@ public class IdeConfigurablesGroup implements ConfigurableGroup {
 
   public Configurable[] getConfigurables() {
     final Application app = ApplicationManager.getApplication();
-    final Configurable[] extensions = app.getExtensions(Configurable.APPLICATION_CONFIGURABLES);
+    final ConfigurableEP[] extensions = app.getExtensions(ConfigurableExtensionPointUtil.APPLICATION_CONFIGURABLES);
     Configurable[] components = app.getComponents(Configurable.class);
 
-    List<Configurable> result = ProjectConfigurablesGroup.buildConfigurablesList(extensions, components, new ConfigurableFilter() {
-      public boolean isIncluded(final Configurable configurable) {
-        if (configurable instanceof Configurable.Assistant) return false;
-        if (configurable instanceof OptionalConfigurable && !((OptionalConfigurable) configurable).needDisplay()) return false;
-        return true;
-      }
-    });
+    List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, components, null);
 
     return result.toArray(new Configurable[result.size()]);
   }

@@ -32,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -357,7 +356,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       final int i = lookupString.indexOf('<');
       if (i >= 0) length = i;
       final int newOffset = addImportForClass(file, startOffset, startOffset + length, aClass);
-      shortenReference(file, newOffset);
+      JavaCompletionUtil.shortenReference(file, newOffset);
     }
     else if (o instanceof PsiType){
       PsiType type = ((PsiType)o).getDeepComponentType();
@@ -378,18 +377,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
           addImportForClass(file, startOffset, startOffset + length, aClass);
         }
       }
-    }
-  }
-
-  //need to shorten references in type argument list
-  private static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-    final Document document = manager.getDocument(file);
-    assert document != null;
-    manager.commitDocument(document);
-    final PsiReference ref = file.findReferenceAt(offset);
-    if (ref instanceof PsiJavaCodeReferenceElement) {
-      JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences((PsiJavaCodeReferenceElement)ref);
     }
   }
 

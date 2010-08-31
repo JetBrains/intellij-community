@@ -276,7 +276,7 @@
   <applicationConfigurable implementation="com.intellij.ide.todo.configurable.TodoConfigurable"/>
 
   <!-- External Tools -->
-  <applicationConfigurable implementation="com.intellij.tools.ToolConfigurable"/>
+  <applicationConfigurable instance="com.intellij.tools.ToolConfigurable"/>
 
   <!-- Project Code Style -->
   <!--<projectConfigurable implementation="com.intellij.application.options.ProjectCodeStyleConfigurable" order="before vcs"/>-->

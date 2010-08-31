@@ -26,11 +26,11 @@ public class ExtensionPointImplTest extends TestCase {
   public void testCreate() {
     ExtensionPointImpl extensionPoint = buildExtensionPoint();
     assertEquals(ExtensionsImplTest.EXTENSION_POINT_NAME_1, extensionPoint.getName());
-    assertEquals(Integer.class.getName(), extensionPoint.getBeanClassName());
+    assertEquals(Integer.class.getName(), extensionPoint.getClassName());
   }
 
   private ExtensionPointImpl buildExtensionPoint() {
-    return new ExtensionPointImpl(ExtensionsImplTest.EXTENSION_POINT_NAME_1, Integer.class.getName(), buildExtensionArea(), null, new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
+    return new ExtensionPointImpl(ExtensionsImplTest.EXTENSION_POINT_NAME_1, Integer.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), null, new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
   }
 
   private ExtensionsAreaImpl buildExtensionArea() {
@@ -50,7 +50,7 @@ public class ExtensionPointImplTest extends TestCase {
   public void testRegisterUnregister_Extension() {
 
     final AreaInstance area = new AreaInstance() {};
-    final ExtensionPointImpl extensionPoint = new ExtensionPointImpl("an.extension.point", Object.class.getName(), buildExtensionArea(), area, new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
+    final ExtensionPointImpl extensionPoint = new ExtensionPointImpl("an.extension.point", Object.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), area, new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
 
     final boolean[] flags = new boolean[2];
     Extension extension = new Extension() {

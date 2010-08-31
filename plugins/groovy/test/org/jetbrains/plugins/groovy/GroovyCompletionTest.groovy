@@ -237,4 +237,28 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   public void testSmartCastCompletion() {doSmartTest();}
   public void testSmartCastCompletionWithoutRParenth() {doSmartTest();}
   public void testSmartCastCompletionWithRParenth() {doSmartTest();}
+
+  public void testWhenSiblingIsStaticallyImported() throws Exception {
+    myFixture.addFileToProject "foo/Foo.groovy", """package foo
+      class Foo {
+        static def abcMethod() {}
+        static def defMethod() {}
+      }
+    """
+
+    myFixture.configureByText("a.groovy", """
+      import static foo.Foo.abcMethod
+
+      abdMethod()
+      defM<caret>
+    """)
+    myFixture.completeBasic()
+    myFixture.checkResult """
+      import static foo.Foo.abcMethod
+      import static foo.Foo.defMethod
+
+      abdMethod()
+      defMethod()<caret>
+    """
+  }
 }

@@ -17,12 +17,9 @@ package com.intellij.execution.console;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 
@@ -33,7 +30,7 @@ public class LanguageConsoleViewImpl extends ConsoleViewImpl {
   protected LanguageConsoleImpl myConsole;
 
   public LanguageConsoleViewImpl(final Project project, String title, final Language language) {
-    this(project, new LanguageConsoleImpl(project, title, language));
+    this(project, new LanguageConsoleImpl(project, title, language, true));
   }
 
   protected LanguageConsoleViewImpl(final Project project, final LanguageConsoleImpl console) {

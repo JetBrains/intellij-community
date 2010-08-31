@@ -40,6 +40,7 @@ import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
+import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -402,6 +403,40 @@ public class GitHistoryUtils {
       rc.add(new GitCommit(new SHAHash(hash), authorName, committerName, date, message, parentsHashes, pathsList, authorEmail,
                            committerEmail, tags, branches));
       //}
+    }
+    return rc;
+  }
+
+  public static List<CommitHashPlusParents> hashesWithParents(Project project, FilePath path, final String... parameters) throws VcsException {
+    // adjust path using change manager
+    path = getLastCommitName(project, path);
+    final VirtualFile root = GitUtil.getGitRoot(path);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
+    h.addParameters(parameters);
+    h.addParameters("--name-only", "--pretty=format:%h%x00%ct%x00%p", "--encoding=UTF-8");
+
+    h.endOptions();
+    h.addRelativePaths(path);
+    String output = h.run();
+    final List<CommitHashPlusParents> rc = new ArrayList<CommitHashPlusParents>();
+    StringTokenizer tk = new StringTokenizer(output, "\n", false);
+
+    while (tk.hasMoreTokens()) {
+      final String line = tk.nextToken();
+      final StringTokenizer tk2 = new StringTokenizer(line, "\u0000", false);
+
+      final String hash = tk2.nextToken();
+      final String dateString = tk2.nextToken();
+      final long time = Long.parseLong(dateString.trim());
+      final String[] parents;
+      if (tk2.hasMoreTokens()) {
+        parents = tk2.nextToken().split(" ");
+      } else {
+        parents = ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+      rc.add(new CommitHashPlusParents(hash, parents, time));
     }
     return rc;
   }

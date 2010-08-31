@@ -85,6 +85,17 @@ public interface PsiResolveHelper {
   @Nullable
   PsiVariable resolveReferencedVariable(@NotNull String referenceText, PsiElement context);
 
+   /**
+   * Resolves a reference to a variable, given the text of the reference and the context
+   * in which it was encountered.
+   *
+   * @param referenceText the text of the reference.
+   * @param context       the context in which the reference is found.
+   * @return the resolve result, or null if the resolve was not successful or resolved variable is not accessible in a given context.
+   */
+  @Nullable
+  PsiVariable resolveAccessibleReferencedVariable(@NotNull String referenceText, PsiElement context);
+
   boolean isAccessible(@NotNull PsiMember member, @Nullable PsiModifierList modifierList,
                        @NotNull PsiElement place, @Nullable PsiClass accessObjectClass, @Nullable PsiElement currentFileResolveScope);
 

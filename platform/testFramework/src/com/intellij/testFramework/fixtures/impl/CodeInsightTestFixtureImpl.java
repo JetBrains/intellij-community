@@ -772,12 +772,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myPsiManager;
   }
 
-  public LookupElement[] complete(final CompletionType type) {
+  @Override
+  public LookupElement[] complete(CompletionType type) {
+    return complete(type, 1);
+  }
+
+  @Override
+  public LookupElement[] complete(final CompletionType type, final int invocationCount) {
     assertInitialized();
     myEmptyLookup = false;
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Exception {
-        final CodeInsightActionHandler handler = new CodeCompletionHandlerBase(type) {
+        final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
           protected PsiFile createFileCopy(final PsiFile file) {
             final PsiFile copy = super.createFileCopy(file);
             if (myFileContext != null) {
@@ -799,7 +805,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
         };
         Editor editor = getCompletionEditor();
-        handler.invoke(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()));
+        handler.invokeCompletion(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()), invocationCount);
       }
     }.execute();
     return getLookupElements();

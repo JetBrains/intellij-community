@@ -174,7 +174,7 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static boolean isVariableNameUnique(@NotNull String name, @NotNull PsiElement place) {
     PsiResolveHelper helper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
-    return helper.resolveReferencedVariable(name, place) == null;
+    return helper.resolveAccessibleReferencedVariable(name, place) == null;
   }
 
   /**

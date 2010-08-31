@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class JavaGlobalMemberLookupElement extends LookupElement {
+public class JavaGlobalMemberLookupElement extends LookupElement implements StaticallyImportable {
   private final PsiMethod myMethod;
   private final PsiClass myContainingClass;
   private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsertion;
@@ -24,11 +24,12 @@ public class JavaGlobalMemberLookupElement extends LookupElement {
   public JavaGlobalMemberLookupElement(PsiMethod method,
                                        PsiClass containingClass,
                                        InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsertion,
-                                       InsertHandler<JavaGlobalMemberLookupElement> importInsertion) {
+                                       InsertHandler<JavaGlobalMemberLookupElement> importInsertion, boolean shouldImport) {
     myMethod = method;
     myContainingClass = containingClass;
     myQualifiedInsertion = qualifiedInsertion;
     myImportInsertion = importInsertion;
+    myShouldImport = shouldImport;
   }
 
   @NotNull
@@ -76,12 +77,19 @@ public class JavaGlobalMemberLookupElement extends LookupElement {
     }
   }
 
-  public boolean isShouldImport() {
-    return myShouldImport;
+  @Override
+  public void setShouldBeImported(boolean shouldImportStatic) {
+    myShouldImport = shouldImportStatic;
   }
 
-  public void setShouldImport(boolean shouldImport) {
-    myShouldImport = shouldImport;
+  @Override
+  public boolean canBeImported() {
+    return true;
+  }
+
+  @Override
+  public boolean willBeImported() {
+    return myShouldImport;
   }
 
   @Override

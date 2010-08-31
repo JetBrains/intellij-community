@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -36,6 +37,7 @@ import java.util.List;
  * @author max
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
   @NonNls
   private static final String PREFER_CLASSIC_OPTIONS_EDITOR = "PREFER_CLASSIC_OPTIONS_EDITOR";
 
@@ -77,7 +79,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     if (project == null) {
       group = new ConfigurableGroup[] {new IdeConfigurablesGroup()};
     } else {
-      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project, false), new IdeConfigurablesGroup()};
+      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project), new IdeConfigurablesGroup()};
     }
 
     Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
@@ -91,7 +93,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   public void showSettingsDialog(@NotNull final Project project, final Configurable toSelect) {
     _showSettingsDialog(project, new ConfigurableGroup[]{
-      new ProjectConfigurablesGroup(project, false),
+      new ProjectConfigurablesGroup(project),
       new IdeConfigurablesGroup()
     }, toSelect);
   }
@@ -126,25 +128,32 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
-    return selectConfigurable(confClass, ApplicationManager.getApplication().getExtensions(Configurable.APPLICATION_CONFIGURABLES));
+    return ConfigurableExtensionPointUtil.findApplicationConfigurable(confClass);
   }
 
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
-    return selectConfigurable(confClass, project.getExtensions(Configurable.PROJECT_CONFIGURABLES));
-  }
-
-  private static <T extends Configurable> T selectConfigurable(final Class<T> confClass, final Configurable... configurables) {
-    for (Configurable configurable : configurables) {
-      if (confClass.isAssignableFrom(configurable.getClass())) return (T)configurable;
-    }
-
-    throw new IllegalStateException("Can't find configurable of class " + confClass.getName());
+    return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 
   public boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable) {
     final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(project, configurable, dimensionServiceKey);
     configurableEditor.show();
     return configurableEditor.isOK();
+  }
+
+  @Override
+  public boolean editProjectConfigurable(@NotNull Project project,
+                                         Class<? extends Configurable> configurableClass,
+                                         @NonNls String dimensionServiceKey) {
+    final Configurable configurable = findProjectConfigurable(project, configurableClass);
+    if (configurable == null) {
+      LOG.error("Cannot find project configurable for " + configurableClass);
+      return false;
+    }
+    if (dimensionServiceKey == null) {
+      dimensionServiceKey = createDimensionKey(configurable);
+    }
+    return editConfigurable(project, dimensionServiceKey, configurable);
   }
 
   public boolean editConfigurable(Component parent, Configurable configurable) {

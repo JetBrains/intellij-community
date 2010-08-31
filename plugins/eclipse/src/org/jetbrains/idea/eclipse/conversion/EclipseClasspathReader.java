@@ -80,9 +80,10 @@ public class EclipseClasspathReader {
         if (srcPath != null) {
           createEPathVariable(usedVariables, srcPath, srcVarStart(srcPath));
         }
-      } else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND)) {
+      } else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND) || Comparing.strEqual(kind, EclipseXml.OUTPUT_KIND)) {
         if (EclipseProjectFinder.isExternalResource(rootPath, path)) {
-          usedVariables.add(EclipseProjectFinder.extractPathVariableName(path));
+          final String linkedLocation = EclipseProjectFinder.replaceLinkedPathLocationVariable(rootPath, path);
+          usedVariables.add(EclipseProjectFinder.extractPathVariableName(linkedLocation));
         }
       }
     }
@@ -104,9 +105,10 @@ public class EclipseClasspathReader {
         model.removeOrderEntry(orderEntry);
       }
     }
+    int idx = 0;
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
-        readClasspathEntry(model, unknownLibraries, unknownJdks, usedVariables, refsToModules, testPattern, (Element)o);
+        readClasspathEntry(model, unknownLibraries, unknownJdks, usedVariables, refsToModules, testPattern, (Element)o, idx++);
       }
       catch (ConversionException e) {
         ErrorLog.rethrow(ErrorLog.Level.Warning, null, EclipseXml.CLASSPATH_FILE, e);
@@ -124,7 +126,7 @@ public class EclipseClasspathReader {
                                   final Set<String> usedVariables,
                                   Set<String> refsToModules,
                                   final String testPattern,
-                                  Element element) throws ConversionException {
+                                  Element element, int idx) throws ConversionException {
     String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
     if (kind == null) {
       throw new ConversionException("Missing classpathentry/@kind");
@@ -149,24 +151,24 @@ public class EclipseClasspathReader {
         String srcUrl = VfsUtil.pathToUrl(myRootPath + "/" + path);
         final boolean isTestFolder = testPattern != null && testPattern.length() > 0 && path.matches(testPattern);
         if (EclipseProjectFinder.isExternalResource(myRootPath, path)) {
-          final String varName = EclipseProjectFinder.extractPathVariableName(path);
-          usedVariables.add(varName);
-
-          final String toPathVariableFormat =
-            getVariableRelatedPath(varName, path.length() > varName.length() ? path.substring(varName.length()) : null);
-          srcUrl = VfsUtil.pathToUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(toPathVariableFormat));
+          srcUrl = VfsUtil.pathToUrl(getExpandedLinkedResourcePath(rootModel, usedVariables, path));
           eclipseModuleManager.registerEclipseLinkedSrcVarPath(srcUrl, path);
-
           rootModel.addContentEntry(srcUrl).addSourceFolder(srcUrl, isTestFolder);
         } else {
           getContentEntry().addSourceFolder(srcUrl, isTestFolder);
         }
-        rearrangeOrderEntryOfType(rootModel, ModuleSourceOrderEntry.class);
+        eclipseModuleManager.setExpectedModuleSourcePlace(rearrangeOrderEntryOfType(rootModel, ModuleSourceOrderEntry.class));
+        eclipseModuleManager.registerSrcPlace(srcUrl, idx);
       }
     }
 
     else if (kind.equals(EclipseXml.OUTPUT_KIND)) {
-      setupOutput(rootModel, myRootPath + "/" + path);
+      String output = myRootPath + "/" + path;
+      if (EclipseProjectFinder.isExternalResource(myRootPath, path)) {
+        output = getExpandedLinkedResourcePath(rootModel, usedVariables, path);
+        eclipseModuleManager.registerEclipseLinkedVarPath(VfsUtil.pathToUrl(output), path);
+      }
+      setupOutput(rootModel, output);
     }
 
     else if (kind.equals(EclipseXml.LIB_KIND)) {
@@ -257,7 +259,7 @@ public class EclipseClasspathReader {
     }
   }
 
-  private static void rearrangeOrderEntryOfType(ModifiableRootModel rootModel, Class<? extends OrderEntry> orderEntryClass) {
+  private static int rearrangeOrderEntryOfType(ModifiableRootModel rootModel, Class<? extends OrderEntry> orderEntryClass) {
     OrderEntry[] orderEntries = rootModel.getOrderEntries();
     int moduleSourcesIdx = 0;
     for (OrderEntry orderEntry : orderEntries) {
@@ -267,7 +269,9 @@ public class EclipseClasspathReader {
       moduleSourcesIdx++;
     }
     orderEntries = ArrayUtil.append(orderEntries, orderEntries[moduleSourcesIdx]);
-    rootModel.rearrangeOrderEntries(ArrayUtil.remove(orderEntries, moduleSourcesIdx));
+    orderEntries = ArrayUtil.remove(orderEntries, moduleSourcesIdx);
+    rootModel.rearrangeOrderEntries(orderEntries);
+    return orderEntries.length - 1;
   }
 
   public static void setupOutput(ModifiableRootModel rootModel, final String path) {
@@ -337,6 +341,16 @@ public class EclipseClasspathReader {
 
   private static String getVariableRelatedPath(String var, String path) {
     return var == null ? null : ("$" + var + "$" + (path == null ? "" : ("/" + path)));
+  }
+
+  private String getExpandedLinkedResourcePath(ModifiableRootModel rootModel, Set<String> usedVariables, String path) {
+    final String linkedLocation = EclipseProjectFinder.replaceLinkedPathLocationVariable(myRootPath, path);
+    final String varName = EclipseProjectFinder.extractPathVariableName(linkedLocation);
+    usedVariables.add(varName);
+    final String toPathVariableFormat =
+      getVariableRelatedPath(varName,
+                             linkedLocation.length() > varName.length() ? linkedLocation.substring(varName.length() + 1) : null);
+    return PathMacroManager.getInstance(rootModel.getModule()).expandPath(toPathVariableFormat);
   }
 
   static String getJunitClsUrl(final boolean version4) {

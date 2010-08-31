@@ -61,10 +61,11 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
   }
 
   public final void setCodeFragmentFactory(CodeFragmentFactory codeFragmentFactory) {
-    myCodeFragmentFactory = codeFragmentFactory;
+    myCodeFragmentFactory = codeFragmentFactory != null? new CodeFragmentFactoryContextWrapper(codeFragmentFactory) : null;
   }
 
-  public final @Nullable CodeFragmentFactory getCodeFragmentFactory() {
+  @Nullable
+  public final CodeFragmentFactory getCodeFragmentFactory() {
     return myCodeFragmentFactory;
   }
 
@@ -72,13 +73,14 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     if (myCodeFragmentFactory != null) {
       return myCodeFragmentFactory;
     }
-    return ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
+    final CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
       public CodeFragmentFactory compute() {
         final List<CodeFragmentFactory> codeFragmentFactories = DebuggerUtilsEx.getCodeFragmentFactories(psiContext);
         // the list always contains at least DefaultCodeFragmentFactory
         return codeFragmentFactories.get(0);
       }
     });
+    return factory != null? new CodeFragmentFactoryContextWrapper(factory) : null;
   }
 
   protected abstract EvaluationContextImpl getEvaluationContext (EvaluationContextImpl evaluationContext);
