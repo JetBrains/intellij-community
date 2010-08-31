@@ -676,4 +676,26 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     """
   }
 
+  public void testInstanceMagicMethod() throws Exception {
+    myFixture.configureByText("a.java", """
+      public class JavaClass {
+          <T> T magic() {}
+
+          void foo() {
+              mag<caret>
+          }
+      }
+      """)
+    myFixture.completeBasic()
+    myFixture.checkResult """
+      public class JavaClass {
+          <T> T magic() {}
+
+          void foo() {
+              magic()<caret>
+          }
+      }
+      """
+  }
+
 }

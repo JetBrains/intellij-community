@@ -961,6 +961,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testExplicitMethodTypeParametersQualify() throws Throwable { doTest(); }
 
+  public void testExplicitMethodTypeParametersFromSuperClass() throws Throwable { doTest(); }
+
   public void testWildcardedInstanceof() throws Throwable { doTest(); }
   public void testWildcardedInstanceof2() throws Throwable { doTest(); }
   public void testWildcardedInstanceof3() throws Throwable { doTest(); }
