@@ -18,10 +18,12 @@ package com.intellij.uiDesigner.projectView;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import com.intellij.uiDesigner.GuiFormFileType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -60,4 +62,15 @@ public class FormMoveProvider extends MoveHandlerDelegate {
     }
   }
 
+
+  @Override
+  public boolean isMoveRedundant(PsiElement source, PsiElement target) {
+    if (source instanceof PsiFile && source.getParent() == target) {
+      final VirtualFile virtualFile = ((PsiFile)source).getVirtualFile();
+      if (virtualFile != null && virtualFile.getFileType() instanceof GuiFormFileType) {
+        return true;
+      }
+    }
+    return super.isMoveRedundant(source, target);
+  }
 }
