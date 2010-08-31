@@ -23,7 +23,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
     if (psiElement instanceof PyFunction) {
       return "reference.dialogs.findUsages.method";
     }
-    if (psiElement instanceof PyReferenceExpression || psiElement instanceof PyTargetExpression) {
+    if (psiElement instanceof PyReferenceExpression || psiElement instanceof PyTargetExpression || psiElement instanceof PyParameter) {
       return "reference.dialogs.findUsages.variable";
     }
     return null;
