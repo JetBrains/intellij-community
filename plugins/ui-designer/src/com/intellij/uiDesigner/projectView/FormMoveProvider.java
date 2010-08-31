@@ -22,6 +22,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -35,6 +36,10 @@ public class FormMoveProvider extends MoveHandlerDelegate {
   public boolean canMove(DataContext dataContext) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     return forms != null && forms.length > 0;
+  }
+
+  public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
+    return false;
   }
 
   @Override

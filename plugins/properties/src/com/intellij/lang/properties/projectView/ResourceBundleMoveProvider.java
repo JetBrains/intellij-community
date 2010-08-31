@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -34,6 +35,10 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
   @Override
   public boolean canMove(DataContext dataContext) {
     return ResourceBundle.ARRAY_DATA_KEY.getData(dataContext) != null;
+  }
+
+  public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
+    return false;
   }
 
   @Override
