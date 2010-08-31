@@ -214,6 +214,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         result.bottom += 2;
         result.right += 4 + ARROW_ICON.getIconWidth();
       }
+      else {
+        result.right += ARROW_ICON.getIconWidth();
+      }
 
       return result;
     }
