@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,13 +67,27 @@ public class InsertionContext {
     return myEditor;
   }
 
+  public void commitDocument() {
+    PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
+  }
+
   @NotNull
   public Document getDocument() {
     return getEditor().getDocument();
   }
 
+  public int getOffset(OffsetKey key) {
+    return getOffsetMap().getOffset(key);
+  }
+
   public OffsetMap getOffsetMap() {
     return myOffsetMap;
+  }
+
+  public OffsetKey trackOffset(int offset, boolean moveableToRight) {
+    final OffsetKey key = OffsetKey.create("tracked", moveableToRight);
+    getOffsetMap().addOffset(key, offset);
+    return key;
   }
 
   public int getStartOffset() {

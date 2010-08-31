@@ -315,7 +315,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (importStaticStatements.length > 0) {
       final StaticImportFilteringProcessor staticImportProcessor = new StaticImportFilteringProcessor(processor, null);
 
-      boolean forCompletion = name == null && processor.getHint(JavaCompletionProcessor.NAME_FILTER) != null;
+      boolean forCompletion = Boolean.TRUE.equals(processor.getHint(JavaCompletionProcessor.JAVA_COMPLETION));
 
       // single member processing
       for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
