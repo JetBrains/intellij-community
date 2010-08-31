@@ -33,10 +33,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.StripedLockConcurrentHashMap;
+import com.intellij.util.pico.IdeaPicoContainer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -52,8 +52,8 @@ public class SemServiceImpl extends SemService{
     }
   };
   private final ConcurrentMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>> myCache = new StripedLockConcurrentHashMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>>();
-  private final Map<SemKey, Collection<NullableFunction<PsiElement, ? extends SemElement>>> myProducers = new THashMap<SemKey, Collection<NullableFunction<PsiElement,? extends SemElement>>>();
-  private final MultiMap<SemKey, SemKey> myInheritors = new MultiMap<SemKey, SemKey>();
+  private final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
+  private final MultiMap<SemKey, SemKey> myInheritors;
   private final Project myProject;
 
   private boolean myBulkChange = false;
@@ -75,14 +75,9 @@ public class SemServiceImpl extends SemService{
       }
     });
 
-    final MutablePicoContainer container = (MutablePicoContainer)project.getPicoContainer();
-    final String serviceKey = SemService.class.getName();
-    container.unregisterComponent(serviceKey);
-    container.registerComponentInstance(serviceKey, this);
+    myProducers = collectProducers();
 
-    SemKey[] allKeys = collectProducers();
-
-    cacheKeyHierarchy(allKeys);
+    myInheritors = cacheKeyHierarchy(myProducers.keySet());
     
     final LowMemoryWatcher watcher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
       public void force() {
@@ -97,25 +92,27 @@ public class SemServiceImpl extends SemService{
     });
   }
 
-  private void cacheKeyHierarchy(SemKey[] allKeys) {
+  private static MultiMap<SemKey, SemKey> cacheKeyHierarchy(Collection<SemKey> allKeys) {
+    final MultiMap<SemKey, SemKey> result = new MultiMap<SemKey, SemKey>();
     ContainerUtil.process(allKeys, new Processor<SemKey>() {
       public boolean process(SemKey key) {
-        myInheritors.putValue(key, key);
+        result.putValue(key, key);
         for (SemKey parent : key.getSupers()) {
-          myInheritors.putValue(parent, key);
+          result.putValue(parent, key);
           process(parent);
         }
         return true;
       }
     });
-    for (final SemKey each : myInheritors.keySet()) {
-      final List<SemKey> inheritors = new ArrayList<SemKey>(myInheritors.get(each));
+    for (final SemKey each : result.keySet()) {
+      final List<SemKey> inheritors = new ArrayList<SemKey>(result.get(each));
       Collections.sort(inheritors, KEY_COMPARATOR);
-      myInheritors.put(each, inheritors);
+      result.put(each, inheritors);
     }
+    return result;
   }
 
-  private SemKey[] collectProducers() {
+  private MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> collectProducers() {
     final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> map = new MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>>();
 
     final SemRegistrar registrar = new SemRegistrar() {
@@ -132,15 +129,14 @@ public class SemServiceImpl extends SemService{
         });
       }
     };
-    for (SemContributor contributor : myProject.getExtensions(SemContributor.EP_NAME)) {
-      contributor.registerSemProviders(registrar);
+
+    final IdeaPicoContainer container = new IdeaPicoContainer(myProject.getPicoContainer());
+    container.registerComponentInstance(SemService.class.getName(), this);
+    for (SemContributorEP contributor : myProject.getExtensions(SemContributor.EP_NAME)) {
+      contributor.registerSemProviders(container, registrar);
     }
 
-    SemKey[] allKeys = map.keySet().toArray(new SemKey[map.size()]);
-    for (final SemKey key : allKeys) {
-      myProducers.put(key, map.get(key));
-    }
-    return allKeys;
+    return map;
   }
 
   public void clearCache() {
@@ -197,7 +193,7 @@ public class SemServiceImpl extends SemService{
   private List<SemElement> createSemElements(SemKey key, PsiElement psi) {
     List<SemElement> result = null;
     final Collection<NullableFunction<PsiElement, ? extends SemElement>> producers = myProducers.get(key);
-    if (producers != null && !producers.isEmpty()) {
+    if (!producers.isEmpty()) {
       for (final NullableFunction<PsiElement, ? extends SemElement> producer : producers) {
         final SemElement element = producer.fun(psi);
         if (element != null) {
