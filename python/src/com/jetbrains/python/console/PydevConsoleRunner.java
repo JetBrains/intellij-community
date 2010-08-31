@@ -50,6 +50,8 @@ import java.util.Map;
  * @author oleg
  */
 public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
+  private static final String DOUBLE_QUOTE_MULTILINE = "\"\"\"";
+  private static final String SINGLE_QUOTE_MULTILINE = "'''";
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   public static Key<PydevConsoleCommunication> CONSOLE_KEY = new Key<PydevConsoleCommunication>("PYDEV_CONSOLE_KEY");
@@ -58,7 +60,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private int currentPythonIndentSize;
   private int myCurrentIndentSize = -1;
   private StringBuilder myInputBuffer;
-  private boolean myInMultilineStringState;
+  private String myInMultilineStringState = null;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -193,11 +195,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   protected void runExecuteActionInner(final AnActionEvent actionEvent) {
     final Editor editor = getLanguageConsole().getCurrentEditor();
     final Document document = editor.getDocument();
-    final String text = document.getText();
+    final String lastLine = document.getText().substring(document.getLineStartOffset(document.getLineCount()-1));
     // multiline strings handling
-    if (myInMultilineStringState){
-      if (text.endsWith("\"\"\"")) {
-        myInMultilineStringState = false;
+    if (myInMultilineStringState != null){
+      if (lastLine.contains(myInMultilineStringState)) {
+        myInMultilineStringState = null;
         super.runExecuteActionInner(actionEvent);
         // restore language
         myConsoleView.getConsole().setLanguage(PythonLanguage.getInstance());
@@ -206,16 +208,23 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       typeInEditor(actionEvent, editor);
       return;
     }
-    else if (text.endsWith("\"\"\"")) {
-      myInMultilineStringState = true;
-      // change language
-      myConsoleView.getConsole().setLanguage(PlainTextLanguage.INSTANCE);
-      typeInEditor(actionEvent, editor);
-      return;
+    else {
+      if (lastLine.contains(DOUBLE_QUOTE_MULTILINE)) {
+        myInMultilineStringState = DOUBLE_QUOTE_MULTILINE;
+      }
+      else if (lastLine.contains(SINGLE_QUOTE_MULTILINE)){
+        myInMultilineStringState = SINGLE_QUOTE_MULTILINE;
+      }
+      if (myInMultilineStringState != null) {
+        // change language
+        myConsoleView.getConsole().setLanguage(PlainTextLanguage.INSTANCE);
+        typeInEditor(actionEvent, editor);
+        return;
+      }
     }
 
     // Process line continuation
-    if (text.endsWith("\\")){
+    if (lastLine.endsWith("\\")){
       typeInEditor(actionEvent, editor);
       return;
     }
