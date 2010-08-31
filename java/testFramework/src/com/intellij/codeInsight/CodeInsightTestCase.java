@@ -196,7 +196,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  protected VirtualFile configureByFiles(final File projectRoot, VirtualFile... vFiles) throws IOException {
+  protected VirtualFile configureByFiles(final File rawProjectRoot, VirtualFile... vFiles) throws IOException {
     myFile = null;
     myEditor = null;
 
@@ -206,14 +206,15 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       rootModel.clear();
     }
     File toDirIO = createTempDirectory();
-    VirtualFile toDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(toDirIO.getCanonicalPath().replace(File.separatorChar, '/'));
+    VirtualFile toDir = getVirtualFile(toDirIO);
 
     // auxiliary files should be copied first
     vFiles = ArrayUtil.reverseArray(vFiles);
     final LinkedHashMap<VirtualFile, EditorInfo> editorInfos;
-    if (projectRoot != null) {
+    if (rawProjectRoot != null) {
+      final File projectRoot = rawProjectRoot.getCanonicalFile();
       FileUtil.copyDir(projectRoot, toDirIO);
-      VirtualFile fromDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot);
+      VirtualFile fromDir = getVirtualFile(projectRoot);
       editorInfos =
         copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(vFiles, String.class, new Function<VirtualFile, String>() {
           public String fun(final VirtualFile s) {
