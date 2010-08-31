@@ -193,14 +193,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   @Override
   protected void runExecuteActionInner(final AnActionEvent actionEvent) {
-    try {
-      // Allow editor syntax highlighting daemon to finish
-      Thread.sleep(300);
-    }
-    catch (InterruptedException e) {
-      // ignore
-    }
-
     final Editor editor = getLanguageConsole().getCurrentEditor();
     final Document document = editor.getDocument();
     final String lastLine = document.getText().substring(document.getLineStartOffset(document.getLineCount()-1));
