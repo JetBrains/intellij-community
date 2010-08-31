@@ -99,10 +99,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private Editor myFullEditor;
   private ActionGroup myFullEditorActions;
+  private final boolean myDoSaveErrorsToHistory;
 
-  public LanguageConsoleImpl(final Project project, String title, final Language language) {
+  public LanguageConsoleImpl(final Project project, String title, final Language language, final boolean doSaveErrorsToHistory) {
     myProject = project;
     myTitle = title;
+    myDoSaveErrorsToHistory = doSaveErrorsToHistory;
     installEditorFactoryListener();
     final EditorFactory editorFactory = EditorFactory.getInstance();
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", StdFileTypes.PLAIN_TEXT, "");
@@ -365,8 +367,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
       iterator.advance();
     }
-    duplicateHighlighters(markupModel, consoleEditor.getDocument().getMarkupModel(myProject), offset, textRange);
-    duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
+    if (myDoSaveErrorsToHistory) {
+      duplicateHighlighters(markupModel, consoleEditor.getDocument().getMarkupModel(myProject), offset, textRange);
+      duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
+    }
     if (!text.endsWith("\n")) history.insertString(history.getTextLength(), "\n");
     return text;
   }
