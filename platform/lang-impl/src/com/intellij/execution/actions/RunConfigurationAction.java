@@ -110,16 +110,6 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
 
   public JComponent createCustomComponent(final Presentation presentation) {
     return new ComboBoxButton(presentation) {
-      protected void updateButtonSize() {
-        super.updateButtonSize();
-        final Dimension preferredSize = getPreferredSize();
-        final int width = preferredSize.width;
-        final int height = preferredSize.height;
-        if (width > height * 15) {
-          setPreferredSize(new Dimension(height * 15, height));
-        }
-      }
-
       public void addNotify() {
         super.addNotify();    //To change body of overriden methods use Options | File Templates.;
         final IdeFrameImpl frame = findFrame(this);
