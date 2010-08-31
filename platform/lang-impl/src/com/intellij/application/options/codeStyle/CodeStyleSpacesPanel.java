@@ -31,9 +31,9 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
   }
 
   protected void initTables() {
-    initBooleanField("SPACE_BEFORE_METHOD_CALL_PARENTHESES", ApplicationBundle.message("checkbox.spaces.method.call.parentheses"),
-                     SPACES_BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_METHOD_PARENTHESES", ApplicationBundle.message("checkbox.spaces.method.declaration.parentheses"),
+                     SPACES_BEFORE_PARENTHESES);
+    initBooleanField("SPACE_BEFORE_METHOD_CALL_PARENTHESES", ApplicationBundle.message("checkbox.spaces.method.call.parentheses"),
                      SPACES_BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_IF_PARENTHESES", ApplicationBundle.message("checkbox.spaces.if.parentheses"), SPACES_BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_FOR_PARENTHESES", ApplicationBundle.message("checkbox.spaces.for.parentheses"),

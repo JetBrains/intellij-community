@@ -119,22 +119,22 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
     addOption("EXTENDS_KEYWORD_WRAP", EXTENDS_KEYWORD, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
 
+    addOption("THROWS_LIST_WRAP", THROWS_LIST, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_THROWS_LIST", ApplicationBundle.message("wrapping.align.when.multiline"), THROWS_LIST);
+    addOption("THROWS_KEYWORD_WRAP", THROWS_KEYWORD, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
+
     addOption("METHOD_PARAMETERS_WRAP", METHOD_PARAMETERS, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     addOption("ALIGN_MULTILINE_PARAMETERS", ApplicationBundle.message("wrapping.align.when.multiline"), METHOD_PARAMETERS);
     addOption("METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.new.line.after.lpar"), METHOD_PARAMETERS);
     addOption("METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line"), METHOD_PARAMETERS);
-
-    addOption("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("wrapping.align.when.multiline"), METHOD_PARENTHESES);
-
-    addOption("THROWS_LIST_WRAP", THROWS_LIST, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    addOption("ALIGN_MULTILINE_THROWS_LIST", ApplicationBundle.message("wrapping.align.when.multiline"), THROWS_LIST);
-    addOption("THROWS_KEYWORD_WRAP", THROWS_KEYWORD, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
 
     addOption("CALL_PARAMETERS_WRAP", METHOD_ARGUMENTS_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     addOption("ALIGN_MULTILINE_PARAMETERS_IN_CALLS", ApplicationBundle.message("wrapping.align.when.multiline"), METHOD_ARGUMENTS_WRAPPING);
     addOption("PREFER_PARAMETERS_WRAP", ApplicationBundle.message("wrapping.take.priority.over.call.chain.wrapping"), METHOD_ARGUMENTS_WRAPPING);
     addOption("CALL_PARAMETERS_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.new.line.after.lpar"), METHOD_ARGUMENTS_WRAPPING);
     addOption("CALL_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line"), METHOD_ARGUMENTS_WRAPPING);
+
+    addOption("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("wrapping.align.when.multiline"), METHOD_PARENTHESES);
 
     addOption("METHOD_CALL_CHAIN_WRAP", CALL_CHAIN, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     addOption("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline"), CALL_CHAIN);
