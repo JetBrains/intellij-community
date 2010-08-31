@@ -70,7 +70,7 @@
     <group id="ChangesViewToolbar">
       <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
               icon="/actions/sync.png"/>
-      <action id="ChangesView.Commit" class="com.intellij.openapi.vcs.changes.actions.CommitAction"
+      <action id="ChangesView.Commit" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction"
               icon="/actions/commit.png"/>
       <action id="ChangesView.Rollback" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
               icon="/actions/rollback.png"/>
