@@ -8,10 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -105,14 +102,14 @@ public class PyPsiUtils {
 
   @Nullable
   public static PsiElement getStatement(@NotNull final PsiElement element) {
-    final PyElement compStatement = getCompoundStatement(element);
+    final PyElement compStatement = getStatementList(element);
     if (compStatement == null){
       return null;
     }
     return getStatement(compStatement, element);
   }
 
-  public static PyElement getCompoundStatement(final PsiElement element) {
+  public static PyElement getStatementList(final PsiElement element) {
     //noinspection ConstantConditions
     return element instanceof PyFile || element instanceof PyStatementList
            ? (PyElement) element
@@ -154,7 +151,7 @@ public class PyPsiUtils {
   }
 
   public static int getElementIndentation(final PsiElement element) {
-    final PsiElement compStatement = getCompoundStatement(element);
+    final PsiElement compStatement = getStatementList(element);
     final PsiElement statement = getStatement(compStatement, element);
     if (statement == null) {
       return 0;
@@ -194,6 +191,7 @@ public class PyPsiUtils {
         }
       }
     }
+    builder.append("\n");
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
     final PsiElement result = elementGenerator.createFromText(LanguageLevel.getDefault(), PsiElement.class, builder.toString());
     if (result == null) {
@@ -266,8 +264,8 @@ public class PyPsiUtils {
   }
 
   static <T, U extends PsiElement> List<T> collectStubChildren(U e,
-                                                                    final StubElement<U> stub, final IElementType elementType,
-                                                                    final Class<T> itemClass) {
+                                                               final StubElement<U> stub, final IElementType elementType,
+                                                               final Class<T> itemClass) {
     final List<T> result = new ArrayList<T>();
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
@@ -302,5 +300,21 @@ public class PyPsiUtils {
       });
     }
     return result;
+  }
+
+  @Nullable
+  public static PsiElement getSignificantToTheRight(PsiElement element, final boolean ignoreComments) {
+    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment){
+      element = PsiTreeUtil.nextLeaf(element);
+    }
+    return element;
+  }
+
+  @Nullable
+  public static PsiElement getSignificantToTheLeft(PsiElement element, final boolean ignoreComments) {
+    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment){
+      element = PsiTreeUtil.prevLeaf(element);
+    }
+    return element;
   }
 }

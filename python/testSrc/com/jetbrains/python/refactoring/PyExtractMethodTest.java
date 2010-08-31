@@ -137,4 +137,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("return_tuple.before.py", "bar", "return_tuple.after.py");
   }
 
+  public void testComment2() throws Throwable {
+    doTest("comment2.before.py", "baz", "comment2.after.py");
+  }
+
 }

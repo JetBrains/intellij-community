@@ -3,14 +3,11 @@ package com.jetbrains.python.refactoring.extractmethod;
 import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -18,7 +15,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -63,12 +59,8 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       }
     }
     // Pass comments and whitespaces
-    while (element1 != null && StringUtil.isEmptyOrSpaces(element1.getText()) || element1 instanceof PsiComment){
-      element1 = PsiTreeUtil.nextLeaf(element1);
-    }
-    while (element2 != null && StringUtil.isEmptyOrSpaces(element2.getText()) || element2 instanceof PsiComment){
-      element2 = PsiTreeUtil.prevLeaf(element2);
-    }
+    element1 = PyPsiUtils.getSignificantToTheRight(element1, false);
+    element2 = PyPsiUtils.getSignificantToTheLeft(element2, false);
     if (element1 == null || element2 == null) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.using.selected.elements"),
@@ -126,19 +118,20 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       return null;
     }
 
-    final PyElement compStatement = PyPsiUtils.getCompoundStatement(parent);
-    if (compStatement == null) {
+    final PyElement statementList = PyPsiUtils.getStatementList(parent);
+    if (statementList == null) {
       return null;
     }
 
-    final PsiElement statement1 = PyPsiUtils.getStatement(compStatement, element1);
-    final PsiElement statement2 = PyPsiUtils.getStatement(compStatement, element2);
+    final PsiElement statement1 = PyPsiUtils.getStatement(statementList, element1);
+    final PsiElement statement2 = PyPsiUtils.getStatement(statementList, element2);
     if (statement1 == null || statement2 == null){
       return null;
     }
 
     // return elements if they are really first and last elements of statements
-    if (element1 == PsiTreeUtil.getDeepestFirst(statement1) && element2 == PsiTreeUtil.getDeepestLast(statement2)) {
+    if (element1 == PsiTreeUtil.getDeepestFirst(statement1) &&
+        element2 == PyPsiUtils.getSignificantToTheLeft(PsiTreeUtil.getDeepestLast(statement2), !(element2 instanceof PsiComment))) {
       return new PsiElement[]{statement1, statement2};
     }
     return null;
