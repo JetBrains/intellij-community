@@ -82,7 +82,14 @@ public class ClassElement extends CompositeElement implements Constants {
     if (isEnum()) {
       if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.contains(first.getElementType())) {
         ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
-        if (semicolonPlace == null || semicolonPlace.getElementType() != SEMICOLON) {
+        boolean commentsOrWhiteSpaces = true;
+        for (ASTNode child = first; child != null; child = child.getTreeNext()) {
+          if (!StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(child.getElementType())) {
+            commentsOrWhiteSpaces = false;
+            break;
+          }
+        }
+        if (!commentsOrWhiteSpaces && (semicolonPlace == null || semicolonPlace.getElementType() != SEMICOLON)) {
             final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1,
                                                                           SharedImplUtil.findCharTableByTree(this), getManager());
             addInternal(semicolon, semicolon, semicolonPlace, Boolean.FALSE);
