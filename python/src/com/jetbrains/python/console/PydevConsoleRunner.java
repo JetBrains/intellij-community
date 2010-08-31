@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -31,6 +32,7 @@ import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
@@ -56,6 +58,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private int currentPythonIndentSize;
   private int myCurrentIndentSize = -1;
   private StringBuilder myInputBuffer;
+  private boolean myInMultilineStringState;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -191,22 +194,46 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     final Editor editor = getLanguageConsole().getCurrentEditor();
     final Document document = editor.getDocument();
     final String text = document.getText();
+    // multiline strings handling
+    if (myInMultilineStringState){
+      if (text.endsWith("\"\"\"")) {
+        myInMultilineStringState = false;
+        super.runExecuteActionInner(actionEvent);
+        // restore language
+        myConsoleView.getConsole().setLanguage(PythonLanguage.getInstance());
+        return;
+      }
+      typeInEditor(actionEvent, editor);
+      return;
+    }
+    else if (text.endsWith("\"\"\"")) {
+      myInMultilineStringState = true;
+      // change language
+      myConsoleView.getConsole().setLanguage(PlainTextLanguage.INSTANCE);
+      typeInEditor(actionEvent, editor);
+      return;
+    }
+
     // Process line continuation
     if (text.endsWith("\\")){
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
-            @Override
-            public void run() {
-              EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, actionEvent.getDataContext());
-            }
-          }, "Enter on line continuation action", null);
-        }
-      });
+      typeInEditor(actionEvent, editor);
       return;
     }
     super.runExecuteActionInner(actionEvent);
+  }
+
+  private void typeInEditor(final AnActionEvent actionEvent, final Editor editor) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
+          @Override
+          public void run() {
+            EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, actionEvent.getDataContext());
+          }
+        }, "Enter on line continuation action", null);
+      }
+    });
   }
 
   @Override
