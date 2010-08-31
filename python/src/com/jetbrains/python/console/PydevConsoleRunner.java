@@ -9,11 +9,15 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -52,7 +56,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private int currentPythonIndentSize;
   private int myCurrentIndentSize = -1;
   private StringBuilder myInputBuffer;
-  private boolean myMultilineStringSeen;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -184,11 +187,32 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   @Override
+  protected void runExecuteActionInner(final AnActionEvent actionEvent) {
+    final Editor editor = getLanguageConsole().getCurrentEditor();
+    final Document document = editor.getDocument();
+    final String text = document.getText();
+    // Process line continuation
+    if (text.endsWith("\\")){
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
+            @Override
+            public void run() {
+              EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, actionEvent.getDataContext());
+            }
+          }, "Enter on line continuation action", null);
+        }
+      });
+      return;
+    }
+    super.runExecuteActionInner(actionEvent);
+  }
+
+  @Override
   public void processInput(final String input) {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     final Editor currentEditor = console.getCurrentEditor();
-
-    myMultilineStringSeen = input.trim().endsWith("\"\"\"");
 
     if (myInputBuffer == null){
       myInputBuffer = new StringBuilder();
@@ -225,9 +249,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
               // compute current indentation
               myCurrentIndentSize = myHelper.getIndent(input, false) + currentPythonIndentSize;
               // In this case we can insert indent automatically
-              if (!myMultilineStringSeen) {
-                indentEditor(currentEditor, myCurrentIndentSize);
-              }
+              indentEditor(currentEditor, myCurrentIndentSize);
             }
           } else {
             if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())){
