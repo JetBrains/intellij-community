@@ -236,6 +236,13 @@ public abstract class AbstractConsoleRunnerWithHistory {
   }
 
   protected void runExecuteActionInner(final AnActionEvent actionEvent) {
+    try {
+      // Allow editor syntax highlighting daemon to finish
+      Thread.sleep(300);
+    }
+    catch (InterruptedException e) {
+      // ignore
+    }
     // Process input and add to history
     final Document document = getLanguageConsole().getCurrentEditor().getDocument();
     final String text = document.getText();
