@@ -51,7 +51,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
    *         use its own language-specific common settings (the settings are shared with other languages).
    */
   @Nullable
-  public CommonCodeStyleSettings getDefaultCommonSettings(CodeStyleSettings settings) {
+  public CommonCodeStyleSettings getDefaultCommonSettings() {
     return null;
   }
 

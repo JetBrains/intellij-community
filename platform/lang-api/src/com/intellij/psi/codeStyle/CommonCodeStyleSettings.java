@@ -17,6 +17,9 @@ package com.intellij.psi.codeStyle;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of <code>CommonCodeStyleSettings</code>.
@@ -25,15 +28,58 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CommonCodeStyleSettings {
 
-  private final CodeStyleSettings myMainSettings;
 
-  CommonCodeStyleSettings(@Nullable CodeStyleSettings mainSettings) {
-    myMainSettings = mainSettings;
+  public CommonCodeStyleSettings clone(CodeStyleSettings parentSettings) {
+    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings();
+    copyPublicFields(this, commonSettings);
+    return commonSettings;
   }
 
-  public CodeStyleSettings getMainSettings() {
-    return myMainSettings;
+  protected static void copyPublicFields(Object from, Object to) {
+    assert from != to;
+    copyFields(to.getClass().getDeclaredFields(), from, to);
+    Class superClass = to.getClass().getSuperclass();
+    if (superClass != null) {
+      copyFields(superClass.getDeclaredFields(), from, to);
+    }
   }
+
+  private static void copyFields(Field[] fields, Object from, Object to) {
+    for (Field field : fields) {
+      if (isPublic(field) && !isFinal(field)) {
+        try {
+          copyFieldValue(from, to, field);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+
+  private static void copyFieldValue(final Object from, Object to, final Field field)
+    throws IllegalAccessException {
+    Class<?> fieldType = field.getType();
+    if (fieldType.isPrimitive()) {
+      field.set(to, field.get(from));
+    }
+    else if (fieldType.equals(String.class)) {
+      field.set(to, field.get(from));
+    }
+    else {
+      throw new RuntimeException("Field not copied " + field.getName());
+    }
+  }
+
+  private static boolean isPublic(final Field field) {
+    return (field.getModifiers() & Modifier.PUBLIC) != 0;
+  }
+
+  private static boolean isFinal(final Field field) {
+    return (field.getModifiers() & Modifier.FINAL) != 0;
+  }
+
+
 
 //----------------- GENERAL --------------------
 
