@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.codeStyle;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -283,10 +281,7 @@ public class CommonCodeStyleSettings {
    * int start = 1;
    * int end   = 10;
    */
-  public boolean ALIGN_GROUP_FIELDS_VARIABLES = false;
-
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
-
 
 //----------------- SPACES --------------------
 
@@ -414,6 +409,13 @@ public class CommonCodeStyleSettings {
    * "[expr]"
    */
   public boolean SPACE_WITHIN_BRACKETS = false;
+
+  /**
+   * void foo(){ { return; } }
+   * or
+   * void foo(){{return;}}
+   */
+  public boolean SPACE_WITHIN_BRACES = false;
 
   /**
    * "int X[] { 1, 3, 5 }"

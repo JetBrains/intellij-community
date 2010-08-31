@@ -88,7 +88,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   private static final String THROWS_KEYWORD = ApplicationBundle.message("wrapping.throws.keyword");
   private static final String TERNARY_OPERATION = ApplicationBundle.message("wrapping.ternary.operation");
   private static final String ASSIGNMENT = ApplicationBundle.message("wrapping.assignment.statement");
-  private static final String FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("wrapping.assignment.statement");
+  private static final String FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("wrapping.assignment.variables.groups");
   private static final String ARRAY_INITIALIZER = ApplicationBundle.message("wrapping.array.initializer");
   private static final String MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
   private static final String ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
@@ -139,6 +139,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("METHOD_CALL_CHAIN_WRAP", CALL_CHAIN, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     addOption("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline"), CALL_CHAIN);
 
+    addOption("ALIGN_GROUP_FIELD_DECLARATIONS", ApplicationBundle.message("wrapping.align.when.multiline"), FIELDS_VARIABLES_GROUPS);
+
     addOption("IF_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), IF_STATEMENT, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
     addOption("ELSE_ON_NEW_LINE", ApplicationBundle.message("wrapping.else.on.new.line"), IF_STATEMENT);
     addOption("SPECIAL_ELSE_IF_TREATMENT", ApplicationBundle.message("wrapping.special.else.if.braces.treatment"), IF_STATEMENT);
@@ -157,8 +159,6 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
     addOption("CATCH_ON_NEW_LINE", ApplicationBundle.message("wrapping.catch.on.new.line"), TRY_STATEMENT);
     addOption("FINALLY_ON_NEW_LINE", ApplicationBundle.message("wrapping.finally.on.new.line"), TRY_STATEMENT);
-
-    addOption("ALIGN_GROUP_FIELDS_VARIABLES", ApplicationBundle.message("wrapping.align.when.multiline"), FIELDS_VARIABLES_GROUPS);
 
     addOption("BINARY_OPERATION_WRAP", BINARY_OPERATION, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     addOption("ALIGN_MULTILINE_BINARY_OPERATION", ApplicationBundle.message("wrapping.align.when.multiline"), BINARY_OPERATION);
