@@ -36,25 +36,25 @@ public class PyConsoleHighlightingUtil {
   }
 
   public static void processOutput(final LanguageConsoleImpl console, String string, final Key attributes) {
-    final ConsoleViewContentType type =
+    final ConsoleViewContentType outputType =
       attributes == ProcessOutputTypes.STDERR ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT;
     // Highlight output by pattern
     Matcher matcher;
     while ((matcher = CODE_ELEMENT_PATTERN.matcher(string)).find()) {
-      LanguageConsoleImpl.printToConsole(console, string.substring(0, matcher.start()), type);
+      LanguageConsoleImpl.printToConsole(console, string.substring(0, matcher.start()), outputType, null);
       // Number group
       if (matcher.group(1) != null) {
-        LanguageConsoleImpl.printToConsole(console, matcher.group(1), NUMBER_ATTRIBUTES);
+        LanguageConsoleImpl.printToConsole(console, matcher.group(1), outputType, NUMBER_ATTRIBUTES);
       }
       // String group
       else if (matcher.group(6) != null) {
-        LanguageConsoleImpl.printToConsole(console, matcher.group(6), STRING_ATTRIBUTES);
+        LanguageConsoleImpl.printToConsole(console, matcher.group(6), outputType, STRING_ATTRIBUTES);
       }
       else {
-        LanguageConsoleImpl.printToConsole(console, matcher.group(), type);
+        LanguageConsoleImpl.printToConsole(console, matcher.group(), outputType, null);
       }
       string = string.substring(matcher.end());
     }
-    LanguageConsoleImpl.printToConsole(console, string, type);
+    LanguageConsoleImpl.printToConsole(console, string, outputType, null);
   }
 }
