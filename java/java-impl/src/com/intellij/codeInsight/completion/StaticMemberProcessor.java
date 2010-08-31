@@ -64,7 +64,7 @@ public abstract class StaticMemberProcessor {
         for (final PsiMethod method : methods) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              processMethod(method, consumer);
+              processMember(method, consumer);
             }
           });
 
@@ -73,7 +73,7 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  public void processMethodsOfRegisteredClasses(@Nullable final PrefixMatcher matcher, final Consumer<LookupElement> consumer) {
+  public void processMembersOfRegisteredClasses(@Nullable final PrefixMatcher matcher, final Consumer<LookupElement> consumer) {
     for (final PsiClass psiClass : myStaticImportedClasses) {
       final PsiMethod[] classMethods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
         public PsiMethod[] compute() {
@@ -84,7 +84,21 @@ public abstract class StaticMemberProcessor {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             if (matcher == null || matcher.prefixMatches(method.getName())) {
-              processMethod(method, consumer);
+              processMember(method, consumer);
+            }
+          }
+        });
+      }
+      final PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
+        public PsiField[] compute() {
+          return psiClass.getAllFields();
+        }
+      });
+      for (final PsiField field : fields) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            if (matcher == null || matcher.prefixMatches(field.getName())) {
+              processMember(field, consumer);
             }
           }
         });
@@ -93,11 +107,12 @@ public abstract class StaticMemberProcessor {
   }
 
 
-  private void processMethod(final PsiMethod method, final Consumer<LookupElement> consumer) {
-    if (method.hasModifierProperty(PsiModifier.STATIC) && myResolveHelper.isAccessible(method, myPosition, null)) {
-      final PsiClass containingClass = method.getContainingClass();
+  private void processMember(final PsiMember member, final Consumer<LookupElement> consumer) {
+    if (member.hasModifierProperty(PsiModifier.STATIC) && myResolveHelper.isAccessible(member, myPosition, null)) {
+      final PsiClass containingClass = member.getContainingClass();
       if (containingClass != null) {
-        if (!JavaCompletionUtil.isInExcludedPackage(containingClass) && !StaticImportMethodFix.isExcluded(method)) {
+        if (!JavaCompletionUtil.isInExcludedPackage(containingClass) &&
+            (!(member instanceof PsiMethod) || !StaticImportMethodFix.isExcluded((PsiMethod)member))) {
           final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
           if (!myHintShown &&
               !shouldImport &&
@@ -110,7 +125,7 @@ public abstract class StaticMemberProcessor {
             myHintShown = true;
           }
 
-          consumer.consume(createLookupElement(method, containingClass, shouldImport));
+          consumer.consume(createLookupElement(member, containingClass, shouldImport));
         }
 
       }
@@ -118,5 +133,5 @@ public abstract class StaticMemberProcessor {
   }
 
   @NotNull
-  protected abstract LookupElement createLookupElement(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport);
+  protected abstract LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport);
 }

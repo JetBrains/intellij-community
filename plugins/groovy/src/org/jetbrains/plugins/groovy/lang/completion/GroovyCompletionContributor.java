@@ -160,7 +160,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
             }
           });
 
-          completeStaticMembers(position).processMethodsOfRegisteredClasses(result.getPrefixMatcher(), new Consumer<LookupElement>() {
+          completeStaticMembers(position).processMembersOfRegisteredClasses(result.getPrefixMatcher(), new Consumer<LookupElement>() {
             @Override
             public void consume(LookupElement element) {
               result.addElement(element);
@@ -389,8 +389,11 @@ public class GroovyCompletionContributor extends CompletionContributor {
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {
       @NotNull
       @Override
-      protected LookupElement createLookupElement(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport) {
-        return new JavaGlobalMemberLookupElement(method, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
+      protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
+        if (member instanceof PsiMethod) {
+          return new JavaGlobalMemberLookupElement((PsiMethod)member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
+        }
+        return GroovyCompletionUtil.getLookupElement(member); //todo;
       }
     };
     final PsiFile file = position.getContainingFile();

@@ -936,6 +936,9 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     doTest();
   }
 
+  public void testStaticallyImportedField() throws Throwable { doTest(); }
+  public void testSiblingOfAStaticallyImportedField() throws Throwable { doTest(); }
+
   public void testInferFromCall() throws Throwable {
     doTest();
   }

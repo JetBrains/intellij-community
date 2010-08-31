@@ -883,7 +883,7 @@ public class JavaCompletionUtil {
       }
     }
 
-    JavaGlobalMemberNameCompletionContributor.completeStaticMembers(element).processMethodsOfRegisteredClasses(matcher, new Consumer<LookupElement>() {
+    JavaGlobalMemberNameCompletionContributor.completeStaticMembers(element).processMembersOfRegisteredClasses(matcher, new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
         set.add(element);

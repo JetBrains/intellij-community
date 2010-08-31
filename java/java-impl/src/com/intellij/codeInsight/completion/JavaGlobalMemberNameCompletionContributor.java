@@ -1,8 +1,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,11 +41,25 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {
       @NotNull
       @Override
-      protected LookupElement createLookupElement(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport) {
-        final JavaMethodCallElement element = new JavaMethodCallElement(method, true);
-        element.setShouldBeImported(shouldImport);
-        return element;
+      protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull final PsiClass containingClass, boolean shouldImport) {
+        if (member instanceof PsiMethod) {
+          final JavaMethodCallElement element = new JavaMethodCallElement((PsiMethod)member, true);
+          element.setShouldBeImported(shouldImport);
+          return element;
+        }
+        return new VariableLookupItem((PsiVariable)member) {
+          @Override
+          public void handleInsert(InsertionContext context) {
+            context.commitDocument();
+            final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
+            if (ref != null) {
+              ref.bindToElementViaStaticImport(containingClass);
+            }
+            super.handleInsert(context);
+          }
+        };
       }
+
     };
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
