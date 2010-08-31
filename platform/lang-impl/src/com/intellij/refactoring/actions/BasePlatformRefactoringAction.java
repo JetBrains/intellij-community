@@ -62,22 +62,38 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   protected final RefactoringActionHandler getHandler(DataContext dataContext) {
     final Language[] languages = LangDataKeys.CONTEXT_LANGUAGES.getData(dataContext);
     if (languages != null) {
+      PsiElement elementAtCaret = getElementAtCaret(LangDataKeys.EDITOR.getData(dataContext), LangDataKeys.PSI_FILE.getData(dataContext));
       for (Language language : languages) {
-        List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
-        if (providers.isEmpty()) continue;
-        if (providers.size() == 1) return getRefactoringHandler(providers.get(0));
-        PsiElement element = getElementAtCaret(LangDataKeys.EDITOR.getData(dataContext), LangDataKeys.PSI_FILE.getData(dataContext));
-        if (element != null) {
-          for (RefactoringSupportProvider provider : providers) {
-            if (provider.isAvailable(element)) {
-              return getRefactoringHandler(provider);
-            }
-          }
+        RefactoringActionHandler handler = getHandler(language, elementAtCaret);
+        if (handler != null) {
+          return handler;
+        }
+      }
+    }
+    else {
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      if (element != null) {
+        return getHandler(element.getLanguage(), element);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+    if (providers.isEmpty()) return null;
+    if (providers.size() == 1) return getRefactoringHandler(providers.get(0));
+    if (element != null) {
+      for (RefactoringSupportProvider provider : providers) {
+        if (provider.isAvailable(element)) {
+          return getRefactoringHandler(provider);
         }
       }
     }
     return null;
   }
+
 
   @Override
   protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
