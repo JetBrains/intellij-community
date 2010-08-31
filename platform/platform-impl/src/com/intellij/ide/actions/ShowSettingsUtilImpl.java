@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -36,6 +37,7 @@ import java.util.List;
  * @author max
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
   @NonNls
   private static final String PREFER_CLASSIC_OPTIONS_EDITOR = "PREFER_CLASSIC_OPTIONS_EDITOR";
 
@@ -145,6 +147,21 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(project, configurable, dimensionServiceKey);
     configurableEditor.show();
     return configurableEditor.isOK();
+  }
+
+  @Override
+  public boolean editProjectConfigurable(@NotNull Project project,
+                                         Class<? extends Configurable> configurableClass,
+                                         @NonNls String dimensionServiceKey) {
+    final Configurable configurable = findProjectConfigurable(project, configurableClass);
+    if (configurable == null) {
+      LOG.error("Cannot find project configurable for " + configurableClass);
+      return false;
+    }
+    if (dimensionServiceKey == null) {
+      dimensionServiceKey = createDimensionKey(configurable);
+    }
+    return editConfigurable(project, dimensionServiceKey, configurable);
   }
 
   public boolean editConfigurable(Component parent, Configurable configurable) {

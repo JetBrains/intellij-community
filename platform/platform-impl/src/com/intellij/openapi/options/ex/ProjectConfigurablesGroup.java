@@ -18,7 +18,6 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -73,17 +72,6 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
     List<Configurable> result = buildConfigurablesList(extensions, components, filter);
 
     return result.toArray(new Configurable[result.size()]);
-  }
-
-  @Nullable
-  public static Configurable getProjectStructureConfigurable(Project project) {
-    final Configurable[] configurables = getConfigurables(project, new ConfigurableFilter() {
-      public boolean isIncluded(final Configurable configurable) {
-        return PROJECT_STRUCTURE_CLASS_FQ_NAME.equals(configurable.getClass().getName());
-      }
-    });
-
-    return configurables.length == 1 ? configurables[0] : null;
   }
 
   static List<Configurable> buildConfigurablesList(final Configurable[] extensions, final Configurable[] components, ConfigurableFilter filter) {
