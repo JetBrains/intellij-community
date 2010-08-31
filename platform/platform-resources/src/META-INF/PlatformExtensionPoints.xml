@@ -9,11 +9,11 @@
                   interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter"/>
 
   <extensionPoint name="projectConfigurable"
-                  interface="com.intellij.openapi.options.Configurable"
+                  beanClass="com.intellij.openapi.options.ConfigurableEP"
                   area="IDEA_PROJECT"/>
 
   <extensionPoint name="applicationConfigurable"
-                  interface="com.intellij.openapi.options.Configurable"/>
+                  beanClass="com.intellij.openapi.options.ConfigurableEP"/>
 
   <extensionPoint name="selectInTarget"
                   interface="com.intellij.ide.SelectInTarget"

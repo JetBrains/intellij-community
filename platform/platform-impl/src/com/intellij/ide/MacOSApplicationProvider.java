@@ -74,7 +74,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
           }
 
           ConfigurableGroup[] group = new ConfigurableGroup[]{
-            new ProjectConfigurablesGroup(project, false),
+            new ProjectConfigurablesGroup(project),
             new IdeConfigurablesGroup()
           };
 

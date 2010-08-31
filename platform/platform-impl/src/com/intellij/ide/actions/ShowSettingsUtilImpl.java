@@ -79,7 +79,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     if (project == null) {
       group = new ConfigurableGroup[] {new IdeConfigurablesGroup()};
     } else {
-      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project, false), new IdeConfigurablesGroup()};
+      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project), new IdeConfigurablesGroup()};
     }
 
     Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
@@ -93,7 +93,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   public void showSettingsDialog(@NotNull final Project project, final Configurable toSelect) {
     _showSettingsDialog(project, new ConfigurableGroup[]{
-      new ProjectConfigurablesGroup(project, false),
+      new ProjectConfigurablesGroup(project),
       new IdeConfigurablesGroup()
     }, toSelect);
   }
@@ -128,19 +128,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
-    return selectConfigurable(confClass, ApplicationManager.getApplication().getExtensions(Configurable.APPLICATION_CONFIGURABLES));
+    return ConfigurableExtensionPointUtil.findApplicationConfigurable(confClass);
   }
 
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
-    return selectConfigurable(confClass, project.getExtensions(Configurable.PROJECT_CONFIGURABLES));
-  }
-
-  private static <T extends Configurable> T selectConfigurable(final Class<T> confClass, final Configurable... configurables) {
-    for (Configurable configurable : configurables) {
-      if (confClass.isAssignableFrom(configurable.getClass())) return (T)configurable;
-    }
-
-    throw new IllegalStateException("Can't find configurable of class " + confClass.getName());
+    return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 
   public boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable) {

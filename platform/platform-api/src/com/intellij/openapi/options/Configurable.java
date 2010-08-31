@@ -31,7 +31,13 @@ import javax.swing.*;
  * this interface are shown in the "Project Settings" group of that dialog.
  */
 public interface Configurable extends UnnamedConfigurable {
+  /**
+   * @deprecated
+   */
   ExtensionPointName<Configurable> PROJECT_CONFIGURABLES = ExtensionPointName.create("com.intellij.projectConfigurable");
+  /**
+   * @deprecated
+   */
   ExtensionPointName<Configurable> APPLICATION_CONFIGURABLES = ExtensionPointName.create("com.intellij.applicationConfigurable");
 
   /**
@@ -59,8 +65,10 @@ public interface Configurable extends UnnamedConfigurable {
   @Nullable
   @NonNls String getHelpTopic();
 
+  /**
+   * @deprecated
+   */
   interface Assistant extends Configurable {
-
   }
 
   interface Composite {

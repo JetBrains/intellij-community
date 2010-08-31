@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.settings;
+package com.intellij.openapi.options;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * @author nik
  */
-public abstract class DebuggerSettingsPanelProvider {
-
-  public abstract int getPriority();
-
-  public abstract Collection<? extends Configurable> getConfigurables(final Project project);
-
-  public void apply() {
-  }
+public abstract class ConfigurableProvider {
 
   @Nullable
-  public Configurable getRootConfigurable() {
-    return null;
-  }
+  public abstract Configurable createConfigurable();
+
 }

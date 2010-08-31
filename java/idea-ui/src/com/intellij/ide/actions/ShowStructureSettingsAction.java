@@ -32,6 +32,6 @@ public class ShowStructureSettingsAction extends AnAction implements DumbAware {
       project = ProjectManager.getInstance().getDefaultProject();
     }
 
-    ShowSettingsUtil.getInstance().editProjectConfigurable(project, ProjectStructureConfigurable.class, OptionsEditorDialog.DIMENSION_KEY);
+    ShowSettingsUtil.getInstance().editConfigurable(project, OptionsEditorDialog.DIMENSION_KEY, ProjectStructureConfigurable.getInstance(project));
   }
 }
