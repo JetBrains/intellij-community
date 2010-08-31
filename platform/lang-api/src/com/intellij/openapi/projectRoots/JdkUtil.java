@@ -71,7 +71,13 @@ public class JdkUtil {
       rtJar = homeDirectory.findFileByRelativePath("../Classes/classes.jar"); // for mac
     }
     if (rtJar == null) {
-      return null;
+      String versionString = jdk.getVersionString();
+      if (versionString != null) {
+        final int start = versionString.indexOf("\"");
+        final int end = versionString.lastIndexOf("\"");
+        versionString = start >= 0 && (end > start)? versionString.substring(start + 1, end) : null;
+      }
+      return versionString;
     }
     VirtualFile rtJarFileContent = JarFileSystem.getInstance().findFileByPath(rtJar.getPath() + JarFileSystem.JAR_SEPARATOR);
     if (rtJarFileContent == null) {
