@@ -3965,6 +3965,12 @@ public class AbstractTreeUi {
   private void runDone(@Nullable Runnable done) {
     if (done == null) return;
 
+    if (!canInitiateNewActivity()) {
+      if (done instanceof AbstractTreeBuilder.UserRunnable) {
+        return;
+      }
+    }
+
     if (isYeildingNow()) {
       if (!myYeildingDoneRunnables.contains(done)) {
         myYeildingDoneRunnables.add(done);
