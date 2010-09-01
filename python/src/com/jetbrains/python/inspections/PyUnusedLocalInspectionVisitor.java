@@ -290,11 +290,21 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (!(element instanceof PyTargetExpression)) {
       return false;
     }
-    if (element.getParent() instanceof PyTupleExpression) {
+    // Handling of the star expressions
+    PsiElement parent = element.getParent();
+    if (parent instanceof PyStarExpression){
+      element = parent;
+      parent = element.getParent();
+    }
+    if (parent instanceof PyTupleExpression) {
       // if all the items of the tuple are unused, we still highlight all of them; if some are unused, we ignore
-      PyTupleExpression tuple = (PyTupleExpression) element.getParent();
+      final PyTupleExpression tuple = (PyTupleExpression)parent;
       for (PyExpression expression : tuple.getElements()) {
-        if (!myUnusedElements.contains(expression)) {
+        if (expression instanceof PyStarExpression){
+          if (!myUnusedElements.contains(((PyStarExpression)expression).getExpression())){
+            return true;
+          }
+        } else if (!myUnusedElements.contains(expression)) {
           return true;
         }
       }
