@@ -17,7 +17,9 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -57,7 +59,7 @@ import java.util.*;
 import java.util.List;
 
 public class RepositoryAttachDialog extends DialogWrapper {
-
+  @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
   @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
   @NonNls private static final String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
 
@@ -135,23 +137,29 @@ public class RepositoryAttachDialog extends DialogWrapper {
         }
       }
     });
+    final PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
+    final boolean pathValueSet = storage.isValueSet(PROPERTY_DOWNLOAD_TO_PATH);
+    if (pathValueSet) {
+      myDirectoryField.setText(storage.getValue(PROPERTY_DOWNLOAD_TO_PATH));
+    }
+    myJavaDocCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_JAVADOC) && storage.isTrueValue(PROPERTY_ATTACH_JAVADOC));
+    mySourcesCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_SOURCES) && storage.isTrueValue(PROPERTY_ATTACH_SOURCES));
     if (!myManaged) {
-      if (myProject != null && !myProject.isDefault()) {
+      if (!pathValueSet && myProject != null && !myProject.isDefault()) {
         final VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir != null) {
           myDirectoryField.setText(FileUtil.toSystemDependentName(baseDir.getPath() + "/lib"));
         }
       }
+      final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      descriptor.putUserData(FileChooserDialogImpl.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
       myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
                                                ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
-                                               FileChooserDescriptorFactory.createSingleFolderDescriptor());
+                                               descriptor);
     }
     else {
       myDirectoryField.setVisible(false);
     }
-    final PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
-    myJavaDocCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_JAVADOC) && storage.isTrueValue(PROPERTY_ATTACH_JAVADOC));
-    mySourcesCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_SOURCES) && storage.isTrueValue(PROPERTY_ATTACH_SOURCES));
     updateInfoLabel();
     init();
   }
@@ -292,6 +300,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   protected void dispose() {
     Disposer.dispose(myProgressIcon);
     final PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
+    storage.setValue(PROPERTY_DOWNLOAD_TO_PATH, myDirectoryField.getText());
     storage.setValue(PROPERTY_ATTACH_JAVADOC, String.valueOf(myJavaDocCheckBox.isSelected()));
     storage.setValue(PROPERTY_ATTACH_SOURCES, String.valueOf(mySourcesCheckBox.isSelected()));
     super.dispose();
