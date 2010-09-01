@@ -151,7 +151,7 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
   public static void notifyTestResult(ObjectReader reader, TestProxy root) {
     final TestProxy testProxy = reader.readObject();
-    if (testProxy.getParent() == null) {
+    if (testProxy.getParent() == null && testProxy != root) {
       root.addChild(testProxy);
     }
     final int state = reader.readInt();
