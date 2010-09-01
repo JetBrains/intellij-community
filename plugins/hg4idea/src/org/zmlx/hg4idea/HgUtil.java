@@ -201,6 +201,9 @@ public abstract class HgUtil {
    */
   @Nullable
   public static VirtualFile getHgRootOrNull(Project project, FilePath filePath) {
+    if (project == null) {
+      return getNearestHgRoot(VcsUtil.getVirtualFile(filePath.getPath()));
+    }
     return getNearestHgRoot(VcsUtil.getVcsRootFor(project, filePath));
   }
 
