@@ -70,7 +70,7 @@
     </group>
 
     <group id="NewXmlDescriptor" text="XML Configuration File" popup="true" icon="/fileTypes/xml.png">
-      <add-to-group group-id="NewXml" anchor="last"/>
+      <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
     <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction"
