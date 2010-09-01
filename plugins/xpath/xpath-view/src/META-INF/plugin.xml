@@ -61,7 +61,7 @@
         serviceInterface="org.intellij.lang.xpath.xslt.psi.XsltElementFactory"
         serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
 
-    <projectConfigurable implementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" />
+    <projectConfigurable instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" />
 
     <projectService
         serviceInterface="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState"

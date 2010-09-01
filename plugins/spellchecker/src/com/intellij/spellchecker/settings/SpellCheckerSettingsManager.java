@@ -17,7 +17,6 @@ package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.Nls;
@@ -31,9 +30,9 @@ public class SpellCheckerSettingsManager implements SearchableConfigurable {
   private final SpellCheckerSettings settings;
   private final Project project;
 
-  public SpellCheckerSettingsManager(Project project) {
+  public SpellCheckerSettingsManager(Project project, SpellCheckerSettings settings) {
     this.project = project;
-    settings = SpellCheckerSettings.getInstance(project);
+    this.settings = settings;
   }
 
   @Nls

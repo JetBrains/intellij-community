@@ -22,6 +22,7 @@ import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -38,7 +39,7 @@ public class ConfigurableExtensionPointUtil {
   }
 
 
-  public static List<Configurable> buildConfigurablesList(final ConfigurableEP[] extensions, final Configurable[] components, ConfigurableFilter filter) {
+  public static List<Configurable> buildConfigurablesList(final ConfigurableEP[] extensions, final Configurable[] components, @Nullable ConfigurableFilter filter) {
     List<Configurable> result = new ArrayList<Configurable>();
     for (ConfigurableEP extension : extensions) {
       ContainerUtil.addIfNotNull(extension.createConfigurable(), result);

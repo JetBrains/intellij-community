@@ -39,7 +39,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
     private final UIState myState;
     private AssociationsEditor myEditor;
 
-    FileAssociationsConfigurable(Project project) {
+    public FileAssociationsConfigurable(Project project) {
         myProject = project;
         myState = ServiceManager.getService(project, UIState.class);
     }
