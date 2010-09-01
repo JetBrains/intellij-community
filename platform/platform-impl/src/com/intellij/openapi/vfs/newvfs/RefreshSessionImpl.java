@@ -45,9 +45,8 @@ public class RefreshSessionImpl extends RefreshSession {
   private final Semaphore mySemaphore = new Semaphore();
   private volatile boolean iHaveEventsToFire;
 
-  public RefreshSessionImpl(final boolean isAsync, boolean reqursively,
-                            final Runnable finishRunnable) {
-    myIsRecursive = reqursively;
+  public RefreshSessionImpl(final boolean isAsync, final boolean recursively, final Runnable finishRunnable) {
+    myIsRecursive = recursively;
     myFinishRunnable = finishRunnable;
     myIsAsync = isAsync;
   }
@@ -83,7 +82,7 @@ public class RefreshSessionImpl extends RefreshSession {
     boolean hasEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
-      ((LocalFileSystemImpl)LocalFileSystem.getInstance()).markSuspicousFilesDirty(workQueue);
+      ((LocalFileSystemImpl)LocalFileSystem.getInstance()).markSuspiciousFilesDirty(workQueue);
 
       for (VirtualFile file : workQueue) {
         final NewVirtualFile nvf = (NewVirtualFile)file;
