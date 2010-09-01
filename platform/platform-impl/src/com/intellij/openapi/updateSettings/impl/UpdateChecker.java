@@ -88,7 +88,6 @@ public final class UpdateChecker {
     SUCCESS, FAILED, CANCELED
   }
 
-  private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
 
 
@@ -122,22 +121,8 @@ public final class UpdateChecker {
     final UpdateSettings settings = UpdateSettings.getInstance();
     if (settings == null || getUpdateUrl() == null) return false;
 
-    final String checkPeriod = settings.CHECK_PERIOD;
-    if (checkPeriod.equals(UpdateSettingsConfigurable.ON_START_UP)) {
-      checkInterval = 0;
-    }
-    if (checkPeriod.equals(UpdateSettingsConfigurable.DAILY)) {
-      checkInterval = DateFormatUtil.DAY;
-    }
-    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.WEEKLY)) {
-      checkInterval = DateFormatUtil.WEEK;
-    }
-    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.MONTHLY)) {
-      checkInterval = DateFormatUtil.MONTH;
-    }
-
     final long timeDelta = System.currentTimeMillis() - settings.LAST_TIME_CHECKED;
-    if (Math.abs(timeDelta) < checkInterval) return false;
+    if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
 
     return settings.CHECK_NEEDED;
   }
