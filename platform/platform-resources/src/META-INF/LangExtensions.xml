@@ -246,34 +246,31 @@
                   serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
 
   <!-- Editor -->
-  <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
+  <applicationConfigurable instance="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
 
   <projectService serviceInterface="com.intellij.semantic.SemService" serviceImplementation="com.intellij.semantic.SemServiceImpl"/>
 
   <!--
     -->
 <!-- Code Completion -->
-    <!--
-<applicationConfigurable implementation="com.intellij.application.options.CodeCompletionOptions" id="completion" order="after editor"/>
-  -->
 
 
   <!-- Global Code Style -->
   <projectConfigurable instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
 
   <!-- File Types -->
-  <applicationConfigurable implementation="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable"/>
+  <applicationConfigurable instance="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable"/>
 
-  <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
+  <applicationConfigurable instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
 
   <!-- Live Templates -->
-  <applicationConfigurable implementation="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
+  <applicationConfigurable instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
 
   <!-- File Templates-->
-  <applicationConfigurable implementation="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
 
   <!-- T.O.D.O -->
-  <applicationConfigurable implementation="com.intellij.ide.todo.configurable.TodoConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.todo.configurable.TodoConfigurable"/>
 
   <!-- External Tools -->
   <applicationConfigurable instance="com.intellij.tools.ToolConfigurable"/>
