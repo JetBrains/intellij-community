@@ -176,7 +176,7 @@
 
   <!-- Plugins -->
   <applicationConfigurable instance="com.intellij.ide.plugins.PluginManagerConfigurable"/>
-  <applicationConfigurable implementation="com.intellij.util.net.HttpConfigurable"/>
+  <applicationConfigurable instance="com.intellij.util.net.HTTPProxySettingsPanel"/>
   <applicationConfigurable instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm"/>
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>

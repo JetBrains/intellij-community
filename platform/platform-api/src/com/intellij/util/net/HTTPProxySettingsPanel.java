@@ -15,7 +15,10 @@
  */
 package com.intellij.util.net;
 
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
@@ -30,7 +33,7 @@ import java.awt.event.ActionListener;
  * Time: 3:52:47 PM
  * To change this template use Options | File Templates.
  */
-public class HTTPProxySettingsPanel{
+public class HTTPProxySettingsPanel implements SearchableConfigurable {
   private JPanel myMainPanel;
 
   private JTextField myProxyLoginTextField;
@@ -134,8 +137,30 @@ public class HTTPProxySettingsPanel{
     myRememberProxyPasswordCheckBox.setEnabled(enabled);
   }
 
-  public JComponent getComponent() {
+  public JComponent createComponent() {
     return myMainPanel;
+  }
+
+  @NotNull
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
+  }
+
+  @Nls
+  public String getDisplayName() {
+    return "HTTP Proxy";
+  }
+
+  public Icon getIcon() {
+    return null;
+  }
+
+  public String getHelpTopic() {
+    return "http.proxy";
   }
 
   public void addActionListener(final ActionListener actionListener) {
@@ -160,5 +185,9 @@ public class HTTPProxySettingsPanel{
     myUseProxyCheckBox.addActionListener(actionListener);
     myRememberProxyPasswordCheckBox.addActionListener(actionListener);
 
+  }
+
+  @Override
+  public void disposeUIResources() {
   }
 }
