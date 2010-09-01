@@ -105,8 +105,8 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     return !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator();
   }
 
-
-  private static void saveProjectsAndDocuments() {
+  // made public for tests
+  public static void saveProjectsAndDocuments() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: save()");
     }

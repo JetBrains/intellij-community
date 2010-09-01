@@ -39,7 +39,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -315,26 +314,27 @@ public class DaemonListeners implements Disposable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by write action:" + action);
       }
+      if (containsDocumentWorthBothering(action)) {
+        stopDaemon(false);
+      }
+    }
+
+    private boolean containsDocumentWorthBothering(Object action) {
       if (action instanceof DocumentRunnable) {
+        if (action instanceof DocumentRunnable.IgnoreDocumentRunnable) return false;
         Document document = ((DocumentRunnable)action).getDocument();
         if (!worthBothering(document, ((DocumentRunnable)action).getProject())) {
-          return;
+          return false;
         }
       }
-      stopDaemon(false);
+      return true;
     }
 
     public void writeActionFinished(Object action) {
-      if (myDaemonCodeAnalyzer.isRunning()) {
-        return;
+      if (myDaemonCodeAnalyzer.isRunning()) return;
+      if (containsDocumentWorthBothering(action)) {
+        stopDaemon(true);
       }
-      if (action instanceof DocumentRunnable) {
-        Document document = ((DocumentRunnable)action).getDocument();
-        if (!worthBothering(document, ((DocumentRunnable)action).getProject())) {
-          return;
-        }
-      }
-      stopDaemon(true);
     }
   }
 

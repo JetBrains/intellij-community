@@ -1018,7 +1018,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 
-  public void _saveSettings() { // for testing purposes
+  public void _saveSettings() { // public for testing purposes
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
         doSave();
