@@ -116,8 +116,11 @@ public class JavaParserUtil {
   }
 
   public static boolean areTypeAnnotationsSupported(final PsiBuilder builder) {
-    final LanguageLevel level = getLanguageLevel(builder);
-    return level.isAtLeast(LanguageLevel.JDK_1_7);
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_7);
+  }
+
+  public static boolean areDiamondsSupported(final PsiBuilder builder) {
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_7);
   }
 
   @NotNull

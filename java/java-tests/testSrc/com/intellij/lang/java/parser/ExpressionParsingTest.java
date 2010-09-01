@@ -16,6 +16,8 @@
 package com.intellij.lang.java.parser;
 
 
+import com.intellij.pom.java.LanguageLevel;
+
 public class ExpressionParsingTest extends JavaParsingTestCase {
 
   public ExpressionParsingTest() {
@@ -73,6 +75,10 @@ public class ExpressionParsingTest extends JavaParsingTestCase {
   public void testNew12() { doTest(true); }
   public void testNew13() { doTest(true); }
   public void testNew14() { doTest(true); }
+  public void testNew15() {
+    withLevel(LanguageLevel.JDK_1_7,
+              new Runnable() { public void run() { doTest(true); } });
+  }
 
   public void testExprList0() { doTest(true); }
   public void testExprList1() { doTest(true); }
