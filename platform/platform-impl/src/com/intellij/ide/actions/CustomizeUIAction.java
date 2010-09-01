@@ -33,6 +33,6 @@ public class CustomizeUIAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-    util.editConfigurable(project, util.createApplicationConfigurable(CustomizationConfigurable.class));
+    util.editConfigurable(project, new CustomizationConfigurable());
   }
 }

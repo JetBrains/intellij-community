@@ -150,19 +150,6 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return editor.isOK();
   }
 
-  @NotNull
-  @Override
-  public <T extends Configurable> T createProjectConfigurable(@NotNull Project project,
-                                                Class<T> configurableClass) {
-    return ConfigurableExtensionPointUtil.createProjectConfigurable(project, configurableClass);
-  }
-
-  @NotNull
-  @Override
-  public <T extends Configurable> T createApplicationConfigurable(Class<T> configurableClass) {
-    return ConfigurableExtensionPointUtil.createApplicationConfigurable(configurableClass);
-  }
-
   public boolean editConfigurable(Component parent, Configurable configurable) {
     return editConfigurable(parent, configurable, null);
   }

@@ -78,9 +78,7 @@ public class GenerateCopyrightAction extends AnAction
 
         if (CopyrightManager.getInstance(project).getCopyrightOptions(file) == null) {
           if (Messages.showOkCancelDialog(project, "No copyright configured for current file. Would you like to edit copyright settings?", "No copyright available", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
-            final CopyrightProjectConfigurable projectConfigurable =
-              ShowSettingsUtil.getInstance().createProjectConfigurable(project, CopyrightProjectConfigurable.class);
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, projectConfigurable);
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, new CopyrightProjectConfigurable(project));
           } else {
             return;
           }

@@ -58,9 +58,8 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
     if (project == null) return;
 
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-    final TemplateDataLanguageConfigurable configurable = util.createProjectConfigurable(project, TemplateDataLanguageConfigurable.class);
-    util.editConfigurable(project, configurable, new Runnable() {
+    final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
       public void run() {
         if (virtualFile != null) {
           configurable.selectFile(virtualFile);
