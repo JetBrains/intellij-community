@@ -648,9 +648,9 @@
     <!-- Path Variables -->
     <!-- the implementation of this configurable is in platform-impl but it's not registered in platform because
          it's only required in full IDEA -->
-    <applicationConfigurable implementation="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
+    <applicationConfigurable instance="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
 
-    <applicationConfigurable implementation="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
+    <applicationConfigurable instance="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
 
     <!-- Resources -->
 
