@@ -425,7 +425,10 @@ public class PyBlock implements ASTBlock {
   private Indent getChildIndent(int newChildIndex) {
     ASTNode lastChild = getLastNonSpaceChild(_node, false);
     if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST && _subBlocks.size() >= newChildIndex) {
-      int prevIndex = newChildIndex-1;
+      if (newChildIndex == 0) {  // block text contains backslash line wrappings, child block list not built
+        return Indent.getNoneIndent();
+      }
+      int prevIndex = newChildIndex - 1;
       while (prevIndex > 0 && _subBlocks.get(prevIndex).getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
         prevIndex--;
       }
