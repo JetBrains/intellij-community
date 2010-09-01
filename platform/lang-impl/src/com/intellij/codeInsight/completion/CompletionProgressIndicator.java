@@ -346,6 +346,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void cleanup() {
+    assert ApplicationManager.getApplication().isDispatchThread();
     myHint = null;
     myOldDocumentText = null;
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
