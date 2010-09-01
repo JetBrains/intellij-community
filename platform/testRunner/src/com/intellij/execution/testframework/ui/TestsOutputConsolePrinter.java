@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 public class TestsOutputConsolePrinter implements Printer, Disposable {
   private final ConsoleView myConsole;
@@ -67,7 +68,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     myConsole.print(text, contentType);
   }
 
-  public void onNewAvailable(final Printable printable) {
+  public void onNewAvailable(@NotNull final Printable printable) {
     if (myPaused) {
       printable.printOn(myPausedPrinter);
     } else {
