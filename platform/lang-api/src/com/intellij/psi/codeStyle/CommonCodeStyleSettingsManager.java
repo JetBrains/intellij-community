@@ -67,6 +67,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
       if (!myCommonSettingsMap.containsKey(provider.getLanguage())) {
         CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings();
         if (initialSettings != null) {
+          initialSettings.copyNonDefaultValuesFrom(myParentSettings);
           registerCommonSettings(provider.getLanguage(), initialSettings);
         }
       }

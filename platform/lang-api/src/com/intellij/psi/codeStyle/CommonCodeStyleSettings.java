@@ -15,6 +15,14 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -26,27 +34,39 @@ import java.lang.reflect.Modifier;
  */
 public class CommonCodeStyleSettings {
 
+  private Language myLanguage;
 
-  public CommonCodeStyleSettings clone(CodeStyleSettings parentSettings) {
-    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings();
+  public CommonCodeStyleSettings(Language language) {
+    myLanguage = language;
+  }
+
+  public CommonCodeStyleSettings clone() {
+    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage);
     copyPublicFields(this, commonSettings);
     return commonSettings;
   }
 
   protected static void copyPublicFields(Object from, Object to) {
     assert from != to;
-    copyFields(to.getClass().getDeclaredFields(), from, to);
-    Class superClass = to.getClass().getSuperclass();
-    if (superClass != null) {
-      copyFields(superClass.getDeclaredFields(), from, to);
-    }
+    copyFields(to.getClass().getFields(), from, to);
+  }
+
+  void copyNonDefaultValuesFrom(CommonCodeStyleSettings from) {
+    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(null);
+    copyFields(this.getClass().getFields(), from, this, new DifferenceFilter<CommonCodeStyleSettings>(from, defaultSettings));
   }
 
   private static void copyFields(Field[] fields, Object from, Object to) {
+    copyFields(fields, from, to, null);
+  }
+
+  private static void copyFields(Field[] fields, Object from, Object to, DifferenceFilter diffFilter) {
     for (Field field : fields) {
       if (isPublic(field) && !isFinal(field)) {
         try {
-          copyFieldValue(from, to, field);
+          if (diffFilter == null || diffFilter.isAccept(field)) {
+            copyFieldValue(from, to, field);
+          }
         }
         catch (Exception e) {
           throw new RuntimeException(e);
@@ -77,7 +97,18 @@ public class CommonCodeStyleSettings {
     return (field.getModifiers() & Modifier.FINAL) != 0;
   }
 
+  @Nullable
+  private CommonCodeStyleSettings getDefaultSettings() {
+    return LanguageCodeStyleSettingsProvider.getDefaultCommonSettings(myLanguage);
+  }
 
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, getDefaultSettings()));
+  }
 
 //----------------- GENERAL --------------------
 
