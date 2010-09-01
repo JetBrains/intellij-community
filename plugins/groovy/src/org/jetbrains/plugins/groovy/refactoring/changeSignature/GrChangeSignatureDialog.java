@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.changeSignature.ExceptionsTableModel;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.ui.CodeFragmentTableCellEditor;
@@ -84,6 +85,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   public GrChangeSignatureDialog(@NotNull Project project, GrMethod method) {
     super(project, true);
     myMethod = method;
+    setTitle(ChangeSignatureHandler.REFACTORING_NAME);
     init();
     updateSignature();
     ActionListener listener = new ActionListener() {
