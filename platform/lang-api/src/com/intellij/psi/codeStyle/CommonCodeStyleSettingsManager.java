@@ -132,8 +132,8 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
       final CommonCodeStyleSettings commonSettings = myCommonSettingsMap.get(language);
       Element commonSettingsElement = new Element(COMMON_SETTINGS_TAG);
       commonSettings.writeExternal(commonSettingsElement);
-      commonSettingsElement.setAttribute(LANGUAGE_ATTR, language.getID());
-      if (!element.getContent().isEmpty()) {
+      if (!commonSettingsElement.getContent().isEmpty()) {
+        commonSettingsElement.setAttribute(LANGUAGE_ATTR, language.getID());
         element.addContent(commonSettingsElement);
       }
     }
