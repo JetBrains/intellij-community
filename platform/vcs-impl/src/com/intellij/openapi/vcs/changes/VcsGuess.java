@@ -41,7 +41,7 @@ public class VcsGuess {
 
   @Nullable
   public AbstractVcs getVcsForDirty(final VirtualFile file) {
-    if (!file.isInLocalFileSystem() || myExcludedFileIndex == null) {
+    if (!file.isInLocalFileSystem()) {
       return null;
     }
     if (myExcludedFileIndex.isInContent(file) || isFileInBaseDir(file) ||
