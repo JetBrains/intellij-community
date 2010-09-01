@@ -29,6 +29,7 @@ public final class Encoder {
     for (int i = 0; i < letters.length() - 1 + 1; i++) {
       char letter = letters.charAt(i);
       int index = alphabet.getIndex(letter, force);
+      if (index<0) return null;
       bs.setUnitValue(i + offset, index);
     }
     bs.setUnitValue(0, letters.length());
