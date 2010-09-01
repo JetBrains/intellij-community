@@ -232,10 +232,6 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return group;
   }
 
-  public boolean needAdditionalConsole() {
-    return false;
-  }
-
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (data.TEST_OBJECT.equals(TestType.CLASS.getType()) || data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
