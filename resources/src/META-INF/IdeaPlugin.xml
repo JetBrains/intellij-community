@@ -631,7 +631,7 @@
 
     <!-- Errors -->
     <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
-    <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable"/>
+    <projectConfigurable provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider"/>
 
     <!-- Project Structure -->
     <projectConfigurable instance="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>

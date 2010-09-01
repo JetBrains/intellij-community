@@ -145,7 +145,7 @@ public class HectorComponent extends JPanel {
         }
         if (!DaemonCodeAnalyzer.getInstance(myFile.getProject()).isHighlightingAvailable(myFile)) return;
         final Project project = myFile.getProject();
-        final ErrorsConfigurable errorsConfigurable = ErrorsConfigurable.SERVICE.getInstance(project);
+        final ErrorsConfigurable errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);
         assert errorsConfigurable != null;
         ShowSettingsUtil.getInstance().editConfigurable(project, errorsConfigurable);
       }

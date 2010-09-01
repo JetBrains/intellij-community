@@ -734,10 +734,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if (element instanceof PsiNamedElement) {
-      return getManager().areElementsEquivalent(element, GroovyTargetElementEvaluator.correctSearchTargets(resolve()));
-    }
-    return false;
+    return getManager().areElementsEquivalent(element, GroovyTargetElementEvaluator.correctSearchTargets(resolve()));
   }
 
   @NotNull

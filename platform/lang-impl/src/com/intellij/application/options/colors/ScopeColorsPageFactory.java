@@ -16,20 +16,19 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
   public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
@@ -72,9 +71,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
         final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
         if (optionsEditor != null) {
           try {
-          final ScopeChooserConfigurable projectConfigurable =
-            ShowSettingsUtil.getInstance().findProjectConfigurable(project, ScopeChooserConfigurable.class);
-            optionsEditor.select(projectConfigurable);
+            optionsEditor.select(ScopeChooserConfigurable.class);
           } catch (IllegalStateException ex) {
             EditScopesDialog.editConfigurable(project, null);
           }

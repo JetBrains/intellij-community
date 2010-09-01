@@ -20,6 +20,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -543,10 +544,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   @Nullable
   private Document writeSchemeToDocument(final E scheme) throws WriteExternalException {
-    if (!isShared(scheme)) {
-      return myProcessor.writeScheme(scheme);
-    }
-    else {
+    if (isShared(scheme)) {
       String originalPath = scheme.getExternalInfo().getOriginalPath();
       if (originalPath != null) {
         Element root = new Element(SHARED_SCHEME);
@@ -563,6 +561,9 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       else {
         return null;
       }
+    }
+    else {
+      return myProcessor.writeScheme(scheme);
     }
   }
 
@@ -721,19 +722,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
 
     if (myVFSBaseDir != null) {
-      final WriteExternalException[] ex = new WriteExternalException[1];
-      ApplicationManager.getApplication().runWriteAction(new Runnable(){
-        public void run() {
-          try {
-            doSave();
-          }
-          catch (WriteExternalException e) {
-            ex[0] = e;
-          }
-        }
-      });
-
-      if (ex[0] != null) throw ex[0];
+      doSave();
     }
   }
 
@@ -755,10 +744,9 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private boolean myInsideSave = false;
 
   private void doSave() throws WriteExternalException {
-
     myInsideSave = true;
     try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable()  {
         public void run() {
           ((NewVirtualFile)myVFSBaseDir).markDirtyRecursively();
           myVFSBaseDir.refresh(false, true);
@@ -772,16 +760,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
       reserveUsingFileNames(schemes, fileNameProvider);
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable() {
         public void run() {
           deleteFilesFromDeletedSchemes();
         }
       });
 
-
       saveSchemes(schemes, fileNameProvider);
 
-      if (myDeletedNames.size() > 0) {
+      if (myDeletedNames.isEmpty()) {
+        deleteServerFiles(DELETED_XML);
+      }
+      else {
         for (StreamProvider provider : getEnabledProviders()) {
           try {
             StorageUtil.sendContent(provider, getFileFullPath(DELETED_XML), createDeletedDocument(), myRoamingType, true);
@@ -790,10 +780,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
             LOG.debug(e);
           }
         }
-      }
-      else {
-        deleteServerFiles(DELETED_XML);
-
       }
     }
     finally {
@@ -859,7 +845,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
                 }
               });
             }
-
           }
         }
       }

@@ -60,4 +60,8 @@ public abstract class MoveHandlerDelegate {
 
   public void collectFilesOrDirsFromContext(DataContext dataContext, Set<PsiElement> filesOrDirs){
   }
+
+  public boolean isMoveRedundant(PsiElement source, PsiElement target) {
+    return false;
+  }
 }
