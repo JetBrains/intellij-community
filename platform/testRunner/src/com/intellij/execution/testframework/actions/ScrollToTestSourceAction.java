@@ -37,6 +37,11 @@ public class ScrollToTestSourceAction extends ToggleBooleanProperty.Disablable {
     return isEnabled(properties, model);
   }
 
+  @Override
+  protected boolean isVisible() {
+    return true;
+  }
+
   private static boolean isEnabled(final AbstractProperty.AbstractPropertyContainer properties, final TestFrameworkRunningModel model) {
     if (!TestConsoleProperties.TRACK_RUNNING_TEST.value(properties)) return true;
     return model != null && !model.isRunning();

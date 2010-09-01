@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.refactoring.actions.MoveAction;
+import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.HashMap;
@@ -582,8 +583,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         }
       }
       if (dragAction == DnDConstants.ACTION_MOVE) {
-        final MoveAction.MoveProvider provider = MoveAction.MoveProvider.DATA_KEY.getData(dataContext);
-        return provider != null && provider.isEnabledOnDataContext(dataContext);
+        return MoveHandler.canMove(dataContext);
       }
       return false;
     }

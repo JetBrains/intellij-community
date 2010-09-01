@@ -32,6 +32,11 @@ public abstract class ToggleModelAction extends ToggleBooleanProperty.Disablable
     super(text, description, icon, properties, property);
   }
 
+  @Override
+  protected boolean isVisible() {
+    return true;
+  }
+
   public abstract void setModel(TestFrameworkRunningModel model);
 
 }

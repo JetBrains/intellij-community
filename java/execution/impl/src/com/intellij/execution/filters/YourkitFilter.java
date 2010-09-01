@@ -47,6 +47,10 @@ public class YourkitFilter implements Filter{
   }
 
   public Result applyFilter(final String line, final int entireLength) {
+    if (!line.endsWith(".java\n")) {
+      return null;
+    }
+
     try {
       final Matcher matcher = PATTERN.matcher(line);
       if (matcher.matches()) {
@@ -66,7 +70,7 @@ public class YourkitFilter implements Filter{
                                    new OpenFileHyperlinkInfo(myProject, psiFiles[0].getVirtualFile(), lineNumber - 1) :
                                    new MyHyperlinkInfo(psiFiles);
 
-        return  new Result(textStartOffset + matcher.start(2), textStartOffset + matcher.end(3), info);
+        return new Result(textStartOffset + matcher.start(2), textStartOffset + matcher.end(3), info);
       }
     }
     catch (NumberFormatException e) {

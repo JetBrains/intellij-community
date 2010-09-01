@@ -17,8 +17,10 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -29,8 +31,10 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -89,9 +93,7 @@ public class DebugUtil {
                                   final boolean usePsi) {
     if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
 
-    for (int i = 0; i < indent; i++) {
-      buffer.append(' ');
-    }
+    StringUtil.repeatSymbol(buffer, ' ', indent);
     if (root instanceof CompositeElement) {
       if (usePsi) {
         final PsiElement psiElement = root.getPsi();
@@ -107,10 +109,7 @@ public class DebugUtil {
       }
     }
     else {
-      String text = root.getText();
-      text = StringUtil.replace(text, "\n", "\\n");
-      text = StringUtil.replace(text, "\r", "\\r");
-      text = StringUtil.replace(text, "\t", "\\t");
+      final String text = fixWhiteSpaces(root.getText());
       buffer.append(root.toString()).append("('").append(text).append("')");
     }
     if (showRanges) buffer.append(root.getTextRange());
@@ -119,9 +118,7 @@ public class DebugUtil {
       ASTNode child = root.getFirstChildNode();
 
       if (child == null) {
-        for (int i = 0; i < indent + 2; i++) {
-          buffer.append(' ');
-        }
+        StringUtil.repeatSymbol(buffer, ' ', indent + 2);
         buffer.append("<empty list>\n");
       }
       else {
@@ -133,20 +130,66 @@ public class DebugUtil {
     }
   }
 
+  public static String lightTreeToString(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
+                                         @NotNull final String source,
+                                         final boolean skipWhitespaces) {
+    StringBuilder buffer = new StringBuilder();
+    lightTreeToBuffer(tree, source, buffer, tree.getRoot(), 0, skipWhitespaces);
+    return buffer.toString();
+  }
+
+  public static void lightTreeToBuffer(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
+                                       @NotNull final String source,
+                                       @NotNull final StringBuilder buffer,
+                                       @NotNull final LighterASTNode root,
+                                       final int indent,
+                                       final boolean skipWhiteSpaces) {
+    final IElementType tokenType = root.getTokenType();
+    if (skipWhiteSpaces && tokenType == TokenType.WHITE_SPACE) return;
+
+    final Ref<LighterASTNode[]> kids = new Ref<LighterASTNode[]>();
+    final int numKids = tree.getChildren(tree.prepareForGetChildren(root), kids);
+    final boolean composite = numKids > 0 || root.getStartOffset() == root.getEndOffset();
+
+    StringUtil.repeatSymbol(buffer, ' ', indent);
+    if (tokenType == TokenType.ERROR_ELEMENT) {
+      buffer.append("PsiErrorElement"); // todo: error message text
+    }
+    else if (tokenType == TokenType.WHITE_SPACE) {
+      buffer.append("PsiWhiteSpace");
+    }
+    else {
+      buffer.append(composite ? "Element" : "PsiElement").append('(').append(tokenType).append(')');
+    }
+
+    if (!composite) {
+      final String text = source.substring(root.getStartOffset(), root.getEndOffset());
+      buffer.append("('").append(fixWhiteSpaces(text)).append("')");
+    }
+    buffer.append("\n");
+
+    if (composite) {
+      if (numKids == 0) {
+        StringUtil.repeatSymbol(buffer, ' ', indent + 2);
+        buffer.append("<empty list>\n");
+      }
+      else {
+        for (int i = 0; i < numKids; i++) {
+          lightTreeToBuffer(tree, source, buffer, kids.get()[i], indent + 2, skipWhiteSpaces);
+        }
+      }
+    }
+  }
+
   private static void treeToBufferWithUserData(StringBuilder buffer, TreeElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
 
-    for (int i = 0; i < indent; i++) {
-      buffer.append(' ');
-    }
+    StringUtil.repeatSymbol(buffer, ' ', indent);
     if (root instanceof CompositeElement) {
       buffer.append(SourceTreeToPsiMap.treeElementToPsi(root).toString());
     }
     else {
-      String text = root.getText();
-      text = StringUtil.replace(text, "\n", "\\n");
-      text = StringUtil.replace(text, "\r", "\\r");
-      text = StringUtil.replace(text, "\t", "\\t");
+      final String text = fixWhiteSpaces(root.getText());
       buffer.append(root.toString()).append("('").append(text).append("')");
     }
     buffer.append(root.getUserDataString());
@@ -159,9 +202,7 @@ public class DebugUtil {
       }
 
       if (children.length == 0) {
-        for (int i = 0; i < indent + 2; i++) {
-          buffer.append(' ');
-        }
+        StringUtil.repeatSymbol(buffer, ' ', indent + 2);
         buffer.append("<empty list>\n");
       }
     }
@@ -170,17 +211,12 @@ public class DebugUtil {
   private static void treeToBufferWithUserData(StringBuilder buffer, PsiElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
-    for (int i = 0; i < indent; i++) {
-      buffer.append(' ');
-    }
+    StringUtil.repeatSymbol(buffer, ' ', indent);
     if (root instanceof CompositeElement) {
       buffer.append(root);
     }
     else {
-      String text = root.getText();
-      text = StringUtil.replace(text, "\n", "\\n");
-      text = StringUtil.replace(text, "\r", "\\r");
-      text = StringUtil.replace(text, "\t", "\\t");
+      final String text = fixWhiteSpaces(root.getText());
       buffer.append(root.toString()).append("('").append(text).append("')");
     }
     buffer.append(((UserDataHolderBase)root).getUserDataString());
@@ -193,9 +229,7 @@ public class DebugUtil {
     }
 
     if (children.length == 0) {
-      for (int i = 0; i < indent + 2; i++) {
-        buffer.append(' ');
-      }
+      StringUtil.repeatSymbol(buffer, ' ', indent + 2);
       buffer.append("<empty list>\n");
     }
 
@@ -273,11 +307,12 @@ public class DebugUtil {
                                  boolean skipWhiteSpaces,
                                  boolean showRanges) {
     final StringBuilder result = new StringBuilder();
-    if (root.getNode() == null) {
+    final ASTNode node = root.getNode();
+    if (node == null) {
       psiToBuffer(result, root, 0, skipWhiteSpaces, showRanges, showRanges);
     }
     else {
-      treeToBuffer(result, root.getNode(), 0, skipWhiteSpaces, showRanges, showRanges, true);
+      treeToBuffer(result, node, 0, skipWhiteSpaces, showRanges, showRanges, true);
     }
     return result.toString();
   }
@@ -290,21 +325,14 @@ public class DebugUtil {
                                  final boolean showChildrenRanges) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
-    for (int i = 0; i < indent; i++) {
-      buffer.append(' ');
-    }
+    StringUtil.repeatSymbol(buffer, ' ', indent);
     final String rootStr = root.toString();
     buffer.append(rootStr);
     PsiElement child = root.getFirstChild();
     if (child == null) {
-      String text = root.getText();
+      final String text = root.getText();
       assert text != null : "text is null for <" + root + ">";
-      text = StringUtil.replace(text, "\n", "\\n");
-      text = StringUtil.replace(text, "\r", "\\r");
-      text = StringUtil.replace(text, "\t", "\\t");
-      buffer.append("('");
-      buffer.append(text);
-      buffer.append("')");
+      buffer.append("('").append(fixWhiteSpaces(text)).append("')");
     }
 
     if (showRanges) buffer.append(root.getTextRange());
@@ -315,6 +343,12 @@ public class DebugUtil {
     }
   }
 
+  public static String fixWhiteSpaces(String text) {
+    text = StringUtil.replace(text, "\n", "\\n");
+    text = StringUtil.replace(text, "\r", "\\r");
+    text = StringUtil.replace(text, "\t", "\\t");
+    return text;
+  }
 
   public static class IncorrectTreeStructureException extends RuntimeException {
     private final ASTNode myElement;

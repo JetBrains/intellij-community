@@ -27,6 +27,8 @@ public interface EditorSettings {
   int getRightMargin(Project project);
   void setRightMargin(int myRightMargin);
 
+  boolean isWrapWhenTypingReachesRightMargin(Project project);
+
   boolean isLineNumbersShown();
   void setLineNumbersShown(boolean val);
 
@@ -100,9 +102,9 @@ public interface EditorSettings {
 
   boolean isUseSoftWraps();
   void setUseSoftWraps(boolean use);
-
   boolean isAllSoftWrapsShown();
-  void setShowAllSoftWraps(boolean show);
+  boolean isUseCustomSoftWrapIndent();
+  int getCustomSoftWrapIndent();
 
   boolean isAllowSingleLogicalLineFolding();
   void setAllowSingleLogicalLineFolding(boolean allow);

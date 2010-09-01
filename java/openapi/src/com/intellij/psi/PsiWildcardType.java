@@ -187,6 +187,13 @@ public class PsiWildcardType extends PsiType {
   }
 
   /**
+   * @return false for unbounded wildcards, true otherwise 
+   */
+  public boolean isBounded() {
+    return myBound != null;
+  }
+
+  /**
    * A lower bound that this wildcard imposes on type parameter value.<br>
    * That is:<br>
    * <ul>

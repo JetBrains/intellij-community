@@ -636,7 +636,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
     public void execute(FileViewProvider viewProvider) {
       final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
-      codeFormatter.processText(viewProvider.getPsi(viewProvider.getBaseLanguage()), myRanges.ensureNonEmpty());
+      codeFormatter.processText(viewProvider.getPsi(viewProvider.getBaseLanguage()), myRanges.ensureNonEmpty(), false);
     }
   }
 

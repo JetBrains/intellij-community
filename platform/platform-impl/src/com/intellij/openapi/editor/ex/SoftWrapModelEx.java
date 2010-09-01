@@ -116,4 +116,19 @@ public interface SoftWrapModelEx extends SoftWrapModel {
    * @return            <code>true</code> if given listener was not registered before; <code>false</code> otherwise
    */
   boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener);
+
+  /**
+   * Asks current model to define approximate soft wraps for the lines range defined by the given lines if necessary.
+   * <p/>
+   * The main idea is to calculate exact soft wraps positions during editor repainting because we have complete
+   * information about font types used for text representation there. However, there is a possible case that we need to
+   * perform intermediate soft wraps calculations. E.g. we may open big document and than may want to scroll to the middle
+   * of it, hence, need to define vertical offset to apply to viewport position. However, vertical offset value depends on
+   * soft wraps between current visible area and target logical line and that soft wraps are not applied yet. We may call this
+   * method in order to define approximate soft wraps number and positions then in order to make scrolling more precise.
+   *
+   * @param line1     one of the target lines boundaries (not imposed to be greater or less than the other boundary)
+   * @param line2     another boundary line (not imposed to be greater or less than the other boundary)
+   */
+  void defineApproximateSoftWraps(int line1, int line2);
 }

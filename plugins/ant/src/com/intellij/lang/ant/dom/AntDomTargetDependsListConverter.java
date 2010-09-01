@@ -15,24 +15,25 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.references.PomService;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.text.StringTokenizer;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -41,11 +42,10 @@ import java.util.*;
 public class AntDomTargetDependsListConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
   
   public TargetResolver.Result fromString(@Nullable @NonNls String s, ConvertContext context) {
-    AntDomProject project = context.getInvocationElement().getParentOfType(AntDomProject.class, false);
+    final AntDomProject project = context.getInvocationElement().getParentOfType(AntDomProject.class, false);
     if (project == null) {
       return null;
     }
-    // todo: use context project
     final AntDomTarget contextTarget = context.getInvocationElement().getParentOfType(AntDomTarget.class, false);
     if (contextTarget == null) {
       return null;
@@ -62,7 +62,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
         refs.add(ref.trim());
       }
     }
-    final TargetResolver.Result result = TargetResolver.resolve(project, contextTarget, refs);
+    final TargetResolver.Result result = TargetResolver.resolve(project.getContextAntProject(), contextTarget, refs);
     result.setRefsString(s);
     return result;
   }
@@ -82,18 +82,13 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
     if (valueElement == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final TargetResolver.Result result = value.getValue();
-    if (result == null) {
+    final String refsString = value.getStringValue();
+    if (refsString == null) {
       return PsiReference.EMPTY_ARRAY;
     }
     final List<PsiReference> refs = new ArrayList<PsiReference>();
-    final StringTokenizer tokenizer = new StringTokenizer(result.getRefsString(), ",", false);
     final TextRange wholeStringRange = ElementManipulators.getValueTextRange(valueElement);
-    final Set<String> existingRefs = new HashSet<String>();
-    final AntDomTarget hostAntTarget = context.getInvocationElement().getParentOfType(AntDomTarget.class, false);
-    if (hostAntTarget != null) {
-      existingRefs.add(hostAntTarget.getName().getRawText()); // avoid setting dependencies onto itself
-    }
+    final StringTokenizer tokenizer = new StringTokenizer(refsString, ",", false);
     while (tokenizer.hasMoreTokens()) {
       final String token = tokenizer.nextToken();
       int tokenStartOffset = tokenizer.getCurrentPosition() - token.length();
@@ -108,36 +103,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
           }
         }
       }
-      final Pair<AntDomTarget,String> antTarget = result.getResolvedTarget(ref);
-      final DomTarget domTarget = (antTarget != null && antTarget.getFirst() != null) ? DomTarget.getTarget(antTarget.getFirst()) : null;
-      if (domTarget != null) {
-        existingRefs.add(antTarget.getSecond());
-      }
-      refs.add(new PsiReferenceBase<PsiElement>(valueElement, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length()), true) {
-        public PsiElement resolve() {
-          return domTarget != null? PomService.convertToPsi(domTarget) : null;
-        }
-        @NotNull
-        public Object[] getVariants() {
-          final List<Object> variants = new ArrayList<Object>();
-          for (Map.Entry<String, AntDomTarget> entry : result.getVariants().entrySet()) {
-            final String targetEffectiveName = entry.getKey();
-            if (!existingRefs.contains(targetEffectiveName)) {
-              //final AntDomTarget target = entry.getValue();
-              //final DomTarget _target = DomTarget.getTarget(target);
-              //if (_target == null) {
-              //  continue;
-              //}
-              //final PsiElement psi = PomService.convertToPsi(_target);
-              //if (psi == null) {
-              //  continue;
-              //}
-              variants.add(LookupElementBuilder.create(/*psi, */targetEffectiveName));
-            }
-          }
-          return variants.toArray();
-        }
-      });
+      refs.add(new AntDomTargetReference(element, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length())));
     }
     return refs.toArray(new PsiReference[refs.size()]);
   }

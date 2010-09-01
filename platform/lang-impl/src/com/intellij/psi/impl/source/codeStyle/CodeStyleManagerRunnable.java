@@ -56,7 +56,7 @@ abstract class CodeStyleManagerRunnable<T> {
     if (document instanceof DocumentWindow) {
       final DocumentWindow documentWindow = (DocumentWindow)document;
       if (range != null) {
-        range = new TextRange(documentWindow.injectedToHost(range.getStartOffset()), documentWindow.injectedToHost(range.getEndOffset()));
+        range = documentWindow.injectedToHost(range);
       }
       if (offset != -1) {
         offset = documentWindow.injectedToHost(offset);

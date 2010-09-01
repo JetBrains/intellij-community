@@ -170,7 +170,8 @@ public class MockDocument implements DocumentEx {
     myUserData.put(key, value);
   }
 
-  public void stripTrailingSpaces(boolean inChangedLinesOnly) {
+  public boolean stripTrailingSpaces(boolean inChangedLinesOnly) {
+    return true;
   }
 
   public void setStripTrailingSpacesEnabled(boolean isEnabled) {

@@ -29,11 +29,11 @@ import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -385,7 +385,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
 
   public static ModuleStructureConfigurable getInstance(final Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ModuleStructureConfigurable.class);
+    return ServiceManager.getService(project, ModuleStructureConfigurable.class);
   }
 
   public void setStartModuleWizard(final boolean show) {

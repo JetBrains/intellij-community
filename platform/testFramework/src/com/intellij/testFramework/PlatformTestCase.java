@@ -61,6 +61,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -82,6 +83,8 @@ import java.util.Set;
  * @author yole
  */
 public abstract class PlatformTestCase extends UsefulTestCase implements DataProvider {
+  public static final String TEST_DIR_PREFIX = "idea_test_";
+
   protected static IdeaTestApplication ourApplication;
   protected boolean myRunCommandForTest = false;
   protected ProjectManagerEx myProjectManager;
@@ -186,6 +189,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     setUpJdk();
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
 
     runStartupActivities();
   }
@@ -571,14 +575,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static File createTempDir(@NonNls final String prefix) throws IOException {
-    final File tempDirectory = FileUtil.createTempDirectory(prefix, null);
+    final File tempDirectory = FileUtil.createTempDirectory(TEST_DIR_PREFIX + prefix, null);
     myFilesToDelete.add(tempDirectory);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         VirtualFileManager.getInstance().refresh(false);
       }
     });
-
     return tempDirectory;
   }
 
@@ -587,14 +590,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File createTempDirectory() throws IOException {
-    File dir = FileUtil.createTempDirectory(getTestName(true), null);
-    myFilesToDelete.add(dir);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        VirtualFileManager.getInstance().refresh(false);
-      }
-    });
-    return dir;
+    return createTempDir(getTestName(true));
   }
 
   protected PsiFile getPsiFile(final Document document) {

@@ -19,6 +19,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * User: cdr
@@ -26,8 +27,8 @@ import com.intellij.psi.PsiElement;
 class InjectedSelfElementInfo extends SelfElementInfo {
   private DocumentWindow myDocument;
 
-  InjectedSelfElementInfo(PsiElement anchor) {
-    super(anchor);
+  InjectedSelfElementInfo(@NotNull PsiElement anchor, @NotNull Document document) {
+    super(anchor, document);
 
     assert myFile.getContext() != null;
   }

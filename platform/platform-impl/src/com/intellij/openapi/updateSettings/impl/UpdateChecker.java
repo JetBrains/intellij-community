@@ -26,6 +26,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.reporter.ConnectionException;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -90,7 +91,6 @@ public final class UpdateChecker {
     SUCCESS, FAILED, CANCELED
   }
 
-  private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
 
 
@@ -123,25 +123,8 @@ public final class UpdateChecker {
     final UpdateSettings settings = UpdateSettings.getInstance();
     if (settings == null || getUpdateUrl() == null) return false;
 
-    final String checkPeriod = settings.CHECK_PERIOD;
-    if (checkPeriod.equals(UpdateSettingsConfigurable.ON_EXIT)) {
-     return false;
-    }
-    if (checkPeriod.equals(UpdateSettingsConfigurable.ON_START_UP)) {
-      checkInterval = 0;
-    }
-    if (checkPeriod.equals(UpdateSettingsConfigurable.DAILY)) {
-      checkInterval = DateFormatUtil.DAY;
-    }
-    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.WEEKLY)) {
-      checkInterval = DateFormatUtil.WEEK;
-    }
-    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.MONTHLY)) {
-      checkInterval = DateFormatUtil.MONTH;
-    }
-
     final long timeDelta = System.currentTimeMillis() - settings.LAST_TIME_CHECKED;
-    if (Math.abs(timeDelta) < checkInterval) return false;
+    if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
 
     return settings.CHECK_NEEDED;
   }
@@ -346,7 +329,8 @@ public final class UpdateChecker {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
-          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + ADDITIONAL_REQUEST_OPTIONS);
+          String uid = PropertiesComponent.getInstance().getOrInit("installation.uid", UUID.randomUUID().toString());
+          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
           final InputStream inputStream = requestUrl.openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);

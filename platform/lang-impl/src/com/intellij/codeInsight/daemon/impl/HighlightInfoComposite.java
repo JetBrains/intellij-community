@@ -19,15 +19,12 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class HighlightInfoComposite extends HighlightInfo {
@@ -43,8 +40,8 @@ public class HighlightInfoComposite extends HighlightInfo {
     text = infos.get(0).text;
     highlighter = infos.get(0).highlighter;
     group = infos.get(0).group;
-    quickFixActionMarkers = new ArrayList<Pair<IntentionActionDescriptor, RangeMarker>>();
-    quickFixActionRanges = new ArrayList<Pair<IntentionActionDescriptor, TextRange>>();
+    quickFixActionMarkers = ContainerUtil.createEmptyCOWList();
+    quickFixActionRanges = ContainerUtil.createEmptyCOWList();
     for (HighlightInfo info : infos) {
       if (info.quickFixActionMarkers != null) {
         quickFixActionMarkers.addAll(info.quickFixActionMarkers);

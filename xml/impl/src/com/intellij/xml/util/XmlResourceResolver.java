@@ -200,11 +200,14 @@ public class XmlResourceResolver implements XMLEntityResolver {
 
     final PsiFile psiFile = result[0];
     if (psiFile != null) {
-      final String url = psiFile.getVirtualFile().getUrl();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Adding external resource ref:"+systemId+","+url+","+super.toString());
+      final VirtualFile file = psiFile.getVirtualFile();
+      if (file != null) {
+        final String url = file.getUrl();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Adding external resource ref:"+systemId+","+url+","+super.toString());
+        }
+        myExternalResourcesMap.put(systemId,url);
       }
-      myExternalResourcesMap.put(systemId,url);
     }
     return psiFile;
   }
@@ -241,9 +244,11 @@ public class XmlResourceResolver implements XMLEntityResolver {
     XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
     if (xmlResourceIdentifier.getLiteralSystemId() == null) {
       VirtualFile virtualFile = psiFile.getVirtualFile();
-      final String url = VfsUtil.fixIDEAUrl(virtualFile.getUrl());
-      source.setBaseSystemId(url);
-      source.setSystemId(url);
+      if (virtualFile != null) {
+        final String url = VfsUtil.fixIDEAUrl(virtualFile.getUrl());
+        source.setBaseSystemId(url);
+        source.setSystemId(url);
+      }
     }
     source.setPublicId(publicId);
     source.setCharacterStream(new StringReader(psiFile.getText()));

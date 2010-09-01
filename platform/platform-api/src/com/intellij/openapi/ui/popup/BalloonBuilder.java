@@ -50,6 +50,9 @@ public interface BalloonBuilder {
   BalloonBuilder setFadeoutTime(long fadeoutTime);
 
   @NotNull
+  BalloonBuilder setAnimationCycle(int time);
+
+  @NotNull
   BalloonBuilder setHideOnFrameResize(boolean hide);
 
   @NotNull
@@ -58,4 +61,5 @@ public interface BalloonBuilder {
   @NotNull
   BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick);
 
+  BalloonBuilder setCalloutShift(int length);
 }

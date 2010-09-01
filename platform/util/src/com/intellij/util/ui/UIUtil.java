@@ -34,6 +34,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ProgressBarUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -76,6 +77,8 @@ public class UIUtil {
 
   // accessed only from EDT
   private static HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
+
+  public static final String CENTER_TOOLTIP = "ToCenterTooltip";
 
   private UIUtil() {
   }
@@ -205,6 +208,13 @@ public class UIUtil {
       s = StringUtil.replace(s, String.valueOf(MNEMONIC), "");
     }
     return s;
+  }
+
+  public static int getDisplayMnemonicIndex(@NotNull String s) {
+    int idx = s.indexOf('&');
+    if (idx >= 0) return idx;
+
+    return s.indexOf(MNEMONIC);
   }
 
   public static String replaceMnemonicAmpersand(final String value) {
@@ -709,6 +719,20 @@ public class UIUtil {
     else {
       drawBoringDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
     }
+  }
+
+  public static void drawSearchMatch(final Graphics2D g,
+                                        final int startX,
+                                        final int endX,
+                                        final int height) {
+    g.setColor(new Color(100, 100, 100, 50));
+    g.fillRoundRect(startX - 2, 2, endX - startX + 4, height - 4, 4, 4);
+
+    g.setPaint(new GradientPaint(startX, 2, new Color(255, 234, 162), startX, height - 5, new Color(255, 208, 66)));
+    g.fillRoundRect(startX - 2, 2, endX - startX + 3, height - 5, 6, 6);
+
+    g.setColor(new Color(170, 170, 170, 200));
+    g.drawRoundRect(startX - 2, 2, endX - startX + 3, height - 5, 4, 4);
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
@@ -1374,10 +1398,23 @@ public class UIUtil {
     protected void installKeyboardActions() {
       super.installKeyboardActions();
 
-      tree.getInputMap().put(KeyStroke.getKeyStroke("pressed LEFT"), "collapse_or_move_up");
-      tree.getInputMap().put(KeyStroke.getKeyStroke("pressed RIGHT"), "expand");
+      final InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
+      inputMap.put(KeyStroke.getKeyStroke("pressed LEFT"), "collapse_or_move_up");
+      inputMap.put(KeyStroke.getKeyStroke("pressed RIGHT"), "expand");
 
-      tree.getActionMap().put("collapse_or_move_up", new AbstractAction() {
+      final ActionMap actionMap = tree.getActionMap();
+
+      final Action expandAction = actionMap.get("expand");
+      if (expandAction != null) {
+        actionMap.put("expand", new TreeUIAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            expandAction.actionPerformed(e);
+          }
+        });
+      }
+
+      actionMap.put("collapse_or_move_up", new TreeUIAction() {
         public void actionPerformed(final ActionEvent e) {
           final Object source = e.getSource();
           if (source instanceof JTree) {
@@ -1401,6 +1438,9 @@ public class UIUtil {
           }
         }
       });
+    }
+
+    private abstract static class TreeUIAction extends AbstractAction implements UIResource {
     }
 
     @Override
@@ -1574,6 +1614,20 @@ public class UIUtil {
       group.setSelected(button.getModel(), index == i);
       i++;
     }
+  }
+
+  public static void setComboBoxEditorBounds(int x, int y, int width, int height, JComponent editor) {
+    if(SystemInfo.isMac && isUnderAquaLookAndFeel()) {
+      // fix for too wide combobox editor, see AquaComboBoxUI.layoutContainer:
+      // it adds +4 pixels to editor width. WTF?!
+      editor.reshape(x, y, width - 4, height - 1);
+    } else {
+      editor.reshape(x, y, width, height);
+    }
+  }
+
+  public static int fixComboBoxHeight(final int height) {
+    return SystemInfo.isMac && isUnderAquaLookAndFeel() ? 28 : height;
   }
 
 }

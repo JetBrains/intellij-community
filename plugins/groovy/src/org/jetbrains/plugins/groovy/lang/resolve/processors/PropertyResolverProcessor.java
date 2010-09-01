@@ -19,20 +19,15 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-
-import java.util.EnumSet;
 
 /**
  * @author ven
  */
 public class PropertyResolverProcessor extends ResolverProcessor {
-  private GroovyResolveResult myProperty = null;
 
   public PropertyResolverProcessor(String name, PsiElement place) {
-    super(name, EnumSet.of(ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
+    super(name, RESOLVE_KINDS_PROPERTY, place, PsiType.EMPTY_ARRAY);
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
@@ -42,21 +37,4 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     return super.execute(element, state);
   }
 
-  @NotNull
-  public GroovyResolveResult[] getCandidates() {
-    if (myProperty != null) {
-      if (myCandidates.isEmpty()) {
-        myCandidates.add(myProperty);
-      }
-
-      myProperty = null;
-    }
-
-    return super.getCandidates();
-  }
-
-  @Override
-  public boolean hasCandidates() {
-    return myProperty != null || super.hasCandidates();
-  }
 }

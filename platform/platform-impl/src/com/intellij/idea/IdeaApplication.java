@@ -194,15 +194,6 @@ public class IdeaApplication {
         }
       }, ModalityState.NON_MODAL);
 
-      app.addApplicationListener(new ApplicationAdapter() {
-        @Override
-        public boolean canExitApplication() {
-          if (UpdateSettings.getInstance().isUpdateOnExit()) {
-            updatePlugins(false);            
-          }
-          return true;
-        }
-      });
 
       app.invokeLater(new Runnable() {
         public void run() {

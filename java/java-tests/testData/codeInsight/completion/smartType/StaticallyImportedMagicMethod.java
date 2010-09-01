@@ -10,6 +10,6 @@ class Bar {
   }
 
   {
-    f(fo<caret>)
+    f(foo<caret>x)
   }
 }

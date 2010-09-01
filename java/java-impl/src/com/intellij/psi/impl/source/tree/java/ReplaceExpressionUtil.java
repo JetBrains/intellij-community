@@ -50,7 +50,8 @@ public class ReplaceExpressionUtil {
       return ((CompositeElement)oldParent).getChildRole(oldExpr) != ChildRole.LOPERAND &&
              opType != JavaTokenType.PLUS &&
              opType != JavaTokenType.ASTERISK &&
-             opType != JavaTokenType.ANDAND;
+             opType != JavaTokenType.ANDAND &&
+             opType != JavaTokenType.OROR;
     }
     else if (i == JavaElementType.INSTANCE_OF_EXPRESSION) {
       return priority < parentPriority;

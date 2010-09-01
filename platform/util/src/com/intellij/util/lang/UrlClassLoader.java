@@ -57,6 +57,10 @@ public class UrlClassLoader extends ClassLoader {
     myURLs.add(url);
   }
 
+  public void setAcceptUnescapedUrls(boolean acceptUnescapedUrls) {
+    myClassPath.setAcceptUnescapedUrls(acceptUnescapedUrls);
+  }
+
   public List<URL> getUrls() {
     return Collections.unmodifiableList(myURLs);
   }

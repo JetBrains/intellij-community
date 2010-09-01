@@ -115,8 +115,14 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
       if (mySheetCallback != null) {
         final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-        if (activeWindow != null && activeWindow instanceof Frame) {
-          final String frameTitle = ((Frame)activeWindow).getTitle();
+        if (activeWindow != null) {
+          String activeWindowTitle = null;
+          if (activeWindow instanceof Frame) {
+            activeWindowTitle = ((Frame)activeWindow).getTitle();
+          } else if (activeWindow instanceof JDialog) {
+            activeWindowTitle = ((JDialog)activeWindow).getTitle();
+          }
+          if (activeWindowTitle == null || activeWindowTitle.length() == 0) return;
 
           final ID sharedApplication = invoke("NSApplication", "sharedApplication");
           final ID windows = invoke(sharedApplication, "windows");
@@ -130,7 +136,10 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
             final ID windowTitle = invoke(window, "title");
             final String titleString = Foundation.toStringViaUTF8(windowTitle);
-            if (titleString.equals(frameTitle)) focusedWindow = window;
+            if (titleString.equals(activeWindowTitle)) {
+              focusedWindow = window;
+              break;
+            }
           }
 
           if (focusedWindow != null) {

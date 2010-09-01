@@ -54,7 +54,7 @@
     <lang.literalEscaper language="XML" implementationClass="com.intellij.lang.xml.XmlLiteralEscaper"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"
-                            order="first, before basic2ClassName"/>
+                            order="first"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.XmlCharFilter" id="xml"/>
 
@@ -91,6 +91,7 @@
 
     <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
     <fileBasedIndex implementation="com.intellij.xml.index.XmlNamespaceIndex"/>
+    <fileBasedIndex implementation="com.intellij.html.index.Html5CustomAttributesIndex"/>
     <include.provider implementation="com.intellij.xml.util.XIncludeProvider"/>
     <indexedRootsProvider implementation="com.intellij.xml.index.ExternalResourcesRootsProvider"/>
 
@@ -181,9 +182,6 @@
     <codeInsight.wordCompletionFilter language="JSP" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
     <codeInsight.wordCompletionFilter language="JSPX" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
 
-    <lang.fileViewProviderFactory language="XML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
-    <lang.fileViewProviderFactory language="HTML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
-    <lang.fileViewProviderFactory language="XHTML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
 
     <lang.psiStructureViewFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdStructureViewBuilderFactory"/>
     <lang.psiStructureViewFactory language="XML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>
@@ -234,8 +232,6 @@
     <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="GUI_DESIGNER_FORM" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
-
-    <psi.includeHandler implementation="com.intellij.xml.util.XmlIncludeHandler"/>
 
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.EnterBetweenXmlTagsHandler" id="xmlEnter"/>
 
@@ -330,21 +326,4 @@
     <renameInputValidator implementation="com.intellij.lang.xml.XmlElementRenameValidator"/>
     <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>
   </extensions>
-
-  <actions>
-    <group id="NewXml" text="XML">
-      <!--<action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="HTML File"/>-->
-      <!--<action id="NewHtml5Type" class="com.intellij.ide.actions.CreateHtml5Action" text="HTML5 File"/>-->
-      <!--<action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="XHTML File"/>-->
-      <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction"/>
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
-    </group>
-
-    <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction"
-            icon="/nodes/ppWeb.png">
-      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CutCopyPasteGroup"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="EditSource"/>
-    </action>
-  </actions>
 </idea-plugin>

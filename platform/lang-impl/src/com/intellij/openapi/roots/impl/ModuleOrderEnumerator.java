@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -37,5 +38,9 @@ public class ModuleOrderEnumerator extends OrderEnumeratorBase {
     processEntries(myRootModel, processor, myRecursively ? new THashSet<Module>() : null, true);
   }
 
+  @Override
+  public boolean isMainModuleModel(@NotNull ModuleRootModel rootModel) {
+    return rootModel.equals(myRootModel);
+  }
 }
 

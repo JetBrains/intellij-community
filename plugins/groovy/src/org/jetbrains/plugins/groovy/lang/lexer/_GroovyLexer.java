@@ -931,24 +931,6 @@ public class _GroovyLexer implements FlexLexer, GroovyTokenTypes {
     yybegin(initialState);
   }
 
-  // For Demetra compatibility
-  public void reset(CharSequence buffer, int initialState){
-    clearStacks();
-    braceCount.clear();
-    afterComment = YYINITIAL;
-
-    zzBuffer = buffer;
-    zzBufferArray = null;
-    zzCurrentPos = zzMarkedPos = zzStartRead = 0;
-    zzPushbackPos = 0;
-    zzAtEOF = false;
-    zzAtBOL = true;
-    zzEndRead = buffer.length();
-    java.util.Arrays.fill(zzFin, false);
-
-    yybegin(initialState);
-  }
-
   /**
    * Refills the input buffer.
    *

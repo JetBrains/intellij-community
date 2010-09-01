@@ -16,7 +16,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.sout"
-     name="sout" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$END$&quot;);">
+     name="sout" toReformat="true" toShortenFQNames="true" value="System.out.println($END$);">
     <context>
       <option name="JAVA_CODE" value="true" />
       <option name="JAVA_COMMENT" value="false" />

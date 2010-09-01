@@ -13,7 +13,6 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,62 +27,20 @@ import java.util.List;
  */
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription, AbstractCollectionChildDescription {
   private final Collection<JavaMethod> myGetterMethods;
-  private final Collection<JavaMethod> myAdderMethods;
-  private final Collection<JavaMethod> myIndexedAdderMethods;
-  private final Collection<JavaMethod> myClassAdderMethods;
-  private final Collection<JavaMethod> myIndexedClassAdderMethods;
-  private final Collection<JavaMethod> myInvertedIndexedClassAdderMethods;
   private final NotNullFunction<DomInvocationHandler, List<XmlTag>> myTagsGetter = new NotNullFunction<DomInvocationHandler, List<XmlTag>>() {
     @NotNull
     public List<XmlTag> fun(final DomInvocationHandler handler) {
       return DomImplUtil.findSubTags(handler.getXmlTag(), handler.createEvaluatedXmlName(getXmlName()), handler.getFile());
     }
   };
-  @NonNls private static final String ES = "es";
 
-  public CollectionChildDescriptionImpl(final XmlName tagName,
-                                        final Type type,
-                                        final Collection<JavaMethod> adderMethods,
-                                        final Collection<JavaMethod> classAdderMethods,
-                                        final Collection<JavaMethod> getterMethods,
-                                        final Collection<JavaMethod> indexedAdderMethods,
-                                        final Collection<JavaMethod> indexedClassAdderMethods,
-                                        final Collection<JavaMethod> invertedIndexedClassAdderMethods) {
+  public CollectionChildDescriptionImpl(final XmlName tagName, final Type type, final Collection<JavaMethod> getterMethods) {
     super(tagName, type);
-    myAdderMethods = adderMethods;
-    myClassAdderMethods = classAdderMethods;
     myGetterMethods = getterMethods;
-    myIndexedAdderMethods = indexedAdderMethods;
-    myIndexedClassAdderMethods = indexedClassAdderMethods;
-    myInvertedIndexedClassAdderMethods = invertedIndexedClassAdderMethods;
-  }
-
-  public JavaMethod getClassAdderMethod() {
-    return getFirst(myClassAdderMethods);
   }
 
   public NotNullFunction<DomInvocationHandler, List<XmlTag>> getTagsGetter() {
     return myTagsGetter;
-  }
-
-  @Nullable
-  private static JavaMethod getFirst(final Collection<JavaMethod> methods) {
-    return methods.isEmpty() ? null : methods.iterator().next();
-  }
-
-  @Nullable
-  public JavaMethod getIndexedClassAdderMethod() {
-    return getFirst(myIndexedClassAdderMethods);
-  }
-
-  @Nullable
-  public JavaMethod getInvertedIndexedClassAdderMethod() {
-    return getFirst(myInvertedIndexedClassAdderMethods);
-  }
-
-  @Nullable
-  public JavaMethod getAdderMethod() {
-    return getFirst(myAdderMethods);
   }
 
   public DomElement addValue(@NotNull DomElement element) {
@@ -120,10 +77,6 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return methods.isEmpty() ? null : methods.iterator().next();
   }
 
-  public JavaMethod getIndexedAdderMethod() {
-    return getFirst(myIndexedAdderMethods);
-  }
-
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement element) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
@@ -147,7 +100,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   @NotNull
   public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     String words = strategy.splitIntoWords(getXmlElementName());
-    return StringUtil.capitalizeWords(words.endsWith(ES) ? words: StringUtil.pluralize(words), true);
+    return StringUtil.capitalizeWords(words.endsWith("es") ? words: StringUtil.pluralize(words), true);
   }
 
   @Nullable
@@ -160,68 +113,6 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
     final Type elemType = getType();
     return elemType instanceof AnnotatedElement ? ((AnnotatedElement)elemType).getAnnotation(annotationClass) : super.getAnnotation(annotationClass);
-  }
-
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    final CollectionChildDescriptionImpl that = (CollectionChildDescriptionImpl)o;
-
-    if (myAdderMethods != null ? !myAdderMethods.equals(that.myAdderMethods) : that.myAdderMethods != null) return false;
-    if (myClassAdderMethods != null ? !myClassAdderMethods.equals(that.myClassAdderMethods) : that.myClassAdderMethods != null) return false;
-    if (myGetterMethods != null ? !myGetterMethods.equals(that.myGetterMethods) : that.myGetterMethods != null) return false;
-    if (myIndexedAdderMethods != null ? !myIndexedAdderMethods.equals(that.myIndexedAdderMethods) : that.myIndexedAdderMethods != null) {
-      return false;
-    }
-    if (myIndexedClassAdderMethods != null
-        ? !myIndexedClassAdderMethods.equals(that.myIndexedClassAdderMethods)
-        : that.myIndexedClassAdderMethods != null) {
-      return false;
-    }
-    if (myInvertedIndexedClassAdderMethods != null
-        ? !myInvertedIndexedClassAdderMethods.equals(that.myInvertedIndexedClassAdderMethods)
-        : that.myInvertedIndexedClassAdderMethods != null) {
-      return false;
-    }
-
-    return true;
-  }
-
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 29 * result + (myGetterMethods != null ? myGetterMethods.hashCode() : 0);
-    result = 29 * result + (myAdderMethods != null ? myAdderMethods.hashCode() : 0);
-    result = 29 * result + (myIndexedAdderMethods != null ? myIndexedAdderMethods.hashCode() : 0);
-    result = 29 * result + (myClassAdderMethods != null ? myClassAdderMethods.hashCode() : 0);
-    result = 29 * result + (myIndexedClassAdderMethods != null ? myIndexedClassAdderMethods.hashCode() : 0);
-    result = 29 * result + (myInvertedIndexedClassAdderMethods != null ? myInvertedIndexedClassAdderMethods.hashCode() : 0);
-    return result;
-  }
-
-  public Collection<JavaMethod> getAdderMethods() {
-    return myAdderMethods;
-  }
-
-  public Collection<JavaMethod> getClassAdderMethods() {
-    return myClassAdderMethods;
-  }
-
-  public Collection<JavaMethod> getGetterMethods() {
-    return myGetterMethods;
-  }
-
-  public Collection<JavaMethod> getIndexedAdderMethods() {
-    return myIndexedAdderMethods;
-  }
-
-  public Collection<JavaMethod> getIndexedClassAdderMethods() {
-    return myIndexedClassAdderMethods;
-  }
-
-  public Collection<JavaMethod> getInvertedIndexedClassAdderMethods() {
-    return myInvertedIndexedClassAdderMethods;
   }
 
   public List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {

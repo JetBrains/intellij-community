@@ -107,6 +107,7 @@
     <psi.referenceContributor implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
 
     <refactoring.elementListenerProvider implementation="com.intellij.uiDesigner.palette.PaletteRefactoringListenerProvider"/>
+    <refactoring.moveHandler implementation="com.intellij.uiDesigner.projectView.FormMoveProvider"/>
     <paletteItemProvider implementation="com.intellij.uiDesigner.palette.UIDesignerPaletteProvider"/>
 
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.uiDesigner.binding.GeneratedCodeFoldingBuilder"/>

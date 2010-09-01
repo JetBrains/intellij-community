@@ -133,7 +133,7 @@ public class PsiImplUtil {
     }
     LOG.error("Parameter " + parameter + " not found among parameters: " + Arrays.asList(parameters)+
               ". parameterList' parent: "+parameterList.getParent()+"; parameter.getParent()==paramList: "+(parameter.getParent()==parameterList)
-              +"; "+parameterList.getClass());
+              +"; "+parameterList.getClass() + "; parameter.isValid()="+parameter.isValid()+"; parameterList.isValid()= "+parameterList.isValid());
     return -1;
   }
 

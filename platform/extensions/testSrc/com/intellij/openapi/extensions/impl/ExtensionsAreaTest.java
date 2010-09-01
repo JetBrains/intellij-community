@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import junit.framework.TestCase;
@@ -51,7 +52,7 @@ public class ExtensionsAreaTest extends TestCase {
   }
 
   public void testNoCreateOnUnregisterElement() {
-    myExtensionsArea.registerExtensionPoint("test.ep", TestClass.class.getName());
+    myExtensionsArea.registerExtensionPoint("test.ep", TestClass.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     final Element element = ExtensionComponentAdapterTest.readElement("<extension point=\"test.ep\"/>");
     TestClass.ourCreationCount = 0;
     myExtensionsArea.registerExtension("test", element);
@@ -61,7 +62,7 @@ public class ExtensionsAreaTest extends TestCase {
   }
 
   public void testNoCreateOnUnregisterExisting() {
-    myExtensionsArea.registerExtensionPoint("test.ep", TestClass.class.getName());
+    myExtensionsArea.registerExtensionPoint("test.ep", TestClass.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     final Element element = ExtensionComponentAdapterTest.readElement("<extension point=\"test.ep\"/>");
     TestClass.ourCreationCount = 0;
     myExtensionsArea.registerExtension("test", element);

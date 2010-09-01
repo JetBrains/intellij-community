@@ -170,11 +170,7 @@ abstract class UndoRedo {
 
   private void reportCannotUndo(String message, Collection<DocumentReference> problemFiles) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(message + "\n" + StringUtil.join(problemFiles, new Function<DocumentReference, String>() {
-        public String fun(DocumentReference each) {
-          return each.toString();
-        }
-      }, "\n"));
+      throw new RuntimeException(message + "\n" + StringUtil.join(problemFiles, StringUtil.createToStringFunction(DocumentReference.class), "\n"));
     }
     new CannotUndoReportDialog(myManager.getProject(), message, problemFiles).show();
   }

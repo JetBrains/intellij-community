@@ -39,6 +39,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -183,8 +184,12 @@ public class AboutAction extends AnAction implements DumbAware {
       Calendar cal = ideInfo.getBuildDate();
       myLines.add(new AboutBoxLine(ideInfo.getFullApplicationName(), true, false));
       myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.number", ideInfo.getBuild().asString())));
-      myLines
-        .add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime()))));
+      String buildDate = "";
+      if (ideInfo.getBuild().isSnapshot()) {
+        buildDate = new SimpleDateFormat("HH:mm, ").format(cal.getTime());
+      }
+      buildDate += DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime());
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", buildDate)));
       myLines.add(new AboutBoxLine(""));
       LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
       if (provider != null) {

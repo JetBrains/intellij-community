@@ -16,9 +16,11 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +48,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   private Map<String, List<String>> myDependenciesMap = new HashMap<String, List<String>>();   // target effective name -> dependencies effective names
 
   private Set<String> myProcessedTargets = new HashSet<String>();
+  private Set<AntDomProject> myVisitedProjects = new HashSet<AntDomProject>();
 
   protected PropertyProviderFinder(DomElement contextElement) {
     myContextElement = contextElement != null? contextElement.getParentOfType(AntDomElement.class, false) : null;
@@ -99,13 +102,13 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       final InclusionKind inclusionKind = myNameContext.getCurrentInclusionKind();
       switch (inclusionKind) {
         case IMPORT:
+          final String alias = myNameContext.getShortPrefix() + declaredTargetName;
           if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
             effectiveTargetName = declaredTargetName;
-            final String alias = myNameContext.getShortPrefix() + declaredTargetName;
             myTargetsResolveMap.put(alias, target); 
           }
           else {
-            effectiveTargetName = myNameContext.getShortPrefix() + declaredTargetName;
+            effectiveTargetName = alias;
           }
           break;
 
@@ -114,29 +117,33 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           break;
 
         default:
-          if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
-            effectiveTargetName = declaredTargetName;
-          }
+          effectiveTargetName = declaredTargetName;
           break;
       }
       if (effectiveTargetName != null) {
-        myTargetsResolveMap.put(effectiveTargetName, target);
-        final String dependsStr = target.getDependsList().getStringValue();
-        Map<String, Pair<AntDomTarget, String>> depsMap = Collections.emptyMap();
-        if (dependsStr != null) {
-          depsMap = new HashMap<String, Pair<AntDomTarget, String>>();
-          final StringTokenizer tokenizer = new StringTokenizer(dependsStr, ",", false);
-          while (tokenizer.hasMoreTokens()) {
-            final String token = tokenizer.nextToken().trim();
-            final String dependentTargetEffectiveName = myNameContext.calcTargetReferenceText(token);
-            final AntDomTarget dependent = getTargetByName(dependentTargetEffectiveName);
-            if (dependent != null) {
-              depsMap.put(token, new Pair<AntDomTarget, String>(dependent, dependentTargetEffectiveName));
-            }
-            addDependency(effectiveTargetName, dependentTargetEffectiveName);
-          }
+        final AntDomTarget existingTarget = myTargetsResolveMap.get(effectiveTargetName);
+        if (existingTarget != null && Comparing.equal(existingTarget.getAntProject(), target.getAntProject())) {
+          duplicateTargetFound(existingTarget, target, effectiveTargetName);
         }
-        targetDefined(target, effectiveTargetName, depsMap);
+        else {
+          myTargetsResolveMap.put(effectiveTargetName, target);
+          final String dependsStr = target.getDependsList().getRawText();
+          Map<String, Pair<AntDomTarget, String>> depsMap = Collections.emptyMap();
+          if (dependsStr != null) {
+            depsMap = new HashMap<String, Pair<AntDomTarget, String>>();
+            final StringTokenizer tokenizer = new StringTokenizer(dependsStr, ",", false);
+            while (tokenizer.hasMoreTokens()) {
+              final String token = tokenizer.nextToken().trim();
+              final String dependentTargetEffectiveName = myNameContext.calcTargetReferenceText(token);
+              final AntDomTarget dependent = getTargetByName(dependentTargetEffectiveName);
+              if (dependent != null) {
+                depsMap.put(token, new Pair<AntDomTarget, String>(dependent, dependentTargetEffectiveName));
+              }
+              addDependency(effectiveTargetName, dependentTargetEffectiveName);
+            }
+          }
+          targetDefined(target, effectiveTargetName, depsMap);
+        }
       }
     }
   }
@@ -155,7 +162,16 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       }
     }
     if (!myStopped) {
-      super.visitAntDomElement(element);
+      //super.visitAntDomElement(element);
+      for (Iterator<AntDomElement> iterator = element.getAntChildrenIterator(); iterator.hasNext();) {
+        AntDomElement child = iterator.next();
+        child.accept(this);
+        if (myStage == Stage.TARGETS_WALKUP_STAGE) {
+          if (myStopped) {
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -192,6 +208,18 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     processFileInclusion(importTag, InclusionKind.IMPORT);
   }
 
+  public void visitProject(AntDomProject project) {
+    if (!myVisitedProjects.contains(project)) {
+      myVisitedProjects.add(project);
+      try {
+        super.visitProject(project);
+      }
+      finally {
+        myVisitedProjects.remove(project);
+      }
+    }
+  }
+
   private void processFileInclusion(AntDomIncludingDirective directive, final InclusionKind kind) {
     if (directive.equals(myContextElement)) {
       stop();
@@ -201,7 +229,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
     final PsiFileSystemItem item = directive.getFile().getValue();
     if (item instanceof PsiFile) {
-      final AntDomProject slaveProject = AntSupport.getAntDomProject((PsiFile)item);
+      final AntDomProject slaveProject = item instanceof XmlFile ? AntSupport.getAntDomProjectForceAntFile((XmlFile)item) : null;
       if (slaveProject != null) {
         myNameContext.pushPrefix(directive, kind, slaveProject);
         try {
@@ -228,6 +256,14 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
    * @param dependenciesMap Map declared dependency reference->pair[tareget object, effective reference name]
    */
   protected void targetDefined(AntDomTarget target, String taregetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
+  }
+
+  /**
+   * @param existingTarget
+   * @param duplicatingTarget
+   * @param taregetEffectiveName
+   */
+  protected void duplicateTargetFound(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String taregetEffectiveName) {
   }
 
   protected void stageCompleted(Stage completedStage, Stage startingStage) {

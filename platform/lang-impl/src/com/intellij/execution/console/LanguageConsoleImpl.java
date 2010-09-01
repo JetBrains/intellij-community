@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.console;
 
-import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
@@ -27,7 +26,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -101,10 +99,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private Editor myFullEditor;
   private ActionGroup myFullEditorActions;
+  private final boolean myDoSaveErrorsToHistory;
 
-  public LanguageConsoleImpl(final Project project, String title, final Language language) {
+  public LanguageConsoleImpl(final Project project, String title, final Language language, final boolean doSaveErrorsToHistory) {
     myProject = project;
     myTitle = title;
+    myDoSaveErrorsToHistory = doSaveErrorsToHistory;
     installEditorFactoryListener();
     final EditorFactory editorFactory = EditorFactory.getInstance();
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", StdFileTypes.PLAIN_TEXT, "");
@@ -155,7 +155,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
       myFullEditor = fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
       assert myFullEditor != null;
-      configureFullEditor();      
+      configureFullEditor();
       fileManager.getCurrentWindow().setFilePinned(virtualFile, true);
     }
   }
@@ -354,7 +354,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
                                     HighlighterTargetArea.EXACT_RANGE);
 
     final int offset = history.getTextLength();
-    final String text = textRange.substring(consoleEditor.getDocument().getText());
+    final String text = consoleEditor.getDocument().getText(textRange);
     history.insertString(offset, text);
     final HighlighterIterator iterator = consoleEditor.getHighlighter().createIterator(0);
     while (!iterator.atEnd()) {
@@ -367,8 +367,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
       iterator.advance();
     }
-    duplicateHighlighters(markupModel, consoleEditor.getDocument().getMarkupModel(myProject), offset, textRange);
-    duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
+    if (myDoSaveErrorsToHistory) {
+      duplicateHighlighters(markupModel, consoleEditor.getDocument().getMarkupModel(myProject), offset, textRange);
+      duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
+    }
     if (!text.endsWith("\n")) history.insertString(history.getTextLength(), "\n");
     return text;
   }
@@ -572,17 +574,22 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     });
   }
 
-  public static void printToConsole(final LanguageConsoleImpl console, final String string, final ConsoleViewContentType type) {
-    printToConsole(console, string, type.getAttributes());
+  public static void printToConsole(final LanguageConsoleImpl console,
+                                    final String string,
+                                    final ConsoleViewContentType mainType,
+                                    ConsoleViewContentType additionalType) {
+    final TextAttributes mainAttributes = mainType.getAttributes();
+    final TextAttributes attributes;
+    if (additionalType == null) {
+      attributes = mainAttributes;
+    } else {
+      attributes = additionalType.getAttributes().clone();
+      attributes.setBackgroundColor(mainAttributes.getBackgroundColor());
+    }
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        console.printToHistory(string, attributes);
+      }
+    }, ModalityState.stateForComponent(console.getComponent()));
   }
-
-   public static void printToConsole(final LanguageConsoleImpl console, final String string, final TextAttributes textAttributes) {
-     final TextAttributes outAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleHighlighter.OUT);
-     final TextAttributes attributes = TextAttributes.merge(outAttrs, textAttributes);
-     ApplicationManager.getApplication().invokeLater(new Runnable() {
-       public void run() {
-         console.printToHistory(string, attributes);
-       }
-     }, ModalityState.stateForComponent(console.getComponent()));
-   }
 }

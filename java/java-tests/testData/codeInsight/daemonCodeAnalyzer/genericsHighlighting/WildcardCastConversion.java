@@ -375,7 +375,7 @@ public class Test {
 
             void foo() {
                 D<? extends T> x = null;
-                D<<error descr="Type parameter 'B' is not within its bound; should extend 'A'">? extends B</error>> y = (D<<error descr="Type parameter 'B' is not within its bound; should extend 'A'">? extends B</error>>) x;
+                D<<error descr="Type parameter '? extends B' is not within its bound; should extend 'A'">? extends B</error>> y = (D<<error descr="Type parameter '? extends B' is not within its bound; should extend 'A'">? extends B</error>>) x;
             }
 
         }
@@ -459,6 +459,12 @@ public class Test {
 
         }
 
+    }
+
+    void testUnbounded() {
+      W<?> x = null;
+      W<? extends A> y = ( W<? extends A>) x;
+      W<?> y1 = (W<?>)x;
     }
 }
 

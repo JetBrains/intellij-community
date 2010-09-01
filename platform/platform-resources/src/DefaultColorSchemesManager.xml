@@ -20,6 +20,7 @@
       <option name="ANNOTATIONS_MERGED_COLOR" value="008080" />
       <option name="CARET_COLOR" value="0"/>
       <option name="RIGHT_MARGIN_COLOR" value="c0c0c0"/>
+      <option name="SOFT_WRAP_SIGN_COLOR" value="c0c0c0"/>
       <option name="TEARLINE_COLOR" value="808080"/>
       <option name="SELECTED_TEARLINE_COLOR" value="000000"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
@@ -302,7 +303,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="baeeba"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="1e201"/>
+          <option name="ERROR_STRIPE_COLOR" value="99ff99"/>
         </value>
       </option>
 
@@ -311,7 +312,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="bccff9"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="3471ff"/>
+          <option name="ERROR_STRIPE_COLOR" value="99ccff"/>
         </value>
       </option>
 

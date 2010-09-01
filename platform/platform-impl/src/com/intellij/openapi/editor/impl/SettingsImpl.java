@@ -131,6 +131,11 @@ public class SettingsImpl implements EditorSettings {
            CodeStyleFacade.getInstance(project).getRightMargin();
   }
 
+  @Override
+  public boolean isWrapWhenTypingReachesRightMargin(Project project) {
+    return CodeStyleFacade.getInstance(project).isWrapWhenTypingReachesRightMargin();
+  }
+
   public void setRightMargin(int rightMargin) {
     final Integer newValue = Integer.valueOf(rightMargin);
     if (newValue.equals(myRightMargin)) return;
@@ -405,8 +410,13 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
-  public void setShowAllSoftWraps(boolean show) {
-    myIsAllSoftWrapsShown = Boolean.valueOf(show);
+  public boolean isUseCustomSoftWrapIndent() {
+    return EditorSettingsExternalizable.getInstance().isUseCustomSoftWrapIndent();
+  }
+
+  @Override
+  public int getCustomSoftWrapIndent() {
+    return EditorSettingsExternalizable.getInstance().getCustomSoftWrapIndent();
   }
 
   @Override

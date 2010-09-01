@@ -49,7 +49,7 @@ public interface Document extends UserDataHolder {
    */
   String getText();
 
-  String getText(TextRange range);
+  @NotNull String getText(@NotNull TextRange range);
 
   /**
    * Use this method instead of {@link #getText()} if you do not need to create a copy of the content.

@@ -16,15 +16,17 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupActionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -32,20 +34,20 @@ import com.intellij.util.Consumer;
 public class ExcludeFromCompletionLookupActionProvider implements LookupActionProvider {
   public void fillActions(LookupElement element, Lookup lookup, Consumer<LookupElementAction> consumer) {
     final Object o = element.getObject();
-    PsiClass clazz = null;
-    if (o instanceof PsiType) {
-      clazz = PsiUtil.resolveClassInType((PsiType)o);
-    } else if (o instanceof PsiClass) {
-      clazz = (PsiClass)o;
+    if (o instanceof PsiClass) {
+      PsiClass clazz = (PsiClass)o;
+      addExcludes(consumer, clazz, clazz.getQualifiedName());
+    } else if (o instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)o;
+      addExcludes(consumer, method, StaticImportMethodFix.getMethodQualifiedName(method));
     }
-    if (clazz != null && clazz.isValid()) {
-      final String qname = clazz.getQualifiedName();
-      if (qname != null) {
-        final Project project = clazz.getProject();
-        for (final String s : AddImportAction.getAllExcludableStrings(qname)) {
-          consumer.consume(new ExcludeFromCompletionAction(project, s));
-        }
-      }
+  }
+
+  private static void addExcludes(Consumer<LookupElementAction> consumer, PsiMember element, @Nullable String qname) {
+    if (qname == null) return;
+    final Project project = element.getProject();
+    for (final String s : AddImportAction.getAllExcludableStrings(qname)) {
+      consumer.consume(new ExcludeFromCompletionAction(project, s));
     }
   }
 
@@ -60,8 +62,9 @@ public class ExcludeFromCompletionLookupActionProvider implements LookupActionPr
     }
 
     @Override
-    public void performLookupAction() {
+    public Result performLookupAction() {
       AddImportAction.excludeFromImport(myProject, myToExclude);
+      return Result.HIDE_LOOKUP;
     }
   }
 }

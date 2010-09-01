@@ -120,6 +120,14 @@ public class ParametersList implements Cloneable{
     return myGroups.get(index);
   }
 
+  @Nullable
+  public ParamsGroup getParamsGroup(@NotNull final String name) {
+    for (ParamsGroup group : myGroups) {
+      if (name.equals(group.getId())) return group;
+    }
+    return null;
+  }
+
   public ParamsGroup removeParamsGroup(final int index) {
     return myGroups.remove(index);
   }

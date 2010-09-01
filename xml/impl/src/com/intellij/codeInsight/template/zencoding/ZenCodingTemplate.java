@@ -17,10 +17,9 @@ package com.intellij.codeInsight.template.zencoding;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.CustomLiveTemplate;
-import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.LiveTemplateBuilder;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.zencoding.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.nodes.*;
@@ -28,12 +27,15 @@ import com.intellij.codeInsight.template.zencoding.tokens.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -471,10 +473,41 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
         end = e;
       }
     }
-    if (end < builder.length()) {
+    /*if (end < builder.length() && end >= 0) {
       builder.insertVariableSegment(end, TemplateImpl.END);
-    }
-    callback.startTemplate(builder.buildTemplate(), null);
+    }*/
+    callback.startTemplate(builder.buildTemplate(), null, new TemplateEditingAdapter() {
+      private TextRange myEndVarRange;
+      private Editor myEditor;
+
+      @Override
+      public void beforeTemplateFinished(TemplateState state, Template template) {
+        int variableNumber = state.getCurrentVariableNumber();
+        if (variableNumber >= 0 && template instanceof TemplateImpl) {
+          TemplateImpl t = (TemplateImpl)template;
+          while (variableNumber < t.getVariableCount()) {
+            String varName = t.getVariableNameAt(variableNumber);
+            if (LiveTemplateBuilder.isEndVariable(varName)) {
+              myEndVarRange = state.getVariableRange(varName);
+              myEditor = state.getEditor();
+              break;
+            }
+            variableNumber++;
+          }
+        }
+      }
+
+      @Override
+      public void templateFinished(Template template, boolean brokenOff) {
+        if (brokenOff && myEndVarRange != null && myEditor != null) {
+          int offset = myEndVarRange.getStartOffset();
+          if (offset >= 0 && offset != myEditor.getCaretModel().getOffset()) {
+            myEditor.getCaretModel().moveToOffset(offset);
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          }
+        }
+      }
+    });
   }
 
   public void wrap(final String selection,

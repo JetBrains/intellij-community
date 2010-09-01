@@ -371,7 +371,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     public void scrollEditors() {
       getOptions().onNewContent(myCurrentSide);
-      final DiffNavigationContext scrollContext = (DiffNavigationContext) myDiffRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
+      final DiffNavigationContext scrollContext = myDiffRequest == null ? null :
+        (DiffNavigationContext) myDiffRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
       if (scrollContext == null) {
         scrollCurrentToFirstDiff();
       } else {
@@ -402,7 +403,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
               @Override
               public void run() {
                 if (finalLine >= 0) {
-                  myRightSide.scrollToFirstDiff(finalLine);
+                  final int line = myLineBlocks.transform(myRightSide.getSide(), finalLine);
+                  myLeftSide.scrollToFirstDiff(line);
                 } else {
                   scrollCurrentToFirstDiff();
                 }
@@ -458,9 +460,16 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         @Override
         public void run() {
           final int startLine = myDocument.getLineNumber(textRange.getStartOffset());
-          final int endLine = myDocument.getLineNumber(textRange.getEndOffset());
+          final int endFragmentOffset = textRange.getEndOffset();
+          final int endLine = myDocument.getLineNumber(endFragmentOffset);
           for (int i = startLine; i <= endLine; i++) {
-            String text = myDocument.getText().substring(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i));
+            int lineEndOffset = myDocument.getLineEndOffset(i);
+            final int lineStartOffset = myDocument.getLineStartOffset(i);
+            if (lineEndOffset > endFragmentOffset && (endFragmentOffset == lineStartOffset)) {
+              lineEndOffset = endFragmentOffset;
+            }
+            if (lineStartOffset > lineEndOffset) continue;
+            String text = myDocument.getText().substring(lineStartOffset, lineEndOffset);
             myBuffer.add(new Pair<Integer, String>(i, text));
           }
         }

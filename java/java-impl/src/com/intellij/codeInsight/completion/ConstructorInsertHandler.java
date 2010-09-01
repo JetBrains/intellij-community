@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -79,7 +78,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       }
     }
 
-    PsiMethodInsertHandler.insertParentheses(context, delegate, false, hasParams);
+    JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams);
   }
 
   private static Runnable generateAnonymousBody(final Editor editor, PsiFile file) {

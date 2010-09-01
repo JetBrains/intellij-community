@@ -24,6 +24,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author peter
@@ -33,12 +34,12 @@ public abstract class NonCodeMembersContributor {
 
   public abstract void processDynamicElements(@NotNull PsiType qualifierType,
                                               PsiScopeProcessor processor,
-                                              PsiElement place,
+                                              GroovyPsiElement place,
                                               ResolveState state);
 
   public static boolean runContributors(@NotNull final PsiType qualifierType,
                                          PsiScopeProcessor processor,
-                                         final PsiElement place,
+                                         final GroovyPsiElement place,
                                          final ResolveState state) {
     final Ref<Boolean> result = Ref.create(true);
     final PsiScopeProcessor wrapper = new DelegatingScopeProcessor(processor) {

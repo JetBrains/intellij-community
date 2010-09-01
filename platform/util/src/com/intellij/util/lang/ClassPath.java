@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -49,6 +50,7 @@ class ClassPath {
   private static final long NS_THRESHOLD = 10000000L;
 
   private static PrintStream ourOrder;
+  private volatile boolean myAcceptUnescapedUrls;
 
   @SuppressWarnings({"UnusedDeclaration"})
   private static void printOrder(Loader loader, String resource) {
@@ -162,7 +164,17 @@ class ClassPath {
 
   @Nullable
   private Loader getLoader(final URL url) throws IOException {
-    String s = url.getFile();
+    String s;
+    if (myAcceptUnescapedUrls) {
+      s = url.getFile();
+    } else {
+      try {
+        s = url.toURI().getSchemeSpecificPart();
+      } catch (URISyntaxException thisShouldNotHappen) {
+        thisShouldNotHappen.printStackTrace();
+        s = url.getFile();
+      }
+    }
 
     Loader loader = null;
     if (s != null  && new File(s).isDirectory()) {
@@ -191,6 +203,10 @@ class ClassPath {
       for (int i = urls.length - 1; i >= 0; i--) myUrls.push(urls[i]);
 
     }
+  }
+
+  public void setAcceptUnescapedUrls(boolean acceptUnescapedUrls) {
+    myAcceptUnescapedUrls = acceptUnescapedUrls;
   }
 
   private class MyEnumeration implements Enumeration<URL> {

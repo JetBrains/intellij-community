@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +133,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run() {
             try {
-              performI18nization(psiFile, getEditorForFile(psiFile), dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
+              performI18nization(psiFile, PsiUtilBase.findEditor(psiFile), dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
                                  dialog.getValue(), dialog.getI18nizedText(), dialog.getParameters(),
                                  dialog.getPropertyCreationHandler());
             }
@@ -143,22 +144,6 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
         });
       }
     }, CodeInsightBundle.message("quickfix.i18n.command.name"),project);
-  }
-
-  private static Editor getEditorForFile(@NotNull final PsiFile psiFile) {
-    VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) {
-      PsiFile originalFile = psiFile.getOriginalFile();
-      virtualFile = originalFile.getVirtualFile();
-      if (virtualFile == null) return null;
-    }
-    final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
-    for (FileEditor editor : editors) {
-      if (editor instanceof TextEditor) {
-        return ((TextEditor)editor).getEditor();
-      }
-    }
-    return null;
   }
 
   protected PsiElement doReplacementInJava(@NotNull final PsiFile psiFile,

@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -60,7 +60,7 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
 
 
   public static GlobalLibrariesConfigurable getInstance(final Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, GlobalLibrariesConfigurable.class);
+    return ServiceManager.getService(project, GlobalLibrariesConfigurable.class);
   }
 
   public LibraryTableModifiableModelProvider getModelProvider(final boolean editable) {

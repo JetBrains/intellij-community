@@ -8,6 +8,6 @@ public class Test {
 }
 
 public class MyCollection implements Collection {
-    public MyCollection(int i, String s) {<caret>
+    public MyCollection(int i, String test) {<caret>
     }
 }

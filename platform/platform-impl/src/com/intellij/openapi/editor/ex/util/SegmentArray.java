@@ -45,6 +45,7 @@ public class SegmentArray {
     if (i >= mySegmentCount) {
       mySegmentCount = i + 1;
     }
+
     myStarts = reallocateArray(myStarts, i);
     myStarts[i] = startOffset;
 
@@ -136,6 +137,7 @@ public class SegmentArray {
       }
     }
 
+    // This means that there is a gap at given offset
     assert myStarts[start] <= offset && offset < myEnds[start] : start;
 
     return start;

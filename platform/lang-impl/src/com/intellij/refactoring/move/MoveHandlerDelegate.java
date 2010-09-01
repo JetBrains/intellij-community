@@ -24,6 +24,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 /**
  * @author yole
  */
@@ -32,6 +34,10 @@ public abstract class MoveHandlerDelegate {
 
   public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     return targetContainer == null || isValidTarget(targetContainer, elements);
+  }
+
+  public boolean canMove(DataContext dataContext){
+    return false;
   }
 
   public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
@@ -50,5 +56,8 @@ public abstract class MoveHandlerDelegate {
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext,
                            @Nullable final PsiReference reference, final Editor editor) {
     return false;
+  }
+
+  public void collectFilesOrDirsFromContext(DataContext dataContext, Set<PsiElement> filesOrDirs){
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
@@ -45,11 +46,12 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
     final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
     final PsiFile containingFile = psiElement.getContainingFile();
+    PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(containingFile);
 
-    if (!(containingFile instanceof PsiJavaFile) || containingFile instanceof JspFile) {
+    if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof JspFile) {
       return null;
     }
-    PsiElement containingClass = psiElement;
+    PsiElement containingClass = topLevelFile == containingFile ? psiElement : containingFile.getContext();
     do {
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
       if (containingClass == null || ((PsiClass)containingClass).getQualifiedName() != null) break;
@@ -60,8 +62,8 @@ public class ClassGroupingRule implements UsageGroupingRule {
       // check whether the element is in the import list
       PsiImportList importList = PsiTreeUtil.getParentOfType(psiElement, PsiImportList.class, true);
       if (importList != null) {
-        final String fileName = getFileNameWithoutExtension(containingFile);
-        final PsiClass[] classes = ((PsiJavaFile)containingFile).getClasses();
+        final String fileName = getFileNameWithoutExtension(topLevelFile);
+        final PsiClass[] classes = ((PsiJavaFile)topLevelFile).getClasses();
         for (final PsiClass aClass : classes) {
           if (fileName.equals(aClass.getName())) {
             containingClass = aClass;
@@ -81,9 +83,9 @@ public class ClassGroupingRule implements UsageGroupingRule {
       return new ClassUsageGroup((PsiClass)containingClass);
     }
 
-    final VirtualFile virtualFile = containingFile.getVirtualFile();
+    final VirtualFile virtualFile = topLevelFile.getVirtualFile();
     if (virtualFile != null) {
-      return new FileGroupingRule.FileUsageGroup(containingFile.getProject(), virtualFile);
+      return new FileGroupingRule.FileUsageGroup(topLevelFile.getProject(), virtualFile);
     }
     return null;
   }

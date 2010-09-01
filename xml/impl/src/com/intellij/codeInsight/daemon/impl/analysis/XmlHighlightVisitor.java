@@ -31,6 +31,7 @@ import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,7 +47,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -124,12 +124,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         if (i != -1) {                              // TODO: fix
           TextRange textRange = token.getTextRange();
           int start = textRange.getStartOffset() + i;
-          addToResults(HighlightInfo.createHighlightInfo(
-            PsiTreeUtil.getParentOfType(token, XmlTag.class) instanceof HtmlTag ? 
-              HighlightInfoType.WARNING:HighlightInfoType.ERROR, 
-            start, start + marker.length(), 
+          HighlightInfoType type = PsiTreeUtil.getParentOfType(token, XmlTag.class) instanceof HtmlTag ?
+                                   HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+          HighlightInfo info = HighlightInfo.createHighlightInfo(
+            type,
+            start, start + marker.length(),
             XmlErrorMessages.message("cdata.end.should.not.appear.in.content.unless.to.mark.end.of.cdata.section")
-          ));
+          );
+          addToResults(info);
         }
       }
     }
@@ -382,8 +384,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private static boolean isInjectedHtmlTagForWhichNoProblemsReporting(HtmlTag tag) {
     PsiElement context = tag.getContainingFile().getContext();
-    if (context != null && skipValidation(context)) return true;
-    return false;
+    return context != null && skipValidation(context);
   }
 
   private static boolean skipValidation(PsiElement context) {
@@ -579,36 +580,40 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       if (reference == null) {
         continue;
       }
-      if (!reference.isSoft()) {
-        if(hasBadResolve(reference)) {
-          String description = getErrorDescription(reference);
+      if(hasBadResolve(reference, false)) {
+        String description = getErrorDescription(reference);
 
-          final int startOffset = reference.getElement().getTextRange().getStartOffset();
-          final TextRange referenceRange = reference.getRangeInElement();
+        final int startOffset = reference.getElement().getTextRange().getStartOffset();
+        final TextRange referenceRange = reference.getRangeInElement();
 
-          // logging for IDEADEV-29655
-          if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
-            LOG.error("Reference range start offset > end offset:  " + reference +
-            ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
-          }
+        // logging for IDEADEV-29655
+        if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
+          LOG.error("Reference range start offset > end offset:  " + reference +
+          ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
+        }
 
-          HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
-          if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && value instanceof XmlAttributeValue) {
-            PsiElement parent = value.getParent();
-            if (parent instanceof XmlAttribute && ((XmlAttribute)parent).getName().toLowerCase().endsWith("stylename")) {
+        HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
+        if (value instanceof XmlAttributeValue) {
+          PsiElement parent = value.getParent();
+          if (parent instanceof XmlAttribute) {
+            String name = ((XmlAttribute)parent).getName().toLowerCase();
+            if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
               type = HighlightInfoType.WARNING;
             }
+            else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
+              continue;
+            }
           }
-          HighlightInfo info = HighlightInfo.createHighlightInfo(
-            type,
-            startOffset + referenceRange.getStartOffset(),
-            startOffset + referenceRange.getEndOffset(),
-            description
-          );
-          addToResults(info);
-          if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
-          UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
         }
+        HighlightInfo info = HighlightInfo.createHighlightInfo(
+          type,
+          startOffset + referenceRange.getStartOffset(),
+          startOffset + referenceRange.getEndOffset(),
+          description
+        );
+        addToResults(info);
+        if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
+        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
       }
     }
   }
@@ -634,7 +639,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return description;
   }
 
-  public static boolean hasBadResolve(final PsiReference reference) {
+  public static boolean hasBadResolve(final PsiReference reference, boolean checkSoft) {
+    if (!checkSoft && reference.isSoft()) return false;
     if (reference instanceof PsiPolyVariantReference) {
       return ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
     }
@@ -658,7 +664,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   public void addMessage(PsiElement context, String message, int type) {
     if (message != null && message.length() > 0) {
       if (context instanceof XmlTag && XmlExtension.getExtension(context.getContainingFile()).shouldBeHighlightedAsTag((XmlTag)context)) {
-        addElementsForTag((XmlTag)context, message, type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO, null);
+        HighlightInfoType infoType = type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO;
+        addElementsForTag((XmlTag)context, message, infoType, null);
       }
       else {
         addToResults(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message));
@@ -679,9 +686,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         final HighlightInfo highlightInfo;
 
         if (contextOfFile != null) {
-          final int offsetInRealDocument = PsiUtilBase.findInjectedElementOffsetInRealDocument(context);
-          highlightInfo = HighlightInfo.createHighlightInfo(defaultInfoType, context.getTextRange().shiftRight(offsetInRealDocument), message);
-        } else {
+          TextRange range = InjectedLanguageManager.getInstance(context.getProject()).injectedToHost(context, context.getTextRange());
+          highlightInfo = HighlightInfo.createHighlightInfo(defaultInfoType, range, message);
+        }
+        else {
           highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message);
         }
 

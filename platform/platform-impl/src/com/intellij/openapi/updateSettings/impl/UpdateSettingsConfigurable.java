@@ -24,13 +24,10 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.MappingListCellRenderer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +37,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -49,20 +47,6 @@ import java.util.List;
 public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private UpdatesSettingsPanel myUpdatesSettingsPanel;
   private boolean myCheckNowEnabled = true;
-  @NonNls public static final String ON_START_UP = "On every start";
-  @NonNls public static final String DAILY = "Daily";
-  @NonNls public static final String WEEKLY = "Weekly";
-  @NonNls public static final String MONTHLY = "Monthly";
-  @NonNls public static final String ON_EXIT = "On every exit";
-  private static final Map<Object, String> PERIOD_VALUE_MAP = new HashMap<Object, String>();
-
-  static {
-    PERIOD_VALUE_MAP.put(ON_START_UP, IdeBundle.message("updates.check.period.on.startup"));
-    PERIOD_VALUE_MAP.put(DAILY, IdeBundle.message("updates.check.period.daily"));
-    PERIOD_VALUE_MAP.put(WEEKLY, IdeBundle.message("updates.check.period.weekly"));
-    PERIOD_VALUE_MAP.put(MONTHLY, IdeBundle.message("updates.check.period.monthly"));
-    PERIOD_VALUE_MAP.put(ON_EXIT, IdeBundle.message("updates.check.period.on.exit"));
-  }
 
   public JComponent createComponent() {
     myUpdatesSettingsPanel = new UpdatesSettingsPanel();
@@ -91,7 +75,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
   public void apply() throws ConfigurationException {
     UpdateSettings settings = UpdateSettings.getInstance();
-    settings.CHECK_PERIOD = (String)myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem();
     settings.CHECK_NEEDED = myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
 
     settings.myPluginHosts.clear();
@@ -101,8 +84,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   public void reset() {
     UpdateSettings settings = UpdateSettings.getInstance();
     myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(settings.CHECK_NEEDED);
-    myUpdatesSettingsPanel.myPeriodCombo.setSelectedItem(settings.CHECK_PERIOD);
-    myUpdatesSettingsPanel.myPeriodCombo.setEnabled(myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected());
     myUpdatesSettingsPanel.updateLastCheckedLabel();
     myUpdatesSettingsPanel.setPluginHosts(settings.myPluginHosts);
   }
@@ -110,8 +91,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   public boolean isModified() {
     UpdateSettings settings = UpdateSettings.getInstance();
     if (!settings.myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
-    return settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected() ||
-           !Comparing.equal(settings.CHECK_PERIOD, myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
+    return settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
   }
 
   public void disposeUIResources() {
@@ -136,7 +116,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
     private JPanel myPanel;
     private JButton myBtnCheckNow;
-    private JComboBox myPeriodCombo;
     private JCheckBox myCbCheckForUpdates;
     private JLabel myBuildNumber;
     private JLabel myVersionNumber;
@@ -148,14 +127,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     private JButton myEditButton;
 
     public UpdatesSettingsPanel() {
-
-      myPeriodCombo.addItem(ON_START_UP);
-      myPeriodCombo.addItem(DAILY);
-      myPeriodCombo.addItem(WEEKLY);
-      myPeriodCombo.addItem(MONTHLY);
-      myPeriodCombo.addItem(ON_EXIT);
-
-      myPeriodCombo.setRenderer(new MappingListCellRenderer(PERIOD_VALUE_MAP));
 
       final ApplicationInfo appInfo = ApplicationInfo.getInstance();
       final String majorVersion = appInfo.getMajorVersion();
@@ -171,12 +142,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       }
       myVersionNumber.setText(appInfo.getVersionName() + " " + versionNumber);
       myBuildNumber.setText(appInfo.getBuild().asString());
-
-      myCbCheckForUpdates.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          myPeriodCombo.setEnabled(myCbCheckForUpdates.isSelected());
-        }
-      });
 
       myBtnCheckNow.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {

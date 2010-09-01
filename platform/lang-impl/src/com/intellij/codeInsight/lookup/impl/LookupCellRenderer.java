@@ -31,6 +31,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -279,14 +280,18 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   private Icon getIcon(Icon icon){
+    return augmentIcon(icon, myEmptyIcon);
+  }
+
+  public static Icon augmentIcon(@Nullable Icon icon, @NotNull Icon standard) {
     if (icon == null) {
-      return myEmptyIcon;
+      return standard;
     }
 
-    if (icon.getIconHeight() < myEmptyIcon.getIconHeight() || icon.getIconWidth() < myEmptyIcon.getIconWidth()) {
+    if (icon.getIconHeight() < standard.getIconHeight() || icon.getIconWidth() < standard.getIconWidth()) {
       final LayeredIcon layeredIcon = new LayeredIcon(2);
-      layeredIcon.setIcon(icon, 0, 0, (myEmptyIcon.getIconHeight() - icon.getIconHeight()) / 2);
-      layeredIcon.setIcon(myEmptyIcon, 1);
+      layeredIcon.setIcon(icon, 0, 0, (standard.getIconHeight() - icon.getIconHeight()) / 2);
+      layeredIcon.setIcon(standard, 1);
       return layeredIcon;
     }
 

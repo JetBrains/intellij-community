@@ -39,15 +39,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.util.xml.DomManager;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,7 +60,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     GroovyPsiElement place,
                                      ResolveState state) {
     final PsiFile file = place.getContainingFile().getOriginalFile();
     CachedValue<List<PsiElement>> value = file.getUserData(INJECTION_PARSED_CONTEXT);

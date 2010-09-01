@@ -20,16 +20,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
@@ -138,14 +138,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     final String expectedName = ResolveUtil.getNameHint(processor);
 
-    PsiScopeProcessor importProcessor = !processClasses || expectedName == null ? processor : new BaseScopeProcessor() {
+    PsiScopeProcessor importProcessor = !processClasses || expectedName == null ? processor : new DelegatingScopeProcessor(processor) {
       public boolean execute(PsiElement element, ResolveState state) {
-        return isImplicitlyImported(element, expectedName) || processor.execute(element, state);
-      }
-
-      @Override
-      public <T> T getHint(Key<T> hintKey) {
-        return processor.getHint(hintKey);
+        return isImplicitlyImported(element, expectedName) || super.execute(element, state);
       }
     };
     for (GrImportStatement importStatement : getImportStatements()) {
@@ -252,10 +247,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Nullable
   public Icon getIcon(int flags) {
-    if (isScript()) {
-      return GroovyScriptType.getScriptType(this).getScriptIcon();
-    }
-    return GroovyIcons.GROOVY_ICON_16x16;
+    final Icon baseIcon = isScript() ? GroovyScriptType.getScriptType(this).getScriptIcon() : GroovyIcons.GROOVY_ICON_16x16;
+    return ElementBase.createLayeredIcon(baseIcon, ElementBase.transformFlags(this, flags));
   }
 
   public GrImportStatement addImportForClass(PsiClass aClass) {
@@ -332,8 +325,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     Boolean isScript = myScript;
     if (isScript == null) {
-      isScript = Boolean.FALSE;
-      for (GrTopStatement st : findChildrenByClass(GrTopStatement.class)) {
+      final GrTopStatement[] topStatements = findChildrenByClass(GrTopStatement.class);
+      isScript = topStatements.length == 0;
+      for (GrTopStatement st : topStatements) {
         if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition)) {
           isScript = Boolean.TRUE;
           break;

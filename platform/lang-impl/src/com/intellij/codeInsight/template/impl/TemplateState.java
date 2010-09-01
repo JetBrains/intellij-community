@@ -381,7 +381,20 @@ public class TemplateState implements Disposable {
 
   private void afterChangedUpdate() {
     if (isFinished()) return;
-    LOG.assertTrue(myTemplate != null, myPrevTemplate != null ? myPrevTemplate.getKey() : "prev template is null");
+    String message;
+    if (myPrevTemplate != null) {
+      message = myPrevTemplate.getKey();
+      if (message == null || message.length() == 0) {
+        message = myPrevTemplate.getString();
+        if (message == null) {
+          message = myPrevTemplate.getTemplateText();
+        }
+      }
+    }
+    else {
+      message = "prev template is null";
+    }
+    LOG.assertTrue(myTemplate != null, message);
     if (myDocumentChanged) {
       if (myDocumentChangesTerminateTemplate || mySegments.isInvalid()) {
         final int oldIndex = myCurrentVariableNumber;
@@ -663,6 +676,10 @@ public class TemplateState implements Disposable {
     }
   }
 
+  public int getCurrentVariableNumber() {
+    return myCurrentVariableNumber;
+  }
+
   public void previousTab() {
     if (isFinished()) {
       return;
@@ -757,7 +774,7 @@ public class TemplateState implements Disposable {
   }
 
   public void gotoEnd() {
-    gotoEnd(false);
+    gotoEnd(true);
   }
 
   private void finishTemplateEditing(boolean brokenOff) {
@@ -1047,7 +1064,7 @@ public class TemplateState implements Disposable {
     return myTemplate;
   }
 
-  void reset() {
-    myListeners = new ArrayList<TemplateEditingListener>();
+  public Editor getEditor() {
+    return myEditor;
   }
 }

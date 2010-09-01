@@ -30,6 +30,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class EndHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
@@ -67,12 +69,18 @@ public class EndHandler extends EditorActionHandler {
     final int caretOffset = caretModel.getOffset();
     CharSequence chars = editor.getDocument().getCharsSequence();
     int length = editor.getDocument().getTextLength();
+
     if (caretOffset < length){
       final int offset1 = CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t");
       if (offset1 < 0 || chars.charAt(offset1) == '\n' || chars.charAt(offset1) == '\r'){
         int offset2 = CharArrayUtil.shiftForward(chars, offset1 + 1, " \t");
         boolean isEmptyLine = offset2 >= length || chars.charAt(offset2) == '\n' || chars.charAt(offset2) == '\r';
-        if (isEmptyLine){
+        if (isEmptyLine) {
+
+          // There is a possible case that indent string is not calculated for particular document (that is true at least for plain text
+          // documents). Hence, we check that and don't finish processing in case we have such a situation. AtomicBoolean is used
+          // here just as a boolean value holder due to requirement to declare variable used from inner class as final.
+          final AtomicBoolean stopProcessing = new AtomicBoolean(true);
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
@@ -91,6 +99,9 @@ public class EndHandler extends EditorActionHandler {
                   EditorModificationUtil.insertStringAtCaret(editor, lineIndent);
                 }
               }
+              else {
+                stopProcessing.set(false);
+              }
 
               editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
               editor.getSelectionModel().removeSelection();
@@ -105,7 +116,9 @@ public class EndHandler extends EditorActionHandler {
               return result;
             }
           });
-          return;
+          if (stopProcessing.get()) {
+            return;
+          }
         }
       }
     }

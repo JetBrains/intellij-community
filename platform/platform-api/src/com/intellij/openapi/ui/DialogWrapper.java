@@ -28,7 +28,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -143,7 +143,6 @@ public abstract class DialogWrapper {
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   protected DialogWrapper(Project project, boolean canBeParent) {
-    ensureEventDispatchThread();
     myPeer = createPeer(project, canBeParent);
     createDefaultActions();
   }
@@ -522,9 +521,22 @@ public abstract class DialogWrapper {
         public boolean visit(final Component component) {
           if (component instanceof JComponent) {
             final JComponent eachComp = (JComponent)component;
+            final ActionMap actionMap = eachComp.getActionMap();
             final KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
             for (KeyStroke eachStroke : strokes) {
-              eachComp.unregisterKeyboardAction(eachStroke);
+              boolean remove = true;
+              if (actionMap != null) {
+                for (int i = 0; i < 3; i++) {
+                  final InputMap inputMap = eachComp.getInputMap(i);
+                  final Object key = inputMap.get(eachStroke);
+                  if (key != null) {
+                    final Action action = actionMap.get(key);
+                    if (action instanceof UIResource) remove = false;
+                  }
+                }
+              }
+
+              if (remove) eachComp.unregisterKeyboardAction(eachStroke);
             }
           }
           return false;

@@ -32,8 +32,6 @@ public class IdentifierSplitter extends BaseSplitter {
   @NonNls
   private static final Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
 
-  @NonNls
-  private static final Pattern WORD_EXT = Pattern.compile("(\\p{L}*?)[-_$\\[\\]0-9]");
 
   @NonNls
   private static final Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
@@ -96,22 +94,57 @@ public class IdentifierSplitter extends BaseSplitter {
   }
 
   public static List<TextRange> splitByCase(@NotNull String text, @NotNull TextRange range) {
+    //System.out.println("text = " + text + " range = " + range);
     List<TextRange> result = new ArrayList<TextRange>();
-    Matcher matcher = WORD_EXT.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
-    int from = range.getStartOffset();
-    while (matcher.find()) {
-      TextRange found = matcherRange(range, matcher);
-      TextRange foundWord = matcherRange(range, matcher, 1);
-
-      if (!tooSmall(from, foundWord.getEndOffset())) {
-        Strings.addAll(text, foundWord, result);
+    int i = range.getStartOffset();
+    int s = -1;
+    int prevType = Character.MATH_SYMBOL;
+    while (i < range.getEndOffset()) {
+      final char ch = text.charAt(i);
+      final int type = Character.getType(ch);
+      if (type == Character.LOWERCASE_LETTER ||
+          type == Character.UPPERCASE_LETTER ||
+          type == Character.TITLECASE_LETTER ||
+          type == Character.OTHER_LETTER ||
+          type == Character.MODIFIER_LETTER ||
+          type == Character.OTHER_PUNCTUATION
+        ) {
+        //letter
+        if (s < 0) {
+          //start
+          s = i;
+        }
+        else if (s >= 0 && type == Character.UPPERCASE_LETTER && prevType == Character.LOWERCASE_LETTER) {
+          //a|Camel
+          add(text, result, i, s);
+          s = i;
+        }
+        else if (i - s >= 1 && type == Character.LOWERCASE_LETTER && prevType == Character.UPPERCASE_LETTER) {
+          //CAPITALN|ext
+          add(text, result, i - 1, s);
+          s = i - 1;
+        }
       }
-      from = found.getEndOffset();
+      else if (s >= 0) {
+        //non-letter
+        add(text, result, i, s);
+        s = -1;
+      }
+      prevType = type;
+      i++;
     }
-    if (!tooSmall(from, range.getEndOffset())) {
-      Strings.addAll(text, new TextRange(from, range.getEndOffset()), result);
+    //remainder
+    if (s >= 0) {
+      add(text, result, i, s);
     }
     return result;
   }
 
+  private static void add(String text, List<TextRange> result, int i, int s) {
+    if (i - s > 3) {
+      final TextRange textRange = new TextRange(s, i);
+      //System.out.println("textRange = " + textRange + " = "+ textRange.substring(text));
+      result.add(textRange);
+    }
+  }
 }

@@ -24,8 +24,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
@@ -177,15 +175,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
-    LOG.assertTrue(getTreeParent() != null);
-    CheckUtil.checkWritable(this);
-    TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
-    getTreeParent().replaceChildInternal(this, elementCopy);
-    elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    final PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
-
-    invalidate();
-    return result;
+    return SharedImplUtil.doReplace(this, this, newElement);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) { //TODO: remove this method!!
@@ -252,11 +242,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public FileStatus getFileStatus() {
-    if (!isPhysical()) return FileStatus.NOT_CHANGED;
-    PsiFile contFile = getContainingFile();
-    if (contFile == null) return FileStatus.NOT_CHANGED;
-    VirtualFile vFile = contFile.getVirtualFile();
-    return vFile != null ? FileStatusManager.getInstance(getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
+    return SharedImplUtil.getFileStatus(this);
   }
 
   @NotNull

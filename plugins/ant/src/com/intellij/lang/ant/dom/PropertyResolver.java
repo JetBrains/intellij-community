@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
@@ -36,18 +36,26 @@ public class PropertyResolver extends PropertyProviderFinder {
     myPropertyName = propertyName;
   }
 
+  public void visitAntDomAntCallParam(AntDomAntCallParam antCallParam) {
+    // deliberately skip ancall params, they will be processed as a special case
+  }
+
   @NotNull
-  public static Pair<PsiElement, Collection<String>> resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
+  public static Trinity<PsiElement, Collection<String>, PropertiesProvider> resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
     final PropertyResolver resolver = new PropertyResolver(propertyName, contextElement);
     resolver.execute(project, project.getDefaultTarget().getRawText());
+    if (resolver.getContextElement() instanceof PropertiesProvider) {
+      // special case - when context element is a property provider itself
+      resolver.propertyProviderFound((PropertiesProvider)resolver.getContextElement());
+    }
     return resolver.getResult();
 
   }
 
   @NotNull
-  public Pair<PsiElement, Collection<String>> getResult() {
+  public Trinity<PsiElement, Collection<String>, PropertiesProvider> getResult() {
     final PsiElement element = myResult != null ? myResult.getNavigationElement(myPropertyName) : null;
-    return new Pair<PsiElement, Collection<String>>(element, Collections.unmodifiableSet(myVariants));
+    return new Trinity<PsiElement, Collection<String>, PropertiesProvider>(element, Collections.unmodifiableSet(myVariants), myResult);
   }
 
   @Override

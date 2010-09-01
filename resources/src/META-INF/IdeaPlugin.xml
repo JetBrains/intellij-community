@@ -223,13 +223,16 @@
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.DefaultFileTypeFactory"/>
 
-    <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"/>
+    <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
+    <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"
+                           id="excludeFromCompletion" order="last"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.BasicToClassNameDelegator" id="basic2ClassName"
-                            order="first, before javaMemberName"/>
+                            order="first, before javaMemberName, after xml"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor" id="javaLegacy"
-                            order="last, before legacy, before default"/>
-    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor" id="javaClassReference"/>
+                            order="last, before legacy, before default, before javaClassName"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor"
+                            id="javaClassReference"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaMethodMergingContributor" id="methodMerger"
                             order="before javaLegacy, before default"/>
@@ -237,6 +240,8 @@
                             order="before javaLegacy"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor" id="javaClassName"
                             order="last, before default"/>
+    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaGlobalMemberNameCompletionContributor"
+                            id="javaGlobalMemberName" order="last, after javaClassName"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor" id="javadoc"
                             order="last, before javaLegacy"/>
@@ -399,14 +404,10 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
                     serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.changes.patch.PatchBaseDirectoryDetector"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.patch.PsiPatchBaseDirectoryDetector"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesModuleGroupingPolicyFactory"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.ExcludedFileIndex"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectExcludedFileIndex"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"/>
 
@@ -449,6 +450,9 @@
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.IdeaFrameTitleBuilder"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"
+                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 
@@ -613,20 +617,18 @@
 
 
     <!-- Project Configurables -->
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable" id="project"
-                         order="first"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
 
     <!-- Errors -->
     <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
     <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable"/>
 
-    <!--<projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>-->
     <!-- Project Structure -->
     <projectConfigurable implementation="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>
     <!-- Compiler -->
@@ -643,6 +645,8 @@
     <!-- the implementation of this configurable is in platform-impl but it's not registered in platform because
          it's only required in full IDEA -->
     <applicationConfigurable implementation="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
+
+    <applicationConfigurable implementation="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
 
     <!-- Resources -->
 
@@ -726,8 +730,7 @@
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.IndentAndBracesSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.WrappingSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.WrappingAndBracesSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.BlankLinesSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.SpacesSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.ImportsSettingsProvider"/>

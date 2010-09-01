@@ -155,7 +155,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   @Nullable
   protected DefaultListCellRenderer getRightCellRenderer() {
     if (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION) {
-      return ModuleRendererFactory.getInstance().getModuleRenderer();
+      final DefaultListCellRenderer renderer = ModuleRendererFactory.getInstance().getModuleRenderer();
+      if (renderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
+        // it won't display any new information
+        return null;
+      }
+      return renderer;
     }
     return null;
   }
@@ -187,10 +192,18 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public void installSpeedSearch(PopupChooserBuilder builder) {
+    installSpeedSearch(builder, false);
+  }
+
+  public void installSpeedSearch(PopupChooserBuilder builder, final boolean includeContainerText) {
     builder.setFilteringEnabled(new Function<Object, String>() {
       public String fun(Object o) {
         if (o instanceof PsiElement) {
-          return PsiElementListCellRenderer.this.getElementText((T)o);
+          final String elementText = PsiElementListCellRenderer.this.getElementText((T)o);
+          if (includeContainerText) {
+            return elementText + " " + getContainerText((T) o, elementText);
+          }
+          return elementText;
         }
         else {
           return o.toString();
@@ -207,7 +220,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     new ListSpeedSearch(list) {
       protected String getElementText(Object o) {
         if (o instanceof PsiElement) {
-          return PsiElementListCellRenderer.this.getElementText((T)o);
+          final String elementText = PsiElementListCellRenderer.this.getElementText((T)o);
+          return elementText + " " + getContainerText((T) o, elementText);
         }
         else {
           return o.toString();

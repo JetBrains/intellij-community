@@ -320,13 +320,14 @@ public class BraceMatchingUtil {
 
   @NotNull
   public static BraceMatcher getBraceMatcher(FileType fileType, Language lang) {
-    final BraceMatcher byFileType = getBraceMatcherByFileType(fileType);
-    if (byFileType != null) return byFileType;
-
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(lang);
     if (matcher != null) {
       return new PairedBraceMatcherAdapter(matcher,  lang);
     }
+
+    final BraceMatcher byFileType = getBraceMatcherByFileType(fileType);
+    if (byFileType != null) return byFileType;
+
     if (fileType instanceof LanguageFileType) {
       final Language language = ((LanguageFileType)fileType).getLanguage();
       if (lang != language) {

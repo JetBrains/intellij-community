@@ -15,16 +15,18 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.TestLookupManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.StaticallyImportable
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.TestLookupManager
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Maxim.Medvedev
@@ -98,6 +100,64 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     myFixture.completeBasic()
     myFixture.type '.'.charAt(0)
     myFixture.checkResult "a.FooBarGooDoo.<caret>a"
+  }
+
+  public void testDelegateBasicToClassNameAutoinsert() throws Exception{
+    addClassToProject("a", "FooBarGooDoo");
+    myFixture.configureByText("a.groovy", "FBGD<caret>")
+    myFixture.completeBasic()
+    myFixture.checkResult "a.FooBarGooDoo<caret>"
+  }
+
+  public void testImportedStaticMethod() throws Exception {
+    myFixture.addFileToProject("b.groovy", """
+class Foo {
+  static def abcmethod1(int a) {}
+  static def abcmethod2(int a) {}
+}""")
+    myFixture.configureByText("a.groovy", "abcme<caret>")
+    def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    ((StaticallyImportable) item).shouldBeImported = true
+    myFixture.type('\n')
+    myFixture.checkResult """import static Foo.abcmethod1
+
+abcmethod1(<caret>)"""
+
+  }
+
+  public void testQualifiedStaticMethod() throws Exception {
+    myFixture.addFileToProject("foo/b.groovy", """package foo
+class Foo {
+  static def abcmethod(int a) {}
+}""")
+    myFixture.configureByText("a.groovy", "abcme<caret>")
+    myFixture.complete(CompletionType.CLASS_NAME)
+    myFixture.checkResult """import foo.Foo
+
+Foo.abcmethod(<caret>)"""
+
+  }
+
+  public void testQualifiedStaticMethodIfThereAreAlreadyStaticImportsFromThatClass() throws Exception {
+    myFixture.addFileToProject("foo/b.groovy", """package foo
+class Foo {
+  static def abcMethod() {}
+  static def anotherMethod() {}
+}""")
+    myFixture.configureByText("a.groovy", """
+import static foo.Foo.anotherMethod
+
+anotherMethod()
+abcme<caret>x""")
+    assertOneElement myFixture.complete(CompletionType.CLASS_NAME)[0]
+    myFixture.type('\t')
+    myFixture.checkResult """
+import static foo.Foo.anotherMethod
+import static foo.Foo.abcMethod
+
+anotherMethod()
+abcMethod()<caret>"""
+
   }
 
 }

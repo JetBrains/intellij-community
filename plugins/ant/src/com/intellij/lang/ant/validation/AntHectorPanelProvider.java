@@ -15,11 +15,11 @@
  */
 package com.intellij.lang.ant.validation;
 
-import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,10 +28,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AntHectorPanelProvider implements HectorComponentPanelsProvider{
   public HectorComponentPanel createConfigurable(@NotNull final PsiFile file) {
-    final AntFile antFile = AntSupport.getAntFile(file);
-    if (antFile == null) {
-      return null;
+    if (file instanceof XmlFile && AntDomFileDescription.isAntFile(((XmlFile)file))) {
+      return new AntHectorConfigurable(((XmlFile)file));
     }
-    return new AntHectorConfigurable(antFile);
+    return null;
   }
 }

@@ -71,7 +71,11 @@ public class FormatterUtil {
   }
 
   private static boolean isWhiteSpaceElement(ASTNode treePrev) {
-    return treePrev.getElementType() == TokenType.WHITE_SPACE;
+    return isWhiteSpaceElement(treePrev, TokenType.WHITE_SPACE);
+  }
+
+  private static boolean isWhiteSpaceElement(ASTNode treePrev, IElementType whiteSpaceTokenType) {
+    return treePrev.getElementType() == whiteSpaceTokenType;
   }
 
   private static boolean isSpaceTextElement(ASTNode treePrev) {
@@ -93,7 +97,7 @@ public class FormatterUtil {
       return;
     }
 
-    ASTNode treePrev = findPreviousWhiteSpace(leafElement);
+    ASTNode treePrev = findPreviousWhiteSpace(leafElement, whiteSpaceToken);
     if (treePrev == null) {
       treePrev = getWsCandidate(leafElement);
     }
@@ -117,12 +121,12 @@ public class FormatterUtil {
           addWhiteSpace(leafElement, whiteSpaceElement);
         }
       }
-      else if (!isSpaceTextElement(treePrev)) {
+      else if (!isWhiteSpaceElement(treePrev, whiteSpaceToken)) {
         if (whiteSpace.length() > 0) {
           addWhiteSpace(treePrev, whiteSpaceElement);
         }
       }
-      else if (isWhiteSpaceElement(treePrev)) {
+      else if (isWhiteSpaceElement(treePrev, whiteSpaceToken)) {
         final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
         if (whiteSpace.length() > 0) {
 //          LOG.assertTrue(textRange == null || treeParent.getTextRange().equals(textRange));
@@ -165,13 +169,13 @@ public class FormatterUtil {
   }
 
   @Nullable
-  private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement) {
+  private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement, final IElementType whiteSpaceTokenType) {
     final int offset = leafElement.getTextRange().getStartOffset() - 1;
     if (offset < 0) return null;
     final PsiElement found = SourceTreeToPsiMap.treeElementToPsi(leafElement).getContainingFile().findElementAt(offset);
     if (found == null) return null;
     final ASTNode treeElement = found.getNode();
-    if (treeElement.getElementType() == TokenType.WHITE_SPACE) return treeElement;
+    if (treeElement != null && treeElement.getElementType() == whiteSpaceTokenType) return treeElement;
     return null;
   }
 
@@ -198,6 +202,15 @@ public class FormatterUtil {
     }
 
   }
+
+  public static ASTNode getPreviousNonSpaceSibling(ASTNode node) {
+    ASTNode prevNode = node.getTreePrev();
+    while (prevNode != null && prevNode.getPsi() instanceof PsiWhiteSpace) {
+      prevNode = prevNode.getTreePrev();
+    }
+    return prevNode;
+  }
+
 
   public static boolean isIncompleted(final ASTNode treeNode) {
     ASTNode lastChild = treeNode.getLastChildNode();

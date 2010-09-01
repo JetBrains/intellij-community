@@ -56,8 +56,8 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   private JTextField mySourceClassField;
   private JLabel myClassNameLabel;
   private JTextField myExtractedSuperNameField;
-  private JLabel myPackageNameLabel;
-  private ComponentWithBrowseButton<EditorComboBox> myPackageNameField;
+  protected JLabel myPackageNameLabel;
+  protected ComponentWithBrowseButton<EditorComboBox> myPackageNameField;
   protected DocCommentPanel myDocCommentPanel;
 
   protected abstract ComponentWithBrowseButton<EditorComboBox> createPackageNameField();

@@ -28,6 +28,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.concurrency.Job;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -179,7 +180,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   void repaintErrorStripeRenderer(Editor editor) {
-    if (myProject.isDisposed()) return;
+    if (!myProject.isInitialized()) return;
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     final EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
@@ -222,7 +223,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void updateVisibleHighlighters(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myUpdateByTimerEnabled) return;
-    //if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
 
     final TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     BackgroundEditorHighlighter highlighter = textEditor.getBackgroundHighlighter();
@@ -588,7 +589,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       public void run() {
         if (!myUpdateByTimerEnabled) return;
         if (PowerSaveMode.isEnabled()) return;
-        if (myDisposed || myProject.isDisposed()) return;
+        if (myDisposed || !myProject.isInitialized()) return;
         final Collection<FileEditor> activeEditors = myDaemonListeners.getSelectedEditors();
         if (activeEditors.isEmpty()) return;
         Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());

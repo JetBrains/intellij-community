@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.IdeView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -39,6 +40,7 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
   public static final DataKey<PsiFile> PSI_FILE = DataKey.create("psi.File");
   public static final DataKey<Language> LANGUAGE = DataKey.create("Language");
+  public static final DataKey<Language[]> CONTEXT_LANGUAGES = DataKey.create("context.Languages");
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
 
   /**
@@ -49,4 +51,6 @@ public class LangDataKeys extends PlatformDataKeys {
 
   public static final DataKey<PsiElement> TARGET_PSI_ELEMENT = DataKey.create("psi.TargetElement");
   public static final DataKey<PsiElement> PASTE_TARGET_PSI_ELEMENT = DataKey.create("psi.pasteTargetElement");
+
+  public static final DataKey<ConsoleView> CONSOLE_VIEW = DataKey.create("consoleView");
 }

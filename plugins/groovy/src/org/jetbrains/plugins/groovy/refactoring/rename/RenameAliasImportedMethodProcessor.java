@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.Collection;
 
@@ -26,6 +27,11 @@ import java.util.Collection;
  * @author Maxim.Medvedev
  */
 public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcessor {
+  @Override
+  public boolean canProcessElement(PsiElement element) {
+    return super.canProcessElement(element) && element instanceof GroovyPsiElement;
+  }
+
   @NotNull
   @Override
   public Collection<PsiReference> findReferences(PsiElement element) {

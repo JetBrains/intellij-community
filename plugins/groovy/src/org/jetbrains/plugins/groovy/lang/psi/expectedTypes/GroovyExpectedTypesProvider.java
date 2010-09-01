@@ -98,7 +98,7 @@ public class GroovyExpectedTypesProvider {
 
     public MyCalculator(GrExpression expression) {
       myExpression = (GrExpression)PsiUtil.skipParentheses(expression, true);
-      myResult = new TypeConstraint[]{SubtypeConstraint.create("java.lang.Object", myExpression)};
+      myResult = new TypeConstraint[0];
     }
 
     public void visitReturnStatement(GrReturnStatement returnStatement) {

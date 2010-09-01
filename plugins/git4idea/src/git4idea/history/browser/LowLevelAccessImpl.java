@@ -26,6 +26,7 @@ import git4idea.GitBranch;
 import git4idea.GitTag;
 import git4idea.commands.GitFileUtils;
 import git4idea.history.GitHistoryUtils;
+import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -87,6 +88,25 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     loadCommits(startingPoints, Collections.<String>emptyList(), filters, consumer, branches, maxCnt);
   }
 
+  // todo starting points can be branches, any referencies
+  public List<CommitHashPlusParents> loadSkeleton(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters)
+    throws VcsException {
+    final List<String> parameters = new LinkedList<String>();
+    for (ChangesFilter.Filter filter : filters) {
+      filter.getCommandParametersFilter().applyToCommandLine(parameters);
+    }
+
+    if (! startingPoints.isEmpty()) {
+      for (String startingPoint : startingPoints) {
+        parameters.add(startingPoint);
+      }
+    } else {
+      parameters.add("--all");
+    }
+
+    return GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), parameters.toArray(new String[parameters.size()]));
+  }
+
   public void loadCommits(final @NotNull Collection<String> startingPoints, @NotNull final Collection<String> endPoints,
                           @NotNull final Collection<ChangesFilter.Filter> filters,
                           @NotNull final Consumer<GitCommit> consumer, final Collection<String> branches, int useMaxCnt)
@@ -94,7 +114,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
     final List<String> parameters = new LinkedList<String>();
     if (useMaxCnt > 0) {
-      parameters.add("--max-count=" + useMaxCnt);
+      parameters.add("--max-count=" + (useMaxCnt + 1));
     }
 
     for (ChangesFilter.Filter filter : filters) {

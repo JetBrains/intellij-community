@@ -17,6 +17,7 @@ package com.intellij.usageView;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface UsageViewDescriptor {
   /**
@@ -29,5 +30,6 @@ public interface UsageViewDescriptor {
 
   String getCodeReferencesText(int usagesCount, int filesCount);
 
+  @Nullable
   String getCommentReferencesText(int usagesCount, int filesCount);
 }

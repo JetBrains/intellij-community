@@ -199,4 +199,8 @@ public class EclipseClasspathTest extends IdeaTestCase {
   public void testLinkedSrc() throws Exception {
     doTest();
   }
+
+  public void testSrcRootsOrder() throws Exception {
+    doTest();
+  }
 }

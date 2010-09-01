@@ -115,6 +115,17 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     if (fileBgColor != null) {
       attributes = attributes.derive(-1,null, fileBgColor,null);
     }
+    // Fix problems with black background or white text as foreground
+    // See UsageViewTreeCellRenderer#patchAttrs for more details
+    Color fgColor = attributes.getFgColor();
+    if (fgColor != null){
+      final float hsb[] = new float[3];
+      Color.RGBtoHSB(fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue(), hsb);
+      if (hsb[2] > 0.7f){
+        fgColor = null;
+      }
+      return new SimpleTextAttributes(attributes.getStyle(), fgColor, attributes.getWaveColor());
+    }
     return attributes;
   }
 

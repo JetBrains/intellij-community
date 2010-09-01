@@ -21,8 +21,12 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.ui.wizard.WizardModel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -33,7 +37,11 @@ import java.util.*;
 public class StartupWizardModel extends WizardModel {
   private final Set<String> myDisabledPluginIds = new HashSet<String>();
   private final Map<String, SelectPluginsStep> myStepMap = new HashMap<String, SelectPluginsStep>();
+  private Map<PluginId, SelectPluginsStep> myPluginToStepMap = new HashMap<PluginId, SelectPluginsStep>();
+  private MultiMap<IdeaPluginDescriptor, IdeaPluginDescriptor> myBackwardDependencies =
+    new MultiMap<IdeaPluginDescriptor, IdeaPluginDescriptor>();
   private SelectPluginsStep myOtherStep;
+  private IdeaPluginDescriptor[] myAllPlugins;
 
   public StartupWizardModel(final List<ApplicationInfoEx.PluginChooserPage> pluginChooserPages) {
     super(ApplicationNamesInfo.getInstance().getFullProductName() + " Initial Configuration Wizard");
@@ -41,7 +49,7 @@ public class StartupWizardModel extends WizardModel {
 
     for (ApplicationInfoEx.PluginChooserPage page : pluginChooserPages) {
       if (page.getCategory() == null) {
-        myOtherStep = new SelectPluginsStep(page.getTitle(), myDisabledPluginIds, null);
+        myOtherStep = new SelectPluginsStep(page.getTitle(), this, null);
       }
       else {
         addSelectPluginsStep(page.getCategory(), page.getTitle(), page.getDependentPlugin());
@@ -51,19 +59,28 @@ public class StartupWizardModel extends WizardModel {
       add(myOtherStep);
     }
 
-    final IdeaPluginDescriptor[] pluginDescriptors = PluginManager.loadDescriptors();
-    for (IdeaPluginDescriptor pluginDescriptor : pluginDescriptors) {
+    myAllPlugins = PluginManager.loadDescriptors();
+    for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
       if (pluginDescriptor.getPluginId().getIdString().equals("com.intellij")) {
         // skip 'IDEA CORE' plugin
         continue;
       }
       PluginManager.initClassLoader(getClass().getClassLoader(), (IdeaPluginDescriptorImpl) pluginDescriptor);
       SelectPluginsStep step = myStepMap.get(pluginDescriptor.getCategory());
+      if (step == null) {
+        step = myOtherStep;
+      }
       if (step != null) {
         step.addPlugin(pluginDescriptor);
-      }
-      else if (myOtherStep != null) {
-        myOtherStep.addPlugin(pluginDescriptor);
+        myPluginToStepMap.put(pluginDescriptor.getPluginId(), step);
+        for (PluginId pluginId : pluginDescriptor.getDependentPluginIds()) {
+          if (!ArrayUtil.contains(pluginId, pluginDescriptor.getOptionalDependentPluginIds())) {
+            IdeaPluginDescriptor dependee = findPlugin(pluginId);
+            if (dependee != null) {
+              myBackwardDependencies.putValue(dependee, pluginDescriptor);
+            }
+          }
+        }
       }
     }
     for (SelectPluginsStep step : myStepMap.values()) {
@@ -72,8 +89,29 @@ public class StartupWizardModel extends WizardModel {
     myOtherStep.fillPlugins();
   }
 
+  @Nullable
+  private IdeaPluginDescriptor findPlugin(PluginId pluginId) {
+    for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
+      if (pluginDescriptor.getPluginId().equals(pluginId)) {
+        return pluginDescriptor;
+      }
+    }
+    return null;
+  }
+
+  static List<PluginId> getNonOptionalDependencies(final IdeaPluginDescriptor descriptor) {
+    List<PluginId> result = new ArrayList<PluginId>();
+    for (PluginId pluginId : descriptor.getDependentPluginIds()) {
+      if (pluginId.getIdString().equals("com.intellij")) continue;
+      if (!ArrayUtil.contains(pluginId, descriptor.getOptionalDependentPluginIds())) {
+        result.add(pluginId);
+      }
+    }
+    return result;
+  }
+
   private SelectPluginsStep addSelectPluginsStep(final String category, final String title, final String requirePlugin) {
-    final SelectPluginsStep step = new SelectPluginsStep(title, myDisabledPluginIds, requirePlugin);
+    final SelectPluginsStep step = new SelectPluginsStep(title, this, requirePlugin);
     add(step);
     myStepMap.put(category, step);
     return step;
@@ -85,5 +123,60 @@ public class StartupWizardModel extends WizardModel {
 
   public Collection<String> getDisabledPluginIds() {
     return myDisabledPluginIds;
+  }
+
+  public boolean isDisabledPlugin(IdeaPluginDescriptor descriptor) {
+    return myDisabledPluginIds.contains(descriptor.getPluginId().toString());
+  }
+
+  public void setPluginEnabled(final IdeaPluginDescriptor desc, boolean value) {
+    if (value) {
+      myDisabledPluginIds.remove(desc.getPluginId().toString());
+    }
+    else {
+      myDisabledPluginIds.add(desc.getPluginId().toString());
+    }
+  }
+
+  public void setPluginEnabledWithDependencies(final IdeaPluginDescriptor desc) {
+    setPluginEnabled(desc, true);
+    for(PluginId id: getNonOptionalDependencies(desc)) {
+      final IdeaPluginDescriptor dependent = findPlugin(id);
+      if (dependent != null) {
+        setPluginEnabledWithDependencies(dependent);
+      }
+    }
+  }
+
+  public void setPluginDisabledWithDependents(final IdeaPluginDescriptor desc) {
+    setPluginEnabled(desc, false);
+    for (IdeaPluginDescriptor plugin : myAllPlugins) {
+      if (ArrayUtil.contains(desc.getPluginId(), plugin.getDependentPluginIds()) &&
+          !ArrayUtil.contains(desc.getPluginId(), plugin.getOptionalDependentPluginIds())) {
+        setPluginDisabledWithDependents(plugin);
+      }
+    }
+  }
+
+  public boolean isForceEnable(IdeaPluginDescriptor descriptor) {
+    return getDependentsOnEarlierPages(descriptor, true).size() > 0;
+  }
+
+  public List<IdeaPluginDescriptor> getDependentsOnEarlierPages(IdeaPluginDescriptor descriptor, boolean includeSamePage) {
+    List<IdeaPluginDescriptor> dependents = new ArrayList<IdeaPluginDescriptor>();
+    int thisStep = getPluginStepIndex(descriptor);
+    for (IdeaPluginDescriptor dependent : myBackwardDependencies.get(descriptor)) {
+      if (!myDisabledPluginIds.contains(dependent.getPluginId().toString())) {
+        int index = getPluginStepIndex(dependent);
+        if (index < thisStep || (includeSamePage && index == thisStep && getDependentsOnEarlierPages(dependent, true).size() > 0)) {
+          dependents.add(dependent);
+        }
+      }
+    }
+    return dependents;
+  }
+
+  private int getPluginStepIndex(IdeaPluginDescriptor descriptor) {
+    return getStepIndex(myPluginToStepMap.get(descriptor.getPluginId()));
   }
 }

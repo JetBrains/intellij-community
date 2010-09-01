@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
+  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.LeafElement");
+
   private static final int TEXT_MATCHES_THRESHOLD = 5;
 
   private final CharSequence myText;
@@ -214,6 +217,19 @@ public abstract class LeafElement extends TreeElement {
 
   public PsiElement getPsi() {
     return null;
+  }
+
+  @Override
+  @Nullable
+  public <T extends PsiElement> T getPsi(Class<T> clazz) {
+    return getPsi(clazz, getPsi(), LOG);
+  }
+
+  @Nullable
+  static <T extends PsiElement> T getPsi(Class<T> clazz, PsiElement element, Logger log) {
+    log.assertTrue(clazz.isInstance(element), "unexpected psi class. expected: " + clazz
+                                             + " got: " + (element == null ? null : element.getClass()));
+    return (T)element;
   }
 
 }

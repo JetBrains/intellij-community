@@ -501,10 +501,12 @@ class RunConfigurable extends BaseConfigurable {
     return null;
   }
 
-  private void applyConfiguration(DefaultMutableTreeNode typeNode, SingleConfigurationConfigurable configurable)
-      throws ConfigurationException {
+  private void applyConfiguration(DefaultMutableTreeNode typeNode, SingleConfigurationConfigurable<?> configurable) throws ConfigurationException {
     try {
-      if (configurable != null) configurable.apply();
+      if (configurable != null) {
+        configurable.apply();
+        RunManagerImpl.getInstanceImpl(myProject).fireRunConfigurationChanged(configurable.getSettings());
+      }
     }
     catch (ConfigurationException e) {
       for (int i = 0; i < typeNode.getChildCount(); i++) {

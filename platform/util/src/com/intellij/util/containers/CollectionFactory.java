@@ -15,6 +15,9 @@
  */
 package com.intellij.util.containers;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +53,7 @@ public class CollectionFactory {
   }
 
   public static <T> ArrayList<T> arrayList() {
-    return new ArrayList<T>();
+    return Lists.newArrayList();
   }
 
   public static <T> ArrayList<T> arrayList(T... elements) {
@@ -80,19 +83,19 @@ public class CollectionFactory {
     return new Stack<T>();
   }
 
-  public static <T> HashSet<T> hashSet() {
-    return new HashSet<T>();
+  public static <T> Set<T> hashSet() {
+    return Sets.newHashSet();
   }
 
-  public static <T, V> HashMap<T, V> hashMap() {
-    return new HashMap<T,V>();
+  public static <T, V> Map<T, V> hashMap() {
+    return Maps.newHashMap();
   }
 
   public static <T, V> LinkedHashMap<T, V> linkedMap() {
-    return new LinkedHashMap<T,V>();
+    return Maps.newLinkedHashMap();
   }
 
   public static <T> LinkedHashSet<T> linkedHashSet() {
-    return new LinkedHashSet<T>();
+    return Sets.newLinkedHashSet();
   }
 }

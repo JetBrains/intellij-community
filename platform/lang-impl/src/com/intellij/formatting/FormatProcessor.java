@@ -36,12 +36,12 @@ class FormatProcessor {
 
   private LeafBlockWrapper myCurrentBlock;
 
-  private Map<AbstractBlockWrapper, Block> myInfos;
-  private CompositeBlockWrapper myRootBlockWrapper;
+  private Map<AbstractBlockWrapper, Block>    myInfos;
+  private CompositeBlockWrapper               myRootBlockWrapper;
   private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
   private final CodeStyleSettings.IndentOptions myIndentOption;
-  private final CodeStyleSettings mySettings;
+  private final CodeStyleSettings               mySettings;
 
   /**
    * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detect
@@ -62,13 +62,13 @@ class FormatProcessor {
   private final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> myBackwardShiftedAlignedBlocks
     = new HashMap<LeafBlockWrapper, Set<LeafBlockWrapper>>();
 
-  private LeafBlockWrapper myWrapCandidate = null;
+  private LeafBlockWrapper myWrapCandidate           = null;
   private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
 
   private LeafBlockWrapper myFirstTokenBlock;
   private LeafBlockWrapper myLastTokenBlock;
 
-  private SortedMap<TextRange,Pair<AbstractBlockWrapper, Boolean>> myPreviousDependencies =
+  private SortedMap<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependencies =
     new TreeMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>(new Comparator<TextRange>() {
       public int compare(final TextRange o1, final TextRange o2) {
         int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
@@ -81,8 +81,8 @@ class FormatProcessor {
     });
 
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
-  private WhiteSpace myLastWhiteSpace;
-  private boolean myDisposed;
+  private WhiteSpace                      myLastWhiteSpace;
+  private boolean                         myDisposed;
   private CodeStyleSettings.IndentOptions myJavaIndentOptions;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
@@ -183,7 +183,7 @@ class FormatProcessor {
       myJavaIndentOptions = mySettings.getIndentOptions(StdFileTypes.JAVA);
     }
 
-    doModify(blocksToModify, model,myIndentOption, myJavaIndentOptions);
+    doModify(blocksToModify, model, myIndentOption, myJavaIndentOptions);
   }
 
   public void setJavaIndentOptions(final CodeStyleSettings.IndentOptions javaIndentOptions) {
@@ -195,14 +195,14 @@ class FormatProcessor {
     final int blocksToModifyCount = blocksToModify.size();
     final boolean bulkReformat = blocksToModifyCount > 50;
     final DocumentEx updatedDocument = bulkReformat ? getAffectedDocument(model) : null;
-    if(updatedDocument != null) {
+    if (updatedDocument != null) {
       updatedDocument.setInBulkUpdate(true);
     }
     try {
       int shift = 0;
       for (int i = 0; i < blocksToModifyCount; ++i) {
         final LeafBlockWrapper block = blocksToModify.get(i);
-        shift = replaceWhiteSpace(model, block, shift, block.getWhiteSpace().generateWhiteSpace(indentOption),javaOptions);
+        shift = replaceWhiteSpace(model, block, shift, block.getWhiteSpace().generateWhiteSpace(indentOption), javaOptions);
 
         // block could be gc'd
         block.getParent().dispose();
@@ -222,7 +222,7 @@ class FormatProcessor {
   private static DocumentEx getAffectedDocument(final FormattingModel model) {
     if (model instanceof DocumentBasedFormattingModel) {
       final Document document = ((DocumentBasedFormattingModel)model).getDocument();
-      if (document instanceof DocumentEx) return (DocumentEx)document; 
+      if (document instanceof DocumentEx) return (DocumentEx)document;
     }/* else if (false) { // till issue with persistent range markers dropped fixed
       Document document = model.getDocumentModel().getDocument();
       if (document instanceof DocumentEx) return (DocumentEx)document;
@@ -231,11 +231,11 @@ class FormatProcessor {
   }
 
   private static int replaceWhiteSpace(final FormattingModel model,
-                                  @NotNull final LeafBlockWrapper block,
-                                  int shift,
-                                  final CharSequence _newWhiteSpace,
-                                  final CodeStyleSettings.IndentOptions options
-                                  ) {
+                                       @NotNull final LeafBlockWrapper block,
+                                       int shift,
+                                       final CharSequence _newWhiteSpace,
+                                       final CodeStyleSettings.IndentOptions options
+  ) {
     final WhiteSpace whiteSpace = block.getWhiteSpace();
     final TextRange textRange = whiteSpace.getTextRange();
     final TextRange wsRange = shiftRange(textRange, shift);
@@ -298,7 +298,7 @@ class FormatProcessor {
     }
 
     if (!adjustIndent()) {
-       return;
+      return;
     }
 
     defineAlignOffset(myCurrentBlock);
@@ -344,7 +344,7 @@ class FormatProcessor {
     final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
     final TextRange dependency = dependantSpaceProperty.getDependency();
     if (dependantSpaceProperty.wasLFUsed()) {
-      myPreviousDependencies.put(dependency,new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
+      myPreviousDependencies.put(dependency, new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
     }
     else {
       final boolean value = containsLineFeeds(dependency);
@@ -454,9 +454,9 @@ class FormatProcessor {
   /**
    * Allows to answer if wrap of the {@link #myWrapCandidate} object (if any) may be replaced by the given wrap.
    *
-   * @param wrap    wrap candidate to check
-   * @return        <code>true</code> if wrap of the {@link #myWrapCandidate} object (if any) may be replaced by the given wrap;
-   *                <code>false</code> otherwise
+   * @param wrap wrap candidate to check
+   * @return <code>true</code> if wrap of the {@link #myWrapCandidate} object (if any) may be replaced by the given wrap;
+   *         <code>false</code> otherwise
    */
   private boolean canReplaceWrapCandidate(WrapImpl wrap) {
     if (myWrapCandidate == null) return true;
@@ -468,8 +468,8 @@ class FormatProcessor {
 
   private boolean isCandidateToBeWrapped(final WrapImpl wrap) {
     return isSuitableInTheCurrentPosition(wrap) &&
-           (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED || wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED) &&
-           !myCurrentBlock.getWhiteSpace().isReadOnly();
+      (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED || wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED) &&
+      !myCurrentBlock.getWhiteSpace().isReadOnly();
   }
 
   private void onCurrentLineChanged() {
@@ -479,9 +479,9 @@ class FormatProcessor {
   /**
    * Adjusts indent of the current block.
    *
-   * @return    <code>true</code> if current formatting iteration should be continued;
-   *            <code>false</code> otherwise (e.g. if previously processed block is shifted inside this method for example
-   *            because of specified alignment options)
+   * @return <code>true</code> if current formatting iteration should be continued;
+   *         <code>false</code> otherwise (e.g. if previously processed block is shifted inside this method for example
+   *         because of specified alignment options)
    */
   private boolean adjustIndent() {
     IndentData alignOffset = getAlignOffset();
@@ -509,7 +509,12 @@ class FormatProcessor {
     }
 
     if (diff > 0) {
-      whiteSpace.setSpaces(whiteSpace.getSpaces(), whiteSpace.getIndentSpaces() + diff);
+      whiteSpace.setSpaces(whiteSpace.getSpaces() + diff, whiteSpace.getIndentSpaces());
+
+      // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
+      if (!whiteSpace.containsLineFeeds()) {
+        whiteSpace.setForceSkipTabulationsUsage(true);
+      }
       return true;
     }
     AlignmentImpl alignment = myCurrentBlock.getAlignmentAtStartOffset();
@@ -545,8 +550,8 @@ class FormatProcessor {
     Set<LeafBlockWrapper> blocksCausedRealignment = myBackwardShiftedAlignedBlocks.get(offsetResponsibleBlock);
     if (blocksCausedRealignment != null && blocksCausedRealignment.contains(myCurrentBlock)) {
       LOG.error(String.format("Formatting error - code block %s is set to be shifted right because of its alignment with "
-                              + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
-                              + "subsequent block to be shifted right as well - cyclic dependency",
+                                + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
+                                + "subsequent block to be shifted right as well - cyclic dependency",
                               offsetResponsibleBlock.getTextRange(), myCurrentBlock.getTextRange()));
       blocksCausedRealignment.add(myCurrentBlock);
       return true;
@@ -556,7 +561,11 @@ class FormatProcessor {
     blocksCausedRealignment.add(myCurrentBlock);
 
     WhiteSpace previousWhiteSpace = offsetResponsibleBlock.getWhiteSpace();
-    previousWhiteSpace.setSpaces(previousWhiteSpace.getSpaces(), previousWhiteSpace.getIndentOffset() - diff);
+    previousWhiteSpace.setSpaces(previousWhiteSpace.getSpaces() - diff, previousWhiteSpace.getIndentOffset());
+    // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
+    if (!previousWhiteSpace.containsLineFeeds()) {
+      previousWhiteSpace.setForceSkipTabulationsUsage(true);
+    }
 
     myCurrentBlock = offsetResponsibleBlock.getNextBlock();
     onCurrentLineChanged();
@@ -586,7 +595,7 @@ class FormatProcessor {
   /**
    * Tries to find the closest block that starts before the {@link #myCurrentBlock currently processed block} and contains line feeds.
    *
-   * @return    closest block to the currently processed block that contains line feeds if any; <code>null</code> otherwise
+   * @return closest block to the currently processed block that contains line feeds if any; <code>null</code> otherwise
    */
   @Nullable
   private AbstractBlockWrapper getPreviousIndentedBlock() {
@@ -626,7 +635,7 @@ class FormatProcessor {
   /**
    * Ensures that offset of the {@link #myCurrentBlock currently processed block} is not increased if we make a wrap on it.
    *
-   * @return    <code>true</code> if it's ok to wrap at the currently processed block; <code>false</code> otherwise
+   * @return <code>true</code> if it's ok to wrap at the currently processed block; <code>false</code> otherwise
    */
   private boolean positionAfterWrappingIsSuitable() {
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
@@ -671,12 +680,12 @@ class FormatProcessor {
   }
 
   /**
-   * @return    <code>true</code> if {@link #myCurrentBlock currently processed wrapped block} doesn't contain line feeds and
-   *            exceeds right margin; <code>false</code> otherwise
+   * @return <code>true</code> if {@link #myCurrentBlock currently processed wrapped block} doesn't contain line feeds and
+   *         exceeds right margin; <code>false</code> otherwise
    */
   private boolean lineOver() {
     return !myCurrentBlock.containsLineFeeds() &&
-           getOffsetBefore(myCurrentBlock) + myCurrentBlock.getLength() > mySettings.RIGHT_MARGIN;
+      getOffsetBefore(myCurrentBlock) + myCurrentBlock.getLength() > mySettings.RIGHT_MARGIN;
   }
 
   /**
@@ -693,8 +702,8 @@ class FormatProcessor {
    * from <code>'whitespace<sub>21</sub>'</code> after its last line feed symbol plus number of symbols at
    * <code>block<sub>21</sub></code> plus number of symbols at <code>whitespace<sub>22</sub></code>.
    *
-   * @param info    target wrapped block to be used at a boundary during counting non-line feed symbols to the left of it
-   * @return        non-line feed symbols to the left of the given wrapped block
+   * @param info target wrapped block to be used at a boundary during counting non-line feed symbols to the left of it
+   * @return non-line feed symbols to the left of the given wrapped block
    */
   private static int getOffsetBefore(LeafBlockWrapper info) {
     if (info != null) {
@@ -733,7 +742,7 @@ class FormatProcessor {
   /**
    * Tries to get align-implied indent of the current block.
    *
-   * @return    indent of the current block if any; <code>null</code> otherwise
+   * @return indent of the current block if any; <code>null</code> otherwise
    */
   @Nullable
   private IndentData getAlignOffset() {
@@ -829,8 +838,8 @@ class FormatProcessor {
 
   static class ChildAttributesInfo {
     public final AbstractBlockWrapper parent;
-    final ChildAttributes attributes;
-    final int index;
+    final        ChildAttributes      attributes;
+    final        int                  index;
 
     public ChildAttributesInfo(final AbstractBlockWrapper parent, final ChildAttributes attributes, final int index) {
       this.parent = parent;
@@ -845,11 +854,11 @@ class FormatProcessor {
     if (parent == null) {
       final LeafBlockWrapper previousBlock = myCurrentBlock.getPreviousBlock();
       if (previousBlock != null) parent = getParentFor(offset, previousBlock);
-      if (parent == null) return new IndentInfo(0,0,0);
+      if (parent == null) return new IndentInfo(0, 0, 0);
     }
     int index = getNewChildPosition(parent, offset);
     final Block block = myInfos.get(parent);
-    
+
     if (block == null) {
       return new IndentInfo(0, 0, 0);
     }
@@ -970,8 +979,8 @@ class FormatProcessor {
 
     if (current.getEndOffset() <= offset) {
       while (!current.isIncomplete() &&
-             current.getParent() != null && 
-             current.getParent().getEndOffset() <= offset) {
+        current.getParent() != null &&
+        current.getParent().getEndOffset() <= offset) {
         current = current.getParent();
       }
       if (current.isIncomplete()) return current;
@@ -1031,7 +1040,7 @@ class FormatProcessor {
 
   private static int calcShift(final IndentInside lastLineIndent, final IndentInside whiteSpaceIndent,
                                final CodeStyleSettings.IndentOptions options
-                               ) {
+  ) {
     if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
     if (options.USE_TAB_CHARACTER) {
       if (lastLineIndent.whiteSpaces > 0) {

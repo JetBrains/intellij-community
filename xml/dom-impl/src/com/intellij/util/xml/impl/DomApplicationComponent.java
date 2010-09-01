@@ -31,8 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.util.containers.CollectionFactory.arrayList;
 
 /**
  * @author peter
@@ -108,6 +111,15 @@ public class DomApplicationComponent {
     }
 
     myTypeChooserManager.copyFrom(description.getTypeChooserManager());
+  }
+
+  public synchronized List<DomFileDescription> getAllFileDescriptions() {
+    final List<DomFileDescription> result = arrayList();
+    for (Set<DomFileDescription> descriptions : myRootTagName2FileDescription.values()) {
+      result.addAll(descriptions);
+    }
+    result.addAll(myAcceptingOtherRootTagNamesDescriptions);
+    return result;
   }
 
   @Nullable

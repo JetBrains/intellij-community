@@ -143,7 +143,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
-  public boolean filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
+  public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
     final ArrayList<FilePathUnderVcs> filesConverted = filesDirty == null ? null : new ArrayList<FilePathUnderVcs>(filesDirty.size());
     final ArrayList<FilePathUnderVcs> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<FilePathUnderVcs>(dirsRecursivelyDirty.size());
 
@@ -155,9 +155,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     });
     final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty()
                               || dirsConverted != null && ! dirsConverted.isEmpty();
-    if (! haveStuff) return false;
+    if (! haveStuff) return;
 
-    return takeDirt(new Consumer<DirtBuilder>() {
+    takeDirt(new Consumer<DirtBuilder>() {
       public void consume(final DirtBuilder dirt) {
         if (filesConverted != null) {
           for (FilePathUnderVcs root : filesConverted) {
@@ -173,21 +173,24 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     });
   }
 
-  private boolean takeDirt(final Consumer<DirtBuilder> filler) {
-    final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
-    final Runnable runnable = new Runnable() {
+  private void takeDirt(final Consumer<DirtBuilder> filler) {
+    LockFreeRunnable.wrap(new Runnable() {
+      @Override
       public void run() {
-        filler.consume(myDirtBuilder);
-        wasNotEmptyRef.set(!myDirtBuilder.isEmpty());
-      }
-    };
-    final LifeDrop lifeDrop = myLife.doIfAlive(runnable);
+        final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            filler.consume(myDirtBuilder);
+            wasNotEmptyRef.set(!myDirtBuilder.isEmpty());
+          }
+        };
+        final LifeDrop lifeDrop = myLife.doIfAlive(runnable);
 
-    if (lifeDrop.isDone() && !lifeDrop.isSuspened() && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
-      myChangeListManager.scheduleUpdate();
-    }
-    // no sense in checking correct here any more: vcs is searched for asynchronously
-    return !lifeDrop.isDone();
+        if (lifeDrop.isDone() && !lifeDrop.isSuspened() && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
+          myChangeListManager.scheduleUpdate();
+        }
+      }
+    }).run();
   }
 
   private void convert(@Nullable final Collection<VirtualFile> from, final Collection<VcsRoot> to) {
@@ -201,7 +204,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
-  public boolean filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
+  public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
     final ArrayList<VcsRoot> filesConverted = filesDirty == null ? null : new ArrayList<VcsRoot>(filesDirty.size());
     final ArrayList<VcsRoot> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<VcsRoot>(dirsRecursivelyDirty.size());
 
@@ -212,9 +215,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     });
     final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty() || dirsConverted != null && ! dirsConverted.isEmpty();
-    if (! haveStuff) return false;
+    if (! haveStuff) return;
 
-    return takeDirt(new Consumer<DirtBuilder>() {
+    takeDirt(new Consumer<DirtBuilder>() {
       public void consume(final DirtBuilder dirt) {
         if (filesConverted != null) {
           for (VcsRoot root : filesConverted) {

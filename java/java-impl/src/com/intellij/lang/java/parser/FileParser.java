@@ -17,6 +17,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -73,7 +74,7 @@ public class FileParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parsePackageStatement(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parsePackageStatement(final PsiBuilder builder) {
     final PsiBuilder.Marker statement = builder.mark();
 
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
@@ -99,13 +100,19 @@ public class FileParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseImportList(final PsiBuilder builder) {
+  private static Pair<PsiBuilder.Marker, Boolean> parseImportList(final PsiBuilder builder) {
+    return parseImportList(builder, IMPORT_LIST_STOPPER_SET);
+  }
+
+  @NotNull
+  public static Pair<PsiBuilder.Marker, Boolean> parseImportList(final PsiBuilder builder, final TokenSet stoppers) {
     final PsiBuilder.Marker list = builder.mark();
 
-    if (builder.getTokenType() == JavaTokenType.IMPORT_KEYWORD) {
+    final boolean isEmpty = builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD;
+    if (!isEmpty) {
       PsiBuilder.Marker invalidElements = null;
       while (!builder.eof()) {
-        if (IMPORT_LIST_STOPPER_SET.contains(builder.getTokenType())) break;
+        if (stoppers.contains(builder.getTokenType())) break;
 
         final PsiBuilder.Marker statement = parseImportStatement(builder);
         if (statement != null) {
@@ -128,7 +135,7 @@ public class FileParser {
     }
 
     list.done(JavaElementType.IMPORT_LIST);
-    return list;
+    return Pair.create(list, isEmpty);
   }
 
   @Nullable

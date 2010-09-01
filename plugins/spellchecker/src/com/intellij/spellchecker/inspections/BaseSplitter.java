@@ -95,12 +95,12 @@ public abstract class BaseSplitter implements Splitter {
   }
 
   @Nullable
-  protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
+  static protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
     List<TextRange> toCheck = new ArrayList<TextRange>();
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
-    Matcher matcher = toExclude.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
+    Matcher matcher = toExclude.matcher(range.substring(text));
     while (matcher.find()) {
 
       checkCancelled();

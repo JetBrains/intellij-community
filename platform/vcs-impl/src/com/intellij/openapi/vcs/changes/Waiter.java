@@ -37,7 +37,7 @@ public class Waiter extends Task.Modal {
     myState = state;
     myDone = false;
     myStarted = false;
-    setCancelText("Use current data");
+    setCancelText("Skip");
   }
 
   public void run(@NotNull ProgressIndicator indicator) {

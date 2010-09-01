@@ -72,7 +72,6 @@ import java.util.List;
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements GrReferenceExpression {
   public static final Key<Boolean> IS_RESOLVED_TO_GETTER = new Key<Boolean>("Is resolved to getter");
-  private static final IElementType[] REFERENCE_NAME_TYPES = TokenSets.REFERENCE_NAMES.getTypes();
 
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -83,12 +82,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
-                                           ? EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE)
-                                           : EnumSet.of(ClassHint.ResolveKind.CLASS);
+                                           ? ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE
+                                           : ResolverProcessor.RESOLVE_KINDS_CLASS;
     boolean hasAt = hasAt();
     GroovyResolveResult[] classCandidates = GroovyResolveResult.EMPTY_ARRAY;
     if (!hasAt) {
-      ResolverProcessor classProcessor = new ClassResolverProcessor(getReferenceName(), this, kinds);
+      ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
       resolveImpl(classProcessor);
       classCandidates = classProcessor.getCandidates();
       for (GroovyResolveResult classCandidate : classCandidates) {
@@ -210,8 +209,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public PsiElement getReferenceNameElement() {
     final ASTNode lastChild = getNode().getLastChildNode();
     if (lastChild == null) return null;
-    for (IElementType elementType : REFERENCE_NAME_TYPES) {
-      if (lastChild.getElementType() == elementType) return lastChild.getPsi();
+    if (TokenSets.REFERENCE_NAMES.contains(lastChild.getElementType())) {
+      return lastChild.getPsi();
     }
 
     return null;
@@ -230,8 +229,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public String getReferenceName() {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
-      if (nameElement.getNode().getElementType() == GroovyElementTypes.mSTRING_LITERAL ||
-          nameElement.getNode().getElementType() == GroovyElementTypes.mGSTRING_LITERAL) {
+      IElementType nodeType = nameElement.getNode().getElementType();
+      if (nodeType == GroovyElementTypes.mSTRING_LITERAL || nodeType == GroovyElementTypes.mGSTRING_LITERAL) {
         return GrStringUtil.removeQuotes(nameElement.getText());
       }
 

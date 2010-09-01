@@ -33,7 +33,6 @@ public final class CompressedDictionary implements Dictionary {
 
   private final Encoder encoder;
   private final String name;
-  private final Compressor compressor;
 
   private final Map<Integer, SortedSet<byte[]>> rawData = new THashMap<Integer, SortedSet<byte[]>>();
   private static final Comparator<byte[]> COMPARATOR = new Comparator<byte[]>() {
@@ -42,9 +41,8 @@ public final class CompressedDictionary implements Dictionary {
     }
   };
 
-  CompressedDictionary(@NotNull Alphabet alphabet, @NotNull Compressor compressor, @NotNull Encoder encoder, @NotNull String name) {
+  CompressedDictionary(@NotNull Alphabet alphabet, @NotNull Encoder encoder, @NotNull String name) {
     this.alphabet = alphabet;
-    this.compressor = compressor;
     this.encoder = encoder;
     this.name = name;
   }
@@ -86,7 +84,7 @@ public final class CompressedDictionary implements Dictionary {
 
   }
 
-  public List<String> getWords(Character first, int minLength, int maxLength) {
+  public List<String> getWords(char first, int minLength, int maxLength) {
     int index = alphabet.getIndex(first, false);
     List<String> result = new ArrayList<String>();
     if (index == -1) {
@@ -101,7 +99,7 @@ public final class CompressedDictionary implements Dictionary {
         if (toTest[1] != index || toTest[0] > maxLength || toTest[0] < minLength) {
           continue;
         }
-        UnitBitSet set = compressor.decompress(toTest);
+        UnitBitSet set = UnitBitSet.create(toTest);
         result.add(encoder.decode(set));
       }
       i++;
@@ -109,7 +107,7 @@ public final class CompressedDictionary implements Dictionary {
     return result;
   }
 
-  public List<String> getWords(Character first) {
+  public List<String> getWords(char first) {
     return getWords(first, 0, Integer.MAX_VALUE);
   }
 
@@ -123,7 +121,8 @@ public final class CompressedDictionary implements Dictionary {
     }
     try {
       UnitBitSet bs = encoder.encode(word, false);
-      byte[] compressed = compressor.compress(bs);
+      if (bs == null) return false;
+      byte[] compressed = UnitBitSet.getBytes(bs);
       int index = -1;
       for (int i = 0; i < lengths.length; i++) {
         if (lengths[i] == compressed.length) {
@@ -175,14 +174,14 @@ public final class CompressedDictionary implements Dictionary {
   public static CompressedDictionary create(@NotNull Loader loader, @NotNull final Transformation transform) {
     Alphabet alphabet = new Alphabet();
     final Encoder encoder = new Encoder(alphabet);
-    final Compressor compressor = new Compressor(2);
-    final CompressedDictionary dictionary = new CompressedDictionary(alphabet, compressor, encoder, loader.getName());
+    final CompressedDictionary dictionary = new CompressedDictionary(alphabet, encoder, loader.getName());
     loader.load(new Consumer<String>() {
       public void consume(String s) {
         String transformed = transform.transform(s);
         if (transformed != null) {
           UnitBitSet bs = encoder.encode(transformed, true);
-          byte[] compressed = compressor.compress(bs);
+          if (bs == null) return;
+          byte[] compressed = UnitBitSet.getBytes(bs);
           dictionary.addToDictionary(compressed);
         }
       }
@@ -194,10 +193,6 @@ public final class CompressedDictionary implements Dictionary {
   public static int compareArrays(byte[] array1, byte[] array2) {
     if (array1.length != array2.length) {
       return (array1.length < array2.length ? -1 : 1);
-    }
-    //array1.length==array2.length
-    if (Arrays.equals(array1, array2)) {
-      return 0;
     }
     //compare elements values
     for (int i = 0; i < array1.length; i++) {

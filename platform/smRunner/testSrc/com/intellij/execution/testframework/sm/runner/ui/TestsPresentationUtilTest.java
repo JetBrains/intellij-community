@@ -50,54 +50,60 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   public void testProgressText() {
     assertEquals("Running: 10 of 1  Failed: 1  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 1, null));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 1, null, false));
     assertEquals("Running: 10 of 1  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0, null));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0, null, false));
+    assertEquals("Running: 10 of 1  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0, null, true));
     //here number format is platform-dependent
     assertEquals("Done: 10 of 1  (0 s)  ",
-                 TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0, null));
+                 TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0, null, false));
   }
 
   public void testProgressText_UnsetTotal() {
     assertEquals("Running: 0 of <...>  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, null));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, null, false));
+    assertEquals("Running: 0 of 0  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, null, true));
     assertEquals("Running: 1 of <...>  Failed: 1  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 1, 1, null));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 1, 1, null, false));
     assertEquals("Running: 10 of <...>  Failed: 1  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 10, 1, null));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 10, 1, null, false));
     //here number format is platform-dependent
     assertEquals("Done: 10 of <...>  Failed: 1  (5 ms)  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1, null));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1, null, false));
   }
 
   public void testProgressText_Category() {
     assertEquals("Running: 0 of <...>  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, new HashSet<String>()));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, new HashSet<String>(), false));
 
     final Set<String> category = new LinkedHashSet<String>();
 
     category.clear();
     category.add("Scenarios");
     assertEquals("Running: Scenarios 0 of <...>  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, false));
 
     category.clear();
     category.add("Scenarios");
     category.add(TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
     assertEquals("Running: Scenarios, tests 0 of <...>  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, false));
 
     category.clear();
     category.add("Cucumbers");
     category.add("Tomatos");
     category.add(TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
     assertEquals("Running: Cucumbers, tomatos, tests 0 of <...>  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, false));
+    assertEquals("Running: Cucumbers, tomatos, tests 0 of 0  ",
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, true));
 
     category.clear();
     category.add(TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
     assertEquals("Running: 0 of <...>  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, false));
 
   }
 

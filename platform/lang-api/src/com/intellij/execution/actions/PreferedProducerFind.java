@@ -54,7 +54,14 @@ class PreferedProducerFind {
       ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
     final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
     for (final RuntimeConfigurationProducer prototype : configurationProducers) {
-      final RuntimeConfigurationProducer producer = prototype.createProducer(location, context);
+      final RuntimeConfigurationProducer producer;
+      try {
+        producer = prototype.createProducer(location, context);
+      }
+      catch (AbstractMethodError e) {
+        LOG.error(e);
+        continue;
+      }
       if (producer.getConfiguration() != null) {
         LOG.assertTrue(producer.getSourceElement() != null, producer);
         producers.add(producer);

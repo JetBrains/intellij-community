@@ -21,6 +21,8 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,14 +49,7 @@ public class JobImpl<T> implements Job<T> {
   }
 
   public void addTask(Callable<T> task) {
-    checkNotScheduled();
-
-    PrioritizedFutureTask<T> future =
-      new PrioritizedFutureTask<T>(task, this, myJobIndex, JobSchedulerImpl.currentTaskIndex(), myPriority, myFailFastOnAcquireReadAction);
-    synchronized (myFutures) {
-      myFutures.add(future);
-    }
-    runningTasks.incrementAndGet();
+    addTask(task, null);
   }
 
   public void addTask(Runnable task, T result) {
@@ -64,6 +59,26 @@ public class JobImpl<T> implements Job<T> {
   public void addTask(Runnable task) {
     addTask(Executors.callable(task, (T)null));
   }
+
+  public void addTask(@NotNull Callable<T> callable, final Consumer<Future> onDoneCallback) {
+    checkNotScheduled();
+
+    PrioritizedFutureTask<T> future =
+      new PrioritizedFutureTask<T>(callable, this, myJobIndex, JobSchedulerImpl.currentTaskIndex(), myPriority, myFailFastOnAcquireReadAction){
+        @Override
+        protected void done() {
+          super.done();
+          if (onDoneCallback != null) {
+            onDoneCallback.consume(this);
+          }
+        }
+      };
+    synchronized (myFutures) {
+      myFutures.add(future);
+    }
+    runningTasks.incrementAndGet();
+  }
+
 
   public List<T> scheduleAndWaitForResults() throws Throwable {
     checkCanSchedule();
@@ -98,12 +113,13 @@ public class JobImpl<T> implements Job<T> {
     //}
     //
 
-    waitForTermination(tasks);
+    waitForTermination();
     return null;
   }
 
-  public void waitForTermination(PrioritizedFutureTask[] tasks) throws Throwable {
+  public void waitForTermination() throws Throwable {
     Throwable ex = null;
+    PrioritizedFutureTask[] tasks = getTasks();
     try {
       for (PrioritizedFutureTask f : tasks) {
         // this loop is for workaround of mysterious bug

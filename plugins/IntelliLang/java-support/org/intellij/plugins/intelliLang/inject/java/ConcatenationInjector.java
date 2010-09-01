@@ -149,7 +149,9 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
               }
             }
           }
-          process(variable, null, -1);
+          if (areThereInjectionsWithName(variable.getName(), false)) {
+            process(variable, null, -1);
+          }
           return false;
         }
 
@@ -176,7 +178,8 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
               final PsiMethod method = declarationScope instanceof PsiMethod ? (PsiMethod)declarationScope : null;
               final PsiParameterList parameterList = method == null ? null : method.getParameterList();
               // don't check catchblock parameters & etc.
-              if (!(parameterList == null || parameterList != e.getParent())) {
+              if (!(parameterList == null || parameterList != e.getParent()) &&
+                  areThereInjectionsWithName(method.getName(), false)) {
                 final int parameterIndex = parameterList.getParameterIndex((PsiParameter)e);
                 process((PsiModifierListOwner)e, method, parameterIndex);
               }

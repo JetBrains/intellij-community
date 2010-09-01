@@ -1,28 +1,28 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
-<idea-plugin>
-  <!-- Plugin name -->
-  <name>SimpleToolWindow</name>
-
-  <!-- Description -->
-  <description>An example of installing a tool window</description>
-
-  <!-- Plugin version -->
+<idea-plugin version="2">
+  <name>Tool Window</name>
+  <description>This sample plugin illustrates how to contribute to the toolWindow extension point</description>
   <version>1.0</version>
+  <vendor>JetBrains</vendor>
+    <!--
+    <idea-version since-build="8000"/>
+    -->
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
 
-  <!-- Plugin's vendor -->
-  <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
-
-  <!-- The minimum build of IDEA with which the plugin is compatible. -->
-  <idea-version since-build="2000"/>
-
-  <!-- Plugin's application components -->
   <project-components>
-    <component>
-      <!-- Component's implementation class -->
-      <implementation-class>com.intellij.openapi.samples.SimpleToolWindowPlugin</implementation-class>
-
-      <!-- Component's interface class -->
-      <interface-class>com.intellij.openapi.samples.SimpleToolWindowPlugin</interface-class>
-    </component>
+    <!-- Add your project components here -->
+     
   </project-components>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->                       
+     <toolWindow id="Sample Calendar"   secondary="true" icon="/com/intellij/openapi/toolWindow/plus.png" anchor="right" factoryClass="com.intellij.openapi.toolWindow.MyToolWindowFactory"   >
+         
+     </toolWindow>
+  </extensions>
 </idea-plugin>

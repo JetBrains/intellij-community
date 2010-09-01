@@ -52,7 +52,9 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose() {
-        if (GotoClassAction.class.equals(myInAction)) myInAction = null;
+        if (GotoClassAction.class.equals(myInAction)) {
+          myInAction = null;
+        }
       }
 
       public void elementChosen(Object element) {

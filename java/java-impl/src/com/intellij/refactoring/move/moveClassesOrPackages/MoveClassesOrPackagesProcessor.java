@@ -157,7 +157,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     detectPackageLocalsMoved(usageInfos, conflicts);
     detectPackageLocalsUsed(conflicts);
     if (!conflicts.isEmpty()) {
-      allUsages.add(new ConflictsUsageInfo(myElementsToMove[0], conflicts));
+      for (PsiElement element : conflicts.keySet()) {
+        allUsages.add(new ConflictsUsageInfo(element, conflicts.get(element)));
+      }
     }
 
     return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(new UsageInfo[allUsages.size()]));
@@ -172,14 +174,14 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   protected static class ConflictsUsageInfo extends UsageInfo {
-    private final MultiMap<PsiElement, String> myConflicts;
+    private final Collection<String> myConflicts;
 
-    public ConflictsUsageInfo(PsiElement pseudoElement, MultiMap<PsiElement, String> conflicts) {
+    public ConflictsUsageInfo(PsiElement pseudoElement, Collection<String> conflicts) {
       super(pseudoElement);
       myConflicts = conflicts;
     }
 
-    public MultiMap<PsiElement, String> getConflicts() {
+    public Collection<String> getConflicts() {
       return myConflicts;
     }
   }
@@ -194,9 +196,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       if (usage instanceof ConflictsUsageInfo) {
         final ConflictsUsageInfo info = (ConflictsUsageInfo)usage;
         final PsiElement element = info.getElement();
-        for (String conflict : info.getConflicts().values()) {
-          conflicts.putValue(element, conflict);
-        }
+        conflicts.putValues(element, info.getConflicts());
       }
       else {
         filteredUsages.add(usage);

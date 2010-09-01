@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="LanguageInjectionConfiguration">
+  <injection language="Groovy" injector-id="xml">
+    <display-name>IntelliJ IDEA pattern</display-name>
+    <place><![CDATA[xmlTag().withLocalName("place").withParent(xmlTag().withLocalName("injection").withParent(xmlTag().withLocalName("component")))]]></place>
+    <place><![CDATA[xmlTag().withLocalName("pattern").inside(xmlTag().withLocalName("idea-plugin"))]]></place>
+  </injection>
+  <injection language="XPath" injector-id="xml">
+    <display-name>JAXB attribute node</display-name>
+    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("node")).withParent(xmlTag().withLocalName(string().equalTo("bindings")).withNamespace(string().equalTo("http://java.sun.com/xml/ns/jaxb")))]]></place>
+  </injection>
+  <injection language="EJBQL" injector-id="xml">
+    <display-name>ejb-ql</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().equalTo("ejb-ql")).withNamespace(string().oneOf("http://java.sun.com/dtd/ejb-jar_2_0.dtd", "http://java.sun.com/j2ee/dtds/ejb-jar_1_0.dtd", "http://java.sun.com/j2ee/dtds/ejb-jar_1_1.dtd", "http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee"))]]></place>
+  </injection>
+  <injection language="EJBQL" injector-id="xml">
+    <display-name>ejbql</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().equalTo("ejbql")).withNamespace(string().equalTo("http://jboss.com/products/seam/framework"))]]></place>
+  </injection>
+  <injection language="RegExp" injector-id="xml">
+    <display-name>element</display-name>
+    <value-pattern>(.+)</value-pattern>
+    <place><![CDATA[xmlTag().withLocalName(string().equalTo("element")).withNamespace(string().equalTo("http://jboss.org/xml/ns/javax/validation/mapping"))]]></place>
+    <xpath-condition>@name='regexp'</xpath-condition>
+  </injection>
+  <injection language="EJBQL" injector-id="xml">
+    <display-name>entity-query/@ejbql</display-name>
+    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("ejbql")).inside(xmlTag().withLocalName(string().equalTo("entity-query")).withNamespace(string().equalTo("http://jboss.com/products/seam/framework")))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="xml">
+    <display-name>mapped-statement</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().equalTo("mapped-statement")).withNamespace(string().equalTo("http://www.ibatis.com/dtd/sql-map.dtd"))]]></place>
+  </injection>
+  <injection language="XPath" injector-id="xml">
+    <display-name>out|if|forEach|set|when/@select</display-name>
+    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("select")).inside(xmlTag().withLocalName(string().oneOf("out", "if", "forEach", "set", "when")).withNamespace(string().equalTo("http://java.sun.com/jsp/jstl/xml")))]]></place>
+  </injection>
+  <injection language="HQL" injector-id="xml">
+    <display-name>query</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().equalTo("query")).withNamespace(string().equalTo("http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd"))]]></place>
+  </injection>
+  <injection language="JPAQL" injector-id="xml">
+    <display-name>query</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().equalTo("query")).withNamespace(string().equalTo("http://java.sun.com/xml/ns/persistence/orm"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="xml">
+    <display-name>query|update/@sql</display-name>
+    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("sql")).inside(xmlTag().withLocalName(string().oneOf("query", "update")).withNamespace(string().equalTo("http://java.sun.com/jsp/jstl/sql")))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="xml">
+    <display-name>sql|select|insert|update|delete|statement</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().oneOf("sql", "select", "insert", "update", "delete", "statement")).withNamespace(string().equalTo("http://ibatis.apache.org/dtd/sql-map-2.dtd"))]]></place>
+    <apply-to-subtags />
+  </injection>
+  <injection language="SQL" injector-id="xml">
+    <display-name>iBatis3: sql|select|insert|update|delete</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().oneOf("sql", "select", "insert", "update", "delete")).withNamespace(string().oneOf("http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd", "http://mybatis.org/dtd/mybatis-3-mapper.dtd"))]]></place>
+    <apply-to-subtags />
+  </injection>
+</component>

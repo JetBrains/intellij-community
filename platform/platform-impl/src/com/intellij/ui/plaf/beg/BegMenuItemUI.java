@@ -58,7 +58,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
   @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
   @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
 
-  private static final Border SELECTED_BACKGROUND_PAINTER = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
+  private Border myAquaSelectedBackgroundPainter;
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -67,6 +67,10 @@ public class BegMenuItemUI extends BasicMenuItemUI {
 
   public BegMenuItemUI() {
     myMaxGutterIconWidth = 18;
+
+    if (UIUtil.isUnderAquaLookAndFeel() && myAquaSelectedBackgroundPainter == null) {
+      myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
+    }
   }
 
   protected void installDefaults() {
@@ -112,7 +116,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
       g.fillRect(0, 0, j1, k1);
       if (buttonmodel.isArmed() || (comp instanceof JMenu) && buttonmodel.isSelected()){
         if (UIUtil.isUnderAquaLookAndFeel()) {
-          SELECTED_BACKGROUND_PAINTER.paintBorder(comp, g, 0, 0, j1, k1);
+          myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, j1, k1);
         } else {
           g.setColor(selectionBackground);
           if (icon2 != null){

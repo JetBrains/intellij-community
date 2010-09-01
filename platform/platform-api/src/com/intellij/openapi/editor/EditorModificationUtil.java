@@ -54,8 +54,14 @@ public class EditorModificationUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasBlockSelection()) return;
 
-    int startLine = selectionModel.getBlockStart().line;
-    int endLine = selectionModel.getBlockEnd().line;
+    LogicalPosition blockStart = selectionModel.getBlockStart();
+    LogicalPosition blockEnd = selectionModel.getBlockEnd();
+    if (blockStart == null || blockEnd == null) {
+      return;
+    }
+
+    int startLine = blockStart.line;
+    int endLine = blockEnd.line;
 
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
@@ -96,6 +102,7 @@ public class EditorModificationUtil {
 
     if (editor.isInsertMode() || !toProcessOverwriteMode) {
       if (selectionModel.hasSelection()) {
+        oldOffset = selectionModel.getSelectionStart();
         editor.getDocument().replaceString(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), s);
       } else {
         editor.getDocument().insertString(oldOffset, s);

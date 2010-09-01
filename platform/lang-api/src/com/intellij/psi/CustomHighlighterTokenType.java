@@ -49,6 +49,8 @@ public interface CustomHighlighterTokenType {
 
   IElementType L_BRACE = new CustomElementType("L_BRACE");
   IElementType R_BRACE = new CustomElementType("R_BRACE");
+  IElementType L_ANGLE = new CustomElementType("L_BROCKET");
+  IElementType R_ANGLE = new CustomElementType("R_BROCKET");
   IElementType L_BRACKET = new CustomElementType("L_BRACKET");
   IElementType R_BRACKET = new CustomElementType("R_BRACKET");
   IElementType L_PARENTH = new CustomElementType("L_PARENTH");

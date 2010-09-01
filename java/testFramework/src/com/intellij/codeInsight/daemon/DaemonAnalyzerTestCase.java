@@ -296,15 +296,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     boolean canChange = canChangeDocumentDuringHighlighting();
-    CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), toIgnore.toNativeArray(), canChange);
+    List<HighlightInfo> infos = CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), toIgnore.toNativeArray(), canChange);
 
     if (!canChange) {
       Document document = getDocument(getFile());
       ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileStatusMap().assertAllDirtyScopesAreNull(document);
     }
 
-    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
-    return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
+    return infos;
   }
 
   @Retention(RetentionPolicy.RUNTIME)

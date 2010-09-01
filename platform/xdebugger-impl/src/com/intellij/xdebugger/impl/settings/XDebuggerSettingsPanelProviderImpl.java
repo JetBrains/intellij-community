@@ -38,8 +38,4 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
     return list;
   }
 
-  @Override
-  public boolean hasAnySettingsPanels() {
-    return !XDebuggerSettingsManager.getInstance().getSettingsList().isEmpty();
-  }
 }

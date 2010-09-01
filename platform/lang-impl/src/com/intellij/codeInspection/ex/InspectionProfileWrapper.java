@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 
 import java.util.ArrayList;
@@ -30,6 +31,11 @@ import java.util.List;
  * Date: 15-Feb-2006
  */
 public class InspectionProfileWrapper {
+  /**
+   * Generic-purpose key object that is intended to be used for customizing inspection profile wrapper retrieval
+   * via {@link com.intellij.openapi.util.UserDataHolder} API.
+   */
+  public static final Key<InspectionProfileWrapper> KEY = Key.create("Inspection Profile Wrapper");
   private final InspectionProfileImpl myProfile;
 
   public InspectionProfileWrapper(final InspectionProfile profile) {

@@ -24,6 +24,7 @@ package com.intellij.refactoring.actions;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -32,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InlineAction extends BasePlatformRefactoringAction {
@@ -45,7 +47,7 @@ public class InlineAction extends BasePlatformRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file) {
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
     return hasInlineActionHandler(element, PsiUtilBase.getLanguageInEditor(editor, element.getProject()), editor);
   }
 
@@ -64,7 +66,8 @@ public class InlineAction extends BasePlatformRefactoringAction {
     ).size() > 0;
   }
 
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
+  @Override
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return new InlineRefactoringActionHandler();
   }
 

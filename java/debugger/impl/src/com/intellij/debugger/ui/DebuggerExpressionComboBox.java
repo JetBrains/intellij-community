@@ -55,7 +55,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
 
     public void setItem(Object item) {
-      super.setItem(createDocument((TextWithImports)item));
+      final Object currentItem = getItem();
+      if (currentItem == null || !currentItem.equals(item)) {
+        super.setItem(createDocument((TextWithImports)item));
+      }
       /* Causes PSI being modified from PSI events. See IDEADEV-22102 
       final Editor editor = getEditor();
       if (editor != null) {
@@ -77,41 +80,13 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     if (myComboBox.getItemCount() > 0) {
       myComboBox.setSelectedIndex(0);
     }
-    if(myComboBox.isEditable()) {
-      myComboBox.getEditor().setItem(item);
-    }
-    else {
-      myItem =  item;
-    }
+
+    myComboBox.getEditor().setItem(item);
+    myItem = item;
   }
 
   public TextWithImports getText() {
     return (TextWithImports)myComboBox.getEditor().getItem();
-  }
-
-  protected void updateEditor(TextWithImports item) {
-    if(!myComboBox.isEditable()) return;
-
-    boolean focusOwner = myEditor != null && myEditor.getEditorComponent().isFocusOwner();
-    int offset = 0;
-    TextWithImports oldItem = null;
-    if(focusOwner) {
-      offset = myEditor.getEditor().getCaretModel().getOffset();
-      oldItem = (TextWithImports)myEditor.getItem();
-    }
-    myEditor = new MyEditorComboBoxEditor(getProject(), myFactory.getFileType());
-    myComboBox.setEditor(myEditor);
-    myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
-
-    myComboBox.setMaximumRowCount(MAX_ROWS);
-
-    myEditor.setItem(item);
-    if(focusOwner) {
-      myEditor.getEditorComponent().requestFocus();
-      if(oldItem.equals(item)) {
-        myEditor.getEditor().getCaretModel().moveToOffset(offset);
-      }
-    }
   }
 
   private void setRecents() {
@@ -137,20 +112,18 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   public void setEnabled(boolean enabled) {
-      if(myComboBox.isEditable() == enabled) return;
+    myComboBox.setEnabled(enabled);
 
-      myComboBox.setEnabled(enabled);
-      myComboBox.setEditable(enabled);
-
-      if(enabled) {
-        setRecents();
-        updateEditor(myItem);
-      } else {
-        myItem = (TextWithImports)myComboBox.getEditor().getItem();
-        myComboBox.removeAllItems();
-        myComboBox.addItem(myItem);
-      }
+    if (enabled) {
+      setRecents();
+      myEditor.setItem(myItem);
     }
+    else {
+      myItem = (TextWithImports)myComboBox.getEditor().getItem();
+      myComboBox.removeAllItems();
+      myComboBox.addItem(myItem);
+    }
+  }
 
   public TextWithImports createText(String text, String importsString) {
     return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text, importsString);
@@ -172,10 +145,16 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   public DebuggerExpressionComboBox(Project project, PsiElement context, @NonNls String recentsId, final CodeFragmentFactory factory) {
     super(project, context, recentsId, factory);
     myComboBox = new ComboBox(-1);
+    myComboBox.setEditable(true);
+
+    myEditor = new MyEditorComboBoxEditor(getProject(), myFactory.getFileType());
+    myComboBox.setEditor(myEditor);
+    myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
+
     // Have to turn this off because when used in DebuggerTreeInplaceEditor, the combobox popup is hidden on every change of selection
     // See comment to SynthComboBoxUI.FocusHandler.focusLost()
     myComboBox.setLightWeightPopupEnabled(false);
-    setLayout(new BorderLayout());
+    setLayout(new BorderLayout(0, 0));
     add(myComboBox);
 
     setText(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));

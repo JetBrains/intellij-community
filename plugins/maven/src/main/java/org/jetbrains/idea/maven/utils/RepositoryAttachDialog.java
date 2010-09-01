@@ -15,31 +15,31 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.Icons;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
@@ -57,29 +57,50 @@ import java.util.*;
 import java.util.List;
 
 public class RepositoryAttachDialog extends DialogWrapper {
-  private static final String DEFAULT_REPOSITORY = "<default>";
-  private final JLabel myInfoLabel;
+
+  @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
+  @NonNls private static final String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
+
+  private JLabel myInfoLabel;
+  private JCheckBox myJavaDocCheckBox;
+  private JCheckBox mySourcesCheckBox;
   private final Project myProject;
   private final boolean myManaged;
-  private final AsyncProcessIcon myProgressIcon;
+  private AsyncProcessIcon myProgressIcon;
+  private ComboboxWithBrowseButton myComboComponent;
+  private JPanel myPanel;
+  private JLabel myCaptionLabel;
   private final THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>> myCoordinates
     = new THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
   private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<String, MavenRepositoryInfo>();
   private final ArrayList<String> myShownItems = new ArrayList<String>();
-  private final JComboBox myCombobox = new JComboBox(new CollectionComboBoxModel(myShownItems, null));
+  private final JComboBox myCombobox;
 
   private TextFieldWithBrowseButton myDirectoryField;
   private String myFilterString;
-  private JComboBox myRepositoryUrl;
 
   public RepositoryAttachDialog(Project project, boolean managed) {
     super(project, true);
     myProject = project;
     myManaged = managed;
-    myProgressIcon = new AsyncProcessIcon("Progress");
-    myProgressIcon.setVisible(false);
     myProgressIcon.suspend();
-    myInfoLabel = new JLabel("");
+    myCaptionLabel.setText("Enter keywords to search by, class name or Maven coordinates,\n" +
+                           "i.e. 'springframework', 'Logger' or 'org.hibernate:hibernate-core:3.5.0.GA':");
+    myCaptionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+    myCaptionLabel.setUI(new MultiLineLabelUI());
+    myInfoLabel.setUI(new MultiLineLabelUI());
+    myInfoLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+    myInfoLabel.setPreferredSize(new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
+
+    myComboComponent.setButtonIcon(IconLoader.findIcon("/actions/menu-find.png"));
+    myComboComponent.getButton().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        performSearch();
+      }
+    });
+    myCombobox = myComboComponent.getComboBox();
+    myCombobox.setModel(new CollectionComboBoxModel(myShownItems, null));
     myCombobox.setEditable(true);
     final JTextField textField = (JTextField)myCombobox.getEditor().getEditorComponent();
     textField.setColumns(50);
@@ -114,8 +135,33 @@ public class RepositoryAttachDialog extends DialogWrapper {
         }
       }
     });
+    if (!myManaged) {
+      if (myProject != null && !myProject.isDefault()) {
+        final VirtualFile baseDir = myProject.getBaseDir();
+        if (baseDir != null) {
+          myDirectoryField.setText(FileUtil.toSystemDependentName(baseDir.getPath() + "/lib"));
+        }
+      }
+      myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
+                                               ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
+                                               FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    }
+    else {
+      myDirectoryField.setVisible(false);
+    }
+    final PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
+    myJavaDocCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_JAVADOC) && storage.isTrueValue(PROPERTY_ATTACH_JAVADOC));
+    mySourcesCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_SOURCES) && storage.isTrueValue(PROPERTY_ATTACH_SOURCES));
     updateInfoLabel();
     init();
+  }
+
+  public boolean getAttachJavaDoc() {
+    return myJavaDocCheckBox.isSelected();
+  }
+
+  public boolean getAttachSources() {
+    return mySourcesCheckBox.isSelected();
   }
 
   public String getDirectoryPath() {
@@ -133,12 +179,6 @@ public class RepositoryAttachDialog extends DialogWrapper {
     final String prefix = field.getText();
     final int caret = field.getCaretPosition();
     myFilterString = prefix.toUpperCase();
-
-    final Pair<MavenArtifactInfo, MavenRepositoryInfo> pair = myCoordinates.get(getCoordinateText());
-    if (myRepositories.containsKey(myRepositoryUrl.getEditor().getItem())) {
-      myRepositoryUrl.setSelectedItem(pair != null && pair.second != null? pair.second.getUrl() : DEFAULT_REPOSITORY);
-    }
-
 
     if (!force && myFilterString.equals(prevFilter)) return;
     myShownItems.clear();
@@ -174,14 +214,12 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private boolean performSearch() {
     final String text = getCoordinateText();
     if (myCoordinates.contains(text)) return false;
-    if (myProgressIcon.isVisible()) return false;
-    myProgressIcon.setVisible(true);
+    if (myProgressIcon.isRunning()) return false;
     myProgressIcon.resume();
     RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean>() {
       public boolean process(Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>> artifacts, Boolean tooMany) {
         if (myProgressIcon.isDisposed()) return true;
         myProgressIcon.suspend();
-        myProgressIcon.setVisible(false);
         final int prevSize = myCoordinates.size();
         for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
           myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
@@ -189,8 +227,6 @@ public class RepositoryAttachDialog extends DialogWrapper {
             myRepositories.put(each.second.getUrl(), each.second);
           }
         }
-
-        myRepositoryUrl.setModel(new CollectionComboBoxModel(new ArrayList<String>(myRepositories.keySet()), myRepositoryUrl.getEditor().getItem()));
         if (Boolean.TRUE.equals(tooMany)) {
           final Point point = new Point(myCombobox.getWidth() / 2, 0);
           JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Too many results found, please refine your query.", MessageType.WARNING, null).
@@ -205,7 +241,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   private void updateInfoLabel() {
-    myInfoLabel.setText(myCombobox.getModel().getSize() +"/" + myCoordinates.size());
+    myInfoLabel.setText("Found: " + myCoordinates.size()+ "\nShowing: " + myCombobox.getModel().getSize());
   }
 
   @Override
@@ -216,22 +252,30 @@ public class RepositoryAttachDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (!isOKActionEnabled()) return;
+    String errorText = null;
+    JComponent errorComponent = null;
     if (!isValidCoordinateSelected()) {
-      IdeFocusManager.findInstance().requestFocus(myCombobox, true);
-      Messages.showErrorDialog("Please enter valid coordinate or select one from the list",
-                               "Coordinate not specified");
-      return;
+      errorComponent = myCombobox;
+      errorText = "Please enter valid coordinate, discover it or select one from the list";
     }
-    if (!myManaged) {
+    else if (!myManaged) {
       final File dir = new File(myDirectoryField.getText());
       if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
-        IdeFocusManager.findInstance().requestFocus(myDirectoryField.getChildComponent(), true);
-        Messages.showErrorDialog("Please enter valid library files path",
-                                 "Library files path not specified");
-        return;
+        errorComponent = myDirectoryField.getTextField();
+        errorText = "Please enter valid library files path";
       }
     }
-    super.doOKAction();
+    if (errorText != null && errorComponent != null) {
+      final Point point = new Point(errorComponent.getWidth() / 2, 0);
+      JBPopupFactory.getInstance()
+        .createHtmlTextBalloonBuilder(errorText, MessageType.WARNING, null).
+        setHideOnClickOutside(false).setHideOnKeyOutside(true).
+        createBalloon().show(new RelativePoint(errorComponent, point), Balloon.Position.above);
+      IdeFocusManager.findInstance().requestFocus(errorComponent, true);
+    }
+    else {
+      super.doOKAction();
+    }
   }
 
   @Override
@@ -240,80 +284,16 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new BorderLayout(15, 0));
-    {
-      JLabel iconLabel = new JLabel(Messages.getQuestionIcon());
-      Container container = new Container();
-      container.setLayout(new BorderLayout());
-      container.add(iconLabel, BorderLayout.NORTH);
-      panel.add(container, BorderLayout.WEST);
-    }
-
-    final ArrayList<JComponent> gridComponents = new ArrayList<JComponent>();
-    {
-      JPanel caption = new JPanel(new BorderLayout(15, 0));
-      JLabel textLabel = new JLabel("Enter keywords to search by, class name or Maven coordinates: \ni.e. 'spring', 'jsf' or 'org.hibernate:hibernate-core:3.3.0.GA'");
-      textLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-      textLabel.setUI(new MultiLineLabelUI());
-      caption.add(textLabel, BorderLayout.WEST);
-      final JPanel infoPanel = new JPanel(new BorderLayout());
-      infoPanel.add(myInfoLabel, BorderLayout.WEST);
-      infoPanel.add(myProgressIcon, BorderLayout.EAST);
-      caption.add(infoPanel, BorderLayout.EAST);
-      gridComponents.add(caption);
-
-      final ComponentWithBrowseButton<JComboBox> coordComponent = new ComponentWithBrowseButton<JComboBox>(myCombobox, new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          performSearch();
-        }
-      });
-      coordComponent.setButtonIcon(Icons.SYNCHRONIZE_ICON);
-      gridComponents.add(coordComponent);
-
-      final LabeledComponent<JComboBox> repository = new LabeledComponent<JComboBox>();
-      repository.getLabel().setText("Repository URL to Download From:");
-      myRepositories.put(DEFAULT_REPOSITORY, null);
-      for (MavenRepositoryInfo repo : RepositoryAttachHandler.getDefaultRepositories()) {
-        myRepositories.put(repo.getUrl(), repo);
-      }
-      myRepositoryUrl = new JComboBox(new CollectionComboBoxModel(new ArrayList<String>(myRepositories.keySet()), DEFAULT_REPOSITORY));
-      myRepositoryUrl.setEditable(true);
-      repository.setComponent(myRepositoryUrl);
-      gridComponents.add(repository);
-
-      if (!myManaged) {
-        myDirectoryField = new TextFieldWithBrowseButton();
-        if (myProject != null && !myProject.isDefault()) {
-          final VirtualFile baseDir = myProject.getBaseDir();
-          if (baseDir != null) {
-            myDirectoryField.setText(FileUtil.toSystemDependentName(baseDir.getPath()+"/lib"));
-          }
-        }
-        myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
-                                   ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
-                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
-
-        final LabeledComponent<TextFieldWithBrowseButton> dirComponent = new LabeledComponent<TextFieldWithBrowseButton>();
-        dirComponent.getLabel().setText("Store Library Files in: ");
-        dirComponent.setComponent(myDirectoryField);
-        gridComponents.add(dirComponent);
-      }
-    }
-    JPanel messagePanel = new JPanel(new GridLayoutManager(gridComponents.size(), 1));
-    for (int i = 0, gridComponentsSize = gridComponents.size(); i < gridComponentsSize; i++) {
-      messagePanel.add(gridComponents.get(i), new GridConstraints(i, 0, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_HORIZONTAL,
-                                                          GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK, 0,
-                                                          null, null, null));
-    }
-    panel.add(messagePanel, BorderLayout.CENTER);
-
-    return panel;
+    return myPanel;
   }
 
 
   @Override
   protected void dispose() {
     Disposer.dispose(myProgressIcon);
+    final PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
+    storage.setValue(PROPERTY_ATTACH_JAVADOC, String.valueOf(myJavaDocCheckBox.isSelected()));
+    storage.setValue(PROPERTY_ATTACH_SOURCES, String.valueOf(mySourcesCheckBox.isSelected()));
     super.dispose();
   }
 
@@ -324,15 +304,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   @NotNull
   public List<MavenRepositoryInfo> getRepositories() {
-    final String selectedRepository = (String)myRepositoryUrl.getEditor().getItem();
-    if (StringUtil.isNotEmpty(selectedRepository) && !DEFAULT_REPOSITORY.equals(selectedRepository) && !myRepositories.containsKey(selectedRepository)) {
-      return Collections.singletonList(new MavenRepositoryInfo("custom", null, selectedRepository));
-    }
-    else {
-      final Pair<MavenArtifactInfo, MavenRepositoryInfo> artifactAndRepo = myCoordinates.get(getCoordinateText());
-      final MavenRepositoryInfo repository = artifactAndRepo == null? null : artifactAndRepo.second;
-      return repository != null? Collections.singletonList(repository) : ContainerUtil.findAll(myRepositories.values(), Condition.NOT_NULL);
-    }
+    final Pair<MavenArtifactInfo, MavenRepositoryInfo> artifactAndRepo = myCoordinates.get(getCoordinateText());
+    final MavenRepositoryInfo repository = artifactAndRepo == null ? null : artifactAndRepo.second;
+    return repository != null ? Collections.singletonList(repository) : ContainerUtil.findAll(myRepositories.values(), Condition.NOT_NULL);
   }
 
   private boolean isValidCoordinateSelected() {
@@ -346,4 +320,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return field.getText();
   }
 
+  private void createUIComponents() {
+    myProgressIcon = new AsyncProcessIcon("Progress");
+  }
 }

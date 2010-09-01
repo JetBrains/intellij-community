@@ -29,7 +29,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -46,8 +46,10 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
@@ -164,6 +166,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
     if (!fromFile.exists()) {
       fromFile = new File(sourceFilePath);
+//      assert fromFile.exists(): "cannot find " + getTestDataPath() + "/" + sourceFilePath;
     }
 
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
@@ -600,11 +603,29 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute();
   }
 
+  @Override
+  public void type(String s) {
+    for (int i = 0; i < s.length(); i++) {
+      type(s.charAt(i));
+    }
+  }
+
   public void performEditorAction(final String actionId) {
     assertInitialized();
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     EditorActionManager actionManager = EditorActionManager.getInstance();
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
+  }
+
+  @Override
+  public Presentation testAction(AnAction action) {
+    DataContext context = DataManager.getInstance().getDataContext(getEditor().getComponent());
+    TestActionEvent e = new TestActionEvent(context, action);
+    action.beforeActionPerformedUpdate(e);
+    if (e.getPresentation().isVisible() && e.getPresentation().isVisible()) {
+      action.actionPerformed(e);
+    }
+    return e.getPresentation();
   }
 
   public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) {
@@ -632,8 +653,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public RangeHighlighter[] testHighlightUsages(final String... files) {
     configureByFiles(files);
+    testAction(new HighlightUsagesAction());
     final Editor editor = getEditor();
-    HighlightUsagesHandler.invoke(getProject(), editor, getFile());
+    //final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+    //assert editor != null;
+    //HighlightUsagesHandler.invoke(getProject(), editor, getFile());
     return editor.getMarkupModel().getAllHighlighters();
   }
 
@@ -748,12 +772,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myPsiManager;
   }
 
-  public LookupElement[] complete(final CompletionType type) {
+  @Override
+  public LookupElement[] complete(CompletionType type) {
+    return complete(type, 1);
+  }
+
+  @Override
+  public LookupElement[] complete(final CompletionType type, final int invocationCount) {
     assertInitialized();
     myEmptyLookup = false;
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Exception {
-        final CodeInsightActionHandler handler = new CodeCompletionHandlerBase(type) {
+        final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
           protected PsiFile createFileCopy(final PsiFile file) {
             final PsiFile copy = super.createFileCopy(file);
             if (myFileContext != null) {
@@ -775,7 +805,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
         };
         Editor editor = getCompletionEditor();
-        handler.invoke(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()));
+        handler.invokeCompletion(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()), invocationCount);
       }
     }.execute();
     return getLookupElements();

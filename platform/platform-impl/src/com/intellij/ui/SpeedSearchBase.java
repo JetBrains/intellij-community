@@ -214,7 +214,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       final Object element = it.next();
       if (isMatchingElement(element, _s)) return element;
     }
-    return current;
+    return isMatchingElement(current, _s) ? current : null;
   }
 
   @Nullable
@@ -233,7 +233,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       final Object element = it.previous();
       if (isMatchingElement(element, _s)) return element;
     }
-    return selectedIndex != -1? current : null;
+    return selectedIndex != -1 && isMatchingElement(current, _s) ? current : null;
   }
 
   @Nullable
@@ -440,14 +440,19 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
         }
         return;
       }
-      super.processKeyEvent(e);
+      
       if (
-        i == KeyEvent.VK_BACK_SPACE ||
         i == KeyEvent.VK_HOME ||
         i == KeyEvent.VK_END ||
         i == KeyEvent.VK_UP ||
         i == KeyEvent.VK_DOWN
         ) {
+        e.consume();
+        return;
+      }
+
+      super.processKeyEvent(e);
+      if (i == KeyEvent.VK_BACK_SPACE) {
         e.consume();
       }
     }

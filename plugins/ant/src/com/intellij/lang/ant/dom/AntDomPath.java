@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -62,7 +63,8 @@ public abstract class AntDomPath extends AntDomFilesProviderImpl{
       }
     }
 
-    for (AntDomElement child : getAntChildren()) {
+    for (Iterator<AntDomElement> iterator = getAntChildrenIterator(); iterator.hasNext();) {
+      AntDomElement child = iterator.next();
       if (child instanceof AntFilesProvider) {
         files.addAll(((AntFilesProvider)child).getFiles(processed));
       }

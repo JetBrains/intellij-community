@@ -170,6 +170,13 @@
       <dependency id="editing.completion.smarttype.general"/>
       </feature>
     <feature
+      id="editing.completion.import.static"
+      tip-file="CompletionImportStatic.html"
+      min-usage-count="8"
+      first-show="10"
+      successive-show="3">
+      </feature>
+    <feature
       id="editing.completion.finishByExclamation"
       tip-file="FinishByExclamation.html"
       min-usage-count="4"

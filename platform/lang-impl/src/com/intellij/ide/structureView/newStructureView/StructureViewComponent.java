@@ -58,6 +58,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -676,6 +677,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return super.getData(dataId);
   }
 
+  @Nullable
   private static PsiElement[] convertToPsiElementsArray(final Object[] selectedElements) {
     if (selectedElements == null) return null;
     ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
@@ -687,6 +689,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return psiElements.toArray(new PsiElement[psiElements.size()]);
   }
 
+  @Nullable
   private TreePath getSelectedUniquePath() {
     JTree tree = getTree();
     if (tree == null) return null;
@@ -777,6 +780,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return false;
     }
 
+    @Nullable
     private StructureViewModel.ElementInfoProvider getElementInfoProvider() {
       if (myTreeModel instanceof StructureViewModel.ElementInfoProvider) {
         return ((StructureViewModel.ElementInfoProvider)myTreeModel);

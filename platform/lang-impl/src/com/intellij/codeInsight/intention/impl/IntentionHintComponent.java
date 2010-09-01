@@ -20,7 +20,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.PriorityQuestionAction;
 import com.intellij.codeInsight.hint.ScrollAwareHint;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -32,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -46,14 +46,15 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -74,27 +75,32 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   static final Icon ourIntentionOffIcon = IconLoader.getIcon("/actions/realIntentionOffBulb.png");
   static final Icon ourQuickFixOffIcon = IconLoader.getIcon("/actions/quickfixOffBulb.png");
   static final Icon ourArrowIcon = IconLoader.getIcon("/general/arrowDown.png");
-  private static final Border INACTIVE_BORDER = null;
-  private static final Insets INACTIVE_MARGIN = new Insets(0, 0, 0, 0);
-  private static final Insets ACTIVE_MARGIN = new Insets(0, 0, 0, 0);
+  static final Icon ourInactiveArrowIcon = new EmptyIcon(ourArrowIcon.getIconWidth(), ourArrowIcon.getIconHeight());
+  private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(6, 6, 6, 6);
+  private static final Border ACTIVE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+  private static final Border INACTIVE_BORDER_SMALL = BorderFactory.createEmptyBorder(4, 4, 4, 4);
+  private static final Border ACTIVE_BORDER_SMALL = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(3, 3, 3, 3));
 
   private final Editor myEditor;
 
   private static final Alarm myAlarm = new Alarm();
 
   private final RowIcon myHighlightedIcon;
-  private final JButton myButton;
+  private final JLabel myIconLabel;
 
   private final Icon mySmartTagIcon;
+  private final RowIcon myInactiveIcon;
 
   private static final int DELAY = 500;
   private final MyComponentHint myComponentHint;
-  private static final Color BACKGROUND_COLOR = new Color(255, 255, 255, 0);
   private boolean myPopupShown = false;
   private boolean myDisposed = false;
   private ListPopup myPopup;
   private final PsiFile myFile;
   private static final int LIGHTBULB_OFFSET = 20;
+
+  private PopupMenuListener myOuterComboboxPopupListener;
 
   public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor, ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded) {
@@ -133,6 +139,15 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myDisposed = true;
     myComponentHint.hide();
     super.hide();
+
+    if (myOuterComboboxPopupListener != null) {
+      final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, myEditor.getContentComponent());
+      if (ancestor != null) {
+        ((JComboBox)ancestor).removePopupMenuListener(myOuterComboboxPopupListener);
+      }
+
+      myOuterComboboxPopupListener = null;
+    }
   }
 
   public void editorScrolled() {
@@ -185,22 +200,44 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private static Point getHintPosition(Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     final int offset = editor.getCaretModel().getOffset();
-    final LogicalPosition pos = editor.offsetToLogicalPosition(offset);
+    final VisualPosition pos = editor.offsetToVisualPosition(offset);
     int line = pos.line;
 
-    final Point position = editor.logicalPositionToXY(new LogicalPosition(line, 0));
-    final int yShift = (ourIntentionIcon.getIconHeight() - editor.getLineHeight() - 1) / 2 - 1;
-    final int xShift = ourIntentionIcon.getIconWidth();
-
+    final Point position = editor.visualPositionToXY(new VisualPosition(line, 0));
     LOG.assertTrue(editor.getComponent().isDisplayable());
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    Point realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift- LIGHTBULB_OFFSET);
-    Point location = SwingUtilities.convertPoint(editor.getContentComponent(), realPoint, editor.getComponent().getRootPane().getLayeredPane());
 
+    JComponent convertComponent = editor.getContentComponent();
+
+    Point realPoint;
+    final boolean oneLineEditor = editor.isOneLineMode();
+    if (oneLineEditor) {
+      // place bulb at the corner of the surrounding component
+      final JComponent contentComponent = editor.getContentComponent();
+      Container ancestorOfClass = SwingUtilities.getAncestorOfClass(JComboBox.class, contentComponent);
+
+      if (ancestorOfClass != null) {
+        convertComponent = (JComponent) ancestorOfClass;
+      } else {
+        ancestorOfClass = SwingUtilities.getAncestorOfClass(JTextField.class, contentComponent);
+        if (ancestorOfClass != null) {
+          convertComponent = (JComponent) ancestorOfClass;
+        }
+      }
+
+      realPoint = new Point(- (ourIntentionIcon.getIconWidth() / 2) - 4, - (ourIntentionIcon.getIconHeight() / 2));
+    } else {
+      final int yShift = (ourIntentionIcon.getIconHeight() - editor.getLineHeight() - 1) / 2 - 1;
+      final int xShift = ourIntentionIcon.getIconWidth();
+
+      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+      realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift- LIGHTBULB_OFFSET);
+    }
+
+    Point location = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
     return new Point(location.x, location.y);
   }
 
-  private IntentionHintComponent(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor,
+  private IntentionHintComponent(@NotNull Project project, @NotNull PsiFile file, @NotNull final Editor editor,
                                  @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myFile = file;
@@ -217,34 +254,40 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         break;
       }
     }
+
     mySmartTagIcon = showFix ? ourQuickFixIcon : ourBulbIcon;
 
     myHighlightedIcon = new RowIcon(2);
     myHighlightedIcon.setIcon(mySmartTagIcon, 0);
     myHighlightedIcon.setIcon(ourArrowIcon, 1);
 
-    myButton = new JButton(mySmartTagIcon);
-    myButton.setFocusable(false);
-    myButton.setMargin(INACTIVE_MARGIN);
-    myButton.setBorderPainted(false);
-    myButton.setContentAreaFilled(false);
+    myInactiveIcon = new RowIcon(2);
+    myInactiveIcon.setIcon(mySmartTagIcon, 0);
+    myInactiveIcon.setIcon(ourInactiveArrowIcon, 1);
 
-    add(myButton, BorderLayout.CENTER);
-    setBorder(INACTIVE_BORDER);
+    myIconLabel = new JLabel(myInactiveIcon);
+    myIconLabel.setOpaque(false);
 
-    myButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        showPopup();
+    add(myIconLabel, BorderLayout.CENTER);
+
+    setBorder(editor.isOneLineMode() ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER);
+
+    myIconLabel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
+          showPopup();
+        }
       }
-    });
 
-    myButton.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseEntered(MouseEvent e) {
-        onMouseEnter();
+        onMouseEnter(editor.isOneLineMode());
       }
 
+      @Override
       public void mouseExited(MouseEvent e) {
-        onMouseExit();
+        onMouseExit(editor.isOneLineMode());
       }
     });
 
@@ -257,34 +300,23 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     Disposer.dispose(this);
   }
 
-  private void onMouseExit() {
+  private void onMouseExit(final boolean small) {
     Window ancestor = SwingUtilities.getWindowAncestor(myPopup.getContent());
     if (ancestor == null) {
-      myButton.setBackground(BACKGROUND_COLOR);
-      myButton.setIcon(mySmartTagIcon);
-      setBorder(INACTIVE_BORDER);
-      myButton.setMargin(INACTIVE_MARGIN);
-      updateComponentHintSize();
+      myIconLabel.setIcon(myInactiveIcon);
+      setBorder(small ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER);
     }
   }
 
-  private void onMouseEnter() {
-    myButton.setBackground(HintUtil.QUESTION_COLOR);
-    myButton.setIcon(myHighlightedIcon);
-    setBorder(BorderFactory.createLineBorder(Color.black));
-    myButton.setMargin(ACTIVE_MARGIN);
-    updateComponentHintSize();
+  private void onMouseEnter(final boolean small) {
+    myIconLabel.setIcon(myHighlightedIcon);
+    setBorder(small ? ACTIVE_BORDER_SMALL : ACTIVE_BORDER);
 
     String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     if (acceleratorsText.length() > 0) {
-      myButton.setToolTipText(CodeInsightBundle.message("lightbulb.tooltip", acceleratorsText));
+      myIconLabel.setToolTipText(CodeInsightBundle.message("lightbulb.tooltip", acceleratorsText));
     }
-  }
-
-  private void updateComponentHintSize() {
-    Component component = myComponentHint.getComponent();
-    component.setSize(getPreferredSize().width, getHeight());
   }
 
   @TestOnly
@@ -322,6 +354,31 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         myPopupShown = false;
       }
     });
+
+    if (myEditor.isOneLineMode()) {
+      // hide popup on combobox popup show
+      final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, myEditor.getContentComponent());
+      if (ancestor != null) {
+        final JComboBox comboBox = (JComboBox)ancestor;
+        myOuterComboboxPopupListener = new PopupMenuListener() {
+          @Override
+          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            hide();
+          }
+
+          @Override
+          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+          }
+
+          @Override
+          public void popupMenuCanceled(PopupMenuEvent e) {
+          }
+        };
+
+        comboBox.addPopupMenuListener(myOuterComboboxPopupListener);
+      }
+    }
+
     Disposer.register(this, myPopup);
     Disposer.register(myPopup, new Disposable() {
       public void dispose() {

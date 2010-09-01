@@ -15,20 +15,17 @@
  */
 package com.intellij.openapi.util;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
-/**
- *
- */
+
 public class Pair<A, B> {
   public final A first;
   public final B second;
-  private final int hashcode;
 
   public Pair(A first, B second) {
     this.first = first;
     this.second = second;
-    hashcode = new HashCodeBuilder().append(first).append(second).toHashCode();
   }
 
   public final A getFirst() {
@@ -43,12 +40,23 @@ public class Pair<A, B> {
     return new Pair<A,B>(first, second);
   }
 
-  public final boolean equals(Object o){
+  @SuppressWarnings({"UnusedDeclaration"})
+  public static <A, B> Function<A, Pair<A, B>> createFunction(@Nullable final B value) {
+    return new Function<A, Pair<A, B>>() {
+      public Pair<A, B> fun(A a) {
+        return create(a, value);
+      }
+    };
+  }
+
+  public final boolean equals(Object o) {
     return o instanceof Pair && Comparing.equal(first, ((Pair)o).first) && Comparing.equal(second, ((Pair)o).second);
   }
 
-  public final int hashCode() {
-    return hashcode;
+  public int hashCode() {
+    int result = first != null ? first.hashCode() : 0;
+    result = 31 * result + (second != null ? second.hashCode() : 0);
+    return result;
   }
 
   public String toString() {

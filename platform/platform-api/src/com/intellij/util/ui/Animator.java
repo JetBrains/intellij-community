@@ -124,6 +124,15 @@ public abstract class Animator implements Disposable {
         }
       }
     };
+
+    if (myTimer == null) {
+      try {
+        cycleEnd();
+      }
+      catch (InterruptedException e) {
+        return;
+      }
+    }
   }
 
   @SuppressWarnings({"SSBasedInspection"})

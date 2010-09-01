@@ -15,42 +15,14 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
+/**
+ * @author Eugene Zhuravlev
+ *         Date: Aug 13, 2010
+ */
+public interface AntDomReference {
+  boolean shouldBeSkippedByAnnotator();
 
-public abstract class AntDomReference extends CachingReference {
-  private final PsiElement myElement;
-  private final String myText;
-  private final TextRange myTextRange;
+  void setShouldBeSkippedByAnnotator(boolean value);
 
-  protected AntDomReference(final PsiElement element, final String str, final TextRange textRange) {
-    myElement = element;
-    myText = str;
-    myTextRange = textRange;
-  }
-
-  public PsiElement getElement() {
-    return myElement;
-  }
-
-  public TextRange getRangeInElement() {
-    return myTextRange;
-  }
-
-  public String getCanonicalText() {
-    return myText;
-  }
-
-  public String getUnresolvedMessagePattern() {
-    return CodeInsightBundle.message("error.cannot.resolve.default.message", "");
-  }
-
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
+  String getUnresolvedMessagePattern();
 }

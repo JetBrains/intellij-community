@@ -54,7 +54,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
           final Document document = editor.getDocument();
           final TextRange textRange = evaluator.getExpressionRangeAtOffset(session.getProject(), document, offset);
           if (textRange != null) {
-            text = textRange.substring(document.getText());
+            text = document.getText(textRange);
           }
         }
       }

@@ -32,7 +32,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor;
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -389,14 +388,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     if(myContext.isHasSecondStroke()){
       myFirstKeyStroke=keyStroke;
-      ArrayList<Pair<AnAction, KeyStroke>> secondKeyStorkes = new ArrayList<Pair<AnAction,KeyStroke>>();
+      ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = new ArrayList<Pair<AnAction,KeyStroke>>();
       for (AnAction action : myContext.getActions()) {
         Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
         for (Shortcut shortcut : shortcuts) {
           if (shortcut instanceof KeyboardShortcut) {
             KeyboardShortcut keyShortcut = (KeyboardShortcut)shortcut;
             if (keyShortcut.getFirstKeyStroke().equals(myFirstKeyStroke)) {
-              secondKeyStorkes.add(new Pair<AnAction, KeyStroke>(action, keyShortcut.getSecondKeyStroke()));
+              secondKeyStrokes.add(new Pair<AnAction, KeyStroke>(action, keyShortcut.getSecondKeyStroke()));
             }
           }
         }
@@ -406,8 +405,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
       StringBuilder message = new StringBuilder();
       message.append(KeyMapBundle.message("prefix.key.pressed.message"));
       message.append(' ');
-      for (int i = 0; i < secondKeyStorkes.size(); i++) {
-        Pair<AnAction, KeyStroke> pair = secondKeyStorkes.get(i);
+      for (int i = 0; i < secondKeyStrokes.size(); i++) {
+        Pair<AnAction, KeyStroke> pair = secondKeyStrokes.get(i);
         if (i > 0) message.append(", ");
         message.append(pair.getFirst().getTemplatePresentation().getText());
         message.append(" (");
@@ -601,6 +600,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
     myContext.setHasSecondStroke(hasSecondStroke);
+
+    Comparator<? super AnAction> comparator = PlatformDataKeys.ACTIONS_SORTER.getData(myContext.getDataContext());
+    if (comparator != null) {
+      Collections.sort(myContext.getActions(), comparator);
+    }
 
     return myContext;
   }

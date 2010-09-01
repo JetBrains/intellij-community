@@ -15,13 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.ImplicitVariable;
+import com.intellij.psi.NavigatablePsiElement;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 04.02.2008
  */
-public interface GrImplicitVariable extends ImplicitVariable {
+public interface GrImplicitVariable extends ImplicitVariable, NavigatablePsiElement {
 }

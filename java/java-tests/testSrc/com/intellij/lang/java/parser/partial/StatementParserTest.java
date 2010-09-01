@@ -36,6 +36,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testBlockIncomplete0() { doParserTest("{ /*}"); }
   public void testBlockIncomplete1() { doParserTest("{ { }"); }
   public void testBlockIncomplete2() { doParserTest("{ else; catch; finally; }"); }
+  public void testSCR5202() { doParserTest("{ String.class.\n String[] strings; }"); }
 
   public void testBreakNormal0() { doParserTest("{ break; }"); }
   public void testBreakNormal1() { doParserTest("{ break LABEL; }"); }

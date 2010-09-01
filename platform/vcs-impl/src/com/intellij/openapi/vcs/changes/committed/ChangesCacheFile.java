@@ -707,6 +707,8 @@ public class ChangesCacheFile {
       myClManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       final DiffProvider diffProvider = myVcs.getDiffProvider();
       if (diffProvider == null) return false;
+
+      myLocation.onBeforeBatch();
       final Collection<FilePath> incomingFiles = myChangesProvider.getIncomingFiles(myLocation);
       boolean anyChanges = false;
       openStreams();
@@ -749,6 +751,7 @@ public class ChangesCacheFile {
         }
       }
       finally {
+        myLocation.onAfterBatch();
         closeStreams();
       }
       return anyChanges;

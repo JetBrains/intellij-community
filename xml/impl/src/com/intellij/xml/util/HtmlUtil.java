@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
+import com.intellij.html.index.Html5CustomAttributesIndex;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -31,18 +32,18 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
@@ -56,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -66,9 +68,10 @@ import java.util.StringTokenizer;
 public class HtmlUtil {
   @NonNls private static final String JSFC = "jsfc";
   @NonNls private static final String CHARSET_PREFIX = "charset=";
+  public static final String HTML5_DATA_ATTR_PREFIX = "data-";
 
   private HtmlUtil() {}
-  @NonNls private static final String[] EMPTY_TAGS = { 
+  @NonNls private static final String[] EMPTY_TAGS = {
     "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col", /*html 5*/ "source"
   };
   private static final Set<String> EMPTY_TAGS_MAP = new THashSet<String>();
@@ -196,17 +199,43 @@ public class HtmlUtil {
 
   public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
-    if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
+    boolean html5Context = isHtml5Context(context);
+    if (entitiesString == null && !html5Context) return XmlAttributeDescriptor.EMPTY;
 
-    StringTokenizer tokenizer = new StringTokenizer(entitiesString,",");
-    XmlAttributeDescriptor[] descriptors = new XmlAttributeDescriptor[tokenizer.countTokens()];
-    int index = 0;
+    final List<String> customAttrNames;
+    if (entitiesString != null) {
+      StringTokenizer tokenizer = new StringTokenizer(entitiesString, ",");
+      customAttrNames = new ArrayList<String>(tokenizer.countTokens());
 
-    while(tokenizer.hasMoreElements()) {
-      final String customName = tokenizer.nextToken();
-      if (customName.length() == 0) continue;
+      while (tokenizer.hasMoreElements()) {
+        final String customName = tokenizer.nextToken();
+        if (customName.length() > 0) {
+          customAttrNames.add(customName);
+        }
+      }
+    }
+    else {
+      customAttrNames = new ArrayList<String>();
+    }
 
-      descriptors[index++] = new XmlAttributeDescriptorImpl() {
+    if (context != null && html5Context) {
+      final String currentAttrName = context instanceof XmlAttribute ? ((XmlAttribute)context).getName() : "";
+      FileBasedIndex.getInstance().processAllKeys(Html5CustomAttributesIndex.ID, new Processor<String>() {
+        @Override
+        public boolean process(String s) {
+          if (!currentAttrName.startsWith(s)) {
+            customAttrNames.add(s);
+          }
+          return true;
+        }
+      }, context.getProject());
+    }
+
+    XmlAttributeDescriptor[] descriptors = new XmlAttributeDescriptor[customAttrNames.size()];
+
+    for (int i = 0, n = customAttrNames.size(); i < n; i++) {
+      final String customName = customAttrNames.get(i);
+      descriptors[i] = new XmlAttributeDescriptorImpl() {
         public String getName(PsiElement context) {
           return customName;
         }
@@ -294,7 +323,7 @@ public class HtmlUtil {
     if (declarationTag.getPrefixByNamespace(XmlUtil.JSF_HTML_URI) != null &&
         declarationTag.getNSDescriptor(XmlUtil.XHTML_URI, true) != null &&
         !XmlUtil.JSP_URI.equals(declarationTag.getNamespace())) {
-      
+
       descriptors = ArrayUtil.append(
         descriptors,
         new XmlAttributeDescriptorImpl() {
@@ -309,6 +338,23 @@ public class HtmlUtil {
       );
     }
     return descriptors;
+  }
+
+  public static boolean isHtml5Document(XmlDocument doc) {
+    if (!(doc instanceof HtmlDocumentImpl)) {
+      return false;
+    }
+    XmlProlog prolog = doc.getProlog();
+    if (prolog == null) {
+      return false;
+    }
+    XmlDoctype doctype = prolog.getDoctype();
+    return doctype != null && doctype.getDtdUri() == null && doctype.getPublicId() == null;
+  }
+
+  public static boolean isHtml5Context(XmlElement context) {
+    XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
+    return isHtml5Document(doc);
   }
 
   private static class TerminateException extends RuntimeException {
@@ -349,7 +395,7 @@ public class HtmlUtil {
             terminate();
           }
           if ("head".equals(name)) {
-            terminate();  
+            terminate();
           }
           inTag.remove(name);
           metHttpEquiv = false;

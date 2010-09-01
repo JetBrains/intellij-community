@@ -400,8 +400,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
               }
             }
           } else {
-            EnumSet<ClassHint.ResolveKind> kinds = kind == CLASS ? EnumSet.of(ClassHint.ResolveKind.CLASS) :
-                EnumSet.of(ClassHint.ResolveKind.PACKAGE, ClassHint.ResolveKind.CLASS);
+            EnumSet<ClassHint.ResolveKind> kinds = kind == CLASS ? ResolverProcessor.RESOLVE_KINDS_CLASS :
+                                                   ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE;
             ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds);
             ResolveUtil.treeWalkUp(ref, processor, false);
             GroovyResolveResult[] candidates = processor.getCandidates();

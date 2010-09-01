@@ -25,6 +25,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -57,7 +58,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     final String name = method.getName();
     final MethodResolverProcessor processor = new MethodResolverProcessor(name, ((GrMethod)method), false, null, null, PsiType.EMPTY_ARRAY);
-    ResolveUtil.processNonCodeMethods(JavaPsiFacade.getElementFactory(project).createType(psiClass), processor, method);
+    ResolveUtil.processNonCodeMethods(JavaPsiFacade.getElementFactory(project).createType(psiClass), processor, (GrMethod)method);
 
     final GroovyResolveResult[] candidates = processor.getCandidates();
 

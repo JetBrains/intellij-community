@@ -62,7 +62,7 @@ public class XValueHint extends AbstractValueHint {
     myEvaluator = evaluator;
     myDebugSession = session;
     final Document document = editor.getDocument();
-    myExpression = textRange.substring(document.getText());
+    myExpression = document.getText(textRange);
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     myExpressionPosition = file != null ? XDebuggerUtil.getInstance().createPositionByOffset(file, textRange.getStartOffset()) : null;
   }

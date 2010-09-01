@@ -125,7 +125,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     PsiReference ref = position.getContainingFile().findReferenceAt(startOffset);
 
     if (ref!=null && completion instanceof PsiNamedElement) {
-      if (completion instanceof PsiMethod || completion instanceof PsiField) {
+      if (completion instanceof PsiField) {
         final PsiMember member = (PsiMember)completion;
         if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null
             && member.hasModifierProperty(PsiModifier.STATIC)

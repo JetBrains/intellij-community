@@ -17,6 +17,7 @@ package org.intellij.plugins.intelliLang.inject.quickedit;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -150,6 +151,7 @@ public class QuickEditAction implements IntentionAction {
     private final Map<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>> myMarkers =
       new LinkedHashMap<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>>();
     private EditorWindow mySplittedWindow;
+    private boolean myReleased;
 
     private MyHandler(Project project, PsiFile injectedFile, final PsiFile origFile, Document origDocument) {
       myProject = project;
@@ -157,13 +159,14 @@ public class QuickEditAction implements IntentionAction {
       myOrigDocument = origDocument;
       final Place shreds = InjectedLanguageUtil.getShreds(myInjectedFile);
       final FileType fileType = injectedFile.getFileType();
+      final Language language = injectedFile.getLanguage();
 
       final PsiFileFactory factory = PsiFileFactory.getInstance(project);
       final String text = InjectedLanguageManager.getInstance(project).getUnescapedText(injectedFile);
       final String newFileName =
-        StringUtil.notNullize(((LanguageFileType)fileType).getLanguage().getDisplayName(), "Injected") + " Fragment " + "(" +
+        StringUtil.notNullize(language.getDisplayName(), "Injected") + " Fragment " + "(" +
         origFile.getName() + ":" + shreds.get(0).host.getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
-      myNewFile = factory.createFileFromText(newFileName, fileType, text, LocalTimeCounter.currentTime(), true);
+      myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
       myNewVirtualFile = (LightVirtualFile)myNewFile.getVirtualFile();
       assert myNewVirtualFile != null;
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
@@ -204,6 +207,7 @@ public class QuickEditAction implements IntentionAction {
         @Override
         public void editorReleased(EditorFactoryEvent event) {
           if (event.getEditor().getDocument() == myNewDocument) {
+            myReleased = true;
             event.getFactory().removeEditorFactoryListener(this);
             myOrigDocument.removeDocumentListener(MyHandler.this);
             myInjectedFile.putUserData(QUICK_EDIT_HANDLER, null);
@@ -288,7 +292,7 @@ public class QuickEditAction implements IntentionAction {
     private void commitToOriginal() {
       if (!isValid()) return;
       final PsiFile origFile = (PsiFile)myNewFile.getUserData(FileContextUtil.INJECTED_IN_ELEMENT).getElement();
-      myOrigDocument.removeDocumentListener(this);
+      if (!myReleased) myOrigDocument.removeDocumentListener(this);
       try {
         new WriteCommandAction.Simple(myProject, origFile) {
           @Override
@@ -303,7 +307,7 @@ public class QuickEditAction implements IntentionAction {
         }.execute();
       }
       finally {
-        myOrigDocument.addDocumentListener(this);
+        if (!myReleased) myOrigDocument.addDocumentListener(this);
       }
     }
 

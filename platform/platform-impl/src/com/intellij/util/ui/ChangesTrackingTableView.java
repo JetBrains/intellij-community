@@ -15,19 +15,27 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.table.TableView;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.TableCellEditor;
+import javax.swing.text.Document;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.EventObject;
 
 public abstract class ChangesTrackingTableView<T> extends TableView<T> {
 
-  private DocumentAdapter myMessageUpdater;
+  private Disposable myEditorListenerDisposable;
 
-  protected abstract void onTextChanged(int row, int column, String value);
+  protected abstract void onCellValueChanged(int row, int column, Object value);
 
   protected abstract void onEditingStopped();
 
@@ -43,21 +51,18 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
   @Override
   public boolean editCellAt(final int row, final int column, EventObject e) {
     if (super.editCellAt(row, column, e)) {
-      assert myMessageUpdater == null;
-      final JTextField textField;
-      if (getEditorComponent() instanceof CellEditorComponentWithBrowseButton) {
-        textField = (JTextField)((CellEditorComponentWithBrowseButton)editorComp).getChildComponent();
-      }
-      else {
-        textField = (JTextField)getEditorComponent();
-      }
-      myMessageUpdater = new DocumentAdapter() {
+      assert myEditorListenerDisposable == null;
+      myEditorListenerDisposable = new Disposable() {
         @Override
-        protected void textChanged(DocumentEvent e) {
-          onTextChanged(row, column, textField.getText());
+        public void dispose() {
         }
       };
-      textField.getDocument().addDocumentListener(myMessageUpdater);
+      addChangeListener(getEditorComponent(), new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          onCellValueChanged(row, column, getValue(getEditorComponent()));
+        }
+      }, myEditorListenerDisposable);
       return true;
     }
     return false;
@@ -65,19 +70,67 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
 
   @Override
   public void removeEditor() {
-    if (myMessageUpdater != null) {
-      final JTextField textField;
-      if (getEditorComponent() instanceof CellEditorComponentWithBrowseButton) {
-        textField = (JTextField)((CellEditorComponentWithBrowseButton)editorComp).getChildComponent();
-      }
-      else {
-        textField = (JTextField)getEditorComponent();
-      }
-      textField.getDocument().removeDocumentListener(myMessageUpdater);
-      myMessageUpdater = null;
+    if (myEditorListenerDisposable != null) {
+      Disposer.dispose(myEditorListenerDisposable);
+      myEditorListenerDisposable = null;
     }
 
     onEditingStopped();
     super.removeEditor();
   }
+
+  public static Object getValue(Component component) {
+    if (component instanceof CellEditorComponentWithBrowseButton) {
+      final JTextField textField = (JTextField)((CellEditorComponentWithBrowseButton)component).getChildComponent();
+      return textField.getText();
+    }
+    else if (component instanceof JTextField) {
+      return ((JTextField)component).getText();
+    }
+    else if (component instanceof JComboBox) {
+      return ((JComboBox)component).getSelectedItem();
+    }
+    throw new UnsupportedOperationException("editor control of type " + component.getClass().getName() + " is not supported");
+  }
+
+  private static void addChangeListener(final Component component, final ChangeListener listener, Disposable parentDisposable) {
+    if (component instanceof CellEditorComponentWithBrowseButton) {
+      addChangeListener(((CellEditorComponentWithBrowseButton)component).getChildComponent(), listener, parentDisposable);
+    }
+    else if (component instanceof JTextField) {
+      final DocumentAdapter documentListener = new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          listener.stateChanged(new ChangeEvent(component));
+        }
+      };
+      final Document document = ((JTextField)component).getDocument();
+      document.addDocumentListener(documentListener);
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          document.removeDocumentListener(documentListener);
+        }
+      });
+    }
+    else if (component instanceof JComboBox) {
+      final ActionListener comboListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          listener.stateChanged(new ChangeEvent(component));
+        }
+      };
+      ((JComboBox)component).addActionListener(comboListener);
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          ((JComboBox)component).removeActionListener(comboListener);
+        }
+      });
+    }
+    else {
+      throw new UnsupportedOperationException("editor control of type " + component.getClass().getName() + " is not supported");
+    }
+  }
+
 }

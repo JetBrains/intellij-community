@@ -29,7 +29,7 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
     myNameIdentifier = new GrLightIdentifier(myManager, name);
   }
 
-    public void accept(@NotNull PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitImplicitVariable(this);
     }
@@ -51,6 +51,11 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
   @Override
   public boolean hasModifierProperty(@NotNull String modifier) {
     return myInnerModifierList.hasModifierProperty(modifier);
+  }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return another == getNavigationElement() || super.isEquivalentTo(another);
   }
 
   protected static class GrLightIdentifier extends LightIdentifier {

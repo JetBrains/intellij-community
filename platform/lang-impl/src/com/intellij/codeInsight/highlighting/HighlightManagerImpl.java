@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -41,7 +42,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,6 +102,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
 
   @Nullable
   public Map<RangeHighlighter, HighlightInfo> getHighlightInfoMap(Editor editor, boolean toCreate) {
+    if (editor instanceof EditorWindow) return getHighlightInfoMap(((EditorWindow)editor).getDelegate(), toCreate);
     Map<RangeHighlighter, HighlightInfo> map = editor.getUserData(HIGHLIGHT_INFO_MAP_KEY);
     if (map == null && toCreate) {
       map = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHT_INFO_MAP_KEY, new HashMap<RangeHighlighter, HighlightInfo>());
@@ -248,10 +249,8 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
 
     for (PsiElement element : elements) {
       TextRange range = element.getTextRange();
-      int offset = PsiUtilBase.findInjectedElementOffsetInRealDocument(element);
-      int start = range.getStartOffset() + offset;
-      int end = range.getEndOffset() + offset;
-      addOccurrenceHighlight(editor, start, end, attributes, flags, outHighlighters, scrollmarkColor);
+      range = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, range);
+      addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, flags, outHighlighters, scrollmarkColor);
     }
   }
 

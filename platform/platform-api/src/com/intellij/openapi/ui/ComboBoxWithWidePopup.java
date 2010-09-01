@@ -16,6 +16,9 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.util.Vector;
 import java.awt.*;
@@ -26,14 +29,20 @@ public class ComboBoxWithWidePopup extends JComboBox {
 
   public ComboBoxWithWidePopup(final ComboBoxModel aModel) {
     super(aModel);
+
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
   public ComboBoxWithWidePopup(final Object items[]) {
     super(items);
+
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
   public ComboBoxWithWidePopup(final Vector<?> items) {
     super(items);
+
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
   public ComboBoxWithWidePopup() {

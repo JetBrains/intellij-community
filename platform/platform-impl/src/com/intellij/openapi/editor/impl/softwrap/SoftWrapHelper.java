@@ -42,35 +42,6 @@ public class SoftWrapHelper {
    * </pre>
    * <p/>
    * This method allows to answer if caret offset of the given editor points to soft wrap and visual caret position
-   * belongs to the visual line where soft wrap start is located.
-   *
-   * @param editor    target editor
-   * @return          <code>true</code> if caret offset of the given editor points to visual position that belongs to
-   *                  visual line before the soft wrap
-   */
-  public static boolean isCaretBeforeSoftWrap(Editor editor) {
-    CaretModel caretModel = editor.getCaretModel();
-    SoftWrapModel softWrapModel = editor.getSoftWrapModel();
-    int offset = caretModel.getOffset();
-    TextChange softWrap = softWrapModel.getSoftWrap(offset);
-    if (softWrap == null) {
-      return false;
-    }
-
-    return editor.offsetToVisualPosition(offset).line != caretModel.getVisualPosition().line;
-  }
-
-  /**
-   * Every soft wrap implies that multiple visual positions correspond to the same document offset. We can classify
-   * such positions by the following criteria:
-   * <pre>
-   * <ul>
-   *   <li>positions from visual line with soft wrap start;</li>
-   *   <li>positions from visual line with soft wrap end;</li>
-   * </ul>
-   * </pre>
-   * <p/>
-   * This method allows to answer if caret offset of the given editor points to soft wrap and visual caret position
    * belongs to the visual line where soft wrap end is located.
    *
    * @param editor    target editor

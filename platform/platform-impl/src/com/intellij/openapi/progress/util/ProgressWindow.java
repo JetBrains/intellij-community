@@ -159,8 +159,10 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   public void startBlocking() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(!isRunning());
-    LOG.assertTrue(!myStoppedAlready);
+    synchronized (this) {
+      LOG.assertTrue(!isRunning());
+      LOG.assertTrue(!myStoppedAlready);
+    }
 
     enterModality();
 
@@ -485,7 +487,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
     public void cancel() {
       if (myShouldShowCancel) {
-        myCancelButton.setEnabled(false);
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            myCancelButton.setEnabled(false);
+          }
+        });
       }
     }
 

@@ -34,7 +34,7 @@ public interface PsiAnnotationOwner {
 
   /**
    * @return the list of annotations which are applicable to this owner.
-   * E.g. Type annotations on method belong to its type element, not them method.
+   * E.g. Type annotations on method belong to its type element, not the method.
    */
   @NotNull PsiAnnotation[] getApplicableAnnotations();
 

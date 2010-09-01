@@ -25,6 +25,9 @@ public interface ExtensionPoint<T> {
   String getName();
   AreaInstance getArea();
 
+  /**
+   * @deprecated use {@link #getClassName()} instead
+   */
   String getBeanClassName();
 
   void registerExtension(@NotNull T extension);
@@ -46,4 +49,10 @@ public interface ExtensionPoint<T> {
   void reset();
 
   Class<T> getExtensionClass();
+
+  Kind getKind();
+
+  String getClassName();
+
+  enum Kind {INTERFACE, BEAN_CLASS}
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,6 +69,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     setFocusable(false);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
     myMinimumButtonSize = minimumSize;
+
+    putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
   }
 
   public void setNoIconsInPopup(boolean noIconsInPopup) {

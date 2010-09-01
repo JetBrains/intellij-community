@@ -84,14 +84,14 @@ public class AllClassesGetter {
         LOG.error(endOffset + " became invalid: " + context.getOffsetMap() + "; inserting " + qname);
       }
 
-      final RangeMarker toDelete = DefaultInsertHandler.insertSpace(endOffset, document);
+      final RangeMarker toDelete = JavaCompletionUtil.insertSpace(endOffset, document);
       psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
 
       boolean insertFqn=checkReference!=ClassNameInsertHandlerResult.REFERENCE_CORRECTED;
       if (checkReference == ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE && psiReference != null) {
         final PsiManager psiManager = file.getManager();
-        if (psiManager.areElementsEquivalent(psiClass, DefaultInsertHandler.resolveReference(psiReference))) {
+        if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(psiReference))) {
           insertFqn = false;
         }
         else if (psiClass.isValid()) {
@@ -101,7 +101,7 @@ public class AllClassesGetter {
               final PsiElement psiElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newUnderlying);
               if (psiElement != null) {
                 for (final PsiReference reference : psiElement.getReferences()) {
-                  if (psiManager.areElementsEquivalent(psiClass, DefaultInsertHandler.resolveReference(reference))) {
+                  if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(reference))) {
                     insertFqn = false;
                     endOffset = reference.getRangeInElement().getEndOffset() + reference.getElement().getTextRange().getStartOffset();
                     break;

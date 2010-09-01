@@ -68,6 +68,11 @@ public class TextComponentSoftWrapModel implements SoftWrapModel {
   }
 
   @Override
+  public boolean isInsideOrBeforeSoftWrap(@NotNull VisualPosition visual) {
+    return false;
+  }
+
+  @Override
   public int getSoftWrapIndentWidthInPixels(@NotNull TextChange softWrap) {
     return 0;
   }

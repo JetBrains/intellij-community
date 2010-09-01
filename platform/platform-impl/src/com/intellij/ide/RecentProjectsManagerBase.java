@@ -33,6 +33,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.InputEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -198,7 +199,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   @Nullable
   protected abstract String getProjectPath(Project project);
 
-  protected abstract void doOpenProject(String projectPath, Project projectToClose);
+  protected abstract void doOpenProject(String projectPath, Project projectToClose, final boolean forceOpenInNewFrame);
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(final Project project) {
@@ -226,7 +227,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
 
     public void actionPerformed(AnActionEvent e) {
-      doOpenProject(myProjectPath, PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+      final int modifiers = e.getModifiers();
+      final boolean forceOpenInNewFrame = (modifiers & InputEvent.CTRL_MASK) != 0 || (modifiers & InputEvent.SHIFT_MASK) != 0;
+      doOpenProject(myProjectPath, PlatformDataKeys.PROJECT.getData(e.getDataContext()), forceOpenInNewFrame);
     }
   }
 
@@ -243,7 +246,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       if (generalSettings.isReopenLastProject()) {
         String lastProjectPath = getLastProjectPath();
         if (lastProjectPath != null) {
-          doOpenProject(lastProjectPath, null);
+          doOpenProject(lastProjectPath, null, false);
         }
       }
     }

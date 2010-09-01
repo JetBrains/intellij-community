@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.psi.JavaPsiFacade
 
 /**
  * @author peter
@@ -182,6 +183,22 @@ Foo untyped() { [] }
       """
     assertEquals(2, MethodReferencesSearch.search(foo.constructors[0], false).findAll().size())
     assertEquals(2, MethodReferencesSearch.search(foo.constructors[1], false).findAll().size())
+  }
+
+  public void testLiteralWithinALiteral() throws Exception {
+    myFixture.addFileToProject "a.gpp", """
+class Foo {
+  Foo(Bar b) {}
+}
+
+class Bar {
+  Bar(String s) {}
+}
+
+Foo f = [['a']]
+Foo f2 = ['super':['super':'a']]
+"""
+    assertEquals 2, MethodReferencesSearch.search(JavaPsiFacade.getInstance(project).findClass("Bar").constructors[0]).findAll().size()
   }
 
 }

@@ -292,7 +292,12 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         if (cacheOnly) {
           ChangesCacheFile cacheFile = myCachesHolder.getCacheFile(vcs, file, location);
           if (!cacheFile.isEmpty()) {
-            return cacheFile.readChanges(settings, maxCount);
+
+            final RepositoryLocation fileLocation = cacheFile.getLocation();
+            fileLocation.onBeforeBatch();
+            final List<CommittedChangeList> committedChangeLists = cacheFile.readChanges(settings, maxCount);
+            fileLocation.onAfterBatch();
+            return committedChangeLists;
           }
           return null;
         }
@@ -303,7 +308,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         }
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.info(e);
       }
     }
     //noinspection unchecked
@@ -415,7 +420,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       return cacheFile.getProvider().getCommittedChanges(settings, location, maxCount);
     }
     else {
-      List<CommittedChangeList> changes = cacheFile.readChanges(settings, maxCount);
+      // we take location instance that would be used for deserialization
+      final RepositoryLocation fileLocation = cacheFile.getLocation();
+      fileLocation.onBeforeBatch();
+      final List<CommittedChangeList> changes = cacheFile.readChanges(settings, maxCount);
+      fileLocation.onAfterBatch();
       List<CommittedChangeList> newChanges = refreshCache(cacheFile);
       settings.filterChanges(newChanges);
       changes.addAll(newChanges);

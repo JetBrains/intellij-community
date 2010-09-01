@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ExternallyRenamedChange;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -429,12 +430,7 @@ public class SvnChangeList implements CommittedChangeList {
 
     private SvnRepositoryContentRevision createRevision(final String path, final boolean isBeforeRevision, final boolean isDir) {
       return SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path,
-                                                 getLocalPath(path, new NotNullFunction<File, Boolean>() {
-                                                   @NotNull
-                                                   public Boolean fun(final File file) {
-                                                     return isDir;
-                                                   }
-                                                 }), getRevision(isBeforeRevision));
+                                                 getLocalPath(path, new ConstantFunction<File, Boolean>(isDir)), getRevision(isBeforeRevision));
     }
   }
 

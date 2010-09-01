@@ -81,7 +81,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
   public void testUnaryOperators() {
     // Inspired by IDEA-52127
-    getSettings().SPACE_AFTER_UNARY_OPERATOR = false;
+    getSettings().SPACE_AROUND_UNARY_OPERATOR = false;
 
     String initial =
       "public class FormattingTest {\n" +
@@ -100,7 +100,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
     doTextTest(initial, initial); // Don't expect spaces to be inserted after unary operators
 
-    getSettings().SPACE_AFTER_UNARY_OPERATOR = true;
+    getSettings().SPACE_AROUND_UNARY_OPERATOR = true;
     String formatted =
       "public class FormattingTest {\n" +
       "    public void foo() {\n" +

@@ -31,23 +31,10 @@ public interface DomCollectionChildDescription extends DomChildrenDescription {
   
   @Nullable
   JavaMethod getGetterMethod();
-  @Nullable
-  JavaMethod getIndexedAdderMethod();
-  @Nullable
-  JavaMethod getAdderMethod();
 
   DomElement addValue(@NotNull DomElement parent);
   DomElement addValue(@NotNull DomElement parent, int index);
   DomElement addValue(@NotNull DomElement parent, Type type);
   DomElement addValue(@NotNull DomElement parent, Type type, int index);
-
-  @Nullable
-  JavaMethod getClassAdderMethod();
-
-  @Nullable
-  JavaMethod getIndexedClassAdderMethod();
-
-  @Nullable
-  JavaMethod getInvertedIndexedClassAdderMethod();
 
 }

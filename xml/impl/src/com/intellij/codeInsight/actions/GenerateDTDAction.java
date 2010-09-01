@@ -48,7 +48,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
           final XmlDocument document = ((XmlFile) file).getDocument();
           if(document.getRootTag() != null){
             buffer.append("<!DOCTYPE " + document.getRootTag().getName() + " [\n");
-            buffer.append(XmlUtil.generateDocumentDTD(document));
+            buffer.append(XmlUtil.generateDocumentDTD(document, true));
             buffer.append("]>\n");
             XmlFile tempFile;
             try{

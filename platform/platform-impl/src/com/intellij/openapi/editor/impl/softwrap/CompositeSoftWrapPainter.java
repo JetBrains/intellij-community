@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -22,12 +23,11 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.AFTER_SOFT_WRAP;
 import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED;
@@ -44,18 +44,59 @@ import static java.util.Arrays.asList;
  */
 public class CompositeSoftWrapPainter implements SoftWrapPainter {
 
-  private static final List<Map<SoftWrapDrawingType, Character>> SYMBOLS = asList(
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\u2926',                   '\u2925')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\uE48B',                   '\uE48C')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\u21B2',                   '\u21B3')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\u2936',                   '\u2937')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-          asList('\u21A9',                   '\u21AA'))
-  );
+  /**
+   * Defines a key to use for checking for code of the custom unicode symbol to use for <code>'before soft wrap'</code> representation.
+   * <p/>
+   * Target value (if any) is assumed to be in hex format.
+   */
+  public static final String CUSTOM_BEFORE_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.before.code";
+
+  /**
+   * Defines a key to use for checking for code of the custom unicode symbol to use for <code>'after soft wrap'</code> representation.
+   * <p/>
+   * Target value (if any) is assumed to be in hex format.
+   */
+  public static final String CUSTOM_AFTER_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.after.code";
+
+  private static final Logger LOG = Logger.getInstance("#" + CompositeSoftWrapPainter.class.getName());
+
+  private static final List<Map<SoftWrapDrawingType, Character>> SYMBOLS = new ArrayList<Map<SoftWrapDrawingType, Character>>();
+
+  static {
+    // Pickup custom soft wraps drawing symbols if both of the are defined.
+    Character customBeforeSymbol = parse(CUSTOM_BEFORE_SOFT_WRAP_SIGN_KEY);
+    if (customBeforeSymbol != null) {
+      Character customAfterSymbol = parse(CUSTOM_AFTER_SOFT_WRAP_SIGN_KEY);
+      if (customAfterSymbol != null) {
+        LOG.info(String.format("Picked up custom soft wrap drawing symbols: '%c' and '%c'", customBeforeSymbol, customAfterSymbol));
+        SYMBOLS.add(asMap(
+          asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+          asList(customBeforeSymbol,         customAfterSymbol))
+        );
+      }
+    }
+
+    SYMBOLS.add(asMap(
+      asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+      asList('\u2926',                   '\u2925'))
+    );
+    SYMBOLS.add(asMap(
+      asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+      asList('\u21B2',                   '\u21B3'))
+    );
+    SYMBOLS.add(asMap(
+      asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+      asList('\u2936',                   '\u2937'))
+    );
+    SYMBOLS.add(asMap(
+      asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+      asList('\u21A9',                   '\u21AA'))
+    );
+    SYMBOLS.add(asMap(
+      asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+      asList('\uE48B',                   '\uE48C'))
+    );
+  }
 
   private final EditorEx        myEditor;
   private       SoftWrapPainter myDelegate;
@@ -70,6 +111,31 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   public CompositeSoftWrapPainter(EditorEx editor) {
     myEditor = editor;
+  }
+
+  @Nullable
+  private static Character parse(String key) {
+    String value = System.getProperty(key);
+    if (value == null) {
+      return null;
+    }
+
+    value = value.trim();
+    if (value.isEmpty()) {
+      return null;
+    }
+
+    int code;
+    try {
+      code = Integer.parseInt(value, 16);
+    }
+    catch (NumberFormatException e) {
+      LOG.info(String.format("Detected invalid code for system property '%s' - '%s'. Expected to find hex number there. " +
+                               "Custom soft wraps signs will not be applied", key, value));
+      return null;
+    }
+
+    return (char)code;
   }
 
   @Override
@@ -108,7 +174,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     }
     if (++mySymbolsDrawingIndex < SYMBOLS.size()) {
       TextDrawingCallback callback = myEditor.getTextDrawingCallback();
-      ColorProvider colorHolder = ColorProvider.byColorScheme(myEditor, EditorColors.RIGHT_MARGIN_COLOR, EditorColors.WHITESPACES_COLOR);
+      ColorProvider colorHolder = ColorProvider.byColorScheme(myEditor, EditorColors.SOFT_WRAP_SIGN_COLOR);
       myDelegate = new TextBasedSoftWrapPainter(SYMBOLS.get(mySymbolsDrawingIndex), myEditor, callback, colorHolder);
       initDelegateIfNecessary();
       return;

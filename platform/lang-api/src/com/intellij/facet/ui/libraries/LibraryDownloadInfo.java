@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class LibraryDownloadInfo {
-  private final RemoteRepositoryInfo myRemoteRepository;
+  @Nullable private final RemoteRepositoryInfo myRemoteRepository;
   private final String myRelativeDownloadUrl;
   private final String myFileNamePrefix;
   private final String myFileNameSuffix;
@@ -91,7 +91,6 @@ public class LibraryDownloadInfo {
            : myRemoteRepository != null ? myRemoteRepository.getDefaultMirror() : myRelativeDownloadUrl;
   }
 
-
   @NotNull
   public String getPresentableUrl(String mirror) {
     return myPresentableUrl != null ? myPresentableUrl : mirror;
@@ -113,14 +112,11 @@ public class LibraryDownloadInfo {
   }
 
   public int hashCode() {
-    int result;
-    result = myRemoteRepository.hashCode();
-    result = 31 * result + myRelativeDownloadUrl.hashCode();
-    result = 31 * result + myFileNamePrefix.hashCode();
-    result = 31 * result + myFileNameSuffix.hashCode();
-    if (myPresentableUrl != null) {
-      result = 31 * result + myPresentableUrl.hashCode();
-    }
+    int result = myRemoteRepository != null ? myRemoteRepository.hashCode() : 0;
+    result = 31 * result + (myRelativeDownloadUrl != null ? myRelativeDownloadUrl.hashCode() : 0);
+    result = 31 * result + (myFileNamePrefix != null ? myFileNamePrefix.hashCode() : 0);
+    result = 31 * result + (myFileNameSuffix != null ? myFileNameSuffix.hashCode() : 0);
+    result = 31 * result + (myPresentableUrl != null ? myPresentableUrl.hashCode() : 0);
     return result;
   }
 }

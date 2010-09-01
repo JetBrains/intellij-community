@@ -207,8 +207,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public void insertString(final int offset, @NotNull CharSequence s) {
-    LOG.assertTrue(offset >= myShreds.get(0).prefix.length());
-    LOG.assertTrue(offset <= getTextLength() - myShreds.get(myShreds.size() - 1).suffix.length());
+    LOG.assertTrue(offset >= myShreds.get(0).prefix.length(), myShreds.get(0).prefix);
+    LOG.assertTrue(offset <= getTextLength() - myShreds.get(myShreds.size() - 1).suffix.length(), myShreds.get(myShreds.size() - 1).suffix);
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
     }
@@ -434,8 +434,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
   }
 
-  public void stripTrailingSpaces(final boolean inChangedLinesOnly) {
-    myDelegate.stripTrailingSpaces(inChangedLinesOnly);
+  public boolean stripTrailingSpaces(final boolean inChangedLinesOnly) {
+    return myDelegate.stripTrailingSpaces(inChangedLinesOnly);
   }
 
   public void setStripTrailingSpacesEnabled(final boolean isEnabled) {

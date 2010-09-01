@@ -19,7 +19,7 @@ package com.intellij.lang.ant.config;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.Nullable;
 
 public interface AntBuildFile {
@@ -33,8 +33,7 @@ public interface AntBuildFile {
 
   AntBuildModel getModel();
 
-  @Nullable
-  PsiFile getAntFile();
+  @Nullable XmlFile getAntFile();
 
   Project getProject();
 

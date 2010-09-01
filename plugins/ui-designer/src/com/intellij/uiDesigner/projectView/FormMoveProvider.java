@@ -17,55 +17,28 @@
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.actions.MoveAction;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.refactoring.move.MoveHandlerDelegate;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author yole
  */
-public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringActionHandler {
+public class FormMoveProvider extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.projectView.FormMoveProvider");
 
-  public boolean isEnabledOnDataContext(DataContext dataContext) {
+  @Override
+  public boolean canMove(DataContext dataContext) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     return forms != null && forms.length > 0;
   }
 
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
-    return this;
-  }
-
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    LOG.debug("invoked FormMoveProvider on file");
-  }
-
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();
-    for (PsiElement element : elements) {
-      if (element instanceof PsiPackage) continue;
-      if (MoveClassesOrPackagesHandlerBase.isPackageOrDirectory(element)) {
-        filesOrDirs.add(element);
-      } else {
-        final PsiFile containingFile = element.getContainingFile();
-        if (containingFile != null) {
-          filesOrDirs.add(containingFile);
-        }
-      }
-    }
+  @Override
+  public void collectFilesOrDirsFromContext(DataContext dataContext, Set<PsiElement> filesOrDirs) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     LOG.assertTrue(forms != null);
     PsiClass[] classesToMove = new PsiClass[forms.length];
@@ -80,10 +53,6 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
         filesOrDirs.add(filesToMove[i]);
       }
     }
-
-    final PsiElement initialTargetElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
-    MoveFilesOrDirectoriesUtil
-      .doMove(project, filesOrDirs.toArray(new PsiElement[filesOrDirs.size()]), new PsiElement[]{initialTargetElement}, null);
   }
 
 }

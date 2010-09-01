@@ -104,7 +104,7 @@ public class JavaUnresolvableLocalCollisionDetector {
                                                   String newName,
                                                   final CollidingVariableVisitor collidingNameVisitor) {
     final PsiVariable collidingVariable =
-      JavaPsiFacade.getInstance(scope.getProject()).getResolveHelper().resolveReferencedVariable(newName, scope);
+      JavaPsiFacade.getInstance(scope.getProject()).getResolveHelper().resolveAccessibleReferencedVariable(newName, scope);
     if (collidingVariable instanceof PsiLocalVariable || collidingVariable instanceof PsiParameter) {
       final PsiElement commonParent = PsiTreeUtil.findCommonParent(element, collidingVariable);
       if (commonParent != null) {

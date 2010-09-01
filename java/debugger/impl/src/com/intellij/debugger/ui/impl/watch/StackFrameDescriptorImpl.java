@@ -53,7 +53,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private MethodsTracker.MethodOccurrence myMethodOccurrence;
   private boolean myIsSynthetic;
   private boolean myIsInLibraryContent;
-  private Long myObjectId;
+  private ObjectReference myThisObject;
   private Color myBackgroundColor;
 
   private static final Icon myObsoleteFrameIcon = IconLoader.getIcon("/debugger/db_obsolete.png");
@@ -63,8 +63,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     myFrame = frame;
     try {
       myLocation = frame.location();
-      final ObjectReference thisObject = frame.thisObject();
-      myObjectId = thisObject != null? thisObject.uniqueID() : null;
+      myThisObject = frame.thisObject();
       myMethodOccurrence = tracker.getMethodOccurrence(myLocation.method());
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
       ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -127,10 +126,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   @Nullable
   public ValueMarkup getValueMarkup() {
-    if (myObjectId != null) {
-      final Map<Long,ValueMarkup> markupMap = getMarkupMap(myFrame.getVirtualMachine().getDebugProcess());
+    if (myThisObject != null) {
+      final Map<ObjectReference, ValueMarkup> markupMap = getMarkupMap(myFrame.getVirtualMachine().getDebugProcess());
       if (markupMap != null) {
-        return markupMap.get(myObjectId);
+        return markupMap.get(myThisObject);
       }
     }
     return null;

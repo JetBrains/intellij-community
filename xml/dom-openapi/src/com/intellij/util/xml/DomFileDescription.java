@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -24,7 +23,6 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentInstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,9 +114,13 @@ public class DomFileDescription<T> {
     return Collections.emptyList();
   }
 
-  @Deprecated
-  protected final void registerClassChooser(final Type aClass, final TypeChooser typeChooser, Disposable parentDisposable) {
-    registerTypeChooser(aClass, typeChooser);
+  /**
+   * @return some version. Override and change (e.g. <code>super.getVersion()+1</code>) when after some changes some files stopped being
+   * described by this description or vice versa, so that the
+   * {@link com.intellij.util.xml.DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project)} index is rebuilt correctly.
+   */
+  public int getVersion() {
+    return myRootTagName.hashCode();
   }
 
   protected final void registerTypeChooser(final Type aClass, final TypeChooser typeChooser) {
@@ -219,26 +221,6 @@ public class DomFileDescription<T> {
   @NotNull
   public Set<? extends Object> getDependencyItems(XmlFile file) {
     return Collections.emptySet();
-  }
-
-  /**
-   * @deprecated not used
-   */
-  @NotNull
-  public Set<Class<? extends DomElement>> getDomModelDependencyItems() {
-    return Collections.emptySet();
-  }
-
-  /**
-   * @deprecated not used
-   */
-  @NotNull
-  public Set<XmlFile> getDomModelDependentFiles(@NotNull DomFileElement changedRoot) {
-    return Collections.emptySet();
-  }
-
-  protected static Set<Class<? extends DomElement>> convertToSet(Class<? extends DomElement> classes) {
-    return new THashSet<Class<? extends DomElement>>(Arrays.asList(classes));
   }
 
   /**

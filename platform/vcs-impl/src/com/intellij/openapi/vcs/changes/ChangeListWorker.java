@@ -246,15 +246,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public void addChangeToCorrespondingList(final Change change, final VcsKey vcsKey) {
     final String path = LOG.isDebugEnabled() ? ChangesUtil.getFilePath(change).getPath() : "";
-    LOG.debug("[addChangeToCorrespondingList] for change " + path);
+    LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     assert myDefault != null;
     for (LocalChangeList list : myMap.values()) {
       if (list.isDefault()) {
-        LOG.debug("[addChangeToCorrespondingList] skip default list: " + list.getName());
+        LOG.debug("[addChangeToCorrespondingList] skip default list: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
         continue;
       }
       if (((LocalChangeListImpl) list).processChange(change)) {
-        LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
+        LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
         myIdx.changeAdded(change, vcsKey);
         correctChangeListEditHandler(list);
         return;
@@ -763,6 +763,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     public void setListsToDisappear(final Collection<String> names) {
       myWorker.setListsToDisappear(names);
+    }
+
+    @Override
+    public FileStatus getStatus(VirtualFile file) {
+      return myWorker.getStatus(file);
     }
   }
 

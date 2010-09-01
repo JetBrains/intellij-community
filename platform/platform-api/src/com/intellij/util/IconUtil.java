@@ -28,12 +28,9 @@ import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 
 
 public class IconUtil {
@@ -137,29 +134,6 @@ public class IconUtil {
           return icon;
         }
       });
-  }
-
-  @NotNull
-  public static Icon getDisabledIcon(@NotNull final Icon icon) {
-    final BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_4BYTE_ABGR);
-    icon.paintIcon(new JLabel(), image.getGraphics(), 0, 0);
-    final Image disabledImage = GrayFilter.createDisabledImage(image);
-    return new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.drawImage(disabledImage, x, y, null);
-      }
-
-      @Override
-      public int getIconWidth() {
-        return disabledImage.getWidth(null);
-      }
-
-      @Override
-      public int getIconHeight() {
-        return disabledImage.getHeight(null);
-      }
-    };
   }
 
   @Nullable

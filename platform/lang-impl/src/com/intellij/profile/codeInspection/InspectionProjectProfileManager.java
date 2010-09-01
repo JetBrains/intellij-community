@@ -38,7 +38,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -109,6 +108,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return getInspectionProfile();
   }
 
+  @NotNull
   public InspectionProfileWrapper getProfileWrapper(){
     final InspectionProfile profile = getInspectionProfile();
     final String profileName = profile.getName();

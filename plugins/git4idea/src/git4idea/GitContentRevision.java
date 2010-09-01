@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
@@ -28,6 +29,7 @@ import git4idea.commands.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
 
 /**
@@ -110,9 +112,13 @@ public class GitContentRevision implements ContentRevision {
                                                String path,
                                                VcsRevisionNumber revisionNumber,
                                                Project project,
-                                               boolean isDeleted) throws VcsException {
-    final String name = vcsRoot.getPath() + "/" + GitUtil.unescapePath(path);
-    final FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(name, false) : VcsUtil.getFilePath(name, false);
+                                               boolean isDeleted, final boolean canBeDeleted) throws VcsException {
+    final String absolutePath = vcsRoot.getPath() + "/" + GitUtil.unescapePath(path);
+    FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(absolutePath, false) : VcsUtil.getFilePath(absolutePath, false);
+    if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsUtil.caseDiffers(file.getPath(), absolutePath)) {
+      // as for deleted file
+      file = FilePathImpl.createForDeletedFile(new File(absolutePath), false);
+    }
     if (revisionNumber != null) {
       return new GitContentRevision(file, (GitRevisionNumber)revisionNumber, project);
     }

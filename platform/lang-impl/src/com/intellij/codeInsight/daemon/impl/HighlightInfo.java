@@ -29,6 +29,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -44,6 +45,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -411,6 +413,10 @@ public class HighlightInfo {
 
     @Nullable
     public List<IntentionAction> getOptions(@NotNull PsiElement element) {
+      Editor editor = PsiUtilBase.findEditor(element);
+      if (editor != null && Boolean.FALSE.equals(editor.getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
+        return null;
+      }
       List<IntentionAction> options = myOptions;
       HighlightDisplayKey key = myKey;
       if (options != null || key == null) {

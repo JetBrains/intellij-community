@@ -214,7 +214,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                            mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
         }
         else {
-          myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1,
+          myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER + 1,
                                            mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
         }
       }
@@ -1020,7 +1020,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       processModifierList();
     }
     else if (myRole1 == ChildRole.OPERATION_SIGN) {
-      createSpaceInCode(mySettings.SPACE_AFTER_UNARY_OPERATOR);
+      createSpaceInCode(mySettings.SPACE_AROUND_UNARY_OPERATOR);
     }
     else if (myChild1.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN
              && myChild2.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN)

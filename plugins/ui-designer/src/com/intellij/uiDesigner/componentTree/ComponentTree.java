@@ -179,8 +179,8 @@ public final class ComponentTree extends Tree implements DataProvider {
       LOG.assertTrue(node != null);
       final Object userObject = node.getUserObject();
       if (userObject instanceof ComponentPtrDescriptor) {
-        final NodeDescriptor descriptor = (NodeDescriptor)userObject;
-        final ComponentPtr ptr = (ComponentPtr)descriptor.getElement();
+        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)userObject;
+        final ComponentPtr ptr = descriptor.getElement();
         if (ptr != null && ptr.isValid()) {
           final RadComponent component = ptr.getComponent();
           LOG.assertTrue(component != null);
@@ -219,9 +219,10 @@ public final class ComponentTree extends Tree implements DataProvider {
       LOG.assertTrue(node != null);
       if (node.getUserObject() instanceof ComponentPtrDescriptor) {
         final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
-        final ComponentPtr ptr = (ComponentPtr)descriptor.getElement();
-        LOG.assertTrue(ptr != null && ptr.isValid());
-        result.add(ptr.getComponent());
+        final ComponentPtr ptr = descriptor.getElement();
+        if (ptr != null && ptr.isValid()) {
+          result.add(ptr.getComponent());
+        }
       }
     }
     return result.toArray(new RadComponent[result.size()]);
@@ -400,7 +401,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       if (node.getUserObject() instanceof ComponentPtrDescriptor) {
         final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
-        final ComponentPtr ptr = (ComponentPtr)descriptor.getElement();
+        final ComponentPtr ptr = descriptor.getElement();
         if (ptr == null) return;
         final RadComponent component = ptr.getComponent();
         LOG.assertTrue(component != null);

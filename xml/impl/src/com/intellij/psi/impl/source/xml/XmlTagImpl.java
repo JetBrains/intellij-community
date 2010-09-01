@@ -877,6 +877,23 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep);
   }
 
+  @Override
+  public XmlTag addSubTag(XmlTag subTag, boolean first) {
+    XmlTagChild[] children = getSubTags();
+    if (children.length == 0) {
+      children = getValue().getChildren();
+    }
+    if (children.length == 0) {
+      return (XmlTag)add(subTag);
+    }
+    else if (first) {
+      return (XmlTag)addBefore(subTag, children[0]);
+    }
+    else {
+      return (XmlTag)addAfter(subTag, ArrayUtil.getLastElement(children));
+    }
+  }
+
   @NotNull
   public XmlTagValue getValue() {
     XmlTagValue tagValue = myValue;
