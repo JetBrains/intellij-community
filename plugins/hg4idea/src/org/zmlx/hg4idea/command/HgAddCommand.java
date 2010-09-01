@@ -13,22 +13,43 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
-import org.zmlx.hg4idea.HgFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgUtil;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * A wrapper for 'hg add' command.
+ */
 public class HgAddCommand {
 
-  private final Project project;
+  private final Project myProject;
 
   public HgAddCommand(Project project) {
-    this.project = project;
+    myProject = project;
   }
 
-  public void execute(@NotNull HgFile hgFile) {
-    HgCommandService.getInstance(project)
-      .execute(hgFile.getRepo(), "add", Arrays.asList(hgFile.getRelativePath()));
+  /**
+   * Adds given files to their Mercurial repositories.
+   * @param hgFiles files to be added.
+   */
+  public void execute(@NotNull HgFile... hgFiles) {
+    execute(Arrays.asList(hgFiles));
+  }
+
+  /**
+   * Adds given files to their Mercurial repositories.
+   * @param hgFiles files to be added.
+   */
+  public void execute(@NotNull Collection<HgFile> hgFiles) {
+    for(Map.Entry<VirtualFile, List<String>> entry : HgUtil.getRelativePathsByRepository(hgFiles).entrySet()) {
+      HgCommandService.getInstance(myProject).execute(entry.getKey(), "add", entry.getValue());
+    }
   }
 
 }

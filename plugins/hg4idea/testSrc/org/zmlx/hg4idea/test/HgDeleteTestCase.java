@@ -12,11 +12,14 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.File;
+
+import static org.testng.Assert.fail;
 
 public class HgDeleteTestCase extends HgSingleUserTestCase {
 
@@ -60,6 +63,53 @@ public class HgDeleteTestCase extends HgSingleUserTestCase {
     runHgOnProjectRepo("commit", "-m", "added file");
     deleteFileInCommand(parent);
     verify(runHgOnProjectRepo("status"), HgTestOutputParser.removed("com", "a.txt"));
+  }
+
+  /**
+   * When deleting a file which was newly added to repository, this file shouldn't be prompted for removal from the repository.
+   * 1. Create a file and add it to the repository.
+   * 2. Remove the file from disk.
+   * 3. File shouldn't be prompted for removal from repository.
+   */
+  @Test
+  public void testNewlyAddedFileShouldNotBePromptedForRemoval() throws Exception {
+    showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
+    final VirtualFile vf = createFileInCommand("a.txt", null);
+    final HgMockVcsHelper helper = registerMockVcsHelper();
+    helper.addListener(new VcsHelperListener() {
+      @Override
+      public void dialogInvoked() {
+        fail("No dialog should be invoked, because newly added file should be silently removed from the repository");
+      }
+    });
+    deleteFileInCommand(vf);
+  }
+
+  /**
+   * A file is also considered to be newly added, if it has a history, but the last action was removal of that file.
+   * 1. Create a file, add it to the repository and commit.
+   * 2. Delete the file and commit it.
+   * 3. Create the file again and add it to the repository.
+   * 4. Delete the file.
+   * 5. File shouldn't be prompted for removal from repository.
+   */
+  @Test
+  public void testJustDeletedAndThenAddedFileShouldNotBePromptedForRemoval() throws Exception {
+    VirtualFile vf = createFileInCommand("a.txt", null);
+    myChangeListManager.commitFiles(vf);
+    deleteFileInCommand(vf);
+    myChangeListManager.commitFiles(vf);
+
+    showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
+    vf = createFileInCommand("a.txt", null);
+    final HgMockVcsHelper helper = registerMockVcsHelper();
+    helper.addListener(new VcsHelperListener() {
+      @Override
+      public void dialogInvoked() {
+        fail("No dialog should be invoked, because newly added file should be silently removed from the repository");
+      }
+    });
+    deleteFileInCommand(myProject, vf);
   }
 
 }
