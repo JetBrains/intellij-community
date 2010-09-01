@@ -95,9 +95,10 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
         setModified(!options.equals(uiOptions));
     }
 
-  public static void show(Project project) {
-        OptionsConfigurabe component = ShowSettingsUtil.getInstance().findApplicationConfigurable(OptionsConfigurabe.class);
-        ShowSettingsUtil.getInstance().editConfigurable(project, component);
+    public static void show(Project project) {
+        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+        OptionsConfigurabe component = util.createApplicationConfigurable(OptionsConfigurabe.class);
+        util.editConfigurable(project, component);
     }
 
   @NonNls

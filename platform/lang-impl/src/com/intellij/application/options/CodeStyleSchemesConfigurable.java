@@ -264,10 +264,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     return "reference.settingsdialog.IDE.globalcodestyle";
   }
 
-  public static CodeStyleSchemesConfigurable getInstance(Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, CodeStyleSchemesConfigurable.class);
-  }
-
   public void selectPage(Class pageToSelect) {
     //TODO lesya
     //getActivePanel().selectTab(pageToSelect);

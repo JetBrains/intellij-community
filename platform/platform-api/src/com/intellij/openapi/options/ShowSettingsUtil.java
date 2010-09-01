@@ -46,12 +46,21 @@ public abstract class ShowSettingsUtil {
 
   public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable);
 
-  public abstract boolean editProjectConfigurable(@NotNull Project project, Class<? extends Configurable> configurableClass,
-                                                  @NonNls @Nullable String dimensionServiceKey);
+  @NotNull
+  public abstract <T extends Configurable> T createProjectConfigurable(@NotNull Project project, Class<T> configurableClass);
+
+  @NotNull
+  public abstract <T extends Configurable> T createApplicationConfigurable(Class<T> configurableClass);
 
   public abstract boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable);
 
+  /**
+   * @deprecated use {@link #createProjectConfigurable} instead
+   */
   public abstract <T extends Configurable> T findProjectConfigurable(Project project, Class<T> confClass);
 
+  /**
+   * @deprecated use {@link #createApplicationConfigurable} instead
+   */
   public abstract <T extends Configurable> T findApplicationConfigurable(Class<T> confClass);
 }

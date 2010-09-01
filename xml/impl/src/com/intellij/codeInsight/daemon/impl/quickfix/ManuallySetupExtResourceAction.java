@@ -34,7 +34,7 @@ public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
 
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     ExternalResourceManager.getInstance().addResource(uri,"");
-    final ExternalResourceConfigurable component = ShowSettingsUtil.getInstance().findProjectConfigurable(file.getProject(), ExternalResourceConfigurable.class);
+    final ExternalResourceConfigurable component = ShowSettingsUtil.getInstance().createProjectConfigurable(file.getProject(), ExternalResourceConfigurable.class);
     ShowSettingsUtil.getInstance().editConfigurable(
       file.getProject(),
       component,

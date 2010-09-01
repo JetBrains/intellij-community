@@ -153,7 +153,7 @@ public class GradleScriptType extends GroovyScriptType {
                                 GradleLibraryManager.GRADLE_ICON);
           if (result == 0) {
             final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-            util.editConfigurable(project, util.findProjectConfigurable(project, GradleConfigurable.class));
+            util.editConfigurable(project, util.createProjectConfigurable(project, GradleConfigurable.class));
           }
           if (GradleLibraryManager.getSdkHome(module, project) == null) {
             return false;

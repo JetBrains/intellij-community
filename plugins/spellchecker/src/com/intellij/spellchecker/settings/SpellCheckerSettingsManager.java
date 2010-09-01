@@ -31,10 +31,6 @@ public class SpellCheckerSettingsManager implements SearchableConfigurable {
   private final SpellCheckerSettings settings;
   private final Project project;
 
-  public static SpellCheckerSettingsManager getInstance(Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, SpellCheckerSettingsManager.class);
-  }
-
   public SpellCheckerSettingsManager(Project project) {
     this.project = project;
     settings = SpellCheckerSettings.getInstance(project);

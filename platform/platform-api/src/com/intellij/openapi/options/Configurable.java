@@ -23,20 +23,35 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Named component which provides a configuration user interface. Components which
- * implement {@link com.intellij.openapi.components.ApplicationComponent} and
- * this interface are shown as items in the "IDE Settings" group of the main
- * IDEA settings dialog.
- * Components which implement {@link com.intellij.openapi.components.ProjectComponent} and
- * this interface are shown in the "Project Settings" group of that dialog.
+ * Named component which provides a configuration user interface.
+ *
+ * <p><p>
+ * Use {@code com.intellij.projectConfigurable} and {@code com.intellij.applicationConfigurable} extensions to provide items for
+ * "Project Settings" and "IDE Settings" groups correspondingly in the "Settings" dialog. There are two ways to declare such extension:
+ * <ul>
+ * <li> an extension element with 'instance' attribute
+ * <br>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;projectConfigurable instance="class-name"/&gt;<br>
+ * &lt;/extensions&gt;<br>
+ * where 'class-name' implements {@link Configurable} means that a new instance of the specified class will be created each time when
+ * the dialog is opened.
+ * <p>
+ * <li> an extension with 'provider' attribute<br>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;projectConfigurable provider="class-name"/&gt;<br>
+ * &lt;/extensions&gt;<br>
+ * where 'class-name' implements {@link ConfigurableProvider} means that method {@link ConfigurableProvider#createConfigurable()}
+ * will be used to create instance each time when the dialog is opened.
+ * </ul>
  */
 public interface Configurable extends UnnamedConfigurable {
   /**
-   * @deprecated
+   * @deprecated projectConfigurable extensions aren't of type Configurable anymore
    */
   ExtensionPointName<Configurable> PROJECT_CONFIGURABLES = ExtensionPointName.create("com.intellij.projectConfigurable");
   /**
-   * @deprecated
+   * @deprecated applicationConfigurable extensions aren't of type Configurable anymore
    */
   ExtensionPointName<Configurable> APPLICATION_CONFIGURABLES = ExtensionPointName.create("com.intellij.applicationConfigurable");
 

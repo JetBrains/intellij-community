@@ -31,15 +31,15 @@ public class CodeStyleSettingsUtilImpl extends CodeStyleSettingsUtil {
   public boolean showCodeStyleSettings(Project project, final Class pageToSelect) {
     CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
     CodeStyleSettings savedSettings = settingsManager.getCurrentSettings().clone();
-    final CodeStyleSchemesConfigurable configurable = CodeStyleSchemesConfigurable.getInstance(project);
-    Runnable selectPage = new Runnable() {
+    final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+    final CodeStyleSchemesConfigurable configurable = util.createProjectConfigurable(project, CodeStyleSchemesConfigurable.class);
+    util.editConfigurable(project, configurable, new Runnable() {
       public void run() {
         if (pageToSelect != null) {
           configurable.selectPage(pageToSelect);
         }
       }
-    };
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, selectPage);
+    });
 
     return !savedSettings.equals(settingsManager.getCurrentSettings());
   }

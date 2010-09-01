@@ -654,10 +654,6 @@
 
     <!-- Resources -->
 
-    <!--TODO <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>--> <!-- Plugins -->
-    <!-- Intention Actions -->
-    <!--TODO <applicationConfigurable implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"/>  --><!-- Updates -->
-
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
 
     <lang.refactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaRefactoringSupportProvider"/>
