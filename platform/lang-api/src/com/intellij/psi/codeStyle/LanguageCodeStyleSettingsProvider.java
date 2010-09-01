@@ -83,4 +83,15 @@ public abstract class LanguageCodeStyleSettingsProvider {
     }
     return null;
   }
+
+  @Nullable
+  public static CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
+    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+      if (provider.getLanguage().equals(lang)) {
+        return provider.getDefaultCommonSettings();
+      }
+    }
+    return null;
+  }
+
 }
