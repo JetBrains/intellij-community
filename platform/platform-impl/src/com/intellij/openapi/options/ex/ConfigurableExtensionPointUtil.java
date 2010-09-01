@@ -18,6 +18,7 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
+import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -78,5 +79,28 @@ public class ConfigurableExtensionPointUtil {
       }
     }
     throw new IllegalArgumentException("Cannot find configurable of " + configurableClass);
+  }
+
+  @Nullable
+  public static Configurable createProjectConfigurableForProvider(@NotNull Project project, Class<? extends ConfigurableProvider> providerClass) {
+    return createConfigurableForProvider(project.getExtensions(PROJECT_CONFIGURABLES), providerClass);
+  }
+
+  @Nullable
+  public static Configurable createApplicationConfigurableForProvider(Class<? extends ConfigurableProvider> providerClass) {
+    return createConfigurableForProvider(APPLICATION_CONFIGURABLES.getExtensions(), providerClass);
+  }
+
+  @Nullable
+  private static Configurable createConfigurableForProvider(ConfigurableEP[] extensions, Class<? extends ConfigurableProvider> providerClass) {
+    for (ConfigurableEP extension : extensions) {
+      if (extension.providerClass != null) {
+        final Class<Object> aClass = extension.findClassNoExceptions(extension.providerClass);
+        if (aClass != null && providerClass.isAssignableFrom(aClass)) {
+          return extension.createConfigurable();
+        }
+      }
+    }
+    return null;
   }
 }
