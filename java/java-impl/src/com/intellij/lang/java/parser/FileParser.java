@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.done;
+import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
 import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
 
 
@@ -79,8 +80,10 @@ public class FileParser {
           invalidElements = null;
         }
         if (firstDeclarationOk == null) {
-          firstDeclarationOk = true;
-          firstDeclaration = declaration;
+          firstDeclarationOk = exprType(declaration) != JavaElementType.MODIFIER_LIST;
+          if (firstDeclarationOk) {
+            firstDeclaration = declaration;
+          }
         }
         continue;
       }
