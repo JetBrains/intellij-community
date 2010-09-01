@@ -168,8 +168,9 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                   }
                   myUsedElements.add(element);
                   myUnusedElements.remove(element);
-                  // In case when assignment is inside try part we should move further
-                  if (PsiTreeUtil.getParentOfType(element, PyTryPart.class) != null) {
+                  // In case when assignment is inside try part and there are no except statements we should move further
+                  final PyTryPart tryPart = PsiTreeUtil.getParentOfType(element, PyTryPart.class);
+                  if (tryPart != null && ((PyTryExceptStatement)tryPart.getParent()).getExceptParts().length == 0) {
                     return ControlFlowUtil.Operation.NEXT;
                   }
                   return ControlFlowUtil.Operation.CONTINUE;
