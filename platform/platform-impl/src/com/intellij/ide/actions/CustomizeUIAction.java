@@ -19,6 +19,8 @@ import com.intellij.ide.ui.customization.CustomizationConfigurable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 
 /**
  * @author yole
@@ -29,6 +31,8 @@ public class CustomizeUIAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    ShowSettingsUtilImpl.getInstance().editConfigurable(e.getData(PlatformDataKeys.PROJECT), CustomizationConfigurable.getInstance());
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+    util.editConfigurable(project, util.createApplicationConfigurable(CustomizationConfigurable.class));
   }
 }

@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.options.ex;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.*;
-
-import java.util.List;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.OptionsBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,7 +26,10 @@ import java.util.List;
  * Time: 3:35:56 PM
  * To change this template use Options | File Templates.
  */
-public class IdeConfigurablesGroup implements ConfigurableGroup {
+public class IdeConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
+  public IdeConfigurablesGroup() {
+    super(ApplicationManager.getApplication(), ConfigurableExtensionPointUtil.APPLICATION_CONFIGURABLES);
+  }
 
   public String getDisplayName() {
     return OptionsBundle.message("ide.settings.display.name");
@@ -38,14 +39,9 @@ public class IdeConfigurablesGroup implements ConfigurableGroup {
     return OptionsBundle.message("ide.settings.short.name");
   }
 
-  public Configurable[] getConfigurables() {
-    final Application app = ApplicationManager.getApplication();
-    final ConfigurableEP[] extensions = app.getExtensions(ConfigurableExtensionPointUtil.APPLICATION_CONFIGURABLES);
-    Configurable[] components = app.getComponents(Configurable.class);
-
-    List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, components, null);
-
-    return result.toArray(new Configurable[result.size()]);
+  @Override
+  protected ConfigurableFilter getConfigurableFilter() {
+    return null;
   }
 
   public boolean equals(Object object) {

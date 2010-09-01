@@ -98,8 +98,8 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
 
-    <projectConfigurable implementation="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
-    <projectConfigurable implementation="org.jetbrains.plugins.groovy.gradle.GradleConfigurable"/>
+    <projectConfigurable instance="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
+    <projectConfigurable instance="org.jetbrains.plugins.groovy.gradle.GradleConfigurable"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.GradleSettings" serviceImplementation="org.jetbrains.plugins.groovy.gradle.GradleSettings"/>

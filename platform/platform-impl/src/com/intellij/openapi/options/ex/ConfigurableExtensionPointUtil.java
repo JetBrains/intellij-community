@@ -22,6 +22,7 @@ import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -38,7 +39,7 @@ public class ConfigurableExtensionPointUtil {
   }
 
 
-  public static List<Configurable> buildConfigurablesList(final ConfigurableEP[] extensions, final Configurable[] components, ConfigurableFilter filter) {
+  public static List<Configurable> buildConfigurablesList(final ConfigurableEP[] extensions, final Configurable[] components, @Nullable ConfigurableFilter filter) {
     List<Configurable> result = new ArrayList<Configurable>();
     for (ConfigurableEP extension : extensions) {
       ContainerUtil.addIfNotNull(extension.createConfigurable(), result);
@@ -59,25 +60,23 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @NotNull
-  public static <T extends Configurable> T findProjectConfigurable(@NotNull Project project, @NotNull Class<T> configurableClass) {
-    return findConfigurable(project.getExtensions(PROJECT_CONFIGURABLES), configurableClass);
+  public static <T extends Configurable> T createProjectConfigurable(@NotNull Project project, @NotNull Class<T> configurableClass) {
+    return createConfigurable(project.getExtensions(PROJECT_CONFIGURABLES), configurableClass);
   }
 
   @NotNull
-  public static <T extends Configurable> T findApplicationConfigurable(@NotNull Class<T> configurableClass) {
-    return findConfigurable(APPLICATION_CONFIGURABLES.getExtensions(), configurableClass);
+  public static <T extends Configurable> T createApplicationConfigurable(@NotNull Class<T> configurableClass) {
+    return createConfigurable(APPLICATION_CONFIGURABLES.getExtensions(), configurableClass);
   }
 
   @NotNull
-  private static <T extends Configurable> T findConfigurable(ConfigurableEP[] extensions, Class<T> configurableClass) {
+  private static <T extends Configurable> T createConfigurable(ConfigurableEP[] extensions, Class<T> configurableClass) {
+    final String className = configurableClass.getName();
     for (ConfigurableEP extension : extensions) {
-      if (extension.implementationClass != null) {
-        final Configurable configurable = extension.createConfigurable();
-        if (configurableClass.isInstance(configurable)) {
-          return configurableClass.cast(configurable);
-        }
+      if (className.equals(extension.implementationClass) || className.equals(extension.instanceClass)) {
+        return configurableClass.cast(extension.createConfigurable());
       }
     }
-    throw new IllegalArgumentException("Cannot find singleton configurable of " + configurableClass);
+    throw new IllegalArgumentException("Cannot find configurable of " + configurableClass);
   }
 }

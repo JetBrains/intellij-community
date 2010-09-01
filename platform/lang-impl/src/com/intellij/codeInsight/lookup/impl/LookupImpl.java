@@ -900,6 +900,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void dispose() {
+    assert ApplicationManager.getApplication().isDispatchThread();
     assert myHidden;
     assert !myDisposed;
     myDisposed = true;

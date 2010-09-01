@@ -229,14 +229,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  public void markSuspicousFilesDirty(List<VirtualFile> files) {
+  public void markSuspiciousFilesDirty(List<VirtualFile> files) {
     storeRefreshStatusToFiles();
 
     if (myWatcher.isOperational()) {
       for (String root : myWatcher.getManualWatchRoots()) {
-        final VirtualFile suspicousRoot = findFileByPathIfCached(root);
-        if (suspicousRoot != null) {
-          ((NewVirtualFile)suspicousRoot).markDirtyRecursively();
+        final VirtualFile suspiciousRoot = findFileByPathIfCached(root);
+        if (suspiciousRoot != null) {
+          ((NewVirtualFile)suspiciousRoot).markDirtyRecursively();
         }
       }
     }

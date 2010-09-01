@@ -39,7 +39,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
     private final UIState myState;
     private AssociationsEditor myEditor;
 
-    FileAssociationsConfigurable(Project project) {
+    public FileAssociationsConfigurable(Project project) {
         myProject = project;
         myState = ServiceManager.getService(project, UIState.class);
     }
@@ -87,16 +87,13 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
         }
     }
 
-    public static FileAssociationsConfigurable getInstance(Project project) {
-        return ShowSettingsUtil.getInstance().findProjectConfigurable(project, FileAssociationsConfigurable.class);
-    }
-
     public AssociationsEditor getEditor() {
         return myEditor;
     }
 
     public static void editAssociations(Project project, final PsiFile file) {
-        final FileAssociationsConfigurable instance = getInstance(project);
+        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+        final FileAssociationsConfigurable instance = util.createProjectConfigurable(project, FileAssociationsConfigurable.class);
 
         ShowSettingsUtil.getInstance().editConfigurable(project, instance, new Runnable() {
             public void run() {

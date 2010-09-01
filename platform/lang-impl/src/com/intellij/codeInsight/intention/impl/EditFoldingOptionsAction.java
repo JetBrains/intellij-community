@@ -47,9 +47,7 @@ public class EditFoldingOptionsAction implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    EditorOptions editorOptions = ShowSettingsUtil.getInstance().findApplicationConfigurable(EditorOptions.class);
-    final Configurable[] configurables = editorOptions.getConfigurables();
-    for (Configurable c : configurables) {
+    for (Configurable c : EditorOptions.getOptionsConfigurables()) {
       if (c instanceof CodeFoldingConfigurable) {
         ShowSettingsUtil.getInstance().editConfigurable(project, c);
         break;

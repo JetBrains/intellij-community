@@ -46,10 +46,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   private PluginManagerMain myPluginManagerMain;
   private final PluginManagerUISettings myUISettings;
 
-  public static PluginManagerConfigurable getInstance() {
-    return ShowSettingsUtil.getInstance().findApplicationConfigurable(PluginManagerConfigurable.class);
-  }
-
   public PluginManagerConfigurable(final PluginManagerUISettings UISettings) {
     myUISettings = UISettings;
   }

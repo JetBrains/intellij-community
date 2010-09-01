@@ -23,13 +23,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.testFramework.IdeaTestCase;
@@ -97,7 +93,6 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
           root.done(this);
 
           final ASTNode rootNode = builder.getTreeBuilt();
-          ParseUtil.bindComments(rootNode);
           return rootNode.getFirstChildNode();
         }
       };
@@ -116,7 +111,9 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   }
 
   private static PsiBuilder createBuilder(final ASTNode chameleon) {
-    final Project project = chameleon.getPsi().getProject();
+    final PsiElement psi = chameleon.getPsi();
+    assert psi != null : chameleon;
+    final Project project = psi.getProject();
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
     final PsiBuilder builder = factory.createBuilder(project, chameleon, chameleon.getElementType().getLanguage(), chameleon.getChars());
 

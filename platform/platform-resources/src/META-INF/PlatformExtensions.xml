@@ -103,7 +103,7 @@
                       serviceImplementation="com.intellij.ide.passwordSafe.config.PasswordSafeSettings"/>
   <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
                       serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"/>
-  <applicationConfigurable implementation="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable"/>
 
   <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
                       serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>
@@ -157,27 +157,27 @@
 
 
   <!-- General -->
-  <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 
   <!-- Appearance -->
-  <applicationConfigurable implementation="com.intellij.ide.ui.AppearanceConfigurable" id="appearance"/>
+  <applicationConfigurable instance="com.intellij.ide.ui.AppearanceConfigurable" id="appearance"/>
 
   <!-- Keymap -->
-  <applicationConfigurable implementation="com.intellij.openapi.keymap.impl.ui.KeymapConfigurable"/>
+  <applicationConfigurable instance="com.intellij.openapi.keymap.impl.ui.KeymapConfigurable"/>
 
   <!-- Customizations -->
-  <applicationConfigurable implementation="com.intellij.ide.ui.customization.CustomizationConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.ui.customization.CustomizationConfigurable"/>
 
   <!-- Web Browser -->
-  <applicationConfigurable implementation="com.intellij.ide.BrowserSettings"/>
+  <applicationConfigurable instance="com.intellij.ide.BrowserSettings"/>
 
   <!-- Notifications -->
-  <applicationConfigurable implementation="com.intellij.notification.impl.NotificationsConfigurable"/>
+  <applicationConfigurable instance="com.intellij.notification.impl.NotificationsConfigurable"/>
 
   <!-- Plugins -->
-  <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.plugins.PluginManagerConfigurable"/>
   <applicationConfigurable implementation="com.intellij.util.net.HttpConfigurable"/>
-  <applicationConfigurable implementation="com.intellij.openapi.diff.impl.external.DiffOptionsForm"/>
+  <applicationConfigurable instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm"/>
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
@@ -198,7 +198,7 @@
   <ComponentRoamingType component="PropertiesComponent" type="DISABLED"/>
 
   <progressFunComponentProvider implementation="com.intellij.featureStatistics.ProgressFunProvider"/>
-  <projectConfigurable implementation="com.intellij.javaee.ExternalResourceConfigurable"/>
+  <projectConfigurable instance="com.intellij.javaee.ExternalResourceConfigurable"/>
 
   <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
   <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->

@@ -370,7 +370,8 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(13, 0, 0, 10), 0, 0);
     MyActionButton openPluginManager = new PluginsActionButton(OPEN_PLUGINS_ICON, null) {
       protected void onPress(InputEvent e) {
-        ShowSettingsUtil.getInstance().editConfigurable(myPluginsPanel, PluginManagerConfigurable.getInstance());
+        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+        util.editConfigurable(myPluginsPanel, util.createApplicationConfigurable(PluginManagerConfigurable.class));
       }
 
       public Dimension getMaximumSize() {
