@@ -291,14 +291,14 @@ public class LightPsiBuilderTest {
   @Test
   public void testCustomEdgeProcessors() throws Exception {
     final WhitespacesAndCommentsProcessor leftEdgeProcessor = new WhitespacesAndCommentsProcessor() {
-      public int process(List<IElementType> tokens) {
+      public int process(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = tokens.size() - 1;
         while (tokens.get(pos) != COMMENT && pos > 0) pos--;
         return pos;
       }
     };
     final WhitespacesAndCommentsProcessor rightEdgeProcessor = new WhitespacesAndCommentsProcessor() {
-      public int process(List<IElementType> tokens) {
+      public int process(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = 0;
         while (tokens.get(pos) != COMMENT && pos < tokens.size()-1) pos++;
         return pos + 1;

@@ -305,6 +305,7 @@ public class StringUtil {
       }
       else if (c == '\r') {
         if (i + 1 < text.length() && text.charAt(i + 1) == '\n') {
+          //noinspection AssignmentToForLoopParameter
           i++;
           count++;
         }
@@ -314,6 +315,14 @@ public class StringUtil {
       }
     }
     return count;
+  }
+
+  public static boolean containsLineBreak(@NotNull CharSequence text) {
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (c == '\n' || c == '\r') return true;
+    }
+    return false;
   }
 
   public static int lineColToOffset(@NotNull CharSequence text, int line, int col) {
