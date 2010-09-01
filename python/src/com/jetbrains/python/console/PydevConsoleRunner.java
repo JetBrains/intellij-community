@@ -195,7 +195,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   protected void runExecuteActionInner(final AnActionEvent actionEvent) {
     final Editor editor = getLanguageConsole().getCurrentEditor();
     final Document document = editor.getDocument();
-    final String lastLine = document.getText().substring(document.getLineStartOffset(document.getLineCount()-1));
+    int lineCount=document.getLineCount();
+    final String text = document.getText();
+    final String lastLine = StringUtil.isEmpty(text) ? "" : text.substring(document.getLineStartOffset(lineCount-1));
     // multiline strings handling
     if (myInMultilineStringState != null){
       if (lastLine.contains(myInMultilineStringState)) {
