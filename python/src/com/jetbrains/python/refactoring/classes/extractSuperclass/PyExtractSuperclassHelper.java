@@ -5,8 +5,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,11 +17,13 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.actions.AddImportHelper;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -76,7 +76,7 @@ public class PyExtractSuperclassHelper {
           }
         });
       }
-    }, RefactoringBundle.message("extract.superclass.command.name", clazz.getName(), superBaseName), null);
+    }, RefactoringBundle.message("extract.superclass.command.name", superBaseName, clazz.getName()), null);
     return newClassRef.get();
   }
 
@@ -122,35 +122,18 @@ public class PyExtractSuperclassHelper {
     }
 
     LOG.assertTrue(psiFile != null);
-    insertImport(project, clazz, newClass, psiFile.getVirtualFile());
-    psiFile.add(newClass);
+    newClass = (PyClass)psiFile.add(newClass);
+    insertImport(clazz, newClass, psiFile.getVirtualFile());
   }
 
-  private static void insertImport(Project project, PyClass clazz, PyClass newClass, VirtualFile newFile) {
-    final String path = findPackageName(project, newFile);
-    final String oldPath = findPackageName(project, clazz.getContainingFile().getVirtualFile());
-    LOG.assertTrue(path != null && oldPath != null);
-
-    final String name = newClass.getName();
-    final StringBuilder text = new StringBuilder();
-    if (!Comparing.strEqual(path, oldPath)) {
-      //noinspection ConstantConditions
-      text.append("from ").append(path).append(".").append(newClass.getName().toLowerCase()).append(" ");
+  private static void insertImport(PyClass clazz, PyClass newClass, VirtualFile vFile) {
+    final PsiFile file = clazz.getContainingFile();
+    if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
+      final String name = newClass.getQualifiedName();
+      AddImportHelper.addImportStatement(file, name, null);
+    } else {
+      AddImportHelper.addImportFrom(file, ResolveImportUtil.findShortestImportableName(clazz, vFile), newClass.getName());
     }
-    text.append("import ").append(name).append("\n");
-
-    final PyStatement imp = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyStatement.class, text.toString());
-    PyPsiUtils.addBeforeInParent(clazz, imp, imp.getNextSibling());
-  }
-
-  @Nullable
-  private static String findPackageName(Project project, VirtualFile newFile) {
-    for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
-      if (VfsUtil.isAncestor(file, newFile, true)) {
-        return VfsUtil.getRelativePath(newFile.getParent(), file, '.');
-      }
-    }
-    return null;
   }
 
   private static String constructFilename(PyClass newClass) {
