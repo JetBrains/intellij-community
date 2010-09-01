@@ -81,7 +81,9 @@ public interface Configurable extends UnnamedConfigurable {
   @NonNls String getHelpTopic();
 
   /**
-   * @deprecated
+   * @deprecated this marker interface was used to hide a Configurable declared as applicationConfigurable or projectConfigurable extension
+   * from the Settings dialog. However it makes no sense to register a Configurable as extension if you don't want to see it in the Settings
+   * dialog
    */
   interface Assistant extends Configurable {
   }
