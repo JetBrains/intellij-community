@@ -72,7 +72,7 @@ public class PyExtractSuperclassHelper {
               PyPsiUtils.removeElements(elements);
             }
             PyClassRefactoringUtil.insertPassIfNeeded(clazz);
-            placeNewClass(project, newClass, clazz, targetFile);
+            placeNewClass(project, newClass, clazz, targetFile, selectedMemberInfos);
           }
         });
       }
@@ -80,7 +80,7 @@ public class PyExtractSuperclassHelper {
     return newClassRef.get();
   }
 
-  private static void placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile) {
+  private static void placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile, Collection<PyMemberInfo> infos) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtil.pathToUrl(targetFile));
     // file is the same as the source
     if (file == clazz.getContainingFile().getVirtualFile()) {
@@ -123,10 +123,18 @@ public class PyExtractSuperclassHelper {
 
     LOG.assertTrue(psiFile != null);
     newClass = (PyClass)psiFile.add(newClass);
-    insertImport(clazz, newClass, psiFile.getVirtualFile());
+    insertImport(clazz, newClass);
+    for (PyMemberInfo info : infos) {
+      final PyElement member = info.getMember();
+      if (member instanceof PyClass) {
+        insertImport(newClass, (PyClass)member);
+      }
+    }
   }
 
-  private static void insertImport(PyClass clazz, PyClass newClass, VirtualFile vFile) {
+  private static void insertImport(PyClass clazz, PyClass newClass) {
+    final VirtualFile vFile = newClass.getContainingFile().getVirtualFile();
+    assert vFile != null;
     final PsiFile file = clazz.getContainingFile();
     if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
       final String name = newClass.getQualifiedName();
