@@ -17,16 +17,19 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -49,18 +52,28 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   @NotNull
   protected PsiElement[] invokeDialog(final Project project, PsiDirectory directory) {
     MyInputValidator validator = new MyValidator(project, directory);
-    Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
-                             IdeBundle.message("title.new.file"), Messages.getQuestionIcon(), null, validator);
-    return validator.getCreatedElements();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      try {
+        return validator.create("test");
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    else {
+      Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
+                               IdeBundle.message("title.new.file"), Messages.getQuestionIcon(), null, validator);
+      return validator.getCreatedElements();
+    }
   }
 
   protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    directory.checkCreateFile(newName);
+    directory.checkCreateFile(getFileName(newName));
   }
 
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
-    return new PsiElement[]{directory.createFile(newName)};
+    return new PsiElement[]{directory.createFile(getFileName(newName))};
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {
@@ -75,6 +88,18 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     return IdeBundle.message("command.create.file");
   }
 
+  protected String getFileName(String newName) {
+    if (getDefaultExtension() == null || FileUtil.getExtension(newName).length() > 0) {
+      return newName;
+    }
+    return newName + "." + getDefaultExtension();
+  }
+
+  @Nullable
+  protected String getDefaultExtension() {
+    return null;
+  }
+
   protected class MyValidator extends MyInputValidator {
     public boolean checkInput(String inputString) {
       return true;
@@ -85,8 +110,8 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
         return super.canClose(inputString);
       }
 
-      FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(inputString);
-      return type != null && super.canClose(inputString);
+      FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(getFileName(inputString));
+      return type != null && super.canClose(getFileName(inputString));
     }
 
     public MyValidator(Project project, PsiDirectory directory){

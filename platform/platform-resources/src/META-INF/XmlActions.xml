@@ -65,11 +65,12 @@
     </group>
 
     <group id="NewXml" text="XML">
-      <!--<action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="HTML File"/>-->
-      <!--<action id="NewHtml5Type" class="com.intellij.ide.actions.CreateHtml5Action" text="HTML5 File"/>-->
-      <!--<action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="XHTML File"/>-->
       <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction"/>
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
+    </group>
+
+    <group id="NewXmlDescriptor" text="XML Configuration File" popup="true" icon="/fileTypes/xml.png">
+      <add-to-group group-id="NewXml" anchor="last"/>
     </group>
 
     <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction"

@@ -19,7 +19,6 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionContext;
@@ -619,7 +618,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public Presentation testAction(AnAction action) {
-    DataContext context = DataManager.getInstance().getDataContext(getEditor().getComponent());
+    DataContext context = DataManager.getInstance().getDataContext();
     TestActionEvent e = new TestActionEvent(context, action);
     action.beforeActionPerformedUpdate(e);
     if (e.getPresentation().isVisible() && e.getPresentation().isVisible()) {
