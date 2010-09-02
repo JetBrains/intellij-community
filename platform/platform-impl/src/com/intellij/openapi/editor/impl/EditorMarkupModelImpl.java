@@ -700,12 +700,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (myEditorScrollbarTop == -1 || myEditorTargetHeight == -1) {
       recalcEditorDimensions();
     }
+    final int safeY = Math.max(0, y - myEditorScrollbarTop);
     VisualPosition visual;
     if (myEditorSourceHeight < myEditorTargetHeight) {
-      visual = myEditor.xyToVisualPosition(new Point(0, y - myEditorScrollbarTop));
+      visual = myEditor.xyToVisualPosition(new Point(0, safeY));
     }
     else {
-      float fraction = Math.max(0, Math.min(1, (y - myEditorScrollbarTop) / (float)myEditorTargetHeight));
+      float fraction = Math.max(0, Math.min(1, safeY / (float)myEditorTargetHeight));
       final int lineCount = myEditorSourceHeight / myEditor.getLineHeight();
       visual = new VisualPosition((int)(fraction * lineCount),0);
     }
