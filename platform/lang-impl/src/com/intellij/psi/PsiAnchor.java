@@ -100,7 +100,7 @@ public abstract class PsiAnchor {
       }
     }
 
-    throw new RuntimeException("Can't find stub index for this psi");
+    throw new RuntimeException("Can't find stub index for PSI element " + psi);
   }
 
 
