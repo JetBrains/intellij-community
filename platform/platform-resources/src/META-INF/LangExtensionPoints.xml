@@ -5,7 +5,7 @@
   <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
   <extensionPoint name="moduleConfigurable"
-                  interface="com.intellij.openapi.options.Configurable"
+                  beanClass="com.intellij.openapi.options.ModuleConfigurableEP"
                   area="IDEA_MODULE"/>
 
   <extensionPoint name="indexPatternProvider"
