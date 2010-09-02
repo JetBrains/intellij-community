@@ -15,6 +15,8 @@
  */
 package org.zmlx.hg4idea;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -22,6 +24,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.*;
 
 import java.util.*;
@@ -82,24 +85,45 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performAdding(Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
-    (new VcsBackgroundTask<VirtualFile>(myProject,
-                                        HgVcsMessages.message("hg4idea.add.progress"),
-                                        VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
-                                        addedFiles) {
-      protected void process(final VirtualFile file) throws VcsException {
-        if (file.isDirectory()) {
-          return;
-        }
-        final VirtualFile copyFrom = copyFromMap.get(file);
-        if (copyFrom != null) {
-          (new HgCopyCommand(myProject)).execute(new HgFile(myProject, copyFrom), new HgFile(myProject, file));
-        } else {
-          (new HgAddCommand(myProject)).execute(new HgFile(myProject, file));
-        }
-        dirtyScopeManager.fileDirty(file);
-      }
+  protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
+    (new Task.ConditionalModal(myProject,
+                               HgVcsMessages.message("hg4idea.add.progress"),
+                               false,
+                               VcsConfiguration.getInstance(myProject).getAddRemoveOption() ) {
+      @Override public void run(@NotNull ProgressIndicator aProgressIndicator) {
+        final ArrayList<HgFile> adds = new ArrayList<HgFile>();
+        final HashMap<HgFile, HgFile> copies = new HashMap<HgFile, HgFile>(); // from -> to
 
+        // separate adds from copies
+        for (VirtualFile file : addedFiles) {
+          if (file.isDirectory()) {
+            continue;
+          }
+
+          final VirtualFile copyFrom = copyFromMap.get(file);
+          if (copyFrom != null) {
+            copies.put(new HgFile(myProject, copyFrom), new HgFile(myProject, file));
+          } else {
+            adds.add(new HgFile(myProject, file));
+          }
+        }
+
+        // add for all files at once
+        if (!adds.isEmpty()) {
+          new HgAddCommand(myProject).execute(adds);
+        }
+
+        // copy needs to be run for each file separately
+        if (!copies.isEmpty()) {
+          for(Map.Entry<HgFile, HgFile> copy : copies.entrySet()) {
+            new HgCopyCommand(myProject).execute(copy.getKey(), copy.getValue());
+          }
+        }
+
+        for (VirtualFile file : addedFiles) {
+          dirtyScopeManager.fileDirty(file);
+        }
+      }
     }).queue();
   }
 
@@ -118,6 +142,29 @@ public class HgVFSListener extends VcsVFSListener {
     return HgVcsMessages.message("hg4idea.remove.single.body");
   }
 
+  @Override
+  protected VcsDeleteType needConfirmDeletion(VirtualFile file) {
+    //// newly added files (which were added to the repo but never committed) should be removed from the VCS,
+    //// but without user confirmation.
+    final FilePath filePath = VcsUtil.getFilePath(file.getPath());
+    final VirtualFile repo = HgUtil.getHgRootOrNull(myProject, filePath);
+    if (repo == null) {
+      return super.needConfirmDeletion(file);
+    }
+    final HgFile hgFile = new HgFile(repo, filePath);
+
+    final HgLogCommand logCommand = new HgLogCommand(myProject);
+    logCommand.setLogFile(true);
+    logCommand.setFollowCopies(false);
+    logCommand.setIncludeRemoved(true);
+    final List<HgFileRevision> localRevisions = logCommand.execute(hgFile, -1, true);
+    // file is newly added, if it doesn't have a history or if the last history action was deleting this file.
+    if (localRevisions == null || localRevisions.isEmpty() || localRevisions.get(0).getDeletedFiles().contains(hgFile.getRelativePath())) {
+      return VcsDeleteType.SILENT;
+    }
+    return VcsDeleteType.CONFIRM;
+  }
+
   protected void executeDelete() {
     final List<FilePath> filesToDelete = new ArrayList<FilePath>(myDeletedWithoutConfirmFiles);
     final List<FilePath> deletedFiles = new ArrayList<FilePath>(myDeletedFiles);
@@ -125,33 +172,9 @@ public class HgVFSListener extends VcsVFSListener {
     myDeletedFiles.clear();
 
     // skip unversioned files and files which are not under Mercurial
-    final List<FilePath> unversionedFilePaths = new ArrayList<FilePath>();
-    for (VirtualFile vf : ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles()) {
-      unversionedFilePaths.add(VcsUtil.getFilePath(vf.getPath()));
-    }
-    skipUnversionedAndNotUnderHg(unversionedFilePaths, filesToDelete);
-    skipUnversionedAndNotUnderHg(unversionedFilePaths, deletedFiles);
-
-    // newly added files (which were added to the repo but never committed should be removed from the VCS,
-    // but without user confirmation.
-    for (Iterator<FilePath> it = deletedFiles.iterator(); it.hasNext(); ) {
-      final FilePath filePath = it.next();
-      final HgLogCommand logCommand = new HgLogCommand(myProject);
-      logCommand.setLogFile(true);
-      logCommand.setFollowCopies(false);
-      logCommand.setIncludeRemoved(true);
-      final VirtualFile repo = HgUtil.getHgRootOrNull(myProject, filePath);
-      if (repo == null) {
-        continue;
-      }
-      final HgFile hgFile = new HgFile(repo, filePath);
-      final List<HgFileRevision> localRevisions = logCommand.execute(hgFile, -1, true);
-      // file is newly added, if it doesn't have a history or if the last history action was deleting this file.
-      if (localRevisions == null || localRevisions.isEmpty() || localRevisions.get(0).getDeletedFiles().contains(hgFile.getRelativePath())) {
-        it.remove();
-        filesToDelete.add(filePath);
-      }
-    }
+    final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+    skipUnversionedAndNotUnderHg(changeListManager, filesToDelete);
+    skipUnversionedAndNotUnderHg(changeListManager, deletedFiles);
 
     // confirm removal from the VCS if needed
     if (myRemoveOption.getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
@@ -172,34 +195,43 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
     /**
-     * Changes the given collection of files by filtering out unversioned files,
-     * files which are not under Mercurial repository, and
-     * newly added files (which were added to the repo, but never committed).
-     * @param unversionedFiles  unversioned files retrieved from the ChangeListManager.
-     *                          Passing as a parameter not to transform List<VirtualFile> to List<FilePath> twice.
+     * Changes the given collection of files by filtering out unversioned files and
+     * files which are not under Mercurial repository.
+     * @param changeListManager instance of the ChangeListManagerImpl to retrieve unversioned files from it.
      * @param filesToFilter     files to be filtered.
      */
-    private void skipUnversionedAndNotUnderHg(Collection<FilePath> unversionedFiles, Collection<FilePath> filesToFilter) {
+  private void skipUnversionedAndNotUnderHg(ChangeListManagerImpl changeListManager, Collection<FilePath> filesToFilter) {
     for (Iterator<FilePath> iter = filesToFilter.iterator(); iter.hasNext(); ) {
       final FilePath filePath = iter.next();
-      if (HgUtil.getHgRootOrNull(myProject, filePath) == null || unversionedFiles.contains(filePath)) {
+      if (HgUtil.getHgRootOrNull(myProject, filePath) == null || changeListManager.isUnversioned(filePath.getVirtualFile())) {
         iter.remove();
       }
     }
   }
 
   @Override
-  protected void performDeletion(List<FilePath> filesToDelete) {
-    (new VcsBackgroundTask<FilePath>(myProject,
+  protected void performDeletion( final List<FilePath> filesToDelete) {
+    (new Task.ConditionalModal(myProject,
                                         HgVcsMessages.message("hg4idea.remove.progress"),
-                                        VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
-                                        filesToDelete) {
-      protected void process(final FilePath file) throws VcsException {
-        if (file.isDirectory()) {
-          return;
+                                        false,
+                                        VcsConfiguration.getInstance(myProject).getAddRemoveOption()) {
+      @Override public void run( @NotNull ProgressIndicator aProgressIndicator ) {
+        final ArrayList<HgFile> deletes = new ArrayList<HgFile>();
+        for (FilePath file : filesToDelete) {
+          if (file.isDirectory()) {
+            continue;
+          }
+
+          deletes.add(new HgFile(VcsUtil.getVcsRootFor(myProject, file), file));
         }
-        (new HgRemoveCommand(myProject)).execute(new HgFile(VcsUtil.getVcsRootFor(myProject, file), file));
-        dirtyScopeManager.fileDirty(file);
+
+        if (!deletes.isEmpty()) {
+          new HgRemoveCommand(myProject).execute(deletes);
+        }
+
+        for (HgFile file : deletes) {
+          dirtyScopeManager.fileDirty(file.toFilePath());
+        }
       }
 
     }).queue();

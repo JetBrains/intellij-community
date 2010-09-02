@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
@@ -232,7 +233,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     resetNode(root, settings);
   }
 
-  private static void resetNode(TreeNode node, final CodeStyleSettings settings) {
+  private void resetNode(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyToggleTreeNode) {
       resetMyTreeNode((MyToggleTreeNode)node, settings);
       return;
@@ -243,7 +244,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
-  private static void resetMyTreeNode(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
+  private void resetMyTreeNode(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
     try {
       BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
       childNode.setSelected(key.getValue(settings));
@@ -471,7 +472,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
-  private static class BooleanOptionKey {
+  private class BooleanOptionKey {
     final String groupName;
     String title;
     final Field field;
@@ -483,9 +484,10 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       this.field = field;
     }
 
-    public void setValue(CodeStyleSettings settings, Boolean aBoolean) {
+    public void setValue(CodeStyleSettings  settings, Boolean aBoolean) {
       try {
-        field.set(settings, aBoolean);
+        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
+        field.set(commonSettings, aBoolean);
       }
       catch (IllegalAccessException e) {
         LOG.error(e);
@@ -493,7 +495,8 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
 
     public boolean getValue(CodeStyleSettings settings) throws IllegalAccessException {
-      return field.getBoolean(settings);
+      CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
+      return field.getBoolean(commonSettings);
     }
 
     public void setEnabled(boolean enabled) {
@@ -505,7 +508,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
-  private static class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
+  private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
     private final Class<T> mySettingsClass;
 
     public CustomBooleanOptionKey(String groupName, String title, Class<T> settingsClass, Field field) {
@@ -570,4 +573,5 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
   public JComponent getPanel() {
     return myPanel;
   }
+
 }

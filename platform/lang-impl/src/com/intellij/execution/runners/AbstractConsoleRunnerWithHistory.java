@@ -173,7 +173,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 // run action
     myRunAction = new DumbAwareAction(null, null, IconLoader.getIcon("/actions/execute.png")) {
       public void actionPerformed(final AnActionEvent e) {
-        runExecuteActionInner();
+        runExecuteActionInner(e);
       }
 
       public void update(final AnActionEvent e) {
@@ -235,20 +235,19 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return myConsoleView.getConsole();
   }
 
-  protected void runExecuteActionInner() {
+  protected void runExecuteActionInner(final AnActionEvent actionEvent) {
     // Process input and add to history
     final Document document = getLanguageConsole().getCurrentEditor().getDocument();
-    final String documentText = document.getText();
+    final String text = document.getText();
     final TextRange range = new TextRange(0, document.getTextLength());
     getLanguageConsole().getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
     getLanguageConsole().addCurrentToHistory(range, false);
     getLanguageConsole().setInputText("");
-    final String line = documentText;
-    if (!StringUtil.isEmptyOrSpaces(line)){
-      myHistory.addToHistory(line);
+    if (!StringUtil.isEmptyOrSpaces(text)){
+      myHistory.addToHistory(text);
     }
     // Send to interpreter / server
-    processInput(line);
+    processInput(text);
   }
 
   protected static String getProviderCommandLine(final CommandLineArgumentsProvider provider) {

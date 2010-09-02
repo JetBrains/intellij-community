@@ -66,16 +66,16 @@ public class SpellCheckerSettingsPane implements Disposable {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
-          final ErrorsConfigurable toolsConfigurable = ErrorsConfigurable.SERVICE.getInstance(project);
-          if (optionsEditor != null && toolsConfigurable != null) {
-            optionsEditor.select(toolsConfigurable).doWhenDone(new Runnable() {
-              public void run() {
-                toolsConfigurable.selectInspectionTool("SpellCheckingInspection");
-              }
-            });
-
+          if (optionsEditor != null) {
+            final ErrorsConfigurable errorsConfigurable = optionsEditor.findConfigurable(ErrorsConfigurable.class);
+            if (errorsConfigurable != null) {
+              optionsEditor.select(errorsConfigurable).doWhenDone(new Runnable() {
+                public void run() {
+                  errorsConfigurable.selectInspectionTool("SpellCheckingInspection");
+                }
+              });
+            }
           }
-
         }
       }
     });

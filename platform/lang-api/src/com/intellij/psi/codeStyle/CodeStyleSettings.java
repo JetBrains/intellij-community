@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
@@ -40,13 +38,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
 
-  @Override
-  public CodeStyleSettings getMainSettings() {
-    return this;
-  }
-
   @NonNls private static final String FILETYPE = "fileType";
-  private final CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
+  private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
 
   public CodeStyleSettings() {
     this(true);
@@ -141,6 +134,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       IndentOptions options = optionEntry.getValue();
       myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)options.clone());
     }
+    
+    myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
   }
 
   public void copyFrom(CodeStyleSettings from) {
@@ -148,51 +143,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     copyCustomSettingsFrom(from);
   }
-
-  private static void copyPublicFields(Object from, Object to) {
-    assert from != to;
-    copyFields(to.getClass().getDeclaredFields(), from, to);
-    Class superClass = to.getClass().getSuperclass();
-    if (superClass != null) {
-      copyFields(superClass.getDeclaredFields(), from, to);
-    }
-  }
-
-  private static void copyFields(Field[] fields, Object from, Object to) {
-    for (Field field : fields) {
-      if (isPublic(field) && !isFinal(field)) {
-        try {
-          copyFieldValue(from, to, field);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-  }
-
-  private static void copyFieldValue(final Object from, Object to, final Field field)
-    throws IllegalAccessException {
-    Class<?> fieldType = field.getType();
-    if (fieldType.isPrimitive()) {
-      field.set(to, field.get(from));
-    }
-    else if (fieldType.equals(String.class)) {
-      field.set(to, field.get(from));
-    }
-    else {
-      throw new RuntimeException("Field not copied " + field.getName());
-    }
-  }
-
-  private static boolean isPublic(final Field field) {
-    return (field.getModifiers() & Modifier.PUBLIC) != 0;
-  }
-
-  private static boolean isFinal(final Field field) {
-    return (field.getModifiers() & Modifier.FINAL) != 0;
-  }
-
 
 
   public boolean USE_SAME_INDENTS = false;
@@ -676,6 +626,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     copyOldIndentOptions("java", JAVA_INDENT_OPTIONS);
     copyOldIndentOptions("jsp", JSP_INDENT_OPTIONS);
     copyOldIndentOptions("xml", XML_INDENT_OPTIONS);
+
+    myCommonSettingsManager.readExternal(element);
   }
 
   private void copyOldIndentOptions(@NonNls final String extension, final IndentOptions options) {
@@ -762,6 +714,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       additionalIndentOptions.setAttribute(FILETYPE,fileType.getDefaultExtension());
       element.addContent(additionalIndentOptions);
     }
+    
+    myCommonSettingsManager.writeExternal(element);
   }
 
   public IndentOptions getIndentOptions(FileType fileType) {
@@ -989,7 +943,4 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return myCommonSettingsManager.getCommonSettings(lang);
   }
 
-  public CommonCodeStyleSettings createCommonSettings(Language lang) {
-    return new CommonCodeStyleSettings(this);
-  }
 }

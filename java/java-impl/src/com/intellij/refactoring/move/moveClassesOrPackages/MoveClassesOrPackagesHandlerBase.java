@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -33,6 +34,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -293,5 +295,18 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
       return true;
     }
     return false;
+  }
+
+  @Override
+  public boolean isMoveRedundant(PsiElement source, PsiElement target) {
+    if (target instanceof PsiDirectory && source instanceof PsiClass) {
+      try {
+        JavaDirectoryServiceImpl.checkCreateClassOrInterface((PsiDirectory)target, ((PsiClass)source).getName());
+      }
+      catch (IncorrectOperationException e) {
+        return true;
+      }
+    }
+    return super.isMoveRedundant(source, target);
   }
 }

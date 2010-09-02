@@ -88,7 +88,9 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
     public void actionPerformed(AnActionEvent e) {
       Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-      ShowSettingsUtil.getInstance().editConfigurable(project, CompilerConfigurable.getInstance(project));
+      if (project == null) return;
+      final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+      util.editConfigurable(project, new CompilerConfigurable(project));
     }
   }
 

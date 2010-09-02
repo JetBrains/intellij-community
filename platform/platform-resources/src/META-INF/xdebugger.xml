@@ -34,7 +34,7 @@
     <projectService serviceInterface="com.intellij.xdebugger.impl.XDebuggerHistoryManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
 
-    <applicationConfigurable implementation="com.intellij.xdebugger.impl.settings.DebuggerConfigurable"/>
+    <applicationConfigurable provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.xdebugger.impl.XDebuggerSupport" order="first"/>
 

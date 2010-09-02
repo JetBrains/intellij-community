@@ -931,18 +931,18 @@
   <action id="Console.History.Previous"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
   <action id="Console.Jdbc.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
-  <action id="Console.Jdbc.Properties"><keyboard-shortcut first-keystroke="alt ENTER"/></action>
+  <action id="Console.Jdbc.Properties"><keyboard-shortcut first-keystroke="control alt ENTER"/></action>
   <action id="Console.Jdbc.Close"><keyboard-shortcut first-keystroke="control shift F4"/></action>
 
   <action id="Console.Hibernate.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
   <action id="Console.Hibernate.GenerateSql"><keyboard-shortcut first-keystroke="control shift ENTER"/></action>
   <action id="Console.Hibernate.GenerateDDL"><keyboard-shortcut first-keystroke="control alt shift ENTER"/></action>
-  <action id="Console.Hibernate.Properties"><keyboard-shortcut first-keystroke="alt ENTER"/></action>
+  <action id="Console.Hibernate.Properties"><keyboard-shortcut first-keystroke="control alt ENTER"/></action>
   <action id="Console.Hibernate.Close"><keyboard-shortcut first-keystroke="control alt shift F4"/></action>
   <action id="Console.Hibernate.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
 
   <action id="Console.Jpa.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
-  <action id="Console.Jpa.Properties"><keyboard-shortcut first-keystroke="alt ENTER"/></action>
+  <action id="Console.Jpa.Properties"><keyboard-shortcut first-keystroke="control alt ENTER"/></action>
   <action id="Console.Jpa.Close"><keyboard-shortcut first-keystroke="control alt shift F4"/></action>
   <action id="Console.Jpa.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
 

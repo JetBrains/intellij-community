@@ -49,7 +49,7 @@ public class FieldConflictsResolver {
       return;
     }
     JavaPsiFacade facade = JavaPsiFacade.getInstance(myScope.getProject());
-    final PsiVariable oldVariable = facade.getResolveHelper().resolveReferencedVariable(name, myScope);
+    final PsiVariable oldVariable = facade.getResolveHelper().resolveAccessibleReferencedVariable(name, myScope);
     myField = oldVariable instanceof PsiField ? (PsiField) oldVariable : null;
     if (!(oldVariable instanceof PsiField)) {
       myReferenceExpressions = null;

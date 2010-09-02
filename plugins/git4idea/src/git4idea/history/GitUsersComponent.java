@@ -102,7 +102,8 @@ public class GitUsersComponent {
     final Pair<String, LowLevelAccess> pair = myAccessMap.get(root);
     if (pair == null) return null;
     try {
-      return new ArrayList<String>(myState.get(pair.getFirst()).getUsers());
+      final UsersData usersData = myState.get(pair.getFirst());
+      return usersData == null ? null : new ArrayList<String>(usersData.getUsers());
     }
     catch (IOException e) {
       LOG.info(e);

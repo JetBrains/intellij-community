@@ -15,7 +15,16 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
@@ -25,14 +34,80 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CommonCodeStyleSettings {
 
-  private final CodeStyleSettings myMainSettings;
+  private Language myLanguage;
 
-  CommonCodeStyleSettings(@Nullable CodeStyleSettings mainSettings) {
-    myMainSettings = mainSettings;
+  public CommonCodeStyleSettings(Language language) {
+    myLanguage = language;
   }
 
-  public CodeStyleSettings getMainSettings() {
-    return myMainSettings;
+  public CommonCodeStyleSettings clone() {
+    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage);
+    copyPublicFields(this, commonSettings);
+    return commonSettings;
+  }
+
+  protected static void copyPublicFields(Object from, Object to) {
+    assert from != to;
+    copyFields(to.getClass().getFields(), from, to);
+  }
+
+  void copyNonDefaultValuesFrom(CommonCodeStyleSettings from) {
+    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(null);
+    copyFields(this.getClass().getFields(), from, this, new DifferenceFilter<CommonCodeStyleSettings>(from, defaultSettings));
+  }
+
+  private static void copyFields(Field[] fields, Object from, Object to) {
+    copyFields(fields, from, to, null);
+  }
+
+  private static void copyFields(Field[] fields, Object from, Object to, DifferenceFilter diffFilter) {
+    for (Field field : fields) {
+      if (isPublic(field) && !isFinal(field)) {
+        try {
+          if (diffFilter == null || diffFilter.isAccept(field)) {
+            copyFieldValue(from, to, field);
+          }
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+
+  private static void copyFieldValue(final Object from, Object to, final Field field)
+    throws IllegalAccessException {
+    Class<?> fieldType = field.getType();
+    if (fieldType.isPrimitive()) {
+      field.set(to, field.get(from));
+    }
+    else if (fieldType.equals(String.class)) {
+      field.set(to, field.get(from));
+    }
+    else {
+      throw new RuntimeException("Field not copied " + field.getName());
+    }
+  }
+
+  private static boolean isPublic(final Field field) {
+    return (field.getModifiers() & Modifier.PUBLIC) != 0;
+  }
+
+  private static boolean isFinal(final Field field) {
+    return (field.getModifiers() & Modifier.FINAL) != 0;
+  }
+
+  @Nullable
+  private CommonCodeStyleSettings getDefaultSettings() {
+    return LanguageCodeStyleSettingsProvider.getDefaultCommonSettings(myLanguage);
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, getDefaultSettings()));
   }
 
 //----------------- GENERAL --------------------
@@ -237,10 +312,7 @@ public class CommonCodeStyleSettings {
    * int start = 1;
    * int end   = 10;
    */
-  public boolean ALIGN_GROUP_FIELDS_VARIABLES = false;
-
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
-
 
 //----------------- SPACES --------------------
 
@@ -368,6 +440,13 @@ public class CommonCodeStyleSettings {
    * "[expr]"
    */
   public boolean SPACE_WITHIN_BRACKETS = false;
+
+  /**
+   * void foo(){ { return; } }
+   * or
+   * void foo(){{return;}}
+   */
+  public boolean SPACE_WITHIN_BRACES = false;
 
   /**
    * "int X[] { 1, 3, 5 }"

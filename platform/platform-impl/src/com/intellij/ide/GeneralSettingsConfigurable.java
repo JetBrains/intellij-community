@@ -16,11 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.CompositeConfigurable;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,12 +24,20 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.util.Arrays;
-import java.util.List;
 import java.awt.*;
+import java.util.List;
 
-public class GeneralSettingsConfigurable extends CompositeConfigurable<Configurable> implements SearchableConfigurable {
-  public static ExtensionPointName<Configurable> EP_NAME = ExtensionPointName.create("com.intellij.generalOptionsProvider");
+/**
+ * To provide an additional settings editor register implementation of {@link com.intellij.openapi.options.SearchableConfigurable} in the plugin.xml:
+ * <p/>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;generalOptionsProvider instance="class-name"/&gt;<br>
+ * &lt;/extensions&gt;
+ * <p>
+ * A new instance of the specified class will be created each time then the Settings dialog is opened
+ */
+public class GeneralSettingsConfigurable extends CompositeConfigurable<SearchableConfigurable> implements SearchableConfigurable {
+  private static ExtensionPointName<GeneralSettingsConfigurableEP> EP_NAME = ExtensionPointName.create("com.intellij.generalOptionsProvider");
   
   private MyComponent myComponent;
 
@@ -99,7 +103,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Configura
       }
     });
 
-    List<Configurable> list = getConfigurables();
+    List<SearchableConfigurable> list = getConfigurables();
     if (!list.isEmpty()) {
       myComponent.myPluginOptionsPanel.setLayout(new GridLayout(list.size(), 1));
       for (Configurable c : list) {
@@ -170,7 +174,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Configura
     return null;
   }
 
-  protected List<Configurable> createConfigurables() {
-    return Arrays.asList(Extensions.getExtensions(EP_NAME));
+  protected List<SearchableConfigurable> createConfigurables() {
+    return AbstractConfigurableEP.createConfigurables(EP_NAME);
   }
 }

@@ -17,10 +17,11 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import org.jetbrains.annotations.NotNull;
 
 public interface Printer {
   void print(String text, ConsoleViewContentType contentType);
-  void onNewAvailable(Printable printable);
+  void onNewAvailable(@NotNull Printable printable);
   void printHyperlink(String text, HyperlinkInfo info);
   void mark();
 }

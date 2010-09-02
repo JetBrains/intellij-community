@@ -25,7 +25,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -54,7 +53,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ProjectJdksConfigurable extends MasterDetailsComponent implements Configurable.Assistant {
+public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
   private final ProjectSdksModel myProjectJdksModel;
   private final Project myProject;

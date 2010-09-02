@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -68,7 +68,7 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   }
 
   public static ProjectLibrariesConfigurable getInstance(final Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ProjectLibrariesConfigurable.class);
+    return ServiceManager.getService(project, ProjectLibrariesConfigurable.class);
   }
 
   protected String getAddText() {

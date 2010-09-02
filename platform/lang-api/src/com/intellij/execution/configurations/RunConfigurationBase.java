@@ -182,8 +182,4 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     }
   }
 
-  public boolean needAdditionalConsole() {
-    return true;
-  }
-
 }

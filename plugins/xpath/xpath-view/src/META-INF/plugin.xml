@@ -61,7 +61,7 @@
         serviceInterface="org.intellij.lang.xpath.xslt.psi.XsltElementFactory"
         serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
 
-    <projectConfigurable implementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" />
+    <projectConfigurable instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" />
 
     <projectService
         serviceInterface="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState"
@@ -109,8 +109,8 @@
       <category>XSLT</category>
     </intentionAction>
 
-    <applicationConfigurable implementation="org.intellij.plugins.xpathView.XPathConfigurable"/>
-    <applicationConfigurable implementation="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" />
+    <applicationConfigurable instance="org.intellij.plugins.xpathView.XPathConfigurable"/>
+    <applicationConfigurable instance="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" />
 
     <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
     <gotoSymbolContributor implementation="org.intellij.lang.xpath.xslt.impl.XsltChooseByNameContributor"/>

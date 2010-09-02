@@ -23,7 +23,7 @@ import com.intellij.xml.XmlBundle;
  * @author yole
  */
 public class WebEditorAppearanceConfigurable extends BeanConfigurable<WebEditorOptions> implements UnnamedConfigurable {
-  protected WebEditorAppearanceConfigurable() {
+  public WebEditorAppearanceConfigurable() {
     super(WebEditorOptions.getInstance());
     checkBox("breadcrumbsEnabled", XmlBundle.message("xml.editor.options.breadcrumbs.title"));
     checkBox("showCssColorPreviewInGutter", "Show CSS Color preview icon in gutter");

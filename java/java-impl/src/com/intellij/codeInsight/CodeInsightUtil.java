@@ -171,14 +171,16 @@ public class CodeInsightUtil {
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
     List<PsiExpression> array = new ArrayList<PsiExpression>();
     addExpressionOccurrences(RefactoringUtil.unparenthesizeExpression(expr), array, scope);
-    boolean found = false;
-    for (PsiExpression psiExpression : array) {
-      if (PsiTreeUtil.isAncestor(expr, psiExpression, false) || PsiTreeUtil.isAncestor(psiExpression, expr, false)) {
-        found = true;
-        break;
+    if (expr.isPhysical()) {
+      boolean found = false;
+      for (PsiExpression psiExpression : array) {
+        if (PsiTreeUtil.isAncestor(expr, psiExpression, false) || PsiTreeUtil.isAncestor(psiExpression, expr, false)) {
+          found = true;
+          break;
+        }
       }
+      if (!found) array.add(expr);
     }
-    if (!found) array.add(expr);
     return array.toArray(new PsiExpression[array.size()]);
   }
 

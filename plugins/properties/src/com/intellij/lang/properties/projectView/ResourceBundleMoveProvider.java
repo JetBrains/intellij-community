@@ -16,11 +16,14 @@
 package com.intellij.lang.properties.projectView;
 
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -36,6 +39,10 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
     return ResourceBundle.ARRAY_DATA_KEY.getData(dataContext) != null;
   }
 
+  public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
+    return false;
+  }
+
   @Override
   public void collectFilesOrDirsFromContext(DataContext dataContext, Set<PsiElement> filesOrDirs) {
 
@@ -44,5 +51,13 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
     for (ResourceBundle bundle : bundles) {
       filesOrDirs.addAll(bundle.getPropertiesFiles(PlatformDataKeys.PROJECT.getData(dataContext)));
     }
+  }
+
+  @Override
+  public boolean isMoveRedundant(PsiElement source, PsiElement target) {
+    if (source instanceof PropertiesFile && target instanceof PsiDirectory) {
+      return source.getParent() == target;
+    }
+    return super.isMoveRedundant(source, target);
   }
 }

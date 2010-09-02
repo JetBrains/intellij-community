@@ -246,37 +246,34 @@
                   serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
 
   <!-- Editor -->
-  <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
+  <applicationConfigurable instance="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
 
   <projectService serviceInterface="com.intellij.semantic.SemService" serviceImplementation="com.intellij.semantic.SemServiceImpl"/>
 
   <!--
     -->
 <!-- Code Completion -->
-    <!--
-<applicationConfigurable implementation="com.intellij.application.options.CodeCompletionOptions" id="completion" order="after editor"/>
-  -->
 
 
   <!-- Global Code Style -->
-  <projectConfigurable implementation="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
+  <projectConfigurable instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
 
   <!-- File Types -->
-  <applicationConfigurable implementation="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable"/>
+  <applicationConfigurable instance="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable"/>
 
-  <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
+  <applicationConfigurable instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
 
   <!-- Live Templates -->
-  <applicationConfigurable implementation="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
+  <applicationConfigurable instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
 
   <!-- File Templates-->
-  <applicationConfigurable implementation="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
 
   <!-- T.O.D.O -->
-  <applicationConfigurable implementation="com.intellij.ide.todo.configurable.TodoConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.todo.configurable.TodoConfigurable"/>
 
   <!-- External Tools -->
-  <applicationConfigurable implementation="com.intellij.tools.ToolConfigurable"/>
+  <applicationConfigurable instance="com.intellij.tools.ToolConfigurable"/>
 
   <!-- Project Code Style -->
   <!--<projectConfigurable implementation="com.intellij.application.options.ProjectCodeStyleConfigurable" order="before vcs"/>-->
@@ -434,16 +431,16 @@
   <codeInsight.linkHandler prefix="#inspection/" handlerClass="com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler"/>
   <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
 
-  <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
+  <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
   <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
   <!-- Colors & Fonts-->
   <editorOptionsProvider implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorTabsConfigurable"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.CodeFoldingConfigurable"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.CodeCompletionOptions"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.AutoImportOptionsConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable"/>
 
   <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
 
@@ -543,8 +540,8 @@
               factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
-  <projectConfigurable implementation="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
-  <projectConfigurable implementation="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors"/>
+  <projectConfigurable instance="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
+  <projectConfigurable instance="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors"/>
 
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.DisposerDebugger"/>

@@ -180,9 +180,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
                                                 NotificationType.INFORMATION, new NotificationListener() {
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              EditorOptions editorOptions = ShowSettingsUtil.getInstance().findApplicationConfigurable(EditorOptions.class);
+              final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
               IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-              ShowSettingsUtil.getInstance().editConfigurable((JFrame)ideFrame, editorOptions);
+              util.editConfigurable((JFrame)ideFrame, new EditorOptions());
             }
           }
         }));

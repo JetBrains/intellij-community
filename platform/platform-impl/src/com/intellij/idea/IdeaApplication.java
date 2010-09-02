@@ -218,7 +218,7 @@ public class IdeaApplication {
     private void updatePlugins(boolean showConfirmation) {
       try {
         final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
-        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false);
+        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
         if (newVersion != null) {
           UpdateChecker.showUpdateInfoDialog(true, newVersion, updatedPlugins);
         } else if (updatedPlugins != null) {

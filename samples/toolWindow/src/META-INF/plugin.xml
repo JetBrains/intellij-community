@@ -1,6 +1,6 @@
 <idea-plugin version="2">
   <name>Tool Window</name>
-  <description>This sample plugin illustrates how to contribute to the toolWindow extension point</description>
+  <description>This sample plugin illustrates how to create your custom tool window.</description>
   <version>1.0</version>
   <vendor>JetBrains</vendor>
     <!--

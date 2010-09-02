@@ -263,6 +263,16 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     return myConfigurable2Node.get(toSelect);
   }
 
+  @Nullable
+  public <T extends Configurable> T findConfigurable(Class<T> configurableClass) {
+    for (Configurable configurable : myConfigurable2Node.keySet()) {
+      if (configurableClass.isInstance(configurable)) {
+        return configurableClass.cast(configurable);
+      }
+    }
+    return null;
+  }
+
   class Renderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
 
 

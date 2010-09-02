@@ -19,7 +19,6 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionContext;
@@ -619,7 +618,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public Presentation testAction(AnAction action) {
-    DataContext context = DataManager.getInstance().getDataContext(getEditor().getComponent());
+    DataContext context = DataManager.getInstance().getDataContext();
     TestActionEvent e = new TestActionEvent(context, action);
     action.beforeActionPerformedUpdate(e);
     if (e.getPresentation().isVisible() && e.getPresentation().isVisible()) {
@@ -772,12 +771,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myPsiManager;
   }
 
-  public LookupElement[] complete(final CompletionType type) {
+  @Override
+  public LookupElement[] complete(CompletionType type) {
+    return complete(type, 1);
+  }
+
+  @Override
+  public LookupElement[] complete(final CompletionType type, final int invocationCount) {
     assertInitialized();
     myEmptyLookup = false;
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Exception {
-        final CodeInsightActionHandler handler = new CodeCompletionHandlerBase(type) {
+        final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
           protected PsiFile createFileCopy(final PsiFile file) {
             final PsiFile copy = super.createFileCopy(file);
             if (myFileContext != null) {
@@ -799,7 +804,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
         };
         Editor editor = getCompletionEditor();
-        handler.invoke(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()));
+        handler.invokeCompletion(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()), invocationCount);
       }
     }.execute();
     return getLookupElements();

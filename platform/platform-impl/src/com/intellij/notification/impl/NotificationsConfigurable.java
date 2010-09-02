@@ -16,8 +16,10 @@
 package com.intellij.notification.impl;
 
 import com.intellij.notification.impl.ui.NotificationsConfigurablePanel;
-import com.intellij.openapi.options.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.OptionalConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nls;
 
@@ -28,17 +30,7 @@ import javax.swing.*;
  */
 public class NotificationsConfigurable implements Configurable, SearchableConfigurable, OptionalConfigurable {
   public static final String DISPLAY_NAME = "Notifications";
-
   private NotificationsConfigurablePanel myComponent;
-
-  public static NotificationsConfigurable getNotificationsConfigurable() {
-    return ShowSettingsUtil.getInstance().findApplicationConfigurable(NotificationsConfigurable.class);
-  }
-
-  public static void editSettings() {
-    final NotificationsConfigurable configurable = getNotificationsConfigurable();
-    ShowSettingsUtil.getInstance().editConfigurable((Project) null, configurable);
-  }
 
   @Nls
   public String getDisplayName() {

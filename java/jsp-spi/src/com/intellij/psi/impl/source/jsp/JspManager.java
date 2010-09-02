@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.MultiMap;
@@ -82,5 +83,5 @@ public abstract class JspManager implements IBaseJspManager {
   public abstract XmlFile getTldFileByUri(@NonNls String uri, @Nullable Module module, @Nullable JspFile jspFile);
 
   @NotNull
-  public abstract JspVersion getJspVersion(@NotNull PsiFile context);
+  public abstract JspVersion getJspVersion(@NotNull PsiFileSystemItem context);
 }

@@ -79,7 +79,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     if (project == null) {
       group = new ConfigurableGroup[] {new IdeConfigurablesGroup()};
     } else {
-      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project, false), new IdeConfigurablesGroup()};
+      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project), new IdeConfigurablesGroup()};
     }
 
     Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
@@ -93,7 +93,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   public void showSettingsDialog(@NotNull final Project project, final Configurable toSelect) {
     _showSettingsDialog(project, new ConfigurableGroup[]{
-      new ProjectConfigurablesGroup(project, false),
+      new ProjectConfigurablesGroup(project),
       new IdeConfigurablesGroup()
     }, toSelect);
   }
@@ -122,57 +122,48 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public boolean editConfigurable(Project project, Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(project, configurable, createDimensionKey(configurable));
-    configurableEditor.show();
-    return configurableEditor.isOK();
+    return editConfigurable(project, createDimensionKey(configurable), configurable);
   }
 
   public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
-    return selectConfigurable(confClass, ApplicationManager.getApplication().getExtensions(Configurable.APPLICATION_CONFIGURABLES));
+    return ConfigurableExtensionPointUtil.findApplicationConfigurable(confClass);
   }
 
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
-    return selectConfigurable(confClass, project.getExtensions(Configurable.PROJECT_CONFIGURABLES));
-  }
-
-  private static <T extends Configurable> T selectConfigurable(final Class<T> confClass, final Configurable... configurables) {
-    for (Configurable configurable : configurables) {
-      if (confClass.isAssignableFrom(configurable.getClass())) return (T)configurable;
-    }
-
-    throw new IllegalStateException("Can't find configurable of class " + confClass.getName());
+    return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 
   public boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(project, configurable, dimensionServiceKey);
-    configurableEditor.show();
-    return configurableEditor.isOK();
+    return editConfigurable(project, configurable, dimensionServiceKey, null);
   }
 
-  @Override
-  public boolean editProjectConfigurable(@NotNull Project project,
-                                         Class<? extends Configurable> configurableClass,
-                                         @NonNls String dimensionServiceKey) {
-    final Configurable configurable = findProjectConfigurable(project, configurableClass);
-    if (configurable == null) {
-      LOG.error("Cannot find project configurable for " + configurableClass);
-      return false;
+  public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
+    return editConfigurable(project, configurable, createDimensionKey(configurable), advancedInitialization);
+  }
+
+  private static boolean editConfigurable(Project project, Configurable configurable, final String dimensionKey, Runnable advancedInitialization) {
+    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable, dimensionKey);
+    if (advancedInitialization != null) {
+      advancedInitialization.run();
     }
-    if (dimensionServiceKey == null) {
-      dimensionServiceKey = createDimensionKey(configurable);
-    }
-    return editConfigurable(project, dimensionServiceKey, configurable);
+    editor.show();
+    return editor.isOK();
   }
 
   public boolean editConfigurable(Component parent, Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(parent, configurable, createDimensionKey(configurable));
-    configurableEditor.show();
-    return configurableEditor.isOK();
+    return editConfigurable(parent, configurable, null);
   }
 
   public boolean editConfigurable(final Component parent, final Configurable configurable, final Runnable advancedInitialization) {
-    SingleConfigurableEditor editor = new SingleConfigurableEditor(parent, configurable, createDimensionKey(configurable));
-    advancedInitialization.run();
+    return editConfigurable(parent, configurable, createDimensionKey(configurable), advancedInitialization);
+  }
+
+  private static boolean editConfigurable(final Component parent, final Configurable configurable, final String dimensionKey,
+                                   final Runnable advancedInitialization) {
+    SingleConfigurableEditor editor = new SingleConfigurableEditor(parent, configurable, dimensionKey);
+    if (advancedInitialization != null) {
+      advancedInitialization.run();
+    }
     editor.show();
     return editor.isOK();
   }
@@ -184,15 +175,6 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public boolean editConfigurable(Component parent, String dimensionServiceKey,Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(parent, configurable, dimensionServiceKey);
-    configurableEditor.show();
-    return configurableEditor.isOK();
-  }
-
-  public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
-    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable, createDimensionKey(configurable));
-    advancedInitialization.run();
-    editor.show();
-    return editor.isOK();
+    return editConfigurable(parent, configurable, dimensionServiceKey, null);
   }
 }

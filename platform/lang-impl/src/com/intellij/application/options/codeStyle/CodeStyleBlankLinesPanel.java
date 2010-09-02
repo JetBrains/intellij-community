@@ -15,11 +15,13 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.OptionGroup;
@@ -33,6 +35,7 @@ import java.util.*;
 import java.util.List;
 
 public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel {
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel");
 
   private List<IntOption> myOptions = new ArrayList<IntOption>();
@@ -203,15 +206,21 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   @Override
   public void renameStandardOption(String fieldName, String newTitle) {
-    if (myIsFirstUpdate) {
-      myRenamedFields.put(fieldName, newTitle);
+    for (IntOption option : myOptions) {
+      option.myTextField.invalidate();
     }
   }
 
-  private static class IntOption {
+  @Override
+  protected void onLanguageChange(Language language) {
+    resetImpl(getSettings());
+  }
+
+  private class IntOption {
     private final JTextField myTextField;
     private final Field myTarget;
     private Class<? extends CustomCodeStyleSettings> myTargetClass;
+    private int myCurrValue = Integer.MAX_VALUE;
 
     private IntOption(String fieldName) {
       this(CodeStyleSettings.class, fieldName, false);
@@ -234,7 +243,11 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
     private int getFieldValue(CodeStyleSettings settings) {
       try {
-        return myTarget.getInt(myTargetClass == null ? settings : settings.getCustomSettings(myTargetClass));
+        if (myTargetClass != null) {
+          return myTarget.getInt(settings.getCustomSettings(myTargetClass));
+        }
+        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
+        return myTarget.getInt(commonSettings);
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);
@@ -243,7 +256,13 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
     public void setFieldValue(CodeStyleSettings settings, int value) {
       try {
-        myTarget.setInt(myTargetClass == null ? settings : settings.getCustomSettings(myTargetClass), value);
+        if (myTargetClass != null) {
+          myTarget.setInt(settings.getCustomSettings(myTargetClass), value);
+        }
+        else {
+          CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
+          myTarget.setInt(commonSettings, value);
+        }
       }
       catch (IllegalAccessException e) {
         LOG.error(e);
@@ -251,24 +270,27 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     }
 
     private int getValue() {
-      int ret = 0;
       try {
-        ret = Integer.parseInt(myTextField.getText());
-        if (ret < 0) {
-          ret = 0;
+        myCurrValue = Integer.parseInt(myTextField.getText());
+        if (myCurrValue < 0) {
+          myCurrValue = 0;
         }
-        if (ret > 10) {
-          ret = 10;
+        if (myCurrValue > 10) {
+          myCurrValue = 10;
         }
       }
       catch (NumberFormatException e) {
         //bad number entered
+        myCurrValue = 0;
       }
-      return ret;
+      return myCurrValue;
     }
 
     public void setValue(int fieldValue) {
-      myTextField.setText(String.valueOf(fieldValue));
+      if (fieldValue != myCurrValue) {
+        myTextField.setText(String.valueOf(fieldValue));
+        myCurrValue = fieldValue;
+      }
     }
   }
   

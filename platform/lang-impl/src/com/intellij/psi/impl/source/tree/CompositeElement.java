@@ -513,12 +513,20 @@ public class CompositeElement extends TreeElement {
       wrapper = myWrapper;
       if (wrapper != null) return wrapper;
 
-      return getPsiNoLock();
+      return createAndStorePsi();
     }
   }
 
-  final PsiElement getPsiNoLock() {
-    return myWrapper = createPsiNoLock();
+  @Override
+  @Nullable
+  public <T extends PsiElement> T getPsi(Class<T> clazz) {
+    return LeafElement.getPsi(clazz, getPsi(), LOG);
+  }
+
+  final PsiElement createAndStorePsi() {
+    PsiElement psi = createPsiNoLock();
+    myWrapper = psi;
+    return psi;
   }
 
   protected PsiElement createPsiNoLock() {

@@ -24,7 +24,7 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.services.MavenServicesManager"/>
 
-    <projectConfigurable implementation="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
+    <projectConfigurable instance="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
     <keymapExtension implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>

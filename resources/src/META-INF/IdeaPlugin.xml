@@ -186,9 +186,9 @@
     <overrideImplementsAnnotationsHandler implementation="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandlerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"/>
-    <errorOptionsProvider implementation="com.intellij.profile.codeInspection.ui.JavaErrorOptionsProvider"/>
-    <autoImportOptionsProvider implementation="com.intellij.application.options.editor.JavaAutoImportOptions"/>
-    <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider"/>
+    <errorOptionsProvider instance="com.intellij.profile.codeInspection.ui.JavaErrorOptionsProvider"/>
+    <autoImportOptionsProvider instance="com.intellij.application.options.editor.JavaAutoImportOptions"/>
+    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider"/>
 
 
 
@@ -621,25 +621,23 @@
 
 
     <!-- Project Configurables -->
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable" id="project"
-                         order="first"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
-    <projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
 
     <!-- Errors -->
     <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
-    <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable"/>
+    <projectConfigurable provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider"/>
 
-    <!--<projectConfigurable implementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>-->
     <!-- Project Structure -->
-    <projectConfigurable implementation="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>
+    <projectConfigurable instance="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>
     <!-- Compiler -->
 
-    <projectConfigurable implementation="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"/>
+    <projectConfigurable instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"/>
 
     <!-- Scopes -->
     <!-- This is registered as a top-level configurable in IDEA, and as a service (accessible from certain dialogs) in platform. -->
@@ -650,15 +648,11 @@
     <!-- Path Variables -->
     <!-- the implementation of this configurable is in platform-impl but it's not registered in platform because
          it's only required in full IDEA -->
-    <applicationConfigurable implementation="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
+    <applicationConfigurable instance="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
 
-    <applicationConfigurable implementation="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
+    <applicationConfigurable instance="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
 
     <!-- Resources -->
-
-    <!--TODO <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>--> <!-- Plugins -->
-    <!-- Intention Actions -->
-    <!--TODO <applicationConfigurable implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"/>  --><!-- Updates -->
 
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
 

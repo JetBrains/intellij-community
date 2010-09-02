@@ -20,7 +20,6 @@ import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.application.options.colors.TextAttributesDescription;
-import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -34,7 +33,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
@@ -122,13 +120,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         final String toConfigure = getSelectedType().getSeverity(null).myName;
         doOKAction();
         myOptionsList.clearSelection();
-        ColorAndFontOptions colorAndFontOptions = null;
-        for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
-          if (provider.getClass().isAssignableFrom(ColorAndFontOptions.class)) {
-            colorAndFontOptions = (ColorAndFontOptions)provider;
-            break;
-          }
-        }
+        ColorAndFontOptions colorAndFontOptions = ColorAndFontOptions.getColorAndFontsInstance();
         assert colorAndFontOptions != null;
         final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
         LOG.assertTrue(javaPage != null);

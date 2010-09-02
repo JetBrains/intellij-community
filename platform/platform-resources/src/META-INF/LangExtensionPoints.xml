@@ -1,11 +1,11 @@
 <extensionPoints>
-  <extensionPoint name="errorOptionsProvider" interface="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
-  <extensionPoint name="codeFoldingOptionsProvider" interface="com.intellij.application.options.editor.CodeFoldingOptionsProvider"/>
-  <extensionPoint name="autoImportOptionsProvider" interface="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
+  <extensionPoint name="errorOptionsProvider" beanClass="com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP"/>
+  <extensionPoint name="codeFoldingOptionsProvider" beanClass="com.intellij.application.options.editor.CodeFoldingOptionsProviderEP"/>
+  <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP"/>
   <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
   <extensionPoint name="moduleConfigurable"
-                  interface="com.intellij.openapi.options.Configurable"
+                  beanClass="com.intellij.openapi.options.ModuleConfigurableEP"
                   area="IDEA_MODULE"/>
 
   <extensionPoint name="indexPatternProvider"
@@ -308,7 +308,7 @@
                   interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
 
   <extensionPoint name="codeInsight.parameterInfo" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
-  <extensionPoint name="editorOptionsProvider" interface="com.intellij.application.options.editor.EditorOptionsProvider"/>
+  <extensionPoint name="editorOptionsProvider" beanClass="com.intellij.application.options.editor.EditorOptionsProviderEP"/>
   <extensionPoint name="fileTypeIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider"/>
   <extensionPoint name="referenceImporter" interface="com.intellij.codeInsight.daemon.ReferenceImporter"/>
   <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer"/>
@@ -383,8 +383,8 @@
   <extensionPoint name="methodHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="typeHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
-  <extensionPoint name="editorAppearanceConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
-  <extensionPoint name="editorSmartKeysConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
+  <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP"/>
+  <extensionPoint name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP"/>
   <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 
   <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
@@ -433,7 +433,7 @@
   <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider"/>
 
   <extensionPoint name="semContributor"
-                  interface="com.intellij.semantic.SemContributor" area="IDEA_PROJECT"/>
+                  beanClass="com.intellij.semantic.SemContributorEP" area="IDEA_PROJECT"/>
 
   <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
 

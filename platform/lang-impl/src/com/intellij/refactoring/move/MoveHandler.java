@@ -173,4 +173,11 @@ public class MoveHandler implements RefactoringActionHandler {
 
     return false;
   }
+
+  public static boolean isMoveRedundant(PsiElement source, PsiElement target) {
+    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+      if (delegate.isMoveRedundant(source, target)) return true;
+    }
+    return false;
+  }
 }

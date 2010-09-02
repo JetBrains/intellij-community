@@ -65,11 +65,11 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testEnumValueOf() throws Throwable {
-    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "MyEnum.valueOf", "Enum.valueOf");
+    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "valueOf", "valueOf");
   }
 
   public void testEnumValueOf2() throws Throwable {
-    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "bar", "MyEnum.valueOf");
+    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "bar", "valueOf");
   }
 
   public void testPreferMatchedWords() throws Throwable {
@@ -115,7 +115,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testBooleanValueOf() throws Throwable {
-    checkPreferredItems(0, "b", "Boolean.valueOf", "Boolean.valueOf", "Boolean.FALSE", "Boolean.TRUE");
+    checkPreferredItems(0, "b", "valueOf", "valueOf", "Boolean.FALSE", "Boolean.TRUE");
   }
   
   public void testXmlTagGetAttribute() throws Throwable {
@@ -188,7 +188,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testFactoryMethodForDefaultType() throws Throwable {
-    checkPreferredItems(0, "Pair.create", "map", "this", "getClass");
+    checkPreferredItems(0, "create", "map", "this", "getClass");
   }
 
   public void testLocalVarsBeforeClassLiterals() throws Throwable {

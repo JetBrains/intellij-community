@@ -518,9 +518,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testNoKeyConstant() throws Throwable {
     configureByTestName();
-    assertEquals(2, myItems.length);
-    assertEquals("A_KEY", myItems[0].getLookupString());
-    assertEquals("Key.create", myItems[1].getLookupString());
+    assertStringItems("A_KEY", "create");
   }
 
   public void testUserDataListAddAll() throws Throwable {
@@ -695,7 +693,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testDontAutoCastWhenAlreadyCasted() throws Throwable {
     configureByTestName();
     assertEquals("s", myItems[0].getLookupString());
-    assertEquals("String.copyValueOf", myItems[1].getLookupString());
+    assertEquals("copyValueOf", myItems[1].getLookupString());
     select();
     checkResultByTestName();
   }
@@ -752,7 +750,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
   public void testNoClassLiteral() throws Exception {
     doActionTest();
-    assertStringItems("Object.class", "getClass", "Class.forName", "Class.forName");
+    assertStringItems("Object.class", "getClass", "forName", "forName");
   }
 
   public void testClassLiteralInAnno2() throws Throwable {
@@ -920,7 +918,10 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testStaticallyImportedMagicMethod() throws Throwable {
-    doItemTest();
+    configureByTestName();
+    assertStringItems("foo");
+    selectItem(myItems[0], '\t');
+    checkResultByTestName();
   }
 
   public void _testCallVarargArgument() throws Throwable { doTest(); }
@@ -934,6 +935,9 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testNoTypeParametersForToArray() throws Throwable {
     doTest();
   }
+
+  public void testStaticallyImportedField() throws Throwable { doTest(); }
+  public void testSiblingOfAStaticallyImportedField() throws Throwable { doTest(); }
 
   public void testInferFromCall() throws Throwable {
     doTest();
@@ -956,6 +960,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testFilterPrivateConstructors() throws Throwable { doTest(); }
 
   public void testExplicitMethodTypeParametersQualify() throws Throwable { doTest(); }
+
+  public void testExplicitMethodTypeParametersFromSuperClass() throws Throwable { doTest(); }
 
   public void testWildcardedInstanceof() throws Throwable { doTest(); }
   public void testWildcardedInstanceof2() throws Throwable { doTest(); }

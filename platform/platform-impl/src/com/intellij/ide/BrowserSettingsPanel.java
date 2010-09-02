@@ -15,16 +15,18 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.AbstractConfigurableEP;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -32,7 +34,7 @@ import java.awt.event.ActionEvent;
 public class BrowserSettingsPanel extends JPanel {
   private final JRadioButton myUseDefaultBrowser;
   private final JRadioButton myUseAlternativeBrowser;
-  private final BrowserSettingsProvider[] mySettingsProviders;
+  private final List<BrowserSettingsProvider> mySettingsProviders;
   private final TextFieldWithBrowseButton myBrowserPathField;
   private final JCheckBox myConfirmExtractFiles;
   private final JButton myClearExtractedFiles;
@@ -96,7 +98,7 @@ public class BrowserSettingsPanel extends JPanel {
       myUseAlternativeBrowser.setVisible(false);
     }
 
-    mySettingsProviders = BrowserSettingsProvider.EP_NAME.getExtensions();
+    mySettingsProviders = AbstractConfigurableEP.createConfigurables(BrowserSettingsProviderEP.EP_NAME);
     for (BrowserSettingsProvider settingsProvider : mySettingsProviders) {
       outerPanel.add(settingsProvider.createComponent());
     }
@@ -161,6 +163,12 @@ public class BrowserSettingsPanel extends JPanel {
 
     for (BrowserSettingsProvider provider : mySettingsProviders) {
       provider.reset();
+    }
+  }
+
+  public void disposeUIResources() {
+    for (BrowserSettingsProvider provider : mySettingsProviders) {
+      provider.disposeUIResources();
     }
   }
 }

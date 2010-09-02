@@ -88,7 +88,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   private static final String THROWS_KEYWORD = ApplicationBundle.message("wrapping.throws.keyword");
   private static final String TERNARY_OPERATION = ApplicationBundle.message("wrapping.ternary.operation");
   private static final String ASSIGNMENT = ApplicationBundle.message("wrapping.assignment.statement");
-  private static final String FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("wrapping.assignment.statement");
+  private static final String FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("wrapping.assignment.variables.groups");
   private static final String ARRAY_INITIALIZER = ApplicationBundle.message("wrapping.array.initializer");
   private static final String MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
   private static final String ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
@@ -119,16 +119,14 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
     addOption("EXTENDS_KEYWORD_WRAP", EXTENDS_KEYWORD, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
 
+    addOption("THROWS_LIST_WRAP", THROWS_LIST, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    addOption("ALIGN_MULTILINE_THROWS_LIST", ApplicationBundle.message("wrapping.align.when.multiline"), THROWS_LIST);
+    addOption("THROWS_KEYWORD_WRAP", THROWS_KEYWORD, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
+
     addOption("METHOD_PARAMETERS_WRAP", METHOD_PARAMETERS, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     addOption("ALIGN_MULTILINE_PARAMETERS", ApplicationBundle.message("wrapping.align.when.multiline"), METHOD_PARAMETERS);
     addOption("METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.new.line.after.lpar"), METHOD_PARAMETERS);
     addOption("METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line"), METHOD_PARAMETERS);
-
-    addOption("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("wrapping.align.when.multiline"), METHOD_PARENTHESES);
-
-    addOption("THROWS_LIST_WRAP", THROWS_LIST, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    addOption("ALIGN_MULTILINE_THROWS_LIST", ApplicationBundle.message("wrapping.align.when.multiline"), THROWS_LIST);
-    addOption("THROWS_KEYWORD_WRAP", THROWS_KEYWORD, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
 
     addOption("CALL_PARAMETERS_WRAP", METHOD_ARGUMENTS_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     addOption("ALIGN_MULTILINE_PARAMETERS_IN_CALLS", ApplicationBundle.message("wrapping.align.when.multiline"), METHOD_ARGUMENTS_WRAPPING);
@@ -136,8 +134,12 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("CALL_PARAMETERS_LPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.new.line.after.lpar"), METHOD_ARGUMENTS_WRAPPING);
     addOption("CALL_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line"), METHOD_ARGUMENTS_WRAPPING);
 
+    addOption("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("wrapping.align.when.multiline"), METHOD_PARENTHESES);
+
     addOption("METHOD_CALL_CHAIN_WRAP", CALL_CHAIN, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     addOption("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline"), CALL_CHAIN);
+
+    addOption("ALIGN_GROUP_FIELD_DECLARATIONS", ApplicationBundle.message("wrapping.align.when.multiline"), FIELDS_VARIABLES_GROUPS);
 
     addOption("IF_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), IF_STATEMENT, BRACE_FORCE_OPTIONS, BRACE_FORCE_VALUES);
     addOption("ELSE_ON_NEW_LINE", ApplicationBundle.message("wrapping.else.on.new.line"), IF_STATEMENT);
@@ -157,8 +159,6 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
     addOption("CATCH_ON_NEW_LINE", ApplicationBundle.message("wrapping.catch.on.new.line"), TRY_STATEMENT);
     addOption("FINALLY_ON_NEW_LINE", ApplicationBundle.message("wrapping.finally.on.new.line"), TRY_STATEMENT);
-
-    addOption("ALIGN_GROUP_FIELDS_VARIABLES", ApplicationBundle.message("wrapping.align.when.multiline"), FIELDS_VARIABLES_GROUPS);
 
     addOption("BINARY_OPERATION_WRAP", BINARY_OPERATION, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     addOption("ALIGN_MULTILINE_BINARY_OPERATION", ApplicationBundle.message("wrapping.align.when.multiline"), BINARY_OPERATION);
