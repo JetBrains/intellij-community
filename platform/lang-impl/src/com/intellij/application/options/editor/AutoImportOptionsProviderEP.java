@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.application.options.editor;
 
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 
 /**
- * @author Dmitry Avdeev
+ * @author nik
  */
-public interface AutoImportOptionsProvider extends UnnamedConfigurable {
+public class AutoImportOptionsProviderEP extends AbstractConfigurableEP<AutoImportOptionsProvider> {
+  public static final ExtensionPointName<AutoImportOptionsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.autoImportOptionsProvider");
 }

@@ -187,7 +187,7 @@
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"/>
     <errorOptionsProvider implementation="com.intellij.profile.codeInspection.ui.JavaErrorOptionsProvider"/>
-    <autoImportOptionsProvider implementation="com.intellij.application.options.editor.JavaAutoImportOptions"/>
+    <autoImportOptionsProvider instance="com.intellij.application.options.editor.JavaAutoImportOptions"/>
     <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider"/>
 
 

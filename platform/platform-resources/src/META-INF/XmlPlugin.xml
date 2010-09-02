@@ -75,7 +75,7 @@
     <editorSmartKeysConfigurable implementation="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
     <editorAppearanceConfigurable implementation="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"/>
 
-    <autoImportOptionsProvider implementation="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
+    <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.HtmlClosingTagErrorFilter"/>
 
