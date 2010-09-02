@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options;
+package com.intellij.application.options.editor;
 
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 
 /**
  * @author nik
  */
-public class ModuleConfigurableEP extends AbstractConfigurableEP<Configurable> {
-  public ModuleConfigurableEP(Module module) {
-    super(module.getPicoContainer());
-  }
+public class EditorOptionsProviderEP extends AbstractConfigurableEP<EditorOptionsProvider> {
+  public static final ExtensionPointName<EditorOptionsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.editorOptionsProvider");
 }

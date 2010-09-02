@@ -18,6 +18,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
@@ -31,7 +32,34 @@ import java.util.List;
 public class AbstractConfigurableEP<T extends UnnamedConfigurable> extends AbstractExtensionPointBean {
   @Attribute("instance")
   public String instanceClass;
+
+  /**
+   * @deprecated
+   */
+  @Attribute("implementation")
+  public String implementationClass;
+
   private final PicoContainer myPicoContainer;
+  private final AtomicNotNullLazyValue<T> myImplementation = new AtomicNotNullLazyValue<T>() {
+    @NotNull
+    @Override
+    protected T compute() {
+      if (implementationClass == null) {
+        throw new IllegalArgumentException("Neither 'instance' nor 'implementation' attribute is not specified for " + AbstractConfigurableEP.this.getClass() + " extension");
+      }
+      try {
+        final Class<T> aClass = findClass(implementationClass);
+        return instantiate(aClass, myPicoContainer, true);
+      }
+      catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
+
+  protected AbstractConfigurableEP(PicoContainer picoContainer) {
+    myPicoContainer = picoContainer;
+  }
 
   public AbstractConfigurableEP() {
     myPicoContainer = ApplicationManager.getApplication().getPicoContainer();
@@ -40,7 +68,7 @@ public class AbstractConfigurableEP<T extends UnnamedConfigurable> extends Abstr
   @NotNull
   public T createConfigurable() {
     if (instanceClass == null) {
-      throw new IllegalArgumentException("'instance' attribute isn't specified for " + getClass().getName() + " extension");
+      return myImplementation.getValue();
     }
     try {
       final Class<T> aClass = findClass(instanceClass);
