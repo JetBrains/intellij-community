@@ -143,7 +143,7 @@
 
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCodeInsightSettings"
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
-    <autoImportOptionsProvider implementation="com.jetbrains.python.codeInsight.PyAutoImportOptions"/>
+    <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.PyAutoImportOptions"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.PyDefaultLiveTemplatesProvider"/>
 
