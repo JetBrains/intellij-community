@@ -46,7 +46,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -75,7 +74,6 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -104,12 +102,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private HighlightDisplayKey myDeadCodeKey;
   private HighlightInfoType myDeadCodeInfoType;
 
-  private PostHighlightingPass(@NotNull Project project,
-                               @NotNull PsiFile file,
-                               @Nullable Editor editor,
-                               @NotNull Document document,
-                               int startOffset,
-                               int endOffset) {
+  PostHighlightingPass(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable Editor editor,
+                       @NotNull Document document,
+                       int startOffset,
+                       int endOffset) {
     super(project, document, true);
     myFile = file;
     myEditor = editor;
@@ -120,14 +118,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myCurentEntryIndex = -1;
 
     myImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-  }
-
-  PostHighlightingPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, int startOffset, int endOffset) {
-    this(project, file, editor, editor.getDocument(), startOffset, endOffset);
-  }
-
-  public PostHighlightingPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document, int startOffset, int endOffset) {
-    this(project, file, null, document, startOffset, endOffset);
   }
 
   public void doCollectInformation(final ProgressIndicator progress) {
@@ -174,19 +164,23 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());
 
-    if (timeToOptimizeImports() && myEditor != null) {
-      optimizeImportsOnTheFly();
+    Editor editor = myEditor;
+    if (editor != null && timeToOptimizeImports()) {
+      optimizeImportsOnTheFly(editor);
     }
   }
 
-  private void optimizeImportsOnTheFly() {
+  private void optimizeImportsOnTheFly(@NotNull final Editor editor) {
     if (myHasRedundantImports || myHasMissortedImports) {
       invokeOnTheFlyImportOptimizer(new Runnable() {
         public void run() {
+          if (myProject.isDisposed() || editor.isDisposed()) {
+            return;
+          }
           OptimizeImportsFix optimizeImportsFix = new OptimizeImportsFix();
-          if (optimizeImportsFix.isAvailable(myProject, myEditor, myFile) && myFile.isWritable()) {
+          if (optimizeImportsFix.isAvailable(myProject, editor, myFile) && myFile.isWritable()) {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            optimizeImportsFix.invoke(myProject, myEditor, myFile);
+            optimizeImportsFix.invoke(myProject, editor, myFile);
           }
         }
       });
@@ -203,11 +197,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         });
       }
     });
-  }
-
-  @TestOnly
-  public Collection<HighlightInfo> getHighlights() {
-    return myHighlights;
   }
 
   private void collectHighlights(@NotNull Collection<PsiElement> elements, @NotNull final List<HighlightInfo> result, @NotNull ProgressIndicator progress) throws ProcessCanceledException {
@@ -251,7 +240,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       else if (unusedImportEnabled && element instanceof PsiImportList) {
         final PsiImportStatementBase[] imports = ((PsiImportList)element).getAllImportStatements();
         for (PsiImportStatementBase statement : imports) {
-          ProgressManager.checkCanceled();
+          progress.checkCanceled();
           final HighlightInfo info = processImport(statement, unusedImportKey);
           if (info != null) {
             result.add(info);
@@ -266,28 +255,23 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, myUnusedSymbolInspection)) return null;
     PsiElement parent = identifier.getParent();
     if (PsiUtilBase.hasErrorElementChild(parent)) return null;
-    HighlightInfo info;
 
     if (parent instanceof PsiLocalVariable && myUnusedSymbolInspection.LOCAL_VARIABLE) {
-      info = processLocalVariable((PsiLocalVariable)parent, progress);
+      return processLocalVariable((PsiLocalVariable)parent, progress);
     }
-    else if (parent instanceof PsiField && myUnusedSymbolInspection.FIELD) {
-      final PsiField psiField = (PsiField)parent;
-      info = processField(psiField, identifier, progress);
+    if (parent instanceof PsiField && myUnusedSymbolInspection.FIELD) {
+      return processField((PsiField)parent, identifier, progress);
     }
-    else if (parent instanceof PsiParameter && myUnusedSymbolInspection.PARAMETER) {
-      info = processParameter((PsiParameter)parent, progress);
+    if (parent instanceof PsiParameter && myUnusedSymbolInspection.PARAMETER) {
+      return processParameter((PsiParameter)parent, progress);
     }
-    else if (parent instanceof PsiMethod && myUnusedSymbolInspection.METHOD) {
-      info = processMethod((PsiMethod)parent, progress);
+    if (parent instanceof PsiMethod && myUnusedSymbolInspection.METHOD) {
+      return processMethod((PsiMethod)parent, progress);
     }
-    else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier()) && myUnusedSymbolInspection.CLASS) {
-      info = processClass((PsiClass)parent, progress);
+    if (parent instanceof PsiClass && myUnusedSymbolInspection.CLASS) {
+      return processClass((PsiClass)parent, progress);
     }
-    else {
-      return null;
-    }
-    return info;
+    return null;
   }
 
 
@@ -486,8 +470,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
     else {
       //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
-      if (containingClass != null && method.isConstructor() && containingClass.getConstructors().length == 1 && isClassUnused(containingClass,
-                                                                                                                              progress) == USED) return null;
+      if (containingClass != null && method.isConstructor()
+          && containingClass.getConstructors().length == 1
+          && isClassUnused(containingClass, progress) == USED) {
+        return null;
+      }
       if (isImplicitUsage(method, progress)) return null;
 
       if (method.findSuperMethods().length != 0) {
@@ -691,20 +678,19 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private boolean containsErrorsPreventingOptimize(PsiFile file) {
-    List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
-
     // ignore unresolved imports errors
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
-    if (importList != null) {
-      TextRange importsRange = importList.getTextRange();
-      for (HighlightInfo error : errors) {
-        if (!error.type.equals(HighlightInfoType.WRONG_REF)) return true;
-        if (!importsRange.contains(error.getActualStartOffset()) || !importsRange.contains(error.getActualEndOffset())) {
-          return true;
-        }
+    final TextRange importsRange = importList == null ? new TextRange(0,0) : importList.getTextRange();
+    boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
+      public boolean process(HighlightInfo error) {
+        int infoStart = error.getActualStartOffset();
+        int infoEnd = error.getActualEndOffset();
+
+        return importsRange.containsRange(infoStart,infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
       }
-    }
-    return false;
+    });
+
+    return hasErrorsExceptUnresolvedImports;
   }
 
   private static boolean isIntentionalPrivateConstructor(PsiMethod method, PsiClass containingClass) {

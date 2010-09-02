@@ -1,6 +1,6 @@
 <idea-plugin version="2">
-  <name>DocumentFiles</name>
-  <description>This plugin illustrates how to work with document files.</description>
+  <name>Text Editor</name>
+  <description>This plugin illustrates how to create a simple text editor and work with document files.</description>
   <version>1.0</version>
   <vendor>JetBrains</vendor>
     <!--

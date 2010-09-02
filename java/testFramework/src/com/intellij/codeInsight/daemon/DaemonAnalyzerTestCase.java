@@ -290,7 +290,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       toIgnore.add(Pass.POPUP_HINTS);
       toIgnore.add(Pass.POST_UPDATE_ALL);
       toIgnore.add(Pass.UPDATE_ALL);
-      toIgnore.add(Pass.UPDATE_VISIBLE);
       toIgnore.add(Pass.UPDATE_OVERRIDEN_MARKERS);
       toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
     }

@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobImpl;
@@ -243,11 +242,6 @@ public abstract class PassExecutorService implements Disposable {
     ScheduledPass predecessor = toBeSubmitted.get(predkey);
     if (predecessor == null) {
       TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
-      if (textEditorPass == null && predecessorId == Pass.UPDATE_VISIBLE && passId != Pass.UPDATE_ALL && findPassById(Pass.UPDATE_ALL, textEditorHighlightingPasses) != null) {
-        // when UPDATE_VISIBLE pass is not going to run, pretend that all dependent passes are depend on UPDATE_ALL pass instead
-        return findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses, updateProgress,
-                                           myThreadsToStartCountdown, jobPriority, Pass.UPDATE_ALL, passId);
-      }
       predecessor = textEditorPass == null ? null : createScheduledPass(fileEditors, textEditorPass, toBeSubmitted, textEditorHighlightingPasses, freePasses,
                                                                         updateProgress, myThreadsToStartCountdown, jobPriority);
     }

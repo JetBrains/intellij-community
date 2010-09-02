@@ -36,7 +36,7 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
   public GeneralHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this,
-                                                                 new int[]{Pass.UPDATE_VISIBLE},
+                                                                 null,
                                                                  new int[]{Pass.UPDATE_FOLDING}, false, Pass.UPDATE_ALL);
   }
 
@@ -51,6 +51,7 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
     if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument(), GeneralHighlightingPass.IN_PROGRESS_ICON,
                                                                              GeneralHighlightingPass.PRESENTABLE_NAME);
-    return new GeneralHighlightingPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true);
+    TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    return new GeneralHighlightingPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange);
   }
 }

@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,9 +53,10 @@ public class MockDocument implements DocumentEx {
     return myText.toString();
   }
 
+  @NotNull
   @Override
-  public String getText(TextRange range) {
-    return myText.substring(range.getStartOffset(), range.getEndOffset());
+  public String getText(@NotNull TextRange range) {
+    return range.substring(myText.toString());
   }
 
   public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
@@ -235,9 +237,12 @@ public class MockDocument implements DocumentEx {
   public void clearLineModificationFlags() {
   }
 
-  public void removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {}
+  public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
+    return false;
+  }
 
-  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {}
+  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
+  }
 
   public boolean isInBulkUpdate() {
     return false;
@@ -260,5 +265,17 @@ public class MockDocument implements DocumentEx {
   @NotNull
   public List<RangeMarker> getGuardedBlocks() {
     return Collections.emptyList();
+  }
+
+  public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
+    return false;
+  }
+
+  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
+    return false;
+  }
+
+  public boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor) {
+    return false;
   }
 }

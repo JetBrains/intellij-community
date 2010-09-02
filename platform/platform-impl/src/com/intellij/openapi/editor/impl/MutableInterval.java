@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.editor.impl;
 
-package com.intellij.codeHighlighting;
-
-public interface Pass {
-  int UPDATE_FOLDING = 1;
-  @Deprecated /** there is no visible highlighting pass anymore, use {@link #UPDATE_ALL} instead */
-  int UPDATE_VISIBLE = 2;
-  int POPUP_HINTS = 3;
-  int UPDATE_ALL = 4;
-  int POST_UPDATE_ALL = 5;
-  int UPDATE_OVERRIDEN_MARKERS = 6;
-  int LOCAL_INSPECTIONS = 7;
-  int EXTERNAL_TOOLS = 8;
-  int WOLF = 9;
-  int VISIBLE_LINE_MARKERS = 10;
-  int LINE_MARKERS = 11;
-
-  int LAST_PASS = LINE_MARKERS;
+/**
+ * User: cdr
+ */
+public interface MutableInterval extends Interval {
+  int setIntervalStart(int start);
+  int setIntervalEnd(int end);
+  boolean isValid();
+  boolean setValid(boolean value);
 }
