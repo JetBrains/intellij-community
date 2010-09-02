@@ -754,20 +754,27 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         }
       });
 
-      Collection<T> schemes = getAllSchemes();
+      final Collection<T> schemes = getAllSchemes();
       myBaseDir.mkdirs();
 
-      UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
+      final UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
 
       reserveUsingFileNames(schemes, fileNameProvider);
 
+      final WriteExternalException[] ex = new WriteExternalException[1];
       ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable() {
         public void run() {
           deleteFilesFromDeletedSchemes();
+          try {
+            saveSchemes(schemes, fileNameProvider);
+          }
+          catch (WriteExternalException e) {
+            ex[0] = e;
+          }
         }
       });
+      if (ex[0] != null) throw ex[0];
 
-      saveSchemes(schemes, fileNameProvider);
 
       if (myDeletedNames.isEmpty()) {
         deleteServerFiles(DELETED_XML);
