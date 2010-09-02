@@ -35,8 +35,7 @@ public interface AddToGroup extends DomElement {
 	 * @return the value of the anchor child.
 	 */
 	@NotNull
-	@Required
-	GenericAttributeValue<String> getAnchor();
+	GenericAttributeValue<Anchor> getAnchor();
 
 
 	/**
