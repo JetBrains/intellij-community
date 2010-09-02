@@ -131,7 +131,7 @@ class NullityInferrer {
     int prevNumAnnotationsAdded;
     int pass = 0;
     do {
-      final JavaRecursiveElementVisitor visitor = new NullityInferrerVisitor();
+      final NullityInferrerVisitor visitor = new NullityInferrerVisitor();
       prevNumAnnotationsAdded = numAnnotationsAdded;
       file.accept(visitor);
       pass++;
@@ -210,9 +210,7 @@ class NullityInferrer {
       final PsiElement referent = expression.resolve();
       if (referent instanceof PsiVariable) {
         final PsiVariable var = (PsiVariable)referent;
-        if (myNotNullSet.contains(myPointerManager.createLazyPointer(var)) ||
-            var instanceof PsiEnumConstant ||
-            NullityInferrer.this.isNotNull(var)) {
+        if (var instanceof PsiEnumConstant || isNotNull(var)) {
           neverNull = true;
           return;
         }
@@ -234,9 +232,14 @@ class NullityInferrer {
     }
   }
 
-  private class ExpressionIsSometimesNullVisitor extends JavaElementVisitor {
+  private class ExpressionIsSometimesNullVisitor extends JavaRecursiveElementWalkingVisitor{
     private boolean sometimesNull = false;
 
+    @Override
+    public void visitElement(PsiElement element) {
+      if (sometimesNull) return;
+      super.visitElement(element);
+    }
 
     @Override
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
@@ -245,18 +248,13 @@ class NullityInferrer {
 
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
-      sometimesNull = expressionIsSometimesNull(expression.getRExpression());
+      super.visitExpression(expression.getRExpression());
     }
 
     @Override
     public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
-      sometimesNull = expressionIsSometimesNull(expression.getThenExpression()) ||
-                      expressionIsSometimesNull(expression.getElseExpression());
-    }
-
-    @Override
-    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
-      sometimesNull = expressionIsSometimesNull(expression.getExpression());
+      super.visitExpression(expression.getThenExpression());
+      super.visitExpression(expression.getElseExpression());
     }
 
     @Override
@@ -264,7 +262,7 @@ class NullityInferrer {
       final PsiElement referent = expression.resolve();
       if (referent instanceof PsiVariable) {
         final PsiVariable var = (PsiVariable)referent;
-        if (myNullableSet.contains(myPointerManager.createLazyPointer(var)) || isNullable(var)) {
+        if (isNullable(var)) {
           sometimesNull = true;
         }
       }
@@ -283,7 +281,7 @@ class NullityInferrer {
     }
   }
 
-  private class MethodNeverReturnsNullVisitor extends JavaRecursiveElementVisitor {
+  private class MethodNeverReturnsNullVisitor extends JavaRecursiveElementWalkingVisitor {
     private boolean neverReturnsNull = true;
 
     @Override
@@ -317,14 +315,22 @@ class NullityInferrer {
   }
 
   private boolean isNotNull(PsiModifierListOwner owner) {
-    return AnnotationUtil.isNotNull(owner) || myNotNullSet.contains(myPointerManager.createLazyPointer(owner));
+    if (AnnotationUtil.isNotNull(owner)) {
+      return true;
+    }
+    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createLazyPointer(owner);
+    return myNotNullSet.contains(pointer);
   }
 
   private boolean isNullable(PsiModifierListOwner owner) {
-    return AnnotationUtil.isNullable(owner) || myNullableSet.contains(myPointerManager.createLazyPointer(owner));
+    if (AnnotationUtil.isNullable(owner)) {
+      return true;
+    }
+    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createLazyPointer(owner);
+    return myNullableSet.contains(pointer);
   }
 
-  private class NullityInferrerVisitor extends JavaRecursiveElementVisitor {
+  private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor{
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -397,24 +403,11 @@ class NullityInferrer {
         return;
       }
 
-      final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createLazyPointer((PsiModifierListOwner)variable);
       if (variableNeverAssignedNull(variable)) {
-        if (myAnnotateLocalVariables) {
-          registerNotNullAnnotation(variable);
-        }
-        else {
-          myNotNullSet.add(pointer);
-          numAnnotationsAdded++;
-        }
+        registerNotNullAnnotation(variable);
       }
       if (variableSometimesAssignedNull(variable)) {
-        if (myAnnotateLocalVariables) {
-          registerNullableAnnotation(variable);
-        }
-        else {
-          myNullableSet.add(pointer);
-          numAnnotationsAdded++;
-        }
+        registerNullableAnnotation(variable);
       }
     }
 
@@ -513,22 +506,10 @@ class NullityInferrer {
       }
       else {
         if (variableNeverAssignedNull(parameter)) {
-          if (myAnnotateLocalVariables) {
-            registerNotNullAnnotation(parameter);
-          }
-          else {
-            myNotNullSet.add(myPointerManager.createLazyPointer((PsiModifierListOwner)parameter));
-            numAnnotationsAdded++;
-          }
+          registerNotNullAnnotation(parameter);
         }
         if (variableSometimesAssignedNull(parameter)) {
-          if (myAnnotateLocalVariables) {
-            registerNullableAnnotation(parameter);
-          }
-          else {
-            myNullableSet.add(myPointerManager.createLazyPointer((PsiModifierListOwner)parameter));
-            numAnnotationsAdded++;
-          }
+          registerNullableAnnotation(parameter);
         }
       }
     }
