@@ -89,6 +89,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyUnusedLocalVariableInspection() {
     PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
     inspection.ignoreTupleUnpacking = false;
+    inspection.ignoreLambdaParameters = false;
     doTest(getTestName(false), inspection);
   }
 

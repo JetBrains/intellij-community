@@ -39,12 +39,14 @@ import java.util.Set;
  */
 class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final boolean myIgnoreTupleUnpacking;
+  private final boolean myIgnoreLambdaParameters;
   private final HashSet<PsiElement> myUnusedElements;
   private final HashSet<PsiElement> myUsedElements;
 
-  public PyUnusedLocalInspectionVisitor(final ProblemsHolder holder, boolean ignoreTupleUnpacking) {
+  public PyUnusedLocalInspectionVisitor(final ProblemsHolder holder, boolean ignoreTupleUnpacking, boolean ignoreLambdaParameters) {
     super(holder);
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
+    myIgnoreLambdaParameters = ignoreLambdaParameters;
     myUnusedElements = new HashSet<PsiElement>();
     myUsedElements = new HashSet<PsiElement>();
   }
@@ -56,7 +58,9 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   @Override
   public void visitPyLambdaExpression(final PyLambdaExpression node) {
-    processScope(PsiTreeUtil.getParentOfType(node, ScopeOwner.class), node);
+    if (!myIgnoreLambdaParameters) {
+      processScope(PsiTreeUtil.getParentOfType(node, ScopeOwner.class), node);
+    }
   }
 
   static class DontPerformException extends RuntimeException {}
