@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -353,13 +353,10 @@ public class RecursionUtils{
 
     private static boolean referenceExpressionDefinitelyRecurses(
             PsiReferenceExpression expression, PsiMethod method){
-
         final PsiExpression qualifierExpression =
                 expression.getQualifierExpression();
-        if(qualifierExpression != null){
-            return expressionDefinitelyRecurses(qualifierExpression, method);
-        }
-        return false;
+        return qualifierExpression != null &&
+                expressionDefinitelyRecurses(qualifierExpression, method);
     }
 
     private static boolean typeCastExpressionDefinitelyRecurses(
@@ -573,8 +570,16 @@ public class RecursionUtils{
         }
         final PsiStatement thenBranch = ifStatement.getThenBranch();
         final PsiStatement elseBranch = ifStatement.getElseBranch();
-        if(thenBranch == null || elseBranch == null){
+        if(thenBranch == null){
             return false;
+        }
+        final Object value =
+                ExpressionUtils.computeConstantExpression(condition);
+        if (value == Boolean.TRUE) {
+            return statementDefinitelyRecurses(thenBranch, method);
+        } else if (value == Boolean.FALSE) {
+            return elseBranch != null &&
+                    statementDefinitelyRecurses(elseBranch, method);
         }
         return statementDefinitelyRecurses(thenBranch, method) &&
                 statementDefinitelyRecurses(elseBranch, method);
@@ -590,7 +595,9 @@ public class RecursionUtils{
         if(expressionDefinitelyRecurses(condition, method)){
             return true;
         }
-        if(BoolUtils.isTrue(condition)){
+        final Object value =
+                ExpressionUtils.computeConstantExpression(condition);
+        if(value == Boolean.TRUE) {
             final PsiStatement body = forStatement.getBody();
             return statementDefinitelyRecurses(body, method);
         }
@@ -610,7 +617,9 @@ public class RecursionUtils{
         if(expressionDefinitelyRecurses(condition, method)){
             return true;
         }
-        if(BoolUtils.isTrue(condition)){
+        final Object value =
+                ExpressionUtils.computeConstantExpression(condition);
+        if(value == Boolean.TRUE){
             final PsiStatement body = whileStatement.getBody();
             return statementDefinitelyRecurses(body, method);
         }
@@ -637,9 +646,7 @@ public class RecursionUtils{
     public static boolean methodDefinitelyRecurses(
             @NotNull PsiMethod method){
         final PsiCodeBlock body = method.getBody();
-        if(body == null){
-            return false;
-        }
-        return !codeBlockMayReturnBeforeRecursing(body, method, true);
+        return body != null &&
+                !codeBlockMayReturnBeforeRecursing(body, method, true);
     }
 }
