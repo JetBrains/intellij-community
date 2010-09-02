@@ -78,7 +78,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   @NotNull private final ClassFilter myClassFilter;
   private final PsiClass myBaseClass;
   private PsiClass myInitialClass;
-  private final PsiClassChildrenSource myClassChildrens;
+  private final PsiClassChildrenSource myClassChildren;
 
   public TreeClassChooserDialog(String title, Project project) {
     this(title, project, null);
@@ -98,13 +98,13 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
                                 @Nullable ClassFilter classFilter,
                                 PsiClass baseClass,
                                 @Nullable PsiClass initialClass,
-                                PsiClassChildrenSource classChildrens) {
+                                PsiClassChildrenSource classChildren) {
     super(project, true);
     myScope = scope;
     myClassFilter = classFilter == null ? ClassFilter.ALL : classFilter;
     myBaseClass = baseClass;
     myInitialClass = initialClass;
-    myClassChildrens = classChildrens;
+    myClassChildren = classChildren;
     setTitle(title);
     myProject = project;
     init();
@@ -141,7 +141,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       }
 
       public boolean isShowMembers() {
-        return myClassChildrens != PsiClassChildrenSource.NONE;
+        return myClassChildren != PsiClassChildrenSource.NONE;
       }
 
       public boolean isHideEmptyMiddlePackages() {
