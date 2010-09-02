@@ -47,7 +47,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
-import com.intellij.openapi.editor.impl.event.MarkupModelEvent;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
@@ -266,27 +265,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
     myMarkupModelListener = new MarkupModelListener() {
-      public void rangeHighlighterChanged(MarkupModelEvent event) {
-        assertIsDispatchThread();
 
-        RangeHighlighterImpl rangeHighlighter = (RangeHighlighterImpl)event.getHighlighter();
-        if (rangeHighlighter.isValid()) {
-          int start = rangeHighlighter.getAffectedAreaStartOffset();
-          int end = rangeHighlighter.getAffectedAreaEndOffset();
-          int startLine = myDocument.getLineNumber(start);
-          int endLine = myDocument.getLineNumber(end);
-          repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-        }
-        else {
-          repaint(0, getDocument().getTextLength());
-        }
-        ((EditorMarkupModelImpl)getMarkupModel()).repaint();
+      public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+        int start = highlighter.getAffectedAreaStartOffset();
+        int end = highlighter.getAffectedAreaEndOffset();
+        int startLine = myDocument.getLineNumber(start);
+        int endLine = myDocument.getLineNumber(end);
+        repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
         ((EditorMarkupModelImpl)getMarkupModel()).markDirtied();
-        GutterIconRenderer renderer = rangeHighlighter.getGutterIconRenderer();
+        ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
+        GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
         if (renderer != null) {
           updateGutterSize();
         }
         updateCaretCursor();
+      }
+
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        afterAdded(highlighter);
+      }
+
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
+        afterAdded(highlighter);
       }
     };
 
@@ -675,7 +675,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myPanel.addComponentListener(new ComponentAdapter() {
       public void componentResized(ComponentEvent e) {
-        myMarkupModel.repaint();
+        myMarkupModel.repaint(0, myDocument.getTextLength());
       }
     });
   }
@@ -768,7 +768,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public EditorHighlighter getHighlighter() {
-    assertIsDispatchThread();
+    assertReadAccess();
     return myHighlighter;
   }
 
@@ -1351,7 +1351,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();
 
-      myMarkupModel.repaint();
+      myMarkupModel.repaint(0, myDocument.getTextLength());
     }
   }
 
@@ -2901,7 +2901,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int lineIndex = myDocument.getLineNumber(offset);
     LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
 
-    if (softWrapAware) {
+    if (softWrapAware && getSoftWrapModel().isSoftWrappingEnabled()) {
       int column = calcColumnNumber(offset, lineIndex, false);
       return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(lineIndex, column), offset).line;
     }
@@ -3024,7 +3024,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
 //    if (myMousePressedInsideSelection) getSelectionModel().removeSelection();
-    final FoldRegion region = ((FoldingModelEx)getFoldingModel()).getFoldingPlaceholderAt(e.getPoint());
+    final FoldRegion region = getFoldingModel().getFoldingPlaceholderAt(e.getPoint());
     if (e.getX() >= 0 && e.getY() >= 0 && region != null && region == myMouseSelectedRegion) {
       getFoldingModel().runBatchFoldingOperation(new Runnable() {
         public void run() {
@@ -4829,14 +4829,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       myOldEndLine = offsetToLogicalPosition(e.getOffset() + e.getOldLength()).line;
-    }
-
-    private int getVisualPositionLine(int offset) {
-      // Do round up of offset to the nearest line start (valid since we need only line)
-      // This is needed for preventing access to lexer editor highlighter regions [that are reset] during bulk mode operation
-
-      int line = calcLogicalLineNumber(offset);
-      return logicalToVisualLine(line);
     }
 
     public synchronized void update(int startLine, int newEndLine, int oldEndLine) {

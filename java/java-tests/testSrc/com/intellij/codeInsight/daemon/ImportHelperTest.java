@@ -135,7 +135,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("mock 1.5");
+    return JavaSdkImpl.getMockJdk17();
   }
 
   private void checkAddImport(PsiJavaFile file, String fqn, String... expectedOrder) {
@@ -313,9 +313,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
        assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
 
        type("/* */");
-       errs = filter(doHighlighting(), HighlightSeverity.ERROR);
-       assertEquals(1, errs.size());
-
+       doHighlighting();
        UIUtil.dispatchAllInvocationEvents();
 
        assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());

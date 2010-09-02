@@ -50,6 +50,6 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
     int startOffset = 0;
     int endOffset = editor.getDocument().getTextLength();
 
-    return new PostHighlightingPass(myProject, file, editor, startOffset, endOffset);
+    return new PostHighlightingPass(myProject, file, editor, editor.getDocument(), startOffset, endOffset);
   }
 }

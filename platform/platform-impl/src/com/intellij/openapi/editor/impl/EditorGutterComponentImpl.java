@@ -103,7 +103,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public Dimension getPreferredSize() {
     int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
-    return new Dimension(w, myEditor.getPreferredSize().height);
+    return new Dimension(w, myEditor.getPreferredHeight());
   }
 
   protected void setUI(ComponentUI newUI) {
@@ -339,17 +339,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     void process(RangeHighlighter highlighter);
   }
 
-  private void processRangeHighlighters(RangeHighlighterProcessor p, int startOffset, int endOffset) {
+  private void processRangeHighlighters(RangeHighlighterProcessor processor, int startOffset, int endOffset) {
     final MarkupModelEx docMarkup = (MarkupModelEx)myEditor.getDocument().getMarkupModel(myEditor.getProject());
-    final HighlighterList docList = docMarkup.getHighlighterList();
-    Iterator<RangeHighlighterImpl> docHighlighters = docList != null ? docList.getHighlighterIterator() : null;
+    Iterator<RangeHighlighterEx> docHighlighters = docMarkup.iterator();
 
     final MarkupModelEx editorMarkup = (MarkupModelEx)myEditor.getMarkupModel();
-    final HighlighterList editorList = editorMarkup.getHighlighterList();
-    Iterator<RangeHighlighterImpl> editorHighlighters = editorList != null ? editorList.getHighlighterIterator() : null;
+    Iterator<RangeHighlighterEx> editorHighlighters = editorMarkup.iterator();
 
-    RangeHighlighterImpl lastDocHighlighter = null;
-    RangeHighlighterImpl lastEditorHighlighter = null;
+    RangeHighlighterEx lastDocHighlighter = null;
+    RangeHighlighterEx lastEditorHighlighter = null;
 
     while (true) {
       if (lastDocHighlighter == null && docHighlighters != null && docHighlighters.hasNext()) {
@@ -380,7 +378,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       if (lastDocHighlighter == null && lastEditorHighlighter == null) return;
 
-      final RangeHighlighterImpl lowerHighlighter;
+      final RangeHighlighterEx lowerHighlighter;
 
       if (less(lastDocHighlighter, lastEditorHighlighter)) {
         lowerHighlighter = lastDocHighlighter;
@@ -401,7 +399,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (endLineIndex < 0 || endLineIndex >= myEditor.getDocument().getLineCount()) continue;
 
       if (lowerHighlighter.getEditorFilter().avaliableIn(myEditor)) {
-        p.process(lowerHighlighter);
+        processor.process(lowerHighlighter);
       }
     }
   }
@@ -452,7 +450,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     processRangeHighlighters(new RangeHighlighterProcessor() {
       public void process(RangeHighlighter highlighter) {
         GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
-        if (renderer == null || !highlighter.getEditorFilter().avaliableIn(myEditor)) return;
+        if (renderer == null) return;
 
         int startOffset = highlighter.getStartOffset();
         int line = myEditor.getDocument().getLineNumber(startOffset);

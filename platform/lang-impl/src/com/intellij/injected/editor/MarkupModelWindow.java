@@ -18,15 +18,19 @@ package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.HighlighterList;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Iterator;
 
 /**
  * @author cdr
@@ -78,31 +82,47 @@ class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
     myHostModel.dispose();
   }
 
-  public HighlighterList getHighlighterList() {
-    return myHostModel.getHighlighterList();
-  }
-
   public RangeHighlighter addPersistentLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
     int hostLine = myDocument.injectedToHostLine(line);
     return myHostModel.addPersistentLineHighlighter(hostLine, layer, textAttributes);
   }
 
 
-  public boolean containsHighlighter(final RangeHighlighter highlighter) {
+  public boolean containsHighlighter(@NotNull final RangeHighlighter highlighter) {
     return myHostModel.containsHighlighter(highlighter);
   }
 
-  public void addMarkupModelListener(MarkupModelListener listener) {
+  public void addMarkupModelListener(@NotNull MarkupModelListener listener) {
     myHostModel.addMarkupModelListener(listener);
   }
 
 
-  public void removeMarkupModelListener(MarkupModelListener listener) {
+  public void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
     myHostModel.removeMarkupModelListener(listener);
   }
 
-  public void setRangeHighlighterAttributes(final RangeHighlighter highlighter, final TextAttributes textAttributes) {
+  public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, final TextAttributes textAttributes) {
     myHostModel.setRangeHighlighterAttributes(highlighter, textAttributes);
+  }
+
+  public boolean processHighlightsOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+    //todo
+    return false;
+  }
+
+  public Iterator<RangeHighlighterEx> iterator() {
+    // todo
+    return null;
+  }
+
+  @NotNull
+  public Iterator<RangeHighlighterEx> iteratorFrom(@NotNull Interval interval) {
+    // todo convert
+    return myHostModel.iteratorFrom(interval);
+  }
+  public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
+    // todo convert
+    return myHostModel.sweep(start, end, sweepProcessor);
   }
 
 }

@@ -143,8 +143,6 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
   public static void clearMyHighlights(Document document, Project project) {
     MarkupModel markupModel = document.getMarkupModel(project);
-    List<HighlightInfo> old = DaemonCodeAnalyzerImpl.getHighlights(document, project);
-    List<HighlightInfo> result = new ArrayList<HighlightInfo>(old == null ? Collections.<HighlightInfo>emptyList() : old);
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       Object tooltip = highlighter.getErrorStripeTooltip();
       if (!(tooltip instanceof HighlightInfo)) {
@@ -152,10 +150,8 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       }
       HighlightInfo info = (HighlightInfo)tooltip;
       if (info.type == ourReadHighlightInfoType || info.type == ourWriteHighlightInfoType) {
-        result.remove(info);
         markupModel.removeHighlighter(highlighter);
       }
     }
-    DaemonCodeAnalyzerImpl.setHighlights(markupModel, project, result, Collections.<HighlightInfo>emptyList());
   }
 }

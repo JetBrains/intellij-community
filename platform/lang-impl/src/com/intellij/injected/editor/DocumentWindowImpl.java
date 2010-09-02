@@ -27,14 +27,12 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
+import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,8 +135,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return text.toString();
   }
 
+  @NotNull
   @Override
-  public String getText(TextRange range) {
+  public String getText(@NotNull TextRange range) {
     return range.substring(getText());
   }
 
@@ -487,8 +486,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public void clearLineModificationFlags() {
   }
 
-  public void removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
-    myDelegate.removeRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate()); 
+  public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
+    return myDelegate.removeRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate()); 
   }
 
   public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
@@ -769,5 +768,18 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @NotNull
   public List<RangeMarker> getGuardedBlocks() {
     return Collections.emptyList();
+  }
+
+  //todo convert injected RMs to host
+  public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
+    return myDelegate.processRangeMarkers(processor);
+  }
+
+  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
+    return myDelegate.processRangeMarkersOverlappingWith(start, end, processor);
+  }
+
+  public boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor) {
+    return myDelegate.processRangeMarkersOverlappingWith(offset, processor);
   }
 }

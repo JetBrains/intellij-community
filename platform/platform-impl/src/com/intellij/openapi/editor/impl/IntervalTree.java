@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.impl.event;
+package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EventListener;
+/**
+ * User: cdr
+ */
+public interface IntervalTree<T extends Interval> extends Iterable<T> {
+  boolean process(@NotNull Processor<? super T> processor);
+  boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor);
+  boolean processOverlappingWith(int offset, @NotNull Processor<? super T> processor);
 
-public interface MarkupModelListener extends EventListener {
-  MarkupModelListener[] EMPTY_ARRAY = new MarkupModelListener[0];
+  Object add(@NotNull T interval);
+  boolean remove(@NotNull T interval);
 
-  void afterAdded(@NotNull RangeHighlighterEx highlighter);
-  void beforeRemoved(@NotNull RangeHighlighterEx highlighter);
-  void attributesChanged(@NotNull RangeHighlighterEx highlighter);
 }

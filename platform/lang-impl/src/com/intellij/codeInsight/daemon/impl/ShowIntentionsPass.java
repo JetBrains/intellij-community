@@ -53,6 +53,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +113,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     myEditor = editor;
 
-    myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    
+    myFile = documentManager.getPsiFile(myEditor.getDocument());
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
   }
 
@@ -188,7 +191,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  public static void getActionsToShow(@NotNull final Editor hostEditor, @NotNull final PsiFile hostFile, @NotNull IntentionsInfo intentions, int passIdToShowIntentionsFor) {
+  public static void getActionsToShow(@NotNull final Editor hostEditor, @NotNull final PsiFile hostFile, @NotNull final IntentionsInfo intentions, int passIdToShowIntentionsFor) {
     final PsiElement psiElement = hostFile.findElementAt(hostEditor.getCaretModel().getOffset());
     LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
 
@@ -221,34 +224,39 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       intentions.inspectionFixesToShow.addAll(actions);
     }
     final int line = document.getLineNumber(offset);
-    final List<HighlightInfo> infoList = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.INFORMATION, project,
-                                                                          document.getLineStartOffset(line),
-                                                                          document.getLineEndOffset(line));
-    for (HighlightInfo info : infoList) {
-      final GutterIconRenderer renderer = info.getGutterIconRenderer();
-      if (renderer != null) {
-        final AnAction action = renderer.getClickAction();
-        if (action != null) {
-          final String text = renderer.getTooltipText();
-          if (text != null) {
-            final IntentionAction actionAdapter = new AbstractIntentionAction() {
-              public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-                final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-                action.actionPerformed(
-                  new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(),
-                                    ActionManager.getInstance(), 0));
-              }
-
-              @NotNull
-              public String getText() {
-                return text;
-              }
-            };
-            intentions.guttersToShow.add(new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+    DaemonCodeAnalyzerImpl.processHighlights(document, project, null,
+                                             document.getLineStartOffset(line),
+                                             document.getLineEndOffset(line), new Processor<HighlightInfo>() {
+        public boolean process(HighlightInfo info) {
+          final GutterIconRenderer renderer = info.getGutterIconRenderer();
+          if (renderer == null) {
+            return true;
           }
-        }
-      }
-    }
-  }
+          final AnAction action = renderer.getClickAction();
+          if (action == null) {
+            return true;
+          }
+          final String text = renderer.getTooltipText();
+          if (text == null) {
+            return true;
+          }
+          final IntentionAction actionAdapter = new AbstractIntentionAction() {
+            public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+              final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+              action.actionPerformed(
+                new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(),
+                                  ActionManager.getInstance(), 0));
+            }
 
+            @NotNull
+            public String getText() {
+              return text;
+            }
+          };
+          intentions.guttersToShow.add(new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+          return true;
+        }
+      });
+  }
 }
+

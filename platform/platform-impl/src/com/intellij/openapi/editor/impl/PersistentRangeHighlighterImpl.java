@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,15 @@ import java.awt.*;
  * Implementation of the markup element for the editor and document.
  * @author max
  */
-class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx {
+public class PersistentRangeHighlighterImpl extends PersistentLineMarker implements RangeHighlighterEx {
   private final RangeHighlighterData data;
-  RangeHighlighterImpl(@NotNull MarkupModel model,
-                       int start,
-                       int end,
-                       int layer,
-                       @NotNull HighlighterTargetArea target,
-                       TextAttributes textAttributes) {
-    super((DocumentEx)model.getDocument(), start, end);
+  PersistentRangeHighlighterImpl(@NotNull MarkupModel model,
+                                 int start,
+                                 int layer,
+                                 @NotNull HighlighterTargetArea target,
+                                 TextAttributes textAttributes
+  ) {
+    super((DocumentEx)model.getDocument(), start);
     data = new RangeHighlighterData(model, layer, target, textAttributes, this);
   }
 

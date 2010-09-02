@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -54,18 +55,6 @@ public class FoldingModelWindow implements FoldingModelEx{
     return myDelegate.getFoldingPlaceholderAt(p);
   }
 
-  public FoldRegion[] getAllFoldRegionsIncludingInvalid() {
-    FoldRegion[] all = myDelegate.getAllFoldRegionsIncludingInvalid();
-    List<FoldRegion> result = new ArrayList<FoldRegion>();
-    for (FoldRegion region : all) {
-      FoldingRegionWindow window = region.getUserData(FOLD_REGION_WINDOW);
-      if (window != null && window.getEditor() == myEditorWindow) {
-        result.add(window);
-      }
-    }
-    return result.toArray(new FoldRegion[result.size()]);
-  }
-
   public boolean intersectsRegion(int startOffset, int endOffset) {
     int hostStart = myDocumentWindow.injectedToHost(startOffset);
     int hostEnd = myDocumentWindow.injectedToHost(endOffset);
@@ -74,7 +63,7 @@ public class FoldingModelWindow implements FoldingModelEx{
 
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
     FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null);
-    return addFoldRegion(region) ? region : null;
+    return region == null || addFoldRegion(region) ? region : null;
   }
 
   public boolean addFoldRegion(@NotNull final FoldRegion region) {
@@ -134,7 +123,9 @@ public class FoldingModelWindow implements FoldingModelEx{
 
   private static final Key<FoldingRegionWindow> FOLD_REGION_WINDOW = Key.create("FOLD_REGION_WINDOW");
   public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group) {
-    FoldRegion hostRegion = myDelegate.createFoldRegion(myDocumentWindow.injectedToHost(startOffset), myDocumentWindow.injectedToHost(endOffset), placeholder, group);
+    TextRange hostRange = myDocumentWindow.injectedToHost(new TextRange(startOffset, endOffset));
+    if (hostRange.getLength() < 2) return null;
+    FoldRegion hostRegion = myDelegate.createFoldRegion(hostRange.getStartOffset(), hostRange.getEndOffset(), placeholder, group);
     FoldingRegionWindow window = new FoldingRegionWindow(myDocumentWindow, myEditorWindow, (FoldRegionImpl)hostRegion);
     hostRegion.putUserData(FOLD_REGION_WINDOW, window);
     return window;

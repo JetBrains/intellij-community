@@ -289,11 +289,11 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     return STANDART_SEVERITIES.containsKey(severity.myName);
   }
 
-  public static boolean skipSeverity(HighlightSeverity minSeverity) {
+  public static boolean isGotoBySeverityEnabled(HighlightSeverity minSeverity) {
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
-      if (!provider.isGotoBySeverityEnabled(minSeverity)) return true;
+      if (provider.isGotoBySeverityEnabled(minSeverity)) return true;
     }
-    return minSeverity == HighlightSeverity.INFORMATION;
+    return minSeverity != HighlightSeverity.INFORMATION;
   }
 
   public static class SeverityBasedTextAttributes implements JDOMExternalizable {
