@@ -139,8 +139,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     // Propagate console communication to language console
     ((PydevLanguageConsoleView)myConsoleView).setPydevConsoleCommunication(myPydevConsoleCommunication);
 
+    // Required timeout for establishing socket connection
     try {
-      Thread.sleep(300);
+      Thread.sleep(3000);
     }
     catch (InterruptedException e) {
       // Ignore
