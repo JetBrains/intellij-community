@@ -59,7 +59,8 @@ public class ArtifactoryService extends MavenManagementService {
     final String packaging = StringUtil.notNullize(template.getPackaging());
     final ArrayList<MavenArtifactInfo> artifacts = new ArrayList<MavenArtifactInfo>();
     final Gson gson = new Gson();
-    if (template.getClassNames() == null) {
+    final String className = template.getClassNames();
+    if (className == null || className.length() == 0) {
       final InputStream stream = new Endpoint.Search.Gavc(url).
         getGavcSearchResultJson(template.getGroupId(), template.getArtifactId(), template.getVersion(), template.getClassifier(), null)
         .getInputStream();
@@ -82,8 +83,9 @@ public class ArtifactoryService extends MavenManagementService {
       }
     }
     else {
-      final InputStream stream = new Endpoint.Search.Archive(url).
-        getArchiveSearchResultJson(template.getClassNames(), null).getInputStream();
+      // IDEA-58225
+      final String searchString = className.endsWith("*") || className.endsWith("?")? className : className + ".class";
+      final InputStream stream = new Endpoint.Search.Archive(url).getArchiveSearchResultJson(searchString, null).getInputStream();
 
       final ArtifactoryModel.ArchiveResults results = gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.ArchiveResults.class);
       for (ArtifactoryModel.ArchiveResult result : results.results) {
