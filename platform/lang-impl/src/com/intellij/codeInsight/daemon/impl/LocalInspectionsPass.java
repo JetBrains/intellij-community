@@ -115,8 +115,21 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = myProfileWrapper;
     final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
-
+    checkInspectionsDuplicates(tools);
     inspect(tools, iManager, true, true, true, progress);
+  }
+
+  // check whether some inspection got registered twice by accident. Bit only once.
+  private static boolean alreadyChecked;
+  private static void checkInspectionsDuplicates(List<LocalInspectionTool> tools) {
+    if (alreadyChecked) return;
+    alreadyChecked = true;
+    Set<LocalInspectionTool> uniqTools = new THashSet<LocalInspectionTool>(tools.size());
+    for (LocalInspectionTool tool : tools) {
+      if (!uniqTools.add(tool)) {
+        LOG.error("Inspection " + tool.getDisplayName() + " (" + tool.getClass() + ") already registered");
+      }
+    }
   }
 
   public void doInspectInBatch(final InspectionManagerEx iManager, List<InspectionProfileEntry> toolWrappers, boolean ignoreSuppressed) {
