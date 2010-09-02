@@ -288,8 +288,8 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
     public void setValue(int fieldValue) {
       if (fieldValue != myCurrValue) {
-        myTextField.setText(String.valueOf(fieldValue));
         myCurrValue = fieldValue;
+        myTextField.setText(String.valueOf(fieldValue));
       }
     }
   }
