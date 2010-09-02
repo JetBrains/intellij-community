@@ -9,15 +9,11 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -153,10 +149,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     // Make executed statements visible to developers
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     PyConsoleHighlightingUtil.processOutput(console, PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
-    processInput(PYTHON_ENV_COMMAND);
+    processLine(PYTHON_ENV_COMMAND);
     for (String statement : statements2execute) {
       PyConsoleHighlightingUtil.processOutput(console, statement + "\n", ProcessOutputTypes.SYSTEM);
-      processInput(statement+"\n");
+      processLine(statement+"\n");
     }
   }
 
@@ -192,73 +188,49 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   @Override
-  protected void runExecuteActionInner(final AnActionEvent actionEvent) {
-    final Editor editor = getLanguageConsole().getCurrentEditor();
-    final Document document = editor.getDocument();
-    int lineCount=document.getLineCount();
-    final String text = document.getText();
-    final String lastLine = StringUtil.isEmpty(text) ? "" : text.substring(document.getLineStartOffset(lineCount-1));
-    // multiline strings handling
-    if (myInMultilineStringState != null){
-      if (lastLine.contains(myInMultilineStringState)) {
-        myInMultilineStringState = null;
-        super.runExecuteActionInner(actionEvent);
-        // restore language
-        myConsoleView.getConsole().setLanguage(PythonLanguage.getInstance());
-        return;
-      }
-      typeInEditor(actionEvent, editor);
-      return;
-    }
-    else {
-      if (lastLine.contains(DOUBLE_QUOTE_MULTILINE)) {
-        myInMultilineStringState = DOUBLE_QUOTE_MULTILINE;
-      }
-      else if (lastLine.contains(SINGLE_QUOTE_MULTILINE)){
-        myInMultilineStringState = SINGLE_QUOTE_MULTILINE;
-      }
-      if (myInMultilineStringState != null) {
-        // change language
-        myConsoleView.getConsole().setLanguage(PlainTextLanguage.INSTANCE);
-        typeInEditor(actionEvent, editor);
-        return;
-      }
-    }
-
-    // Process line continuation
-    if (lastLine.endsWith("\\")){
-      typeInEditor(actionEvent, editor);
-      return;
-    }
-    super.runExecuteActionInner(actionEvent);
-  }
-
-  private void typeInEditor(final AnActionEvent actionEvent, final Editor editor) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
-          @Override
-          public void run() {
-            EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, actionEvent.getDataContext());
-          }
-        }, "Enter on line continuation action", null);
-      }
-    });
-  }
-
-  @Override
-  public void processInput(final String input) {
+  public void processLine(final String line) {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     final Editor currentEditor = console.getCurrentEditor();
 
     if (myInputBuffer == null){
       myInputBuffer = new StringBuilder();
     }
-    myInputBuffer.append(input).append("\n");
+    myInputBuffer.append(line).append("\n");
+
+    // multiline strings handling
+    if (myInMultilineStringState != null){
+      if (line.contains(myInMultilineStringState)) {
+        myInMultilineStringState = null;
+        // restore language
+        console.setLanguage(PythonLanguage.getInstance());
+        console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+      } else {
+        return;
+      }
+    }
+    else {
+      if (line.contains(DOUBLE_QUOTE_MULTILINE)) {
+        myInMultilineStringState = DOUBLE_QUOTE_MULTILINE;
+      }
+      else if (line.contains(SINGLE_QUOTE_MULTILINE)){
+        myInMultilineStringState = SINGLE_QUOTE_MULTILINE;
+      }
+      if (myInMultilineStringState != null) {
+        // change language
+        console.setLanguage(PlainTextLanguage.INSTANCE);
+        console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
+        return;
+      }
+    }
+
+    // Process line continuation
+    if (line.endsWith("\\")){
+      console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
+      return;
+    }
 
     if (myCurrentIndentSize != -1) {
-      final int indent = myHelper.getIndent(input, false);
+      final int indent = myHelper.getIndent(line, false);
       if (indent >= myCurrentIndentSize) {
         indentEditor(currentEditor, indent);
         scrollDown(currentEditor);
@@ -285,7 +257,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
               console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
               scrollDown(currentEditor);
               // compute current indentation
-              myCurrentIndentSize = myHelper.getIndent(input, false) + currentPythonIndentSize;
+              myCurrentIndentSize = myHelper.getIndent(line, false) + currentPythonIndentSize;
               // In this case we can insert indent automatically
               indentEditor(currentEditor, myCurrentIndentSize);
             }
