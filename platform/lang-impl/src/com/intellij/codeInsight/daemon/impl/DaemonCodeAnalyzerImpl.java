@@ -34,7 +34,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.Extensions;
@@ -44,6 +47,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,8 +61,11 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.Alarm;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -67,6 +74,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -75,37 +83,37 @@ import java.util.*;
 public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
-  private static final Key<List<HighlightInfo>> HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY = Key.create("HIGHLIGHTS_IN_EDITOR_DOCUMENT");
-  private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
+  //private static final Key<IntervalTree<HighlightInfo>> HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY = Key.create("HIGHLIGHTS_IN_EDITOR_DOCUMENT");
+  private static final Key<List<HighlightInfo>> HIGHLIGHTS_TO_REMOVE_KEY = Key.create("HIGHLIGHTS_TO_REMOVE");
 
+  private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
   private final EditorTracker myEditorTracker;
   private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator(); //guarded by this
+
   private DaemonProgressIndicator myUpdateVisibleProgress = new DaemonProgressIndicator(); //guarded by this
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
 
   private final Alarm myAlarm = new Alarm();
-
   private boolean myUpdateByTimerEnabled = true;
   private final Collection<VirtualFile> myDisabledHintsFiles = new THashSet<VirtualFile>();
   private final Collection<PsiFile> myDisabledHighlightingFiles = new THashSet<PsiFile>();
+
   private final FileStatusMap myFileStatusMap;
-
   private DaemonCodeAnalyzerSettings myLastSettings;
+
   private IntentionHintComponent myLastIntentionHint; //guarded by this
-
-  private boolean myDisposed;
+  private volatile boolean myDisposed;
   private boolean myInitialized;
-  @NonNls private static final String DISABLE_HINTS_TAG = "disable_hints";
 
+  @NonNls private static final String DISABLE_HINTS_TAG = "disable_hints";
   @NonNls private static final String FILE_TAG = "file";
   @NonNls private static final String URL_ATT = "url";
   private DaemonListeners myDaemonListeners;
   private StatusBarUpdater myStatusBarUpdater;
   private final PassExecutorService myPassExecutorService;
-  private static final Key<List<HighlightInfo>> HIGHLIGHTS_TO_REMOVE_KEY = Key.create("HIGHLIGHTS_TO_REMOVE");
   private int myModificationCount = 0;
 
   public DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
@@ -133,6 +141,87 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     };
     Disposer.register(project, myPassExecutorService);
     Disposer.register(project, myFileStatusMap);
+  }
+
+  static boolean hasErrors(Project project, Document document) {
+    return !processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(), CommonProcessors.<HighlightInfo>alwaysFalse());
+  }
+
+  @NotNull
+  @TestOnly
+  public static List<HighlightInfo> getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
+    List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
+    processHighlights(document, project, minSeverity, 0, document.getTextLength(), new CommonProcessors.CollectProcessor<HighlightInfo>(infos));
+    return infos;
+  }
+
+  public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
+                                           @NotNull Document document,
+                                           @NotNull final ProgressIndicator progress) {
+    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), true);
+    action1.doCollectInformation(progress);
+
+    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    result.addAll(action1.getHighlights());
+
+    LocalInspectionsPass action3 = new LocalInspectionsPass(psiFile, document, 0, psiFile.getTextLength());
+    action3.doCollectInformation(progress);
+
+    result.addAll(action3.getHighlights());
+
+    return result;
+  }
+
+  @TestOnly
+  public List<HighlightInfo> runPasses(@NotNull PsiFile file,
+                                       @NotNull Document document,
+                                       @NotNull TextEditor textEditor,
+                                       @NotNull final ProgressIndicator progress,
+                                       @NotNull int[] toIgnore,
+                                       boolean allowDirt,
+                                       final boolean apply) {
+    // pump first so that queued event do not interfere
+    if (SwingUtilities.isEventDispatchThread()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    else {
+      UIUtil.pump();
+    }
+
+    Project project = file.getProject();
+    setUpdateByTimerEnabled(false);
+    FileStatusMap fileStatusMap = getFileStatusMap();
+    for (int ignoreId : toIgnore) {
+      fileStatusMap.markFileUpToDate(document, file, ignoreId);
+    }
+    fileStatusMap.allowDirt(allowDirt);
+    try {
+      TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
+      final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
+      ProgressManager.getInstance().runProcess(new Runnable() {
+        public void run() {
+          for (TextEditorHighlightingPass pass : passes) {
+            pass.collectInformation(progress);
+            if (apply) {
+              // apply incremental highlights scheduled for AWT thread
+              if (SwingUtilities.isEventDispatchThread()) {
+                UIUtil.dispatchAllInvocationEvents();
+              }
+              else {
+                UIUtil.pump();
+              }
+              pass.applyInformationToEditor();
+            }
+          }
+        }
+      }, progress);
+
+      return getHighlights(document, null, project);
+    }
+    finally {
+      fileStatusMap.allowDirt(true);
+      myPassExecutorService.cancelAll(true);
+    }
   }
 
   @NotNull
@@ -222,6 +311,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void updateVisibleHighlighters(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (true) return;  // no need, will not work anyway
+
     if (!myUpdateByTimerEnabled) return;
     if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
 
@@ -380,76 +471,66 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myUpdateProgress;
   }
 
-  @Nullable
-  public static List<HighlightInfo> getHighlights(Document document, Project project) {
+  public static boolean processHighlights(@NotNull Document document,
+                                          @NotNull Project project,
+                                          @Nullable("null means all") final HighlightSeverity minSeverity,
+                                          final int startOffset,
+                                          final int endOffset,
+                                          @NotNull final Processor<HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-    MarkupModel markup = document.getMarkupModel(project);
-    return getHighlights(markup);
-  }
 
-  static List<HighlightInfo> getHighlights(MarkupModel markup) {
-    return markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
-  }
-
-  @NotNull
-  public static List<HighlightInfo> getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
-    return getHighlights(document, minSeverity, project, Integer.MIN_VALUE, Integer.MAX_VALUE);
-  }
-
-  @NotNull
-  public static List<HighlightInfo> getHighlights(Document document, HighlightSeverity minSeverity, Project project, int startOffset, int endOffset) {
-    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-    List<HighlightInfo> highlights = getHighlights(document, project);
-    if (highlights == null) return Collections.emptyList();
-    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
-    final SeverityRegistrar instance = SeverityRegistrar.getInstance(project);
-
-    for (HighlightInfo info : highlights) {
-      if (instance.compare(info.getSeverity(), minSeverity) >= 0 &&
-          info.startOffset >= startOffset &&
-          info.endOffset <= endOffset) {
-        array.add(info);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    MarkupModelEx model = (MarkupModelEx)((DocumentEx)document).getMarkupModel(project);
+    return model.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+      public boolean process(RangeHighlighterEx marker) {
+        Object tt = marker.getErrorStripeTooltip();
+        if (!(tt instanceof HighlightInfo)) return true;
+        HighlightInfo info = (HighlightInfo)tt;
+        return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0 || processor.process(info);
       }
-    }
-    return array;
+    });
   }
 
-  @NotNull
-  public static List<HighlightInfo> getHighlightsAround(Document document, Project project, int offset) {
-    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-    List<HighlightInfo> highlights = getHighlights(document, project);
-    if (highlights == null) return Collections.emptyList();
-    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
 
-    for (HighlightInfo info : highlights) {
-      if (isOffsetInsideHighlightInfo(offset, info, true)) {
-        array.add(info);
-      }
-    }
-    return array;
-  }
+  public static boolean processHighlightsNearOffset(@NotNull Document document,
+                                                    @NotNull Project project,
+                                                    @NotNull final HighlightSeverity minSeverity,
+                                                    final int offset,
+                                                    final boolean includeFixRange,
+                                                    @NotNull final Processor<HighlightInfo> processor) {
+    return processHighlights(document, project, null, 0, document.getTextLength(), new Processor<HighlightInfo>() {
+      public boolean process(HighlightInfo info) {
+        if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) return true;
 
-  @Nullable
-  public HighlightInfo findHighlightByOffset(Document document, int offset, boolean includeFixRange) {
-    List<HighlightInfo> highlights = getHighlights(document, myProject);
-    if (highlights == null) return null;
-
-    List<HighlightInfo> foundInfoList = new SmartList<HighlightInfo>();
-    for (HighlightInfo info : highlights) {
-      if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) continue;
-
-      if (!foundInfoList.isEmpty()) {
-        HighlightInfo foundInfo = foundInfoList.get(0);
-        int compare = foundInfo.getSeverity().compareTo(info.getSeverity());
+        int compare = info.getSeverity().compareTo(minSeverity);
         if (compare < 0) {
-          foundInfoList.clear();
+          return true;
         }
-        else if (compare > 0) {
-          continue;
-        }
+
+        return processor.process(info);
       }
-      foundInfoList.add(info);
-    }
+    });
+  }
+
+  @Nullable
+  public HighlightInfo findHighlightByOffset(Document document, final int offset, final boolean includeFixRange) {
+    final List<HighlightInfo> foundInfoList = new SmartList<HighlightInfo>();
+    processHighlightsNearOffset(document, myProject, HighlightSeverity.INFORMATION, offset, includeFixRange, new Processor<HighlightInfo>() {
+      public boolean process(HighlightInfo info) {
+        if (!foundInfoList.isEmpty()) {
+          HighlightInfo foundInfo = foundInfoList.get(0);
+          int compare = foundInfo.getSeverity().compareTo(info.getSeverity());
+          if (compare < 0) {
+            foundInfoList.clear();
+          }
+          else if (compare > 0) {
+            return true;
+          }
+        }
+        foundInfoList.add(info);
+        return true;
+      }
+    });
 
     if (foundInfoList.isEmpty()) return null;
     if (foundInfoList.size() == 1) return foundInfoList.get(0);
@@ -457,9 +538,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private static boolean isOffsetInsideHighlightInfo(int offset, HighlightInfo info, boolean includeFixRange) {
-    if (info.highlighter == null || !info.highlighter.isValid()) return false;
-    int startOffset = info.highlighter.getStartOffset();
-    int endOffset = info.highlighter.getEndOffset();
+    RangeHighlighterEx highlighter = info.highlighter;
+    if (highlighter == null || !highlighter.isValid()) return false;
+    int startOffset = highlighter.getStartOffset();
+    int endOffset = highlighter.getEndOffset();
     if (startOffset > offset || offset > endOffset) {
       if (!includeFixRange) return false;
       if (info.fixMarker == null || !info.fixMarker.isValid()) return false;
@@ -470,47 +552,106 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return true;
   }
 
-  static void setHighlights(MarkupModel markup, Project project, List<HighlightInfo> highlightsToSet, List<HighlightInfo> highlightsToRemove) {
+  static void addHighlight(MarkupModel markup,
+                           Project project,
+                           HighlightInfo toAdd) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    stripWarningsCoveredByErrors(project, highlightsToSet, markup);
-    markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, Collections.unmodifiableList(highlightsToSet));
 
-    markup.putUserData(HIGHLIGHTS_TO_REMOVE_KEY, Collections.unmodifiableList(highlightsToRemove));
-
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl && ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater != null) {
-      ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater.updateStatus();
-    }
+    stripWarningsCoveredByErrors(project, markup, toAdd);
+    
+    //DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+    //if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl && ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater != null) {
+    //  ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater.updateStatus();
+    //}
+    
   }
 
-  private static void stripWarningsCoveredByErrors(final Project project, List<HighlightInfo> highlights, MarkupModel markup) {
+  private static void stripWarningsCoveredByErrors(Project project, MarkupModel markup, final HighlightInfo toAdd) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-    Collection<HighlightInfo> errors = new ArrayList<HighlightInfo>();
-    for (HighlightInfo highlight : highlights) {
-      if (severityRegistrar.compare(highlight.getSeverity(), HighlightSeverity.ERROR) >= 0) {
-        errors.add(highlight);
-      }
-    }
+    final Set<HighlightInfo> covered = new THashSet<HighlightInfo>();
 
-    for (Iterator<HighlightInfo> it = highlights.iterator(); it.hasNext();) {
-      HighlightInfo highlight = it.next();
-      if (severityRegistrar.compare(HighlightSeverity.ERROR, highlight.getSeverity()) > 0 && highlight.getSeverity().myVal > 0) {
-        for (HighlightInfo errorInfo : errors) {
-          if (isCoveredBy(highlight, errorInfo)) {
-            it.remove();
-            RangeHighlighter highlighter = highlight.highlighter;
-            if (highlighter != null) {
-              markup.removeHighlighter(highlighter);
-            }
-            break;
+    // either toAdd is warning and covered by one of errors in highlightsToSet or toAdd is an error and covers warnings in highlightsToSet or it is OK
+    final boolean addingError = severityRegistrar.compare(HighlightSeverity.ERROR, toAdd.getSeverity()) <= 0;
+    boolean toAddIsVisible = processHighlights(markup.getDocument(), project, null, toAdd.getActualStartOffset(),
+                                               toAdd.getActualEndOffset(), new Processor<HighlightInfo>() {
+        public boolean process(HighlightInfo interval) {
+          boolean isError = severityRegistrar.compare(HighlightSeverity.ERROR, interval.getSeverity()) <= 0;
+          if (addingError && !isError && isCoveredBy(interval, toAdd)) {
+            covered.add(interval);
           }
+          return addingError || !isError || !isCoveredBy(toAdd, interval);
         }
+      });
+    if (toAddIsVisible) {
+      // ok
+      //highlightsToSet.add(toAdd);
+    }
+    else {
+      // toAdd is covered by
+      markup.removeHighlighter(toAdd.highlighter);
+    }
+    for (HighlightInfo warning : covered) {
+      RangeHighlighter highlighter = warning.highlighter;
+      if (highlighter != null) {
+        markup.removeHighlighter(highlighter);
       }
     }
   }
 
-  private static boolean isCoveredBy(HighlightInfo info, HighlightInfo coveredBy) {
-    return info.startOffset >= coveredBy.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
+  //private static void stripWarningsCoveredByErrors(final Project project, IntervalTree<HighlightInfo> highlights, MarkupModel markup) {
+  //  final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+  //
+  //  final Set<HighlightInfo> currentErrors = new THashSet<HighlightInfo>();
+  //  final Set<HighlightInfo> covered = new THashSet<HighlightInfo>();
+  //
+  //
+  //  final PriorityQueue<HighlightInfo> ends = new PriorityQueue<HighlightInfo>(1, new Comparator<HighlightInfo>() {
+  //    public int compare(HighlightInfo o1, HighlightInfo o2) {
+  //      return o1.getActualEndOffset() - o2.getActualEndOffset();
+  //    }
+  //  });
+  //  highlights.process(new Processor<HighlightInfo>() {
+  //    public boolean process(HighlightInfo info) {
+  //      int startOffset = info.getActualStartOffset();
+  //
+  //      for (HighlightInfo nearestEnd = ends.peek(); nearestEnd != null && nearestEnd.getActualEndOffset() <= startOffset; nearestEnd = ends.peek()) {
+  //        currentErrors.remove(nearestEnd);
+  //        Interval t = ends.poll();
+  //        assert t == nearestEnd;
+  //      }
+  //
+  //      boolean isError = severityRegistrar.compare(HighlightSeverity.ERROR, info.getSeverity()) <= 0;
+  //      if (isError) {
+  //        currentErrors.add(info);
+  //      }
+  //      else {
+  //        if (info.getSeverity().myVal > 0) {
+  //          // warning, check for everlaps
+  //          for (HighlightInfo error : currentErrors) {
+  //            if (isCoveredBy(info, error)) {
+  //              covered.add(info);
+  //            }
+  //          }
+  //        }
+  //      }
+  //      ends.add(info);
+  //
+  //      return true;
+  //    }
+  //  });
+  //
+  //  for (HighlightInfo warning : covered) {
+  //    highlights.remove(warning);
+  //
+  //    RangeHighlighter highlighter = warning.highlighter;
+  //    if (highlighter != null) {
+  //      markup.removeHighlighter(highlighter);
+  //    }
+  //  }
+  //}
+
+  static boolean isCoveredBy(HighlightInfo info, HighlightInfo coveredBy) {
+    return coveredBy.startOffset <= info.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
   }
 
   @Nullable
@@ -632,10 +773,5 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @TestOnly
   public static List<HighlightInfo> getFileLevelHighlights(Project project,PsiFile file ) {
     return UpdateHighlightersUtil.getFileLeveleHighlights(project, file);
-  }
-
-  @TestOnly
-  public void clearPasses() {
-    myPassExecutorService.cancelAll(true);
   }
 }

@@ -183,7 +183,7 @@
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 
-  <applicationConfigurable implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"/>
+  <applicationConfigurable instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"/>
 
   <applicationService serviceInterface="com.intellij.psi.search.scope.packageSet.PackageSetFactory"
                       serviceImplementation="com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl"/>

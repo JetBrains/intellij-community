@@ -40,12 +40,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +80,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   @NotNull private final ClassFilter myClassFilter;
   private final PsiClass myBaseClass;
   private PsiClass myInitialClass;
-  private final PsiClassChildrenSource myClassChildrens;
+  private final PsiClassChildrenSource myClassChildren;
 
   public TreeClassChooserDialog(String title, Project project) {
     this(title, project, null);
@@ -98,13 +100,13 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
                                 @Nullable ClassFilter classFilter,
                                 PsiClass baseClass,
                                 @Nullable PsiClass initialClass,
-                                PsiClassChildrenSource classChildrens) {
+                                PsiClassChildrenSource classChildren) {
     super(project, true);
     myScope = scope;
     myClassFilter = classFilter == null ? ClassFilter.ALL : classFilter;
     myBaseClass = baseClass;
     myInitialClass = initialClass;
-    myClassChildrens = classChildrens;
+    myClassChildren = classChildren;
     setTitle(title);
     myProject = project;
     init();
@@ -141,7 +143,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       }
 
       public boolean isShowMembers() {
-        return myClassChildrens != PsiClassChildrenSource.NONE;
+        return myClassChildren != PsiClassChildrenSource.NONE;
       }
 
       public boolean isHideEmptyMiddlePackages() {
@@ -392,20 +394,50 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
   private class SubclassGotoClassModel extends MyGotoClassModel {
+
+    private boolean myFastMode = true;
+
     public SubclassGotoClassModel(final Project project) {
       super(project);
       assert myBaseClass != null;
     }
 
     public String[] getNames(boolean checkBoxState) {
-      return JavaPsiFacade.getInstance(myProject).getShortNamesCache().getAllClassNames();
+      if (!myFastMode) {
+        return JavaPsiFacade.getInstance(myProject).getShortNamesCache().getAllClassNames();
+      }
+      final List<String> names = new ArrayList<String>();
+      myFastMode = ClassInheritorsSearch.search(myBaseClass, myScope, true).forEach(new Processor<PsiClass>() {
+        private int count;
+        @Override
+        public boolean process(PsiClass aClass) {
+          if (count++ > 1000) {
+            return false;
+          }
+          if ((myClassFilter.isAccepted(aClass)) && aClass.getName() != null) {
+            names.add(aClass.getName());
+          }
+          return true;
+        }
+      });
+      if (!myFastMode) {
+        return getNames(checkBoxState);
+      }
+      if ((myClassFilter.isAccepted(myBaseClass)) && myBaseClass.getName() != null) {
+        names.add(myBaseClass.getName());
+      }
+      return names.toArray(new String[names.size()]);
     }
 
     protected boolean isAccepted(PsiClass aClass) {
-      return (aClass == myBaseClass || aClass.isInheritor(myBaseClass, true)) && myClassFilter.isAccepted(aClass);
+      if (myFastMode) {
+        return myClassFilter.isAccepted(aClass);
+      }
+      else {
+        return (aClass == myBaseClass || aClass.isInheritor(myBaseClass, true)) && myClassFilter.isAccepted(aClass);
+      }
     }
   }
-
   private class MyCallback extends ChooseByNamePopupComponent.Callback {
     public void elementChosen(Object element) {
       mySelectedClass = (PsiClass)element;

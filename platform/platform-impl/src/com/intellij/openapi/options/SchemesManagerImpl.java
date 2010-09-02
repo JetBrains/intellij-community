@@ -728,17 +728,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private void ensureVFSBaseDir() {
     myBaseDir.mkdirs();
-    myVFSBaseDir = new WriteAction<VirtualFile>() {
-      protected void run(final Result<VirtualFile> result) {
+    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable(){
+      @Override
+      public void run() {
         VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBaseDir);
-        result.setResult(dir);
+        myVFSBaseDir = dir;
         if (dir != null) {
           dir.getChildren();
           ((NewVirtualFile)dir).markDirtyRecursively();
           dir.refresh(false, true);
         }
       }
-    }.execute().getResultObject();
+    });
   }
 
   private boolean myInsideSave = false;

@@ -15,9 +15,15 @@
  */
 package com.intellij.openapi.editor.impl.event;
 
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 public interface MarkupModelListener extends EventListener {
   MarkupModelListener[] EMPTY_ARRAY = new MarkupModelListener[0];
-  void rangeHighlighterChanged(MarkupModelEvent event);
+
+  void afterAdded(@NotNull RangeHighlighterEx highlighter);
+  void beforeRemoved(@NotNull RangeHighlighterEx highlighter);
+  void attributesChanged(@NotNull RangeHighlighterEx highlighter);
 }

@@ -18,7 +18,6 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
@@ -68,12 +67,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -109,6 +107,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
@@ -144,6 +143,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NonNls private static final String XXX = "XXX";
   private PsiElement myFileContext;
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
+  private boolean myAllowDirt;
 
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -619,7 +619,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public Presentation testAction(AnAction action) {
-    DataContext context = DataManager.getInstance().getDataContext(getEditor().getComponent());
+    DataContext context = DataManager.getInstance().getDataContext();
     TestActionEvent e = new TestActionEvent(context, action);
     action.beforeActionPerformedUpdate(e);
     if (e.getPresentation().isVisible() && e.getPresentation().isVisible()) {
@@ -955,6 +955,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void tearDown() throws Exception {
     if (SwingUtilities.isEventDispatchThread()) {
       LookupManager.getInstance(getProject()).hideActiveLookup();
+      UIUtil.dispatchAllInvocationEvents();
     }
     else {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -962,6 +963,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           LookupManager.getInstance(getProject()).hideActiveLookup();
         }
       }, ModalityState.NON_MODAL);
+      UIUtil.pump();
     }
 
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
@@ -1203,41 +1205,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return
     ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
       public List<HighlightInfo> compute() {
-        return instantiateAndRun(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false);
+        return instantiateAndRun(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY, myAllowDirt);
       }
     });
   }
 
   @NotNull
-  public static List<HighlightInfo> instantiateAndRun(PsiFile file, Editor editor, int[] toIgnore, boolean allowDirt) {
+  public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file, @NotNull Editor editor, @NotNull int[] toIgnore, boolean allowDirt) {
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-    codeAnalyzer.setUpdateByTimerEnabled(false);
-    FileStatusMap fileStatusMap = codeAnalyzer.getFileStatusMap();
-    for (int ignoreId : toIgnore) {
-      fileStatusMap.markFileUpToDate(editor.getDocument(), file, ignoreId);
-    }
-    fileStatusMap.allowDirt(allowDirt);
-    try {
-      TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)TextEditorProvider.getInstance().getTextEditor(editor).getBackgroundHighlighter();
-      final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
-      final ProgressIndicator progress = new DaemonProgressIndicator();
-      ProgressManager.getInstance().runProcess(new Runnable() {
-        public void run() {
-          for (TextEditorHighlightingPass pass : passes) {
-            pass.collectInformation(progress);
-            pass.applyInformationToEditor();
-          }
-        }
-      }, progress);
-      List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), project);
-      return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
-    }
-    finally {
-      fileStatusMap.allowDirt(true);
-      codeAnalyzer.clearPasses();
-    }
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerImpl.getInstance(project);
+    TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, new DaemonProgressIndicator(), toIgnore, allowDirt, true);
   }
 
   public static void ensureIndexesUpToDate(Project project) {
@@ -1446,4 +1425,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return actualText;
   }
 
+  public void canChangeDocumentDuringHighlighting(boolean canI) {
+    myAllowDirt = canI;
+  }
 }

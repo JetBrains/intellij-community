@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -28,10 +29,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -52,28 +54,31 @@ public final class QuickFixAction {
 
   @Deprecated
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
-    if (info == null || action == null) return;
-    final TextRange fixRange = new TextRange(info.startOffset, info.endOffset);
-    if (info.quickFixActionRanges == null) {
-      info.quickFixActionRanges = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>>();
-    }
-    info.quickFixActionRanges.add(Pair.create(new HighlightInfo.IntentionActionDescriptor(action, options, displayName), fixRange));
-    info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
-    info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
+    doregister(info, action, options, displayName, null, null);
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
+  private static void doregister(HighlightInfo info,
+                                 IntentionAction action,
+                                 List<IntentionAction> options,
+                                 String displayName,
+                                 TextRange fixRange,
+                                 HighlightDisplayKey key) {
     if (info == null || action == null) return;
     if (fixRange == null) fixRange = new TextRange(info.startOffset, info.endOffset);
     if (info.quickFixActionRanges == null) {
-      info.quickFixActionRanges = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>>();
+      info.quickFixActionRanges = ContainerUtil.createEmptyCOWList();
     }
-    info.quickFixActionRanges.add(Pair.create(new HighlightInfo.IntentionActionDescriptor(action, key), fixRange));
+    HighlightInfo.IntentionActionDescriptor desc = new HighlightInfo.IntentionActionDescriptor(action, options, displayName, null, key);
+    info.quickFixActionRanges.add(Pair.create(desc, fixRange));
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
     if (action instanceof HintAction) {
       info.setHint(true);
     }
+  }
+
+  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
+    doregister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 
   public static void unregisterQuickFixAction(HighlightInfo info, Condition<IntentionAction> condition) {
@@ -89,24 +94,28 @@ public final class QuickFixAction {
    * Is invoked inside atomic action.
    */
   @NotNull
-  public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull Editor editor, @NotNull PsiFile file, final int passId) {
-    int offset = editor.getCaretModel().getOffset();
+  public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull final Editor editor, @NotNull final PsiFile file, final int passId) {
+    final int offset = editor.getCaretModel().getOffset();
     final Project project = file.getProject();
 
-    List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlightsAround(editor.getDocument(), project, offset);
-    int[] groups = passId == -1 ? null : new int[]{passId};
-    for (HighlightInfo info : infos) {
-      addAvailableActionsForGroups(info, editor, file, result, groups, offset);
-    }
+    final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, new Processor<HighlightInfo>() {
+      public boolean process(HighlightInfo info) {
+        addAvailableActionsForGroups(info, editor, file, result, passId, offset);
+        return true;
+      }
+    });
     return result;
   }
 
-  private static void addAvailableActionsForGroups(HighlightInfo info, Editor editor, PsiFile file, List<HighlightInfo.IntentionActionDescriptor> outList,
-                                                   int[] groups,
+  private static void addAvailableActionsForGroups(HighlightInfo info,
+                                                   Editor editor,
+                                                   PsiFile file,
+                                                   List<HighlightInfo.IntentionActionDescriptor> outList,
+                                                   int group,
                                                    int offset) {
     if (info == null || info.quickFixActionMarkers == null) return;
-    if (groups != null && Arrays.binarySearch(groups, info.group) < 0) return;
+    if (group != -1 && group != info.group) return;
     for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
       HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
       RangeMarker range = pair.second;

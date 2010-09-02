@@ -35,7 +35,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
   private Map<Language, CommonCodeStyleSettings> myCommonSettingsMap;
   private final CodeStyleSettings myParentSettings;
 
-  private static final String COMMON_SETTINGS_TAG = "commonCodeStyleSettings";
+  private static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
 
   public CommonCodeStyleSettingsManager(CodeStyleSettings parentSettings) {

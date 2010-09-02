@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -35,11 +34,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
@@ -56,22 +54,11 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     myEditor = editor;
 
-    TextRange range = getVisibleRange(myEditor);
+    TextRange range = VisibleHighlightingPassFactory.calculateVisibleRange(myEditor);
     myStartOffset = range.getStartOffset();
     myEndOffset = range.getEndOffset();
 
     myFile = file;
-  }
-
-  public static TextRange getVisibleRange(Editor editor) {
-    Rectangle visibleRect = editor.getScrollingModel().getVisibleArea();
-
-    LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(visibleRect.x, visibleRect.y));
-    int myStartOffset = editor.logicalPositionToOffset(startPosition);
-
-    LogicalPosition endPosition = editor.xyToLogicalPosition(new Point(visibleRect.x + visibleRect.width, visibleRect.y + visibleRect.height));
-    int myEndOffset = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
-    return new TextRange(myStartOffset, myEndOffset);
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
@@ -95,19 +82,17 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private static List<HighlightInfo> getVisibleHighlights(int startOffset, int endOffset, Project project, Editor editor) {
-    List<HighlightInfo> highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), project);
-    if (highlights == null) return Collections.emptyList();
-
-    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
-    for (HighlightInfo info : highlights) {
-      if (info.hasHint()
-          && startOffset <= info.startOffset && info.endOffset <= endOffset
-          && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
-        array.add(info);
+  private static List<HighlightInfo> getVisibleHighlights(final int startOffset, final int endOffset, Project project, final Editor editor) {
+    final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
+    DaemonCodeAnalyzerImpl.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, new Processor<HighlightInfo>() {
+      public boolean process(HighlightInfo info) {
+        if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
+          highlights.add(info);
+        }
+        return true;
       }
-    }
-    return array;
+    });
+    return highlights;
   }
 
   private boolean showAddImportHint(HighlightInfo info) {

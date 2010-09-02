@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
-import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.editor.JavaAutoImportOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
@@ -34,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -157,7 +155,7 @@ public class AddImportAction implements QuestionAction {
       public void run() {
         if (project.isDisposed()) return;
 
-        final AutoImportOptionsConfigurable configurable = EditorOptionsProvider.EP_NAME.findExtension(AutoImportOptionsConfigurable.class);
+        final AutoImportOptionsConfigurable configurable = new AutoImportOptionsConfigurable();
         ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
           public void run() {                 
             final JavaAutoImportOptions options = ContainerUtil.findInstance(configurable.getConfigurables(), JavaAutoImportOptions.class);

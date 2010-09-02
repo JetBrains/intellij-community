@@ -5,13 +5,19 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Iterator;
 
 /**
  * This is mock implementation to be used in null-object pattern where necessary.
@@ -35,12 +41,12 @@ public class EmptyMarkupModel implements MarkupModelEx {
                                               int layer,
                                               @Nullable TextAttributes textAttributes,
                                               @NotNull HighlighterTargetArea targetArea) {
-    return new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes, false);
+    throw new ProcessCanceledException();
   }
 
   @NotNull
   public RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
-    return new RangeHighlighterImpl(this, 0, 0, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributes, false);
+    throw new ProcessCanceledException();
   }
 
   public void removeHighlighter(RangeHighlighter rangeHighlighter) {
@@ -64,25 +70,37 @@ public class EmptyMarkupModel implements MarkupModelEx {
   public void dispose() {
   }
 
-  public HighlighterList getHighlighterList() {
-    return null;
-  }
-
   public RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
     return null;
   }
 
-  public boolean containsHighlighter(RangeHighlighter highlighter) {
+  public boolean containsHighlighter(@NotNull RangeHighlighter highlighter) {
     return false;
   }
 
-  public void addMarkupModelListener(MarkupModelListener listener) {
+  public void addMarkupModelListener(@NotNull MarkupModelListener listener) {
   }
 
-  public void removeMarkupModelListener(MarkupModelListener listener) {
+  public void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
   }
 
-  public void setRangeHighlighterAttributes(final RangeHighlighter highlighter, final TextAttributes textAttributes) {
+  public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, final TextAttributes textAttributes) {
 
+  }
+
+  public boolean processHighlightsOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+    return false;
+  }
+
+  public Iterator<RangeHighlighterEx> iterator() {
+    return ContainerUtil.emptyIterator();
+  }
+
+  @NotNull
+  public Iterator<RangeHighlighterEx> iteratorFrom(@NotNull Interval interval) {
+    return iterator();
+  }
+  public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
+    return false;
   }
 }

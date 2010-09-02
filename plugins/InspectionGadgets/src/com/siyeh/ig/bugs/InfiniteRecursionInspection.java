@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,22 +25,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class InfiniteRecursionInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "infinite.recursion.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "infinite.recursion.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new InfiniteRecursionVisitor();
     }

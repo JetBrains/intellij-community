@@ -31,7 +31,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -47,7 +46,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -290,13 +288,5 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17();
-  }
-
-  protected static void sortClasses(final PsiClass[] classes) {
-    Arrays.sort(classes, new Comparator<PsiClass>() {
-      public int compare(PsiClass o1, PsiClass o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
   }
 }

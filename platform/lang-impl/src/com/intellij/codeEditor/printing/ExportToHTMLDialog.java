@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -31,6 +32,8 @@ import com.intellij.ui.OptionGroup;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ExportToHTMLDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile;
@@ -45,6 +48,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
   private final String myDirectoryName;
   private final boolean myIsSelectedTextEnabled;
   private final Project myProject;
+  private final List<UnnamedConfigurable> myExtensions;
 
   public ExportToHTMLDialog(String fileName, String directoryName, boolean isSelectedTextEnabled, Project project) {
     super(project, true);
@@ -54,6 +58,10 @@ public class ExportToHTMLDialog extends DialogWrapper {
     myDirectoryName = directoryName;
     this.myIsSelectedTextEnabled = isSelectedTextEnabled;
     setTitle(CodeEditorBundle.message("export.to.html.title"));
+    myExtensions = new ArrayList<UnnamedConfigurable>();
+    for (PrintOption extension : Extensions.getExtensions(PrintOption.EP_NAME)) {
+      myExtensions.add(extension.createConfigurable());
+    }
     init();
   }
 
@@ -114,7 +122,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     myCbLineNumbers = new JCheckBox(CodeEditorBundle.message("export.to.html.options.show.line.numbers.checkbox"));
     optionGroup.add(myCbLineNumbers);
 
-    for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+    for (UnnamedConfigurable printOption : myExtensions) {
       optionGroup.add(printOption.createComponent());
     }
 
@@ -141,9 +149,17 @@ public class ExportToHTMLDialog extends DialogWrapper {
 
     myTargetDirectoryField.setText(exportToHTMLSettings.OUTPUT_DIRECTORY);
 
-    for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+    for (UnnamedConfigurable printOption : myExtensions) {
       printOption.reset();
     }
+  }
+
+  @Override
+  protected void dispose() {
+    for (UnnamedConfigurable extension : myExtensions) {
+      extension.disposeUIResources();
+    }
+    super.dispose();
   }
 
   public void apply() throws ConfigurationException {
@@ -163,7 +179,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     exportToHTMLSettings.PRINT_LINE_NUMBERS = myCbLineNumbers.isSelected();
     exportToHTMLSettings.OPEN_IN_BROWSER = myCbOpenInBrowser.isSelected();
     exportToHTMLSettings.OUTPUT_DIRECTORY = myTargetDirectoryField.getText();
-    for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+    for (UnnamedConfigurable printOption : myExtensions) {
       printOption.apply();
     }
   }

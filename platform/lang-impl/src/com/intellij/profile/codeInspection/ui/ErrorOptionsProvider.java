@@ -20,9 +20,16 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 
+/**
+ * Register implementation of this interface in the plugin.xml:
+ * <p/>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;errorOptionsProvider instance="class-name"/&gt;<br>
+ * &lt;/extensions&gt;
+ * <p>
+ * A new instance of the specified class will be created each time then the Settings dialog is opened
+ */
 public interface ErrorOptionsProvider extends UnnamedConfigurable {
-  ExtensionPointName<ErrorOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.errorOptionsProvider");
 }

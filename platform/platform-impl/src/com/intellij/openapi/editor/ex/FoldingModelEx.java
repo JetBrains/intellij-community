@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -31,7 +32,6 @@ public interface FoldingModelEx extends FoldingModel {
   boolean isFoldingEnabled();
 
   FoldRegion getFoldingPlaceholderAt(Point p);
-  FoldRegion[] getAllFoldRegionsIncludingInvalid();
 
   boolean intersectsRegion(int startOffset, int endOffset);
 
@@ -42,6 +42,7 @@ public interface FoldingModelEx extends FoldingModel {
   TextAttributes getPlaceholderAttributes();
 
   FoldRegion[] fetchTopLevel();
-  
+
+  @Nullable
   FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group);
 }

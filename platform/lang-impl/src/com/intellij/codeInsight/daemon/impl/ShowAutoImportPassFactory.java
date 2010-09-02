@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 public class ShowAutoImportPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public ShowAutoImportPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_VISIBLE,}, null, false, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, false, -1);
   }
 
   @NonNls

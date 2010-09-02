@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class IdentifierHighlighterPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public IdentifierHighlighterPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_VISIBLE}, null, false, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, false, -1);
   }
 
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {

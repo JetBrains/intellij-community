@@ -1,16 +1,11 @@
 PsiJavaFile:IfIncomplete3.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiIfStatement
+    PsiKeyword:if('if')
     PsiWhiteSpace(' ')
-    PsiIfStatement
-      PsiKeyword:if('if')
-      PsiWhiteSpace(' ')
-      PsiJavaToken:LPARENTH('(')
-      PsiReferenceExpression:cond
-        PsiReferenceParameterList
-          <empty list>
-        PsiIdentifier:cond('cond')
-      PsiErrorElement:')' expected
+    PsiJavaToken:LPARENTH('(')
+    PsiReferenceExpression:cond
+      PsiReferenceParameterList
         <empty list>
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+      PsiIdentifier:cond('cond')
+    PsiErrorElement:')' expected
+      <empty list>

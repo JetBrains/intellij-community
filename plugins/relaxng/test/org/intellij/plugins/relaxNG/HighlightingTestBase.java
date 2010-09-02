@@ -204,7 +204,6 @@ public abstract class HighlightingTestBase extends TestCase implements IdeaCodeI
       com.intellij.codeHighlighting.Pass.UPDATE_ALL,
       com.intellij.codeHighlighting.Pass.UPDATE_FOLDING,
       com.intellij.codeHighlighting.Pass.UPDATE_OVERRIDEN_MARKERS,
-      com.intellij.codeHighlighting.Pass.UPDATE_VISIBLE,
       com.intellij.codeHighlighting.Pass.VISIBLE_LINE_MARKERS,
     } : new int[]{com.intellij.codeHighlighting.Pass.EXTERNAL_TOOLS};
     return CodeInsightTestFixtureImpl.instantiateAndRun(myTestFixture.getFile(), editor, ignore, false);

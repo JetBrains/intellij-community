@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -55,17 +56,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Comparator;
 import java.util.List;
 
-public class HighlightInfo {
+public class HighlightInfo implements Segment {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfo");
 
-  public static final Comparator<HighlightInfo> BY_START_OFFSET = new Comparator<HighlightInfo>() {
-    public int compare(HighlightInfo o1, HighlightInfo o2) {
-      return o1.startOffset - o2.startOffset;
-    }
-  };
   public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   private final boolean myNeedsUpdateOnTyping;
   public JComponent fileLevelComponent;
@@ -400,10 +395,15 @@ public class HighlightInfo {
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon) {
+      this(action, options, displayName, icon, null);
+    }
+
+    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon, HighlightDisplayKey key) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
       myIcon = icon;
+      myKey = key;
     }
 
     @NotNull
@@ -468,5 +468,15 @@ public class HighlightInfo {
     public Icon getIcon() {
       return myIcon;
     }
+  }
+
+  @Override
+  public int getStartOffset() {
+    return getActualStartOffset();
+  }
+
+  @Override
+  public int getEndOffset() {
+    return getActualEndOffset();
   }
 }

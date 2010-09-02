@@ -19,13 +19,18 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * @author mike
  */
 @NonNls public abstract class IdeaTestCase extends PlatformTestCase {
+  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   protected IdeaTestCase() {
     initPlatformPrefix();
   }
@@ -46,5 +51,13 @@ import org.jetbrains.annotations.NonNls;
 
   public static void initPlatformPrefix() {
     initPlatformPrefix("com.intellij.idea.IdeaUltimateApplication", "Idea");
+  }
+
+  protected static void sortClassesByName(final PsiClass[] classes) {
+    Arrays.sort(classes, new Comparator<PsiClass>() {
+      public int compare(PsiClass o1, PsiClass o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
   }
 }

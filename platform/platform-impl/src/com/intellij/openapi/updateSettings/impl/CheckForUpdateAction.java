@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -32,13 +33,13 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    actionPerformed(true);
+    actionPerformed(true, null);
   }
 
-  public static void actionPerformed(final boolean enableLink) {
+  public static void actionPerformed(final boolean enableLink, final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
     try {
       final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
-      final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true);
+      final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, settingsConfigurable);
       if (newVersion != null) {
         UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
         UpdateChecker.showUpdateInfoDialog(enableLink, newVersion, updatedPlugins);

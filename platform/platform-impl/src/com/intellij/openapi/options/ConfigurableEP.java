@@ -30,6 +30,9 @@ import org.picocontainer.PicoContainer;
  * @author nik
  */
 public class ConfigurableEP extends AbstractExtensionPointBean {
+  /**
+   * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
+   */
   @Attribute("implementation")
   public String implementationClass;
   @Attribute("instance")

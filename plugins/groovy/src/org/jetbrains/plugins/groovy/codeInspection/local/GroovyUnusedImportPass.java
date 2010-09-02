@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -138,8 +139,6 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   }
 
   private boolean containsErrorsPreventingOptimize() {
-    List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
-
     // ignore unresolved imports errors
     final TextRange ignoreRange;
     final GrImportStatement[] imports = myFile.getImportStatements();
@@ -151,13 +150,15 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
       ignoreRange = new TextRange(0, 0);
     }
 
-    for (HighlightInfo error : errors) {
-      if (!error.type.equals(HighlightInfoType.WRONG_REF)) return true;
-      if (!ignoreRange.contains(error.getActualStartOffset()) || !ignoreRange.contains(error.getActualEndOffset())) {
-        return true;
+    boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
+      public boolean process(HighlightInfo error) {
+        int infoStart = error.getActualStartOffset();
+        int infoEnd = error.getActualEndOffset();
+
+        return ignoreRange.containsRange(infoStart,infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
       }
-    }
-    return false;
+    });
+    return hasErrorsExceptUnresolvedImports;
   }
 
 

@@ -20,9 +20,16 @@
  */
 package com.intellij.application.options.editor;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 
+/**
+ * Register implementation of this interface in the plugin.xml:
+ * <p/>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;codeFoldingOptionsProvider instance="class-name"/&gt;<br>
+ * &lt;/extensions&gt;
+ * <p>
+ * A new instance of the specified class will be created each time then the Settings dialog is opened
+ */
 public interface CodeFoldingOptionsProvider extends UnnamedConfigurable {
-  ExtensionPointName<CodeFoldingOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.codeFoldingOptionsProvider");
 }

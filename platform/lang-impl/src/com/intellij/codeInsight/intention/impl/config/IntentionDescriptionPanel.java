@@ -23,6 +23,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginManagerUISettings;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -98,7 +99,7 @@ public class IntentionDescriptionPanel {
       label.addHyperlinkListener(new HyperlinkListener() {
         public void hyperlinkUpdate(HyperlinkEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-          final PluginManagerConfigurable pluginConfigurable = util.createApplicationConfigurable(PluginManagerConfigurable.class);
+          final PluginManagerConfigurable pluginConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
           final Project project = ProjectManager.getInstance().getDefaultProject();
           util.editConfigurable(project, pluginConfigurable, new Runnable(){
             public void run() {

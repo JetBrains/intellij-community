@@ -17,11 +17,13 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider;
+import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP;
 
 import javax.swing.*;
+import java.util.List;
 
 public class ErrorHighlightingPanel {
   private JTextField myAutoreparseDelayField;
@@ -30,9 +32,11 @@ public class ErrorHighlightingPanel {
   private JPanel myPanel;
   private JPanel myErrorsPanel;
   private JCheckBox myNextErrorGoesToErrorsFirst;
+  private final List<ErrorOptionsProvider> myExtensions;
 
   public ErrorHighlightingPanel() {
-    for (ErrorOptionsProvider optionsProvider : Extensions.getExtensions(ErrorOptionsProvider.EP_NAME)) {
+    myExtensions = AbstractConfigurableEP.createConfigurables(ErrorOptionsProviderEP.EP_NAME);
+    for (ErrorOptionsProvider optionsProvider : myExtensions) {
       myErrorsPanel.add(optionsProvider.createComponent());
     }
   }
@@ -44,7 +48,7 @@ public class ErrorHighlightingPanel {
     myMarkMinHeight.setText(Integer.toString(settings.ERROR_STRIPE_MARK_MIN_HEIGHT));
     myNextErrorGoesToErrorsFirst.setSelected(settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST);
 
-    for (ErrorOptionsProvider optionsProvider : Extensions.getExtensions(ErrorOptionsProvider.EP_NAME)) {
+    for (ErrorOptionsProvider optionsProvider : myExtensions) {
       optionsProvider.reset();
     }
   }
@@ -59,7 +63,7 @@ public class ErrorHighlightingPanel {
     settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = myNextErrorGoesToErrorsFirst.isSelected();
 
 
-    for (ErrorOptionsProvider optionsProvider : Extensions.getExtensions(ErrorOptionsProvider.EP_NAME)) {
+    for (ErrorOptionsProvider optionsProvider : myExtensions) {
       optionsProvider.apply();
     }
   }
@@ -78,7 +82,7 @@ public class ErrorHighlightingPanel {
     
     isModified |= getErrorStripeMarkMinHeight() != settings.ERROR_STRIPE_MARK_MIN_HEIGHT;
     isModified |= myNextErrorGoesToErrorsFirst.isSelected() != settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
-    for (ErrorOptionsProvider optionsProvider : Extensions.getExtensions(ErrorOptionsProvider.EP_NAME)) {
+    for (ErrorOptionsProvider optionsProvider : myExtensions) {
       isModified |= optionsProvider.isModified();
     }
     if (isModified) return true;
@@ -87,7 +91,7 @@ public class ErrorHighlightingPanel {
 
 
   public void disposeUIResources() {
-    for (ErrorOptionsProvider optionsProvider : Extensions.getExtensions(ErrorOptionsProvider.EP_NAME)) {
+    for (ErrorOptionsProvider optionsProvider : myExtensions) {
       optionsProvider.disposeUIResources();
     }
   }

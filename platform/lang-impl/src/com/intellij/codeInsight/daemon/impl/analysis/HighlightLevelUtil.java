@@ -23,11 +23,19 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class HighlightLevelUtil {
   private HighlightLevelUtil() {
   }
+  public enum AnalysisLevel {
+    HIGHLIGHT, HIGHLIGHT_AND_INSPECT
+  }
+  public static boolean shouldAnalyse(@NotNull PsiFile root, @NotNull AnalysisLevel analysisLevel) {
+    return analysisLevel == AnalysisLevel.HIGHLIGHT_AND_INSPECT ? shouldInspect(root) : shouldHighlight(root);
+  }
+
 
   public static boolean shouldHighlight(@NotNull PsiElement psiRoot) {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(psiRoot.getProject());

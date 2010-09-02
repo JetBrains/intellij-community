@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -58,4 +59,7 @@ public abstract class ConvertContext {
   
   public abstract PsiManager getPsiManager();
 
+  public Project getProject() {
+    return getPsiManager().getProject();
+  }
 }

@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -55,6 +56,10 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
   private final TableColumnsProportionData myAvailableTableProportions = new TableColumnsProportionData();
   private final TableColumnsProportionData myInstalledTableProportions = new TableColumnsProportionData();
+
+  public static PluginManagerUISettings getInstance() {
+    return ServiceManager.getService(PluginManagerUISettings.class);
+  }
 
   public Element getState() {
     Element element = new Element("state");

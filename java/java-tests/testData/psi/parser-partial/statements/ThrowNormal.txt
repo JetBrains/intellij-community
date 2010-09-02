@@ -1,14 +1,9 @@
 PsiJavaFile:ThrowNormal.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiThrowStatement
+    PsiKeyword:throw('throw')
     PsiWhiteSpace(' ')
-    PsiThrowStatement
-      PsiKeyword:throw('throw')
-      PsiWhiteSpace(' ')
-      PsiReferenceExpression:e
-        PsiReferenceParameterList
-          <empty list>
-        PsiIdentifier:e('e')
-      PsiJavaToken:SEMICOLON(';')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+    PsiReferenceExpression:e
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:e('e')
+    PsiJavaToken:SEMICOLON(';')

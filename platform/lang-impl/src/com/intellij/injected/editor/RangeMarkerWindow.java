@@ -56,6 +56,10 @@ public class RangeMarkerWindow implements RangeMarkerEx {
     return myHostMarker.isValid() && myDocumentWindow.isValid();
   }
 
+  public boolean setValid(boolean value) {
+    return myHostMarker.setValid(value);
+  }
+
   ////////////////////////////delegates
   public void setGreedyToLeft(final boolean greedy) {
     myHostMarker.setGreedyToLeft(greedy);
@@ -91,4 +95,21 @@ public class RangeMarkerWindow implements RangeMarkerEx {
   public boolean isGreedyToLeft() {
     return myHostMarker.isGreedyToLeft();
   }
+
+  public int intervalStart() {
+    return getStartOffset();
+  }
+
+  public int intervalEnd() {
+    return getEndOffset();
+  }
+
+  public int setIntervalStart(int start) {
+    throw new IllegalStateException();
+  }
+
+  public int setIntervalEnd(int end) {
+    throw new IllegalStateException();
+  }
+
 }

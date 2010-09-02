@@ -15,28 +15,38 @@
  */
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.editor.impl.HighlighterList;
+import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author max
  */
-public interface MarkupModelEx extends MarkupModel {
+public interface MarkupModelEx extends MarkupModel, Iterable<RangeHighlighterEx> {
   void dispose();
 
-  @Nullable
-  HighlighterList getHighlighterList();
-
-  @Nullable
   RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
-  boolean containsHighlighter(RangeHighlighter highlighter);
+  boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
 
-  void addMarkupModelListener(MarkupModelListener listener);
-  void removeMarkupModelListener(MarkupModelListener listener);
+  void addMarkupModelListener(@NotNull MarkupModelListener listener);
+  void removeMarkupModelListener(@NotNull MarkupModelListener listener);
 
-  void setRangeHighlighterAttributes(final RangeHighlighter highlighter, TextAttributes textAttributes);
+  void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, TextAttributes textAttributes);
+
+  boolean processHighlightsOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
+  @NotNull
+  Iterator<RangeHighlighterEx> iteratorFrom(@NotNull Interval interval);
+
+  interface SweepProcessor<T> {
+    boolean process(int offset, T interval, boolean atStart, Collection<T> overlappingIntervals);
+  }
+
+  boolean sweep(int start, int end, @NotNull final SweepProcessor<RangeHighlighterEx> sweepProcessor);
 }

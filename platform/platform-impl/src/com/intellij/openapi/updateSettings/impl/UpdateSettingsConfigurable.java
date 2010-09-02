@@ -20,14 +20,12 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -63,10 +62,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableUpdates.png");
-  }
-
-  public static UpdateSettingsConfigurable getInstance() {
-    return ShowSettingsUtil.getInstance().findApplicationConfigurable(UpdateSettingsConfigurable.class);
   }
 
   public void setCheckNowEnabled(boolean enabled) {
@@ -98,18 +93,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myUpdatesSettingsPanel = null;
   }
 
-  public List<String> getPluginHosts() {
-    final ArrayList<String> hosts = new ArrayList<String>();
-    if (myUpdatesSettingsPanel != null) {
-      hosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
-    } else {
-      hosts.addAll(UpdateSettings.getInstance().myPluginHosts);
-    }
-    final String pluginHosts = System.getProperty("idea.plugin.hosts");
-    if (pluginHosts != null) {
-      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
-    }
-    return hosts;
+  public Collection<? extends String> getPluginsHosts() {
+    return myUpdatesSettingsPanel.getPluginsHosts();
   }
 
   private class UpdatesSettingsPanel {
@@ -145,7 +130,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       myBtnCheckNow.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          CheckForUpdateAction.actionPerformed(false);
+          CheckForUpdateAction.actionPerformed(false, UpdateSettingsConfigurable.this);
           updateLastCheckedLabel();
         }
       });

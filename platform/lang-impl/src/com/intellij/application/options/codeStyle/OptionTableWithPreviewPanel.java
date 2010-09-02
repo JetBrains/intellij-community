@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
@@ -167,6 +168,10 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   @Override
   protected void onLanguageChange(Language language) {
+    if (myTreeTable.isEditing()) {
+      myTreeTable.getCellEditor().stopCellEditing();
+    }
+    resetImpl(getSettings());
     myTreeTable.repaint();
   }
 
@@ -458,16 +463,17 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   }
 
   private Object getSettingsValue(Object key, final CodeStyleSettings settings) {
+    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
     try {
       if (key instanceof BooleanOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
-        return field.getBoolean(settings) ? Boolean.TRUE : Boolean.FALSE;
+        return field.getBoolean(commonSettings) ? Boolean.TRUE : Boolean.FALSE;
       }
       else if (key instanceof SelectionOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
         SelectionOptionKey intKey = (SelectionOptionKey)key;
         int[] values = intKey.values;
-        int value = field.getInt(settings);
+        int value = field.getInt(commonSettings);
         for (int i = 0; i < values.length; i++) {
           if (values[i] == value) return intKey.options[i];
         }
@@ -480,10 +486,11 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   }
 
   public void setSettingsValue(Object key, Object value, final CodeStyleSettings settings) {
+    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
     try {
       if (key instanceof BooleanOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
-        field.setBoolean(settings, ((Boolean)value).booleanValue());
+        field.setBoolean(commonSettings, ((Boolean)value).booleanValue());
       }
       else if (key instanceof SelectionOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
@@ -491,7 +498,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         int[] values = intKey.values;
         for (int i = 0; i < values.length; i++) {
           if (intKey.options[i].equals(value)) {
-            field.setInt(settings, values[i]);
+            field.setInt(commonSettings, values[i]);
             return;
           }
         }

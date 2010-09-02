@@ -72,10 +72,10 @@
     <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
 
     <breadcrumbsInfoProvider implementation="com.intellij.xml.breadcrumbs.XmlLanguageBreadcrumbsInfoProvider"/>
-    <editorSmartKeysConfigurable implementation="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
-    <editorAppearanceConfigurable implementation="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"/>
+    <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
+    <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"/>
 
-    <autoImportOptionsProvider implementation="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
+    <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.HtmlClosingTagErrorFilter"/>
 
@@ -276,7 +276,7 @@
 
     <inspectionToolProvider implementation="com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider"/>
 
-    <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider"/>
+    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider"/>
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.XMLColorsPage"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.HTMLColorsPage"/>
@@ -285,7 +285,7 @@
 
     <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
 
-    <browserSettingsProvider implementation="com.intellij.ide.browsers.BrowserSettingsProviderImpl"/>
+    <browserSettingsProvider instance="com.intellij.ide.browsers.BrowserSettingsProviderImpl"/>
 
     <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
 

@@ -19,6 +19,7 @@ package com.intellij.codeHighlighting;
 
 public interface Pass {
   int UPDATE_FOLDING = 1;
+  @Deprecated /** there is no visible highlighting pass anymore, use {@link #UPDATE_ALL} instead */
   int UPDATE_VISIBLE = 2;
   int POPUP_HINTS = 3;
   int UPDATE_ALL = 4;

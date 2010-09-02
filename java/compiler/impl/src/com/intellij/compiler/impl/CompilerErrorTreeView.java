@@ -90,8 +90,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
       final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-      final CompilerConfigurable configurable = util.createProjectConfigurable(project, CompilerConfigurable.class);
-      util.editConfigurable(project, configurable);
+      util.editConfigurable(project, new CompilerConfigurable(project));
     }
   }
 

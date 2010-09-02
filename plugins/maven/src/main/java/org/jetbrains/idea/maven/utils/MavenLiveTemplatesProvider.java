@@ -22,4 +22,9 @@ public class MavenLiveTemplatesProvider implements DefaultLiveTemplatesProvider 
   public String[] getDefaultLiveTemplateFiles() {
     return new String[]{"/liveTemplates/maven_xml"};
   }
+
+  @Override
+  public String[] getHiddenLiveTemplateFiles() {
+    return null;
+  }
 }

@@ -16,7 +16,10 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.FormatTextRanges;
+import com.intellij.formatting.FormatterEx;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
@@ -118,8 +121,28 @@ public class CodeFormatterFacade {
         try {
           ranges.preprocess(file.getNode());
           if (doPostponedFormatting) {
+            RangeMarker[] markers = new RangeMarker[ranges.getRanges().size()];
+            int i = 0;
+            for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+              TextRange textRange = range.getTextRange();
+              int start = textRange.getStartOffset();
+              int end = textRange.getEndOffset();
+              if (start >= 0 && end > start && end <= document.getTextLength()) {
+                markers[i] = document.createRangeMarker(textRange);
+                markers[i].setGreedyToLeft(true);
+                markers[i].setGreedyToRight(true);
+                i++;
+              }
+            }
             final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
             component.doPostponedFormatting(file.getViewProvider());
+            i = 0;
+            for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+              if (markers[i] != null) {
+                range.setTextRange(new TextRange(markers[i].getStartOffset(), markers[i].getEndOffset()));
+              }
+              i++;
+            }
           }
           final FormattingModel originalModel = builder.createModel(file, mySettings);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),

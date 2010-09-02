@@ -431,16 +431,16 @@
   <codeInsight.linkHandler prefix="#inspection/" handlerClass="com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler"/>
   <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
 
-  <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
+  <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
   <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
   <!-- Colors & Fonts-->
   <editorOptionsProvider implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorTabsConfigurable"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.CodeFoldingConfigurable"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.CodeCompletionOptions"/>
-  <editorOptionsProvider implementation="com.intellij.application.options.editor.AutoImportOptionsConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable"/>
 
   <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
 

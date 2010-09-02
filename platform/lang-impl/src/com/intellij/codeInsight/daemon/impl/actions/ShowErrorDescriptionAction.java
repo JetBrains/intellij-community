@@ -45,10 +45,10 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
   }
 
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
-    return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file);
+    return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file) && isEnabledForFile(project, editor, file);
   }
 
-  protected boolean isEnabledForFile(Project project, Editor editor, PsiFile file) {
+  private static boolean isEnabledForFile(Project project, Editor editor, PsiFile file) {
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     HighlightInfo info =
       ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
