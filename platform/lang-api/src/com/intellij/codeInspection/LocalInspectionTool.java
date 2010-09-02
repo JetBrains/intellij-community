@@ -94,6 +94,23 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
+   * Override the method to provide your own inspection visitor, if you need to store additional state in the
+   * LocalInspectionToolSession user data or get information about the inspection scope.
+   * Visitor created must not be recursive (e.g. it must not inherit {@link com.intellij.psi.PsiRecursiveElementVisitor})
+   * since it will be fed with every element in the file anyway.
+   * Visitor created must be thread-safe since it might be called on several elements concurrently.
+   *
+   * @param holder     where visitor will register problems found.
+   * @param isOnTheFly true if inspection was run in non-batch mode
+   * @param session    the session in the context of which the tool runs.
+   * @return not-null visitor for this inspection.
+   */
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, final LocalInspectionToolSession session) {
+    return buildVisitor(holder, isOnTheFly);
+  }
+
+  /**
    * Override the method to provide your own inspection visitor.
    * Visitor created must not be recursive (e.g. it must not inherit {@link com.intellij.psi.PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
