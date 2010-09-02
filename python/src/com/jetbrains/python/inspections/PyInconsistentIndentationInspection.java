@@ -82,16 +82,22 @@ public class PyInconsistentIndentationInspection extends PyInspection {
       final int problemStart = tokenStart + lastLF + 1;
       if (spaces > 0 && tabs > 0) {
         reportProblem("Inconsistent indentation: mix of tabs and spaces", problemStart, length);
+        // don't know which one is correct => don't complain about inconsistent indentation on subsequent lines which use
+        // either tabs or spaces
+        myLastSpaces = 0;
+        myLastTabs = 0;
       }
-      else if (spaces > 0 && myLastTabs > 0) {
-        reportProblem("Inconsistent indentation: previous line used tabs, this line uses spaces", problemStart, length);
-      }
-      else if (tabs > 0 && myLastSpaces > 0) {
-        reportProblem("Inconsistent indentation: previous line used spaces, this line uses tabs", problemStart, length);
-      }
-      if (spaces > 0 || tabs > 0) {
-        myLastTabs = tabs;
-        myLastSpaces = spaces;
+      else {
+        if (spaces > 0 && myLastTabs > 0) {
+          reportProblem("Inconsistent indentation: previous line used tabs, this line uses spaces", problemStart, length);
+        }
+        else if (tabs > 0 && myLastSpaces > 0) {
+          reportProblem("Inconsistent indentation: previous line used spaces, this line uses tabs", problemStart, length);
+        }
+        if (spaces > 0 || tabs > 0) {
+          myLastTabs = tabs;
+          myLastSpaces = spaces;
+        }
       }
     }
 
