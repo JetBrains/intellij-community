@@ -88,8 +88,10 @@ public class PyInconsistentIndentationInspection extends PyInspection {
       else if (tabs > 0 && myLastSpaces > 0) {
         reportProblem("Inconsistent indentation: previous line used spaces, this line uses tabs", problemStart, length);
       }
-      myLastTabs = tabs;
-      myLastSpaces = spaces;
+      if (spaces > 0 || tabs > 0) {
+        myLastTabs = tabs;
+        myLastSpaces = spaces;
+      }
     }
 
     private void reportProblem(final String descriptionTemplate, final int problemStart, final int problemLength) {
