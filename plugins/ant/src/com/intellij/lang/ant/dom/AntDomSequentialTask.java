@@ -15,28 +15,9 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.util.xml.*;
-
-import java.util.List;
-
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 8, 2010
+ *         Date: Sep 2, 2010
  */
-public abstract class AntDomMacroDef extends AntDomNamedElement{
-  @Attribute("uri")
-  public abstract GenericAttributeValue<String> getUri();
-  
-  @SubTagList("attribute")
-  public abstract List<AntDomMacrodefAttribute> getMacroAttributes();
-
-  @SubTagList("element")
-  public abstract List<AntDomMacrodefElement> getMacroElements();
-  
-  @SubTag("text")
-  public abstract AntDomMacrodefText getTextElement();
-
-  @SubTag("sequential")
-  @Required
-  public abstract AntDomSequentialTask getMacroBody();
+public abstract class AntDomSequentialTask extends AntDomElement{
 }
