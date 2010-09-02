@@ -9,7 +9,7 @@
 
   <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
-  <projectConfigurable implementation="com.intellij.openapi.vcs.configurable.VcsManagerConfigurable" id="vcs"/>
+  <projectConfigurable instance="com.intellij.openapi.vcs.configurable.VcsManagerConfigurable" id="vcs"/>
 
   <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
                       predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>

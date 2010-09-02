@@ -631,13 +631,13 @@
 
     <!-- Errors -->
     <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
-    <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable"/>
+    <projectConfigurable provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider"/>
 
     <!-- Project Structure -->
-    <projectConfigurable implementation="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>
+    <projectConfigurable instance="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>
     <!-- Compiler -->
 
-    <projectConfigurable implementation="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"/>
+    <projectConfigurable instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"/>
 
     <!-- Scopes -->
     <!-- This is registered as a top-level configurable in IDEA, and as a service (accessible from certain dialogs) in platform. -->
@@ -653,10 +653,6 @@
     <applicationConfigurable implementation="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
 
     <!-- Resources -->
-
-    <!--TODO <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>--> <!-- Plugins -->
-    <!-- Intention Actions -->
-    <!--TODO <applicationConfigurable implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"/>  --><!-- Updates -->
 
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
 

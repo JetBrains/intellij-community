@@ -356,7 +356,7 @@ public class ExpressionParser {
           final PsiBuilder.Marker copy = startMarker.precede();
           startMarker.rollbackTo();
 
-          final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, false, true, false);
+          final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, false, true, false, false);
           if (ref == null || builder.getTokenType() != JavaTokenType.DOT) {
             copy.rollbackTo();
             return parsePrimary(builder, BreakPoint.P2);
@@ -383,7 +383,7 @@ public class ExpressionParser {
         else {
           dotPos.drop();
           final PsiBuilder.Marker refExpr = expr.precede();
-          ReferenceParser.parseReferenceParameterList(builder, false);
+          ReferenceParser.parseReferenceParameterList(builder, false, false);
 
           if (!JavaParserUtil.expectOrError(builder, JavaTokenType.IDENTIFIER, JavaErrorMessages.message("expected.identifier"))) {
             refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
@@ -637,14 +637,15 @@ public class ExpressionParser {
     final PsiBuilder.Marker newExpr = (start != null ? start.precede() : builder.mark());
     builder.advanceLexer();
 
-    ReferenceParser.parseReferenceParameterList(builder, false);
+    final boolean parseDiamonds = areDiamondsSupported(builder);
+    ReferenceParser.parseReferenceParameterList(builder, false, parseDiamonds);
 
     final PsiBuilder.Marker refOrType;
     final boolean parseAnnotations = areTypeAnnotationsSupported(builder) && builder.getTokenType() == JavaTokenType.AT;
 
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.IDENTIFIER || parseAnnotations) {
-      refOrType = ReferenceParser.parseJavaCodeReference(builder, true, true, parseAnnotations);
+      refOrType = ReferenceParser.parseJavaCodeReference(builder, true, true, parseAnnotations, parseDiamonds);
       if (refOrType == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
         newExpr.done(JavaElementType.NEW_EXPRESSION);
@@ -715,7 +716,7 @@ public class ExpressionParser {
   private static PsiBuilder.Marker parseClassObjectAccess(final PsiBuilder builder) {
     final PsiBuilder.Marker expr = builder.mark();
 
-    final PsiBuilder.Marker type = ReferenceParser.parseType(builder, false, false);
+    final PsiBuilder.Marker type = ReferenceParser.parseType(builder, false, false, false);
     if (type == null) {
       expr.drop();
       return null;

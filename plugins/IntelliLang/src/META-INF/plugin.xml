@@ -38,7 +38,7 @@
 
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
 
-    <applicationConfigurable implementation="org.intellij.plugins.intelliLang.Settings"/>
+    <applicationConfigurable instance="org.intellij.plugins.intelliLang.Settings"/>
 
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>

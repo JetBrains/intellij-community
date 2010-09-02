@@ -31,7 +31,6 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IErrorCounterReparseableElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
@@ -51,7 +50,6 @@ public interface JavaElementType {
 
   IElementType MODIFIER_LIST = JavaStubElementTypes.MODIFIER_LIST;
   IElementType ANNOTATION = JavaStubElementTypes.ANNOTATION;
-  TokenSet ANNOTATIONS = TokenSet.create(ANNOTATION);
   IElementType EXTENDS_LIST = JavaStubElementTypes.EXTENDS_LIST;
   IElementType IMPLEMENTS_LIST = JavaStubElementTypes.IMPLEMENTS_LIST;
   IElementType FIELD = JavaStubElementTypes.FIELD;

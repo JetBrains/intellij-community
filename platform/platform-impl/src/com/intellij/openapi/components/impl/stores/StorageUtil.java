@@ -25,6 +25,7 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -101,7 +102,8 @@ public class StorageUtil {
         file.renameTo(backupFile);
       }
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      // mark this action as modifying the file which daemon analyzer should ignore
+      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable() {
         public void run() {
           if (!file.exists()) {
             file.createParentDirs();

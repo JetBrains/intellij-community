@@ -103,7 +103,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     final int startOffset = context.getStartOffset();
     final OffsetKey refStart = context.trackOffset(startOffset, true);
-    if (SmartCompletionDecorator.hasUnboundTypeParams(method)) {
+    if (shouldInsertTypeParameters(context)) {
       qualifyMethodCall(file, startOffset, document);
       insertExplicitTypeParameters(context, refStart);
     }
@@ -131,6 +131,17 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       }
     }
 
+  }
+
+  private boolean shouldInsertTypeParameters(InsertionContext context) {
+    final PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
+    if (PsiTreeUtil.getParentOfType(leaf, PsiExpressionList.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
+      if (PsiTreeUtil.getParentOfType(leaf, PsiConditionalExpression.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
+        return false;
+      }
+    }
+
+    return SmartCompletionDecorator.hasUnboundTypeParams(getObject());
   }
 
   private boolean insertExplicitTypeParameters(InsertionContext context, OffsetKey refStart) {
@@ -169,10 +180,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     final PsiMethod method = getObject();
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       document.insertString(startOffset, "this.");
-
-      if (method.getManager().areElementsEquivalent(myContainingClass, PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiClass.class, false))) {
-        return;
-      }
+      return;
     }
 
     document.insertString(startOffset, ".");

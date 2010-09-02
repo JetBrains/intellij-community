@@ -28,6 +28,13 @@ import java.util.List;
  */
 public interface WhitespacesAndCommentsProcessor {
   /**
+   * Provides an ability for the processor to get a text of any of given tokens.
+   */
+  interface TokenTextGetter {
+    CharSequence get(int i);
+  }
+
+  /**
    * <p>Analyzes whitespace and comment tokens at element's edge and returns element's edge position relative to these tokens.
    * Value returned by left edge processor will be used as a pointer to a first token of element.
    * Value returned by right edge processor will be used as a pointer to a token next of element's last token.
@@ -41,7 +48,9 @@ public interface WhitespacesAndCommentsProcessor {
    * whitespace or comment after element's end.
    *
    * @param tokens sequence of whitespace and comment tokens at the element's edge.
-   * @return position of element's edge relative to given tokens
+   * @param atStreamEdge true if sequence of tokens is located at the beginning or the end of token stream.
+   * @param getter token text getter.
+   * @return position of element's edge relative to given tokens.
    */
-  int process(List<IElementType> tokens);
+  int process(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter);
 }

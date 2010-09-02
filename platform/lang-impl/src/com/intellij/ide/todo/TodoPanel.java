@@ -604,7 +604,8 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         new AnAction(IdeBundle.message("action.todo.edit.filters"),
                      IdeBundle.message("action.todo.edit.filters"), IconLoader.getIcon("/general/ideOptions.png")) {
           public void actionPerformed(AnActionEvent e) {
-            ShowSettingsUtil.getInstance().editConfigurable(myProject, TodoConfigurable.getInstance());
+            final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+            util.editConfigurable(myProject, util.createApplicationConfigurable(TodoConfigurable.class));
           }
         }
       );

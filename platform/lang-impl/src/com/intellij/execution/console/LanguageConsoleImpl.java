@@ -523,7 +523,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
 
     final FileType type = language.getAssociatedFileType();
-    @NonNls final String name = getTitle() + "." + (type == null ? "txt" : type.getDefaultExtension());
+    @NonNls final String name = getTitle();
     final LightVirtualFile newVFile = new LightVirtualFile(name, language, myEditorDocument.getText());
     FileDocumentManagerImpl.registerDocument(myEditorDocument, newVFile);
     myFile = ((PsiFileFactoryImpl)PsiFileFactory.getInstance(myProject)).trySetupPsiForFile(newVFile, language, true, false);

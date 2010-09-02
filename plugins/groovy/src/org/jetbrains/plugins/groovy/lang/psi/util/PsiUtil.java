@@ -488,9 +488,18 @@ public class PsiUtil {
 
   public static void reformatCode(final PsiElement element) {
     final TextRange textRange = element.getTextRange();
+
+    PsiFile file = element.getContainingFile();
+    FileViewProvider viewProvider = file.getViewProvider();
+
+    if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
+      MultiplePsiFilesPerDocumentFileViewProvider multiProvider = (MultiplePsiFilesPerDocumentFileViewProvider)viewProvider;
+      file = multiProvider.getPsi(multiProvider.getBaseLanguage());
+    }
+
     try {
       CodeStyleManager.getInstance(element.getProject())
-        .reformatText(element.getContainingFile(), textRange.getStartOffset(), textRange.getEndOffset());
+        .reformatText(file, textRange.getStartOffset(), textRange.getEndOffset());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

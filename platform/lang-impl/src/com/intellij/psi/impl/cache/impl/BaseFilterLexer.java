@@ -31,6 +31,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   private int myTodoScannedBound = 0;
   private int myOccurenceMask;
   private TodoScanningData[] myTodoScanningData;
+  private CharSequence myCachedBufferSequence;
 
   public interface OccurrenceConsumer {
     void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask);
@@ -110,10 +111,11 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
     myOccurenceMask = occurrenceMask;
     final int start = getTokenStart();
     final int end = getTokenEnd();
-    IdTableBuilding.scanWords(this, getBufferSequence(), null, start, end, mayHaveEscapes);
+    if (myCachedBufferSequence == null) myCachedBufferSequence = getBufferSequence();
+    IdTableBuilding.scanWords(this, myCachedBufferSequence, null, start, end, mayHaveEscapes);
 
     if (mayHaveFileRefs) {
-      processPossibleComplexFileName(getBufferSequence(), start, end);
+      processPossibleComplexFileName(myCachedBufferSequence, start, end);
     }
   }
   

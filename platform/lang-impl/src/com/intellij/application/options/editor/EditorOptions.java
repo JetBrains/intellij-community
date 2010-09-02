@@ -33,6 +33,10 @@ public class EditorOptions implements SearchableConfigurable.Parent {
   private EditorOptionsPanel myEditorOptionsPanel;
 
   public Configurable[] getConfigurables() {
+    return getOptionsConfigurables();
+  }
+
+  public static EditorOptionsProvider[] getOptionsConfigurables() {
     return Extensions.getExtensions(EditorOptionsProvider.EP_NAME);
   }
 

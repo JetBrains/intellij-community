@@ -92,7 +92,7 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
 
   private class NewInstanceFactory extends NotNullLazyValue<Class<? extends Configurable>> implements NullableFactory<Configurable> {
     public Configurable create() {
-      return instantiate(getValue(), myPicoContainer);
+      return instantiate(getValue(), myPicoContainer, true);
     }
 
     @NotNull

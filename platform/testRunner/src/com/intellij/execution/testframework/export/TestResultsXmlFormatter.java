@@ -24,6 +24,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.PairProcessor;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -157,7 +158,7 @@ public class TestResultsXmlFormatter {
           }
 
           @Override
-          public void onNewAvailable(Printable printable) {
+          public void onNewAvailable(@NotNull Printable printable) {
           }
 
           @Override

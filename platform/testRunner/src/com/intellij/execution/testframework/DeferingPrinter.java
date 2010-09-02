@@ -18,6 +18,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import org.jetbrains.annotations.NotNull;
 
 public class DeferingPrinter implements Printer {
   private CompositePrintable myCompositePrintable;
@@ -34,7 +35,7 @@ public class DeferingPrinter implements Printer {
     });
   }
 
-  public void onNewAvailable(final Printable printable) {
+  public void onNewAvailable(@NotNull final Printable printable) {
     myCompositePrintable.addLast(printable);
   }
 

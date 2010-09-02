@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 import org.testng.annotations.BeforeMethod;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
@@ -64,12 +66,16 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
     myTraceClient = true;
   }
 
-  protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
+  protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {
     setStandardConfirmation(HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
   }
 
-  protected void disableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
+  protected void doNothingSilently(final VcsConfiguration.StandardConfirmation op) {
     setStandardConfirmation(HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
+  }
+
+  protected void showConfirmation(final VcsConfiguration.StandardConfirmation op) {
+    setStandardConfirmation(HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.SHOW_CONFIRMATION);
   }
 
   /**
@@ -111,8 +117,17 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
     }
     return new HgFile(myWorkingCopyDir, fileToInclude);
   }
-                       
 
+  /**
+   * Registers HgMockVcsHelper as the AbstractVcsHelper.
+   */
+  protected HgMockVcsHelper registerMockVcsHelper() {
+    final String key = "com.intellij.openapi.vcs.AbstractVcsHelper";
+    final MutablePicoContainer picoContainer = (MutablePicoContainer) myProject.getPicoContainer();
+    picoContainer.unregisterComponent(key);
+    picoContainer.registerComponentImplementation(key, HgMockVcsHelper.class);
+    return (HgMockVcsHelper) AbstractVcsHelper.getInstance(myProject);
+  }
 
   protected VirtualFile makeFile(File file) throws IOException {
     file.createNewFile();

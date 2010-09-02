@@ -15,18 +15,14 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.apache.commons.codec.binary.Base64;
-import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -39,7 +35,13 @@ import java.net.*;
  * Time: 3:58:23 PM
  * To change this template use Options | File Templates.
  */
-public class HttpConfigurable implements JDOMExternalizable, ApplicationComponent, SearchableConfigurable {
+@State(
+  name = "HttpConfigurable",
+  storages = {
+    @Storage(id = "other", file = "$APP_CONFIG$/other.xml")
+  }
+)
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable> {
   public boolean USE_HTTP_PROXY = false;
   public String PROXY_HOST = "";
   public int PROXY_PORT = 80;
@@ -49,39 +51,33 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
   public String PROXY_PASSWORD_CRYPT = "";
   public boolean KEEP_PROXY_PASSWORD = false;
 
-  private HTTPProxySettingsPanel myPanel;
-
   public static HttpConfigurable getInstance() {
     return ServiceManager.getService(HttpConfigurable.class);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    if (!KEEP_PROXY_PASSWORD)
+  public static boolean editConfigurable(final JComponent parent) {
+    return ShowSettingsUtil.getInstance().editConfigurable(parent, new HTTPProxySettingsPanel(getInstance()));
+  }
+
+  @Override
+  public HttpConfigurable getState() {
+    final HttpConfigurable state = new HttpConfigurable();
+    XmlSerializerUtil.copyBean(this, state);
+    if (!KEEP_PROXY_PASSWORD) {
+      state.PROXY_PASSWORD_CRYPT = "";
+    }
+    return state;
+  }
+
+  @Override
+  public void loadState(HttpConfigurable state) {
+    XmlSerializerUtil.copyBean(state, this);
+    if (!KEEP_PROXY_PASSWORD) {
       PROXY_PASSWORD_CRYPT = "";
+    }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    String proxyPassword = PROXY_PASSWORD_CRYPT;
-    if (!KEEP_PROXY_PASSWORD)
-      PROXY_PASSWORD_CRYPT = "";
-
-    DefaultJDOMExternalizer.writeExternal(this, element);
-
-    PROXY_PASSWORD_CRYPT = proxyPassword;
-  }
-
-  public String getComponentName() {
-    return "HttpConfigurable";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public String getPlainProxyPassword () {
+  public String getPlainProxyPassword() {
     return new String(new Base64().decode(PROXY_PASSWORD_CRYPT.getBytes()));
   }
 
@@ -90,8 +86,7 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
   }
 
   public PasswordAuthentication getPromptedAuthentication(final String host, final String prompt) {
-    if (PROXY_AUTHENTICATION &&
-        ! KEEP_PROXY_PASSWORD) {
+    if (PROXY_AUTHENTICATION && !KEEP_PROXY_PASSWORD) {
       Runnable runnable = new Runnable() {
         public void run() {
           AuthenticationDialog dlg = new AuthenticationDialog(host, prompt);
@@ -157,53 +152,5 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
       System.clearProperty("http.proxyPort");
       Authenticator.setDefault(null);
     }
-  }
-
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  public Runnable enableSearch(final String option) {
-    return null;
-  }
-
-  @Nls
-  public String getDisplayName() {
-    return "HTTP Proxy";
-  }
-
-  public Icon getIcon() {
-    return null;
-  }
-
-  public String getHelpTopic() {
-    return "http.proxy";
-  }
-
-  public JComponent createComponent() {
-    if (myPanel == null) {
-      myPanel = new HTTPProxySettingsPanel(getInstance());
-    }
-    return myPanel.getComponent();
-  }
-
-  public boolean isModified() {
-    return myPanel != null && myPanel.isModified();
-  }
-
-  public void apply() throws ConfigurationException {
-    if (myPanel != null) {
-      myPanel.apply();
-    }
-  }
-
-  public void reset() {
-    if (myPanel != null) {
-      myPanel.reset();
-    }
-  }
-
-  public void disposeUIResources() {
-    myPanel = null;
   }
 }

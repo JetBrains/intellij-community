@@ -26,6 +26,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,8 +42,10 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   @Deprecated
   public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME;
 
+  private final static NotNullLazyKey<InjectedLanguageManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(InjectedLanguageManager.class);
+
   public static InjectedLanguageManager getInstance(Project project) {
-    return ServiceManager.getService(project, InjectedLanguageManager.class);
+    return INSTANCE_CACHE.getValue(project);
   }
 
   @Nullable

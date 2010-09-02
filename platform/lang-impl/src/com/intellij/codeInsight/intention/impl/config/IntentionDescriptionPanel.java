@@ -97,9 +97,10 @@ public class IntentionDescriptionPanel {
       HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
       label.addHyperlinkListener(new HyperlinkListener() {
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          final PluginManagerConfigurable pluginConfigurable = PluginManagerConfigurable.getInstance();
+          final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+          final PluginManagerConfigurable pluginConfigurable = util.createApplicationConfigurable(PluginManagerConfigurable.class);
           final Project project = ProjectManager.getInstance().getDefaultProject();
-          ShowSettingsUtil.getInstance().editConfigurable(project, pluginConfigurable, new Runnable(){
+          util.editConfigurable(project, pluginConfigurable, new Runnable(){
             public void run() {
               pluginConfigurable.select(pluginDescriptor);
             }

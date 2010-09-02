@@ -19,6 +19,15 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../lib/automaton.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

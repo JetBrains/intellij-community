@@ -32,7 +32,7 @@
     <i18nInspectionTool implementation="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
     <java15InspectionTool implementation="com.intellij.uiDesigner.inspections.Java15FormInspection"/>
 
-    <projectConfigurable implementation="com.intellij.uiDesigner.GuiDesignerConfigurable"/> <!-- GUI Designer -->
+    <projectConfigurable instance="com.intellij.uiDesigner.GuiDesignerConfigurable"/>
 
     <favoriteNodeProvider implementation="com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider"/>
     <renameHandler implementation="com.intellij.uiDesigner.projectView.FormRenameHandler"/>

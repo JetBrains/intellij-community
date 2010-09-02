@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public class CompositePrintable implements Printable, Disposable {
     }
   }
 
-  public void addLast(final Printable printable) {
+  public void addLast(@NotNull final Printable printable) {
     synchronized (myNestedPrintables) {
       myNestedPrintables.add(printable);
     }
@@ -132,7 +133,7 @@ public class CompositePrintable implements Printable, Disposable {
             }
 
             @Override
-            public void onNewAvailable(Printable printable11) {
+            public void onNewAvailable(@NotNull Printable printable11) {
             }
 
             @Override

@@ -93,7 +93,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
       errorsConfigurable = new IDEInspectionToolsConfigurable(InspectionProjectProfileManager.getInstance(project), InspectionProfileManager.getInstance());
     }
     else {
-      errorsConfigurable = ErrorsConfigurable.SERVICE.getInstance(project);
+      errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);
     }
     return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
       public void run() {

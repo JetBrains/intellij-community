@@ -30,7 +30,7 @@ import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -334,7 +334,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    return getStubOrPsiChildren(JavaElementType.ANNOTATIONS, PsiAnnotation.ARRAY_FACTORY);
+    return getStubOrPsiChildren(ElementType.ANNOTATIONS, PsiAnnotation.ARRAY_FACTORY);
   }
 
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {

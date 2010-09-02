@@ -6,7 +6,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <applicationConfigurable implementation="org.intellij.images.options.impl.OptionsConfigurabe"/>
+    <applicationConfigurable instance="org.intellij.images.options.impl.OptionsConfigurabe"/>
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
     <applicationService serviceInterface="org.intellij.images.options.OptionsManager"

@@ -15,18 +15,20 @@
  */
 package com.intellij.openapi.options.ex;
 
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.NonDefaultProjectConfigurable;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
-
-import java.util.List;
 
 /**
  * @author max
  */
-public class ProjectConfigurablesGroup implements ConfigurableGroup {
-  private Project myProject;
+public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
+  private final Project myProject;
 
   public ProjectConfigurablesGroup(Project project) {
+    super(project, ConfigurableExtensionPointUtil.PROJECT_CONFIGURABLES);
     myProject = project;
   }
 
@@ -44,17 +46,14 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
     return myProject.isDefault();
   }
 
-  public Configurable[] getConfigurables() {
-    final ConfigurableEP[] extensions = myProject.getExtensions(ConfigurableExtensionPointUtil.PROJECT_CONFIGURABLES);
-    Configurable[] components = myProject.getComponents(Configurable.class);
-    List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, components, new ConfigurableFilter() {
+  @Override
+  protected ConfigurableFilter getConfigurableFilter() {
+    return new ConfigurableFilter() {
       public boolean isIncluded(final Configurable configurable) {
         if (isDefault() && configurable instanceof NonDefaultProjectConfigurable) return false;
         return true;
       }
-    });
-
-    return result.toArray(new Configurable[result.size()]);
+    };
   }
 
   public int hashCode() {

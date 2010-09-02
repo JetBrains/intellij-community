@@ -27,37 +27,63 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
+import static com.intellij.lang.java.parser.JavaParserUtil.done;
+import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
 import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
 
 
 public class FileParser {
+  public interface TopLevelDeclarationParser {
+    @Nullable PsiBuilder.Marker parse(PsiBuilder builder);
+  }
+
   private static final TokenSet IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
     ElementType.MODIFIER_BIT_SET,
     TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 
+  private static final TopLevelDeclarationParser TOP_LEVEL_DECLARATION_PARSER = new TopLevelDeclarationParser() {
+    public PsiBuilder.Marker parse(final PsiBuilder builder) {
+      return DeclarationParser.parse(builder, DeclarationParser.Context.FILE);
+    }
+  };
+
   private FileParser() { }
 
   public static void parse(final PsiBuilder builder) {
+    parseFile(builder, IMPORT_LIST_STOPPER_SET, TOP_LEVEL_DECLARATION_PARSER, JavaErrorMessages.message("expected.class.or.interface"));
+  }
+
+  public static void parseFile(final PsiBuilder builder, final TokenSet importListStoppers,
+                               final TopLevelDeclarationParser declarationParser, final String errorMessage) {
     parsePackageStatement(builder);
 
-    parseImportList(builder);
+    final Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);
 
+    Boolean firstDeclarationOk = null;
+    PsiBuilder.Marker firstDeclaration = null;
     PsiBuilder.Marker invalidElements = null;
     while (!builder.eof()) {
       if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
         if (invalidElements != null) {
-          invalidElements.error(JavaErrorMessages.message("expected.class.or.interface"));
+          invalidElements.error(errorMessage);
           invalidElements = null;
         }
         builder.advanceLexer();
+        if (firstDeclarationOk == null) firstDeclarationOk = false;
         continue;
       }
 
-      final PsiBuilder.Marker declaration = DeclarationParser.parse(builder, DeclarationParser.Context.FILE);
+      final PsiBuilder.Marker declaration = declarationParser.parse(builder);
       if (declaration != null) {
         if (invalidElements != null) {
-          invalidElements.errorBefore(JavaErrorMessages.message("expected.class.or.interface"), declaration);
+          invalidElements.errorBefore(errorMessage, declaration);
           invalidElements = null;
+        }
+        if (firstDeclarationOk == null) {
+          firstDeclarationOk = exprType(declaration) != JavaElementType.MODIFIER_LIST;
+          if (firstDeclarationOk) {
+            firstDeclaration = declaration;
+          }
         }
         continue;
       }
@@ -66,10 +92,16 @@ public class FileParser {
         invalidElements = builder.mark();
       }
       builder.advanceLexer();
+      if (firstDeclarationOk == null) firstDeclarationOk = false;
     }
 
     if (invalidElements != null) {
-      invalidElements.error(JavaErrorMessages.message("expected.class.or.interface"));
+      invalidElements.error(errorMessage);
+    }
+
+    if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {
+      impListInfo.first.setCustomEdgeProcessors(JavaParserUtil.PRECEDING_COMMENT_BINDER, null);  // pass comments behind fake import list
+      firstDeclaration.setCustomEdgeProcessors(JavaParserUtil.SPECIAL_PRECEDING_COMMENT_BINDER, null);
     }
   }
 
@@ -80,14 +112,14 @@ public class FileParser {
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
       final PsiBuilder.Marker modList = builder.mark();
       DeclarationParser.parseAnnotations(builder);
-      modList.done(JavaElementType.MODIFIER_LIST);
+      done(modList, JavaElementType.MODIFIER_LIST);
       if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
         statement.rollbackTo();
         return null;
       }
     }
 
-    final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, false, false);
+    final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, false, false, false);
     if (ref == null) {
       statement.rollbackTo();
       return null;
@@ -95,13 +127,8 @@ public class FileParser {
 
     semicolon(builder);
 
-    statement.done(JavaElementType.PACKAGE_STATEMENT);
+    done(statement, JavaElementType.PACKAGE_STATEMENT);
     return statement;
-  }
-
-  @NotNull
-  private static Pair<PsiBuilder.Marker, Boolean> parseImportList(final PsiBuilder builder) {
-    return parseImportList(builder, IMPORT_LIST_STOPPER_SET);
   }
 
   @NotNull
@@ -134,7 +161,7 @@ public class FileParser {
       }
     }
 
-    list.done(JavaElementType.IMPORT_LIST);
+    done(list, JavaElementType.IMPORT_LIST);
     return Pair.create(list, isEmpty);
   }
 
@@ -153,7 +180,7 @@ public class FileParser {
       semicolon(builder);
     }
 
-    statement.done(type);
+    done(statement, type);
     return statement;
   }
 }

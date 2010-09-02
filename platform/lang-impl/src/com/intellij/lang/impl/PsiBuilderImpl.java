@@ -40,7 +40,10 @@ import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.LimitedPool;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
@@ -104,13 +107,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   });
 
   private static final WhitespacesAndCommentsProcessor DEFAULT_LEFT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
-    public int process(final List<IElementType> tokens) {
+    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return tokens.size();
     }
   };
 
   private static final WhitespacesAndCommentsProcessor DEFAULT_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
-    public int process(final List<IElementType> tokens) {
+    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return 0;
     }
   };
@@ -827,23 +830,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     markTokenTypeChecked();
 
-    for (int i = 1; i < myProduction.size() - 1; i++) {
-      final ProductionMarker item = myProduction.get(i);
-
-      if (item instanceof StartMarker && ((StartMarker)item).myDoneMarker == null) {
-        LOG.error(UNBALANCED_MESSAGE);
-      }
-
-      final int prevProductionLexIndex = myProduction.get(i - 1).myLexemeIndex;
-      int wsStartIndex = item.myLexemeIndex;
-      while (wsStartIndex > prevProductionLexIndex && whitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--;
-
-      int wsEndIndex = item.myLexemeIndex;
-      while (wsEndIndex < myLexemeCount && whitespaceOrComment(myLexTypes[wsEndIndex])) wsEndIndex++;
-
-      final List<IElementType> wsTokens = CollectionFactory.arrayList(myLexTypes, wsStartIndex, wsEndIndex);
-      item.myLexemeIndex = wsStartIndex + item.myEdgeProcessor.process(wsTokens);
-    }
+    balanceWhiteSpaces();
 
     rootMarker.firstChild = rootMarker.lastChild = rootMarker.next = null;
     StartMarker curNode = rootMarker;
@@ -889,6 +876,33 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     LOG.assertTrue(curNode == rootMarker, UNBALANCED_MESSAGE);
     return rootMarker;
+  }
+
+  private void balanceWhiteSpaces() {
+    for (int i = 1; i < myProduction.size() - 1; i++) {
+      final ProductionMarker item = myProduction.get(i);
+
+      if (item instanceof StartMarker && ((StartMarker)item).myDoneMarker == null) {
+        LOG.error(UNBALANCED_MESSAGE);
+      }
+
+      final int prevProductionLexIndex = myProduction.get(i - 1).myLexemeIndex;
+      int idx = item.myLexemeIndex;
+      while (idx > prevProductionLexIndex && whitespaceOrComment(myLexTypes[idx - 1])) idx--;
+      final int wsStartIndex = idx;
+
+      int wsEndIndex = item.myLexemeIndex;
+      while (wsEndIndex < myLexemeCount && whitespaceOrComment(myLexTypes[wsEndIndex])) wsEndIndex++;
+
+      final List<IElementType> wsTokens = CollectionFactory.arrayList(myLexTypes, wsStartIndex, wsEndIndex);
+      final boolean atEnd = (wsStartIndex == 0 || wsEndIndex == myLexemeCount);
+      final WhitespacesAndCommentsProcessor.TokenTextGetter getter = new WhitespacesAndCommentsProcessor.TokenTextGetter() {
+        public CharSequence get(final int i) {
+          return myText.subSequence(myLexStarts[wsStartIndex + i], myLexStarts[wsStartIndex + i + 1]);
+        }
+      };
+      item.myLexemeIndex = wsStartIndex + item.myEdgeProcessor.process(wsTokens, atEnd, getter);
+    }
   }
 
   private void bind(CompositeElement ast, StartMarker marker) {

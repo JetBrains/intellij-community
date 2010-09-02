@@ -41,6 +41,7 @@ import java.nio.charset.Charset;
 import java.util.Map;
 
 public class FileEncodingConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable, OptionalConfigurable {
+  private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
   private final Project myProject;
   private FileTreeTable myTreeView;
   private JScrollPane myTreePanel;
@@ -51,11 +52,6 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
   private Charset mySelectedCharsetForPropertiesFiles;
   private JComboBox myIdeEncodingsCombo;
   private ChooseFileEncodingAction myAction;
-  private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
-
-  public static FileEncodingConfigurable getInstance(final Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, FileEncodingConfigurable.class);
-  }
 
   public FileEncodingConfigurable(Project project) {
     myProject = project;

@@ -122,49 +122,61 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public boolean editConfigurable(Project project, Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(project, configurable, createDimensionKey(configurable));
-    configurableEditor.show();
-    return configurableEditor.isOK();
+    return editConfigurable(project, createDimensionKey(configurable), configurable);
   }
 
   public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
-    return ConfigurableExtensionPointUtil.findApplicationConfigurable(confClass);
+    return ConfigurableExtensionPointUtil.createApplicationConfigurable(confClass);
   }
 
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
-    return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
+    return ConfigurableExtensionPointUtil.createProjectConfigurable(project, confClass);
   }
 
   public boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(project, configurable, dimensionServiceKey);
-    configurableEditor.show();
-    return configurableEditor.isOK();
+    return editConfigurable(project, configurable, dimensionServiceKey, null);
   }
 
+  public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
+    return editConfigurable(project, configurable, createDimensionKey(configurable), advancedInitialization);
+  }
+
+  private static boolean editConfigurable(Project project, Configurable configurable, final String dimensionKey, Runnable advancedInitialization) {
+    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable, dimensionKey);
+    if (advancedInitialization != null) {
+      advancedInitialization.run();
+    }
+    editor.show();
+    return editor.isOK();
+  }
+
+  @NotNull
   @Override
-  public boolean editProjectConfigurable(@NotNull Project project,
-                                         Class<? extends Configurable> configurableClass,
-                                         @NonNls String dimensionServiceKey) {
-    final Configurable configurable = findProjectConfigurable(project, configurableClass);
-    if (configurable == null) {
-      LOG.error("Cannot find project configurable for " + configurableClass);
-      return false;
-    }
-    if (dimensionServiceKey == null) {
-      dimensionServiceKey = createDimensionKey(configurable);
-    }
-    return editConfigurable(project, dimensionServiceKey, configurable);
+  public <T extends Configurable> T createProjectConfigurable(@NotNull Project project,
+                                                Class<T> configurableClass) {
+    return ConfigurableExtensionPointUtil.createProjectConfigurable(project, configurableClass);
+  }
+
+  @NotNull
+  @Override
+  public <T extends Configurable> T createApplicationConfigurable(Class<T> configurableClass) {
+    return ConfigurableExtensionPointUtil.createApplicationConfigurable(configurableClass);
   }
 
   public boolean editConfigurable(Component parent, Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(parent, configurable, createDimensionKey(configurable));
-    configurableEditor.show();
-    return configurableEditor.isOK();
+    return editConfigurable(parent, configurable, null);
   }
 
   public boolean editConfigurable(final Component parent, final Configurable configurable, final Runnable advancedInitialization) {
-    SingleConfigurableEditor editor = new SingleConfigurableEditor(parent, configurable, createDimensionKey(configurable));
-    advancedInitialization.run();
+    return editConfigurable(parent, configurable, createDimensionKey(configurable), advancedInitialization);
+  }
+
+  private static boolean editConfigurable(final Component parent, final Configurable configurable, final String dimensionKey,
+                                   final Runnable advancedInitialization) {
+    SingleConfigurableEditor editor = new SingleConfigurableEditor(parent, configurable, dimensionKey);
+    if (advancedInitialization != null) {
+      advancedInitialization.run();
+    }
     editor.show();
     return editor.isOK();
   }
@@ -176,15 +188,6 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public boolean editConfigurable(Component parent, String dimensionServiceKey,Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(parent, configurable, dimensionServiceKey);
-    configurableEditor.show();
-    return configurableEditor.isOK();
-  }
-
-  public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
-    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable, createDimensionKey(configurable));
-    advancedInitialization.run();
-    editor.show();
-    return editor.isOK();
+    return editConfigurable(parent, configurable, dimensionServiceKey, null);
   }
 }

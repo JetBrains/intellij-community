@@ -17,8 +17,9 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,10 +38,12 @@ public interface ErrorsConfigurable extends Configurable {
     }
 
     @Nullable
-    public static ErrorsConfigurable getInstance(Project project) {
-      ErrorsConfigurable profileConfigurable = ShowSettingsUtil.getInstance().findProjectConfigurable(project, ErrorsConfigurable.class);
-      if (profileConfigurable != null) return profileConfigurable;
-      return ShowSettingsUtil.getInstance().findApplicationConfigurable(ErrorsConfigurable.class);
+    public static ErrorsConfigurable createConfigurable(@NotNull Project project) {
+      Configurable configurable = ConfigurableExtensionPointUtil.createProjectConfigurableForProvider(project, ErrorsConfigurableProvider.class);
+      if (configurable == null) {
+        configurable = ConfigurableExtensionPointUtil.createApplicationConfigurableForProvider(ErrorsConfigurableProvider.class);
+      }
+      return (ErrorsConfigurable)configurable;
     }
   }
 }
