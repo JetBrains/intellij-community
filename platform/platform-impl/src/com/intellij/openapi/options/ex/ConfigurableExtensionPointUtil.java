@@ -61,21 +61,23 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @NotNull
-  public static <T extends Configurable> T createProjectConfigurable(@NotNull Project project, @NotNull Class<T> configurableClass) {
-    return createConfigurable(project.getExtensions(PROJECT_CONFIGURABLES), configurableClass);
+  public static <T extends Configurable> T findProjectConfigurable(@NotNull Project project, @NotNull Class<T> configurableClass) {
+    return findConfigurable(project.getExtensions(PROJECT_CONFIGURABLES), configurableClass);
   }
 
   @NotNull
-  public static <T extends Configurable> T createApplicationConfigurable(@NotNull Class<T> configurableClass) {
-    return createConfigurable(APPLICATION_CONFIGURABLES.getExtensions(), configurableClass);
+  public static <T extends Configurable> T findApplicationConfigurable(@NotNull Class<T> configurableClass) {
+    return findConfigurable(APPLICATION_CONFIGURABLES.getExtensions(), configurableClass);
   }
 
   @NotNull
-  private static <T extends Configurable> T createConfigurable(ConfigurableEP[] extensions, Class<T> configurableClass) {
-    final String className = configurableClass.getName();
+  private static <T extends Configurable> T findConfigurable(ConfigurableEP[] extensions, Class<T> configurableClass) {
     for (ConfigurableEP extension : extensions) {
-      if (className.equals(extension.implementationClass) || className.equals(extension.instanceClass)) {
-        return configurableClass.cast(extension.createConfigurable());
+      if (extension.implementationClass != null) {
+        final Configurable configurable = extension.createConfigurable();
+        if (configurableClass.isInstance(configurable)) {
+          return configurableClass.cast(configurable);
+        }
       }
     }
     throw new IllegalArgumentException("Cannot find configurable of " + configurableClass);

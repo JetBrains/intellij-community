@@ -126,11 +126,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
-    return ConfigurableExtensionPointUtil.createApplicationConfigurable(confClass);
+    return ConfigurableExtensionPointUtil.findApplicationConfigurable(confClass);
   }
 
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
-    return ConfigurableExtensionPointUtil.createProjectConfigurable(project, confClass);
+    return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 
   public boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable) {
