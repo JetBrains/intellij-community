@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariableImpl;
 
 /**
 * @author sergey.evdokimov
