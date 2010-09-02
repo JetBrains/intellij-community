@@ -25,6 +25,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
@@ -40,13 +41,18 @@ import java.util.Set;
 class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final boolean myIgnoreTupleUnpacking;
   private final boolean myIgnoreLambdaParameters;
+  private final boolean myIgnoreRangeIterationVariables;
   private final HashSet<PsiElement> myUnusedElements;
   private final HashSet<PsiElement> myUsedElements;
 
-  public PyUnusedLocalInspectionVisitor(final ProblemsHolder holder, boolean ignoreTupleUnpacking, boolean ignoreLambdaParameters) {
+  public PyUnusedLocalInspectionVisitor(final ProblemsHolder holder,
+                                        boolean ignoreTupleUnpacking,
+                                        boolean ignoreLambdaParameters,
+                                        boolean ignoreRangeIterationVariables) {
     super(holder);
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myIgnoreLambdaParameters = ignoreLambdaParameters;
+    myIgnoreRangeIterationVariables = ignoreRangeIterationVariables;
     myUnusedElements = new HashSet<PsiElement>();
     myUsedElements = new HashSet<PsiElement>();
   }
@@ -58,9 +64,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   @Override
   public void visitPyLambdaExpression(final PyLambdaExpression node) {
-    if (!myIgnoreLambdaParameters) {
-      processScope(PsiTreeUtil.getParentOfType(node, ScopeOwner.class), node);
-    }
+    processScope(PsiTreeUtil.getParentOfType(node, ScopeOwner.class), node);
   }
 
   static class DontPerformException extends RuntimeException {}
@@ -244,6 +248,9 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               PsiTreeUtil.getParentOfType(element, PyClass.class) != null){
             continue;
           }
+          if (myIgnoreLambdaParameters && PsiTreeUtil.getParentOfType(element, Callable.class) instanceof PyLambdaExpression) {
+            continue;
+          }
           boolean isInitMethod = false;
           PyClass containingClass = null;
           PyParameterList paramList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
@@ -266,9 +273,12 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
             continue;
           }
-          if (PyForStatementNavigator.getPyForStatementByIterable(element) != null) {
-            registerProblem(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
-                            ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
+          final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
+          if (forStatement != null) {
+            if (!myIgnoreRangeIterationVariables || !isRangeIteration(forStatement)) {
+              registerProblem(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
+                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
+            }
           }
           else {
             registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name));
@@ -276,6 +286,21 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
+  }
+
+  private static boolean isRangeIteration(PyForStatement forStatement) {
+    final PyExpression source = forStatement.getForPart().getSource();
+    if (!(source instanceof PyCallExpression)) {
+      return false;
+    }
+    PyCallExpression expr = (PyCallExpression) source;
+    if (expr.isCalleeText("range", "xrange")) {
+      final PyCallExpression.PyMarkedCallee callee = expr.resolveCallee();
+      if (callee != null && !callee.isImplicitlyResolved() && PyBuiltinCache.getInstance(forStatement).hasInBuiltins(callee.getCallable())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean ignoreUnusedParameters(PyFunction func, Set<PyFunction> functionsWithInheritors) {

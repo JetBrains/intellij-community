@@ -19,6 +19,7 @@ public class PyUnusedLocalInspection extends PyInspection {
 
   public boolean ignoreTupleUnpacking = true;
   public boolean ignoreLambdaParameters = true;
+  public boolean ignoreLoopIterationVariables = true;
 
   @NotNull
   @Nls
@@ -28,7 +29,8 @@ public class PyUnusedLocalInspection extends PyInspection {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
-    final PyUnusedLocalInspectionVisitor visitor = new PyUnusedLocalInspectionVisitor(holder, ignoreTupleUnpacking, ignoreLambdaParameters);
+    final PyUnusedLocalInspectionVisitor visitor = new PyUnusedLocalInspectionVisitor(holder, ignoreTupleUnpacking, ignoreLambdaParameters,
+                                                                                      ignoreLoopIterationVariables);
     session.putUserData(KEY, visitor);
     return visitor;
   }
@@ -47,6 +49,7 @@ public class PyUnusedLocalInspection extends PyInspection {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore variables used in tuple unpacking", "ignoreTupleUnpacking");
     panel.addCheckbox("Ignore lambda parameters", "ignoreLambdaParameters");
+    panel.addCheckbox("Ignore range iteration variables", "ignoreLoopIterationVariables");
     return panel;
   }
 }
