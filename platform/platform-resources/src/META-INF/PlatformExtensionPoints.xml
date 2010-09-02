@@ -98,7 +98,7 @@
   <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>
   <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
 
-  <extensionPoint name="generalOptionsProvider" interface="com.intellij.openapi.options.SearchableConfigurable"/>
+  <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP"/>
   
   <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
 
