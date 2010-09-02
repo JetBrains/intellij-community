@@ -14,4 +14,9 @@ public class PyDefaultLiveTemplatesProvider implements DefaultLiveTemplatesProvi
   public String[] getDefaultLiveTemplateFiles() {
     return DEFAULT_TEMPLATES;
   }
+
+  @Override
+  public String[] getHiddenLiveTemplateFiles() {
+    return null;
+  }
 }
