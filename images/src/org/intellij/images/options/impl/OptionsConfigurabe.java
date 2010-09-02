@@ -97,8 +97,7 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
 
     public static void show(Project project) {
         final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-        OptionsConfigurabe component = util.createApplicationConfigurable(OptionsConfigurabe.class);
-        util.editConfigurable(project, component);
+      util.editConfigurable(project, new OptionsConfigurabe());
     }
 
   @NonNls

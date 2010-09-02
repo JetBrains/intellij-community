@@ -29,7 +29,6 @@ public class EditSettingsAction extends MavenAction {
   }
 
   protected static void showSettingsFor(Project project) {
-    MavenSettings configurable = ShowSettingsUtil.getInstance().createProjectConfigurable(project, MavenSettings.class);
-    ShowSettingsUtil.getInstance().showSettingsDialog(project, configurable);
+    ShowSettingsUtil.getInstance().showSettingsDialog(project, new MavenSettings(project));
   }
 }

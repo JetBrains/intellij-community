@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -42,7 +43,7 @@ public class PsiMethodReceiverImpl extends CompositePsiElement implements PsiMet
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    return getChildrenAsPsiElements(JavaElementType.ANNOTATIONS, PsiAnnotation.PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(ElementType.ANNOTATIONS, PsiAnnotation.PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
   }
 
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {

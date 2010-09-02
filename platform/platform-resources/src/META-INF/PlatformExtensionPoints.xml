@@ -84,7 +84,7 @@
   <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean"/>
   <extensionPoint name="contentBasedClassFileProcessor" interface="com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor"/>
 
-  <extensionPoint name="browserSettingsProvider" interface="com.intellij.ide.BrowserSettingsProvider"/>
+  <extensionPoint name="browserSettingsProvider" beanClass="com.intellij.ide.BrowserSettingsProviderEP"/>
 
   <extensionPoint name="bundledColorSchemesProvider" interface="com.intellij.openapi.editor.colors.impl.BundledColorSchemesProvider"/>
   <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider"/>
@@ -98,7 +98,7 @@
   <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>
   <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
 
-  <extensionPoint name="generalOptionsProvider" interface="com.intellij.openapi.options.SearchableConfigurable"/>
+  <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP"/>
   
   <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
 

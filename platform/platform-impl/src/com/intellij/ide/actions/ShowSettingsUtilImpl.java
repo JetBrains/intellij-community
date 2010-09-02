@@ -126,11 +126,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
-    return ConfigurableExtensionPointUtil.createApplicationConfigurable(confClass);
+    return ConfigurableExtensionPointUtil.findApplicationConfigurable(confClass);
   }
 
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
-    return ConfigurableExtensionPointUtil.createProjectConfigurable(project, confClass);
+    return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 
   public boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable) {
@@ -148,19 +148,6 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     }
     editor.show();
     return editor.isOK();
-  }
-
-  @NotNull
-  @Override
-  public <T extends Configurable> T createProjectConfigurable(@NotNull Project project,
-                                                Class<T> configurableClass) {
-    return ConfigurableExtensionPointUtil.createProjectConfigurable(project, configurableClass);
-  }
-
-  @NotNull
-  @Override
-  public <T extends Configurable> T createApplicationConfigurable(Class<T> configurableClass) {
-    return ConfigurableExtensionPointUtil.createApplicationConfigurable(configurableClass);
   }
 
   public boolean editConfigurable(Component parent, Configurable configurable) {

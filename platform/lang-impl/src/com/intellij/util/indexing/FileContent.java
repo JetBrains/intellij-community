@@ -69,7 +69,7 @@ public final class FileContent extends UserDataHolderBase {
       }
       final Language language = ((LanguageFileType)getFileTypeWithoutSubstitution()).getLanguage();
       final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, getFile(), project);
-      psi = PsiFileFactory.getInstance(project).createFileFromText(getFileName(), substitutedLanguage, getContentAsText(), false, false);
+      psi = PsiFileFactory.getInstance(project).createFileFromText(getFileName(), substitutedLanguage, getContentAsText(), false, false, true);
 
       psi.putUserData(FileBasedIndex.VIRTUAL_FILE, getFile());
       putUserData(CACHED_PSI, psi);

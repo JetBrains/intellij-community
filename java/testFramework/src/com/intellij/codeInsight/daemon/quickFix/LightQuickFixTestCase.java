@@ -87,7 +87,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
             }
             catch (Throwable e) {
               e.printStackTrace();
-              fail();
+              fail(testName);
             }
           }
         });

@@ -205,7 +205,7 @@ public class DeclarationParser {
       }
 
       // adding a reference, not simple tokens allows "Browse ..." to work well
-      final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, true, false);
+      final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, true, false, false);
       if (ref == null) {
         builder.advanceLexer();
       }
@@ -518,7 +518,7 @@ public class DeclarationParser {
       }
 
       // adding a reference, not simple tokens allows "Browse .." to work well
-      final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, true, false);
+      final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, true, false, false);
       if (ref == null && builder.getTokenType() != null) {
         builder.advanceLexer();
       }
@@ -538,7 +538,7 @@ public class DeclarationParser {
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
     final PsiBuilder.Marker type = ellipsis ? ReferenceParser.parseTypeWithEllipsis(builder, true, true) :
-                                              ReferenceParser.parseType(builder, true, true);
+                                              ReferenceParser.parseType(builder, true, true, false);
 
     if (type == null && modListInfo.second) {
       param.rollbackTo();
@@ -676,7 +676,7 @@ public class DeclarationParser {
     final PsiBuilder.Marker anno = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker classRef = ReferenceParser.parseJavaCodeReference(builder, true, false, false);
+    final PsiBuilder.Marker classRef = ReferenceParser.parseJavaCodeReference(builder, true, false, false, false);
     if (classRef == null) {
       error(builder, JavaErrorMessages.message("expected.class.reference"));
     }

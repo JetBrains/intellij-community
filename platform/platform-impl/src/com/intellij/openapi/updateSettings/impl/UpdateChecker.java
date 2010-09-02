@@ -47,6 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.DateFormatUtil;
@@ -129,10 +130,10 @@ public final class UpdateChecker {
     return settings.CHECK_NEEDED;
   }
 
-  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog) {
+  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog, final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
     final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
-    for (String host : UpdateSettingsConfigurable.getInstance().getPluginHosts()) {
+    for (String host : getPluginHosts(settingsConfigurable)) {
       try {
         checkPluginsHost(host, downloaded);
       }
@@ -151,6 +152,21 @@ public final class UpdateChecker {
       }
     }
     return downloaded.isEmpty() ? null : downloaded;
+  }
+
+  private static List<String> getPluginHosts(@Nullable UpdateSettingsConfigurable settingsConfigurable) {
+    final ArrayList<String> hosts = new ArrayList<String>();
+    if (settingsConfigurable != null) {
+      hosts.addAll(settingsConfigurable.getPluginsHosts());
+    }
+    else {
+      hosts.addAll(UpdateSettings.getInstance().myPluginHosts);
+    }
+    final String pluginHosts = System.getProperty("idea.plugin.hosts");
+    if (pluginHosts != null) {
+      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
+    }
+    return hosts;
   }
 
   public static boolean checkPluginsHost(final String host, final List<PluginDownloader> downloaded) throws Exception {

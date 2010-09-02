@@ -17,13 +17,17 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
+ * Register implementation of this interface in the plugin.xml:
+ * <p/>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;autoImportOptionsProvider instance="class-name"/&gt;<br>
+ * &lt;/extensions&gt;
+ * <p>
+ * A new instance of the specified class will be created each time then the Settings dialog is opened
+ *
  * @author Dmitry Avdeev
  */
 public interface AutoImportOptionsProvider extends UnnamedConfigurable {
-
-  ExtensionPointName<AutoImportOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.autoImportOptionsProvider");
-
 }

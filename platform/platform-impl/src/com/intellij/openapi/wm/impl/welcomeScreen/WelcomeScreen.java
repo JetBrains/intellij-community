@@ -17,10 +17,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -370,8 +367,8 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(13, 0, 0, 10), 0, 0);
     MyActionButton openPluginManager = new PluginsActionButton(OPEN_PLUGINS_ICON, null) {
       protected void onPress(InputEvent e) {
-        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-        util.editConfigurable(myPluginsPanel, util.createApplicationConfigurable(PluginManagerConfigurable.class));
+        final PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
+        ShowSettingsUtil.getInstance().editConfigurable(myPluginsPanel, configurable);
       }
 
       public Dimension getMaximumSize() {

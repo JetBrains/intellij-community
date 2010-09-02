@@ -17,13 +17,12 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.CompositeConfigurable;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,7 +33,7 @@ public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImp
   private JPanel myProvidersPanel;
 
   protected List<AutoImportOptionsProvider> createConfigurables() {
-    return Arrays.asList(Extensions.getExtensions(AutoImportOptionsProvider.EP_NAME));
+    return AbstractConfigurableEP.createConfigurables(AutoImportOptionsProviderEP.EP_NAME);
   }
 
   @Nls

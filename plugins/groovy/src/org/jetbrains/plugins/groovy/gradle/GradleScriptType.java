@@ -152,8 +152,7 @@ public class GradleScriptType extends GroovyScriptType {
             .showOkCancelDialog("Gradle is not configured. Do you want to configure it?", "Configure Gradle SDK",
                                 GradleLibraryManager.GRADLE_ICON);
           if (result == 0) {
-            final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-            util.editConfigurable(project, util.createProjectConfigurable(project, GradleConfigurable.class));
+            ShowSettingsUtil.getInstance().editConfigurable(project, new GradleConfigurable(project));
           }
           if (GradleLibraryManager.getSdkHome(module, project) == null) {
             return false;

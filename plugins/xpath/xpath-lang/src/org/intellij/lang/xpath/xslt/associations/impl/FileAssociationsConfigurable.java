@@ -92,8 +92,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
     }
 
     public static void editAssociations(Project project, final PsiFile file) {
-        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-        final FileAssociationsConfigurable instance = util.createProjectConfigurable(project, FileAssociationsConfigurable.class);
+        final FileAssociationsConfigurable instance = new FileAssociationsConfigurable(project);
 
         ShowSettingsUtil.getInstance().editConfigurable(project, instance, new Runnable() {
             public void run() {

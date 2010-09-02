@@ -68,9 +68,8 @@ public class TemplateLanguageErrorQuickFixProvider implements ErrorQuickFixProvi
       }
 
       public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-        final TemplateDataLanguageConfigurable configurable = util.createProjectConfigurable(project, TemplateDataLanguageConfigurable.class);
-        util.editConfigurable(project, configurable, new Runnable() {
+        final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
+        ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
           public void run() {
             if (virtualFile != null) {
               configurable.selectFile(virtualFile);
