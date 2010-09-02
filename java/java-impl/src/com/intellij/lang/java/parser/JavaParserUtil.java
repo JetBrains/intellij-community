@@ -17,10 +17,14 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.*;
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -36,6 +40,14 @@ import java.util.List;
 
 public class JavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
+
+  public interface ParserWrapper {
+    void parse(PsiBuilder builder);
+  }
+
+  public interface MarkingParserWrapper {
+    @Nullable PsiBuilder.Marker parse(PsiBuilder builder);
+  }
 
   public static final WhitespacesAndCommentsProcessor GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
     public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
@@ -128,6 +140,41 @@ public class JavaParserUtil {
     final LanguageLevel level = builder.getUserData(LANG_LEVEL_KEY);
     assert level != null : builder;
     return level;
+  }
+
+  @NotNull
+  public static PsiBuilder createBuilder(final ASTNode chameleon) {
+    final PsiElement psi = chameleon.getPsi();
+    assert psi != null : chameleon;
+    final Project project = psi.getProject();
+
+    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(StdLanguages.JAVA);
+    final PsiBuilder builder = factory.createBuilder(parserDefinition.createLexer(project), StdLanguages.JAVA, chameleon.getChars());
+
+    final LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+    setLanguageLevel(builder, level);
+
+    return builder;
+  }
+
+  @NotNull
+  public static ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper) {
+    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+    final LanguageLevel level = LanguageLevel.HIGHEST;
+    final PsiBuilder builder = factory.createBuilder(JavaParserDefinition.createLexer(level), StdLanguages.JAVA, chameleon.getChars());
+    setLanguageLevel(builder, level);
+
+    final PsiBuilder.Marker root = builder.mark();
+    wrapper.parse(builder);
+    if (!builder.eof()) {
+      final PsiBuilder.Marker extras = builder.mark();
+      while (!builder.eof()) builder.advanceLexer();
+      extras.error(JavaErrorMessages.message("unexpected.tokens"));
+    }
+    root.done(chameleon.getElementType());
+
+    return builder.getTreeBuilt().getFirstChildNode();
   }
 
   public static void done(final PsiBuilder.Marker marker, final IElementType type) {
