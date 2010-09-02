@@ -188,7 +188,7 @@
                         serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"/>
     <errorOptionsProvider implementation="com.intellij.profile.codeInspection.ui.JavaErrorOptionsProvider"/>
     <autoImportOptionsProvider instance="com.intellij.application.options.editor.JavaAutoImportOptions"/>
-    <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider"/>
+    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider"/>
 
 
 

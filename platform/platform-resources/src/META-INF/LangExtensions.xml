@@ -431,7 +431,7 @@
   <codeInsight.linkHandler prefix="#inspection/" handlerClass="com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler"/>
   <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
 
-  <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
+  <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
   <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>

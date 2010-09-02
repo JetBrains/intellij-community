@@ -25,7 +25,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.BeanConfigurable;
 
 public class JavaCodeFoldingOptionsProvider extends BeanConfigurable<JavaCodeFoldingSettings> implements CodeFoldingOptionsProvider {
-  protected JavaCodeFoldingOptionsProvider() {
+  public JavaCodeFoldingOptionsProvider() {
     super(JavaCodeFoldingSettings.getInstance());
     checkBox("COLLAPSE_ACCESSORS", ApplicationBundle.message("checkbox.collapse.simple.property.accessors"));
     checkBox("COLLAPSE_INNER_CLASSES", ApplicationBundle.message("checkbox.collapse.inner.classes"));

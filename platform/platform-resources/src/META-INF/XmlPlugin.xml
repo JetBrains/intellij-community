@@ -276,7 +276,7 @@
 
     <inspectionToolProvider implementation="com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider"/>
 
-    <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider"/>
+    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider"/>
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.XMLColorsPage"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.HTMLColorsPage"/>

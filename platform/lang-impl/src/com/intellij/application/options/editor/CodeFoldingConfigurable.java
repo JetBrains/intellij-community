@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nls;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -102,7 +101,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
   }
 
   protected List<CodeFoldingOptionsProvider> createConfigurables() {
-    return Arrays.asList(Extensions.getExtensions(CodeFoldingOptionsProvider.EP_NAME));
+    return AbstractConfigurableEP.createConfigurables(CodeFoldingOptionsProviderEP.EP_NAME);
   }
 
   public String getId() {

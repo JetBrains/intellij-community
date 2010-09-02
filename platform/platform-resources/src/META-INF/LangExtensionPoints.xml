@@ -1,6 +1,6 @@
 <extensionPoints>
   <extensionPoint name="errorOptionsProvider" interface="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
-  <extensionPoint name="codeFoldingOptionsProvider" interface="com.intellij.application.options.editor.CodeFoldingOptionsProvider"/>
+  <extensionPoint name="codeFoldingOptionsProvider" beanClass="com.intellij.application.options.editor.CodeFoldingOptionsProviderEP"/>
   <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP"/>
   <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
