@@ -334,9 +334,10 @@ public abstract class ChooseByNameBase {
     }
 
     if (myToolArea != null) {
-      hBox.add(Box.createHorizontalStrut(4));
+      hBox.add(Box.createHorizontalStrut(5));
       hBox.add(myToolArea);
     }
+    hBox.add(Box.createHorizontalStrut(5));
     myTextFieldPanel.add(caption2Tools);
 
     myHistory = new ArrayList<Pair<String, Integer>>();
