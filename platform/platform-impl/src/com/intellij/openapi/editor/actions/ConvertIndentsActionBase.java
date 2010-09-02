@@ -35,11 +35,11 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
     setupHandler(new Handler());
   }
 
-  protected static int convertIndentsToTabs(Document document, int tabSize, TextRange textRange) {
+  public static int convertIndentsToTabs(Document document, int tabSize, TextRange textRange) {
     return processIndents(document, tabSize, textRange, tabIndentBuilder);
   }
 
-  protected static int convertIndentsToSpaces(Document document, int tabSize, TextRange textRange) {
+  public static int convertIndentsToSpaces(Document document, int tabSize, TextRange textRange) {
     return processIndents(document, tabSize, textRange, spaceIndentBuilder);
   }
 
