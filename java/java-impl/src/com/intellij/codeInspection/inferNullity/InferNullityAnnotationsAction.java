@@ -75,7 +75,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     if (indicator != null) {
       indicator.setText(INFER_NULLITY_ANNOTATIONS);
     }
-    if (progressManager.runProcessWithProgressSynchronously(new Runnable() {
+    if (!progressManager.runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         scope.accept(new PsiElementVisitor() {
