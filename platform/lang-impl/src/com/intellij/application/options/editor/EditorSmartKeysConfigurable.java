@@ -17,15 +17,15 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.Commenter;
-import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -33,17 +33,15 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements EditorOptionsProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.editor.EditorSmartKeysConfigurable");
-
-  public static final ExtensionPointName<UnnamedConfigurable> EP_NAME = ExtensionPointName.create("com.intellij.editorSmartKeysConfigurable");
+  private static final ExtensionPointName<EditorSmartKeysConfigurableEP> EP_NAME = ExtensionPointName.create("com.intellij.editorSmartKeysConfigurable");
 
   private JCheckBox myCbSmartHome;
   private JCheckBox myCbSmartEnd;
@@ -86,7 +84,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   }
 
   protected List<UnnamedConfigurable> createConfigurables() {
-    return Arrays.asList(Extensions.getExtensions(EP_NAME));
+    return AbstractConfigurableEP.createConfigurables(EP_NAME);
   }
 
   @Nls

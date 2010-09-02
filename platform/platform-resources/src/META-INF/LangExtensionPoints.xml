@@ -384,7 +384,7 @@
   <extensionPoint name="typeHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP"/>
-  <extensionPoint name="editorSmartKeysConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
+  <extensionPoint name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP"/>
   <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 
   <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
