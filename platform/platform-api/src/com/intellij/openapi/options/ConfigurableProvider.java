@@ -18,6 +18,10 @@ package com.intellij.openapi.options;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Register implementation of this class as {@code projectConfigurable} or {@code applicationConfigurable} extension to provide items for
+ * "Project Settings" and "IDE Settings" groups correspondingly in the "Settings" dialog
+ *
+ * @see Configurable
  * @author nik
  */
 public abstract class ConfigurableProvider {

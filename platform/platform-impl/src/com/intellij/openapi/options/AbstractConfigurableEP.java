@@ -34,7 +34,7 @@ public class AbstractConfigurableEP<T extends UnnamedConfigurable> extends Abstr
   public String instanceClass;
 
   /**
-   * @deprecated
+   * @deprecated use '{@link #instanceClass instance}' attribute instead
    */
   @Attribute("implementation")
   public String implementationClass;
