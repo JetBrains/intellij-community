@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.actions.ConvertIndentsFix;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,8 @@ public class PyInconsistentIndentationInspection extends PyInspection {
       int endOffset = startOffset + problemLength;
       myProblems.add(myManager.createProblemDescriptor(elt, new TextRange(startOffset, endOffset),
                                                        descriptionTemplate,
-                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly,
+                                                       new ConvertIndentsFix(false), new ConvertIndentsFix(true)));
     }
   }
 }
