@@ -383,7 +383,7 @@
   <extensionPoint name="methodHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="typeHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
-  <extensionPoint name="editorAppearanceConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
+  <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP"/>
   <extensionPoint name="editorSmartKeysConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
   <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 

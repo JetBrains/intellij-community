@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,11 @@
  */
 package com.intellij.application.options.editor;
 
-import com.intellij.openapi.options.BeanConfigurable;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.xml.XmlBundle;
 
 /**
- * @author yole
+ * @author nik
  */
-public class WebEditorAppearanceConfigurable extends BeanConfigurable<WebEditorOptions> implements UnnamedConfigurable {
-  public WebEditorAppearanceConfigurable() {
-    super(WebEditorOptions.getInstance());
-    checkBox("breadcrumbsEnabled", XmlBundle.message("xml.editor.options.breadcrumbs.title"));
-    checkBox("showCssColorPreviewInGutter", "Show CSS Color preview icon in gutter");
-  }
+public class EditorAppearanceConfigurableEP extends AbstractConfigurableEP<UnnamedConfigurable> {
 }

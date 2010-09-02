@@ -73,7 +73,7 @@
 
     <breadcrumbsInfoProvider implementation="com.intellij.xml.breadcrumbs.XmlLanguageBreadcrumbsInfoProvider"/>
     <editorSmartKeysConfigurable implementation="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
-    <editorAppearanceConfigurable implementation="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"/>
+    <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"/>
 
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
