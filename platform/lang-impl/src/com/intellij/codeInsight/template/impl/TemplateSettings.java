@@ -458,11 +458,15 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
           readDefTemplate(provider, defTemplate, true);
         }
-        String[] hidden = provider.getHiddenLiveTemplateFiles();
-        if (hidden != null) {
-          for (String s : hidden) {
-            readDefTemplate(provider, s, false);
+        try {
+          String[] hidden = provider.getHiddenLiveTemplateFiles();
+          if (hidden != null) {
+            for (String s : hidden) {
+              readDefTemplate(provider, s, false);
+            }
           }
+        }
+        catch (AbstractMethodError ignore) {
         }
       }
     } catch (Exception e) {
