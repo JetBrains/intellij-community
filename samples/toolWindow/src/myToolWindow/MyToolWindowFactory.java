@@ -1,4 +1,4 @@
-package com.intellij.openapi.toolWindow;
+package myToolWindow;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -56,7 +56,7 @@ public class MyToolWindowFactory implements ToolWindowFactory {
         Calendar instance = Calendar.getInstance();
         currentDate.setText(String.valueOf(instance.get(Calendar.DAY_OF_MONTH)) + "/"
                 + String.valueOf(instance.get(Calendar.MONTH) + 1) + "/" + String.valueOf(instance.get(Calendar.YEAR)));
-        currentDate.setIcon(new ImageIcon(getClass().getResource("/com/intellij/openapi/toolWindow/Calendar-icon.png")));
+        currentDate.setIcon(new ImageIcon(getClass().getResource("/myToolWindow/Calendar-icon.png")));
         int min = instance.get(Calendar.MINUTE);
         String strMin;
         if (min < 10) {
@@ -65,13 +65,13 @@ public class MyToolWindowFactory implements ToolWindowFactory {
             strMin = String.valueOf(min);
         }
         currentTime.setText(instance.get(Calendar.HOUR_OF_DAY) + ":" + strMin);
-        currentTime.setIcon(new ImageIcon(getClass().getResource("/com/intellij/openapi/toolWindow/Time-icon.png")));
+        currentTime.setIcon(new ImageIcon(getClass().getResource("/myToolWindow/Time-icon.png")));
         // Get time zone
         long gmt_Offset = instance.get(Calendar.ZONE_OFFSET); // offset from GMT in milliseconds
         String str_gmt_Offset = String.valueOf(gmt_Offset / 3600000);
         str_gmt_Offset = (gmt_Offset > 0) ? "GMT + " + str_gmt_Offset : "GMT - " + str_gmt_Offset;
         timeZone.setText(str_gmt_Offset);
-        timeZone.setIcon(new ImageIcon(getClass().getResource("/com/intellij/openapi/toolWindow/Time-zone-icon.png")));
+        timeZone.setIcon(new ImageIcon(getClass().getResource("/myToolWindow/Time-zone-icon.png")));
 
 
     }
