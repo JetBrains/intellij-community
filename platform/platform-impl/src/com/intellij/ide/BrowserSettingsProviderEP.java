@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 
 /**
- * @author spleaner
+ * @author nik
  */
-public abstract class BrowserSettingsProvider implements UnnamedConfigurable {
-  public void disposeUIResources() {
-  }
+public class BrowserSettingsProviderEP extends AbstractConfigurableEP<BrowserSettingsProvider> {
+  public static ExtensionPointName<BrowserSettingsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.browserSettingsProvider");
 }
