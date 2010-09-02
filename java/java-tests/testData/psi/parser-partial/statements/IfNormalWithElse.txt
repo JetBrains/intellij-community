@@ -1,49 +1,44 @@
 PsiJavaFile:IfNormalWithElse.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiIfStatement
+    PsiKeyword:if('if')
     PsiWhiteSpace(' ')
-    PsiIfStatement
-      PsiKeyword:if('if')
-      PsiWhiteSpace(' ')
-      PsiJavaToken:LPARENTH('(')
-      PsiReferenceExpression:a
-        PsiReferenceParameterList
-          <empty list>
-        PsiIdentifier:a('a')
-      PsiJavaToken:RPARENTH(')')
-      PsiBlockStatement
-        PsiCodeBlock
-          PsiJavaToken:LBRACE('{')
-          PsiWhiteSpace(' ')
-          PsiExpressionStatement
-            PsiMethodCallExpression:f1()
-              PsiReferenceExpression:f1
-                PsiReferenceParameterList
-                  <empty list>
-                PsiIdentifier:f1('f1')
-              PsiExpressionList
-                PsiJavaToken:LPARENTH('(')
-                PsiJavaToken:RPARENTH(')')
-            PsiJavaToken:SEMICOLON(';')
-          PsiWhiteSpace(' ')
-          PsiJavaToken:RBRACE('}')
-      PsiWhiteSpace(' ')
-      PsiKeyword:else('else')
-      PsiBlockStatement
-        PsiCodeBlock
-          PsiJavaToken:LBRACE('{')
-          PsiWhiteSpace(' ')
-          PsiExpressionStatement
-            PsiMethodCallExpression:f2()
-              PsiReferenceExpression:f2
-                PsiReferenceParameterList
-                  <empty list>
-                PsiIdentifier:f2('f2')
-              PsiExpressionList
-                PsiJavaToken:LPARENTH('(')
-                PsiJavaToken:RPARENTH(')')
-            PsiJavaToken:SEMICOLON(';')
-          PsiWhiteSpace(' ')
-          PsiJavaToken:RBRACE('}')
+    PsiJavaToken:LPARENTH('(')
+    PsiReferenceExpression:a
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:a('a')
+    PsiJavaToken:RPARENTH(')')
+    PsiBlockStatement
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace(' ')
+        PsiExpressionStatement
+          PsiMethodCallExpression:f1()
+            PsiReferenceExpression:f1
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:f1('f1')
+            PsiExpressionList
+              PsiJavaToken:LPARENTH('(')
+              PsiJavaToken:RPARENTH(')')
+          PsiJavaToken:SEMICOLON(';')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:RBRACE('}')
     PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+    PsiKeyword:else('else')
+    PsiBlockStatement
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace(' ')
+        PsiExpressionStatement
+          PsiMethodCallExpression:f2()
+            PsiReferenceExpression:f2
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:f2('f2')
+            PsiExpressionList
+              PsiJavaToken:LPARENTH('(')
+              PsiJavaToken:RPARENTH(')')
+          PsiJavaToken:SEMICOLON(';')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:RBRACE('}')

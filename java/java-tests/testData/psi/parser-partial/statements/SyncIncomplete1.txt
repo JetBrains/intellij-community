@@ -1,11 +1,6 @@
 PsiJavaFile:SyncIncomplete1.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace(' ')
-    PsiSynchronizedStatement
-      PsiKeyword:synchronized('synchronized')
-      PsiJavaToken:LPARENTH('(')
-      PsiErrorElement:Expression expected
-        <empty list>
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+  PsiSynchronizedStatement
+    PsiKeyword:synchronized('synchronized')
+    PsiJavaToken:LPARENTH('(')
+    PsiErrorElement:Expression expected
+      <empty list>

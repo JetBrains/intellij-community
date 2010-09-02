@@ -1,12 +1,7 @@
 PsiJavaFile:ReturnWithResult.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiReturnStatement
+    PsiKeyword:return('return')
     PsiWhiteSpace(' ')
-    PsiReturnStatement
-      PsiKeyword:return('return')
-      PsiWhiteSpace(' ')
-      PsiLiteralExpression:10
-        PsiJavaToken:INTEGER_LITERAL('10')
-      PsiJavaToken:SEMICOLON(';')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+    PsiLiteralExpression:10
+      PsiJavaToken:INTEGER_LITERAL('10')
+    PsiJavaToken:SEMICOLON(';')
