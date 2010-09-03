@@ -954,6 +954,14 @@ public class TemplateState implements Disposable {
       for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
         optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
       }
+      // for Python, we need to indent the template even if reformatting is enabled, because otherwise indents would be broken
+      // and reformat wouldn't be able to fix them
+      if (myTemplate.isToIndent()) {
+        if (!myTemplateIndented) {
+          smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+          myTemplateIndented = true;
+        }
+      }
       if (myTemplate.isToReformat()) {
         try {
           int endSegmentNumber = myTemplate.getEndSegmentNumber();
@@ -978,12 +986,6 @@ public class TemplateState implements Disposable {
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
-        }
-      }
-      else if (myTemplate.isToIndent()) {
-        if (!myTemplateIndented) {
-          smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
-          myTemplateIndented = true;
         }
       }
     }
