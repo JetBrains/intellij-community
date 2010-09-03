@@ -9,6 +9,4 @@ class A(object):
     "Sets X"
     self.__x = v
 
-a = A()
-a.<the_ref>x = 1
-
+A().<the_ref>x = 1
