@@ -68,7 +68,7 @@ public class CustomTemplateCallback {
 
   @NotNull
   public PsiElement getContext() {
-    return getContext(myFile, myOffset > 0 ? myOffset - 1 : myOffset);
+    return getContext(myFile, myOffset);
   }
 
   public void fixInitialState() {
