@@ -2,27 +2,25 @@ package com.jetbrains.python.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
-
-import java.util.Stack;
+import gnu.trove.TIntStack;
 
 /**
  * @author yole
  */
 public class PythonIndentingLexer extends PythonFutureAwareLexer {
-  private final Stack<Integer> _indentStack = new Stack<Integer>();
-  private int _braceLevel;
-  private boolean _lineHasSignificantTokens;
+  private final TIntStack myIndentStack = new TIntStack();
+  private int myBraceLevel;
+  private boolean myLineHasSignificantTokens;
 
   private static final boolean DUMP_TOKENS = false;
 
-  // used in Selena
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     checkStartState(startOffset, initialState);
     super.start(buffer, startOffset, endOffset, initialState);
     setStartState();
   }
 
-  private void checkStartState(int startOffset, int initialState) {
+  private static void checkStartState(int startOffset, int initialState) {
     if (DUMP_TOKENS) {
       System.out.println("\n--- LEXER START---");
     }
@@ -32,27 +30,27 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
   }
 
   private void setStartState() {
-    _indentStack.clear();
-    _indentStack.push(0);
-    _braceLevel = 0;
+    myIndentStack.clear();
+    myIndentStack.push(0);
+    myBraceLevel = 0;
     adjustBraceLevel();
-    _lineHasSignificantTokens = false;
+    myLineHasSignificantTokens = false;
     checkSignificantTokens();
   }
 
   private void adjustBraceLevel() {
     if (PyTokenTypes.OPEN_BRACES.contains(getTokenType())) {
-      _braceLevel++;
+      myBraceLevel++;
     }
     else if (PyTokenTypes.CLOSE_BRACES.contains(getTokenType())) {
-      _braceLevel--;
+      myBraceLevel--;
     }
   }
 
   private void checkSignificantTokens() {
     IElementType tokenType = getBaseTokenType();
     if (!PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(tokenType) && tokenType != PyTokenTypes.END_OF_LINE_COMMENT) {
-      _lineHasSignificantTokens = true;
+      myLineHasSignificantTokens = true;
     }
   }
 
@@ -70,7 +68,7 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
       if (getTokenType() != null) {
         System.out.print(getTokenStart() + "-" + getTokenEnd() + ":" + getTokenType());
         if (getTokenType() == PyTokenTypes.LINE_BREAK) {
-          System.out.println("{" + _braceLevel + "}");
+          System.out.println("{" + myBraceLevel + "}");
         }
         else {
           System.out.print(" ");
@@ -127,11 +125,11 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
   }
 
   private void processLineBreak(int startPos) {
-    if (_braceLevel == 0) {
-      if (_lineHasSignificantTokens) {
+    if (myBraceLevel == 0) {
+      if (myLineHasSignificantTokens) {
         pushToken(PyTokenTypes.STATEMENT_BREAK, startPos, startPos);
       }
-      _lineHasSignificantTokens = false;
+      myLineHasSignificantTokens = false;
       advanceBase();
       processIndent(startPos);
     }
@@ -160,7 +158,7 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
   }
 
   private void processIndent(int whiteSpaceStart) {
-    int lastIndent = _indentStack.peek();
+    int lastIndent = myIndentStack.peek();
     int indent = getNextLineIndent();
     // don't generate indent/dedent tokens if a line contains only end-of-line comment and whitespace
     if (getBaseTokenType() == PyTokenTypes.END_OF_LINE_COMMENT) {
@@ -168,14 +166,14 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
     }
     int whiteSpaceEnd = (getBaseTokenType() == null) ? super.getBufferEnd() : getBaseTokenStart();
     if (indent > lastIndent) {
-      _indentStack.push(indent);
+      myIndentStack.push(indent);
       myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, whiteSpaceStart, whiteSpaceEnd));
       myTokenQueue.add(new PendingToken(PyTokenTypes.INDENT, whiteSpaceEnd, whiteSpaceEnd));
     }
     else if (indent < lastIndent) {
       while (indent < lastIndent) {
-        _indentStack.pop();
-        lastIndent = _indentStack.peek();
+        myIndentStack.pop();
+        lastIndent = myIndentStack.peek();
         if (indent > lastIndent) {
           myTokenQueue.add(new PendingToken(PyTokenTypes.INCONSISTENT_DEDENT, whiteSpaceStart, whiteSpaceStart));
         }

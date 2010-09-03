@@ -5,8 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
-import java.io.IOException;
-
 /**
  * @author yole
  */
@@ -157,6 +155,16 @@ public class PyIndentTest extends PyLightFixtureTestCase {
 
   public void testIndentAfterComment() {   // PY-641
     doTest("def foo():\n    #some_call()<caret>\n    another_call()", "def foo():\n    #some_call()\n    <caret>\n    another_call()");
+  }
+
+  public void testUnindentAfterReturn() {  // PY-289
+    doTest("def foo():\n" +
+           "    if True:\n" +
+           "        return<caret>",
+           "def foo():\n" +
+           "    if True:\n" +
+           "        return\n" +
+           "    <caret>");
   }
 
   /*

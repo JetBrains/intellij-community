@@ -89,6 +89,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyUnusedLocalVariableInspection() {
     PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
     inspection.ignoreTupleUnpacking = false;
+    inspection.ignoreLambdaParameters = false;
     doTest(getTestName(false), inspection);
   }
 
@@ -183,9 +184,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyFromFutureImportInspection() {
-    myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
-    myFixture.enableInspections(PyFromFutureImportInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+    doHighlightingTest(PyFromFutureImportInspection.class);
   }
 
   public void testPyFromFutureImportInspectionDocString() {
@@ -244,5 +243,9 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
 
   public void testPyPropertyDefinitionInspection26() {
     doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON26);
+  }
+
+  public void testInconsistentIndentation() {
+    doHighlightingTest(PyInconsistentIndentationInspection.class);
   }
 }

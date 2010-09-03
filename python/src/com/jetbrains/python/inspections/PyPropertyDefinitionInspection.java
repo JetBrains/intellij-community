@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -44,58 +45,47 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     return PyBundle.message("INSP.NAME.property.definition");
   }
 
-  private ThreadLocal<LanguageLevel> myLevel = new ThreadLocal<LanguageLevel>();
-  private ThreadLocal<List<PyClass>> myStringClasses = new ThreadLocal<List<PyClass>>();
-  private ThreadLocal<PyParameterList> myOneParamList = new ThreadLocal<PyParameterList>(); // arglist with one arg, 'self'
-  private ThreadLocal<PyParameterList> myTwoParamList = new ThreadLocal<PyParameterList>(); // arglist with two args, 'self' and 'value'
-
-  @Override
-  public void inspectionStarted(LocalInspectionToolSession session) {
-    super.inspectionStarted(session);
-    // save us continuous checks for level, module, stc
-    final PsiFile psifile = session.getFile();
-    LanguageLevel level = null;
-    if (psifile != null) {
-      VirtualFile vfile = psifile.getVirtualFile();
-      if (vfile != null) level = LanguageLevel.forFile(vfile);
-    }
-    if (level == null) level = LanguageLevel.getDefault();
-    myLevel.set(level);
-    // string classes
-    final List<PyClass> string_classes = new ArrayList<PyClass>(2);
-    final PyBuiltinCache builtins = PyBuiltinCache.getInstance(psifile);
-    PyClass cls = builtins.getClass("str");
-    if (cls != null) string_classes.add(cls);
-    cls = builtins.getClass("unicode");
-    if (cls != null) string_classes.add(cls);
-    myStringClasses.set(string_classes);
-    // reference signatures
-    PyClass object_class = builtins.getClass("object");
-    if (object_class != null) {
-      final PyFunction method_repr = object_class.findMethodByName("__repr__", false);
-      if (method_repr != null) myOneParamList.set(method_repr.getParameterList());
-      final PyFunction method_delattr = object_class.findMethodByName("__delattr__", false);
-      if (method_delattr != null) myTwoParamList.set(method_delattr.getParameterList());
-    }
-  }
-
-  private static final List<String> SUFFIXES = new ArrayList<String>(2);
-  static {
-    SUFFIXES.add("setter");
-    SUFFIXES.add("deleter");
-  }
-
+  private static final ImmutableList<String> SUFFIXES = ImmutableList.of("setter", "deleter");
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
+    return new Visitor(holder, session.getFile());
   }
 
-  public class Visitor extends PyInspectionVisitor {
+  public static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(final ProblemsHolder holder) {
+    private LanguageLevel myLevel;
+    private List<PyClass> myStringClasses;
+    private PyParameterList myOneParamList;
+    private PyParameterList myTwoParamList; // arglist with two args, 'self' and 'value'
+
+    public Visitor(final ProblemsHolder holder, PsiFile psifile) {
       super(holder);
+      // save us continuous checks for level, module, stc
+      LanguageLevel level = null;
+      if (psifile != null) {
+        VirtualFile vfile = psifile.getVirtualFile();
+        if (vfile != null) level = LanguageLevel.forFile(vfile);
+      }
+      if (level == null) level = LanguageLevel.getDefault();
+      myLevel = level;
+      // string classes
+      final List<PyClass> string_classes = new ArrayList<PyClass>(2);
+      final PyBuiltinCache builtins = PyBuiltinCache.getInstance(psifile);
+      PyClass cls = builtins.getClass("str");
+      if (cls != null) string_classes.add(cls);
+      cls = builtins.getClass("unicode");
+      if (cls != null) string_classes.add(cls);
+      myStringClasses = string_classes;
+      // reference signatures
+      PyClass object_class = builtins.getClass("object");
+      if (object_class != null) {
+        final PyFunction method_repr = object_class.findMethodByName("__repr__", false);
+        if (method_repr != null) myOneParamList = method_repr.getParameterList();
+        final PyFunction method_delattr = object_class.findMethodByName("__delattr__", false);
+        if (method_delattr != null) myTwoParamList = method_delattr.getParameterList();
+      }
     }
 
 
@@ -144,7 +134,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
               else if ("fdel".equals(param_name)) checkDeleter(callable, argument);
               else if ("doc".equals(param_name)) {
                 PyType type = argument.getType(TypeEvalContext.fast());
-                if (! (type instanceof PyClassType && myStringClasses.get().contains(((PyClassType)type).getPyClass()))) {
+                if (! (type instanceof PyClassType && myStringClasses.contains(((PyClassType)type).getPyClass()))) {
                   registerProblem(argument, PyBundle.message("INSP.doc.param.should.be.str"));
                 }
               }
@@ -171,7 +161,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     @Override
     public void visitPyFunction(PyFunction node) {
       super.visitPyFunction(node);
-      if (myLevel.get().isAtLeast(LanguageLevel.PYTHON26)) {
+      if (myLevel.isAtLeast(LanguageLevel.PYTHON26)) {
         // check @foo.setter and @foo.deleter
         PyClass cls = node.getContainingClass();
         if (cls != null) {
@@ -204,7 +194,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     }
 
     @Nullable
-    private PsiElement getFunctionMarkingElement(PyFunction node) {
+    private static PsiElement getFunctionMarkingElement(PyFunction node) {
       if (node == null) return null;
       final ASTNode name_node = node.getNameNode();
       PsiElement markable = node;
@@ -224,7 +214,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       if (callable != null) {
         // signature: at least two params, more optionals ok; first arg 'self'
         final PyParameterList param_list = callable.getParameterList();
-        final PyParameterList two_parameters_list = myTwoParamList.get();
+        final PyParameterList two_parameters_list = myTwoParamList;
         if (two_parameters_list != null && !param_list.isCompatibleTo(two_parameters_list)) {
           registerProblem(being_checked, PyBundle.message("INSP.setter.signature.advice"));
         }
@@ -243,7 +233,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
     private void checkOneParameter(Callable callable, PsiElement being_checked, boolean is_getter) {
       final PyParameterList param_list = callable.getParameterList();
-      final PyParameterList one_parameter_list = myOneParamList.get();
+      final PyParameterList one_parameter_list = myOneParamList;
       if (one_parameter_list != null && ! param_list.isCompatibleTo(one_parameter_list)) {
         if (is_getter) registerProblem(being_checked, PyBundle.message("INSP.getter.signature.advice"));
         else registerProblem(being_checked, PyBundle.message("INSP.deleter.signature.advice"));

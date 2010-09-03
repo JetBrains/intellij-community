@@ -1,6 +1,5 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElementVisitor;
@@ -15,16 +14,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 /**
  * Checks that properties are accessed correctly.
  * User: dcheryasov
  * Date: Jun 29, 2010 5:55:52 AM
  */
 public class PyPropertyAccessInspection extends PyInspection {
-  private ThreadLocal<HashMap<Pair<PyClass, String>, Property>> myPropertyCache = new ThreadLocal<HashMap<Pair<PyClass, String>, Property>>();
-
   @Nls
   @NotNull
   @Override
@@ -37,25 +32,14 @@ public class PyPropertyAccessInspection extends PyInspection {
     return true;
   }
 
-  @Override
-  public void inspectionStarted(LocalInspectionToolSession session) {
-    super.inspectionStarted(session);
-    myPropertyCache.set(new HashMap<Pair<PyClass, String>, Property>());
-  }
-
-  @Override
-  public void inspectionFinished(LocalInspectionToolSession session) {
-    myPropertyCache.set(null); // help gc
-    super.inspectionFinished(session);
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
   }
 
-  public class Visitor extends PyInspectionVisitor {
+  public static class Visitor extends PyInspectionVisitor {
+    private final HashMap<Pair<PyClass, String>, Property> myPropertyCache = new HashMap<Pair<PyClass, String>, Property>();
 
     public Visitor(@Nullable final ProblemsHolder holder) {
       super(holder);
@@ -81,12 +65,11 @@ public class PyPropertyAccessInspection extends PyInspection {
           PyClass cls = ((PyClassType)type).getPyClass();
           String name = node.getName();
           if (cls != null && name != null) {
-            Map<Pair<PyClass, String>, Property> cache = PyPropertyAccessInspection.this.myPropertyCache.get();
             final Pair<PyClass, String> key = new Pair<PyClass, String>(cls, name);
             Property property;
-            if (cache.containsKey(key)) property = cache.get(key);
+            if (myPropertyCache.containsKey(key)) property = myPropertyCache.get(key);
             else property = cls.findProperty(name);
-            cache.put(key, property); // we store nulls, too, to know that a property does not exist
+            myPropertyCache.put(key, property); // we store nulls, too, to know that a property does not exist
             if (property != null) {
               AccessDirection dir = AccessDirection.of(node);
               checkAccessor(node, name, dir, property);
