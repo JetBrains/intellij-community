@@ -15,8 +15,11 @@
  */
 package com.intellij.codeInsight.template.zencoding;
 
+import com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter;
+import com.intellij.codeInsight.template.zencoding.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.nodes.*;
 import com.intellij.codeInsight.template.zencoding.tokens.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -45,11 +48,29 @@ public class ZenCodingParser {
     ZenCodingToken filter = nextToken();
     ZenCodingNode result = add;
     while (filter instanceof FilterToken) {
-      result = new FilterNode(result, ((FilterToken)filter).getSuffix());
+      String suffix = ((FilterToken)filter).getSuffix();
+      if (!checkFilterSuffix(suffix)) {
+        return null;
+      }
+      result = new FilterNode(result, suffix);
       myIndex++;
       filter = nextToken();
     }
     return result;
+  }
+
+  public static boolean checkFilterSuffix(@NotNull String suffix) {
+    for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
+      if (suffix.equals(generator.getSuffix())) {
+        return true;
+      }
+    }
+    for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
+      if (suffix.equals(filter.getSuffix())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
