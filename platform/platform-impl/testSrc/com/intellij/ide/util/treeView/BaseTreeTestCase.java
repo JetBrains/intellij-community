@@ -34,6 +34,8 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   private boolean myYieldingUiBuild;
   private boolean myBgStructureBuilding;
+  protected Set<Object> myForegroundLoadingNodes = new HashSet<Object>();
+
   private boolean myPassthroughMode;
 
   final Set<StructureElement> myAutoExpand = new HashSet<StructureElement>();
@@ -161,7 +163,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
     @Override
     protected final boolean updateNodeDescriptor(NodeDescriptor descriptor) {
-      checkThread();
+      checkThread(descriptor.getElement());
 
       int delay = getNodeDescriptorUpdateDelay();
       if (delay > 0) {
@@ -280,7 +282,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
     @Override
     public boolean isToBuildChildrenInBackground(Object element) {
-      return myBgStructureBuilding;
+      return myBgStructureBuilding && !myForegroundLoadingNodes.contains(element);
     }
 
     @Override
@@ -295,7 +297,6 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     @NotNull
     @Override
     public final NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-      checkThread();
       return doCreateDescriptor(element, parentDescriptor);
     }
 
@@ -309,7 +310,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
     public final Object[] _getChildElements(Object element, boolean checkThread) {
       if (checkThread) {
-        checkThread();
+        checkThread(element);
       }
 
       return doGetChildElements(element);
@@ -328,6 +329,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     mySmartExpand = false;
     myAutoExpand.clear();
     myAlwaysShowPlus.clear();
+    myForegroundLoadingNodes.clear();
     myTestThread = Thread.currentThread();
   }
 
@@ -353,6 +355,10 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void assertTree(final String expected) throws Exception {
     waitBuilderToCome();
+    assertTreeNow(expected);
+  }
+
+  void assertTreeNow(String expected) {
     Assert.assertEquals(expected, PlatformTestUtil.print(myTree, true));
   }
 
@@ -430,12 +436,16 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     return 0;
   }
 
-  private void checkThread() {
-    String message = "Wrong thread used for query structure, thread=" + Thread.currentThread();
+  private void checkThread(@Nullable Object element) {
+    String message = "Wrong thread used for query structure, thread=" + Thread.currentThread() + " element=" + element;
 
     if (!myPassthroughMode) {
       if (isBgStructureBuilding()) {
-        Assert.assertFalse(message, EventQueue.isDispatchThread());
+        if (myForegroundLoadingNodes.contains(element)) {
+          Assert.assertTrue(message, EventQueue.isDispatchThread());
+        } else {
+          Assert.assertFalse(message, EventQueue.isDispatchThread());
+        }
       } else {
         Assert.assertTrue(message, EventQueue.isDispatchThread());
       }
@@ -461,7 +471,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   protected final void assertEdt() {
     if (myPassthroughMode) {
-      checkThread();
+      checkThread(null);
     } else if (!EventQueue.isDispatchThread()) {
       myCancelRequest = new AssertionFailedError("Must be event dispatch thread");
       throw new RuntimeException(myCancelRequest);

@@ -86,7 +86,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public boolean hasNodesToUpdate() {
-    return myNodeQueue.size() > 0;
+    return myNodeQueue.size() > 0 || !myUpdateQueue.isEmpty();
   }
 
   public void dispose() {
