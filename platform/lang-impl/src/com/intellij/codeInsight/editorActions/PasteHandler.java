@@ -31,7 +31,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -84,16 +83,6 @@ public class PasteHandler extends EditorActionHandler {
       return;
     }
 
-    final FileType fileType = file.getFileType();
-    /*
-    if (fileType == FileType.HTML || fileType == FileType.PLAIN_TEXT) {
-      if (myOriginalHandler != null){
-        myOriginalHandler.execute(editor, dataContext);
-      }
-      return;
-    }
-    */
-
     document.startGuardedBlockChecking();
     try {
       for(PasteProvider provider: Extensions.getExtensions(EP_NAME)) {
@@ -102,7 +91,7 @@ public class PasteHandler extends EditorActionHandler {
           return;
         }
       }
-      doPaste(editor, project, file, fileType, document);
+      doPaste(editor, project, file, document);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
@@ -113,10 +102,9 @@ public class PasteHandler extends EditorActionHandler {
   }
 
   private static void doPaste(final Editor editor,
-                       final Project project,
-                       final PsiFile file,
-                       final FileType fileType,
-                       final Document document) {
+                              final Project project,
+                              final PsiFile file,
+                              final Document document) {
     Transferable content = CopyPasteManager.getInstance().getContents();
     if (content != null) {
       String text = null;
@@ -160,7 +148,7 @@ public class PasteHandler extends EditorActionHandler {
       int indentOptions = text.equals(newText) ? settings.REFORMAT_ON_PASTE : CodeInsightSettings.REFORMAT_BLOCK;
       text = newText;
 
-      if (fileType != StdFileTypes.XML && fileType != StdFileTypes.JAVA && indentOptions != CodeInsightSettings.NO_REFORMAT) {
+      if (LanguageFormatting.INSTANCE.forContext(file) == null && indentOptions != CodeInsightSettings.NO_REFORMAT) {
         indentOptions = CodeInsightSettings.INDENT_BLOCK;
       }
 
@@ -252,7 +240,7 @@ public class PasteHandler extends EditorActionHandler {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (LanguageFormatting.INSTANCE.forContext(file) != null) {
-        adjustBlockIndent(project, document, file, startOffset, endOffset);
+        indentBlockWithFormatter(project, document, startOffset, endOffset, file);
       }
       else {
         indentPlainTextBlock(document, startOffset, endOffset, originalCaretCol);
@@ -289,11 +277,6 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private static void adjustBlockIndent(Project project, Document document, PsiFile file, int startOffset, int endOffset) {
-    final FileType fileType = file.getFileType();
-    indentJavaBlock(project, document, startOffset, endOffset, file, fileType);
-  }
-
   private static void indentPlainTextBlock(Document document, int startOffset, int endOffset, int indentLevel) {
     CharSequence chars = document.getCharsSequence();
     int spaceEnd = CharArrayUtil.shiftForward(chars, startOffset, " \t");
@@ -314,11 +297,11 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private static void indentJavaBlock(Project project, Document document,
-                                      int startOffset,
-                                      int endOffset,
-                                      PsiFile file,
-                                      final FileType fileType) {
+  private static void indentBlockWithFormatter(Project project, Document document,
+                                               int startOffset,
+                                               int endOffset,
+                                               PsiFile file) {
+    final FileType fileType = file.getFileType();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     CharSequence chars = document.getCharsSequence();
     int spaceStart = CharArrayUtil.shiftBackwardUntil(chars, startOffset - 1, "\n\r") + 1;
