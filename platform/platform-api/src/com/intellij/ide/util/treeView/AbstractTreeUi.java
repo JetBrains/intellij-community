@@ -124,7 +124,7 @@ public class AbstractTreeUi {
   private final Alarm myBusyAlarm = new Alarm();
   private final Runnable myWaiterForReady = new Runnable() {
     public void run() {
-      maybeSetBusyAndScheduleWaiterForReady(false);
+      maybeSetBusyAndScheduleWaiterForReady(false, null);
     }
   };
 
@@ -256,8 +256,20 @@ public class AbstractTreeUi {
     myNodeChildrenActions.clear();
   }
 
-  private void maybeSetBusyAndScheduleWaiterForReady(boolean forcedBusy) {
-    if (!myShowBusyIndicator.asBoolean() || !canYield()) return;
+  private void maybeSetBusyAndScheduleWaiterForReady(boolean forcedBusy, @Nullable Object element) {
+    if (!myShowBusyIndicator.asBoolean()) return;
+
+    boolean canUpdateBusyState = false;
+
+    if (forcedBusy) {
+      if (canYield() || (element != null && getTreeStructure().isToBuildChildrenInBackground(element))) {
+        canUpdateBusyState = true;
+      }
+    } else {
+      canUpdateBusyState = true;
+    }
+
+    if (!canUpdateBusyState) return;
 
     if (myTree instanceof com.intellij.ui.treeStructure.Tree) {
       final com.intellij.ui.treeStructure.Tree tree = (Tree)myTree;
@@ -970,9 +982,7 @@ public class AbstractTreeUi {
   }
 
   final void updateSubtreeNow(TreeUpdatePass pass, boolean canSmartExpand) {
-
-
-    maybeSetBusyAndScheduleWaiterForReady(true);
+    maybeSetBusyAndScheduleWaiterForReady(true, getElementFor(pass.getNode()));
     setHoldSize(true);
 
     boolean consumed = initRootNodeNowIfNeeded(pass);
@@ -1200,6 +1210,8 @@ public class AbstractTreeUi {
                                      final boolean wasExpanded,
                                      final boolean wasLeaf,
                                      final boolean forceUpdate) {
+    if (isUpdatingNow(node)) return;
+
     if (!canInitiateNewActivity()) {
       throw new ProcessCanceledException();
     }
@@ -2444,6 +2456,8 @@ public class AbstractTreeUi {
 
     addToLoadedInBackground(oldElementFromDescriptor, updateInfo);
 
+    maybeSetBusyAndScheduleWaiterForReady(true, oldElementFromDescriptor);
+
     if (!isNodeBeingBuilt(node)) {
       LoadingNode loadingNode = new LoadingNode(getLoadingNodeText());
       myTreeModel.insertNodeInto(loadingNode, node, node.getChildCount());
@@ -2612,7 +2626,7 @@ public class AbstractTreeUi {
 
     final Object element = getBuilder().getTreeStructureElement((NodeDescriptor)o);
 
-    boolean childrenReady = !isLoadedInBackground(element);
+    boolean childrenReady = !isLoadedInBackground(element) && !isUpdatingNow(node);
 
     processActions(node, element, myNodeActions, childrenReady ? myNodeChildrenActions : null);
     if (childrenReady) {
@@ -3522,6 +3536,7 @@ public class AbstractTreeUi {
       return;
     }
 
+
     boolean willAffectSelection = elements.length > 0 || (elements.length == 0 && addToSelection);
     if (!willAffectSelection) {
       runDone(onDone);
@@ -4330,7 +4345,7 @@ public class AbstractTreeUi {
 
 
   private void _addNodeAction(Object element, NodeAction action, Map<Object, List<NodeAction>> map) {
-    maybeSetBusyAndScheduleWaiterForReady(true);
+    maybeSetBusyAndScheduleWaiterForReady(true, element);
     List<NodeAction> list = map.get(element);
     if (list == null) {
       list = new ArrayList<NodeAction>();
