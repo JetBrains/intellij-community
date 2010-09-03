@@ -46,7 +46,7 @@ public interface Application extends ComponentManager {
    *
    * @param action the action to run.
    */
-  void runReadAction(Runnable action);
+  void runReadAction(@NotNull Runnable action);
 
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
@@ -56,7 +56,7 @@ public interface Application extends ComponentManager {
    * @param computation the computation to perform.
    * @return the result returned by the computation.
    */
-  <T> T runReadAction(Computable<T> computation);
+  <T> T runReadAction(@NotNull Computable<T> computation);
 
   /**
    * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
@@ -64,7 +64,7 @@ public interface Application extends ComponentManager {
    *
    * @param action the action to run
    */
-  void runWriteAction(Runnable action);
+  void runWriteAction(@NotNull Runnable action);
 
   /**
    * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
@@ -74,7 +74,7 @@ public interface Application extends ComponentManager {
    * @param computation the computation to run
    * @return the result returned by the computation.
    */
-  <T> T runWriteAction(Computable<T> computation);
+  <T> T runWriteAction(@NotNull Computable<T> computation);
 
   /**
    * Returns the currently executing write action of the specified class.
@@ -83,7 +83,7 @@ public interface Application extends ComponentManager {
    * @return the write action instance, or null if no action of the specified class is currently executing.
    */
   @Nullable
-  <T> T getCurrentWriteAction(Class<T> actionClass);
+  <T> T getCurrentWriteAction(@NotNull Class<T> actionClass);
 
   /**
    * Asserts whether the read access is allowed.
@@ -105,7 +105,7 @@ public interface Application extends ComponentManager {
    *
    * @param listener the listener to add
    */
-  void addApplicationListener(ApplicationListener listener);
+  void addApplicationListener(@NotNull ApplicationListener listener);
 
   /**
    * Adds an {@link ApplicationListener}.
@@ -113,14 +113,14 @@ public interface Application extends ComponentManager {
    * @param listener the listener to add
    * @param parent the parent disposable which dispose will trigger this listener removal
    */
-  void addApplicationListener(ApplicationListener listener, Disposable parent);
+  void addApplicationListener(@NotNull ApplicationListener listener, @NotNull Disposable parent);
 
   /**
    * Removes an {@link ApplicationListener}.
    *
    * @param listener the listener to remove
    */
-  void removeApplicationListener(ApplicationListener listener);
+  void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /**
    * Saves all open documents and projects.
@@ -175,9 +175,9 @@ public interface Application extends ComponentManager {
    *
    * @param runnable the runnable to execute.
    */
-  void invokeLater(Runnable runnable);
+  void invokeLater(@NotNull Runnable runnable);
 
-  void invokeLater(Runnable runnable, @NotNull Condition expired);
+  void invokeLater(@NotNull Runnable runnable, @NotNull Condition expired);
 
   /**
    * Causes <i>runnable.run()</i> to be executed asynchronously on the
@@ -187,9 +187,9 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param state the state in which the runnable will be executed.
    */
-  void invokeLater(Runnable runnable, @NotNull ModalityState state);
+  void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state);
 
-  void invokeLater(Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
+  void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
 
   /**
    * Causes <code>runnable.run()</code> to be executed synchronously on the
@@ -200,7 +200,7 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param modalityState the state in which the runnable will be executed.
    */
-  void invokeAndWait(Runnable runnable, @NotNull ModalityState modalityState);
+  void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
 
   /**
    * Returns the current modality state for the Swing dispatch thread.
@@ -215,7 +215,7 @@ public interface Application extends ComponentManager {
    * @param c the component for which the modality state is requested.
    * @return the modality state.
    */
-  ModalityState getModalityStateForComponent(Component c);
+  ModalityState getModalityStateForComponent(@NotNull Component c);
 
   /**
    * Returns the current modality state for the current thread (which may be different
@@ -282,7 +282,7 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
-  Future<?> executeOnPooledThread(Runnable action);
+  Future<?> executeOnPooledThread(@NotNull Runnable action);
 
   /**
    * @return true if application is currently disposing (but not yet disposed completely)

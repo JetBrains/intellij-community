@@ -324,7 +324,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return PluginsFacade.INSTANCE.getPlugins();
   }
 
-  public Future<?> executeOnPooledThread(final Runnable action) {
+  public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
     return ourThreadExecutorsService.submit(new Runnable() {
       public void run() {
         try {
@@ -355,19 +355,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
 
-  public void invokeLater(final Runnable runnable) {
+  public void invokeLater(@NotNull final Runnable runnable) {
     myInvokator.invokeLater(runnable);
   }
 
-  public void invokeLater(final Runnable runnable, @NotNull final Condition expired) {
+  public void invokeLater(@NotNull final Runnable runnable, @NotNull final Condition expired) {
     myInvokator.invokeLater(runnable, expired);
   }
 
-  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state) {
+  public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state) {
     myInvokator.invokeLater(runnable, state);
   }
 
-  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
+  public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
     myInvokator.invokeLater(runnable, state, expired);
   }
 
@@ -564,7 +564,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return result;
   }
 
-  public void invokeAndWait(Runnable runnable, @NotNull ModalityState modalityState) {
+  public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     if (isDispatchThread()) {
       LOG.error("invokeAndWait must not be called from event queue thread");
       runnable.run();
@@ -588,7 +588,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return entities.length > 0 ? new ModalityStateEx(entities) : getNoneModalityState();
   }
 
-  public ModalityState getModalityStateForComponent(Component c) {
+  public ModalityState getModalityStateForComponent(@NotNull Component c) {
     Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
@@ -682,7 +682,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return true;
   }
 
-  public void runReadAction(final Runnable action) {
+  public void runReadAction(@NotNull final Runnable action) {
     /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
      * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
     boolean mustAcquire = !isReadAccessAllowed();
@@ -724,7 +724,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return old;
   }
 
-  public <T> T runReadAction(final Computable<T> computation) {
+  public <T> T runReadAction(@NotNull final Computable<T> computation) {
     final Ref<T> ref = Ref.create(null);
     runReadAction(new Runnable() {
       public void run() {
@@ -734,7 +734,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return ref.get();
   }
 
-  public void runWriteAction(final Runnable action) {
+  public void runWriteAction(@NotNull final Runnable action) {
     assertCanRunWriteAction();
 
     ActivityTracker.getInstance().inc();
@@ -771,7 +771,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  public <T> T runWriteAction(final Computable<T> computation) {
+  public <T> T runWriteAction(@NotNull final Computable<T> computation) {
     final Ref<T> ref = Ref.create(null);
     runWriteAction(new Runnable() {
       public void run() {
@@ -781,7 +781,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return ref.get();
   }
 
-  public <T>  T getCurrentWriteAction(Class<T> actionClass) {
+  public <T>  T getCurrentWriteAction(@NotNull Class<T> actionClass) {
     synchronized (myWriteActionsStack) {
       for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
         Runnable action = myWriteActionsStack.get(i);
@@ -990,15 +990,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     LOG.assertTrue(myInEditorPaintCounter >= 0);
   }
 
-  public void addApplicationListener(ApplicationListener l) {
+  public void addApplicationListener(@NotNull ApplicationListener l) {
     myDispatcher.addListener(l);
   }
 
-  public void addApplicationListener(ApplicationListener l, Disposable parent) {
+  public void addApplicationListener(@NotNull ApplicationListener l, @NotNull Disposable parent) {
     myDispatcher.addListener(l, parent);
   }
 
-  public void removeApplicationListener(ApplicationListener l) {
+  public void removeApplicationListener(@NotNull ApplicationListener l) {
     myDispatcher.removeListener(l);
   }
 

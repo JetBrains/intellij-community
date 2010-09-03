@@ -109,7 +109,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
 
-  public Future<?> executeOnPooledThread(Runnable action) {
+  public Future<?> executeOnPooledThread(@NotNull Runnable action) {
     new Thread(action).start();
     return null; // ?
   }
@@ -125,36 +125,36 @@ public class MockApplication extends MockComponentManager implements Application
   public void restart() {
   }
 
-  public void runReadAction(Runnable action) {
+  public void runReadAction(@NotNull Runnable action) {
     action.run();
   }
 
-  public <T> T runReadAction(Computable<T> computation) {
+  public <T> T runReadAction(@NotNull Computable<T> computation) {
     return computation.compute();
   }
 
-  public void runWriteAction(Runnable action) {
+  public void runWriteAction(@NotNull Runnable action) {
     action.run();
   }
 
-  public <T> T runWriteAction(Computable<T> computation) {
+  public <T> T runWriteAction(@NotNull Computable<T> computation) {
     return computation.compute();
   }
 
-  public <T> T getCurrentWriteAction(Class<T> actionClass) {
+  public <T> T getCurrentWriteAction(@NotNull Class<T> actionClass) {
     return null;
   }
 
   public void assertIsDispatchThread() {
   }
 
-  public void addApplicationListener(ApplicationListener listener) {
+  public void addApplicationListener(@NotNull ApplicationListener listener) {
   }
 
-  public void addApplicationListener(ApplicationListener listener, Disposable parent) {
+  public void addApplicationListener(@NotNull ApplicationListener listener, @NotNull Disposable parent) {
   }
 
-  public void removeApplicationListener(ApplicationListener listener) {
+  public void removeApplicationListener(@NotNull ApplicationListener listener) {
   }
 
   public void saveAll() {
@@ -202,16 +202,16 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
 
-  public void invokeLater(final Runnable runnable, @NotNull final Condition expired) {
+  public void invokeLater(@NotNull final Runnable runnable, @NotNull final Condition expired) {
   }
 
-  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
+  public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
   }
 
-  public void invokeLater(Runnable runnable) {
+  public void invokeLater(@NotNull Runnable runnable) {
   }
 
-  public void invokeLater(Runnable runnable, @NotNull ModalityState state) {
+  public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
   }
 
   @NotNull
@@ -219,7 +219,7 @@ public class MockApplication extends MockComponentManager implements Application
     throw new UnsupportedOperationException();
   }
 
-  public void invokeAndWait(Runnable runnable, @NotNull ModalityState modalityState) {
+  public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
   }
 
   public long getStartTime() {
@@ -238,7 +238,7 @@ public class MockApplication extends MockComponentManager implements Application
     return null;
   }
 
-  public ModalityState getModalityStateForComponent(Component c) {
+  public ModalityState getModalityStateForComponent(@NotNull Component c) {
     return null;
   }
 
