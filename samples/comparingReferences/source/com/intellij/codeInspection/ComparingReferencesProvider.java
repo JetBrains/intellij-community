@@ -5,6 +5,6 @@ package com.intellij.codeInspection;
  */
 public class ComparingReferencesProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
-    return new Class[] {ComparingReferencesInspection.class};
+    return new Class[] { ComparingReferencesInspection.class};
   }
 }
