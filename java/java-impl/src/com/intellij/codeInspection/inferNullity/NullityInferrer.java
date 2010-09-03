@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashSet;
 
-class NullityInferrer {
+public class NullityInferrer {
   private static final Logger LOG = Logger.getInstance("#" + NullityInferrer.class.getName());
 
   private static final int MAX_PASSES = 10;
@@ -248,13 +248,13 @@ class NullityInferrer {
 
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
-      super.visitExpression(expression.getRExpression());
+      sometimesNull = expressionIsSometimesNull(expression.getRExpression());
     }
 
     @Override
     public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
-      super.visitExpression(expression.getThenExpression());
-      super.visitExpression(expression.getElseExpression());
+      sometimesNull = expressionIsSometimesNull(expression.getThenExpression()) ||
+                      expressionIsSometimesNull(expression.getElseExpression());
     }
 
     @Override
