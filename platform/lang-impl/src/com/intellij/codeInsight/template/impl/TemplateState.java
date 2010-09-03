@@ -43,6 +43,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -998,6 +999,23 @@ public class TemplateState implements Disposable {
       return;
     }
 
+    int selectionIndent = -1;
+    int selectionStartLine = -1;
+    int selectionEndLine = -1;
+    int selectionSegment = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
+    if (selectionSegment >= 0) {
+      int selectionStart = myTemplate.getSegmentOffset(selectionSegment);
+      selectionIndent = 0;
+      String templateText = myTemplate.getTemplateText();
+      while (selectionStart > 0 && templateText.charAt(selectionStart-1) == ' ') {
+        // TODO handle tabs
+        selectionIndent++;
+        selectionStart--;
+      }
+      selectionStartLine = myDocument.getLineNumber(mySegments.getSegmentStart(selectionSegment));
+      selectionEndLine = myDocument.getLineNumber(mySegments.getSegmentEnd(selectionSegment));
+    }
+
     int indentLineNum = startLineNum;
 
     int lineLength = 0;
@@ -1019,12 +1037,17 @@ public class TemplateState implements Disposable {
       }
       buffer.append(ch);
     }
-    if (buffer.length() == 0) {
+    if (buffer.length() == 0 && selectionIndent <= 0) {
       return;
     }
     String stringToInsert = buffer.toString();
     for (int i = startLineNum + 1; i <= endLineNum; i++) {
-      myDocument.insertString(myDocument.getLineStartOffset(i), stringToInsert);
+      if (i > selectionStartLine && i <= selectionEndLine) {
+        myDocument.insertString(myDocument.getLineStartOffset(i), StringUtil.repeatSymbol(' ', selectionIndent));
+      }
+      else {
+        myDocument.insertString(myDocument.getLineStartOffset(i), stringToInsert);
+      }
     }
   }
 
