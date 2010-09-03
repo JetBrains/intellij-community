@@ -143,4 +143,9 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
   public JComponent getPreferredFocusedComponent() {
     return myProjectNameTextField;
   }
+
+  @Override
+  protected String getHelpId() {
+    return "create_new_project_dialog";
+  }
 }

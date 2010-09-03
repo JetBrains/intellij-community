@@ -244,4 +244,9 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
   public String[] getDefaultLiveTemplateFiles() {
     return new String[] {"/liveTemplates/xsl"};
   }
+
+  @Override
+  public String[] getHiddenLiveTemplateFiles() {
+    return null;
+  }
 }

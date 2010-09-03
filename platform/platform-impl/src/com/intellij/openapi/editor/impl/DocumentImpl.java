@@ -35,8 +35,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -47,14 +47,16 @@ import org.jetbrains.annotations.TestOnly;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
 
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
-  private final WeakHashMap<RangeMarkerEx,String> myRangeMarkers = new WeakHashMap<RangeMarkerEx, String>();
+  private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
@@ -207,23 +209,26 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return !myIsReadOnly;
   }
 
-  public void removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
+  public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     synchronized(myRangeMarkers) {
-      myRangeMarkers.remove(rangeMarker);
+      return myRangeMarkers.remove(rangeMarker);
     }
   }
 
   public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     synchronized(myRangeMarkers) {
-      myRangeMarkers.put(rangeMarker, null);
+      RangeMarkerImpl marker = (RangeMarkerImpl)rangeMarker;
+      marker.setValid(true);
+      marker.myNode = myRangeMarkers.add(rangeMarker);
+      myRangeMarkers.checkMax(true);
     }
   }
 
   @TestOnly
-  public Collection<RangeMarkerEx> getRangeMarkers() {
-    return myRangeMarkers.keySet();
+  public int getRangeMarkersSize() {
+    return myRangeMarkers.size();
   }
 
   @NotNull
@@ -291,8 +296,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset) {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    return new RangeMarkerImpl(this, startOffset, endOffset);
+    return createRangeMarker(startOffset, endOffset, false);
   }
 
   @NotNull
@@ -301,9 +305,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!(0 <= startOffset && startOffset <= endOffset && endOffset <= getTextLength())) {
       LOG.error("Incorrect offsets startOffset=" + startOffset + ", endOffset=" + endOffset + ", text length=" + getTextLength());
     }
-    return surviveOnExternalChange
-           ? new PersistentRangeMarker(this, startOffset, endOffset)
-           : new RangeMarkerImpl(this, startOffset, endOffset);
+    RangeMarkerImpl rangeMarker = surviveOnExternalChange
+                                  ? new PersistentRangeMarker(this, startOffset, endOffset)
+                                  : new RangeMarkerImpl(this, startOffset, endOffset);
+    rangeMarker.registerInDocument();
+    return rangeMarker;
   }
 
   public long getModificationStamp() {
@@ -477,7 +483,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (ShutDownTracker.isShutdownHookRunning()) {
       return; // suppress events in shutdown hook
     }
-    try{
+    try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
       myLineSet.changedUpdate(event);
@@ -501,31 +507,37 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void updateRangeMarkers(final DocumentEvent event) {
-    synchronized(myRangeMarkers) {
-      for(Iterator<RangeMarkerEx> rangeMarkerIterator = myRangeMarkers.keySet().iterator(); rangeMarkerIterator.hasNext();) {
-        try {
-          final RangeMarkerEx rangeMarker = rangeMarkerIterator.next();
+    /*
+    synchronized (myRangeMarkers) {
+      myRangeMarkers.updateMarkersOnChange(event);
+    */
 
-          if (rangeMarker != null && rangeMarker.isValid()) {
-            if (event.getOffset() <= rangeMarker.getEndOffset()) {
-              rangeMarker.documentChanged(event);
-              if (!rangeMarker.isValid()) {
-                rangeMarkerIterator.remove();
-                if (myGuardedBlocks.remove(rangeMarker)) {
-                  LOG.error("Guarded blocks should stay valid: "+rangeMarker);
-                }
-              }
-            }
-          }
-          else {
-            rangeMarkerIterator.remove();
-          }
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
+      //for (Iterator<RangeMarkerEx> rangeMarkerIterator = myRangeMarkers.keySet().iterator(); rangeMarkerIterator.hasNext();) {
+      //  try {
+      //    final RangeMarkerEx rangeMarker = rangeMarkerIterator.next();
+      //
+      //    if (rangeMarker != null && rangeMarker.isValid()) {
+      //      if (event.getOffset() <= rangeMarker.getEndOffset()) {
+      //        rangeMarker.documentChanged(event);
+      //        if (!rangeMarker.isValid()) {
+      //          rangeMarkerIterator.remove();
+      //          if (myGuardedBlocks.remove(rangeMarker)) {
+      //            LOG.error("Guarded blocks should stay valid: " + rangeMarker);
+      //          }
+      //        }
+      //      }
+      //    }
+      //    else {
+      //      rangeMarkerIterator.remove();
+      //    }
+      //  }
+      //  catch (Exception e) {
+      //    LOG.error(e);
+      //  }
+      //}
+    /*
     }
+    */
   }
 
   public String getText() {
@@ -704,8 +716,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     MarkupModel model = myProjectToMarkupModelMap.get(project);
     if (create && model == null) {
-      model = ConcurrencyUtil.cacheOrGet(myProjectToMarkupModelMap, project, new MarkupModelImpl(this));
-      documentMarkupModelManager.registerDocument(this);
+      synchronized (lock) {
+        model = myProjectToMarkupModelMap.get(project);
+        if (model == null) {
+          model = new MarkupModelImpl(this);
+          myProjectToMarkupModelMap.put(project, model);
+          documentMarkupModelManager.registerDocument(this);
+        }
+      }
     }
 
     return model;
@@ -773,6 +791,18 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private static DocumentBulkUpdateListener getPublisher() {
     return DocumentBulkUpdateListenerHolder.ourBulkChangePublisher;
+  }
+
+  public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
+    return myRangeMarkers.process(processor);
+  }
+
+  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
+    return myRangeMarkers.processOverlappingWith(start, end, processor);
+  }
+
+  public boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor) {
+    return myRangeMarkers.processOverlappingWith(offset, processor);
   }
 }
 

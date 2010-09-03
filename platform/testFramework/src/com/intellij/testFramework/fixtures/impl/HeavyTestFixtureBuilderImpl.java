@@ -20,9 +20,9 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.pico.IdeaPicoContainer;
 import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -31,24 +31,23 @@ import java.util.Map;
  * @author mike
 */
 class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestFixture> {
-  private final FactoryMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder> myModuleFixtureBuilderFactory;
-
   private final HeavyIdeaTestFixtureImpl myFixture;
+  private Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> myProviders;
+  private final MutablePicoContainer myContainer;
 
   public HeavyTestFixtureBuilderImpl(HeavyIdeaTestFixtureImpl fixture, final Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> providers) {
     myFixture = fixture;
+    myProviders = providers;
 
-    final MutablePicoContainer container = new IdeaPicoContainer();
-    container.registerComponentInstance(this);
+    myContainer = new IdeaPicoContainer();
+    myContainer.registerComponentInstance(this);
+  }
 
-    myModuleFixtureBuilderFactory = new FactoryMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder>() {
-      protected ModuleFixtureBuilder create(Class<? extends ModuleFixtureBuilder> key) {
-        Class<? extends ModuleFixtureBuilder> implClass = providers.get(key);
-        assert implClass != null: key;
-        container.registerComponentImplementation(implClass);
-        return (ModuleFixtureBuilder)container.getComponentInstanceOfType(implClass);
-      }
-    };
+  private <M extends ModuleFixtureBuilder> M createModuleBuilder(Class<M> key) {
+    Class<? extends ModuleFixtureBuilder> implClass = myProviders.get(key);
+    assert implClass != null: key;
+    final ConstructorInjectionComponentAdapter adapter = new ConstructorInjectionComponentAdapter(implClass, implClass);
+    return (M)adapter.getComponentInstance(myContainer);
   }
 
   public HeavyIdeaTestFixture getFixture() {
@@ -57,7 +56,7 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
 
   public <M extends ModuleFixtureBuilder> M addModule(final Class<M> builderClass) {
     loadClassConstants(builderClass);
-    final M builder = (M)myModuleFixtureBuilderFactory.get(builderClass);
+    final M builder = createModuleBuilder(builderClass);
     myFixture.addModuleFixtureBuilder(builder);
     return builder;
   }

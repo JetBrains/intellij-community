@@ -15,13 +15,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,240 +27,140 @@ import java.awt.*;
  * Implementation of the markup element for the editor and document.
  * @author max
  */
-public class RangeHighlighterImpl implements RangeHighlighterEx {
-  private final MarkupModel myModel;
-  private final int myLayer;
-  private final HighlighterTargetArea myTargetArea;
-  private TextAttributes myTextAttributes;
-  private LineMarkerRenderer myLineMarkerRenderer;
-  private Color myErrorStripeColor;
-  private Color myLineSeparatorColor;
-  private SeparatorPlacement mySeparatorPlacement;
-  private boolean isAfterEndOfLine;
-  private final RangeMarkerEx myRangeMarker;
-  private GutterIconRenderer myGutterIconRenderer;
-  private boolean myErrorStripeMarkIsThin;
-  private Object myErrorStripeTooltip;
-  private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
-  private CustomHighlighterRenderer myCustomRenderer;
-
+class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx {
+  private final RangeHighlighterData data;
   RangeHighlighterImpl(@NotNull MarkupModel model,
                        int start,
                        int end,
                        int layer,
                        @NotNull HighlighterTargetArea target,
-                       TextAttributes textAttributes,
-                       boolean persistent) {
-    myRangeMarker = persistent
-                    ? new PersistentLineMarker((DocumentEx)model.getDocument(), start)
-                    : (RangeMarkerEx)model.getDocument().createRangeMarker(start, end);
-    myTextAttributes = textAttributes;
-    myTargetArea = target;
-    myLayer = layer;
-    myModel = model;
-    if (textAttributes != null) {
-      myErrorStripeColor = textAttributes.getErrorStripeColor();
-    }
+                       TextAttributes textAttributes) {
+    super((DocumentEx)model.getDocument(), start, end);
+    data = new RangeHighlighterData(model, layer, target, textAttributes, this);
   }
 
+  @Override
+  protected void registerInDocument() {
+    // we store highlighters in MarkupModel
+    data.registerMe();
+  }
+
+  @Override
+  protected boolean unregisterInDocument() {
+    // we store highlighters in MarkupModel
+    data.unregisterMe();
+    myNode = null;
+    return true;
+  }
+
+  // delegates
+
   public TextAttributes getTextAttributes() {
-    return myTextAttributes;
+    return data.getTextAttributes();
   }
 
   public void setTextAttributes(TextAttributes textAttributes) {
-    TextAttributes old = myTextAttributes;
-    myTextAttributes = textAttributes;
-    if (!Comparing.equal(old, textAttributes)) {
-      fireChanged();
-    }
+    data.setTextAttributes(textAttributes);
+  }
+
+  public void changeAttributesInBatch(@NotNull Runnable change) {
+    data.changeAttributesInBatch(change);
   }
 
   public int getLayer() {
-    return myLayer;
+    return data.getLayer();
   }
 
   public HighlighterTargetArea getTargetArea() {
-    return myTargetArea;
-  }
-
-  public int getAffectedAreaStartOffset() {
-    int startOffset = getStartOffset();
-    if (myTargetArea == HighlighterTargetArea.EXACT_RANGE) return startOffset;
-    if (startOffset == getDocument().getTextLength()) return startOffset;
-    return getDocument().getLineStartOffset(getDocument().getLineNumber(startOffset));
-  }
-
-  public int getAffectedAreaEndOffset() {
-    int endOffset = getEndOffset();
-    if (myTargetArea == HighlighterTargetArea.EXACT_RANGE) return endOffset;
-    int textLength = getDocument().getTextLength();
-    if (endOffset == textLength) return endOffset;
-    return Math.min(textLength, getDocument().getLineEndOffset(getDocument().getLineNumber(endOffset)) + 1);
+    return data.getTargetArea();
   }
 
   public LineMarkerRenderer getLineMarkerRenderer() {
-    return myLineMarkerRenderer;
+    return data.getLineMarkerRenderer();
   }
 
   public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
-    myLineMarkerRenderer = renderer;
-    fireChanged();
+    data.setLineMarkerRenderer(renderer);
   }
 
   public CustomHighlighterRenderer getCustomRenderer() {
-    return myCustomRenderer;
+    return data.getCustomRenderer();
   }
 
   public void setCustomRenderer(CustomHighlighterRenderer renderer) {
-    myCustomRenderer = renderer;
+    data.setCustomRenderer(renderer);
   }
 
   public GutterIconRenderer getGutterIconRenderer() {
-    return myGutterIconRenderer;
+    return data.getGutterIconRenderer();
   }
 
   public void setGutterIconRenderer(GutterIconRenderer renderer) {
-    GutterIconRenderer old = myGutterIconRenderer;
-    myGutterIconRenderer = renderer;
-    if (!Comparing.equal(old, renderer)) {
-      fireChanged();
-    }
+    data.setGutterIconRenderer(renderer);
   }
 
   public Color getErrorStripeMarkColor() {
-    return myErrorStripeColor;
+    return data.getErrorStripeMarkColor();
   }
 
   public void setErrorStripeMarkColor(Color color) {
-    Color old = myErrorStripeColor;
-    myErrorStripeColor = color;
-    if (!Comparing.equal(old, color)) {
-      fireChanged();
-    }
+    data.setErrorStripeMarkColor(color);
   }
 
   public Object getErrorStripeTooltip() {
-    return myErrorStripeTooltip;
+    return data.getErrorStripeTooltip();
   }
 
   public void setErrorStripeTooltip(Object tooltipObject) {
-    Object old = myErrorStripeTooltip;
-    myErrorStripeTooltip = tooltipObject;
-    if (!Comparing.equal(old, tooltipObject)) {
-      fireChanged();
-    }
+    data.setErrorStripeTooltip(tooltipObject);
   }
 
   public boolean isThinErrorStripeMark() {
-    return myErrorStripeMarkIsThin;
+    return data.isThinErrorStripeMark();
   }
 
   public void setThinErrorStripeMark(boolean value) {
-    boolean old = myErrorStripeMarkIsThin;
-    myErrorStripeMarkIsThin = value;
-    if (old != value) {
-      fireChanged();
-    }
+    data.setThinErrorStripeMark(value);
   }
 
   public Color getLineSeparatorColor() {
-    return myLineSeparatorColor;
+    return data.getLineSeparatorColor();
   }
 
   public void setLineSeparatorColor(Color color) {
-    Color old = myLineSeparatorColor;
-    myLineSeparatorColor = color;
-    if (!Comparing.equal(old, color)) {
-      fireChanged();
-    }
+    data.setLineSeparatorColor(color);
   }
 
   public SeparatorPlacement getLineSeparatorPlacement() {
-    return mySeparatorPlacement;
+    return data.getLineSeparatorPlacement();
   }
 
   public void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement) {
-    SeparatorPlacement old = mySeparatorPlacement;
-    mySeparatorPlacement = placement;
-    if (!Comparing.equal(old, placement)) {
-      fireChanged();
-    }
+    data.setLineSeparatorPlacement(placement);
   }
 
   public void setEditorFilter(@NotNull MarkupEditorFilter filter) {
-    myFilter = filter;
-    fireChanged();
+    data.setEditorFilter(filter);
   }
 
   @NotNull
   public MarkupEditorFilter getEditorFilter() {
-    return myFilter;
+    return data.getEditorFilter();
   }
 
   public boolean isAfterEndOfLine() {
-    return isAfterEndOfLine;
+    return data.isAfterEndOfLine();
   }
 
   public void setAfterEndOfLine(boolean afterEndOfLine) {
-    boolean old = isAfterEndOfLine;
-    isAfterEndOfLine = afterEndOfLine;
-    if (old != afterEndOfLine) {
-      fireChanged();
-    }
+    data.setAfterEndOfLine(afterEndOfLine);
   }
 
-  private void fireChanged() {
-    if (myModel instanceof MarkupModelImpl) {
-      ((MarkupModelImpl)myModel).fireSegmentHighlighterChanged(this);
-    }
+  public int getAffectedAreaStartOffset() {
+    return data.getAffectedAreaStartOffset();
   }
 
-  public int getStartOffset() {
-    return myRangeMarker.getStartOffset();
-  }
-
-  public long getId() {
-    return myRangeMarker.getId();
-  }
-
-  public int getEndOffset() {
-    return myRangeMarker.getEndOffset();
-  }
-
-  public boolean isValid() {
-    return myRangeMarker.isValid();
-  }
-
-  @NotNull
-  public Document getDocument() {
-    return myRangeMarker.getDocument();
-  }
-
-  public void setGreedyToLeft(boolean greedy) {
-    myRangeMarker.setGreedyToLeft(greedy);
-  }
-
-  public void setGreedyToRight(boolean greedy) {
-    myRangeMarker.setGreedyToRight(greedy);
-  }
-
-  public boolean isGreedyToRight() {
-    return myRangeMarker.isGreedyToRight();
-  }
-
-  public boolean isGreedyToLeft() {
-    return myRangeMarker.isGreedyToLeft();
-  }
-
-  public <T> T getUserData(@NotNull Key<T> key) {
-    return myRangeMarker.getUserData(key);
-  }
-
-  public <T> void putUserData(@NotNull Key<T> key, T value) {
-    myRangeMarker.putUserData(key, value);
-  }
-
-  public String toString() {
-    return myRangeMarker.toString();
+  public int getAffectedAreaEndOffset() {
+    return data.getAffectedAreaEndOffset();
   }
 }

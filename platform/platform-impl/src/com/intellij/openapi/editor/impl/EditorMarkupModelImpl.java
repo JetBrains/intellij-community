@@ -38,18 +38,15 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,19 +62,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsFound.png");
-
+  private static final int ERROR_ICON_WIDTH = ERRORS_FOUND_ICON.getIconWidth();
+  private static final int ERROR_ICON_HEIGHT = ERRORS_FOUND_ICON.getIconHeight();
+  private static final int PREFERRED_WIDTH = ERRORS_FOUND_ICON.getIconWidth() + 4;
   private final EditorImpl myEditor;
   private ErrorStripeRenderer myErrorStripeRenderer = null;
   private final List<ErrorStripeListener> myErrorMarkerListeners = new ArrayList<ErrorStripeListener>();
   private ErrorStripeListener[] myCachedErrorMarkerListeners = null;
-  private List<RangeHighlighter> myCachedSortedHighlighters = null;
-  private final MarkSpots myMarkSpots = new MarkSpots();
-  private int myScrollBarHeight;
-  private static final Comparator<RangeHighlighter> LAYER_COMPARATOR = new Comparator<RangeHighlighter>() {
-    public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
-      return o1.getLayer() - o2.getLayer();
-    }
-  };
+
+  private int myEditorScrollbarTop = -1;
+  private int myEditorTargetHeight = -1;
+  private int myEditorSourceHeight = -1;
 
   @NotNull private ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
 
@@ -96,397 +91,104 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private int offsetToLine(int offset) {
     final Document document = myEditor.getDocument();
     if (offset > document.getTextLength()) {
-      offset = document.getTextLength();
+      return document.getLineCount();
     }
-    final int lineNumber = document.getLineNumber(offset);
-    return myEditor.logicalToVisualPosition(new LogicalPosition(lineNumber, 0)).line;
+    return myEditor.offsetToVisualLine(offset);
   }
 
-  private static class MarkSpot {
-
-    private final int yStart;
-
-    private int yEnd;
-
-    // sorted by layers from bottom to top
-    private RangeHighlighter[] highlighters = RangeHighlighter.EMPTY_ARRAY;
-
-    private MarkSpot(final int yStart, final int yEnd) {
-      this.yStart = yStart;
-      this.yEnd = yEnd;
-    }
-
-    private boolean near(MouseEvent e, double width) {
-      final int x = e.getX();
-      final int y = e.getY();
-      return 0 <= x && x < width && yStart - getMinHeight() <= y && y < yEnd + getMinHeight();
-    }
-
-  }
-
-  public static int getMinHeight() {
+  private static int getMinHeight() {
     return myMinMarkHeight;
   }
 
-  private class MarkSpots {
+  private void recalcEditorDimensions() {
+    EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
+    int scrollBarHeight = scrollBar.getSize().height;
 
-    private List<MarkSpot> myWideSpots;
-    private List<MarkSpot> myNarrowSpots;
+    myEditorScrollbarTop = scrollBar.getDecScrollButtonHeight()/* + 1*/;
+    int editorScrollbarBottom = scrollBar.getIncScrollButtonHeight();
+    myEditorTargetHeight = scrollBarHeight - myEditorScrollbarTop - editorScrollbarBottom;
+    myEditorSourceHeight = myEditor.getPreferredHeight();
+  }
 
-    private int myEditorScrollbarTop = -1;
+  private static class PositionedStripe {
+    private final Color color;
+    private final int yStart;
+    private int yEnd;
+    private final boolean thin;
+    private final int layer;
 
-    private int myEditorTargetHeight = -1;
-
-    private int myEditorSourceHeight = -1;
-
-    private void recalcEditorDimensions() {
-      EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-      myEditorScrollbarTop = scrollBar.getDecScrollButtonHeight() + 1;
-      int bottom = scrollBar.getIncScrollButtonHeight();
-      myEditorTargetHeight = myScrollBarHeight - myEditorScrollbarTop - bottom;
-      myEditorSourceHeight = myEditor.getPreferredSize().height;
+    private PositionedStripe(Color color, int yStart, int yEnd, boolean thin, int layer) {
+      this.color = color;
+      this.yStart = yStart;
+      this.yEnd = yEnd;
+      this.thin = thin;
+      this.layer = layer;
     }
+  }
 
-    private void clear() {
-      myWideSpots = null;
-      myNarrowSpots = null;
-      myEditorScrollbarTop = -1;
-      myEditorSourceHeight = -1;
-      myEditorTargetHeight = -1;
+  public boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
+    Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
+
+    getNearestHighlighters(this, e, width, highlighters);
+    getNearestHighlighters((MarkupModelEx)myEditor.getDocument().getMarkupModel(getEditor().getProject()), e, width, highlighters);
+    if (highlighters.isEmpty()) return false;
+    TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
+    if (bigRenderer != null) {
+      showTooltip(e, bigRenderer);
+      return true;
     }
+    return false;
+  }
 
-    public boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
-      recalcMarkSpots();
-      final List<MarkSpot> nearestMarkSpots = getNearestMarkSpots(e, width);
-      if (nearestMarkSpots.isEmpty()) return false;
-      Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>(nearestMarkSpots.size() + 4);
-      for (MarkSpot markSpot : nearestMarkSpots) {
-        ContainerUtil.addAll(highlighters, markSpot.highlighters);
+  private RangeHighlighter getNearestRangeHighlighter(final MouseEvent e, final int width) {
+    List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    getNearestHighlighters(this, e, width, highlighters);
+    getNearestHighlighters((MarkupModelEx)myEditor.getDocument().getMarkupModel(myEditor.getProject()), e, width, highlighters);
+    RangeHighlighter nearestMarker = null;
+    int yPos = 0;
+    for (RangeHighlighter highlighter : highlighters) {
+      final int newYPos = offsetToYPosition(highlighter.getStartOffset());
+
+      if (nearestMarker == null || Math.abs(yPos - e.getY()) > Math.abs(newYPos - e.getY())) {
+        nearestMarker = highlighter;
+        yPos = newYPos;
       }
-      TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
-      if (bigRenderer != null) {
-        showTooltip(e, bigRenderer);
+    }
+    return nearestMarker;
+  }
+
+  private void getNearestHighlighters(MarkupModelEx markupModel, MouseEvent e, final double width, final Collection<RangeHighlighter> nearest) {
+    if (0 > e.getX() || e.getX() >= width) return;
+    int startOffset = yPositionToOffset(e.getY()-getMinHeight(), true);
+    int endOffset = yPositionToOffset(e.getY()+getMinHeight(), false);
+    markupModel.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+      public boolean process(RangeHighlighterEx highlighter) {
+        if (highlighter.getErrorStripeMarkColor() != null) nearest.add(highlighter);
         return true;
       }
-      return false;
+    });
+  }
+
+  public void doClick(final MouseEvent e, final int width) {
+    RangeHighlighter marker = getNearestRangeHighlighter(e, width);
+    if (marker == null) return;
+    int offset = marker.getStartOffset();
+
+    final Document doc = myEditor.getDocument();
+    if (doc.getLineCount() > 0) {
+      // Necessary to expand folded block even if navigating just before one
+      // Very useful when navigating to first unused import statement.
+      int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
+      myEditor.getCaretModel().moveToOffset(lineEnd);
     }
 
-    private class PositionedRangeHighlighter {
-
-      private final RangeHighlighter highlighter;
-
-      private final int yStart;
-
-      private final int yEnd;
-
-      private PositionedRangeHighlighter(final RangeHighlighter highlighter, final int yStart, final int yEnd) {
-        this.highlighter = highlighter;
-        this.yStart = yStart;
-        this.yEnd = yEnd;
-      }
-
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public String toString() {
-        return "PR[" + yStart + "-" + yEnd + ")";
-      }
-
-    }
-
-    private PositionedRangeHighlighter getPositionedRangeHighlighter(RangeHighlighter mark) {
-      int visStartLine = offsetToLine(mark.getStartOffset());
-      int visEndLine = offsetToLine(mark.getEndOffset());
-      int yStartPosition = visibleLineToYPosition(visStartLine);
-      int yEndPosition = visibleLineToYPosition(visEndLine);
-      if (yEndPosition - yStartPosition < getMinMarkHeight()) {
-        yEndPosition = yStartPosition + getMinMarkHeight();
-      }
-      return new PositionedRangeHighlighter(mark, yStartPosition, yEndPosition);
-    }
-
-    private int visibleLineToYPosition(int lineNumber) {
-      if (myEditorScrollbarTop == -1) {
-        recalcEditorDimensions();
-      }
-      if (myEditorSourceHeight < myEditorTargetHeight) {
-        return myEditorScrollbarTop + lineNumber * myEditor.getLineHeight();
-      }
-      else {
-        final int lineCount = myEditorSourceHeight / myEditor.getLineHeight();
-        return myEditorScrollbarTop + (int)((float)lineNumber / lineCount * myEditorTargetHeight);
-      }
-    }
-
-    private void recalcMarkSpots() {
-      if (myWideSpots != null) return;
-      myWideSpots = new ArrayList<MarkSpot>();
-      myNarrowSpots = new ArrayList<MarkSpot>();
-
-      buildSpots(false, myWideSpots);
-      buildSpots(true, myNarrowSpots);
-    }
-
-    private void buildSpots(boolean narrow, List<MarkSpot> spots) {
-      final List<RangeHighlighter> sortedHighlighters = getSortedHighlighters();
-
-      if (sortedHighlighters.isEmpty()) return;
-      Queue<PositionedRangeHighlighter> startQueue =
-        new PriorityQueue<PositionedRangeHighlighter>(5, new Comparator<PositionedRangeHighlighter>() {
-          public int compare(final PositionedRangeHighlighter o1, final PositionedRangeHighlighter o2) {
-            return o1.yStart - o2.yStart;
-          }
-        });
-      Queue<PositionedRangeHighlighter> endQueue =
-        new PriorityQueue<PositionedRangeHighlighter>(5, new Comparator<PositionedRangeHighlighter>() {
-          public int compare(final PositionedRangeHighlighter o1, final PositionedRangeHighlighter o2) {
-            return o1.yEnd - o2.yEnd;
-          }
-        });
-      int index = 0;
-      MarkSpot currentSpot = null;
-      while (!startQueue.isEmpty() || !endQueue.isEmpty() || index != sortedHighlighters.size()) {
-        LOG.assertTrue(startQueue.size() == endQueue.size());
-
-        final PositionedRangeHighlighter positionedMark;
-        boolean addingNew;
-        if (index != sortedHighlighters.size()) {
-          RangeHighlighter mark = sortedHighlighters.get(index);
-          if (!mark.isValid() || mark.getErrorStripeMarkColor() == null) {
-            sortedHighlighters.remove(index);
-            continue;
-          }
-          if (mark.isThinErrorStripeMark() != narrow) {
-            index++;
-            continue;
-          }
-
-          PositionedRangeHighlighter positioned = getPositionedRangeHighlighter(mark);
-          if (!endQueue.isEmpty() && endQueue.peek().yEnd <= positioned.yStart) {
-            positionedMark = endQueue.peek();
-            addingNew = false;
-          }
-          else {
-            positionedMark = positioned;
-            addingNew = true;
-          }
-        }
-        else if (!endQueue.isEmpty()) {
-          positionedMark = endQueue.peek();
-          addingNew = false;
-        }
-        else {
-          LOG.error("cant be");
-          return;
-        }
-
-        if (addingNew) {
-          if (currentSpot == null) {
-            currentSpot = new MarkSpot(positionedMark.yStart, -1);
-          }
-          else {
-            currentSpot.yEnd = positionedMark.yStart;
-            if (currentSpot.yEnd != currentSpot.yStart) {
-              spitOutMarkSpot(currentSpot, startQueue, spots);
-            }
-            currentSpot = new MarkSpot(positionedMark.yStart, -1);
-          }
-          while (index != sortedHighlighters.size()) {
-            RangeHighlighter mark = sortedHighlighters.get(index);
-            if (mark.isThinErrorStripeMark() == narrow) {
-              PositionedRangeHighlighter positioned = getPositionedRangeHighlighter(mark);
-              if (positioned.yStart != positionedMark.yStart) break;
-              startQueue.add(positioned);
-              endQueue.add(positioned);
-            }
-
-            index++;
-          }
-        }
-        else {
-          currentSpot.yEnd = positionedMark.yEnd;
-          spitOutMarkSpot(currentSpot, startQueue, spots);
-          currentSpot = new MarkSpot(positionedMark.yEnd, -1);
-          while (!endQueue.isEmpty() && endQueue.peek().yEnd == positionedMark.yEnd) {
-            final PositionedRangeHighlighter highlighter = endQueue.remove();
-            for (Iterator<PositionedRangeHighlighter> iterator = startQueue.iterator(); iterator.hasNext();) {
-              PositionedRangeHighlighter positioned = iterator.next();
-              if (positioned == highlighter) {
-                iterator.remove();
-                break;
-              }
-            }
-          }
-          if (startQueue.isEmpty()) {
-            currentSpot = null;
-          }
-        }
-      }
-    }
-
-    private void spitOutMarkSpot(final MarkSpot currentSpot,
-                                 final Queue<PositionedRangeHighlighter> startQueue,
-                                 List<MarkSpot> spots) {
-      spots.add(currentSpot);
-      currentSpot.highlighters = new RangeHighlighter[startQueue.size()];
-      int i =0;
-      for (PositionedRangeHighlighter positioned : startQueue) {
-        currentSpot.highlighters[i++] = positioned.highlighter;
-      }
-      Arrays.sort(currentSpot.highlighters, LAYER_COMPARATOR);
-    }
-
-    private void repaint(Graphics g, final int width) {
-      recalcMarkSpots();
-
-      int offset = 3;
-      paintSpots(g, offset,  width, myWideSpots);
-
-      int narrow = width / 2 + 1;
-      paintSpots(g, offset + narrow + 1, narrow, myNarrowSpots);
-    }
-
-    private void paintSpots(Graphics g, int x, int width, List<MarkSpot> spots) {
-      for (int i = 0; i < spots.size(); i++) {
-        MarkSpot markSpot = spots.get(i);
-
-        int yStart = markSpot.yStart;
-        RangeHighlighter mark = markSpot.highlighters[markSpot.highlighters.length - 1];
-
-        int yEnd = markSpot.yEnd;
-
-        final Color color = mark.getErrorStripeMarkColor();
-
-
-        if (color == null) return;
-        g.setColor(color);
-        g.fillRect(x + 1, yStart, width - 2, yEnd - yStart);
-
-
-        if (true) {// mark.isThinErrorStripeMark()) {
-          paintPullDecorations(g, i, markSpot, yStart, yEnd, color, x, width, spots);
-        }
-        else {
-          paintPushDecorations(g, i, markSpot, yStart, yEnd, color, x, width, spots);
-        }
-
-      }
-    }
-
-    private void paintPullDecorations(Graphics g,
-                                      int i,
-                                      MarkSpot markSpot,
-                                      int yStart,
-                                      int yEnd,
-                                      Color color,
-                                      int x,
-                                      int paintWidth, List<MarkSpot> spots) {
-      Color brighter = color.brighter();
-      Color darker = ColorUtil.shift(color, 0.75);
-
-      g.setColor(brighter);
-      //left
-      UIUtil.drawLine(g, x, yStart, x, yEnd - 1);
-      if (i == 0 || !isAdjacent(spots.get(i - 1), markSpot) || wider(markSpot, spots.get(i - 1))) {
-        //top decoration
-        UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
-      }
-      g.setColor(darker);
-      if (i == spots.size() - 1 || !isAdjacent(markSpot, spots.get(i + 1)) || wider(markSpot, spots.get(i + 1))) {
-        // bottom decoration
-        UIUtil.drawLine(g, x + 1, yEnd - 1, x + paintWidth - 2, yEnd - 1);
-      }
-      //right
-      UIUtil.drawLine(g, x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd - 1);
-    }
-
-    private void paintPushDecorations(Graphics g,
-                                      int i,
-                                      MarkSpot markSpot,
-                                      int yStart,
-                                      int yEnd,
-                                      Color color,
-                                      int x,
-                                      int paintWidth, List<MarkSpot> spots) {
-      Color brighter = ColorUtil.shift(color, 0.75);
-
-      g.setColor(brighter);
-      //left
-      UIUtil.drawLine(g, x, yStart, x, yEnd - 1);
-      if (i == 0 || !isAdjacent(spots.get(i - 1), markSpot) || wider(markSpot, spots.get(i - 1))) {
-        //top decoration
-        UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
-      }
-    }
-
-
-    private boolean isAdjacent(MarkSpot markTop, MarkSpot markBottom) {
-      return markTop.yEnd >= markBottom.yStart;
-    }
-
-    private boolean wider(MarkSpot markTop, MarkSpot markBottom) {
-      final RangeHighlighter highlighterTop = markTop.highlighters[markTop.highlighters.length - 1];
-      final RangeHighlighter highlighterBottom = markBottom.highlighters[markBottom.highlighters.length - 1];
-      return !highlighterTop.isThinErrorStripeMark() && highlighterBottom.isThinErrorStripeMark();
-    }
-
-    public void doClick(final MouseEvent e, final int width) {
-      recalcMarkSpots();
-      RangeHighlighter marker = getNearestRangeHighlighter(e, width);
-      if (marker == null) return;
-      int offset = marker.getStartOffset();
-
-      final Document doc = myEditor.getDocument();
-      if (doc.getLineCount() > 0) {
-        // Necessary to expand folded block even if navigating just before one
-        // Very useful when navigating to first unused import statement.
-        int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
-        myEditor.getCaretModel().moveToOffset(lineEnd);
-      }
-
-      myEditor.getCaretModel().moveToOffset(offset);
-      myEditor.getSelectionModel().removeSelection();
-      ScrollingModel scrollingModel = myEditor.getScrollingModel();
-      scrollingModel.disableAnimation();
-      scrollingModel.scrollToCaret(ScrollType.CENTER);
-      scrollingModel.enableAnimation();
-      fireErrorMarkerClicked(marker, e);
-    }
-
-    @Nullable
-    private RangeHighlighter getNearestRangeHighlighter(final MouseEvent e, final int width) {
-      List<MarkSpot> nearestSpots = getNearestMarkSpots(e, width);
-      RangeHighlighter nearestMarker = null;
-      int yPos = 0;
-      for (MarkSpot markSpot : nearestSpots) {
-        for (RangeHighlighter highlighter : markSpot.highlighters) {
-          final int newYPos = visibleLineToYPosition(offsetToLine(highlighter.getStartOffset()));
-
-          if (nearestMarker == null || Math.abs(yPos - e.getY()) > Math.abs(newYPos - e.getY())) {
-            nearestMarker = highlighter;
-            yPos = newYPos;
-          }
-        }
-      }
-      return nearestMarker;
-    }
-
-    private List<MarkSpot> getNearestMarkSpots(final MouseEvent e, final double width) {
-      List<MarkSpot> nearestSpot = findSpots(e, width, null, myWideSpots);
-      nearestSpot = findSpots(e, width, nearestSpot, myNarrowSpots);
-      return nearestSpot == null ? Collections.<MarkSpot>emptyList() : nearestSpot;
-    }
-
-    private List<MarkSpot> findSpots(MouseEvent e, double width, List<MarkSpot> nearestSpot, List<MarkSpot> spots) {
-      for (MarkSpot markSpot : spots) {
-        if (markSpot.near(e, width)) {
-          if (nearestSpot == null) {
-            nearestSpot = new SmartList<MarkSpot>();
-          }
-          nearestSpot.add(markSpot);
-        }
-      }
-      return nearestSpot;
-    }
-
+    myEditor.getCaretModel().moveToOffset(offset);
+    myEditor.getSelectionModel().removeSelection();
+    ScrollingModel scrollingModel = myEditor.getScrollingModel();
+    scrollingModel.disableAnimation();
+    scrollingModel.scrollToCaret(ScrollType.CENTER);
+    scrollingModel.enableAnimation();
+    fireErrorMarkerClicked(marker, e);
   }
 
   public void setErrorStripeVisible(boolean val) {
@@ -523,6 +225,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myErrorStripeRenderer = renderer;
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
+
     myEditor.getVerticalScrollBar().repaint();
   }
 
@@ -539,41 +242,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     super.dispose();
   }
 
-  public void repaint() {
+  void repaint(int startOffset, int endOffset) {
     markDirtied();
-    EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-    myScrollBarHeight = scrollBar.getSize().height;
-    scrollBar.repaint();
+
+    int startY = offsetToYPosition(startOffset);
+    int endY = offsetToYPosition(endOffset) + getMinHeight();
+
+    myEditor.getVerticalScrollBar().repaint(0, startY, PREFERRED_WIDTH, endY - startY);
   }
 
-  private List<RangeHighlighter> getSortedHighlighters() {
-    if (myCachedSortedHighlighters == null) {
-      myCachedSortedHighlighters = new ArrayList<RangeHighlighter>();
-
-      for (RangeHighlighter highlighter : getAllHighlighters()) {
-        if (highlighter.getErrorStripeMarkColor() != null && highlighter.isValid()) {
-          myCachedSortedHighlighters.add(highlighter);
-        }
-      }
-
-      final MarkupModel docMarkup = getDocument().getMarkupModel(myEditor.getProject());
-      for (RangeHighlighter highlighter : docMarkup.getAllHighlighters()) {
-        if (highlighter.getErrorStripeMarkColor() != null && highlighter.isValid()) {
-          myCachedSortedHighlighters.add(highlighter);
-        }
-      }
-
-      if (!myCachedSortedHighlighters.isEmpty()) {
-        ContainerUtil.quickSort(myCachedSortedHighlighters, new Comparator<RangeHighlighter>() {
-          public int compare(final RangeHighlighter h1, final RangeHighlighter h2) {
-            return h1.getStartOffset() - h2.getStartOffset();
-          }
-        });
-      }
-    }
-    return myCachedSortedHighlighters;
-  }
-
+  private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(PREFERRED_WIDTH, ERROR_ICON_HEIGHT + 4);
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
     }
@@ -595,7 +273,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       try {
         if (myErrorStripeRenderer != null) {
-          myErrorStripeRenderer.paint(this, g, new Rectangle(5, 2, ERRORS_FOUND_ICON.getIconWidth(), ERRORS_FOUND_ICON.getIconHeight()));
+          myErrorStripeRenderer.paint(this, g, new Rectangle(5, 2, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
         }
       }
       finally {
@@ -605,7 +283,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(ERRORS_FOUND_ICON.getIconWidth() + 4, ERRORS_FOUND_ICON.getIconHeight() + 4);
+      return STRIPE_BUTTON_PREFERRED_SIZE;
     }
   }
 
@@ -677,7 +355,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
       try {
-        myMarkSpots.repaint(g, ERRORS_FOUND_ICON.getIconWidth() - 2);
+        Rectangle clipBounds = g.getClipBounds();
+        repaint(g, ERROR_ICON_WIDTH - 2, clipBounds);
       }
       finally {
         g.translate(-shift, 0);
@@ -688,6 +367,151 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     protected Color adjustColor(Color c) {
       return ColorUtil.withAlpha(super.adjustColor(c), 0.85);
+    }
+
+    private void repaint(final Graphics g, final int width, Rectangle clipBounds) {
+      Document document = myEditor.getDocument();
+      int startOffset = yPositionToOffset(clipBounds.y, true);
+      int endOffset = yPositionToOffset(clipBounds.y + clipBounds.height, false);
+
+      drawMarkup(g, width, startOffset, endOffset, EditorMarkupModelImpl.this);
+      drawMarkup(g, width, startOffset, endOffset, (MarkupModelEx)document.getMarkupModel(myEditor.getProject()));
+    }
+
+    private void drawMarkup(final Graphics g, final int width, int startOffset, int endOffset, MarkupModelEx markup) {
+      final Queue<PositionedStripe> thinEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
+        public int compare(PositionedStripe o1, PositionedStripe o2) {
+          return o1.yEnd - o2.yEnd;
+        }
+      });
+      final Queue<PositionedStripe> wideEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
+        public int compare(PositionedStripe o1, PositionedStripe o2) {
+          return o1.yEnd - o2.yEnd;
+        }
+      });
+      // sorted by layer
+      final List<PositionedStripe> thinStripes = new ArrayList<PositionedStripe>();
+      final List<PositionedStripe> wideStripes = new ArrayList<PositionedStripe>();
+      final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
+      final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
+
+      markup.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+        public boolean process(RangeHighlighterEx highlighter) {
+          Color color = highlighter.getErrorStripeMarkColor();
+          if (color == null) return true;
+          boolean isThin = highlighter.isThinErrorStripeMark();
+          int[] yStart = isThin ? thinYStart : wideYStart;
+          List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
+          Queue<PositionedStripe> ends = isThin ? thinEnds : wideEnds;
+
+          final int ys = offsetToYPosition(highlighter.getStartOffset());
+          int ye = offsetToYPosition(highlighter.getEndOffset());
+          if (ye - ys < getMinHeight()) ye = ys + getMinHeight();
+
+          yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, width, yStart[0]);
+
+          final int layer = highlighter.getLayer();
+
+          PositionedStripe stripe = null;
+          int i;
+          for (i = 0; i < stripes.size(); i++) {
+            PositionedStripe s = stripes.get(i);
+            if (s.layer == layer) {
+              stripe = s;
+              break;
+            }
+            if (s.layer < layer) {
+              break;
+            }
+          }
+          if (stripe == null) {
+            // started new stripe, draw previous above
+            if (yStart[0] != ys) {
+              if (!stripes.isEmpty()) {
+                PositionedStripe top = stripes.get(0);
+                drawSpot(g, width, top.thin, yStart[0], ys, top.color, true, true);
+              }
+              yStart[0] = ys;
+            }
+            stripe = new PositionedStripe(color, ys, ye, isThin, layer);
+            stripes.add(i, stripe);
+            ends.offer(stripe);
+          }
+          else {
+            // key changed, reinsert into queue
+            if (stripe.yEnd != ye) {
+              ends.remove(stripe);
+              stripe.yEnd = ye;
+              ends.offer(stripe);
+            }
+          }
+
+          return true;
+        }
+
+      });
+
+      drawStripesEndingBefore(Integer.MAX_VALUE, thinEnds, thinStripes, g, width, thinYStart[0]);
+      drawStripesEndingBefore(Integer.MAX_VALUE, wideEnds, wideStripes, g, width, wideYStart[0]);
+    }
+
+    private int drawStripesEndingBefore(int ys,
+                                        Queue<PositionedStripe> ends,
+                                        List<PositionedStripe> stripes,
+                                        Graphics g, int width, int yStart) {
+      while (!ends.isEmpty()) {
+        PositionedStripe endingStripe = ends.peek();
+        if (endingStripe.yEnd > ys) break;
+        ends.remove();
+
+        // check whether endingStripe got obscured in the range yStart..endingStripe.yEnd
+        int i = stripes.indexOf(endingStripe);
+        stripes.remove(i);
+        if (i == 0) {
+          // visible
+          drawSpot(g, width, endingStripe.thin, yStart, endingStripe.yEnd, endingStripe.color, true, true);
+          yStart = endingStripe.yEnd;
+        }
+      }
+      return yStart;
+    }
+
+    private void drawSpot(Graphics g,
+                          int width,
+                          boolean thinErrorStripeMark,
+                          int yStart,
+                          int yEnd,
+                          Color color,
+                          boolean drawTopDecoration,
+                          boolean drawBottomDecoration) {
+      int x = 3;
+      int paintWidth = width;
+      if (thinErrorStripeMark) {
+        paintWidth /= 2;
+        paintWidth += 1;
+        x += paintWidth + 1;
+      }
+      if (color == null) return;
+      g.setColor(color);
+      g.fillRect(x + 1, yStart, paintWidth - 2, yEnd - yStart+1);
+
+      Color brighter = color.brighter();
+      g.setColor(brighter);
+      //left decoration
+      UIUtil.drawLine(g, x, yStart, x, yEnd/* - 1*/);
+      if (drawTopDecoration) {
+        //top decoration
+        UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
+      }
+      Color darker = ColorUtil.shift(color, 0.75);
+
+      g.setColor(darker);
+      if (drawBottomDecoration) {
+        // bottom decoration
+        UIUtil.drawLine(g, x + 1, yEnd/* - 1*/, x + paintWidth - 2, yEnd/* - 1*/);   // large bottom to let overwrite by hl below
+      }
+      //right decoration
+      UIUtil.drawLine(g, x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd/* - 1*/);
     }
 
     // mouse events
@@ -707,7 +531,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     public void mouseReleased(MouseEvent e) {
     }
 
-    public int getWidth() {
+    private int getWidth() {
       return scrollbar.getWidth();
     }
 
@@ -717,7 +541,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (lineCount == 0) {
         return;
       }
-      myMarkSpots.doClick(e, getWidth());
+      doClick(e, getWidth());
     }
 
     public void mouseMoved(MouseEvent e) {
@@ -736,7 +560,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         return;
       }
 
-      if (myMarkSpots.showToolTipByMouseMove(e,getWidth())) {
+      if (showToolTipByMouseMove(e,getWidth())) {
         scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return;
       }
@@ -813,12 +637,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   public void markDirtied() {
-    myCachedSortedHighlighters = null;
-    myMarkSpots.clear();
-  }
-
-  public int getMinMarkHeight() {
-    return myMinMarkHeight;
+    myEditorScrollbarTop = -1;
+    myEditorSourceHeight = -1;
+    myEditorTargetHeight = -1;
   }
 
   public void setMinMarkHeight(final int minMarkHeight) {
@@ -859,5 +680,41 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
       return new LineTooltipRenderer(text, width);
     }
+  }
+
+  private int offsetToYPosition(int offset) {
+    int lineNumber = offsetToLine(offset);
+    if (myEditorScrollbarTop == -1 || myEditorTargetHeight == -1) {
+      recalcEditorDimensions();
+    }
+    if (myEditorSourceHeight < myEditorTargetHeight) {
+      return myEditorScrollbarTop + lineNumber * myEditor.getLineHeight();
+    }
+    else {
+      final int lineCount = myEditorSourceHeight / myEditor.getLineHeight();
+      return myEditorScrollbarTop + (int)((float)lineNumber / lineCount * myEditorTargetHeight);
+    }
+  }
+
+  private int yPositionToOffset(int y, boolean beginLine) {
+    if (myEditorScrollbarTop == -1 || myEditorTargetHeight == -1) {
+      recalcEditorDimensions();
+    }
+    final int safeY = Math.max(0, y - myEditorScrollbarTop);
+    VisualPosition visual;
+    if (myEditorSourceHeight < myEditorTargetHeight) {
+      visual = myEditor.xyToVisualPosition(new Point(0, safeY));
+    }
+    else {
+      float fraction = Math.max(0, Math.min(1, safeY / (float)myEditorTargetHeight));
+      final int lineCount = myEditorSourceHeight / myEditor.getLineHeight();
+      visual = new VisualPosition((int)(fraction * lineCount),0);
+    }
+    int line = myEditor.visualToLogicalPosition(visual).line;
+    Document document = myEditor.getDocument();
+    if (line < 0) return 0;
+    if (line >= document.getLineCount()) return document.getTextLength();
+
+    return beginLine ? document.getLineStartOffset(line) : document.getLineEndOffset(line);
   }
 }

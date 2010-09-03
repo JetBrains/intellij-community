@@ -1,29 +1,24 @@
 PsiJavaFile:DoIncomplete6.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiDoWhileStatement
+    PsiKeyword:do('do')
     PsiWhiteSpace(' ')
-    PsiDoWhileStatement
-      PsiKeyword:do('do')
-      PsiWhiteSpace(' ')
-      PsiExpressionStatement
-        PsiMethodCallExpression:foo()
-          PsiReferenceExpression:foo
-            PsiReferenceParameterList
-              <empty list>
-            PsiIdentifier:foo('foo')
-          PsiExpressionList
-            PsiJavaToken:LPARENTH('(')
-            PsiJavaToken:RPARENTH(')')
-        PsiJavaToken:SEMICOLON(';')
-      PsiWhiteSpace(' ')
-      PsiKeyword:while('while')
-      PsiJavaToken:LPARENTH('(')
-      PsiReferenceExpression:cond
-        PsiReferenceParameterList
-          <empty list>
-        PsiIdentifier:cond('cond')
-      PsiJavaToken:RPARENTH(')')
-      PsiErrorElement:';' expected
+    PsiExpressionStatement
+      PsiMethodCallExpression:foo()
+        PsiReferenceExpression:foo
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:foo('foo')
+        PsiExpressionList
+          PsiJavaToken:LPARENTH('(')
+          PsiJavaToken:RPARENTH(')')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiKeyword:while('while')
+    PsiJavaToken:LPARENTH('(')
+    PsiReferenceExpression:cond
+      PsiReferenceParameterList
         <empty list>
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+      PsiIdentifier:cond('cond')
+    PsiJavaToken:RPARENTH(')')
+    PsiErrorElement:';' expected
+      <empty list>

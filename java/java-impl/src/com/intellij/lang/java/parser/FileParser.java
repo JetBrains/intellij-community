@@ -33,15 +33,11 @@ import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
 
 
 public class FileParser {
-  public interface TopLevelDeclarationParser {
-    @Nullable PsiBuilder.Marker parse(PsiBuilder builder);
-  }
-
   private static final TokenSet IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
     ElementType.MODIFIER_BIT_SET,
     TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 
-  private static final TopLevelDeclarationParser TOP_LEVEL_DECLARATION_PARSER = new TopLevelDeclarationParser() {
+  private static final JavaParserUtil.MarkingParserWrapper TOP_LEVEL_DECLARATION_PARSER = new JavaParserUtil.MarkingParserWrapper() {
     public PsiBuilder.Marker parse(final PsiBuilder builder) {
       return DeclarationParser.parse(builder, DeclarationParser.Context.FILE);
     }
@@ -54,7 +50,7 @@ public class FileParser {
   }
 
   public static void parseFile(final PsiBuilder builder, final TokenSet importListStoppers,
-                               final TopLevelDeclarationParser declarationParser, final String errorMessage) {
+                               final JavaParserUtil.MarkingParserWrapper declarationParser, final String errorMessage) {
     parsePackageStatement(builder);
 
     final Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);

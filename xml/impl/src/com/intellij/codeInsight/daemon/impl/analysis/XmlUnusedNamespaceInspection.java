@@ -52,7 +52,6 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
-
         if (!attribute.isNamespaceDeclaration()) {
           checkUnusedLocations(attribute, holder);
           return;
@@ -84,6 +83,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
           }
           else {
             for (PsiReference reference : getLocationReferences(namespace, parent)) {
+              if (!XmlHighlightVisitor.hasBadResolve(reference, false))
               holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
                                                  new RemoveNamespaceDeclarationFix(declaredPrefix));
             }
@@ -139,10 +139,13 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
           PsiReference reference = references[i];
           String ns = getNamespaceFromReference(reference);
           if (ArrayUtil.indexOf(attribute.getParent().knownNamespaces(), ns) == -1) {
+            if (!XmlHighlightVisitor.hasBadResolve(reference, false))
             holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
                                                new RemoveNamespaceLocationFix(ns));
             if (i + 1 < referencesLength) {
-              holder.registerProblemForReference(references[i + 1], ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
+              PsiReference nextRef = references[i + 1];
+              if (!XmlHighlightVisitor.hasBadResolve(nextRef, false))
+              holder.registerProblemForReference(nextRef, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
                                                  new RemoveNamespaceLocationFix(ns));
             }
           }

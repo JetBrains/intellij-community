@@ -16,8 +16,12 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.codeInsight.CodeSmellInfo;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +41,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.MessageCategory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -131,24 +136,12 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     return result;
   }
 
-  private List<CodeSmellInfo> findCodeSmells(final PsiFile psiFile, final ProgressIndicator progress, final Document document) {
-
+  private List<CodeSmellInfo> findCodeSmells(@NotNull PsiFile psiFile, final ProgressIndicator progress, @NotNull Document document) {
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
 
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), true);
-    action1.doCollectInformation(progress);
-
-    collectErrorsAndWarnings(action1.getHighlights(), result, document);
-
-    PostHighlightingPass action2 = new PostHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength());
-    action2.doCollectInformation(progress);
-
-    collectErrorsAndWarnings(action2.getHighlights(), result, document);
-
-    LocalInspectionsPass action3 = new LocalInspectionsPass(psiFile, document, 0, psiFile.getTextLength());
-    action3.doCollectInformation(progress);
-
-    collectErrorsAndWarnings(action3.getHighlights(), result, document);
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, progress);
+    collectErrorsAndWarnings(infos, result, document);
 
     return result;
 

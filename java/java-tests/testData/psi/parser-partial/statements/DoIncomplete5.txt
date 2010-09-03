@@ -1,35 +1,30 @@
 PsiJavaFile:DoIncomplete5.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiDoWhileStatement
+    PsiKeyword:do('do')
     PsiWhiteSpace(' ')
-    PsiDoWhileStatement
-      PsiKeyword:do('do')
-      PsiWhiteSpace(' ')
-      PsiExpressionStatement
-        PsiMethodCallExpression:foo()
-          PsiReferenceExpression:foo
-            PsiReferenceParameterList
-              <empty list>
-            PsiIdentifier:foo('foo')
-          PsiExpressionList
-            PsiJavaToken:LPARENTH('(')
-            PsiJavaToken:RPARENTH(')')
-        PsiJavaToken:SEMICOLON(';')
-      PsiWhiteSpace(' ')
-      PsiKeyword:while('while')
-      PsiJavaToken:LPARENTH('(')
-      PsiErrorElement:Expression expected
-        <empty list>
-    PsiWhiteSpace('\n ')
     PsiExpressionStatement
-      PsiMethodCallExpression:g()
-        PsiReferenceExpression:g
+      PsiMethodCallExpression:foo()
+        PsiReferenceExpression:foo
           PsiReferenceParameterList
             <empty list>
-          PsiIdentifier:g('g')
+          PsiIdentifier:foo('foo')
         PsiExpressionList
           PsiJavaToken:LPARENTH('(')
           PsiJavaToken:RPARENTH(')')
       PsiJavaToken:SEMICOLON(';')
     PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+    PsiKeyword:while('while')
+    PsiJavaToken:LPARENTH('(')
+    PsiErrorElement:Expression expected
+      <empty list>
+  PsiWhiteSpace('\n ')
+  PsiExpressionStatement
+    PsiMethodCallExpression:g()
+      PsiReferenceExpression:g
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:g('g')
+      PsiExpressionList
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+    PsiJavaToken:SEMICOLON(';')

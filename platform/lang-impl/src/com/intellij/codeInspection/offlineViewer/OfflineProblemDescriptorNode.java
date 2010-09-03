@@ -74,13 +74,18 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
           PsiFile containingFile = psiElement.getContainingFile();
           final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile, false);
           final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)myTool).getTool();
-          final PsiElementVisitor visitor = localInspectionTool.buildVisitor(holder, false);
+          final int startOffset = psiElement.getTextRange().getStartOffset();
+          final int endOffset = psiElement.getTextRange().getEndOffset();
+          LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
+          final PsiElementVisitor visitor = localInspectionTool.buildVisitor(holder, false, session);
+          localInspectionTool.inspectionStarted(session);
           final PsiElement[] elementsInRange = LocalInspectionsPass.getElementsIntersectingRange(containingFile,
-                                                                                                 psiElement.getTextRange().getStartOffset(),
-                                                                                                 psiElement.getTextRange().getEndOffset());
+                                                                                                 startOffset,
+                                                                                                 endOffset);
           for (PsiElement el : elementsInRange) {
             el.accept(visitor);
           }
+          localInspectionTool.inspectionFinished(session);
           if (holder.hasResults()) {
             final List<ProblemDescriptor> list = holder.getResults();
             final int idx = offlineProblemDescriptor.getProblemIndex();

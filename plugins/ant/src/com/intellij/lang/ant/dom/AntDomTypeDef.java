@@ -51,7 +51,7 @@ public abstract class AntDomTypeDef extends AntDomCustomClasspathComponent{
     return CustomAntElementsRegistry.getInstance(getAntProject()).hasTypeLoadingErrors(this);
   }
   
-  private boolean isTask(final Class clazz) {
+  public boolean isTask(final Class clazz) {
     if ("taskdef".equals(getXmlTag().getName())) { // in taskdef, the adapter is always set to Task
       return true;
     }

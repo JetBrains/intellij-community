@@ -30,10 +30,8 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private final boolean myGoForward;
@@ -53,60 +51,59 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-    List<HighlightInfo> highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), severityRegistrar.getSeverityByIndex(0), project);
-    if (highlights.isEmpty()){
-      showMessageWhenNoHighlights(project, file, editor);
-      return;
-    }
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    if (settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST) {
-      for (int idx = severityRegistrar.getSeveritiesCount() - 1; idx >= 0; idx--) {
-        final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
-        List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), minSeverity, project);
-        if (!errors.isEmpty()) {
-          highlights = errors;
-          break;
-        }
+    int maxSeverity = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST ? severityRegistrar.getSeveritiesCount() - 1 : 0;
+
+    for (int idx = maxSeverity; idx >= 0; idx--) {
+      final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
+      HighlightInfo infoToGo = findInfo(project, editor, caretOffset, minSeverity);
+      if (infoToGo != null) {
+        navigateToError(project, editor, infoToGo);
+        return;
       }
     }
-
-    HighlightInfo infoToGo = findInfoToGo(editor, caretOffset, highlights, true);
-    if (infoToGo == null) {
-      infoToGo = findInfoToGo(editor, caretOffset, highlights, false);
-    }
-    if (infoToGo != null) {
-      navigateToError(project, editor, infoToGo);
-    }
+    showMessageWhenNoHighlights(project, file, editor);
   }
 
-  @Nullable
-  private HighlightInfo findInfoToGo(Editor editor, int caretOffset, List<HighlightInfo> highlights, boolean skip) {
-    int offsetToGo = myGoForward ? Integer.MAX_VALUE : Integer.MIN_VALUE;
-    int offsetToGoIfNoLuck = offsetToGo;
-    HighlightInfo infoToGo = null;
-    HighlightInfo infoToGoIfNoLuck = null;
-    int caretOffsetIfNoLuck = myGoForward ? -1 : editor.getDocument().getTextLength();
-    for (HighlightInfo info : highlights) {
-      if (skip) {
-        if (SeverityRegistrar.skipSeverity(info.getSeverity())) continue;
+  private HighlightInfo findInfo(Project project, Editor editor, final int caretOffset, HighlightSeverity minSeverity) {
+    final Document document = editor.getDocument();
+    final HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
+    final int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
+
+    DaemonCodeAnalyzerImpl.processHighlights(document, project, minSeverity, 0, document.getTextLength(), new Processor<HighlightInfo>() {
+      public boolean process(HighlightInfo info) {
+        int startOffset = getNavigationPositionFor(info, document);
+        if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
+          infoToGo[0][0] = getBetterInfoThan(infoToGo[0][0], caretOffset, startOffset, info);
+          infoToGo[1][0] = getBetterInfoThan(infoToGo[1][0], caretOffsetIfNoLuck, startOffset, info);
+        }
+        infoToGo[0][1] = getBetterInfoThan(infoToGo[0][1], caretOffset, startOffset, info);
+        infoToGo[1][1] = getBetterInfoThan(infoToGo[1][1], caretOffsetIfNoLuck, startOffset, info);
+        return true;
       }
-      int startOffset = getNavigationPositionFor(info, editor.getDocument());
-      if (isBetter(caretOffset, offsetToGo, startOffset)) {
-        offsetToGo = startOffset;
-        infoToGo = info;
-      }
-      if (isBetter(caretOffsetIfNoLuck, offsetToGoIfNoLuck, startOffset)) {
-        offsetToGoIfNoLuck = startOffset;
-        infoToGoIfNoLuck = info;
-      }
+    });
+    if (infoToGo[0][0] == null) infoToGo[0][0] = infoToGo[1][0];
+    if (infoToGo[0][1] == null) infoToGo[0][1] = infoToGo[1][1];
+    if (infoToGo[0][0] == null) infoToGo[0][0] = infoToGo[0][1];
+    return infoToGo[0][0];
+  }
+
+  private HighlightInfo getBetterInfoThan(HighlightInfo infoToGo, int caretOffset, int startOffset, HighlightInfo info) {
+    if (isBetterThan(infoToGo, caretOffset, startOffset)) {
+      infoToGo = info;
     }
-    if (infoToGo == null) infoToGo = infoToGoIfNoLuck;
     return infoToGo;
   }
 
-  private boolean isBetter(int caretOffset, int offsetToGo, int startOffset) {
-    return myGoForward ? startOffset > caretOffset && startOffset < offsetToGo
-                         : startOffset < caretOffset && startOffset > offsetToGo;
+  private boolean isBetterThan(HighlightInfo oldInfo, int caretOffset, int newOffset) {
+    if (oldInfo == null) return true;
+    int oldOffset = getNavigationPositionFor(oldInfo, oldInfo.highlighter.getDocument());
+    if (myGoForward) {
+      return caretOffset < oldOffset != caretOffset < newOffset ? caretOffset < newOffset : newOffset < oldOffset;
+    }
+    else {
+      return caretOffset <= oldOffset != caretOffset <= newOffset ? caretOffset > newOffset : newOffset > oldOffset;
+    }
   }
 
   static void showMessageWhenNoHighlights(Project project, PsiFile file, Editor editor) {
@@ -121,7 +118,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     int oldOffset = editor.getCaretModel().getOffset();
 
     final int offset = getNavigationPositionFor(info, editor.getDocument());
-    final int endOffset = info.highlighter.getEndOffset();
+    final int endOffset = info.getActualEndOffset();
 
     final ScrollingModel scrollingModel = editor.getScrollingModel();
     if (offset != oldOffset) {
@@ -146,12 +143,12 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   }
 
   private static int getNavigationPositionFor(HighlightInfo info, Document document) {
-    int start = info.highlighter.getStartOffset();
+    int start = info.getActualStartOffset();
     if (start >= document.getTextLength()) return document.getTextLength();
     char c = document.getCharsSequence().charAt(start);
     int shift = info.isAfterEndOfLine && c != '\n' ? 1 : info.navigationShift;
 
-    int offset = info.highlighter.getStartOffset() + shift;
+    int offset = info.getActualStartOffset() + shift;
     return Math.min(offset, document.getTextLength());
   }
 }

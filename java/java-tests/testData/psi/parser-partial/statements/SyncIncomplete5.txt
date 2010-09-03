@@ -1,22 +1,17 @@
 PsiJavaFile:SyncIncomplete5.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace(' ')
-    PsiSynchronizedStatement
-      PsiKeyword:synchronized('synchronized')
-      PsiJavaToken:LPARENTH('(')
-      PsiErrorElement:Expression expected
-        <empty list>
-    PsiWhiteSpace('\n ')
-    PsiExpressionStatement
-      PsiMethodCallExpression:foo()
-        PsiReferenceExpression:foo
-          PsiReferenceParameterList
-            <empty list>
-          PsiIdentifier:foo('foo')
-        PsiExpressionList
-          PsiJavaToken:LPARENTH('(')
-          PsiJavaToken:RPARENTH(')')
-      PsiJavaToken:SEMICOLON(';')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+  PsiSynchronizedStatement
+    PsiKeyword:synchronized('synchronized')
+    PsiJavaToken:LPARENTH('(')
+    PsiErrorElement:Expression expected
+      <empty list>
+  PsiWhiteSpace('\n ')
+  PsiExpressionStatement
+    PsiMethodCallExpression:foo()
+      PsiReferenceExpression:foo
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:foo('foo')
+      PsiExpressionList
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+    PsiJavaToken:SEMICOLON(';')

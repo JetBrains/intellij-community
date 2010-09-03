@@ -1,16 +1,11 @@
 PsiJavaFile:WhileIncomplete4.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace(' ')
-    PsiWhileStatement
-      PsiKeyword:while('while')
-      PsiJavaToken:LPARENTH('(')
-      PsiReferenceExpression:cond
-        PsiReferenceParameterList
-          <empty list>
-        PsiIdentifier:cond('cond')
-      PsiJavaToken:RPARENTH(')')
-      PsiErrorElement:Statement expected
+  PsiWhileStatement
+    PsiKeyword:while('while')
+    PsiJavaToken:LPARENTH('(')
+    PsiReferenceExpression:cond
+      PsiReferenceParameterList
         <empty list>
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+      PsiIdentifier:cond('cond')
+    PsiJavaToken:RPARENTH(')')
+    PsiErrorElement:Statement expected
+      <empty list>

@@ -35,7 +35,6 @@ import java.util.List;
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
   private static final int[] EXCEPT_OVERRIDDEN = {
     Pass.UPDATE_FOLDING,
-    Pass.UPDATE_VISIBLE,
     Pass.POPUP_HINTS,
     Pass.UPDATE_ALL,
     Pass.POST_UPDATE_ALL,
@@ -99,26 +98,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   @NotNull
   public TextEditorHighlightingPass[] createPassesForVisibleArea() {
     List<TextEditorHighlightingPass> passes = getPasses(EXCEPT_VISIBLE);
-    int updateAllIndex = -1;
-    int updateVisibleIndex = -1;
-    for (int i = 0, passesSize = passes.size(); i < passesSize; i++) {
-      TextEditorHighlightingPass pass = passes.get(i);
-      if (pass instanceof GeneralHighlightingPass) {
-        if (pass.getId() == Pass.UPDATE_ALL) updateAllIndex = i;
-        if (pass.getId() == Pass.UPDATE_VISIBLE) updateVisibleIndex = i;
-      }
-    }
-
-    if (updateVisibleIndex != -1 && updateAllIndex == -1) {
-      // ok
-    }
-    else if (updateVisibleIndex == -1 && updateAllIndex != -1) {
-      // use updateAll pass instead of updateVisible
-    }
-    else if (updateVisibleIndex != -1 && updateAllIndex != -1) {
-      // run only updateVisible, not both
-      passes.remove(updateAllIndex);
-    }
     return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(new TextEditorHighlightingPass[passes.size()]);
   }
 

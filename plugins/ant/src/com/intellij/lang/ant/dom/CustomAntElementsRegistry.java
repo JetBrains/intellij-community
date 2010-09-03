@@ -85,13 +85,18 @@ public class CustomAntElementsRegistry {
 
   @NotNull
   public Set<XmlName> getCompletionVariants(AntDomElement parentElement) {
+    if (parentElement instanceof AntDomCustomElement) {
+      // this case is already handled in AntDomExtender when defining children
+      return Collections.emptySet(); 
+    }
     final Set<XmlName> result = new HashSet<XmlName>();
     
     final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
     final AntDomMacroDef restrictToMacroDef = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getFirst() : null;
     final AntDomScriptDef restrictToScriptDef = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getSecond() : null;
-    
-    for (XmlName xmlName : myCustomElements.keySet()) {
+    final boolean parentIsDataType = parentElement.isDataType();
+
+    for (final XmlName xmlName : myCustomElements.keySet()) {
       final AntDomNamedElement declaringElement = myDeclarations.get(xmlName);
       if (declaringElement instanceof AntDomMacrodefElement) {
         if (restrictToMacroDef == null || !restrictToMacroDef.equals(declaringElement.getParentOfType(AntDomMacroDef.class, true))) {
@@ -101,6 +106,25 @@ public class CustomAntElementsRegistry {
       else if (declaringElement instanceof AntDomScriptdefElement) {
         if (restrictToScriptDef == null || !restrictToScriptDef.equals(declaringElement.getParentOfType(AntDomScriptDef.class, true))) {
           continue;
+        }
+      }
+
+      if (declaringElement != null) {
+        if (declaringElement.equals(restrictToMacroDef) || declaringElement.equals(restrictToScriptDef)) {
+          continue;
+        }
+      }
+
+      if (parentIsDataType) {
+        if (declaringElement instanceof AntDomMacroDef || declaringElement instanceof AntDomScriptDef || declaringElement instanceof AntDomTaskdef) {
+          continue;
+        }
+        if (declaringElement instanceof AntDomTypeDef) {
+          final AntDomTypeDef typedef = (AntDomTypeDef)declaringElement;
+          final Class clazz = myCustomElements.get(xmlName);
+          if (clazz != null && typedef.isTask(clazz)) {
+            continue;                                                           
+          }
         }
       }
       

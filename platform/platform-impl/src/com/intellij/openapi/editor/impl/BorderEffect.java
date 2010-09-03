@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -66,7 +67,7 @@ public class BorderEffect {
 
   public void paintHighlighters(RangeHighlighter[] highlighterList) {
     for (RangeHighlighter aHighlighterList : highlighterList) {
-      RangeHighlighterImpl rangeHighlighter = (RangeHighlighterImpl)aHighlighterList;
+      RangeHighlighterEx rangeHighlighter = (RangeHighlighterEx)aHighlighterList;
       if (rangeHighlighter.isValid()) {
         TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
         if (isBorder(textAttributes) && intersectsRange(rangeHighlighter)) paintBorder(rangeHighlighter);
@@ -80,7 +81,7 @@ public class BorderEffect {
            EffectType.BOXED == textAttributes.getEffectType();
   }
 
-  private void paintBorder(RangeHighlighterImpl rangeHighlighter) {
+  private void paintBorder(RangeHighlighterEx rangeHighlighter) {
     paintBorder(rangeHighlighter.getTextAttributes().getEffectColor(),
                 rangeHighlighter.getAffectedAreaStartOffset(),
                 rangeHighlighter.getAffectedAreaEndOffset());
@@ -90,7 +91,7 @@ public class BorderEffect {
     paintBorder(myGraphics, myEditor, startOffset, endOffset, color);
   }
 
-  private boolean intersectsRange(RangeHighlighterImpl rangeHighlighter) {
+  private boolean intersectsRange(RangeHighlighterEx rangeHighlighter) {
     return myRange.contains(rangeHighlighter.getAffectedAreaStartOffset()) ||
            myRange.contains(rangeHighlighter.getAffectedAreaEndOffset());
   }
@@ -102,7 +103,7 @@ public class BorderEffect {
                                                highlighter.createIterator(startOffset),
                                                BOX_FILTER);
     iterator.init(myRange);
-    for (; !iterator.atEnd();) {
+    while (!iterator.atEnd()) {
       iterator.advance();
       paintBorder(myGraphics, myEditor, iterator.getStart(), iterator.getEnd(),
                   iterator.getTextAttributes().getEffectColor());

@@ -4,7 +4,7 @@
   <name>VfsSample</name>
 
   <!-- Description -->
-  <description>An example of using IDEA's virtual file system, dynamically keeps the count of Java files in sourcepaths</description>
+  <description>This plugin monitors the number of Java files in sourcepaths.</description>
 
   <!-- Plugin version -->
   <version>1.0</version>
@@ -13,15 +13,16 @@
   <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
 
   <!-- Minimum IDEA build number with which the plugin is compatible -->
+    <!--
   <idea-version since-build="2000"/>
-
+       -->
   <!-- Plugin's application components -->
   <project-components>
     <component>
       <!-- Component's implementation class -->
-      <implementation-class>com.intellij.openapi.samples.VfsSamplePlugin</implementation-class>
+      <implementation-class> myVFS.VfsSamplePlugin</implementation-class>
       <!-- Component's interface class -->
-      <interface-class>com.intellij.openapi.samples.VfsSamplePlugin</interface-class>
+      <interface-class> myVFS.VfsSamplePlugin</interface-class>
     </component>
   </project-components>
 </idea-plugin>
