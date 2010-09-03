@@ -43,8 +43,12 @@ public class EnterInLineCommentHandler implements EnterHandlerDelegate {
         final int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
 
         if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
-          assert commenter.getLineCommentPrefix() != null:"Line Comment type is set but Line Comment Prefix is null!";
-          document.insertString(caretOffset, commenter.getLineCommentPrefix() + " ");
+          String prefix = commenter.getLineCommentPrefix();
+          assert prefix != null: "Line Comment type is set but Line Comment Prefix is null!";
+          if (text.charAt(caretOffset) != ' ') {
+            prefix += " ";
+          }
+          document.insertString(caretOffset, prefix);
           return Result.Default;
         }
       }
