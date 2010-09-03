@@ -41,7 +41,7 @@ public abstract class SwingActionWrapper<T extends JComponent> implements Action
   }
 
   @Nullable
-  private static Object getKeyForActionMap(JComponent component, KeyStroke keyStroke) {
+  public static Object getKeyForActionMap(JComponent component, KeyStroke keyStroke) {
     for (int i = 0; i < 3; i++) {
       final InputMap inputMap = component.getInputMap(i);
       if (inputMap == null) continue;

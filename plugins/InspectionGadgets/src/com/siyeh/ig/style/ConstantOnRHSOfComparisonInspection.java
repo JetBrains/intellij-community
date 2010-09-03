@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,27 +32,32 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "ConstantOnRightSideOfComparison";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "constant.on.rhs.of.comparison.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "constant.on.rhs.of.comparison.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ConstantOnRHSOfComparisonVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new SwapComparisonFix();
     }
@@ -61,9 +66,10 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
 
         @NotNull
         public String getName() {
-            return InspectionGadgetsBundle.message("flip.comparision.quickfix");
+            return InspectionGadgetsBundle.message("flip.comparison.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiBinaryExpression expression =
@@ -106,7 +112,7 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
             registerError(expression);
         }
 
-        private boolean isConstantExpression(PsiExpression expression) {
+        private static boolean isConstantExpression(PsiExpression expression) {
             return ExpressionUtils.isNullLiteral(expression) ||
                     PsiUtil.isConstantExpression(expression);
         }

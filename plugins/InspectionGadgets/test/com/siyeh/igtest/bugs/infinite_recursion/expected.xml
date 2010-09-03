@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>InfiniteRecursion.java</file>
+    <line>21</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Infinite recursion</problem_class>
+    <description>Method &lt;code&gt;baz()&lt;/code&gt; recurses infinitely, and can only end by throwing an exception #loc</description>
+  </problem>
+
+  <problem>
+    <file>InfiniteRecursion.java</file>
+    <line>52</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Infinite recursion</problem_class>
+    <description>Method &lt;code&gt;barangoo()&lt;/code&gt; recurses infinitely, and can only end by throwing an exception #loc
+    </description>
+  </problem>
+
+  <problem>
+    <file>InfiniteRecursion.java</file>
+    <line>61</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Infinite recursion</problem_class>
+    <description>Method &lt;code&gt;bazoomer()&lt;/code&gt; recurses infinitely, and can only end by throwing an exception #loc
+    </description>
+  </problem>
+
+  <problem>
+    <file>InfiniteRecursion.java</file>
+    <line>78</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Infinite recursion</problem_class>
+    <description>Method &lt;code&gt;foobarangus()&lt;/code&gt; recurses infinitely, and can only end by throwing an exception #loc
+    </description>
+  </problem>
+
+
+  <problem>
+    <file>InfiniteRecursion.java</file>
+    <line>126</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Infinite recursion</problem_class>
+    <description>Method &lt;code&gt;foo1()&lt;/code&gt; recurses infinitely, and can only end by throwing an exception #loc</description>
+  </problem>
+
+  <problem>
+    <file>InfiniteRecursion.java</file>
+    <line>132</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Infinite recursion</problem_class>
+    <description>Method &lt;code&gt;foo2()&lt;/code&gt; recurses infinitely, and can only end by throwing an exception #loc</description>
+  </problem>
+
+
+
+
+  <problem>
+    <file>InfiniteRecursion.java</file>
+    <line>138</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Infinite recursion</problem_class>
+    <description>Method &lt;code&gt;bar1()&lt;/code&gt; recurses infinitely, and can only end by throwing an exception #loc</description>
+  </problem>
+
+
+</problems>

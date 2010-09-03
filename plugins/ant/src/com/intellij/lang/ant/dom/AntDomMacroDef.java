@@ -15,10 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.SubTag;
-import com.intellij.util.xml.SubTagList;
+import com.intellij.util.xml.*;
 
 import java.util.List;
 
@@ -38,4 +35,8 @@ public abstract class AntDomMacroDef extends AntDomNamedElement{
   
   @SubTag("text")
   public abstract AntDomMacrodefText getTextElement();
+
+  @SubTag("sequential")
+  @Required
+  public abstract AntDomSequentialTask getMacroBody();
 }

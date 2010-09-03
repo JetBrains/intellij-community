@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.finalization;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 class CallToSuperFinalizeVisitor extends JavaRecursiveElementVisitor{
@@ -33,12 +33,8 @@ class CallToSuperFinalizeVisitor extends JavaRecursiveElementVisitor{
     @Override
     public void visitIfStatement(PsiIfStatement statement) {
         final PsiExpression condition = statement.getCondition();
-        final Project project = statement.getProject();
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiConstantEvaluationHelper constantEvaluationHelper =
-                psiFacade.getConstantEvaluationHelper();
         final Object result =
-                    constantEvaluationHelper.computeConstantExpression(condition);
+                    ExpressionUtils.computeConstantExpression(condition);
         if(result != null && result.equals(Boolean.FALSE)){
             return;
         }

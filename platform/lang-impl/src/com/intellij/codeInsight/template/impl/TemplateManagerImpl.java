@@ -55,7 +55,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public void disposeComponent() {
     for (Disposable disposable : myDisposables) {
-      disposable.dispose();
+      Disposer.dispose(disposable);
     }
     myDisposables.clear();
   }
@@ -91,7 +91,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   private void disposeState(final TemplateState tState) {
-    tState.dispose();
+    Disposer.dispose(tState);
     myDisposables.remove(tState);
   }
 

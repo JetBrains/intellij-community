@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -56,5 +57,12 @@ public class ClassMappingNameConverter extends ResolvingConverter.StringConverte
     PsiClassType classType = PsiTypesUtil.getClassType(psiClass);
     SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType);
     return Arrays.asList(info.names);
+  }
+
+  @Override
+  public PsiElement resolve(String o, ConvertContext context) {
+    DomElement parent = context.getInvocationElement().getParent();
+    assert parent != null;
+    return parent.getXmlElement();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FinalUtils {
 
@@ -437,11 +436,8 @@ public class FinalUtils {
             if (condition != null) {
                 condition.accept(this);
             }
-            final Project project = statement.getProject();
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiConstantEvaluationHelper helper =
-                    psiFacade.getConstantEvaluationHelper();
-            final Object constant = helper.computeConstantExpression(condition);
+            final Object constant =
+                    ExpressionUtils.computeConstantExpression(condition);
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiStatement elseBranch = statement.getElseBranch();
             if (constant == Boolean.TRUE) {

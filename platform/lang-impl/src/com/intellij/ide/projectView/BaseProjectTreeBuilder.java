@@ -144,7 +144,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       TreeNode childAt = node.getChildAt(i);
       DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)childAt;
       if (defaultMutableTreeNode.getUserObject() instanceof AbstractTreeNode) {
-        ProjectViewNode treeNode = (ProjectViewNode)defaultMutableTreeNode.getUserObject();
+        AbstractTreeNode treeNode = (AbstractTreeNode)defaultMutableTreeNode.getUserObject();
         result.add(treeNode);
       }
       else if (defaultMutableTreeNode.getUserObject() instanceof FavoritesTreeNodeDescriptor) {

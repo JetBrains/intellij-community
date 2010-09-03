@@ -854,7 +854,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void assertIsDispatchThread(String message) {
-    if (myTestModeFlag || myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
+    if (myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
     final Thread currentThread = Thread.currentThread();
     if (ourDispatchThread == currentThread) return;
 

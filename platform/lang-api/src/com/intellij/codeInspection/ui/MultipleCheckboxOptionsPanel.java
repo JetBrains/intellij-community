@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.ui;
+package com.intellij.codeInspection.ui;
 
-import com.siyeh.ig.BaseInspection;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import org.jetbrains.annotations.NonNls;
 
-import javax.swing.ButtonModel;
-import javax.swing.JCheckBox;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.lang.reflect.Field;
-
-import org.jetbrains.annotations.NonNls;
 
 public class MultipleCheckboxOptionsPanel extends JPanel {
 
-    private final BaseInspection owner;
+    private final InspectionProfileEntry owner;
 
-    public MultipleCheckboxOptionsPanel(BaseInspection owner) {
+    public MultipleCheckboxOptionsPanel(InspectionProfileEntry owner) {
         super(new GridBagLayout());
         this.owner = owner;
     }
@@ -62,10 +57,10 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         add(checkBox, constraints);
     }
 
-    private static boolean getPropertyValue(BaseInspection owner,
+    private static boolean getPropertyValue(InspectionProfileEntry owner,
                                             String property) {
         try {
-            final Class<? extends BaseInspection> aClass = owner.getClass();
+            final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
             final Field field = aClass.getField(property);
             return field.getBoolean(owner);
         } catch (IllegalAccessException ignored) {
@@ -76,11 +71,11 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
     }
 
     private static class CheckboxChangeListener implements ChangeListener {
-        private final BaseInspection owner;
+        private final InspectionProfileEntry owner;
         private final String property;
         private final ButtonModel model;
 
-        CheckboxChangeListener(BaseInspection owner, String property,
+        CheckboxChangeListener(InspectionProfileEntry owner, String property,
                                ButtonModel model) {
             this.owner = owner;
             this.property = property;
@@ -91,11 +86,11 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
             setPropertyValue(owner, property, model.isSelected());
         }
 
-        private static void setPropertyValue(BaseInspection owner,
+        private static void setPropertyValue(InspectionProfileEntry owner,
                                              String property,
                                              boolean selected) {
             try {
-                final Class<? extends BaseInspection> aClass = owner.getClass();
+                final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
                 final Field field = aClass.getField(property);
                 field.setBoolean(owner, selected);
             } catch (IllegalAccessException ignored) {
