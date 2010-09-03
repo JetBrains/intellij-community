@@ -151,8 +151,16 @@ def _update_function(oldfunc, newfunc):
     """Update a function object."""
     oldfunc.__doc__ = newfunc.__doc__
     oldfunc.__dict__.update(newfunc.__dict__)
-    oldfunc.__code__ = newfunc.__code__
-    oldfunc.__defaults__ = newfunc.__defaults__
+    
+    try:
+        oldfunc.__code__ = newfunc.__code__
+    except AttributeError:
+        oldfunc.func_code = newfunc.func_code
+    try:
+        oldfunc.__defaults__ = newfunc.__defaults__
+    except AttributeError:
+        oldfunc.func_defaults = newfunc.func_defaults
+        
     return oldfunc
 
 
