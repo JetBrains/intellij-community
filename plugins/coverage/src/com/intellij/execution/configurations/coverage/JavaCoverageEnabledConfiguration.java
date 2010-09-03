@@ -63,7 +63,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
   @Nullable
   public static JavaCoverageEnabledConfiguration getFrom(final ModuleBasedConfiguration configuration) {
-    final CoverageEnabledConfiguration coverageEnabledConfiguration = get(configuration);
+    final CoverageEnabledConfiguration coverageEnabledConfiguration = getOrCreate(configuration);
     if (coverageEnabledConfiguration instanceof JavaCoverageEnabledConfiguration) {
       return (JavaCoverageEnabledConfiguration)coverageEnabledConfiguration;
     }

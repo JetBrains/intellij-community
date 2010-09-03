@@ -124,7 +124,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   @Override
   public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> boolean isListenerDisabled(T configuration, Object listener) {
     if (listener instanceof CoverageListener) {
-      final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
+      final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
       return !(coverageEnabledConfiguration.isCoverageEnabled() && coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner);
     }
     return false;

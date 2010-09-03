@@ -117,7 +117,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
 
     myCoverageEnabledCheckbox.setEnabled(isJre50);
 
-    final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.get(runConfiguration);
+    final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
     final CoverageRunner runner = configuration.getCoverageRunner();
     if (runner != null) {
       myCoverageRunnerCb.setSelectedItem(new CoverageRunnerItem(runner));
@@ -165,11 +165,11 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
   }
   
   protected boolean canHavePerTestCoverage() {
-    return CoverageEnabledConfiguration.get(myConfig).canHavePerTestCoverage();
+    return CoverageEnabledConfiguration.getOrCreate(myConfig).canHavePerTestCoverage();
   }
 
   protected void applyEditorTo(final T runConfiguration) throws ConfigurationException {
-    final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.get(runConfiguration);
+    final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
     configuration.setCoverageEnabled(myCoverageEnabledCheckbox.isSelected());
     configuration.setMergeWithPreviousResults(myMergeDataCheckbox.isSelected());
     configuration.setCoveragePatterns(myClassFilterEditor.getFilters());
