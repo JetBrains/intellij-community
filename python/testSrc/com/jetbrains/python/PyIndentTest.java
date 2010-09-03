@@ -167,6 +167,19 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "    <caret>");
   }
 
+  public void testUnindentAfterReturnNotLast() {  // PY-289
+    doTest("def foo():\n" +
+           "    if True:\n" +
+           "        return<caret>\n" +
+           "def bar(): pass",
+           "def foo():\n" +
+           "    if True:\n" +
+           "        return\n" +
+           "    <caret>\n" +
+           "def bar(): pass"
+    );
+  }
+
   /*
   TODO: formatter core problem?
   public void testAlignListBeforeEquals() throws Exception {
