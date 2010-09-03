@@ -78,7 +78,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class DaemonListeners implements Disposable {
+class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
 
   private final ApplicationListener myApplicationListener = new MyApplicationListener();

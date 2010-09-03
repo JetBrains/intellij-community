@@ -83,9 +83,6 @@ import java.util.*;
 public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
-  //private static final Key<IntervalTree<HighlightInfo>> HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY = Key.create("HIGHLIGHTS_IN_EDITOR_DOCUMENT");
-  private static final Key<List<HighlightInfo>> HIGHLIGHTS_TO_REMOVE_KEY = Key.create("HIGHLIGHTS_TO_REMOVE");
-
   private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
@@ -115,6 +112,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private StatusBarUpdater myStatusBarUpdater;
   private final PassExecutorService myPassExecutorService;
   private int myModificationCount = 0;
+
+  //   @TestOnly
+  private boolean allowToInterrupt = true;
 
   public DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
     myProject = project;
@@ -445,6 +445,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public synchronized void stopProcess(boolean toRestartAlarm) {
+    if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
+
     cancelUpdateProgress(toRestartAlarm, "by Stop process");
     myAlarm.cancelAllRequests();
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
@@ -764,14 +766,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @NotNull
-  static List<HighlightInfo> getHighlightsToRemove(MarkupModel markup) {
-    List<HighlightInfo> infos = markup.getUserData(HIGHLIGHTS_TO_REMOVE_KEY);
-    return infos == null ? Collections.<HighlightInfo>emptyList() : infos;
-  }
-
-  @NotNull
   @TestOnly
   public static List<HighlightInfo> getFileLevelHighlights(Project project,PsiFile file ) {
     return UpdateHighlightersUtil.getFileLeveleHighlights(project, file);
+  }
+
+  @TestOnly
+  public void allowToInterrupt(boolean can) {
+    allowToInterrupt = can;
   }
 }
