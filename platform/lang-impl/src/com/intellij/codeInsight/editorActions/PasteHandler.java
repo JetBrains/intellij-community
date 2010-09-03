@@ -175,6 +175,7 @@ public class PasteHandler extends EditorActionHandler {
       editor.getSelectionModel().removeSelection();
 
       for(Map.Entry<CopyPastePostProcessor, TextBlockTransferableData> e: extraData.entrySet()) {
+        //noinspection unchecked
         e.getKey().processTransferableData(project, editor, bounds, e.getValue());
       }
 

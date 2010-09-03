@@ -32,8 +32,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 
-public class CopyPasteFoldingProcessor implements CopyPastePostProcessor {
-  public TextBlockTransferableData collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<FoldingTransferableData> {
+  public FoldingTransferableData collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
@@ -58,7 +58,7 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor {
   }
 
   @Nullable
-  public TextBlockTransferableData extractTransferableData(final Transferable content) {
+  public FoldingTransferableData extractTransferableData(final Transferable content) {
     FoldingTransferableData foldingData = null;
     try {
       final DataFlavor flavor = FoldingTransferableData.FoldingData.getDataFlavor();
@@ -79,13 +79,13 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor {
     return null;
   }
 
-  public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final TextBlockTransferableData value) {
+  public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final FoldingTransferableData value) {
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor, true);
 
     Runnable operation = new Runnable() {
       public void run() {
-        for (FoldingTransferableData.FoldingData data : ((FoldingTransferableData) value).getData()) {
+        for (FoldingTransferableData.FoldingData data : value.getData()) {
           FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
           if (region != null) {
             region.setExpanded(data.isExpanded);
