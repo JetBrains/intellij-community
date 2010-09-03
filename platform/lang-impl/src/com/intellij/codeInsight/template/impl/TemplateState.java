@@ -92,6 +92,7 @@ public class TemplateState implements Disposable {
   private Document myDocument;
   private boolean myFinished;
   @Nullable private PairProcessor<String, String> myProcessor;
+  private boolean mySelectionCalculated = false;
 
   public TemplateState(@NotNull Project project, final Editor editor) {
     myProject = project;
@@ -598,6 +599,12 @@ public class TemplateState implements Disposable {
           for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
             if (!calcedSegments.get(i)) {
               String variableName = myTemplate.getSegmentName(i);
+              if (variableName.equals(TemplateImpl.SELECTION)) {
+                if (mySelectionCalculated) {
+                  continue;
+                }
+                mySelectionCalculated = true;
+              }
               String newValue = getVariableValue(variableName).getText();
               int start = mySegments.getSegmentStart(i);
               int end = mySegments.getSegmentEnd(i);
@@ -643,7 +650,7 @@ public class TemplateState implements Disposable {
     String newValue = result.toString();
     if (newValue == null) newValue = "";
 
-    if (element != null) {
+    if (element != null && !(expressionNode instanceof SelectionNode)) {
       newValue = LanguageLiteralEscapers.INSTANCE.forLanguage(element.getLanguage()).getEscapedText(element, newValue);
     }
 
