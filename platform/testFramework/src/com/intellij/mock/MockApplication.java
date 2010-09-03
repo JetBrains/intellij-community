@@ -141,7 +141,7 @@ public class MockApplication extends MockComponentManager implements Application
     return computation.compute();
   }
 
-  public Object getCurrentWriteAction(Class actionClass) {
+  public <T> T getCurrentWriteAction(Class<T> actionClass) {
     return null;
   }
 

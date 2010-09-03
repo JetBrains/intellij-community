@@ -30,7 +30,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
@@ -287,7 +287,7 @@ class DaemonListeners implements Disposable {
 
   private boolean canUndo(VirtualFile virtualFile) {
     for (FileEditor editor : FileEditorManager.getInstance(myProject).getEditors(virtualFile)) {
-      if (UndoManagerImpl.getInstance(myProject).isUndoAvailable(editor)) return true;
+      if (UndoManager.getInstance(myProject).isUndoAvailable(editor)) return true;
     }
     return false;
   }
@@ -314,16 +314,17 @@ class DaemonListeners implements Disposable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by write action:" + action);
       }
-      if (containsDocumentWorthBothering(action)) {
+      if (containsDocumentWorthBothering()) {
         stopDaemon(false);
       }
     }
 
-    private boolean containsDocumentWorthBothering(Object action) {
-      if (action instanceof DocumentRunnable) {
-        if (action instanceof DocumentRunnable.IgnoreDocumentRunnable) return false;
-        Document document = ((DocumentRunnable)action).getDocument();
-        if (!worthBothering(document, ((DocumentRunnable)action).getProject())) {
+    private boolean containsDocumentWorthBothering() {
+      DocumentRunnable currentWriteAction = ApplicationManager.getApplication().getCurrentWriteAction(DocumentRunnable.class);
+      if (currentWriteAction != null) {
+        if (currentWriteAction instanceof DocumentRunnable.IgnoreDocumentRunnable) return false;
+        Document document = currentWriteAction.getDocument();
+        if (!worthBothering(document, currentWriteAction.getProject())) {
           return false;
         }
       }
@@ -332,7 +333,7 @@ class DaemonListeners implements Disposable {
 
     public void writeActionFinished(Object action) {
       if (myDaemonCodeAnalyzer.isRunning()) return;
-      if (containsDocumentWorthBothering(action)) {
+      if (containsDocumentWorthBothering()) {
         stopDaemon(true);
       }
     }

@@ -83,7 +83,7 @@ public interface Application extends ComponentManager {
    * @return the write action instance, or null if no action of the specified class is currently executing.
    */
   @Nullable
-  Object getCurrentWriteAction(Class actionClass);
+  <T> T getCurrentWriteAction(Class<T> actionClass);
 
   /**
    * Asserts whether the read access is allowed.

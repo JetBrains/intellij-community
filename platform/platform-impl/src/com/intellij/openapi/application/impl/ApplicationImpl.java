@@ -781,11 +781,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return ref.get();
   }
 
-  public Object getCurrentWriteAction(Class actionClass) {
+  public <T>  T getCurrentWriteAction(Class<T> actionClass) {
     synchronized (myWriteActionsStack) {
       for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
         Runnable action = myWriteActionsStack.get(i);
-        if (actionClass == null || ReflectionCache.isAssignable(actionClass, action.getClass())) return action;
+        if (actionClass == null || ReflectionCache.isAssignable(actionClass, action.getClass())) return (T)action;
       }
     }
     return null;
