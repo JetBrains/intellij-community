@@ -159,13 +159,45 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    super.writeExternal(element);
+    // just for backward compatibility with settings format before "Huge Coverage Refactoring"
+    // see [IDEA-56800] ProjectRunConfigurationManager component: "coverage" extension: "merge" attribute is misplaced
+    // here we can't use super.writeExternal(...) due to differences in format between IDEA 10 and IDEA 9.x
+
+    // enabled
+    element.setAttribute(COVERAGE_ENABLED_ATTRIBUTE_NAME, String.valueOf(isCoverageEnabled()));
 
     // merge with prev
     element.setAttribute(COVERAGE_MERGE_ATTRIBUTE_NAME, String.valueOf(myIsMergeWithPreviousResults));
 
     if (myIsMergeWithPreviousResults && mySuiteToMergeWith != null) {
       element.setAttribute(COVERAGE_MERGE_SUITE_ATT_NAME, mySuiteToMergeWith);
+    }
+
+    // track per test
+    final boolean trackPerTestCoverage = isTrackPerTestCoverage();
+    if (!trackPerTestCoverage) {
+      element.setAttribute(TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME, String.valueOf(trackPerTestCoverage));
+    }
+
+    // sampling
+    final boolean sampling = isSampling();
+    if (sampling) {
+      element.setAttribute(SAMPLING_COVERAGE_ATTRIBUTE_NAME, String.valueOf(sampling));
+    }
+
+    // test folders
+    final boolean trackTestFolders = isTrackTestFolders();
+    if (trackTestFolders) {
+      element.setAttribute(TRACK_TEST_FOLDERS, String.valueOf(trackTestFolders));
+    }
+
+    // runner
+    final CoverageRunner coverageRunner = getCoverageRunner();
+    final String runnerId = getRunnerId();
+    if (coverageRunner != null) {
+      element.setAttribute(COVERAGE_RUNNER, coverageRunner.getId());
+    } else if (runnerId != null) {
+      element.setAttribute(COVERAGE_RUNNER, runnerId);
     }
 
     // patterns
