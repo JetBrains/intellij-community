@@ -792,7 +792,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void assertReadAccessAllowed() {
-    if (myTestModeFlag || myHeadlessMode) return;
+    if (myHeadlessMode) return;
     if (!isReadAccessAllowed()) {
       LOG.error(
         "Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
