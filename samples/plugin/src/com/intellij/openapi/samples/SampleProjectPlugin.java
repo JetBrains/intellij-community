@@ -16,6 +16,7 @@
 package com.intellij.openapi.samples;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.ui.Messages;
 
 /**
  * <h3>SampleProjectPlugin</h3>
@@ -42,14 +43,16 @@ public class SampleProjectPlugin implements ProjectComponent {
    * Invoked when project is opened.
    */
   public void projectOpened() {
-    System.out.println("SampleProjectPlugin: projectOpened");
+     DateTimeClass dateTime = new DateTimeClass();
+     Messages.showMessageDialog("Project opened at " +
+     dateTime.currentDate + " " + dateTime.currentTime, "IntelliJ IDEA",Messages.getInformationIcon() );
   }
 
   /**
    * Invoked when project is closed.
    */
   public void projectClosed() {
-    System.out.println("SampleProjectPlugin: projectClosed");
+    // System.out.println("SampleProjectPlugin: projectClosed");
   }
 
   /**

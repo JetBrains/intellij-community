@@ -253,7 +253,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public static boolean isTooLarge(final VirtualFile vFile) {
-    if (vFile.getUserData(ourNoSizeLimitKey) != null) return false;
+    if (Boolean.TRUE.equals(vFile.getUserData(ourNoSizeLimitKey))) return false;
     return fileSizeIsGreaterThan(vFile, PersistentFS.MAX_INTELLISENSE_FILESIZE);
   }
 

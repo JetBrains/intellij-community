@@ -16,7 +16,7 @@
         </constraints>
         <properties>
           <selected value="false"/>
-          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="ovetly.complex.boolean.expression.ignore.pure.conjunctions.and.disjunctions.option"/>
+          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="overly.complex.boolean.expression.ignore.pure.conjunctions.and.disjunctions.option"/>
         </properties>
       </component>
       <vspacer id="41baa">

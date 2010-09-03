@@ -173,7 +173,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 // run action
     myRunAction = new DumbAwareAction(null, null, IconLoader.getIcon("/actions/execute.png")) {
       public void actionPerformed(final AnActionEvent e) {
-        runExecuteActionInner(e);
+        runExecuteActionInner();
       }
 
       public void update(final AnActionEvent e) {
@@ -218,11 +218,11 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
   }
 
-  public void processInput(final String input) {
+  public void processLine(final String line) {
     final Charset charset = myProcessHandler.getCharset();
     final OutputStream outputStream = myProcessHandler.getProcessInput();
     try {
-      byte[] bytes = (input + "\n").getBytes(charset.name());
+      byte[] bytes = (line + "\n").getBytes(charset.name());
       outputStream.write(bytes);
       outputStream.flush();
     }
@@ -235,7 +235,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return myConsoleView.getConsole();
   }
 
-  protected void runExecuteActionInner(final AnActionEvent actionEvent) {
+  protected void runExecuteActionInner() {
     // Process input and add to history
     final Document document = getLanguageConsole().getCurrentEditor().getDocument();
     final String text = document.getText();
@@ -247,7 +247,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
       myHistory.addToHistory(text);
     }
     // Send to interpreter / server
-    processInput(text);
+    processLine(text);
   }
 
   protected static String getProviderCommandLine(final CommandLineArgumentsProvider provider) {

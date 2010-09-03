@@ -551,7 +551,7 @@ public class EditTemplateDialog extends DialogWrapper {
     myVariables = parsedVariables;
   }
 
-  private static void parseVariables(CharSequence text, ArrayList variables) {
+  private static void parseVariables(CharSequence text, ArrayList<Variable> variables) {
     TemplateImplUtil.parseVariables(
       text,
       variables,

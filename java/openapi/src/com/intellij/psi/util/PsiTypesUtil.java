@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.psi.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -109,5 +110,9 @@ public class PsiTypesUtil {
   @Nullable
   public static PsiClass getPsiClass(final PsiType psiType) {
     return psiType instanceof PsiClassType? ((PsiClassType)psiType).resolve() : null;
+  }
+
+  public static PsiClassType getClassType(@NotNull PsiClass psiClass) {
+    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
   }
 }

@@ -36,7 +36,7 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
   }
 
   public String toString() {
-    return "Specific implicit variable";
+    return "Specific implicit variable: " + getName();
   }
 
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {

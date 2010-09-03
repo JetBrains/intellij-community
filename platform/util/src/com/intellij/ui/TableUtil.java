@@ -196,21 +196,20 @@ public class TableUtil {
   }
 
   public static void configureAllowedCellSelection(final JTable table, final Condition<Point> cellCondition) {
-    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("ENTER"));
-    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("TAB"));
-    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("shift TAB"));
-    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("RIGHT"));
-    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("LEFT"));
-    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("UP"));
-    new MyFocusAction(table, cellCondition, KeyStroke.getKeyStroke("DOWN"));
+    for (String keyStroke : new String[]{"ENTER","TAB","shift TAB","RIGHT","LEFT","UP","DOWN"}) {
+      final Object key = SwingActionWrapper.getKeyForActionMap(table, KeyStroke.getKeyStroke(keyStroke));
+      if (key != null) {
+        new MyFocusAction(table, cellCondition, key);
+      }
+    }
   }
 
   public static class MyFocusAction extends SwingActionWrapper<JTable> {
 
     private final Condition<Point> myCellCondition;
 
-    public MyFocusAction(JTable table, Condition<Point> cellCondition, KeyStroke keyStroke) {
-      super(table, keyStroke);
+    public MyFocusAction(JTable table, Condition<Point> cellCondition, Object key) {
+      super(table, key);
       myCellCondition = cellCondition;
     }
 

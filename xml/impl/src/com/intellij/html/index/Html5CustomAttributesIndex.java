@@ -15,13 +15,19 @@
  */
 package com.intellij.html.index;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lexer.HtmlHighlightingLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.XHtmlHighlightingLexer;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.XmlRecursiveElementVisitor;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -42,14 +48,28 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   private final DataIndexer<String, Void, FileContent> myIndexer = new DataIndexer<String, Void, FileContent>() {
     @NotNull
     public Map<String, Void> map(FileContent inputData) {
-      PsiFile psiFile = inputData.getPsiFile();
-      if (psiFile instanceof XmlFile) {
-        XmlDocument document = ((XmlFile)psiFile).getDocument();
-        if (document != null && HtmlUtil.isHtml5Document(document)) {
-          MyCustomAttributesCollector collector = new MyCustomAttributesCollector();
-          document.accept(collector);
-          return collector.myResult;
+      CharSequence input = inputData.getContentAsText();
+      Language language = ((LanguageFileType)inputData.getFileType()).getLanguage();
+      if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
+        final Lexer lexer = (language == HTMLLanguage.INSTANCE ? new HtmlHighlightingLexer() : new XHtmlHighlightingLexer());
+        lexer.start(input);
+        Map<String, Void> result = new HashMap<String, Void>();
+        IElementType tokenType = lexer.getTokenType();
+        while (tokenType != null) {
+          if (tokenType == XmlTokenType.XML_NAME) {
+            String xmlName = input.subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
+            if (xmlName.startsWith(HtmlUtil.HTML5_DATA_ATTR_PREFIX)) {
+              result.put(xmlName, null);
+            }
+          }
+          else if (tokenType == XmlTokenType.XML_DOCTYPE_PUBLIC || tokenType == XmlTokenType.XML_DOCTYPE_SYSTEM) {
+            // this is not an HTML5 context
+            break;
+          }
+          lexer.advance();
+          tokenType = lexer.getTokenType();
         }
+        return result;
       }
       return Collections.emptyMap();
     }
@@ -90,17 +110,5 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   @Override
   public int getVersion() {
     return 0;
-  }
-
-  private static class MyCustomAttributesCollector extends XmlRecursiveElementVisitor {
-    private final Map<String, Void> myResult = new HashMap<String, Void>();
-
-    @Override
-    public void visitXmlAttribute(XmlAttribute attribute) {
-      String attrName = attribute.getName();
-      if (attrName.startsWith(HtmlUtil.HTML5_DATA_ATTR_PREFIX)) {
-        myResult.put(attrName, null);
-      }
-    }
   }
 }

@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.samples;
+package myActions;
+
 
 import com.intellij.openapi.components.ApplicationComponent;
 
@@ -40,7 +41,7 @@ public class ActionsPlugin implements ApplicationComponent {
   }
 
   /**
-   * Returns the name of component
+   * Returns   the name of component
    *
    * @return String representing component name. Use PluginName.ComponentName notation
    *  to avoid conflicts.

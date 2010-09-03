@@ -32,4 +32,9 @@ public class JavaDefaultLiveTemplatesProvider implements DefaultLiveTemplatesPro
   public String[] getDefaultLiveTemplateFiles() {
     return DEFAULT_TEMPLATES;
   }
+
+  @Override
+  public String[] getHiddenLiveTemplateFiles() {
+    return null;
+  }
 }

@@ -1,4 +1,4 @@
-package com.siyeh.igtest.bugs;
+package com.siyeh.igtest.bugs.infinite_recursion;
 
 import com.intellij.psi.PsiClass;
 
@@ -6,11 +6,11 @@ import java.util.List;
 import java.io.IOException;
 import java.io.File;
 
-public class InfiniteRecursionInspection
+public class InfiniteRecursion
 {
     public void foo()
     {
-        new InfiniteRecursionInspection().foo();
+        new InfiniteRecursion().foo();
     }
 
     public void bar()
@@ -120,6 +120,24 @@ public class InfiniteRecursionInspection
         for (int j = 0; j < pageConfig.size(); j++) {
             List pc = (List) pageConfig.get(j);
             rec(pc);
+        }
+    }
+
+    void foo1() {
+        for (;true && true || false;) {
+            foo1();
+        }
+    }
+
+    void foo2() {
+        if (true || false) {
+            foo2();
+        }
+    }
+
+    void bar1() {
+        while (true || false) {
+            bar1();
         }
     }
 }

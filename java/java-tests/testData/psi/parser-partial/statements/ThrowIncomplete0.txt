@@ -1,10 +1,5 @@
 PsiJavaFile:ThrowIncomplete0.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace(' ')
-    PsiThrowStatement
-      PsiKeyword:throw('throw')
-      PsiErrorElement:Expression expected
-        <empty list>
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+  PsiThrowStatement
+    PsiKeyword:throw('throw')
+    PsiErrorElement:Expression expected
+      <empty list>

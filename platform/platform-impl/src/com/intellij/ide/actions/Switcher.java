@@ -47,7 +47,6 @@ import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.FocusManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -57,6 +56,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+
+import static java.awt.event.KeyEvent.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -68,33 +69,42 @@ public class Switcher extends AnAction implements DumbAware {
   private static final Color SEPARATOR_COLOR = BORDER_COLOR.brighter();
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
   private static final Color ON_MOUSE_OVER_BG_COLOR = new Color(231, 242, 249);
-
-  private static final KeyListener performanceProblemsSolver = new KeyAdapter() { //IDEA-24436
-    @Override
-    public void keyReleased(KeyEvent e) {
-      if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-        synchronized (Switcher.class) {
-          if (SWITCHER != null) {
-            SWITCHER.navigate();
-          }
+  private static int CTRL_KEY;
+  private static int ALT_KEY;
+  static {
+    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event.getID() == KEY_RELEASED
+            && event instanceof KeyEvent
+            && ((KeyEvent)event).getKeyCode() == CTRL_KEY) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              synchronized (Switcher.class) {
+                if (SWITCHER != null) {
+                  SWITCHER.navigate();
+                }
+              }
+            }
+          });
         }
       }
-    }
-  };
+    }, KEY_EVENT_MASK);
+  }
 
-  private static Component focusComponent = null;
   @NonNls private static final String SWITCHER_TITLE = "Switcher";
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
     if (SWITCHER == null) {
-      focusComponent = FocusManager.getCurrentManager().getFocusOwner();
-      if (focusComponent != null) {
-        focusComponent.addKeyListener(performanceProblemsSolver);
+      synchronized (Switcher.class) {
+        if (SWITCHER == null) {
+          SWITCHER = new SwitcherPanel(project);
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
+        }
       }
-      SWITCHER = new SwitcherPanel(project);
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
     }
 
     if (e.getInputEvent().isShiftDown()) {
@@ -114,8 +124,6 @@ public class Switcher extends AnAction implements DumbAware {
     final JLabel pathLabel = new JLabel(" ");
     final JPanel descriptions;
     final Project project;
-    final int CTRL_KEY;
-    final int ALT_KEY;
 
     SwitcherPanel(Project project) {
       super(new BorderLayout(0, 0));
@@ -285,13 +293,9 @@ public class Switcher extends AnAction implements DumbAware {
       });
 
       final int modifiers = getModifiers(Switcher.this.getShortcutSet());
-      if ((modifiers & Event.ALT_MASK) != 0) {
-        ALT_KEY = KeyEvent.VK_CONTROL;
-        CTRL_KEY = KeyEvent.VK_ALT;
-      } else {
-        ALT_KEY = KeyEvent.VK_ALT;
-        CTRL_KEY = KeyEvent.VK_CONTROL;
-      }
+      final boolean isAlt = (modifiers & Event.ALT_MASK) != 0;
+      ALT_KEY = isAlt ? VK_CONTROL : VK_ALT;
+      CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
 
       final IdeFrameImpl ideFrame = WindowManagerEx.getInstanceEx().getFrame(project);
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)
@@ -304,10 +308,6 @@ public class Switcher extends AnAction implements DumbAware {
           .setCancelCallback(new Computable<Boolean>() {
           public Boolean compute() {
             SWITCHER = null;
-            if (focusComponent != null) {
-              focusComponent.removeKeyListener(performanceProblemsSolver);
-              focusComponent = null;
-            }
             return true;
           }
         }).createPopup();
@@ -325,28 +325,29 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     public void keyReleased(KeyEvent e) {
-      if (e.getKeyCode() == CTRL_KEY || e.getKeyCode() == KeyEvent.VK_ENTER) {
+      if (e.getKeyCode() == CTRL_KEY || e.getKeyCode() == VK_ENTER) {
         navigate();
-      } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+      } else
+      if (e.getKeyCode() == VK_LEFT) {
         goLeft();
-      } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+      } else if (e.getKeyCode() == VK_RIGHT) {
         goRight();
       }
     }
 
     public void keyPressed(KeyEvent e) {
       switch (e.getKeyCode()) {
-        case KeyEvent.VK_UP:
+        case VK_UP:
           goBack();
           break;
-        case KeyEvent.VK_DOWN:
+        case VK_DOWN:
           goForward();
           break;
-        case KeyEvent.VK_ESCAPE:
+        case VK_ESCAPE:
           cancel();
           break;
-        case KeyEvent.VK_DELETE:
-        case KeyEvent.VK_BACK_SPACE: // Mac users
+        case VK_DELETE:
+        case VK_BACK_SPACE: // Mac users
           closeTabOrToolWindow();
           break;
       }
@@ -482,7 +483,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
 
-    private void navigate() {
+    void navigate() {
       myPopup.cancel();
       final Object value = getSelectedList().getSelectedValue();
       if (value instanceof ToolWindow) {

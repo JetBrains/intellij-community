@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -25,4 +26,7 @@ public interface DefaultLiveTemplatesProvider {
   ExtensionPointName<DefaultLiveTemplatesProvider> EP_NAME = ExtensionPointName.create("com.intellij.defaultLiveTemplatesProvider");
 
   String[] getDefaultLiveTemplateFiles();
+
+  @Nullable
+  String[] getHiddenLiveTemplateFiles();
 }

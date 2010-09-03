@@ -125,6 +125,10 @@ public class StatementParser {
     return codeBlock;
   }
 
+  public static void parseStatements(final PsiBuilder builder) {
+    parseStatements(builder, null);
+  }
+
   private static void parseStatements(final PsiBuilder builder, final BraceMode braceMode) {
     while (builder.getTokenType() != null) {
       final PsiBuilder.Marker statement = parseStatement(builder);

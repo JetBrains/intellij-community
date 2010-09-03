@@ -1,24 +1,19 @@
 PsiJavaFile:IfIncomplete5.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiIfStatement
+    PsiKeyword:if('if')
     PsiWhiteSpace(' ')
-    PsiIfStatement
-      PsiKeyword:if('if')
-      PsiWhiteSpace(' ')
-      PsiJavaToken:LPARENTH('(')
-      PsiErrorElement:Expression expected
-        <empty list>
-      PsiJavaToken:RPARENTH(')')
-      PsiWhiteSpace(' ')
-      PsiExpressionStatement
-        PsiMethodCallExpression:foo()
-          PsiReferenceExpression:foo
-            PsiReferenceParameterList
-              <empty list>
-            PsiIdentifier:foo('foo')
-          PsiExpressionList
-            PsiJavaToken:LPARENTH('(')
-            PsiJavaToken:RPARENTH(')')
-        PsiJavaToken:SEMICOLON(';')
+    PsiJavaToken:LPARENTH('(')
+    PsiErrorElement:Expression expected
+      <empty list>
+    PsiJavaToken:RPARENTH(')')
     PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+    PsiExpressionStatement
+      PsiMethodCallExpression:foo()
+        PsiReferenceExpression:foo
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:foo('foo')
+        PsiExpressionList
+          PsiJavaToken:LPARENTH('(')
+          PsiJavaToken:RPARENTH(')')
+      PsiJavaToken:SEMICOLON(';')

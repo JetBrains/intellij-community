@@ -728,17 +728,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private void ensureVFSBaseDir() {
     myBaseDir.mkdirs();
-    myVFSBaseDir = new WriteAction<VirtualFile>() {
-      protected void run(final Result<VirtualFile> result) {
+    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable(){
+      @Override
+      public void run() {
         VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBaseDir);
-        result.setResult(dir);
+        myVFSBaseDir = dir;
         if (dir != null) {
           dir.getChildren();
           ((NewVirtualFile)dir).markDirtyRecursively();
           dir.refresh(false, true);
         }
       }
-    }.execute().getResultObject();
+    });
   }
 
   private boolean myInsideSave = false;
@@ -753,20 +754,27 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         }
       });
 
-      Collection<T> schemes = getAllSchemes();
+      final Collection<T> schemes = getAllSchemes();
       myBaseDir.mkdirs();
 
-      UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
+      final UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
 
       reserveUsingFileNames(schemes, fileNameProvider);
 
+      final WriteExternalException[] ex = new WriteExternalException[1];
       ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable() {
         public void run() {
           deleteFilesFromDeletedSchemes();
+          try {
+            saveSchemes(schemes, fileNameProvider);
+          }
+          catch (WriteExternalException e) {
+            ex[0] = e;
+          }
         }
       });
+      if (ex[0] != null) throw ex[0];
 
-      saveSchemes(schemes, fileNameProvider);
 
       if (myDeletedNames.isEmpty()) {
         deleteServerFiles(DELETED_XML);

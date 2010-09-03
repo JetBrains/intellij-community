@@ -662,8 +662,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
                             @Nullable final String actionName,
                             @Nullable final PluginId pluginId) {
     if (anchorStr == null) {
-      reportActionError(pluginId, actionName + ": attribute \"anchor\" should be defined");
-      return null;
+      return Anchor.LAST;
     }
 
     if (FIRST.equalsIgnoreCase(anchorStr)) {

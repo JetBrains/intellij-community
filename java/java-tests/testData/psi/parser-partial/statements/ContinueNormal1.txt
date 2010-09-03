@@ -1,11 +1,6 @@
 PsiJavaFile:ContinueNormal1.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiContinueStatement
+    PsiKeyword:continue('continue')
     PsiWhiteSpace(' ')
-    PsiContinueStatement
-      PsiKeyword:continue('continue')
-      PsiWhiteSpace(' ')
-      PsiIdentifier:LABEL('LABEL')
-      PsiJavaToken:SEMICOLON(';')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+    PsiIdentifier:LABEL('LABEL')
+    PsiJavaToken:SEMICOLON(';')

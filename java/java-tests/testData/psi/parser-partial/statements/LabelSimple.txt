@@ -1,19 +1,14 @@
 PsiJavaFile:LabelSimple.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace(' ')
-    PsiLabeledStatement
-      PsiIdentifier:Loop('Loop')
-      PsiJavaToken:COLON(':')
-      PsiWhiteSpace('\n ')
-      PsiWhileStatement
-        PsiKeyword:while('while')
-        PsiJavaToken:LPARENTH('(')
-        PsiLiteralExpression:true
-          PsiJavaToken:TRUE_KEYWORD('true')
-        PsiJavaToken:RPARENTH(')')
-        PsiWhiteSpace(' ')
-        PsiEmptyStatement
-          PsiJavaToken:SEMICOLON(';')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+  PsiLabeledStatement
+    PsiIdentifier:Loop('Loop')
+    PsiJavaToken:COLON(':')
+    PsiWhiteSpace('\n ')
+    PsiWhileStatement
+      PsiKeyword:while('while')
+      PsiJavaToken:LPARENTH('(')
+      PsiLiteralExpression:true
+        PsiJavaToken:TRUE_KEYWORD('true')
+      PsiJavaToken:RPARENTH(')')
+      PsiWhiteSpace(' ')
+      PsiEmptyStatement
+        PsiJavaToken:SEMICOLON(';')

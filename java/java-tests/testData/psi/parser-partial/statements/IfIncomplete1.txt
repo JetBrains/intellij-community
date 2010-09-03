@@ -1,12 +1,7 @@
 PsiJavaFile:IfIncomplete1.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiIfStatement
+    PsiKeyword:if('if')
     PsiWhiteSpace(' ')
-    PsiIfStatement
-      PsiKeyword:if('if')
-      PsiWhiteSpace(' ')
-      PsiJavaToken:LPARENTH('(')
-      PsiErrorElement:Expression expected
-        <empty list>
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+    PsiJavaToken:LPARENTH('(')
+    PsiErrorElement:Expression expected
+      <empty list>
