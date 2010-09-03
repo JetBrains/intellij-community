@@ -89,7 +89,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         if (myHtmlURL != null) {
           final int classPathType = myHtmlURL.isHttp() ? JavaParameters.JDK_ONLY : JavaParameters.JDK_AND_CLASSES;
           final RunConfigurationModule runConfigurationModule = getConfigurationModule();
-          JavaParametersUtil.configureModule(runConfigurationModule, params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
+          JavaParametersUtil.configureModule(runConfigurationModule, params, classPathType | JavaParameters.RUNTIME_ONLY, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
           final String policyFileParameter = getPolicyFileParameter();
           if (policyFileParameter != null) {
             params.getVMParametersList().add(policyFileParameter);
