@@ -367,7 +367,13 @@ public class PyBlock implements ASTBlock {
       PsiElement prevElt = prevNode.getPsi();
 
       // stmt lists, parts and definitions should also think for themselves
-      if (prevElt instanceof PyStatementList || prevElt instanceof PyStatementPart) {
+      if (prevElt instanceof PyStatementList) {
+        if (dedentAfterLastStatement((PyStatementList) prevElt)) {
+          return new ChildAttributes(Indent.getNoneIndent(), getChildAlignment());
+        }
+        return ChildAttributes.DELEGATE_TO_PREV_CHILD;
+      }
+      else if (prevElt instanceof PyStatementPart) {
         return ChildAttributes.DELEGATE_TO_PREV_CHILD;
       }
 
@@ -413,6 +419,15 @@ public class PyBlock implements ASTBlock {
 
 
     return new ChildAttributes(getChildIndent(newChildIndex), getChildAlignment());
+  }
+
+  private static boolean dedentAfterLastStatement(PyStatementList statementList) {
+    final PyStatement[] statements = statementList.getStatements();
+    if (statements.length == 0) {
+      return false;
+    }
+    PyStatement last = statements[statements.length-1];
+    return last instanceof PyReturnStatement || last instanceof PyRaiseStatement || last instanceof PyPassStatement;
   }
 
   private Alignment getChildAlignment() {

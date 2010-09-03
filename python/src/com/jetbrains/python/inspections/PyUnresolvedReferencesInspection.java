@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -30,7 +31,8 @@ import java.util.*;
  * Date: Nov 15, 2008
  */
 public class PyUnresolvedReferencesInspection extends PyInspection {
-  private final ThreadLocal<Visitor> myLastVisitor = new ThreadLocal<Visitor>();
+  private static Key<Visitor> KEY = Key.create("PyUnresolvedReferencesInspection.Visitor");
+
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -39,20 +41,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, final LocalInspectionToolSession session) {
     final Visitor visitor = new Visitor(holder);
-    myLastVisitor.set(visitor);
+    session.putUserData(KEY, visitor);
     return visitor;
   }
 
   @Override
   public void inspectionFinished(LocalInspectionToolSession session) {
-    final Visitor visitor = myLastVisitor.get();
+    final Visitor visitor = session.getUserData(KEY);
     assert visitor != null;
     if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
       visitor.highlightUnusedImports();
     }
-    myLastVisitor.remove();
+    session.putUserData(KEY, null);
   }
 
   public static class Visitor extends PyInspectionVisitor {

@@ -1,13 +1,14 @@
 package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import org.apache.xmlrpc.*;
+import org.apache.xmlrpc.WebServer;
+import org.apache.xmlrpc.XmlRpcException;
+import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
@@ -45,7 +46,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
 
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
   private final Project myProject;
-  public static final int MAX_ATTEMPTS = 1;
+  public static final int MAX_ATTEMPTS = 3;
   public static final long TIMEOUT = (long)(10e9);
 
   /**

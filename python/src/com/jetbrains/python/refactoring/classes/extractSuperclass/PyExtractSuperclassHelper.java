@@ -41,11 +41,15 @@ public class PyExtractSuperclassHelper {
                                              final String superBaseName,
                                              final String targetFile) {
     final Set<String> superClasses = new HashSet<String>();
+    final Set<PyClass> extractedClasses = new HashSet<PyClass>();
     final List<PyFunction> methods = new ArrayList<PyFunction>();
     for (PyMemberInfo member : selectedMemberInfos) {
       final PyElement element = member.getMember();
       if (element instanceof PyFunction) methods.add((PyFunction)element);
-      else if (element instanceof PyClass) superClasses.add(element.getName());
+      else if (element instanceof PyClass) {
+        extractedClasses.add((PyClass)element);
+        superClasses.add(element.getName());
+      }
       else LOG.error("unmatched member class " + element.getClass());
     }
 
@@ -72,7 +76,7 @@ public class PyExtractSuperclassHelper {
               PyPsiUtils.removeElements(elements);
             }
             PyClassRefactoringUtil.insertPassIfNeeded(clazz);
-            placeNewClass(project, newClass, clazz, targetFile, selectedMemberInfos);
+            placeNewClass(project, newClass, clazz, targetFile, extractedClasses);
           }
         });
       }
@@ -80,7 +84,7 @@ public class PyExtractSuperclassHelper {
     return newClassRef.get();
   }
 
-  private static void placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile, Collection<PyMemberInfo> infos) {
+  private static void placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile, Set<PyClass> extractedClasses) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtil.pathToUrl(targetFile));
     // file is the same as the source
     if (file == clazz.getContainingFile().getVirtualFile()) {
@@ -124,11 +128,8 @@ public class PyExtractSuperclassHelper {
     LOG.assertTrue(psiFile != null);
     newClass = (PyClass)psiFile.add(newClass);
     insertImport(clazz, newClass);
-    for (PyMemberInfo info : infos) {
-      final PyElement member = info.getMember();
-      if (member instanceof PyClass) {
-        insertImport(newClass, (PyClass)member);
-      }
+    for (PyClass member : extractedClasses) {
+      insertImport(newClass, member);
     }
   }
 
