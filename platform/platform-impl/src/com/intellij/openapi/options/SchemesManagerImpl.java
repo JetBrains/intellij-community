@@ -41,6 +41,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,22 +53,22 @@ import java.util.*;
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
   private static final Logger LOG = Logger.getInstance("#" + SchemesManagerFactoryImpl.class.getName());
 
-  private static final String EXT = ".xml";
+  @NonNls private static final String EXT = ".xml";
 
   private final Set<String> myDeletedNames = new LinkedHashSet<String>();
   private final Set<String> myFilesToDelete = new HashSet<String>();
 
-  private static final String SHARED_SCHEME = "shared-scheme";
-  private static final String SHARED_SCHEME_ORIGINAL = "shared-scheme-original";
+  @NonNls private static final String SHARED_SCHEME = "shared-scheme";
+  @NonNls private static final String SHARED_SCHEME_ORIGINAL = "shared-scheme-original";
   private static final String NAME = "name";
-  private static final String ORIGINAL_SCHEME_PATH = "original-scheme-path";
+  @NonNls private static final String ORIGINAL_SCHEME_PATH = "original-scheme-path";
   private final String myFileSpec;
   private final SchemeProcessor<E> myProcessor;
   private final RoamingType myRoamingType;
 
 
-  private static final String SCHEME_LOCAL_COPY = "scheme-local-copy";
-  private static final String DELETED_XML = "__deleted.xml";
+  @NonNls private static final String SCHEME_LOCAL_COPY = "scheme-local-copy";
+  @NonNls private static final String DELETED_XML = "__deleted.xml";
   private final StreamProvider[] myProviders;
   private final File myBaseDir;
   private VirtualFile myVFSBaseDir;
@@ -250,7 +251,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return null;
   }
 
-  private boolean isFileUnder(final VirtualFile file, final VirtualFile baseDirFile) {
+  private static boolean isFileUnder(final VirtualFile file, final VirtualFile baseDirFile) {
     return file.getParent().equals(baseDirFile);
   }
 
@@ -346,7 +347,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return file;
   }
 
-  private String checkFileNameIsFree(final String subpath, final String schemeName) throws IOException {
+  private String checkFileNameIsFree(final String subpath, final String schemeName) {
     for (Scheme scheme : mySchemes) {
       if (scheme instanceof ExternalizableScheme) {
         ExternalInfo externalInfo = ((ExternalizableScheme)scheme).getExternalInfo();
@@ -381,11 +382,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return result;
   }
 
-  private String createUniqueFileName(final Collection<String> strings, final String schemeName) {
+  private static String createUniqueFileName(final Collection<String> strings, final String schemeName) {
     return UniqueNameGenerator.generateUniqueName(schemeName, "", "", strings);
   }
 
-  private void loadScheme(final E scheme, boolean forceAdd, final String name) throws IOException {
+  private void loadScheme(final E scheme, boolean forceAdd, final String name) {
     if (scheme != null && (!myDeletedNames.contains(scheme.getName()) || forceAdd)) {
       T existing = findSchemeByName(scheme.getName());
       if (existing != null) {
@@ -504,7 +505,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
     }
     else if (rootElement.getName().equals(SHARED_SCHEME_ORIGINAL)) {
-      SchemesManagerImpl<T, E>.SharedSchemeData schemeData = unwrap(subDocument);
+      SharedSchemeData schemeData = unwrap(subDocument);
       E scheme = myProcessor.readScheme(schemeData.original);
       if (scheme != null) {
         renameScheme(scheme, schemeData.name);
@@ -518,7 +519,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Nullable
-  private static Document loadGlobalScheme(final String schemePath) throws IOException, JDOMException {
+  private static Document loadGlobalScheme(final String schemePath) throws IOException {
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
     for (StreamProvider provider : providers) {
@@ -631,7 +632,8 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       result.name = rootElement.getAttributeValue(NAME);
       result.description = rootElement.getAttributeValue(DESCRIPTION);
       result.user = rootElement.getAttributeValue(USER);
-      result.original = new Document((Element)((Element)(rootElement.getChildren().iterator().next())).clone());
+      Element next = (Element)rootElement.getChildren().iterator().next();
+      result.original = new Document((Element)next.clone());
     }
     else {
       result.name = rootElement.getAttributeValue(NAME);
@@ -681,11 +683,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   }
 
-  private Document wrap(final Document original, final String name, final String description) {
+  private static Document wrap(final Document original, final String name, final String description) {
     Element sharedElement = new Element(SHARED_SCHEME_ORIGINAL);
     sharedElement.setAttribute(NAME, name);
     sharedElement.setAttribute(DESCRIPTION, description);
-    sharedElement.addContent(((Element)original.getRootElement().clone()));
+    sharedElement.addContent((Element)original.getRootElement().clone());
     return new Document(sharedElement);
   }
 
@@ -874,7 +876,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private void saveIfNeeded(final E schemeKey, final String fileName, final Document document, final long newHash, final Long oldHash)
       throws IOException {
-    if (oldHash == null || newHash != oldHash.longValue() || (myVFSBaseDir.findChild(fileName) == null)) {
+    if (oldHash == null || newHash != oldHash.longValue() || myVFSBaseDir.findChild(fileName) == null) {
       if (oldHash != null && newHash != oldHash.longValue()) {
         final byte[] text = StorageUtil.printDocument(document);
 
