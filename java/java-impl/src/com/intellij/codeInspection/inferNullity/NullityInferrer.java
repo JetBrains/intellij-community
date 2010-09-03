@@ -223,8 +223,9 @@ public class NullityInferrer {
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         neverNull = false;
+      } else {
+        neverNull = isNotNull(method);
       }
-      neverNull = isNotNull(method);
     }
 
     private boolean isNeverNull() {
