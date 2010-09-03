@@ -91,7 +91,7 @@ public class CustomTemplateCallback {
   private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates, TemplateContextType... contextTypes) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
-      if (TemplateManagerImpl.isApplicable(myFile, myOffset, candidate)) {
+      if (TemplateManagerImpl.isApplicable(myFile, myOffset > 0 ? myOffset - 1 : myOffset, candidate)) {
         result.add(candidate);
       }
       TemplateContext context = candidate.getTemplateContext();
