@@ -15,9 +15,13 @@
  */
 package com.intellij.util.xml;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * Marks a DomElement as containing class fqn for {@link com.intellij.util.xml.ClassMappingNameConverter}
  * @author Dmitry Avdeev
  */
+@Retention(RetentionPolicy.RUNTIME)
 public @interface MappingClass {
 }
