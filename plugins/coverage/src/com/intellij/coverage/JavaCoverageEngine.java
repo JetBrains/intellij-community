@@ -46,8 +46,13 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
 
   @Override
-  public CoverageEnabledConfiguration createCoverageEnabledConfiguration(final ModuleBasedConfiguration conf) {
-    if (conf instanceof CommonJavaRunConfigurationParameters) {
+  public boolean isApplicableTo(@Nullable final ModuleBasedConfiguration conf) {
+    return conf instanceof CommonJavaRunConfigurationParameters;
+  }
+
+  @Override
+  public CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final ModuleBasedConfiguration conf) {
+    if (isApplicableTo(conf)) {
       return new JavaCoverageEnabledConfiguration(conf, this);
     }
     return null;
