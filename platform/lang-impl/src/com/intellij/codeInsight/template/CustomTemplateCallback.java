@@ -75,7 +75,7 @@ public class CustomTemplateCallback {
 
   @NotNull
   public PsiElement getContext() {
-    return getContext(myFile, myStartOffset > 0 ? myStartOffset - 1 : myStartOffset);
+    return getContext(myFile, myStartOffset);
   }
 
   public void fixInitialState() {
@@ -104,7 +104,7 @@ public class CustomTemplateCallback {
   private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
-      if (TemplateManagerImpl.isApplicable(myFile, myStartOffset, candidate)) {
+      if (TemplateManagerImpl.isApplicable(myFile, myStartOffset > 0 ? myStartOffset - 1 : myStartOffset, candidate)) {
         result.add(candidate);
       }
     }
