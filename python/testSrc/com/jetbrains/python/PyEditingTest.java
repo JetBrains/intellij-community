@@ -96,6 +96,10 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile("/editing/uncommentWithSpace.after.py", true);
   }
 
+  public void testEnterInLineComment() {  // PY-1739
+    assertEquals("# foo\n# bar", doTestTyping("# foo bar", 5, '\n'));
+  }
+
   private String doTestTyping(final String text, final int offset, final char character) {
     final PsiFile file = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
       public PsiFile compute() {
