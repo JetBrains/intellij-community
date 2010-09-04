@@ -42,7 +42,7 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
     initRootNode();
   }
 
-  public SMTRunnerTreeStructure getRTestUnitTreeStructure() {
+  public SMTRunnerTreeStructure getSMRunnerTreeStructure() {
     return ((SMTRunnerTreeStructure)getTreeStructure()) ;
   }
 
