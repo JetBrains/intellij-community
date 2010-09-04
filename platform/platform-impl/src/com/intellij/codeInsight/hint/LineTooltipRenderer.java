@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
@@ -56,7 +57,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     myCurrentWidth = width;
   }
 
-  public LightweightHint show(final Editor editor, final Point p, final boolean alignToRight, final TooltipGroup group) {
+  public LightweightHint show(final Editor editor, final Point p, final boolean alignToRight, final TooltipGroup group, final HintHint hintInfo) {
     if (myText == null) return null;
 
     //setup text
@@ -138,7 +139,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
         if (myCurrentWidth > 0) {
           stripDescription();
         }
-        createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()).show(editor, new Point(p.x -3, p.y -3), false, group);
+        createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()).show(editor, new Point(p.x -3, p.y -3), false, group, hintInfo);
       }
     });
 
@@ -168,7 +169,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
             }
             stripDescription();
             hint.hide();
-            createRenderer(myText, 0).show(editor, new Point(p.x - 3, p.y - 3), false, group);
+            createRenderer(myText, 0).show(editor, new Point(p.x - 3, p.y - 3), false, group, hintInfo);
           }
         }
       }
@@ -194,7 +195,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     hintManager.showEditorHint(hint, editor, p,
                                HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_OTHER_HINT |
-                               HintManagerImpl.HIDE_BY_SCROLLING, 0, false);
+                               HintManagerImpl.HIDE_BY_SCROLLING, 0, false, hintInfo);
     return hint;
   }
 

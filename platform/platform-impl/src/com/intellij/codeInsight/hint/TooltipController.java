@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -51,7 +52,7 @@ public class TooltipController {
   }
 
   public void showTooltipByMouseMove(@NotNull final Editor editor,
-                                     @NotNull MouseEvent e,
+                                     @NotNull final MouseEvent e,
                                      final TooltipRenderer tooltipObject,
                                      final boolean alignToRight,
                                      @NotNull final TooltipGroup group) {
@@ -79,7 +80,7 @@ public class TooltipController {
             Project project = editor.getProject();
             if (project != null && !project.isOpen()) return;
             if (editor.getContentComponent().isShowing()) {
-              showTooltip(editor, p, tooltipObject, alignToRight, group);
+              showTooltip(editor, p, tooltipObject, alignToRight, group, new HintHint(e));
             }
           }
         },
@@ -107,6 +108,10 @@ public class TooltipController {
   }
 
   public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group) {
+    showTooltip(editor, p, tooltipRenderer, alignToRight, group, new HintHint(editor, p));
+  }
+
+  public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group, HintHint hintInfo) {
     myTooltipAlarm.cancelAllRequests();
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
@@ -118,7 +123,7 @@ public class TooltipController {
     p = new Point(p);
     hideCurrentTooltip();
 
-    LightweightHint hint = tooltipRenderer.show(editor, p, alignToRight, group);
+    LightweightHint hint = tooltipRenderer.show(editor, p, alignToRight, group, hintInfo);
 
     myCurrentTooltipGroup = group;
     myCurrentTooltip = hint;

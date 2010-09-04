@@ -94,7 +94,11 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
    * are in <code>parentComponent</code> coordinate system. Note that the component
    * appears on 250 layer.
    */
-  public void show(@NotNull final JComponent parentComponent, final int x, final int y, final JComponent focusBackComponent) {
+  public void show(@NotNull final JComponent parentComponent,
+                   final int x,
+                   final int y,
+                   final JComponent focusBackComponent,
+                   @NotNull HintHint hintInfo) {
     myParentComponent = parentComponent;
 
     myFocusBackComponent = focusBackComponent;
