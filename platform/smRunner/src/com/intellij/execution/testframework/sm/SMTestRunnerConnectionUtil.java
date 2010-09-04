@@ -79,6 +79,7 @@ public class SMTestRunnerConnectionUtil {
     // Console
     final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
     final SMTRunnerConsoleView testRunnerConsole = new SMTRunnerConsoleView(consoleProperties, runnerSettings, configurationSettings, splitterPropertyName);
+    testRunnerConsole.setHelpId("reference.runToolWindow.testResultsTab");
     testRunnerConsole.initUI();
     final SMTestRunnerResultsForm resultsViewer = testRunnerConsole.getResultsViewer();
 
