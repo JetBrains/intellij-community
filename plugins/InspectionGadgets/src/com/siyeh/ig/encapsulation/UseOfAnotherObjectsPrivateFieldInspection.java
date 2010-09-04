@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

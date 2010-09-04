@@ -28,13 +28,14 @@ import java.awt.datatransfer.Transferable;
 /**
  * @author yole
  */
-public interface CopyPastePostProcessor {
+public interface CopyPastePostProcessor<T extends TextBlockTransferableData> {
   ExtensionPointName<CopyPastePostProcessor> EP_NAME = ExtensionPointName.create("com.intellij.copyPastePostProcessor");
 
-  TextBlockTransferableData collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
+  @Nullable
+  T collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
 
   @Nullable
-  TextBlockTransferableData extractTransferableData(final Transferable content);
+  T extractTransferableData(final Transferable content);
 
-  void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final TextBlockTransferableData value);
+  void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final T value);
 }

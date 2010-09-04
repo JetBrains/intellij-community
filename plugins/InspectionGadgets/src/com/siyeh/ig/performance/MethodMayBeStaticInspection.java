@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -30,8 +31,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

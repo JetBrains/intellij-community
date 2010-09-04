@@ -17,6 +17,10 @@ package com.intellij.openapi.samples;
 
 
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.ui.Messages;
+
+
+
 
 /**
  * <h3>SampleApplicationPlugin</h3>
@@ -27,9 +31,13 @@ public class SampleApplicationPlugin implements ApplicationComponent {
   /**
    * Method is called after plugin is already created and configured. Plugin can start to communicate with
    * other plugins only in this method.
+   *
    */
   public void initComponent() {
     //System.out.println("SampleApplicationPlugin: initComponent");
+     DateTimeClass dateTime = new DateTimeClass();
+     Messages.showMessageDialog("Welcome to IntelliJ IDEA!\nToday: " +
+     dateTime.currentDate + " " + dateTime.currentTime, "IntelliJ IDEA",Messages.getInformationIcon() );
   }
 
   /**
@@ -37,6 +45,7 @@ public class SampleApplicationPlugin implements ApplicationComponent {
    */
   public void disposeComponent() {
     //System.out.println("SampleApplicationPlugin: disposeComponent");
+      Messages.showMessageDialog("Thank you for using IntelliJ IDEA!", "IntelliJ IDEA",Messages.getInformationIcon() );
   }
 
   /**
@@ -46,4 +55,7 @@ public class SampleApplicationPlugin implements ApplicationComponent {
   public String getComponentName() {
     return "Sample.SampleApplicationPlugin";
   }
+
+
+
 }

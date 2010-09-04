@@ -68,11 +68,26 @@ public class InvokeTemplateAction extends AnAction {
       ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(file);
     }
 
-    String selectionString = myEditor.getSelectionModel().getSelectedText();
-
-    if (selectionString != null) {
-      if (myTemplate.isToReformat()) selectionString = selectionString.trim();
+    // adjust the selection so that it starts with a non-whitespace character (to make sure that the template is inserted
+    // at a meaningful position rather than at indent 0)
+    if (myEditor.getSelectionModel().hasSelection()) {
+      int offset = myEditor.getSelectionModel().getSelectionStart();
+      int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
+      int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
+      while(offset < lineEnd && offset < selectionEnd &&
+            (document.getCharsSequence().charAt(offset) == ' ' || document.getCharsSequence().charAt(offset) == '\t')) {
+        offset++;
+      }
+      // avoid extra line break after $SELECTION$ in case when selection ends with a complete line
+      if (selectionEnd == document.getLineStartOffset(document.getLineNumber(selectionEnd))) {
+        selectionEnd--;
+      }
+      if (offset < lineEnd && offset < selectionEnd) {  // found non-WS character in first line of selection
+        myEditor.getSelectionModel().setSelection(offset, selectionEnd);
+      }
     }
+
+    String selectionString = myEditor.getSelectionModel().getSelectedText();
 
     TemplateManager.getInstance(myProject).startTemplate(myEditor, selectionString, myTemplate);
   }

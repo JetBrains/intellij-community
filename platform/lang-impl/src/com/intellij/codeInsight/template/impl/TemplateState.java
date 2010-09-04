@@ -43,6 +43,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -92,6 +93,7 @@ public class TemplateState implements Disposable {
   private Document myDocument;
   private boolean myFinished;
   @Nullable private PairProcessor<String, String> myProcessor;
+  private boolean mySelectionCalculated = false;
 
   public TemplateState(@NotNull Project project, final Editor editor) {
     myProject = project;
@@ -598,6 +600,12 @@ public class TemplateState implements Disposable {
           for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
             if (!calcedSegments.get(i)) {
               String variableName = myTemplate.getSegmentName(i);
+              if (variableName.equals(TemplateImpl.SELECTION)) {
+                if (mySelectionCalculated) {
+                  continue;
+                }
+                mySelectionCalculated = true;
+              }
               String newValue = getVariableValue(variableName).getText();
               int start = mySegments.getSegmentStart(i);
               int end = mySegments.getSegmentEnd(i);
@@ -643,7 +651,7 @@ public class TemplateState implements Disposable {
     String newValue = result.toString();
     if (newValue == null) newValue = "";
 
-    if (element != null) {
+    if (element != null && !(expressionNode instanceof SelectionNode)) {
       newValue = LanguageLiteralEscapers.INSTANCE.forLanguage(element.getLanguage()).getEscapedText(element, newValue);
     }
 
@@ -947,6 +955,14 @@ public class TemplateState implements Disposable {
       for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
         optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
       }
+      // for Python, we need to indent the template even if reformatting is enabled, because otherwise indents would be broken
+      // and reformat wouldn't be able to fix them
+      if (myTemplate.isToIndent()) {
+        if (!myTemplateIndented) {
+          smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+          myTemplateIndented = true;
+        }
+      }
       if (myTemplate.isToReformat()) {
         try {
           int endSegmentNumber = myTemplate.getEndSegmentNumber();
@@ -973,12 +989,6 @@ public class TemplateState implements Disposable {
           LOG.error(e);
         }
       }
-      else if (myTemplate.isToIndent()) {
-        if (!myTemplateIndented) {
-          smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
-          myTemplateIndented = true;
-        }
-      }
     }
   }
 
@@ -987,6 +997,23 @@ public class TemplateState implements Disposable {
     int endLineNum = myDocument.getLineNumber(endOffset);
     if (endLineNum == startLineNum) {
       return;
+    }
+
+    int selectionIndent = -1;
+    int selectionStartLine = -1;
+    int selectionEndLine = -1;
+    int selectionSegment = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
+    if (selectionSegment >= 0) {
+      int selectionStart = myTemplate.getSegmentOffset(selectionSegment);
+      selectionIndent = 0;
+      String templateText = myTemplate.getTemplateText();
+      while (selectionStart > 0 && templateText.charAt(selectionStart-1) == ' ') {
+        // TODO handle tabs
+        selectionIndent++;
+        selectionStart--;
+      }
+      selectionStartLine = myDocument.getLineNumber(mySegments.getSegmentStart(selectionSegment));
+      selectionEndLine = myDocument.getLineNumber(mySegments.getSegmentEnd(selectionSegment));
     }
 
     int indentLineNum = startLineNum;
@@ -1010,12 +1037,17 @@ public class TemplateState implements Disposable {
       }
       buffer.append(ch);
     }
-    if (buffer.length() == 0) {
+    if (buffer.length() == 0 && selectionIndent <= 0) {
       return;
     }
     String stringToInsert = buffer.toString();
     for (int i = startLineNum + 1; i <= endLineNum; i++) {
-      myDocument.insertString(myDocument.getLineStartOffset(i), stringToInsert);
+      if (i > selectionStartLine && i <= selectionEndLine) {
+        myDocument.insertString(myDocument.getLineStartOffset(i), StringUtil.repeatSymbol(' ', selectionIndent));
+      }
+      else {
+        myDocument.insertString(myDocument.getLineStartOffset(i), stringToInsert);
+      }
     }
   }
 

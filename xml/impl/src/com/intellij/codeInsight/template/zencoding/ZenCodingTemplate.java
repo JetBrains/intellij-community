@@ -420,11 +420,14 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     while (node instanceof FilterNode) {
       FilterNode filterNode = (FilterNode)node;
       String filterSuffix = filterNode.getFilter();
+      boolean filterFound = false;
       for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
         if (filter.isMyContext(context) && filter.getSuffix().equals(filterSuffix)) {
+          filterFound = true;
           result.add(filter);
         }
       }
+      assert filterFound;
       node = filterNode.getNode();
     }
 
@@ -615,7 +618,11 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       ZenCodingToken filter = nextToken();
       ZenCodingNode result = add;
       while (filter instanceof FilterToken) {
-        result = new FilterNode(result, ((FilterToken)filter).getSuffix());
+        String suffix = ((FilterToken)filter).getSuffix();
+        if (!ZenCodingParser.checkFilterSuffix(suffix)) {
+          return null;
+        }
+        result = new FilterNode(result, suffix);
         myIndex++;
         filter = nextToken();
       }

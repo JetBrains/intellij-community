@@ -50,7 +50,7 @@ public class RefusedBequestInspection extends BaseInspection {
         //noinspection HardCodedStringLiteral
         return new SingleCheckboxOptionsPanel(
                 "<html>" + InspectionGadgetsBundle.message(
-                        "reqused.bequest.ignore.empty.super.methods.option") +
+                        "refused.bequest.ignore.empty.super.methods.option") +
                         "</html>", this, "ignoreEmptySuperMethods");
     }
 

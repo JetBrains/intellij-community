@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml;
+package com.intellij.openapi.editor.actions;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 
 /**
- * Marks a DomElement as containing class fqn for {@link com.intellij.util.xml.ClassMappingNameConverter}
- * @author Dmitry Avdeev
+ * @author yole
  */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface MappingClass {
+public class ConvertIndentsToTabsAction extends ConvertIndentsActionBase {
+  @Override
+  protected int performAction(Editor editor, TextRange textRange) {
+    return convertIndentsToTabs(editor.getDocument(), editor.getSettings().getTabSize(editor.getProject()), textRange);
+  }
 }

@@ -62,6 +62,10 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
               result.put(xmlName, null);
             }
           }
+          else if (tokenType == XmlTokenType.XML_DOCTYPE_PUBLIC || tokenType == XmlTokenType.XML_DOCTYPE_SYSTEM) {
+            // this is not an HTML5 context
+            break;
+          }
           lexer.advance();
           tokenType = lexer.getTokenType();
         }

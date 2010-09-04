@@ -31,7 +31,8 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionsBundle.message("inspection.comparing.references.display.name");
+   // return InspectionsBundle.message("inspection.comparing.references.display.name");
+      return "'==' or '!=' instead of 'equals()'";
   }
 
   @NotNull
@@ -56,59 +57,34 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
     return false;
   }
 
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return analyzeCode(method.getBody(), manager);
-  }
+    @NotNull
+    @Override
+    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+     return new JavaElementVisitor() {
 
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    ArrayList<ProblemDescriptor> problemList = null;
-    PsiClassInitializer[] initializers = aClass.getInitializers();
-    for (PsiClassInitializer initializer : initializers) {
-      ProblemDescriptor[] problemDescriptors = analyzeCode(initializer, manager);
-      if (problemDescriptors != null) {
-        if (problemList == null) problemList = new ArrayList<ProblemDescriptor>();
-        problemList.addAll(Arrays.asList(problemDescriptors));
-      }
-    }
+         @Override
+         public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression) {
+         }
 
-    return problemList == null
-           ? null
-           : problemList.toArray(new ProblemDescriptor[problemList.size()]);
-  }
-
-  private ProblemDescriptor[] analyzeCode(PsiElement where, final InspectionManager manager) {
-    if (where == null) return null;
-
-    final Ref<ArrayList<ProblemDescriptor>> problemList = new Ref<ArrayList<ProblemDescriptor>>();
-    where.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitMethod(PsiMethod method) {}
-
-      @Override public void visitClass(PsiClass aClass) {}
 
       @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
-        super.visitBinaryExpression(expression);
-        IElementType opSign = expression.getOperationSign().getTokenType();
-        if (opSign == JavaTokenType.EQEQ || opSign == JavaTokenType.NE) {
-          PsiExpression lOperand = expression.getLOperand();
-          PsiExpression rOperand = expression.getROperand();
-          if (rOperand == null || isNullLiteral(lOperand) || isNullLiteral(rOperand)) return;
+          super.visitBinaryExpression(expression);
+          IElementType opSign = expression.getOperationSign().getTokenType();
+          if (opSign == JavaTokenType.EQEQ || opSign == JavaTokenType.NE) {
+              PsiExpression lOperand = expression.getLOperand();
+              PsiExpression rOperand = expression.getROperand();
+              if (rOperand == null || isNullLiteral(lOperand) || isNullLiteral(rOperand)) return;
 
-          PsiType lType = lOperand.getType();
-          PsiType rType = rOperand.getType();
+              PsiType lType = lOperand.getType();
+              PsiType rType = rOperand.getType();
 
-          if (isCheckedType(lType) || isCheckedType(rType)) {
-            if (problemList.get() == null) problemList.set(new ArrayList<ProblemDescriptor>());
-            problemList.get().add(manager.createProblemDescriptor(expression, DESCRIPTION_TEMPLATE,
-                                                               myQuickFix,
-                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+              if (isCheckedType(lType) || isCheckedType(rType)) {
+                  holder.registerProblem(expression,
+                          DESCRIPTION_TEMPLATE, myQuickFix);
+              }
           }
-        }
       }
-    });
-
-    return problemList.get() == null
-           ? null
-           : problemList.get().toArray(new ProblemDescriptor[problemList.get().size()]);
+    };
   }
 
   private static boolean isNullLiteral(PsiExpression expr) {

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.jdk15;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,7 +23,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
