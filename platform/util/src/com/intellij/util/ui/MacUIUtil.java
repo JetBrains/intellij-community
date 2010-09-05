@@ -19,8 +19,11 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.TreeUI;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
+import java.lang.reflect.Field;
 
 /**
  * User: spLeaner
@@ -35,7 +38,7 @@ public class MacUIUtil {
   public static Color getFocusRingColor() {
     final Object o = UIManager.get("Focus.color");
     if (o instanceof Color) {
-      return (Color) o;
+      return (Color)o;
     }
 
     return new Color(64, 113, 167);
@@ -43,7 +46,7 @@ public class MacUIUtil {
 
   public static void paintComboboxFocusRing(@NotNull final Graphics2D g2d, @NotNull final Rectangle bounds) {
     final Color color = getFocusRingColor();
-    final Color[] colors = new Color[] {
+    final Color[] colors = new Color[]{
       new Color(color.getRed(), color.getGreen(), color.getBlue(), 180),
       new Color(color.getRed(), color.getGreen(), color.getBlue(), 130),
       new Color(color.getRed(), color.getGreen(), color.getBlue(), 80),
@@ -54,7 +57,8 @@ public class MacUIUtil {
     final Object oldStrokeControlValue = g2d.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);
 
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                         USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
     final GeneralPath path1 = new GeneralPath();
     path1.moveTo(2, 4);
@@ -109,7 +113,24 @@ public class MacUIUtil {
       if (focusOwner != null) {
         final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, focusOwner);
         if (ancestor == combobox) {
-          paintComboboxFocusRing((Graphics2D) g, combobox.getBounds());
+          paintComboboxFocusRing((Graphics2D)g, combobox.getBounds());
+        }
+      }
+    }
+  }
+
+  public static void doNotFillBackground(@NotNull final JTree tree, @NotNull final DefaultTreeCellRenderer renderer) {
+    TreeUI ui = tree.getUI();
+    if (ui instanceof UIUtil.MacTreeUI) {
+      if (((UIUtil.MacTreeUI)ui).isWideSelection()) {
+        renderer.setOpaque(false);
+        try {
+          final Field fillBackground = DefaultTreeCellRenderer.class.getDeclaredField("fillBackground");
+          fillBackground.setAccessible(true);
+          fillBackground.set(renderer, false);
+        }
+        catch (Exception e) {
+          // nothing
         }
       }
     }
