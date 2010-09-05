@@ -4,4 +4,5 @@
     return self.__x
   x = property(fdel=__getX)
 
-del A().<the_ref>x
+a = A()
+del a.<the_ref>x
