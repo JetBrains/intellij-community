@@ -383,6 +383,9 @@ public class PluginManager {
                                      Map<PluginId, IdeaPluginDescriptor> map,
                                      final boolean checkModuleDependencies) {
     for (PluginId id: descriptor.getDependentPluginIds()) {
+      if (ArrayUtil.contains(id, descriptor.getOptionalDependentPluginIds())) {
+        continue;
+      }
       if (!checkModuleDependencies && isModuleDependency(id)) {
         continue;
       }

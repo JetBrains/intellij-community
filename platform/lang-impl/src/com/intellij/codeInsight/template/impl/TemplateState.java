@@ -967,22 +967,20 @@ public class TemplateState implements Disposable {
         try {
           int endSegmentNumber = myTemplate.getEndSegmentNumber();
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-          RangeMarker rangeMarker = null;
-          if (endSegmentNumber >= 0) {
-            int endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
-            PsiElement marker = style.insertNewLineIndentMarker(file, endVarOffset);
-            if (marker != null) rangeMarker = myDocument.createRangeMarker(marker.getTextRange());
-          }
           int startOffset = rangeMarkerToReformat != null ? rangeMarkerToReformat.getStartOffset() : myTemplateRange.getStartOffset();
           int endOffset = rangeMarkerToReformat != null ? rangeMarkerToReformat.getEndOffset() : myTemplateRange.getEndOffset();
           style.reformatText(file, startOffset, endOffset);
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
 
-          if (rangeMarker != null && rangeMarker.isValid()) {
-            //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!
-            mySegments.replaceSegmentAt(endSegmentNumber, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-            myDocument.deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+          if (endSegmentNumber >= 0) {
+            final int offset = mySegments.getSegmentStart(endSegmentNumber);
+            final int lineStart = myDocument.getLineStartOffset(myDocument.getLineNumber(offset));
+            // if $END$ is at line start, put it at correct indentation
+            if (myDocument.getCharsSequence().subSequence(lineStart, offset).toString().trim().length() == 0) {
+              final int adjustedOffset = style.adjustLineIndent(file, offset);
+              mySegments.replaceSegmentAt(endSegmentNumber, adjustedOffset, adjustedOffset);
+            }
           }
         }
         catch (IncorrectOperationException e) {

@@ -150,6 +150,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     Disposer.register(this, myTreeBuilder);
     myAnimator = new MyAnimator(this, myTreeBuilder);
 
+    //TODO always hide root node
+    //myTreeView.setRootVisible(false);
+
     return myTreeView;
   }
 
@@ -203,6 +206,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
     updateStatusLabel();
 
+    // TODO : show info - "Loading..." msg
+
     fireOnTestingStarted();
   }
 
@@ -219,6 +224,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     if (myTestsRootNode.getChildren().size() == 0) {
       // no tests found
       myStatusLine.setStatusColor(ColorProgressBar.RED);
+
+      // TODO - show correct info if tree is empty
+      // (e.g no tests found or all tests passed, etc.)
     }
 
     myAnimator.stopMovie();
@@ -297,9 +305,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
   public void setFilter(final Filter filter) {
     // is used by Test Runner actions, e.g. hide passed, etc
-    final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getRTestUnitTreeStructure();
+    final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getSMRunnerTreeStructure();
     treeStructure.setFilter(filter);
-    myTreeBuilder.updateFromRoot();
+
+    // TODO - show correct info if no children are available
+    // (e.g no tests found or all tests passed, etc.)
+    // treeStructure.getChildElements(treeStructure.getRootElement()).length == 0
+
+    myTreeBuilder.queueUpdate();
   }
 
   public boolean isRunning() {
