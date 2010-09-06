@@ -5,14 +5,14 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author peter
  */
 public class LightParameterListBuilder extends LightElement implements PsiParameterList {
-  private final List<PsiParameter> myParameters = Collections.synchronizedList(new ArrayList<PsiParameter>());
+  private final List<PsiParameter> myParameters = new ArrayList<PsiParameter>();
+  private PsiParameter[] myCachedParameters;
 
   public LightParameterListBuilder(PsiManager manager, Language language) {
     super(manager, language);
@@ -20,6 +20,7 @@ public class LightParameterListBuilder extends LightElement implements PsiParame
 
   public void addParameter(PsiParameter parameter) {
     myParameters.add(parameter);
+    myCachedParameters = null;
   }
 
   @Override
@@ -30,7 +31,16 @@ public class LightParameterListBuilder extends LightElement implements PsiParame
   @NotNull
   @Override
   public PsiParameter[] getParameters() {
-    return myParameters.toArray(new PsiParameter[myParameters.size()]);
+    if (myCachedParameters == null) {
+      if (myParameters.isEmpty()) {
+        myCachedParameters = PsiParameter.EMPTY_ARRAY;
+      }
+      else {
+        myCachedParameters = myParameters.toArray(new PsiParameter[myParameters.size()]);
+      }
+    }
+    
+    return myCachedParameters;
   }
 
   @Override
