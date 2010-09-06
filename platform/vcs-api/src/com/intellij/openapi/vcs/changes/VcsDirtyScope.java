@@ -99,4 +99,8 @@ public abstract class VcsDirtyScope {
    * @return true if path belongs to the dirty scope.
    */
   public abstract boolean belongsTo(final FilePath path);
+
+  public Collection<VirtualFile> getAffectedContentRootsWithCheck() {
+    return getAffectedContentRoots();
+  }
 }

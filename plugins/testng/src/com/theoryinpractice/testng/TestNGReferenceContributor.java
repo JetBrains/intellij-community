@@ -28,6 +28,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
@@ -91,9 +92,9 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     @Nullable
     public PsiElement resolve() {
-      PsiClass cls = PsiUtil.getTopLevelClass(getElement());
+      final PsiClass cls = getProviderClass(PsiUtil.getTopLevelClass(getElement()));
       if (cls != null) {
-        PsiMethod[] methods = cls.getMethods();
+        PsiMethod[] methods = cls.getAllMethods();
         @NonNls String val = getValue();
         for (PsiMethod method : methods) {
           PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
@@ -116,12 +117,19 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     @NotNull
     public Object[] getVariants() {
       final List<Object> list = new ArrayList<Object>();
-      final PsiClass cls = PsiUtil.getTopLevelClass(getElement());
+      final PsiClass topLevelClass = PsiUtil.getTopLevelClass(getElement());
+      final PsiClass cls = getProviderClass(topLevelClass);
+      final boolean needToBeStatic = cls != topLevelClass;
       if (cls != null) {
         final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
-        final PsiMethod[] methods = cls.getMethods();
+        final PsiMethod[] methods = cls.getAllMethods();
         for (PsiMethod method : methods) {
           if (current != null && method.getName().equals(current.getName())) continue;
+          if (needToBeStatic) {
+            if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
+          } else {
+            if (cls != method.getContainingClass() && method.hasModifierProperty(PsiModifier.PRIVATE)) continue;
+          }
           final PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
           if (dataProviderAnnotation != null) {
             boolean nameFoundInAttributes = false;
@@ -143,6 +151,26 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         }
       }
       return list.toArray();
+    }
+
+    private PsiClass getProviderClass(final PsiClass topLevelClass) {
+      final PsiAnnotationParameterList parameterList = PsiTreeUtil.getParentOfType(getElement(), PsiAnnotationParameterList.class);
+      if (parameterList != null) {
+        for (PsiNameValuePair nameValuePair : parameterList.getAttributes()) {
+          if (Comparing.strEqual(nameValuePair.getName(), "dataProviderClass")) {
+            final PsiAnnotationMemberValue value = nameValuePair.getValue();
+            if (value instanceof PsiClassObjectAccessExpression) {
+              final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
+              final PsiClass psiClass = PsiUtil.resolveClassInType(operand.getType());
+              if (psiClass != null) {
+                return psiClass;
+              }
+            }
+            break;
+          }
+        }
+      }
+      return topLevelClass;
     }
   }
 

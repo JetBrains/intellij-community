@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -94,6 +95,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
 
     Rectangle prefferedBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
+    ScreenUtil.fitToScreen(prefferedBounds);
 
     myListScrollPane.setVisible(true);
     myListScrollPane.setBorder(null);

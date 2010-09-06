@@ -447,13 +447,15 @@ public class FrameDebuggerTree extends DebuggerTree {
       myVars = vars;
     }
 
-    @Override public void visitElement(final PsiElement element) {
+    @Override 
+    public void visitElement(final PsiElement element) {
       if (myLineRange.intersects(element.getTextRange())) {
         super.visitElement(element);
       }
     }
 
-    @Override public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+    @Override 
+    public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
       final PsiMethod psiMethod = expression.resolveMethod();
       if (psiMethod != null && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
         myExpressions.add(new TextWithImportsImpl(expression));
@@ -461,13 +463,15 @@ public class FrameDebuggerTree extends DebuggerTree {
       super.visitMethodCallExpression(expression);
     }
 
-    @Override public void visitReferenceExpression(final PsiReferenceExpression reference) {
+    @Override 
+    public void visitReferenceExpression(final PsiReferenceExpression reference) {
       if (myLineRange.intersects(reference.getTextRange())) {
         final PsiElement psiElement = reference.resolve();
         if (psiElement instanceof PsiVariable) {
           final PsiVariable var = (PsiVariable)psiElement;
           if (var instanceof PsiField) {
             if (!DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
+              /*
               if (var instanceof PsiEnumConstant && reference.getQualifier() == null) {
                 final PsiClass enumClass = ((PsiEnumConstant)var).getContainingClass();
                 if (enumClass != null) {
@@ -482,6 +486,13 @@ public class FrameDebuggerTree extends DebuggerTree {
               else {
                 myExpressions.add(new TextWithImportsImpl(reference));
               }
+              */
+              final PsiModifierList modifierList = var.getModifierList();
+              boolean isConstant = (var instanceof PsiEnumConstant) || 
+                                   (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL));
+              if (!isConstant) {
+                myExpressions.add(new TextWithImportsImpl(reference));
+              }
             }
           }
           else {
@@ -494,19 +505,22 @@ public class FrameDebuggerTree extends DebuggerTree {
       super.visitReferenceExpression(reference);
     }
 
-    @Override public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+    @Override 
+    public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
       if (!DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
         myExpressions.add(new TextWithImportsImpl(expression));
       }
       super.visitArrayAccessExpression(expression);
     }
 
-    @Override public void visitParameter(final PsiParameter parameter) {
+    @Override 
+    public void visitParameter(final PsiParameter parameter) {
       processVariable(parameter);
       super.visitParameter(parameter);
     }
 
-    @Override public void visitLocalVariable(final PsiLocalVariable variable) {
+    @Override 
+    public void visitLocalVariable(final PsiLocalVariable variable) {
       processVariable(variable);
       super.visitLocalVariable(variable);
     }

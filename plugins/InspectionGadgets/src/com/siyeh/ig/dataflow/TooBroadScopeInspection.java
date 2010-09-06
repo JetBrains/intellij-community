@@ -117,6 +117,9 @@ public class TooBroadScopeInspection extends BaseInspection
         {
             final PsiElement variableIdentifier =
                     descriptor.getPsiElement();
+            if (!(variableIdentifier instanceof PsiVariable)) {
+                return;
+            }
             final PsiVariable variable =
                     (PsiVariable)variableIdentifier.getParent();
             assert variable != null;

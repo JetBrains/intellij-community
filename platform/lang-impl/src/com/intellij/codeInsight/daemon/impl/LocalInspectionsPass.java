@@ -245,7 +245,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           @Override
           public void registerProblem(@NotNull ProblemDescriptor descriptor) {
             super.registerProblem(descriptor);
-            addDescriptorIncrementally(myDocument, descriptor, tool, ignoreSuppressed, indicator);
+            if (isOnTheFly) {
+              addDescriptorIncrementally(descriptor, tool, ignoreSuppressed, indicator);
+            }
           }
         };
         PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly, session);
@@ -265,7 +267,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         advanceProgress(elements.size());
 
         if (holder.hasResults()) {
-          appendDescriptors(myFile, holder.getResults(), tool, ignoreSuppressed);
+          appendDescriptors(myFile, holder.getResults(), tool);
         }
         return true;
       }
@@ -307,7 +309,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         tool.inspectionFinished(session);
 
         if (holder.hasResults()) {
-          appendDescriptors(myFile, holder.getResults(), tool, ignoreSuppressed);
+          appendDescriptors(myFile, holder.getResults(), tool);
         }
         return true;
       }
@@ -363,8 +365,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final ConcurrentLinkedQueue<Pair<ProblemDescriptor, LocalInspectionTool>> infosToAdd = new ConcurrentLinkedQueue<Pair<ProblemDescriptor, LocalInspectionTool>>();
   private final Set<TextRange> emptyActionRegistered = Collections.synchronizedSet(new HashSet<TextRange>());
 
-  private void addDescriptorIncrementally(@NotNull final Document document,
-                                          @NotNull final ProblemDescriptor descriptor,
+  private void addDescriptorIncrementally(@NotNull final ProblemDescriptor descriptor,
                                           @NotNull final LocalInspectionTool tool,
                                           boolean ignoreSuppressed,
                                           @NotNull final ProgressIndicator indicator) {
@@ -374,6 +375,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     infosToAdd.offer(Pair.create(descriptor, tool));
     if (haveInfosToProcess.getAndSet(true)) return;
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     // extra invoke later is harmless, missing invoke is not
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
@@ -393,7 +395,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             PsiElement psiElement = descriptor.getPsiElement();
             if (psiElement == null) continue;
             PsiFile file = psiElement.getContainingFile();
-            Document thisDocument = file == myFile ? document : PsiDocumentManager.getInstance(myProject).getDocument(file);
+            Document thisDocument = documentManager.getDocument(file);
 
             HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
@@ -408,7 +410,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     });
   }
 
-  private void appendDescriptors(PsiFile file, List<ProblemDescriptor> descriptors, LocalInspectionTool tool, boolean ignoreSuppressed) {
+  private void appendDescriptors(PsiFile file, List<ProblemDescriptor> descriptors, LocalInspectionTool tool) {
     InspectionResult res = new InspectionResult(tool, descriptors);
     appendResult(file, res);
   }
@@ -593,7 +595,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private void doInspectInjectedPsi(@NotNull PsiFile injectedPsi,
                                     @NotNull List<LocalInspectionTool> tools,
-                                    boolean isOnTheFly,
+                                    final boolean isOnTheFly,
                                     final boolean ignoreSuppressed,
                                     final ProgressIndicator indicator,
                                     LocalInspectionToolSession session) {
@@ -613,7 +615,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         @Override
         public void registerProblem(@NotNull ProblemDescriptor descriptor) {
           super.registerProblem(descriptor);
-          addDescriptorIncrementally(myDocument, descriptor, tool, ignoreSuppressed, indicator);
+          if (isOnTheFly) {
+            addDescriptorIncrementally(descriptor, tool, ignoreSuppressed, indicator);
+          }
         }
       };
 

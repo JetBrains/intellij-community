@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Bas Leijdekkers
+ * Copyright 2005-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,9 +251,14 @@ public class ExpressionUtils {
         if (!(strippedExpression instanceof PsiArrayAccessExpression)) {
             return false;
         }
-        final PsiArrayAccessExpression arrayExpression =
+        final PsiArrayAccessExpression arrayAccessExpression =
                 (PsiArrayAccessExpression)strippedExpression;
-        final PsiExpression index = arrayExpression.getIndexExpression();
+        final PsiExpression arrayExpression =
+                arrayAccessExpression.getArrayExpression();
+        if (isOffsetArrayAccess(arrayExpression, variable)) {
+            return false;
+        }
+        final PsiExpression index = arrayAccessExpression.getIndexExpression();
         if (index == null) {
             return false;
         }

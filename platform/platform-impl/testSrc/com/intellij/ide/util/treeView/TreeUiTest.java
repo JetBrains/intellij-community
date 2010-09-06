@@ -575,6 +575,30 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +xunit\n");
   }
 
+  public void testSelectWhileUpdating() throws Exception {
+    buildStructure(myRoot, false);
+    myForegroundLoadingNodes.add(myRoot.getElement());
+
+    myAutoExpand.add(myRoot.getElement());
+
+    invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        getBuilder().getUi().activate(true);
+        getBuilder().select(new NodeElement("com"));
+      }
+    });
+
+    waitBuilderToCome();
+
+    assertTree(
+      "-/\n" +
+      " +[com]\n" +
+      " +jetbrains\n" +
+      " +org\n" +
+      " +xunit\n");
+  }
+
   public void testCallbackOnceOnSelect() throws Exception {
     buildStructure(myRoot);
 
@@ -1004,8 +1028,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     };
 
-    assertTrue(getBuilder().getUi().isReady());
-    assertTree("+null\n");
+    assertTrue(getBuilder().getUi().isIdle());
+    assertTreeNow("+null\n");
     assertNull(((DefaultMutableTreeNode)getBuilder().getTreeModel().getRoot()).getUserObject());
 
     invokeLaterIfNeeded(new Runnable() {
@@ -2099,6 +2123,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class VeryQuickBgLoadingSyncUpdate extends TreeUiTest {
     public VeryQuickBgLoadingSyncUpdate() {
       super(false, true);
+    }
+
+    @Override
+    public void testSelectWhileUpdating() throws Exception {
+      super.testSelectWhileUpdating();
     }
 
     @Override

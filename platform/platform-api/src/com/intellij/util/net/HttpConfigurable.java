@@ -20,9 +20,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.apache.commons.codec.binary.Base64;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -41,7 +46,7 @@ import java.net.*;
     @Storage(id = "other", file = "$APP_CONFIG$/other.xml")
   }
 )
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable> {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, JDOMExternalizable {
   public boolean USE_HTTP_PROXY = false;
   public String PROXY_HOST = "";
   public int PROXY_PORT = 80;
@@ -109,6 +114,17 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         return getPromptedAuthentication(getRequestingHost(), getRequestingPrompt());
       }
     };
+  }
+
+  //these methods are preserved for compatibility
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
+  }
+
+  @Override
+  public void writeExternal(Element element) throws WriteExternalException {
+    XmlSerializer.serializeInto(getState(), element);
   }
 
   // @todo [all] Call this function before every HTTP connection.

@@ -35,6 +35,16 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
 
   protected BaseXmlElementDescriptorImpl() {}
 
+  @Override
+  public Integer getMinOccurs() {
+    return null;
+  }
+
+  @Override
+  public Integer getMaxOccurs() {
+    return null;
+  }
+
   // Read-only action
   protected abstract XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context);
 

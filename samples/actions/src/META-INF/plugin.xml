@@ -35,12 +35,13 @@
       <mouse-shortcut keystroke="ctrl alt button2" keymap="$default"/>
     </action>
 
-    <action id="Actions.ActionsPlugin.HelloWorld1" class="myActions.HelloWorldAction" text="Hello World" description=""/>
+    <action id="Actions.ActionsPlugin.HelloWorld1" class="myActions.HelloWorldAction" text="Hello World" icon ="/icons/plus.png" description=""/>
 
     <group id="Actions.ActionsPlugin.SampleGroup" text="Sample _Menu" description="Sample group">
       <reference ref="ActionsSample.ActionsPlugin.GarbageCollection"/>
       <separator/>
-      <action id="Actions.ActionsPlugin.HelloWorld" class="myActions.HelloWorldAction" text="Hello World" description=""/>
+       <reference ref="Actions.ActionsPlugin.HelloWorld1"/>
+
       <!--adds this group to the main menu-->
       <add-to-group group-id="MainMenu" anchor="last"/>
       <!--adds this group to the main toolbar before the Help action-->

@@ -241,6 +241,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myTracker = tracker;
     myTracker.init(this);
 
+    Position originalPreferred = position;
+
     JRootPane root = null;
     JDialog dialog = IJSwingUtilities.findParentOfType(tracker.getComponent(), JDialog.class);
     if (dialog != null) {
@@ -261,7 +263,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     myLayeredPane.addComponentListener(myComponentListener);
 
-    myTargetPoint = myTracker.recalculateLocation(this).getPoint(myLayeredPane);
+    myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutshift);
 
 
     if (myShowPointer) {
@@ -292,6 +294,10 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
           myPosition = targetPosition;
         }
       }
+    }
+
+    if (myPosition != originalPreferred) {
+      myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutshift);
     }
 
     createComponent();
@@ -329,7 +335,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     Rectangle rec = new Rectangle(new Point(0, 0), size);
 
-    position.setRecToRelativePosition(rec, position.getShiftedPoint(myTargetPoint, myCalloutshift));
+    position.setRecToRelativePosition(rec, myTargetPoint);
 
     if (adjust) {
       rec = myPosition
@@ -375,7 +381,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     RelativePoint newPosition = tracker.recalculateLocation(this);
 
     if (newPosition != null) {
-      myTargetPoint = newPosition.getPoint(myLayeredPane);
+      myTargetPoint = myPosition.getShiftedPoint(newPosition.getPoint(myLayeredPane), myCalloutshift);
       myPosition.updateBounds(this);
     }
   }
@@ -553,11 +559,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                                       Rectangle forcedBounds,
                                       Dimension preferredSize,
                                       boolean showPointer,
-                                      Point targetPoint, Insets containerInsets, int calloutShift) {
+                                      Point point, Insets containerInsets, int calloutShift) {
 
       Rectangle bounds = forcedBounds;
-
-      Point point = showPointer ? getShiftedPoint(targetPoint, calloutShift) : targetPoint;
 
       if (bounds == null) {
         Point location = showPointer

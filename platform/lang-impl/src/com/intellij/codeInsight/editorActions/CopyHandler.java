@@ -72,7 +72,10 @@ public class CopyHandler extends EditorActionHandler {
 
     List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
     for(CopyPastePostProcessor processor: Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-      transferableDatas.add(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+      final TextBlockTransferableData e = processor.collectTransferableData(file, editor, startOffsets, endOffsets);
+      if (e != null) {
+        transferableDatas.add(e);
+      }
     }
 
     String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(), "\n", transferableDatas);

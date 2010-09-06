@@ -97,7 +97,7 @@ public class PluginManager {
   /**
    * do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by IdeaClassLoader
    */
-  public synchronized static IdeaPluginDescriptor[] getPlugins() {
+  public static synchronized IdeaPluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
       initializePlugins();
       getLogger().info("Loaded plugins:" + StringUtil.join(ourPlugins, new Function<IdeaPluginDescriptorImpl, String>() {
@@ -138,10 +138,10 @@ public class PluginManager {
             ClassloaderUtil.clearJarURLCache();
 
             //noinspection AssignmentToStaticFieldFromInstanceMethod
-            PluginsFacade.INSTANCE = new PluginManager.Facade();
+            PluginsFacade.INSTANCE = new Facade();
 
             Class aClass = Class.forName(mainClass);
-            final Method method = aClass.getDeclaredMethod(methodName, (ArrayUtil.EMPTY_STRING_ARRAY).getClass());
+            final Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
             method.setAccessible(true);
 
             //noinspection RedundantArrayCreation
@@ -383,6 +383,9 @@ public class PluginManager {
                                      Map<PluginId, IdeaPluginDescriptor> map,
                                      final boolean checkModuleDependencies) {
     for (PluginId id: descriptor.getDependentPluginIds()) {
+      if (ArrayUtil.contains(id, descriptor.getOptionalDependentPluginIds())) {
+        continue;
+      }
       if (!checkModuleDependencies && isModuleDependency(id)) {
         continue;
       }
@@ -750,7 +753,7 @@ public class PluginManager {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(final File file, final @NonNls String fileName) {
+  public static IdeaPluginDescriptorImpl loadDescriptor(final File file, @NonNls final String fileName) {
     IdeaPluginDescriptorImpl descriptor = null;
 
     if (file.isDirectory()) {
@@ -925,7 +928,7 @@ public class PluginManager {
 
 
   public static boolean isPluginInstalled(PluginId id) {
-    return (getPlugin(id) != null);
+    return getPlugin(id) != null;
   }
 
   @Nullable
@@ -972,7 +975,7 @@ public class PluginManager {
   }
 
   public static void saveDisabledPlugins(Collection<String> ids, boolean append) throws IOException {
-    File plugins = new File(PathManager.getConfigPath(), PluginManager.DISABLED_PLUGINS_FILENAME);
+    File plugins = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
     }

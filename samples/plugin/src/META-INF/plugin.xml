@@ -8,7 +8,9 @@
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
 <!-- minimum IDEA build number with which the plugin is compatible -->
+ <!--
   <idea-version since-build="2000"/>
+  -->
 <!-- application components of the plugin -->
   <application-components>
     <component>

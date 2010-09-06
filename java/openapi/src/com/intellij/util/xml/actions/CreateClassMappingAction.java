@@ -39,10 +39,10 @@ import java.util.Map;
  */
 public abstract class CreateClassMappingAction<T extends DomElement> extends CreateDomElementAction<T> {
 
-  private final String myBaseClass;
+  @Nullable private final String myBaseClass;
   private final String myTemplate;
 
-  public CreateClassMappingAction(Class<T> contextClass, String baseClass, String template) {
+  public CreateClassMappingAction(Class<T> contextClass, @Nullable String baseClass, String template) {
     super(contextClass);
     myBaseClass = baseClass;
     myTemplate = template;
@@ -51,8 +51,8 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
   @Override
   protected DomElement createElement(final T context, final Editor editor, PsiFile file, final Project project) {
     PsiClass selectedClass;
-    PsiClass baseClass = getBaseClass(context, project);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      PsiClass baseClass = getBaseClass(context, project, myBaseClass);
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
         .createInheritanceClassChooser(getChooserTitle(), GlobalSearchScope.allScope(project), baseClass, null, new TreeClassChooser.ClassFilter() {
           @Override
@@ -64,7 +64,7 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
       selectedClass = chooser.getSelectedClass();
     }
     else {
-      selectedClass = baseClass;
+      selectedClass = getBaseClass(context, project, myBaseClass == null ? "java.lang.Object" : myBaseClass);
     }
     if (selectedClass == null) return null;
 
@@ -86,8 +86,8 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
   protected abstract DomElement createElement(T context);
 
   @Nullable
-  protected PsiClass getBaseClass(T context, Project project) {
-    return JavaPsiFacade.getInstance(project).findClass(myBaseClass, GlobalSearchScope.allScope(project));
+  protected PsiClass getBaseClass(T context, Project project, String baseClass) {
+    return baseClass == null ? null : JavaPsiFacade.getInstance(project).findClass(baseClass, GlobalSearchScope.allScope(project));
   }
 
   @Override

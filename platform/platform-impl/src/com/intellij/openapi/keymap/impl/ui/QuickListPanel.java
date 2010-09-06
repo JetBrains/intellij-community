@@ -23,9 +23,11 @@ import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBDefaultTreeCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -33,7 +35,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -62,7 +63,7 @@ public class QuickListPanel {
     DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
     myActionsTree.setModel(model);
-    myActionsTree.setCellRenderer(new MyTreeCellRenderer());
+    myActionsTree.setCellRenderer(new MyTreeCellRenderer(myActionsTree));
 
     myActionsList.setModel(new DefaultListModel());
     myActionsList.setCellRenderer(new MyListCellRenderer());
@@ -265,7 +266,11 @@ public class QuickListPanel {
     return myPanel;
   }
 
-  private class MyTreeCellRenderer extends DefaultTreeCellRenderer {
+  private class MyTreeCellRenderer extends JBDefaultTreeCellRenderer {
+    private MyTreeCellRenderer(@NotNull JTree tree) {
+      super(tree);
+    }
+
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean sel,
@@ -294,7 +299,9 @@ public class QuickListPanel {
           String actionId = (String)userObject;
           used = ((DefaultListModel)myActionsList.getModel()).lastIndexOf(actionId) >= 0;
           AnAction action = ActionManager.getInstance().getAction(actionId);
-          setText(action != null ? action.getTemplatePresentation().getText() : actionId);
+          String text = action == null ? actionId : action.getTemplatePresentation().getText();
+          if (text == null || text.length() == 0) text = actionId;
+          setText(text);
           if (action != null) {
             Icon actionIcon = action.getTemplatePresentation().getIcon();
             if (actionIcon != null) {
@@ -320,7 +327,7 @@ public class QuickListPanel {
         setIcon(ActionsTree.getEvenIcon(icon));
 
         if (sel) {
-          setForeground(UIUtil.getTreeSelectionForeground());
+          setForeground(getSelectionForeground(tree));
         }
         else {
           Color foreground = used ? UIUtil.getTextInactiveTextColor() :UIUtil.getTreeForeground();

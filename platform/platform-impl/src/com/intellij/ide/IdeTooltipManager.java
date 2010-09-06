@@ -178,7 +178,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setBorderColor(border)
       .setAnimationCycle(150)
       .setShowCallout(true)
-      .setCalloutShift(0); //todo
+      .setCalloutShift(4);
     myTipLabel.setForeground(fg);
     myTipLabel.setBorder(new EmptyBorder(1, 3, 2, 3));
     myTipLabel.setFont(UIManager.getFont("ToolTip.font"));

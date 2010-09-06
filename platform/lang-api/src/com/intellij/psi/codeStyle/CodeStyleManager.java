@@ -209,13 +209,6 @@ public abstract class CodeStyleManager  {
   public abstract Indent zeroIndent();
 
   /**
-   * @deprecated this method is not designed to be used by plugins.
-   */
-  @Nullable
-  public abstract PsiElement insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException;
-
-
-  /**
    * Reformats line indents inside new element and reformats white spaces around it
    * @param block - added element parent
    * @param addedElement - new element
