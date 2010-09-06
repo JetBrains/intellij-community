@@ -45,6 +45,16 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
     return myXmlNSDescriptor;
   }
 
+  @Override
+  public Integer getMinOccurs() {
+    return null;
+  }
+
+  @Override
+  public Integer getMaxOccurs() {
+    return null;
+  }
+
   public PsiElement getDeclaration(){
     return null;
   }

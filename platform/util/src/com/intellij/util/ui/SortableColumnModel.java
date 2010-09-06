@@ -15,23 +15,19 @@
  */
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.Nullable;
 
-
+import javax.swing.*;
 
 public interface SortableColumnModel {
-  int SORT_ASCENDING = 1;
-  int SORT_DESCENDING = 2;
-
   ColumnInfo[] getColumnInfos();
-
-  void sortByColumn(int columnIndex);
-  void sortByColumn(int columnIndex, int sortingType);
-
-  int getSortedColumnIndex();
-
-  int getSortingType();
 
   void setSortable(boolean aBoolean);
 
   boolean isSortable();
+
+  Object getRowValue(int row);
+
+  @Nullable
+  RowSorter.SortKey getDefaultSortKey();
 }

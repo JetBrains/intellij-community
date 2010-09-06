@@ -42,13 +42,13 @@ import java.util.List;
  */
 public class LightMethodBuilder extends LightElement implements PsiMethod {
   private final String myName;
-  private volatile Computable<PsiType> myReturnType;
+  private Computable<PsiType> myReturnType;
   private final LightModifierList myModifierList;
-  private volatile LightParameterListBuilder myParameterList;
-  private volatile Icon myBaseIcon;
-  private volatile PsiClass myContainingClass;
-  private volatile boolean myConstructor;
-  private volatile String myMethodKind = "LightMethodBuilder";
+  private LightParameterListBuilder myParameterList;
+  private Icon myBaseIcon;
+  private PsiClass myContainingClass;
+  private boolean myConstructor;
+  private String myMethodKind = "LightMethodBuilder";
 
   public LightMethodBuilder(PsiClass constructedClass) {
     this(constructedClass.getManager(), constructedClass.getName());

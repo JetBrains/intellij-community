@@ -19,9 +19,9 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,15 +33,18 @@ import java.util.List;
  */
 abstract public class PluginTableModel extends AbstractTableModel implements SortableColumnModel {
   protected ColumnInfo[] columns;
-  protected SortableProvider sortableProvider;
   protected List<IdeaPluginDescriptor> view;
+  private RowSorter.SortKey myDefaultSortKey;
 
   protected PluginTableModel() {
   }
 
-  public PluginTableModel(SortableProvider sortableProvider, ColumnInfo... columns) {
+  public PluginTableModel(ColumnInfo... columns) {
     this.columns = columns;
-    this.sortableProvider = sortableProvider;
+  }
+
+  public void setSortKey(final RowSorter.SortKey sortKey) {
+    myDefaultSortKey = sortKey;
   }
 
   public int getColumnCount() {
@@ -64,16 +67,18 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     return columns[column].getName();
   }
 
-  public int getSortedColumnIndex() {
-    return sortableProvider.getSortColumn();
-  }
-
-  public int getSortingType() {
-    return sortableProvider.getSortOrder();
-  }
-
   public IdeaPluginDescriptor getObjectAt (int row) {
     return view.get(row);
+  }
+
+  @Override
+  public Object getRowValue(int row) {
+    return getObjectAt(row);
+  }
+
+  @Override
+  public RowSorter.SortKey getDefaultSortKey() {
+    return myDefaultSortKey;
   }
 
   public int getRowCount() {
@@ -91,16 +96,6 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
   public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
     columns[columnIndex].setValue(getObjectAt(rowIndex), aValue);
   }
-
-  public void sortByColumn(int columnIndex) {
-    Collections.sort(view, columns[columnIndex].getComparator());
-    fireTableDataChanged();
-  }
-
-  public void sortByColumn(int columnIndex, int sortingType) {
-    sortByColumn(columnIndex);
-  }
-
 
   public ArrayList<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
     ArrayList<IdeaPluginDescriptorImpl> list = new ArrayList<IdeaPluginDescriptorImpl>();
@@ -123,12 +118,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
   public abstract void modifyData(List<IdeaPluginDescriptor> list);
 
   public void filter(ArrayList<IdeaPluginDescriptor> filtered){
-    safeSort();
-  }
-
-  protected void safeSort() {
-    final int sortColumn = sortableProvider.getSortColumn();
-    sortByColumn(-1 < sortColumn && sortColumn < getColumnCount() ? sortColumn : 0);
+    fireTableDataChanged();
   }
 
   public abstract int getNameColumn();

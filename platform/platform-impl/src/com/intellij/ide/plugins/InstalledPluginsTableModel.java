@@ -16,18 +16,17 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +51,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   public static Set<PluginId> updatedPlugins = new HashSet<PluginId>();
   private final Map<PluginId, Boolean> myEnabled = new HashMap<PluginId, Boolean>();
 
-  public InstalledPluginsTableModel(SortableProvider sortableProvider) {
-    super.sortableProvider = sortableProvider;
+  public InstalledPluginsTableModel() {
     super.columns = new ColumnInfo[]{new EnabledPluginInfo(), new NameColumnInfo(), new BundledColumnInfo()};
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
     reset(view);
@@ -62,7 +60,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       @NonNls final String s = iterator.next().getPluginId().getIdString();
       if ("com.intellij".equals(s)) iterator.remove();
     }
-    sortByColumn(getNameColumn());
+
+    setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
   }
 
   public static int getCheckboxColumn() {
@@ -102,7 +101,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         }
       }
     }
-    safeSort();
+
+    fireTableDataChanged();
   }
 
   @Override
@@ -113,6 +113,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         view.add(descriptor);
       }
     }
+
     super.filter(filtered);
   }
 
@@ -216,20 +217,19 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
 
     public Comparator<IdeaPluginDescriptorImpl> getComparator() {
-      final boolean sortDirection = (sortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING);
       return new Comparator<IdeaPluginDescriptorImpl>() {
         public int compare(final IdeaPluginDescriptorImpl o1, final IdeaPluginDescriptorImpl o2) {
           if (myEnabled.get(o1.getPluginId())) {
             if (myEnabled.get(o2.getPluginId())) {
               return 0;
             }
-            return sortDirection ? -1 : 1;
+            return -1;
           }
           else {
             if (!myEnabled.get(o2.getPluginId())) {
               return 0;
             }
-            return sortDirection ? 1 : -1;
+            return 1;
           }
         }
       };
@@ -282,7 +282,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   private class NameColumnInfo extends PluginManagerColumnInfo {
     public NameColumnInfo() {
-      super(PluginManagerColumnInfo.COLUMN_NAME, sortableProvider);
+      super(COLUMN_NAME);
     }
 
     public TableCellRenderer getRenderer(final IdeaPluginDescriptor ideaPluginDescriptor) {

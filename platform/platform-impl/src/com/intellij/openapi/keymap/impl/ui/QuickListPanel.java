@@ -299,7 +299,9 @@ public class QuickListPanel {
           String actionId = (String)userObject;
           used = ((DefaultListModel)myActionsList.getModel()).lastIndexOf(actionId) >= 0;
           AnAction action = ActionManager.getInstance().getAction(actionId);
-          setText(action != null ? action.getTemplatePresentation().getText() : actionId);
+          String text = action == null ? actionId : action.getTemplatePresentation().getText();
+          if (text == null || text.length() == 0) text = actionId;
+          setText(text);
           if (action != null) {
             Icon actionIcon = action.getTemplatePresentation().getIcon();
             if (actionIcon != null) {

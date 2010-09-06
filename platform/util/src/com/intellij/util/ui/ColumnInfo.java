@@ -15,15 +15,12 @@
  */
 package com.intellij.util.ui;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 public abstract class ColumnInfo <Item, Aspect> {
 
@@ -67,13 +64,6 @@ public abstract class ColumnInfo <Item, Aspect> {
 
   public String getName() {
     return myName;
-  }
-
-  public void sort(@NotNull List<Item> list) {
-    Comparator<Item> comparator = getComparator();
-    if (comparator != null) {
-      Collections.sort(list, comparator);
-    }
   }
 
   public Class getColumnClass() {

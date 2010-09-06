@@ -225,6 +225,10 @@ public class ActionsTree {
       super(root);
     }
 
+    @Override
+    public void setTree(JTree tree) {
+    }
+
     public int getColumnCount() {
       return 2;
     }

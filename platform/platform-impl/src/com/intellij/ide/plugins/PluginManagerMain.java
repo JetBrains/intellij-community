@@ -104,11 +104,11 @@ public class PluginManagerMain implements Disposable {
 
   private final MyPluginsFilter myFilter = new MyPluginsFilter();
 
-  public PluginManagerMain(final SortableProvider installedProvider, final SortableProvider availableProvider) {
+  public PluginManagerMain() {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
     myChangeNotesTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
-    installedPluginsModel = new InstalledPluginsTableModel(installedProvider);
+    installedPluginsModel = new InstalledPluginsTableModel();
     installedPluginTable = new PluginTable(installedPluginsModel);
 
     installedPluginTable.setColumnWidth(2, 45);
@@ -132,7 +132,7 @@ public class PluginManagerMain implements Disposable {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
 
-    availablePluginsModel = new AvailablePluginsTableModel(availableProvider);
+    availablePluginsModel = new AvailablePluginsTableModel();
     availablePluginsTable = new PluginTable(availablePluginsModel);
     //  Downloads
     availablePluginsTable.setColumnWidth(1, 70);

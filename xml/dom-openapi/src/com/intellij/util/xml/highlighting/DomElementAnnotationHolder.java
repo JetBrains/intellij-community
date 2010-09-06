@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDescriptor>{
 
   @NotNull
-  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message);
+  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message, LocalQuickFix... fixes);
 
   @NotNull
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message);

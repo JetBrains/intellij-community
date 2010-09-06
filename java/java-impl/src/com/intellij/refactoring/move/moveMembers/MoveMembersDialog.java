@@ -34,9 +34,9 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
@@ -70,7 +70,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   private MemberSelectionTable myTable;
   private final MoveCallback myMoveCallback;
 
-  VisibilityPanel myVisibilityPanel;
+  JavaVisibilityPanel myVisibilityPanel;
   private final JCheckBox myIntroduceEnumConstants = new JCheckBox(RefactoringBundle.message("move.enum.constant.cb"), true);
 
   public MoveMembersDialog(Project project,
@@ -199,7 +199,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     scrollPane.setBorder(border);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    myVisibilityPanel = new VisibilityPanel(true, true);
+    myVisibilityPanel = new JavaVisibilityPanel(true, true);
     myVisibilityPanel.setVisibility(null);
     panel.add(myVisibilityPanel, BorderLayout.EAST);
 

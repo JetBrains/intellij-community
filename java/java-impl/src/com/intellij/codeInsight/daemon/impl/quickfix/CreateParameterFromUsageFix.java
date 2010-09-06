@@ -25,8 +25,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +95,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
       processor.run();
     }
     else {
-      ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false, myReferenceExpression);
+      JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, false, myReferenceExpression);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
     }

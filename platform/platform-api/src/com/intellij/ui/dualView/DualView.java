@@ -399,19 +399,12 @@ public class DualView extends JPanel {
   }
 
   public void setRoot(final TreeNode node, final List<Object> selection) {
-    ListTableModel model = myFlatView.getListTableModel();
-    final int column = model.getSortedColumnIndex();
-    final int sortingType = model.getSortingType();
-
     final List<Object> currentlySelected = myFlatView.getSelectedObjects();
     final List<Object> targetSelection = (currentlySelected != null && (! currentlySelected.isEmpty())) ? currentlySelected : selection;
     //final Object obj = myFlatView.getSelectedObject() != null ? myFlatView.getSelectedObject() : selection;
 
     myTreeView.getTreeViewModel().setRoot(node);
 
-    if (column != -1) {
-      model.sortByColumn(column, sortingType);
-    }
     if ((targetSelection != null) && (! targetSelection.isEmpty())) {
       final List items = myFlatView.getItems();
       for (Object selElement : targetSelection) {
@@ -447,19 +440,21 @@ public class DualView extends JPanel {
                                                    int column) {
       Component result = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       Object treeNode = null;
+
+      final int modelRow = table.convertRowIndexToModel(row);
+
       if (myCurrentView == myTreeView) {
-        TreePath path = myTreeView.getTree().getPathForRow(row);
+        TreePath path = myTreeView.getTree().getPathForRow(modelRow);
         if (path != null) {
           treeNode = path.getLastPathComponent();
         }
       }
       else if (myCurrentView == myFlatView) {
-        treeNode = myFlatView.getItems().get(row);
+        treeNode = myFlatView.getItems().get(modelRow);
       }
 
       myCellWrapper.wrap(result, table, value, isSelected, hasFocus, row, column, treeNode);
       return result;
-
     }
   }
 }

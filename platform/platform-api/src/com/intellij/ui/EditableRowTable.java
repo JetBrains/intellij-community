@@ -79,6 +79,7 @@ public class EditableRowTable {
           table.editCellAt(index, 0);
           table.setRowSelectionInterval(index, index);
           table.setColumnSelectionInterval(0, 0);
+          table.getParent().repaint();
           final Component editorComponent = table.getEditorComponent();
           if (editorComponent != null) {
             final Rectangle bounds = editorComponent.getBounds();
@@ -107,6 +108,7 @@ public class EditableRowTable {
             updateButtons(table, tableModel, addButton, removeButton, upButton, downButton);
           }
 
+          table.getParent().repaint();
           table.requestFocus();
         }
       }

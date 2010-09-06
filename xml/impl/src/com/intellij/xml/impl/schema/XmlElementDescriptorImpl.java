@@ -156,6 +156,28 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return nsDescriptor;
   }
 
+  @Override
+  public Integer getMinOccurs() {
+    String value = myDescriptorTag.getAttributeValue("minOccurs");
+    try {
+      return value == null ? 1 : Integer.parseInt(value);
+    }
+    catch (NumberFormatException e) {
+      return null;
+    }
+  }
+
+  @Override
+  public Integer getMaxOccurs() {
+    String value = myDescriptorTag.getAttributeValue("maxOccurs");
+    try {
+      return value == null ? 1 : "unbounded".equals(value) ? Integer.MAX_VALUE : Integer.parseInt(value);
+    }
+    catch (NumberFormatException e) {
+      return null;
+    }
+  }
+
   @Nullable
   public TypeDescriptor getType() {
     return getType(null);

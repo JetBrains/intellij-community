@@ -24,8 +24,8 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageViewUtil;
@@ -47,7 +47,7 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
   }
 
   protected JList myList;
-  protected VisibilityPanel myVisibilityPanel;
+  protected JavaVisibilityPanel myVisibilityPanel;
   protected final String myRefactoringName;
 
   public MoveInstanceMethodDialogBase(PsiMethod method, PsiVariable[] variables, String refactoringName) {
@@ -94,8 +94,8 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
     return list;
   }
 
-  protected static VisibilityPanel createVisibilityPanel() {
-    final VisibilityPanel visibilityPanel = new VisibilityPanel(false, true);
+  protected static JavaVisibilityPanel createVisibilityPanel() {
+    final JavaVisibilityPanel visibilityPanel = new JavaVisibilityPanel(false, true);
     visibilityPanel.setVisibility(null);
     return visibilityPanel;
   }

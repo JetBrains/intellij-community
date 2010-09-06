@@ -845,6 +845,12 @@ public class StringUtil {
     return s == null ? defaultValue : s;
   }
 
+  @Nullable
+  public static String nullize(final @Nullable String s) {
+    if (isEmpty(s)) return null;
+    return s;
+  }
+
   public static boolean isEmptyOrSpaces(final String s) {
     return s == null || s.trim().length() == 0;
   }

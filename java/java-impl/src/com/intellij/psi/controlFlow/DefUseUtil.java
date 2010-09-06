@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,16 +106,8 @@ public class DefUseUtil {
       return result;
     }
 
-    void touch() {
+    private void touch() {
       if (myVariablesUseArmed == null) myVariablesUseArmed = new THashSet<PsiVariable>();
-    }
-
-    public boolean equals(Object obj) {
-      InstructionState state = (InstructionState) obj;
-      if (myVariablesUseArmed == null && state.myVariablesUseArmed == null) return true;
-      if (myVariablesUseArmed == null || state.myVariablesUseArmed == null) return false;
-
-      return myVariablesUseArmed.equals(state.myVariablesUseArmed);
     }
 
     public void merge(InstructionState state) {
@@ -122,8 +115,15 @@ public class DefUseUtil {
       myVariablesUseArmed.addAll(state.myVariablesUseArmed);
     }
 
-    public void markVisited() {
+    public boolean contains(InstructionState state) {
+      return myVariablesUseArmed != null && state.myVariablesUseArmed != null &&
+             myVariablesUseArmed.containsAll(state.myVariablesUseArmed);
+    }
+
+    public boolean markVisited() {
+      boolean old = myIsVisited;
       myIsVisited = true;
+      return old;
     }
 
     public boolean isVisited() {
@@ -172,9 +172,8 @@ public class DefUseUtil {
     InstructionState[] states = getStates(instructions);
 
     boolean[] defsArmed = new boolean[instructions.size()];
-    for (int i = 0; i < defsArmed.length; i++) defsArmed[i] = false;
 
-    List<InstructionState> queue = new ArrayList<InstructionState>();
+    Queue<InstructionState> queue = new Queue<InstructionState>(8);
 
     for (int i = states.length - 1; i >= 0; i--) {
       final InstructionState outerState = states[i];
@@ -186,11 +185,11 @@ public class DefUseUtil {
           outerState.mergeUseArmed(psiVariable);
         }
       }
-      queue.add(outerState);
+      queue.addLast(outerState);
 
       while (!queue.isEmpty()) {
         ProgressManager.checkCanceled();
-        InstructionState state = queue.remove(0);
+        InstructionState state = queue.pullFirst();
         state.markVisited();
 
         int idx = state.getInstructionIdx();
@@ -215,11 +214,13 @@ public class DefUseUtil {
           }
         }
 
-        for (int j = 0; j < state.getBackwardTraces().size(); j++) {
-          int prevIdx = state.getBackwardTraces().get(j);
-          if (!state.equals(states[prevIdx])) {
-            states[prevIdx].merge(state);
-            queue.add(states[prevIdx]);
+        IntArrayList backwardTraces = state.getBackwardTraces();
+        for (int j = 0; j < backwardTraces.size(); j++) {
+          int prevIdx = backwardTraces.get(j);
+          InstructionState prevState = states[prevIdx];
+          if (!prevState.contains(state)) {
+            prevState.merge(state);
+            queue.addLast(prevState);
           }
         }
       }
@@ -255,9 +256,8 @@ public class DefUseUtil {
   @NotNull
   public static PsiElement[] getDefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
     try {
-      return new RefsDefs(body) {
-
-        final InstructionState[] states = getStates(instructions);
+      RefsDefs refsDefs = new RefsDefs(body) {
+        private final InstructionState[] states = getStates(instructions);
 
         protected int nNext(int index) {
           return states[index].getBackwardTraces().size();
@@ -267,7 +267,9 @@ public class DefUseUtil {
           return states[index].getBackwardTraces().get(no);
         }
 
-        protected boolean defs() { return true; }
+        protected boolean defs() {
+          return true;
+        }
 
         protected void processInstruction(final Set<PsiElement> res, final Instruction instruction, int index) {
           if (instruction instanceof WriteVariableInstruction) {
@@ -276,14 +278,17 @@ public class DefUseUtil {
 
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
-                @Override public void visitReferenceExpression(PsiReferenceExpression ref) {
+                @Override
+                public void visitReferenceExpression(PsiReferenceExpression ref) {
                   if (PsiUtil.isAccessedForWriting(ref)) {
                     if (ref.resolve() == def) {
                       res.add(ref);
                     }
                   }
                 }
-                @Override public void visitVariable(PsiVariable var) {
+
+                @Override
+                public void visitVariable(PsiVariable var) {
                   if (var == def && (var instanceof PsiParameter || var.hasInitializer())) {
                     res.add(var);
                   }
@@ -292,7 +297,8 @@ public class DefUseUtil {
             }
           }
         }
-      }.get(def, ref);
+      };
+      return refsDefs.get(def, ref);
     }
     catch (AnalysisCanceledException e) {
       return PsiElement.EMPTY_ARRAY;
@@ -302,8 +308,7 @@ public class DefUseUtil {
   @NotNull
   public static PsiElement[] getRefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
     try {
-      return new RefsDefs(body) {
-
+      RefsDefs refsDefs = new RefsDefs(body) {
         protected int nNext(int index) {
           return instructions.get(index).nNext();
         }
@@ -312,7 +317,9 @@ public class DefUseUtil {
           return instructions.get(index).getNext(index, no);
         }
 
-        protected boolean defs() { return false; }
+        protected boolean defs() {
+          return false;
+        }
 
         protected void processInstruction(final Set<PsiElement> res, final Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
@@ -321,7 +328,8 @@ public class DefUseUtil {
 
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
-                @Override public void visitReferenceExpression(PsiReferenceExpression ref) {
+                @Override
+                public void visitReferenceExpression(PsiReferenceExpression ref) {
                   if (ref.resolve() == def) {
                     res.add(ref);
                   }
@@ -330,15 +338,15 @@ public class DefUseUtil {
             }
           }
         }
-      }.get(def, ref);
+      };
+      return refsDefs.get(def, ref);
     }
     catch (AnalysisCanceledException e) {
       return PsiElement.EMPTY_ARRAY;
     }
   }
 
-  protected abstract static class RefsDefs {
-
+  private abstract static class RefsDefs {
     protected abstract int   nNext(int index);
     protected abstract int getNext(int index, int no);
 
@@ -357,7 +365,7 @@ public class DefUseUtil {
     protected abstract boolean defs ();
 
     @NotNull
-    PsiElement[] get (final PsiVariable def, PsiElement refOrDef) {
+    private PsiElement[] get (final PsiVariable def, PsiElement refOrDef) {
       if (body == null) {
         return PsiElement.EMPTY_ARRAY;
       }

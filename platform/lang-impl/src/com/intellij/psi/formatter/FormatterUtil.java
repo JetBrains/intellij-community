@@ -280,5 +280,4 @@ public class FormatterUtil {
     if (prevNode == null) return false;
     return tokens.contains(prevNode.getElementType());
   }
-
 }

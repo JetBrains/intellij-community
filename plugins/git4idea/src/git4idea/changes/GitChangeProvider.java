@@ -29,6 +29,7 @@ import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -58,11 +59,15 @@ public class GitChangeProvider implements ChangeProvider {
                          final ChangelistBuilder builder,
                          final ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
-    final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
-    Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
-    if (roots.size() != affected.size()) {
-      LOG.info("affected content roots size: " + affected.size() + " roots size: " + roots.size());
+    final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRootsWithCheck();
+    if (dirtyScope.getAffectedContentRoots().size() != affected.size()) {
+      final Set<VirtualFile> set = new HashSet<VirtualFile>(affected);
+      set.removeAll(dirtyScope.getAffectedContentRoots());
+      for (VirtualFile file : set) {
+        ((VcsAppendableDirtyScope) dirtyScope).addDirtyDirRecursively(new FilePathImpl(file));
+      }
     }
+    Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
 
     final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate);
 

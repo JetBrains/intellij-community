@@ -94,6 +94,22 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     return getNsDescriptorFrom(myElementDecl);
   }
 
+  /**
+   * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
+   */
+  @Override
+  public Integer getMinOccurs() {
+    return null;
+  }
+
+  /**
+   * @return maximal occurrence constraint value (e.g. 1 or {@link Integer.MAX_VALUE}), on null if not applied
+   */
+  @Override
+  public Integer getMaxOccurs() {
+    return null;
+  }
+
   @Nullable
   private static XmlNSDescriptor getNsDescriptorFrom(final PsiElement elementDecl) {
     final XmlFile file = XmlUtil.getContainingFile(elementDecl);

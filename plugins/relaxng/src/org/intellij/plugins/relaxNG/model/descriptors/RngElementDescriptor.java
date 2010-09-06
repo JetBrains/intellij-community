@@ -182,6 +182,16 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return myNsDescriptor;
   }
 
+  @Override
+  public Integer getMinOccurs() {
+    return null;
+  }
+
+  @Override
+  public Integer getMaxOccurs() {
+    return null;
+  }
+
   // is this actually used anywhere?
   public int getContentType() {
     final DPattern child = myElementPattern.getChild();

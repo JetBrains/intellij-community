@@ -47,4 +47,32 @@ public interface ParameterInfo {
    */
   @Nullable
   String getDefaultValue();
+
+  /**
+   * Set parameter new name (to be changed to during refactoring)
+   * @param name new name
+   */
+  void setName(String name);
+
+  /**
+   * Returns parameter type text
+   *
+   * @return type text
+   */
+  String getTypeText();
+
+  /**
+   * Flag whether refactoring should use any appropriate nearby variable as the default value
+   *
+   * @return flag value
+   */
+  boolean isUseAnySingleVariable();
+
+
+  /**
+   * Flag whether refactoring should use any appropriate nearby variable as the default value
+   *
+   * @param b new value
+   */
+  void setUseAnySingleVariable(boolean b);
 }

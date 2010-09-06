@@ -23,9 +23,11 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
@@ -50,6 +52,21 @@ public class VcsDirtyScopeImpl extends VcsAppendableDirtyScope {
   }
 
   public Collection<VirtualFile> getAffectedContentRoots() {
+    return myAffectedContentRoots;
+  }
+
+  public Collection<VirtualFile> getAffectedContentRootsWithCheck() {
+    if (myVcs.allowsNestedRoots()) {
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
+      final VirtualFile[] roots = vcsManager.getRootsUnderVcs(myVcs);
+      final List<VirtualFile> asList = Arrays.asList(roots);
+
+      final Set<VirtualFile> result = new HashSet<VirtualFile>();
+      for (VirtualFile root : myAffectedContentRoots) {
+        result.addAll(ProjectLevelVcsManagerImpl.getRootsUnder(asList, root));
+      }
+      return new SmartList<VirtualFile>(result);
+    }
     return myAffectedContentRoots;
   }
 
@@ -275,6 +292,14 @@ public class VcsDirtyScopeImpl extends VcsAppendableDirtyScope {
           result.append(file).append(" ");
         }
       }
+    }
+    result.append("affected roots=");
+    for (VirtualFile contentRoot : myAffectedContentRoots) {
+      result.append(contentRoot.getPath()).append(" ");
+    }
+    result.append("affected roots DISCLOSED=");
+    for (VirtualFile contentRoot : getAffectedContentRootsWithCheck()) {
+      result.append(contentRoot.getPath()).append(" ");
     }
     result.append("]");
     return result.toString();

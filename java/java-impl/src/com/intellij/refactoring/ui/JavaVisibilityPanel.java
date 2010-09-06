@@ -30,11 +30,12 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.EventListener;
 
-public class VisibilityPanel extends JPanel {
+public class JavaVisibilityPanel extends VisibilityPanelBase {
   private JRadioButton myRbAsIs;
   private JRadioButton myRbEscalate;
   private final JRadioButton myRbPrivate;
@@ -42,7 +43,7 @@ public class VisibilityPanel extends JPanel {
   private final JRadioButton myRbPackageLocal;
   private final JRadioButton myRbPublic;
 
-  public VisibilityPanel(boolean hasAsIs, final boolean hasEscalate) {
+  public JavaVisibilityPanel(boolean hasAsIs, final boolean hasEscalate) {
     setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title")));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
@@ -50,7 +51,7 @@ public class VisibilityPanel extends JPanel {
     ItemListener listener = new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         if(e.getStateChange() == ItemEvent.SELECTED) {
-          fireStateChanged();
+          myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
         }
       }
     };
@@ -158,20 +159,4 @@ public class VisibilityPanel extends JPanel {
     myRbPublic.setSelected(true);
   }
 
-  public static interface StateChanged extends EventListener {
-    void visibilityChanged();
-  }
-
-  public void addStateChangedListener(StateChanged l) {
-    listenerList.add(StateChanged.class, l);
-  }
-  private void fireStateChanged() {
-    Object[] list = listenerList.getListenerList();
-
-    for (Object obj : list) {
-      if (obj instanceof StateChanged) {
-        ((StateChanged)obj).visibilityChanged();
-      }
-    }
-  }
 }

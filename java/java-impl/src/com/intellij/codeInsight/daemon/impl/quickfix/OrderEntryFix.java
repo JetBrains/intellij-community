@@ -272,14 +272,14 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   public static void addBundledJarToRoots(final Project project,
                                           @Nullable final Editor editor,
                                           final Module currentModule,
-                                          final PsiReference reference,
+                                          @Nullable final PsiReference reference,
                                           @NonNls final String className,
                                           @NonNls final String libVirtFile) {
-    addJarToRoots(libVirtFile, currentModule, reference.getElement());
+    addJarToRoots(libVirtFile, currentModule, reference != null ? reference.getElement() : null);
 
     GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-    if (aClass != null && editor != null) {
+    if (aClass != null && editor != null && reference != null) {
       new AddImportAction(project, reference, editor, aClass).execute();
     }
   }

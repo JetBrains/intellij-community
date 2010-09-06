@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -46,6 +48,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
@@ -151,6 +154,33 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.updateUI();
+    final TreeCellRenderer renderer = myTree.getCellRenderer();
+    myTree.setCellRenderer(new TreeCellRenderer() {
+      @Override
+      public Component getTreeCellRendererComponent(JTree tree,
+                                                    Object value,
+                                                    boolean selected,
+                                                    boolean expanded,
+                                                    boolean leaf,
+                                                    int row,
+                                                    boolean hasFocus) {
+        final Component c = renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        if (value instanceof DefaultMutableTreeNode) {
+          final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+          if (userObject instanceof ViewerNodeDescriptor) {
+            final Object element = ((ViewerNodeDescriptor)userObject).getElement();
+            if ((element instanceof PsiElement && FileContextUtil.getFileContext(((PsiElement)element).getContainingFile()) != null)
+              || element instanceof ViewerTreeStructure.Inject) {
+                final TextAttributes attr =
+                  EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
+                c.setBackground(attr.getBackgroundColor());
+
+            }
+          }
+        }
+        return c;
+      }
+    });
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
@@ -540,6 +570,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   protected void doOKAction() {
     final String text = myEditor.getDocument().getText();
+    myEditor.getSelectionModel().removeSelection();
     //if (text.trim().length() == 0) return;
 
     myLastParsedText = text;
@@ -639,9 +670,11 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
                                    ? (PsiElement)elementObject
                                    : elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
         if (element != null) {
+          final PsiElement psiElement = FileContextUtil.getFileContext(element.getContainingFile());
+          final int textOffset = psiElement == null ? 0 : psiElement.getTextOffset();
           TextRange range = element.getTextRange();
-          int start = range.getStartOffset();
-          int end = range.getEndOffset();
+          int start = range.getStartOffset() + textOffset;
+          int end = range.getEndOffset() + textOffset;
           final ViewerTreeStructure treeStructure = (ViewerTreeStructure)myTreeBuilder.getTreeStructure();
           PsiElement rootPsiElement = treeStructure.getRootPsiElement();
           if (rootPsiElement != null) {
@@ -657,7 +690,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
             if (myTree.hasFocus()) {
               myEditor.getCaretModel().moveToOffset(start);
               myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-            } else {
+            }
+            else {
               myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(start), ScrollType.MAKE_VISIBLE);
             }
           }
