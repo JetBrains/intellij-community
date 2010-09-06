@@ -3,15 +3,15 @@
   <problem>
     <file>InstanceVariableInitialization.java</file>
     <line>7</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Instance variable may not be initialized</problem_class>
-    <description>Instance variable &lt;code&gt;javaHome&lt;/code&gt; may not be initialized during object construction or 'setUp()' call #loc</description>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Instance field may not be initialized</problem_class>
+    <description>Instance field &lt;code&gt;javaHome&lt;/code&gt; may not be initialized during object construction or 'setUp()' call #loc</description>
   </problem>
 
   <problem>
     <file>InstanceVariableInitialization.java</file>
     <line>21</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Instance variable may not be initialized</problem_class>
-    <description>Instance variable &lt;code&gt;m_fooBardo&lt;/code&gt; may not be initialized during object construction #loc</description>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Instance field may not be initialized</problem_class>
+    <description>Instance field &lt;code&gt;m_fooBardo&lt;/code&gt; may not be initialized during object construction #loc</description>
   </problem>
 
 </problems>

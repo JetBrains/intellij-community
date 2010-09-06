@@ -3,7 +3,7 @@
   <problem>
     <file>StaticVariableInitializationInspection.java</file>
     <line>11</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static variable may not be initialized</problem_class>
-    <description>Static variable &lt;code&gt;s_fooBar&lt;/code&gt; may not be initialized during class initialization #loc</description>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static field may not be initialized</problem_class>
+    <description>Static field &lt;code&gt;s_fooBar&lt;/code&gt; may not be initialized during class initialization #loc</description>
   </problem>
 </problems>
