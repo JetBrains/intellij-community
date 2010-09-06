@@ -31,6 +31,7 @@ import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
@@ -38,7 +39,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
@@ -46,6 +46,7 @@ import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -184,7 +185,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     boolean dtdUriFromDocTypeIsNamespace = false;
 
     if (XmlUtil.HTML_URI.equals(namespace)) {
-      XmlNSDescriptor nsDescriptor = doctype != null ? getNsDescriptorFormDocType(doctype, containingFile) : null;
+      XmlNSDescriptor nsDescriptor = doctype != null ? getNsDescriptorFormDocType(doctype, containingFile, true) : null;
       if (nsDescriptor == null) nsDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
       return new HtmlNSDescriptorImpl(nsDescriptor);
     }
@@ -209,7 +210,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     if (strict && !dtdUriFromDocTypeIsNamespace) return null;
 
     if (doctype != null) {
-      XmlNSDescriptor descr = getNsDescriptorFormDocType(doctype, containingFile);
+      XmlNSDescriptor descr = getNsDescriptorFormDocType(doctype, containingFile, false);
 
       if (descr != null) {
         return XmlExtension.getExtension(containingFile).getDescriptorFromDoctype(containingFile, descr);
@@ -239,26 +240,34 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return null;
   }
 
-  private XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile) {
-    XmlNSDescriptor descr = null;
-    if (doctype.getMarkupDecl() != null){
-      descr = (XmlNSDescriptor)doctype.getMarkupDecl().getMetaData();
-      final XmlElementDescriptor[] rootElementsDescriptors = descr.getRootElementsDescriptors(this);
-      if (rootElementsDescriptors.length == 0) descr = null;
-    }
+  @Nullable
+  private XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile, final boolean nonEmpty) {
+    XmlNSDescriptor descriptor = getNSDescriptorFromMetaData(doctype.getMarkupDecl(), nonEmpty);
 
     final String dtdUri = XmlUtil.getDtdUri(doctype);
     if (dtdUri != null && dtdUri.length() > 0){
       final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
-      final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
-      if (descr != null && descr1 != null){
-        descr = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descr, descr1});
+      XmlNSDescriptor descriptorFromDtd = getNSDescriptorFromMetaData(xmlFile == null ? null : xmlFile.getDocument(), nonEmpty);
+
+      if (descriptor != null && descriptorFromDtd != null){
+        descriptor = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descriptor, descriptorFromDtd});
       }
-      else if (descr1 != null) {
-        descr = descr1;
+      else if (descriptorFromDtd != null) {
+        descriptor = descriptorFromDtd;
       }
     }
-    return descr;
+    return descriptor;
+  }
+
+  @Nullable
+  private XmlNSDescriptor getNSDescriptorFromMetaData(@Nullable PsiMetaOwner metaOwner, boolean nonEmpty) {
+    if (metaOwner == null) return null;
+    XmlNSDescriptor descriptor = (XmlNSDescriptor)metaOwner.getMetaData();
+    if (descriptor == null) return null;
+    if (nonEmpty && descriptor.getRootElementsDescriptors(this).length == 0) {
+      return null;
+    }
+    return descriptor;
   }
 
   public Object clone() {
