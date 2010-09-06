@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.actions.ConvertIndentsFix;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import org.jetbrains.annotations.Nls;
@@ -29,7 +30,10 @@ public class PyInconsistentIndentationInspection extends PyInspection {
 
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return new IndentValidator(file, manager, isOnTheFly).invoke();
+    if (file.getLanguage() instanceof PythonLanguage) {
+      return new IndentValidator(file, manager, isOnTheFly).invoke();
+    }
+    return ProblemDescriptor.EMPTY_ARRAY;
   }
 
   private static class IndentValidator {
