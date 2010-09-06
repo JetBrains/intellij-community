@@ -15,24 +15,27 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.psi.*;
-import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Maxim.Medvedev
- */
-public interface JavaParameterInfo extends ParameterInfo {
+import java.util.List;
+
+public interface MethodDescriptor<P extends ParameterInfo> {
+
+  String getName();
+
+  List<P> getParameters();
+
+  int getParametersCount();
+
+  String getVisibility();
+
+  boolean isConstructor();
+
+  PsiElement getMethod();
+
   @Nullable
-  PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException;
+  String getReturnTypeText();
 
-  String getTypeText();
-
-  CanonicalTypes.Type getTypeWrapper();
-
-  PsiExpression getValue(PsiCallExpression callExpression);
-
-  boolean isVarargType();
-
+  boolean canChangeVisibility();
 }

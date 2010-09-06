@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.ui.VisibilityPanel;
+import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.EditorTextField;
@@ -37,6 +37,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -62,7 +64,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
 
   private final InputVariables myVariableData;
   private final PsiClass myTargetClass;
-  private VisibilityPanel myVisibilityPanel;
+  private JavaVisibilityPanel myVisibilityPanel;
 
   private boolean myDefaultVisibility = true;
   private boolean myChangingVisibility;
@@ -286,10 +288,11 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
 
 
   protected JComponent createCenterPanel() {
-    myVisibilityPanel = new VisibilityPanel(false, false);
+    myVisibilityPanel = new JavaVisibilityPanel(false, false);
     myVisibilityPanel.setVisibility(PsiModifier.PRIVATE);
-    myVisibilityPanel.addStateChangedListener(new VisibilityPanel.StateChanged() {
-      public void visibilityChanged() {
+    myVisibilityPanel.addListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
         updateSignature();
         if (!myChangingVisibility) {
           myDefaultVisibility = false;

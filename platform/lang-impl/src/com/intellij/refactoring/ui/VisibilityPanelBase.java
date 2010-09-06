@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.changeSignature;
+package com.intellij.refactoring.ui;
 
-import com.intellij.psi.*;
-import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.EventDispatcher;
 
-/**
- * @author Maxim.Medvedev
- */
-public interface JavaParameterInfo extends ParameterInfo {
-  @Nullable
-  PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException;
+import javax.swing.*;
+import javax.swing.event.ChangeListener;
 
-  String getTypeText();
+public abstract class VisibilityPanelBase extends JPanel {
 
-  CanonicalTypes.Type getTypeWrapper();
+  protected final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
-  PsiExpression getValue(PsiCallExpression callExpression);
+  public abstract String getVisibility();
 
-  boolean isVarargType();
+  public abstract void setVisibility(String visibility);
 
+  public void addListener(ChangeListener listener) {
+    myEventDispatcher.addListener(listener);
+  }
 }

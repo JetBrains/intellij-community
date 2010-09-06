@@ -54,7 +54,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final ReferenceEditorComboWithBrowseButton packageTextField;
   private final JTextField sourceClassTextField;
   private JCheckBox myGenerateAccessorsCb;
-  private final VisibilityPanel myVisibilityPanel;
+  private final JavaVisibilityPanel myVisibilityPanel;
   private JCheckBox extractAsEnum;
   private List<MemberInfo> enumConstants = new ArrayList<MemberInfo>();
 
@@ -62,7 +62,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     super(sourceClass.getProject(), true);
     setModal(true);
     setTitle(RefactorJBundle.message("extract.class.title"));
-    myVisibilityPanel = new VisibilityPanel(true, true);
+    myVisibilityPanel = new JavaVisibilityPanel(true, true);
     myVisibilityPanel.setVisibility(null);
     this.sourceClass = sourceClass;
     final DocumentListener docListener = new DocumentAdapter() {

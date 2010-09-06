@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
@@ -31,9 +32,15 @@ import java.awt.*;
  */
 public class CodeFragmentTableCellRenderer implements TableCellRenderer {
   private final Project myProject;
+  private final FileType myFileType;
 
   public CodeFragmentTableCellRenderer(Project project) {
+    this(project, StdFileTypes.JAVA);
+  }
+
+  public CodeFragmentTableCellRenderer(Project project, FileType fileType) {
     myProject = project;
+    myFileType = fileType;
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, final boolean hasFocus, int row, int column) {
@@ -42,14 +49,14 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     final EditorTextField editorTextField;
     if (codeFragment != null) {
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(codeFragment);
-      editorTextField = new EditorTextField(document, myProject, StdFileTypes.JAVA) {
+      editorTextField = new EditorTextField(document, myProject, myFileType) {
         protected boolean shouldHaveBorder() {
           return false;
         }
       };
     }
     else {
-      editorTextField = new EditorTextField("", myProject, StdFileTypes.JAVA) {
+      editorTextField = new EditorTextField("", myProject, myFileType) {
         protected boolean shouldHaveBorder() {
           return false;
         }
