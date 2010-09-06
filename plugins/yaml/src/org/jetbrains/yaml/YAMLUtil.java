@@ -34,7 +34,7 @@ public class YAMLUtil {
   }
 
   @Nullable
-  public static String getKey(final YAMLKeyValue yamlKeyValue) {
+  public static String getFullKey(final YAMLKeyValue yamlKeyValue) {
     final StringBuilder builder = new StringBuilder();
     YAMLKeyValue element = yamlKeyValue;
     PsiElement parent;
