@@ -26,10 +26,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ViewerTreeStructure extends AbstractTreeStructure {
-
   private boolean myShowWhiteSpaces = true;
   private boolean myShowTreeNodes = true;
 
@@ -76,8 +72,14 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
         final Object[] result;
         if (myShowTreeNodes) {
           final ArrayList<Object> list = new ArrayList<Object>();
-          final ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
+          ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
                                element instanceof ASTNode? (ASTNode)element : null;
+          boolean injected = false;
+          if (element instanceof Inject) {
+            root = SourceTreeToPsiMap.psiElementToTree(((Inject)element).getPsi());
+            injected = true;
+          }
+
           if (root != null) {
             ASTNode child = root.getFirstChildNode();
             while (child != null) {
@@ -86,6 +88,15 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
                 list.add(childElement == null ? child : childElement);
               }
               child = child.getTreeNext();
+            }
+            final PsiElement psi = root.getPsi();
+            if (psi instanceof PsiLanguageInjectionHost) {
+              ((PsiLanguageInjectionHost)psi).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+                @Override
+                public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+                  list.add(new Inject(psi, injectedPsi));
+                }
+              });
             }
           }
           result = ArrayUtil.toObjectArray(list);
@@ -119,7 +130,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     if (element == myRootPsiElement) {
       return myRootElement;
     }
-    return ((PsiElement)element).getParent();
+    return element instanceof Inject ? ((Inject)element).getParent() :((PsiElement)element).getParent();
   }
 
   public void commit() {
@@ -158,5 +169,28 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
 
   public void setShowTreeNodes(final boolean showTreeNodes) {
     myShowTreeNodes = showTreeNodes;
+  }
+
+  static class Inject {
+    private final PsiElement myParent;
+    private final PsiElement myPsi;
+
+    Inject(PsiElement parent, PsiElement psi) {
+      myParent = parent;
+      myPsi = psi;
+    }
+
+    public PsiElement getParent() {
+      return myParent;
+    }
+
+    public PsiElement getPsi() {
+      return myPsi;
+    }
+
+    @Override
+    public String toString() {
+      return "INJECTION " + myPsi.getLanguage();
+    }
   }
 }
