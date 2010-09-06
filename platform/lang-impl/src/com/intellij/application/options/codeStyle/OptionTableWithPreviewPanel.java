@@ -17,7 +17,6 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -27,6 +26,7 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
@@ -44,22 +44,23 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author max
  */
 public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyleAbstractPanel {
   private TreeTable myTreeTable;
-  private final ArrayList<OptionKey> myKeys = new ArrayList<OptionKey>();
-  private boolean isFirstUpdate = true;
+  private final JPanel myPanel = new JPanel();
+
+  private final List<Option> myOptions = new ArrayList<Option>();
+  private final List<Option> myCustomOptions = new ArrayList<Option>();
   private final Set<String> myAllowedOptions = new THashSet<String>();
   private final Map<String, String> myRenamedFields = new THashMap<String, String>();
+  private boolean myShowAllStandardOptions;
+  private boolean isFirstUpdate = true;
 
-  private final JPanel myPanel = new JPanel();
 
   public OptionTableWithPreviewPanel(CodeStyleSettings settings) {
     super(settings);
@@ -99,8 +100,8 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   @Override
   public void showAllStandardOptions() {
-    for (OptionKey each : myKeys) {
-      myAllowedOptions.add(each.field.getName());
+    myShowAllStandardOptions = true;
+    for (Option each : myOptions) {
       each.setEnabled(true);
     }
   }
@@ -108,7 +109,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   @Override
   public void showStandardOptions(String... optionNames) {
     Collections.addAll(myAllowedOptions, optionNames);
-    for (OptionKey each : myKeys) {
+    for (Option each : myOptions) {
       each.setEnabled(false);
       for (String optionName : optionNames) {
         if (each.field.getName().equals(optionName)) {
@@ -122,8 +123,27 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
                                String title,
-                               String groupName) {
-    //TODO: IMPLEMENT
+                               String groupName,
+                               Object... options) {
+    if (isFirstUpdate) {
+      Option option;
+      if (options.length == 2) {
+        option = new SelectionOption(settingsClass, fieldName, title, groupName, (String[])options[0], (int[])options[1]);
+      }
+      else {
+        option = new BooleanOption(settingsClass, fieldName, title, groupName);
+      }
+      myCustomOptions.add(option);
+      option.setEnabled(true);
+    }
+    else {
+      for (Option each : myCustomOptions) {
+        each.setEnabled(false);
+        if (each.clazz == settingsClass && each.field.getName().equals(fieldName)) {
+          each.setEnabled(true);
+        }
+      }
+    }
   }
 
   @Override
@@ -135,30 +155,32 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   protected TreeTable createOptionsTree(CodeStyleSettings settings) {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
+    Map<String, DefaultMutableTreeNode> groupsMap = new THashMap<String, DefaultMutableTreeNode>();
 
-    String currentGroupName = "";
-    DefaultMutableTreeNode currentGroupNode = null;
-
-    for (OptionKey each : myKeys) {
-      if (!myAllowedOptions.contains(each.field.getName())) continue;
+    for (Option each : ContainerUtil.concat(myOptions, myCustomOptions)) {
+      if (!(myCustomOptions.contains(each) || myAllowedOptions.contains(each.field.getName()) || myShowAllStandardOptions)) continue;
 
       String group = each.groupName;
-
       MyTreeNode newNode = new MyTreeNode(each, getRenamedTitle(each.field.getName(), each.title), settings);
-      if (currentGroupNode == null || !Comparing.equal(group, currentGroupName)) {
-        if (group == null) {
-          currentGroupName = each.title;
-          currentGroupNode = newNode;
-        }
-        else {
-          currentGroupName = group;
-          currentGroupNode = new DefaultMutableTreeNode(getRenamedTitle(group, group));
-          currentGroupNode.add(newNode);
-        }
-        rootNode.add(currentGroupNode);
+
+      DefaultMutableTreeNode groupNode = groupsMap.get(group);
+      if (groupNode != null) {
+        groupNode.add(newNode);
       }
       else {
-        currentGroupNode.add(newNode);
+        String groupName;
+
+        if (group == null) {
+          groupName = each.title;
+          groupNode = newNode;
+        }
+        else {
+          groupName = group;
+          groupNode = new DefaultMutableTreeNode(getRenamedTitle(group, group));
+          groupNode.add(newNode);
+        }
+        groupsMap.put(groupName, groupNode);
+        rootNode.add(groupNode);
       }
     }
 
@@ -282,51 +304,45 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     addOption(fieldName, title, null);
   }
 
-  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
-    try {
-      Class styleSettingsClass = CodeStyleSettings.class;
-      Field field = styleSettingsClass.getField(fieldName);
-      BooleanOptionKey key = new BooleanOptionKey(field, title, groupName);
-      myKeys.add(key);
-    }
-    catch (NoSuchFieldException e) {
-    }
-    catch (SecurityException e) {
-    }
-  }
-
   protected void addOption(@NotNull String fieldName, @NotNull String title, @NotNull String[] options, @NotNull int[] values) {
     addOption(fieldName, title, null, options, values);
   }
 
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
+    myOptions.add(new BooleanOption(null, fieldName, title, groupName));
+  }
+
   protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
                            @NotNull String[] options, @NotNull int[] values) {
-    try {
-      Class styleSettingsClass = CodeStyleSettings.class;
-      Field field = styleSettingsClass.getField(fieldName);
-      SelectionOptionKey key = new SelectionOptionKey(field, title, groupName, options, values);
-      myKeys.add(key);
-    }
-    catch (NoSuchFieldException e) {
-    }
-    catch (SecurityException e) {
-    }
+    myOptions.add(new SelectionOption(null, fieldName, title, groupName, options, values));
   }
 
   protected void prepareForReformat(final PsiFile psiFile) {
     //
   }
 
-  private static abstract class OptionKey {
+  private static abstract class Option {
+    @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
     @NotNull final Field field;
     @NotNull final String title;
     @Nullable final String groupName;
     private boolean myEnabled = false;
 
-    public OptionKey(@NotNull Field field, @NotNull String title, @Nullable String groupName) {
-      this.field = field;
+    public Option(Class<? extends CustomCodeStyleSettings> clazz,
+                  @NotNull String fieldName,
+                  @NotNull String title,
+                  @Nullable String groupName) {
+      this.clazz = clazz;
       this.title = title;
       this.groupName = groupName;
+
+      try {
+        Class styleSettingsClass = clazz == null ? CodeStyleSettings.class : clazz;
+        this.field = styleSettingsClass.getField(fieldName);
+      }
+      catch (NoSuchFieldException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     public void setEnabled(boolean enabled) {
@@ -336,66 +352,82 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     public boolean isEnabled() {
       return myEnabled;
     }
-  }
 
-  private static class BooleanOptionKey extends OptionKey {
-    private BooleanOptionKey(@NotNull Field field, @NotNull String title, @Nullable String groupName) {
-      super(field, title, groupName);
+    public abstract Object getValue(CodeStyleSettings settings);
+
+    public abstract void setValue(Object value, CodeStyleSettings settings);
+
+    protected Object getSettings(CodeStyleSettings settings) {
+      return clazz == null ? settings : settings.getCustomSettings(clazz);
     }
   }
 
-  private static class SelectionOptionKey extends OptionKey {
+  private static class BooleanOption extends Option {
+    private BooleanOption(Class<? extends CustomCodeStyleSettings> clazz,
+                          @NotNull String fieldName,
+                          @NotNull String title,
+                          @Nullable String groupName) {
+      super(clazz, fieldName, title, groupName);
+
+    }
+
+    public Object getValue(CodeStyleSettings settings) {
+      try {
+        return field.getBoolean(getSettings(settings)) ? Boolean.TRUE : Boolean.FALSE;
+      }
+      catch (IllegalAccessException ignore) {
+        return null;
+      }
+    }
+
+    public void setValue(Object value, CodeStyleSettings settings) {
+      try {
+        field.setBoolean(getSettings(settings), ((Boolean)value).booleanValue());
+      }
+      catch (IllegalAccessException e) {
+      }
+    }
+  }
+
+  private static class SelectionOption extends Option {
     @NotNull final String[] options;
     @NotNull final int[] values;
 
-    public SelectionOptionKey(@NotNull Field field,
-                              @NotNull String title,
-                              @Nullable String groupName,
-                              @NotNull String[] options,
-                              @NotNull int[] values) {
-      super(field, title, groupName);
+    public SelectionOption(Class<? extends CustomCodeStyleSettings> clazz,
+                           @NotNull String fieldName,
+                           @NotNull String title,
+                           @Nullable String groupName,
+                           @NotNull String[] options,
+                           @NotNull int[] values) {
+      super(clazz, fieldName, title, groupName);
       this.options = options;
       this.values = values;
     }
-  }
 
-  private Object getSettingsValue(OptionKey key, final CodeStyleSettings settings) {
-    try {
-      if (key instanceof BooleanOptionKey) {
-        return key.field.getBoolean(settings) ? Boolean.TRUE : Boolean.FALSE;
-      }
-      else if (key instanceof SelectionOptionKey) {
-        SelectionOptionKey intKey = (SelectionOptionKey)key;
-        int[] values = intKey.values;
-        int value = key.field.getInt(settings);
+    @Override
+    public Object getValue(CodeStyleSettings settings) {
+      try {
+        int value = field.getInt(getSettings(settings));
         for (int i = 0; i < values.length; i++) {
-          if (values[i] == value) return intKey.options[i];
+          if (values[i] == value) return options[i];
         }
       }
-    }
-    catch (IllegalAccessException e) {
-    }
-
-    return null;
-  }
-
-  public void setSettingsValue(OptionKey key, Object value, final CodeStyleSettings settings) {
-    try {
-      if (key instanceof BooleanOptionKey) {
-        key.field.setBoolean(settings, ((Boolean)value).booleanValue());
+      catch (IllegalAccessException ignore) {
       }
-      else if (key instanceof SelectionOptionKey) {
-        SelectionOptionKey intKey = (SelectionOptionKey)key;
-        int[] values = intKey.values;
+      return null;
+    }
+
+    public void setValue(Object value, CodeStyleSettings settings) {
+      try {
         for (int i = 0; i < values.length; i++) {
-          if (intKey.options[i].equals(value)) {
-            key.field.setInt(settings, values[i]);
+          if (options[i].equals(value)) {
+            field.setInt(getSettings(settings), values[i]);
             return;
           }
         }
       }
-    }
-    catch (IllegalAccessException e) {
+      catch (IllegalAccessException e) {
+      }
     }
   }
 
@@ -481,17 +513,17 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   };
 
   private class MyTreeNode extends DefaultMutableTreeNode {
-    private final OptionKey myKey;
+    private final Option myKey;
     private final String myText;
     private Object myValue;
 
-    public MyTreeNode(OptionKey key, String text, CodeStyleSettings settings) {
+    public MyTreeNode(Option key, String text, CodeStyleSettings settings) {
       myKey = key;
       myText = text;
-      myValue = getSettingsValue(key, settings);
+      myValue = key.getValue(settings);
     }
 
-    public OptionKey getKey() {
+    public Option getKey() {
       return myKey;
     }
 
@@ -508,15 +540,15 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
 
     public void reset(CodeStyleSettings settings) {
-      setValue(getSettingsValue(myKey, settings));
+      setValue(myKey.getValue(settings));
     }
 
     public boolean isModified(final CodeStyleSettings settings) {
-      return !myValue.equals(getSettingsValue(myKey, settings));
+      return !myValue.equals(myKey.getValue(settings));
     }
 
     public void apply(final CodeStyleSettings settings) {
-      setSettingsValue(myKey, myValue, settings);
+      myKey.setValue(myValue, settings);
     }
 
     public boolean isEnabled() {
@@ -607,7 +639,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       myCurrentNode = null;
       if (defaultNode instanceof MyTreeNode) {
         MyTreeNode node = (MyTreeNode)defaultNode;
-        if (node.getKey() instanceof BooleanOptionKey) {
+        if (node.getKey() instanceof BooleanOption) {
           myCurrentEditor = myCheckBox;
           myCheckBox.setSelected(node.getValue() == Boolean.TRUE);
           myCheckBox.setEnabled(node.isEnabled());
@@ -615,7 +647,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         else {
           myCurrentEditor = myComboBox;
           myComboBox.removeAllItems();
-          SelectionOptionKey key = (SelectionOptionKey)node.getKey();
+          SelectionOption key = (SelectionOption)node.getKey();
           String[] values = key.options;
           for (int i = 0; i < values.length; i++) {
             myComboBox.addItem(values[i]);

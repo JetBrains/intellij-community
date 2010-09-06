@@ -17,9 +17,6 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 
-/**
- * @author yole
- */
 public interface CodeStyleSettingsCustomizable {
   String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
   String SPACES_BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
@@ -57,11 +54,59 @@ public interface CodeStyleSettingsCustomizable {
   String WRAPPING_MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
   String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
 
+  String[] WRAP_OPTIONS = new String[]{
+    ApplicationBundle.message("wrapping.do.not.wrap"),
+    ApplicationBundle.message("wrapping.wrap.if.long"),
+    ApplicationBundle.message("wrapping.chop.down.if.long"),
+    ApplicationBundle.message("wrapping.wrap.always")
+  };
+  String[] WRAP_OPTIONS_FOR_SINGLETON = new String[]{
+    ApplicationBundle.message("wrapping.do.not.wrap"),
+    ApplicationBundle.message("wrapping.wrap.if.long"),
+    ApplicationBundle.message("wrapping.wrap.always")
+  };
+  int[] WRAP_VALUES = new int[]{CodeStyleSettings.DO_NOT_WRAP,
+    CodeStyleSettings.WRAP_AS_NEEDED,
+    CodeStyleSettings.WRAP_AS_NEEDED |
+    CodeStyleSettings.WRAP_ON_EVERY_ITEM,
+    CodeStyleSettings.WRAP_ALWAYS};
+  int[] WRAP_VALUES_FOR_SINGLETON = new int[]{CodeStyleSettings.DO_NOT_WRAP,
+    CodeStyleSettings.WRAP_AS_NEEDED,
+    CodeStyleSettings.WRAP_ALWAYS};
+  String[] BRACE_OPTIONS = new String[]{
+    ApplicationBundle.message("wrapping.force.braces.do.not.force"),
+    ApplicationBundle.message("wrapping.force.braces.when.multiline"),
+    ApplicationBundle.message("wrapping.force.braces.always")
+  };
+  int[] BRACE_VALUES = new int[]{
+    CodeStyleSettings.DO_NOT_FORCE,
+    CodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
+    CodeStyleSettings.FORCE_BRACES_ALWAYS
+  };
+  String[] BRACE_PLACEMENT_OPTIONS = new String[]{
+    ApplicationBundle.message("wrapping.brace.placement.end.of.line"),
+    ApplicationBundle.message("wrapping.brace.placement.next.line.if.wrapped"),
+    ApplicationBundle.message("wrapping.brace.placement.next.line"),
+    ApplicationBundle.message("wrapping.brace.placement.next.line.shifted"),
+    ApplicationBundle.message("wrapping.brace.placement.next.line.each.shifted")
+  };
+  int[] BRACE_PLACEMENT_VALUES = new int[]{
+    CodeStyleSettings.END_OF_LINE,
+    CodeStyleSettings.NEXT_LINE_IF_WRAPPED,
+    CodeStyleSettings.NEXT_LINE,
+    CodeStyleSettings.NEXT_LINE_SHIFTED,
+    CodeStyleSettings.NEXT_LINE_SHIFTED2
+  };
+
   void showAllStandardOptions();
 
   void showStandardOptions(String... optionNames);
 
-  void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, String fieldName, String title, String groupName);
+  void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                        String fieldName,
+                        String title,
+                        String groupName,
+                        Object... options);
 
   void renameStandardOption(String fieldName, String newTitle);
 }
