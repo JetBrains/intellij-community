@@ -255,6 +255,7 @@ public class FindInProjectUtil {
 
         int countInFile = processUsagesInFile(psiFile, findModel, consumer, count, warningShown);
 
+        count += countInFile;
         if (countInFile > 0) {
           totalFilesSize += fileLength;
           if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown[0]) {
