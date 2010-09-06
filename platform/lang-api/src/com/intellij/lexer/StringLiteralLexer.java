@@ -231,7 +231,7 @@ public class StringLiteralLexer extends LexerBase {
         //  return i;
         //}
         if (myState == AFTER_FIRST_QUOTE && myBuffer.charAt(i) == myQuoteChar) {
-          myState = AFTER_LAST_QUOTE;
+          if (i + 1 == myBufferEnd) myState = AFTER_LAST_QUOTE;
           return i + 1;
         }
         i++;
