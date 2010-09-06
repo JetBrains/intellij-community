@@ -319,7 +319,21 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
 
     if (newQualifier != null) {
-      methodRef.getQualifier().replace(newQualifier);
+      if (call instanceof PsiMethodCallExpression) {
+        instanceRef.replace(newQualifier);
+      } else {
+        final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)call).getClassReference();
+        LOG.assertTrue(classReference != null);
+        final PsiNewExpression newExpr =
+          (PsiNewExpression)factory.createExpressionFromText("new " + newQualifier.getText() + "." + classReference.getText() + "()", classReference);
+        final PsiExpressionList callArgs = call.getArgumentList();
+        if (callArgs != null) {
+          final PsiExpressionList argumentList = newExpr.getArgumentList();
+          LOG.assertTrue(argumentList != null);
+          argumentList.replace(callArgs);
+        }
+        call.replace(newExpr);
+      }
     }
   }
 
