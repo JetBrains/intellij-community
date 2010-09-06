@@ -48,12 +48,12 @@ import java.util.*;
 
 public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor {
   private final PsiDirectory[] myDirectories;
-  private PsiDirectory myTargetDirectory;
-  private boolean mySearchInComments;
-  private boolean mySearchInNonJavaFiles;
-  private Map<PsiFile, TargetDirectoryWrapper> myFilesToMove;
+  private final PsiDirectory myTargetDirectory;
+  private final boolean mySearchInComments;
+  private final boolean mySearchInNonJavaFiles;
+  private final Map<PsiFile, TargetDirectoryWrapper> myFilesToMove;
   private NonCodeUsageInfo[] myNonCodeUsages;
-  private MoveCallback myMoveCallback;
+  private final MoveCallback myMoveCallback;
 
   public MoveDirectoryWithClassesProcessor(Project project,
                                            PsiDirectory[] directories,
@@ -63,6 +63,15 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
                                            boolean includeSelf,
                                            MoveCallback moveCallback) {
     super(project);
+    if (targetDirectory != null) {
+      final List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(Arrays.asList(directories));
+      for (Iterator<PsiDirectory> iterator = dirs.iterator(); iterator.hasNext();) {
+        if (targetDirectory.equals(iterator.next().getParentDirectory())) {
+          iterator.remove();
+        }
+      }
+      directories = dirs.toArray(new PsiDirectory[dirs.size()]);
+    }
     myDirectories = directories;
     myTargetDirectory = targetDirectory;
     mySearchInComments = searchInComments;
@@ -158,7 +167,11 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     try {
       //top level directories should be created even if they are empty
       for (PsiDirectory directory : myDirectories) {
-        getTargetDirectory(directory).findOrCreateTargetDirectory();
+        final TargetDirectoryWrapper targetSubDirectory =
+          myTargetDirectory != null
+          ? new TargetDirectoryWrapper(myTargetDirectory, directory.getName())
+          : getTargetDirectory(directory);
+        targetSubDirectory.findOrCreateTargetDirectory();
       }
       for (PsiFile psiFile : myFilesToMove.keySet()) {
         myFilesToMove.get(psiFile).findOrCreateTargetDirectory();
@@ -245,7 +258,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       super(statementBase);
     }
   }
-  
+
   public static class TargetDirectoryWrapper {
     private TargetDirectoryWrapper myParentDirectory;
     private PsiDirectory myTargetDirectory;
