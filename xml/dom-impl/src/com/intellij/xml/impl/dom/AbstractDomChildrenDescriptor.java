@@ -63,6 +63,22 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
             return name.getXmlName().getLocalName();
           }
 
+          /**
+           * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
+           */
+          @Override
+          public Integer getMinOccurs() {
+            return null;
+          }
+
+          /**
+           * @return maximal occurrence constraint value (e.g. 1 or {@link Integer.MAX_VALUE}), on null if not applied
+           */
+          @Override
+          public Integer getMaxOccurs() {
+            return null;
+          }
+
           @Override
           @Nullable
           public PsiElement getDeclaration() {
@@ -113,6 +129,22 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
         @Override
         public String getDefaultName() {
           return finalDomElement.getXmlElementName();
+        }
+
+        /**
+         * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
+         */
+        @Override
+        public Integer getMinOccurs() {
+          return null;
+        }
+
+        /**
+         * @return maximal occurrence constraint value (e.g. 1 or {@link Integer.MAX_VALUE}), on null if not applied
+         */
+        @Override
+        public Integer getMaxOccurs() {
+          return null;
         }
 
         @Override

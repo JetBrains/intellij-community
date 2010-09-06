@@ -88,6 +88,22 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
     return getAttributeDescriptor(attribute.getName(), attribute.getParent());
   }
 
+  /**
+   * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
+   */
+  @Override
+  public Integer getMinOccurs() {
+    return null;
+  }
+
+  /**
+   * @return maximal occurrence constraint value (e.g. 1 or {@link Integer.MAX_VALUE}), on null if not applied
+   */
+  @Override
+  public Integer getMaxOccurs() {
+    return null;
+  }
+
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
     final XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(attributeName.toLowerCase(), context);
     if (descriptor != null) return descriptor;
