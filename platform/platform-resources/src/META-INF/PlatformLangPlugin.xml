@@ -68,6 +68,8 @@
                     serviceImplementation="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable$Factory"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.patch.PatchBaseDirectoryDetector"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.patch.PsiPatchBaseDirectoryDetector"/>
 
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
