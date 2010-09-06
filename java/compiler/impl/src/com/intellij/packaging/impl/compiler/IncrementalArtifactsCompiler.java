@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -121,6 +122,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
 
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
+    DumbService.getInstance(context.getProject()).waitForSmartMode();
     return new ReadAction<ProcessingItem[]>() {
       protected void run(final Result<ProcessingItem[]> result) {
         final Project project = context.getProject();
