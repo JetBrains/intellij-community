@@ -241,13 +241,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   @Nullable
-  private XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile, final boolean nonEmpty) {
-    XmlNSDescriptor descriptor = getNSDescriptorFromMetaData(doctype.getMarkupDecl(), nonEmpty);
+  private XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile, final boolean forHtml) {
+    XmlNSDescriptor descriptor = getNSDescriptorFromMetaData(doctype.getMarkupDecl(), true);
 
     final String dtdUri = XmlUtil.getDtdUri(doctype);
     if (dtdUri != null && dtdUri.length() > 0){
       final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
-      XmlNSDescriptor descriptorFromDtd = getNSDescriptorFromMetaData(xmlFile == null ? null : xmlFile.getDocument(), nonEmpty);
+      XmlNSDescriptor descriptorFromDtd = getNSDescriptorFromMetaData(xmlFile == null ? null : xmlFile.getDocument(), forHtml);
 
       if (descriptor != null && descriptorFromDtd != null){
         descriptor = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descriptor, descriptorFromDtd});
