@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 
-// todo: support for multiple stacks (threads)
 public class PySuspendContext extends XSuspendContext {
 
   private final XExecutionStack myActiveStack;

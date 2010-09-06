@@ -51,7 +51,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
                            final ExecutionConsole executionConsole,
                            final ProcessHandler processHandler) {
     super(session);
-    session.setPauseActionSupported(true);  // todo: implement and drop
+    session.setPauseActionSupported(true); 
     myDebugger = new RemoteDebugger(this, serverSocket, 10);
     myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this)};
     myEditorsProvider = new PyDebuggerEditorsProvider();
