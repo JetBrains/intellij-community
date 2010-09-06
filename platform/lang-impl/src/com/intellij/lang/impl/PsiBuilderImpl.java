@@ -1004,13 +1004,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         final PsiErrorElement e1 = (PsiErrorElement)oldNode;
         return Comparing.equal(e1.getErrorDescription(), getErrorMessage(newNode)) ? ThreeState.UNSURE : ThreeState.NO;
       }
-      
+
       if (newNode instanceof Token) {
         if (oldNode instanceof ForeignLeafPsiElement) {
           final IElementType type = newNode.getTokenType();
           return type instanceof ForeignLeafType && ((ForeignLeafType)type).getValue().equals(oldNode.getText())
-                                                   ? ThreeState.YES
-                                                   : ThreeState.NO;
+                 ? ThreeState.YES
+                 : ThreeState.NO;
         }
 
         if (oldNode instanceof LeafElement) {
@@ -1045,7 +1045,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return probablyWrapper;
     }
 
-    public boolean hashcodesEqual(final ASTNode n1, final LighterASTNode n2) {
+    public boolean hashCodesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof LeafElement && n2 instanceof Token) {
         if (n1 instanceof ForeignLeafPsiElement && n2.getTokenType() instanceof ForeignLeafType) {
           return n1.getText().equals(((ForeignLeafType)n2.getTokenType()).getValue());
