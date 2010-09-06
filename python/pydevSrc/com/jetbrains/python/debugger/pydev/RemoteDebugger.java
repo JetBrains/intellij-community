@@ -98,7 +98,8 @@ public class RemoteDebugger {
     return command.getRemoteVersion();
   }
 
-  public PyDebugValue evaluate(final String threadId, final String frameId, final String expression, final boolean execute) throws PyDebuggerException {
+  public PyDebugValue evaluate(final String threadId, final String frameId, final String expression, final boolean execute)
+    throws PyDebuggerException {
     final EvaluateCommand command = new EvaluateCommand(this, threadId, frameId, expression, execute);
     command.execute();
     return command.getValue();
@@ -119,13 +120,13 @@ public class RemoteDebugger {
   }
 
   public void changeVariable(final String threadId, final String frameId, final PyDebugValue var, final String value)
-      throws PyDebuggerException {
+    throws PyDebuggerException {
     setTempVariable(threadId, frameId, var);
     doChangeVariable(threadId, frameId, var.getEvaluationExpression(), value);
   }
 
   private void doChangeVariable(final String threadId, final String frameId, final String varName, final String value)
-      throws PyDebuggerException {
+    throws PyDebuggerException {
     final ChangeVariableCommand command = new ChangeVariableCommand(this, threadId, frameId, varName, value);
     command.execute();
   }
@@ -214,7 +215,8 @@ public class RemoteDebugger {
         try {
           myResponseQueue.wait(1000);
         }
-        catch (InterruptedException ignore) { }
+        catch (InterruptedException ignore) {
+        }
         response = myResponseQueue.get(sequence);
       }
       while (response == null && System.currentTimeMillis() < until);
@@ -259,6 +261,17 @@ public class RemoteDebugger {
     }
   }
 
+  public void suspendAllThreads() {
+    for (PyThreadInfo thread : getThreads()) {
+      suspendThread(thread.getId());
+    }
+  }
+
+
+  public void suspendThread(String threadId) {
+    final SuspendCommand command = new SuspendCommand(this, threadId);
+    execute(command);
+  }
 
   private class DebuggerReader implements Runnable {
     private final InputStream myInputStream;
@@ -291,10 +304,7 @@ public class RemoteDebugger {
         final ProtocolFrame frame = new ProtocolFrame(line);
         logFrame(frame, false);
 
-        if (frame.getCommand() == AbstractCommand.CREATE_THREAD ||
-            frame.getCommand() == AbstractCommand.KILL_THREAD ||
-            frame.getCommand() == AbstractCommand.RESUME_THREAD ||
-            frame.getCommand() == AbstractCommand.SUSPEND_THREAD) {
+        if (AbstractThreadCommand.isThreadCommand(frame.getCommand())) {
           processThreadEvent(frame);
         }
         else {
@@ -311,14 +321,14 @@ public class RemoteDebugger {
     private void processThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
       switch (frame.getCommand()) {
         case AbstractCommand.CREATE_THREAD: {
-          final PyThreadInfo thread = ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
-          if (!thread.getId().equals("-1")) {  // ignore pydevd threads
+          final PyThreadInfo thread = parseThreadEvent(frame);
+          if (!thread.isPydevThread()) {  // ignore pydevd threads
             myThreads.put(thread.getId(), thread);
           }
           break;
         }
         case AbstractCommand.SUSPEND_THREAD: {
-          final PyThreadInfo event = ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
+          final PyThreadInfo event = parseThreadEvent(frame);
           final PyThreadInfo thread = myThreads.get(event.getId());
           if (thread != null) {
             thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
@@ -327,10 +337,11 @@ public class RemoteDebugger {
           break;
         }
         case AbstractCommand.RESUME_THREAD: {
-          final String id = frame.getPayload().split("\t")[0];
+          final String id = ProtocolParser.getThreadId(frame.getPayload());
           final PyThreadInfo thread = myThreads.get(id);
           if (thread != null) {
             thread.updateState(PyThreadInfo.State.RUNNING, null);
+            myDebugProcess.threadResumed(thread);
           }
           break;
         }
@@ -344,6 +355,10 @@ public class RemoteDebugger {
           break;
         }
       }
+    }
+
+    private PyThreadInfo parseThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
+      return ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
     }
 
     private void closeReader(BufferedReader reader) {

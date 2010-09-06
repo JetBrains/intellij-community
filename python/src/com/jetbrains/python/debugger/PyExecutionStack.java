@@ -56,4 +56,20 @@ public class PyExecutionStack extends XExecutionStack {
     return new PyStackFrame(debugProcess, frameInfo);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PyExecutionStack that = (PyExecutionStack)o;
+
+    if (myThreadInfo != null ? !myThreadInfo.equals(that.myThreadInfo) : that.myThreadInfo != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myThreadInfo != null ? myThreadInfo.hashCode() : 0;
+  }
 }

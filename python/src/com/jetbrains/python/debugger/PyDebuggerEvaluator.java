@@ -41,5 +41,4 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
   public TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset) {
     return PyDebugSupportUtils.getExpressionRangeAtOffset(project, document, offset);
   }
-
 }

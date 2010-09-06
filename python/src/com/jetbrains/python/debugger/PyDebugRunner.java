@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Collection;
 
 /**
  * @author yole
@@ -90,6 +89,7 @@ public class PyDebugRunner extends GenericProgramRunner {
           PythonHelpersLocator.getHelperPath("pydev/pydevd.py"),
           "--client", "127.0.0.1",
           "--port", String.valueOf(serverLocalPort),
+          "--DEBUG_RECORD_SOCKET_READS",
           "--file"
         };
         // script name is the last parameter; all other params are for python interpreter; insert just before name

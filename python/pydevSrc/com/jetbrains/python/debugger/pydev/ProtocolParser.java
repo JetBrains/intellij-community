@@ -51,6 +51,11 @@ public class ProtocolParser {
     return new PyThreadInfo(id, name, frames, (stopReason == AbstractCommand.SET_BREAKPOINT));
   }
 
+  @NotNull
+  public static String getThreadId(@NotNull String payload) {
+    return payload.split("\t")[0];
+  } 
+
   private static PyStackFrameInfo parseFrame(final XppReader reader, final String threadId, final PyPositionConverter positionConverter)
       throws PyDebuggerException {
     if (!"frame".equals(reader.getNodeName())) {

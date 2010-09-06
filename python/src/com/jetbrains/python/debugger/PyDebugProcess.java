@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -18,6 +19,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.local.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.pydev.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.ServerSocket;
 import java.util.Collection;
@@ -42,7 +44,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   private final ProcessHandler myProcessHandler;
   private final ExecutionConsole myExecutionConsole;
   private final Map<PySourcePosition, XLineBreakpoint> myRegisteredBreakpoints = new ConcurrentHashMap<PySourcePosition, XLineBreakpoint>();
-  private volatile PyThreadInfo mySuspendedThread = null;
+  private final List<PyThreadInfo> mySuspendedThreads = Lists.newArrayList();
 
   protected PyDebugProcess(@NotNull XDebugSession session,
                            final ServerSocket serverSocket,
@@ -57,10 +59,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     myExecutionConsole = executionConsole;
   }
 
+  @Override
   public PyPositionConverter getPositionConverter() {
     return myPositionConverter;
   }
 
+  @Override
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return myBreakpointHandlers;
   }
@@ -71,10 +75,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     return myEditorsProvider;
   }
 
+  @Override
+  @Nullable
   protected ProcessHandler doGetProcessHandler() {
     return myProcessHandler;
   }
 
+  @Override
   @NotNull
   public ExecutionConsole createConsole() {
     return myExecutionConsole;
@@ -115,36 +122,50 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     }
   }
 
+  @Override
   public void startStepOver() {
     resume(ResumeCommand.Mode.STEP_OVER);
   }
 
+  @Override
   public void startStepInto() {
     resume(ResumeCommand.Mode.STEP_INTO);
   }
 
+  @Override
   public void startStepOut() {
     resume(ResumeCommand.Mode.STEP_OUT);
   }
 
+  @Override
   public void stop() {
     myDebugger.disconnect();
   }
 
+  @Override
   public void resume() {
     resume(ResumeCommand.Mode.RESUME);
   }
 
-  private void resume(final ResumeCommand.Mode mode) {
-    if (myDebugger.isConnected() && mySuspendedThread != null) {
-      final ResumeCommand command = new ResumeCommand(myDebugger, mySuspendedThread.getId(), mode);
-      mySuspendedThread = null;
-      myDebugger.execute(command);
+  @Override
+  public void startPausing() {
+    if (myDebugger.isConnected()) {
+      myDebugger.suspendAllThreads();
     }
   }
 
+  private void resume(final ResumeCommand.Mode mode) {
+    if (myDebugger.isConnected()) {
+      for (PyThreadInfo suspendedThread : mySuspendedThreads) {
+        final ResumeCommand command = new ResumeCommand(myDebugger, suspendedThread.getId(), mode);
+        myDebugger.execute(command);
+      }
+    }
+  }
+
+  @Override
   public void runToPosition(@NotNull final XSourcePosition position) {
-    if (myDebugger.isConnected() && mySuspendedThread != null) {
+    if (myDebugger.isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convert(position);
       final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, pyPosition.getFile(), pyPosition.getLine());
       myDebugger.execute(command);  // set temp. breakpoint
@@ -162,11 +183,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     return myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
   }
 
+  @Override
   public List<PyDebugValue> loadVariable(final PyDebugValue var) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), var);
   }
 
+  @Override
   public void changeVariable(final PyDebugValue var, final String value) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     myDebugger.changeVariable(frame.getThreadId(), frame.getFrameId(), var, value);
@@ -211,38 +234,40 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     return myDebugger.getThreads();
   }
 
+  @Override
   public void threadSuspended(final PyThreadInfo threadInfo) {
-    if (mySuspendedThread != null) {
-      // todo: XDebugSession supports only one suspend context 
-      final ResumeCommand command = new ResumeCommand(myDebugger, threadInfo.getId(), ResumeCommand.Mode.RESUME);
-      myDebugger.execute(command);
-      return;
-    }
-    mySuspendedThread = threadInfo;
+    if (!mySuspendedThreads.contains(threadInfo)) {
+      mySuspendedThreads.add(threadInfo);
 
-    final List<PyStackFrameInfo> frames = threadInfo.getFrames();
-    if (frames != null) {
-      final PySuspendContext suspendContext = new PySuspendContext(this, threadInfo);
+      final List<PyStackFrameInfo> frames = threadInfo.getFrames();
+      if (frames != null) {
+        final PySuspendContext suspendContext = new PySuspendContext(this, threadInfo);
 
-      XLineBreakpoint breakpoint = null;
-      if (threadInfo.isStopOnBreakpoint()) {
-        final PySourcePosition position = frames.get(0).getPosition();
-        breakpoint = myRegisteredBreakpoints.get(position);
-        if (breakpoint == null) {
-          final RemoveBreakpointCommand command = new RemoveBreakpointCommand(myDebugger, position.getFile(), position.getLine());
-          myDebugger.execute(command);  // remove temp. breakpoint
+        XLineBreakpoint breakpoint = null;
+        if (threadInfo.isStopOnBreakpoint()) {
+          final PySourcePosition position = frames.get(0).getPosition();
+          breakpoint = myRegisteredBreakpoints.get(position);
+          if (breakpoint == null) {
+            final RemoveBreakpointCommand command = new RemoveBreakpointCommand(myDebugger, position.getFile(), position.getLine());
+            myDebugger.execute(command);  // remove temp. breakpoint
+          }
+        }
+
+        if (breakpoint != null) {
+          if (!getSession().breakpointReached(breakpoint, suspendContext)) {
+            resume();
+          }
+        }
+        else {
+          getSession().positionReached(suspendContext);
         }
       }
-
-      if (breakpoint != null) {
-        if (!getSession().breakpointReached(breakpoint, suspendContext)) {
-          resume();
-        }
-      }
-      else {
-        getSession().positionReached(suspendContext);
-      }
     }
+  }
+
+  @Override
+  public void threadResumed(final PyThreadInfo threadInfo) {
+    mySuspendedThreads.remove(threadInfo);
   }
 
 }
