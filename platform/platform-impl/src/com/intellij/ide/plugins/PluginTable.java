@@ -18,7 +18,6 @@ package com.intellij.ide.plugins;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -26,8 +25,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,7 +37,7 @@ public class PluginTable extends Table {
   public PluginTable(final PluginTableModel model) {
     super(model);
 
-    initializeHeader(model);
+    initializeHeader();
 
     for (int i = 0; i < model.getColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
@@ -79,35 +76,8 @@ public class PluginTable extends Table {
     return columnInfo.getRenderer(((PluginTableModel)getModel()).getObjectAt(row));
   }
 
-  private void initializeHeader(final PluginTableModel model) {
+  private void initializeHeader() {
     final JTableHeader header = getTableHeader();
-
-    header.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        int column = getTableHeader().getColumnModel().getColumnIndexAtX(e.getX());
-
-        if (model.sortableProvider.getSortColumn() == column) {
-          if (model.sortableProvider.getSortOrder() == SortableColumnModel.SORT_DESCENDING) {
-            model.sortableProvider.setSortOrder(SortableColumnModel.SORT_ASCENDING);
-          }
-          else {
-            model.sortableProvider.setSortOrder(SortableColumnModel.SORT_DESCENDING);
-          }
-        }
-        else {
-          model.sortableProvider.setSortOrder(SortableColumnModel.SORT_ASCENDING);
-          model.sortableProvider.setSortColumn(column);
-        }
-
-        final IdeaPluginDescriptor[] selectedObjects = getSelectedObjects();
-        model.sortByColumn(column);
-        if (selectedObjects != null){
-          select(selectedObjects);
-        }
-
-        header.repaint();
-      }
-    });
     header.setReorderingAllowed(false);
   }
 

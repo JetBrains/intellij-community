@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -57,12 +56,10 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   };
 
   private final int columnIdx;
-  private final SortableProvider mySortableProvider;
 
-  public PluginManagerColumnInfo(int columnIdx, SortableProvider sortableProvider) {
+  public PluginManagerColumnInfo(int columnIdx) {
     super(COLUMNS[columnIdx]);
     this.columnIdx = columnIdx;
-    mySortableProvider = sortableProvider;
   }
 
   public String valueOf(IdeaPluginDescriptor base) {
@@ -94,14 +91,12 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   public Comparator<IdeaPluginDescriptor> getComparator() {
-    final boolean sortDirection = (mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING);
-
     switch (columnIdx) {
       case COLUMN_NAME:
         return new Comparator<IdeaPluginDescriptor>() {
           public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            String name1 = (sortDirection ? o1 : o2).getName();
-            String name2 = (sortDirection ? o2 : o1).getName();
+            String name1 = o1.getName();
+            String name2 = o2.getName();
             return compareStrings(name1, name2);
           }
         };
@@ -109,11 +104,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       case COLUMN_DOWNLOADS:
         return new Comparator<IdeaPluginDescriptor>() {
           public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            if (!sortDirection) {
-              IdeaPluginDescriptor swap = o2;
-              o2 = o1;
-              o1 = swap;
-            }
             String count1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDownloads() : ((IdeaPluginDescriptorImpl)o1).getDownloads();
             String count2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDownloads() : ((IdeaPluginDescriptorImpl)o2).getDownloads();
             if (count1 != null && count2 != null) {
@@ -131,8 +121,8 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       case COLUMN_CATEGORY:
         return new Comparator<IdeaPluginDescriptor>() {
           public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            String cat1 = (sortDirection ? o1 : o2).getCategory();
-            String cat2 = (sortDirection ? o2 : o1).getCategory();
+            String cat1 = o1.getCategory();
+            String cat2 = o2.getCategory();
             return compareStrings(cat1, cat2);
           }
         };
@@ -140,11 +130,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       case COLUMN_DATE:
         return new Comparator<IdeaPluginDescriptor>() {
           public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            if (!sortDirection) {
-              IdeaPluginDescriptor swap = o2;
-              o2 = o1;
-              o1 = swap;
-            }
             long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : ((IdeaPluginDescriptorImpl)o1).getDate();
             long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : ((IdeaPluginDescriptorImpl)o2).getDate();
             if (date1 > date2) {

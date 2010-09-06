@@ -22,13 +22,15 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableModel;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,8 +59,31 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   public void reset() {
     myPluginManagerMain.reset();
     myUISettings.getSplitterProportionsData().restoreSplitterProportions(myPluginManagerMain.getMainPanel());
-    myUISettings.getAvailableTableProportions().restoreProportion(myPluginManagerMain.getAvailablePluginsTable());
-    myUISettings.getInstalledTableProportions().restoreProportion(myPluginManagerMain.getInstalledPluginTable());
+
+    final PluginTable availablePluginsTable = myPluginManagerMain.getAvailablePluginsTable();
+    final PluginTable installedPluginTable = myPluginManagerMain.getInstalledPluginTable();
+
+    myUISettings.getAvailableTableProportions().restoreProportion(availablePluginsTable);
+    myUISettings.getInstalledTableProportions().restoreProportion(installedPluginTable);
+
+    restoreSorting(availablePluginsTable, true);
+    restoreSorting(installedPluginTable, false);
+  }
+
+  private void restoreSorting(final PluginTable table, final boolean available) {
+    final RowSorter<? extends TableModel> rowSorter = table.getRowSorter();
+    if (rowSorter != null) {
+      final int column = available ? myUISettings.AVAILABLE_SORT_COLUMN : myUISettings.INSTALLED_SORT_COLUMN;
+      if (column >= 0) {
+        final int orderOrdinal = available ? myUISettings.AVAILABLE_SORT_COLUMN_ORDER : myUISettings.INSTALLED_SORT_COLUMN_ORDER;
+        for (final SortOrder sortOrder : SortOrder.values()) {
+          if (sortOrder.ordinal() == orderOrdinal) {
+            rowSorter.setSortKeys(Arrays.asList(new RowSorter.SortKey(column, sortOrder)));
+          }
+
+        }
+      }
+    }
   }
 
   public String getHelpTopic() {
@@ -68,16 +93,46 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   public void disposeUIResources() {
     if (myPluginManagerMain != null) {
       myUISettings.getSplitterProportionsData().saveSplitterProportions(myPluginManagerMain.getMainPanel());
-      myUISettings.getAvailableTableProportions().saveProportion(myPluginManagerMain.getAvailablePluginsTable());
-      myUISettings.getInstalledTableProportions().saveProportion(myPluginManagerMain.getInstalledPluginTable());
+      final PluginTable availablePluginsTable = myPluginManagerMain.getAvailablePluginsTable();
+      final PluginTable installedPluginTable = myPluginManagerMain.getInstalledPluginTable();
+      myUISettings.getAvailableTableProportions().saveProportion(availablePluginsTable);
+      myUISettings.getInstalledTableProportions().saveProportion(installedPluginTable);
+
+      saveSorting(availablePluginsTable, true);
+      saveSorting(installedPluginTable, false);
+
       Disposer.dispose(myPluginManagerMain);
       myPluginManagerMain = null;
     }
   }
 
+  private void saveSorting(final PluginTable availablePluginsTable, final boolean available) {
+    final RowSorter<? extends TableModel> rowSorter = availablePluginsTable.getRowSorter();
+    if (rowSorter != null) {
+      final List<? extends RowSorter.SortKey> sortKeys = rowSorter.getSortKeys();
+      if (sortKeys.size() > 0) {
+        final RowSorter.SortKey sortKey = sortKeys.get(0);
+        if (available) {
+          myUISettings.AVAILABLE_SORT_COLUMN = sortKey.getColumn();
+          myUISettings.AVAILABLE_SORT_COLUMN_ORDER = sortKey.getSortOrder().ordinal();
+        }
+        else {
+          myUISettings.INSTALLED_SORT_COLUMN = sortKey.getColumn();
+          myUISettings.INSTALLED_SORT_COLUMN_ORDER = sortKey.getSortOrder().ordinal();
+
+        }
+      }
+    }
+  }
+
   public JComponent createComponent() {
     if (myPluginManagerMain == null) {
-      myPluginManagerMain = new PluginManagerMain( new MyInstalledProvider() , new MyAvailableProvider());
+      myPluginManagerMain = new PluginManagerMain( );
+
+      final PluginTable availablePluginsTable = myPluginManagerMain.getAvailablePluginsTable();
+      final PluginTable installedPluginTable = myPluginManagerMain.getInstalledPluginTable();
+      restoreSorting(availablePluginsTable, true);
+      restoreSorting(installedPluginTable, false);
     }
 
     return myPluginManagerMain.getMainPanel();
@@ -114,42 +169,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
   public Icon getIcon() {
     return IconLoader.getIcon("/general/pluginManager.png");
-  }
-
-  private class MyInstalledProvider implements SortableProvider {
-    public int getSortOrder() {
-      return myUISettings.INSTALLED_SORT_COLUMN_ORDER;
-    }
-
-    public int getSortColumn() {
-      return myUISettings.INSTALLED_SORT_COLUMN;
-    }
-
-    public void setSortOrder(int sortOrder) {
-      myUISettings.INSTALLED_SORT_COLUMN_ORDER = sortOrder;
-    }
-
-    public void setSortColumn(int sortColumn) {
-      myUISettings.INSTALLED_SORT_COLUMN = sortColumn;
-    }
-  }
-
-  private class MyAvailableProvider implements SortableProvider {
-    public int getSortOrder() {
-      return myUISettings.AVAILABLE_SORT_COLUMN_ORDER;
-    }
-
-    public int getSortColumn() {
-      return myUISettings.AVAILABLE_SORT_COLUMN;
-    }
-
-    public void setSortOrder(int sortOrder) {
-      myUISettings.AVAILABLE_SORT_COLUMN_ORDER = sortOrder;
-    }
-
-    public void setSortColumn(int sortColumn) {
-      myUISettings.AVAILABLE_SORT_COLUMN = sortColumn;
-    }
   }
 
   public String getId() {

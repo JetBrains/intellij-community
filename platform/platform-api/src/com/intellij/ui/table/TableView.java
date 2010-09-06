@@ -27,8 +27,6 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,29 +39,6 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public TableView(final ListTableModel<Item> model) {
     super(model);
-    final JTableHeader tableHeader = getTableHeader();
-    if (tableHeader != null) {
-      tableHeader.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(final MouseEvent e) {
-          processEvent(e);
-        }
-
-        public void mousePressed(final MouseEvent e) {
-          processEvent(e);
-        }
-
-        public void mouseReleased(final MouseEvent e) {
-          processEvent(e);
-        }
-
-        private void processEvent(MouseEvent e) {
-          final int column = convertColumnIndexToModel(tableHeader.columnAtPoint(e.getPoint()));
-          if (column > -1) {
-            onHeaderClicked(column, e);
-          }
-        }
-      });
-    }
     setModel(model);
   }
 
@@ -82,10 +57,6 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public void setModel(final ListTableModel<Item> model) {
     super.setModel(model);
-    final JTableHeader header = getTableHeader();
-    if (header != null) {
-      header.setDefaultRenderer(new TableHeaderRenderer(model));
-    }
     updateColumnSizes();
   }
 
@@ -199,25 +170,6 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public List<Item> getItems() {
     return getListTableModel().getItems();
-  }
-
-  public void resortKeepSelection() {
-    final int column = getSelectedColumn();
-    if (column != -1) {
-      SortableColumnModel model = getListTableModel();
-      Collection<Item> selection = getSelection();
-      model.sortByColumn(column);
-      setSelection(selection);
-    }
-  }
-
-  protected void onHeaderClicked(int column, MouseEvent e) {
-    if (e.getButton() == MouseEvent.BUTTON1 && e.getID() == MouseEvent.MOUSE_CLICKED && e.getClickCount() == 1) {
-      SortableColumnModel model = getListTableModel();
-      Collection<Item> selection = getSelection();
-      model.sortByColumn(column);
-      setSelection(selection);
-    }
   }
 
   public void setMinRowHeight(int i) {

@@ -18,18 +18,26 @@ package com.intellij.ui.treeStructure.treetable;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class ListTreeTableModelOnColumns extends DefaultTreeModel
   implements TreeTableModel, SortableColumnModel{
 
   private ColumnInfo[] myColumns;
+  private JTree myTree;
 
   public ListTreeTableModelOnColumns(TreeNode root, ColumnInfo[] columns) {
     super(root);
     myColumns = columns;
+  }
+
+  @Override
+  public void setTree(JTree tree) {
+    myTree = tree;
   }
 
   public int getColumnCount() {
@@ -46,6 +54,21 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
 
   public Object getChild(Object parent, int index) {
     return ((TreeNode) parent).getChildAt(index);
+  }
+
+  @Override
+  public Object getRowValue(final int row) {
+    final TreePath path = myTree.getPathForRow(row);
+    if (path != null) {
+      return path.getLastPathComponent();
+    }
+
+    return null;
+  }
+
+  @Override
+  public RowSorter.SortKey getDefaultSortKey() {
+    return null;
   }
 
   public int getChildCount(Object parent) {
@@ -101,20 +124,6 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
       TreeNode child = (TreeNode) children.nextElement();
       addElementsToCollection(child, collection);
     }
-  }
-
-  public void sortByColumn(int columnIndex) {
-  }
-
-  public void sortByColumn(int columnIndex, int sortingType) {
-  }
-
-  public int getSortedColumnIndex() {
-    return -1;
-  }
-
-  public int getSortingType() {
-    return -1;
   }
 
   public void setSortable(boolean aBoolean) {
