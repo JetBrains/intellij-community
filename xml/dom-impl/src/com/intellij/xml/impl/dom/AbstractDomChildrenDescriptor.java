@@ -79,6 +79,16 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     return xmlElementDescriptors.toArray(new XmlElementDescriptor[xmlElementDescriptors.size()]);
   }
 
+  @Override
+  public Integer getMinOccurs() {
+    return null;
+  }
+
+  @Override
+  public Integer getMaxOccurs() {
+    return null;
+  }
+
   @Nullable
   public XmlElementDescriptor getElementDescriptor(@NotNull final XmlTag childTag, @Nullable XmlTag contextTag) {
     DomElement domElement = myManager.getDomElement(childTag);

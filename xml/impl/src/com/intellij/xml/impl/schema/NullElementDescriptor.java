@@ -70,6 +70,16 @@ public class NullElementDescriptor implements XmlElementDescriptor {
     return null;
   }
 
+  @Override
+  public Integer getMinOccurs() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public Integer getMaxOccurs() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
   public int getContentType() {
     return 0;
   }
