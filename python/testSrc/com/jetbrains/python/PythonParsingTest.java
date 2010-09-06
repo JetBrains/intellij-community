@@ -20,201 +20,206 @@ public class PythonParsingTest extends ParsingTestCase {
     return PythonTestUtil.getTestDataPath();
   }
 
-  public void testHelloWorld() throws Exception {
+  public void testHelloWorld() {
     doTest();
   }
 
-  public void testIfStatement() throws Exception {
+  public void testIfStatement() {
     doTest();
   }
 
-  public void testConditionalExpression() throws Exception {
+  public void testConditionalExpression() {
     doTest();
   }
 
-  public void testSubscribedAssignmentLHS() throws Exception {
+  public void testSubscribedAssignmentLHS() {
     doTest();
   }
 
-  public void testConditionalParenLambda() throws Exception {
+  public void testConditionalParenLambda() {
     doTest();
   }
 
-  public void testLambdaComprehension() throws Exception {
+  public void testLambdaComprehension() {
     doTest();
   }
 
-  public void testLambdaConditional() throws Exception {
+  public void testLambdaConditional() {
     doTest();
   }
 
-  public void testTryExceptFinally() throws Exception {
+  public void testTryExceptFinally() {
     doTest();
   }
 
-  public void testTryFinally() throws Exception {
+  public void testTryFinally() {
     doTest();
   }
 
-  public void testYieldStatement() throws Exception {
+  public void testYieldStatement() {
     doTest();
   }
 
-  public void testYieldInAssignment() throws Exception {
+  public void testYieldInAssignment() {
     doTest();
   }
 
-  public void testYieldInAugAssignment() throws Exception {
+  public void testYieldInAugAssignment() {
     doTest();
   }
 
-  public void testYieldInParentheses() throws Exception {
+  public void testYieldInParentheses() {
     doTest();
   }
 
-  public void _testYieldAsArgument() throws Exception {
+  public void _testYieldAsArgument() {
     // this is a strange case: PEP 342 says this syntax is valid, but
     // Python 2.5 doesn't accept it. let's stick with Python behavior for now
     doTest();
   }
 
-  public void testWithStatement() throws Exception {
+  public void testWithStatement() {
     doTest();
   }
 
-  public void testWithStatement2() throws Exception {
+  public void testWithStatement2() {
     doTest();
   }
 
-  public void testImportStmt() throws Exception {
+  public void testImportStmt() {
     doTest();
   }
 
-  public void testDecoratedFunction() throws Exception {
+  public void testDecoratedFunction() {
     doTest();
   }
 
-  public void testTryExceptAs() throws Exception {   // PY-293
+  public void testTryExceptAs() {   // PY-293
     doTest();
   }
 
-  public void testWithStatement26() throws Exception {
+  public void testWithStatement26() {
     doTest(LanguageLevel.PYTHON26);
   }
 
-  public void testPrintAsFunction26() throws Exception {
+  public void testPrintAsFunction26() {
     doTest(LanguageLevel.PYTHON26);
   }
 
-  public void testClassDecorators() throws Exception {
+  public void testClassDecorators() {
     doTest(LanguageLevel.PYTHON26);
   }
 
-  public void testEmptySuperclassList() throws Exception {  // PY-321
+  public void testEmptySuperclassList() {  // PY-321
     doTest();
   }
 
-  public void testListComprehensionNestedIf() throws Exception {  // PY-322
+  public void testListComprehensionNestedIf() {  // PY-322
     doTest();
   }
 
-  public void testKeywordOnlyArgument() throws Exception {   // PEP 3102
+  public void testKeywordOnlyArgument() {   // PEP 3102
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testPy3KKeywords() throws Exception {
+  public void testPy3KKeywords() {
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testExecPy2() throws Exception {
+  public void testExecPy2() {
     doTest();
   }
 
-  public void testExecPy3() throws Exception {
+  public void testExecPy3() {
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testSuperclassKeywordArguments() throws Exception {
+  public void testSuperclassKeywordArguments() {
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testDictLiteral() throws Exception {
+  public void testDictLiteral() {
     doTest();
   }
 
-  public void testSetLiteral() throws Exception {
+  public void testSetLiteral() {
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testSetComprehension() throws Exception {
+  public void testSetComprehension() {
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testDictComprehension() throws Exception {
+  public void testDictComprehension() {
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testRaiseFrom() throws Exception {
+  public void testRaiseFrom() {
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testEllipsis() throws Exception {
+  public void testEllipsis() {
     doTest();
   }
 
-  public void testTupleArguments() throws Exception {
+  public void testTupleArguments() {
     doTest();
   }
 
-  public void testDefaultTupleArguments() throws Exception {
+  public void testDefaultTupleArguments() {
     doTest();
   }
 
-  public void testExtendedSlices() throws Exception {
+  public void testExtendedSlices() {
     doTest();
   }
 
-  public void testAnnotations() throws Exception {
+  public void testAnnotations() {
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testNonlocal() throws Exception {
+  public void testNonlocal() {
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testFloorDiv() throws Exception {
+  public void testFloorDiv() {
     doTest();
   }
 
-  public void testWithStatement31() throws Exception {
+  public void testWithStatement31() {
     doTest(LanguageLevel.PYTHON31);
   }
 
-  public void testLongString() throws Exception {
+  public void testLongString() {
     doTest();
   }
 
-  public void testTrailingSemicolon() throws Exception {  // PY-363
+  public void testTrailingSemicolon() {  // PY-363
     doTest();    
   }
 
-  public void testStarExpression() throws Exception {   // PEP-3132
+  public void testStarExpression() {   // PEP-3132
     doTest(LanguageLevel.PYTHON30);
   }
 
-  public void testDictMissingComma() throws Exception {  // PY-1025
+  public void testDictMissingComma() {  // PY-1025
     doTest();
   }
 
-  public void testInconsistentDedent() throws Exception { // PY-1131
+  public void testInconsistentDedent() { // PY-1131
     doTest();
   }
 
-  public void doTest() throws Exception {
+  public void testReturnAtEOF() {  // PY-1739
+    doTest();
+  }
+
+  public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }
 
-  public void doTest(LanguageLevel languageLevel) throws Exception {
+
+  public void doTest(LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(ourProject, languageLevel);
     try {
       doTest(true);
