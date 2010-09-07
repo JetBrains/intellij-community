@@ -19,6 +19,8 @@ package com.intellij.lang;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -28,9 +30,15 @@ public abstract class PsiBuilderFactory {
     return ServiceManager.getService(PsiBuilderFactory.class);
   }
 
-  public abstract PsiBuilder createBuilder(Project project, ASTNode tree, Language lang, CharSequence seq);
+  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree);
 
-  public abstract PsiBuilder createBuilder(Project project, ASTNode tree, Lexer lexer, Language lang, CharSequence seq);
+  /**
+   * @deprecated consider using {@link #createBuilder(com.intellij.openapi.project.Project, ASTNode)} instead.
+   */
+  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree, @NotNull Language lang, @NotNull CharSequence seq);
 
-  public abstract PsiBuilder createBuilder(final Lexer lexer, Language lang, CharSequence seq);
+  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree, @Nullable Lexer lexer,
+                                           @NotNull Language lang, @NotNull CharSequence seq);
+
+  public abstract PsiBuilder createBuilder(@NotNull Lexer lexer, @NotNull Language lang, @NotNull CharSequence seq);
 }

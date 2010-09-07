@@ -19,7 +19,6 @@ package com.intellij.lang.impl;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -119,20 +118,23 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   };
 
   @NonNls private static final String UNBALANCED_MESSAGE =
-    "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
+    "Unbalanced tree. Most probably caused by unbalanced markers. " +
+    "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
 
   public static void registerWhitespaceToken(IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
-  public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
+  public PsiBuilderImpl(@NotNull final Language lang, @NotNull final Lexer lexer, @NotNull final ASTNode chameleon,
+                        @NotNull final CharSequence text) {
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     assert parserDefinition != null : "ParserDefinition absent for language: " + lang.getID();
-    myLexer = lexer != null ? lexer : parserDefinition.createLexer(project);
+    myLexer = lexer;
     myWhitespaces = parserDefinition.getWhitespaceTokens();
     myComments = parserDefinition.getCommentTokens();
+
     myCharTable = SharedImplUtil.findCharTableByTree(chameleon);
 
     myOriginalTree = chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED);
@@ -142,7 +144,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @TestOnly
-  public PsiBuilderImpl(final Lexer lexer, final TokenSet whitespaces, final TokenSet comments, CharSequence text) {
+  public PsiBuilderImpl(@NotNull final Lexer lexer, @NotNull final TokenSet whitespaces, @NotNull final TokenSet comments,
+                        @NotNull final CharSequence text) {
     myWhitespaces = whitespaces;
     myLexer = lexer;
     myComments = comments;
