@@ -77,8 +77,6 @@ public class ChangesBrowserDialog extends DialogWrapper {
             myChanges.addRows(committedChangeLists);
             if (selectFirst) {
               myCommittedChangesBrowser.selectFirstIfAny();
-            } else {
-              myCommittedChangesBrowser.resortKeepSelection();
             }
           }
         }.callMe();

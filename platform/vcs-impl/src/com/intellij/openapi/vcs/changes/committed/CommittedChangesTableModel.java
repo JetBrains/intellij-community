@@ -27,14 +27,15 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Comparator;
 import java.util.List;
 
 public class CommittedChangesTableModel extends ListTableModel<CommittedChangeList> {
   private final boolean myAsynchLoad;
   private static final ChangeListColumn[] ourDefaultColumns = new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME };
+  private RowSorter.SortKey mySortKey;
 
   public CommittedChangesTableModel(final List<CommittedChangeList> changeLists, boolean asynchLoad) {
     super(buildColumnInfos(ourDefaultColumns), changeLists, 0);
@@ -46,25 +47,13 @@ public class CommittedChangesTableModel extends ListTableModel<CommittedChangeLi
     myAsynchLoad = asynchLoad;
   }
 
-  public void sortByChangesColumn(final ChangeListColumn column, int sortingType) {
-    if (column == null) {
-      return;
-    }
-    final ColumnInfo[] columnInfos = getColumnInfos();
-    for(int i=0; i<columnInfos.length; i++) {
-      ColumnInfoAdapter adapter = (ColumnInfoAdapter) columnInfos [i];
-      if (adapter.getColumn() == column) {
-        sortByColumn(i, sortingType);
-        break;
-      }
-    }
+  protected void setSortKey(final RowSorter.SortKey sortKey) {
+    mySortKey = sortKey;
   }
 
-  @Nullable
-  public ChangeListColumn getSortColumn() {
-    int index = getSortedColumnIndex();
-    if (index < 0) return null;
-    return ((ColumnInfoAdapter) getColumnInfos() [index]).getColumn();
+  @Override
+  public RowSorter.SortKey getDefaultSortKey() {
+    return mySortKey;
   }
 
   private static ColumnInfo[] buildColumnInfos(final ChangeListColumn[] columns) {

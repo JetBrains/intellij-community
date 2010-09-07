@@ -20,15 +20,14 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.table.ItemsProvider;
 import com.intellij.ui.table.SelectionProvider;
-import com.intellij.ui.table.TableHeaderRenderer;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -47,8 +46,6 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
   public TreeTableView(ListTreeTableModelOnColumns treeTableModel) {
     super(treeTableModel);
     setRootVisible(false);
-
-    getTableHeader().setDefaultRenderer(new TableHeaderRenderer(treeTableModel));
 
     setTreeCellRenderer(new TreeCellRenderer() {
       private final TreeCellRenderer myBaseRenderer = new HighlightableCellRenderer();
@@ -71,7 +68,6 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
   public void setTableModel(TreeTableModel treeTableModel) {
     super.setTableModel(treeTableModel);
     LOG.assertTrue(treeTableModel instanceof SortableColumnModel);
-    getTableHeader().setDefaultRenderer(new TableHeaderRenderer((SortableColumnModel)treeTableModel));
   }
 
   private void setSizes() {

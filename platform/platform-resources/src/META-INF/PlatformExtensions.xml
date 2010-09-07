@@ -178,6 +178,7 @@
   <applicationConfigurable instance="com.intellij.ide.plugins.PluginManagerConfigurable"/>
   <applicationConfigurable instance="com.intellij.util.net.HTTPProxySettingsPanel"/>
   <applicationConfigurable instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm"/>
+  <applicationConfigurable instance="com.intellij.ui.switcher.QuickAccessConfigurable"/>
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"

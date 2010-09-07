@@ -17,6 +17,7 @@ package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.util.ui.ColumnInfo;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
@@ -64,4 +65,7 @@ public class ListTreeTableModel extends DefaultTreeModel implements TreeTableMod
     myColumns[column].setValue(node, aValue);
   }
 
+  @Override
+  public void setTree(JTree tree) {
+  }
 }

@@ -681,13 +681,6 @@ public class AbstractPopup implements JBPopup {
       listener.beforeShown(new LightweightWindowEvent(this));
     }
 
-    Window w = myPopup.getWindow();
-    if (w != null) {
-      WindowManagerEx.WindowShadowMode mode =
-        myShadowed ? WindowManagerEx.WindowShadowMode.NORMAL : WindowManagerEx.WindowShadowMode.DISABLED;
-      WindowManagerEx.getInstanceEx().setWindowShadow(myWindow, mode);
-    }
-
     myPopup.setRequestFocus(myRequestFocus);
     myPopup.show();
 
@@ -837,6 +830,10 @@ public class AbstractPopup implements JBPopup {
       Shape mask = myMaskProvider.getMask(size);
       wndManager.setWindowMask(window, mask);
     }
+
+    WindowManagerEx.WindowShadowMode mode =
+      myShadowed ? WindowManagerEx.WindowShadowMode.NORMAL : WindowManagerEx.WindowShadowMode.DISABLED;
+    WindowManagerEx.getInstanceEx().setWindowShadow(window, mode);
 
     return window;
   }

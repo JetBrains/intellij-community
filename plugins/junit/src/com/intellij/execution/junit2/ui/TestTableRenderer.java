@@ -40,12 +40,6 @@ class TestTableRenderer implements TableCellRenderer {
                                                  final int row, final int column) {
     final int modelColumn = table.convertColumnIndexToModel(column);
     final TableCellRenderer renderer = myRenderers[modelColumn];
-    if (row == 0) {
-      final Component component = ((modelColumn == 0) ? myLeftTopRenderer : renderer).
-          getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      component.setFont(component.getFont().deriveFont(Font.BOLD));
-      return component;
-    }
     return renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
   }
 

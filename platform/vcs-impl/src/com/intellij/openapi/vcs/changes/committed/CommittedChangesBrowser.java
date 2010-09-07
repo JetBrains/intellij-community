@@ -31,7 +31,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -64,7 +63,14 @@ public class CommittedChangesBrowser extends JPanel {
 
     myProject = project;
     myTableModel = tableModel;
-    myTableModel.sortByChangesColumn(ChangeListColumn.DATE, SortableColumnModel.SORT_DESCENDING);
+
+    for (int i = 0; i < myTableModel.getColumnCount(); i++) {
+      if (ChangeListColumn.DATE.getTitle().equals(myTableModel.getColumnName(i))) {
+        myTableModel.setSortKey(new RowSorter.SortKey(i, SortOrder.DESCENDING));
+        break;
+      }
+    }
+
     myChangeListsView = new TableView<CommittedChangeList>(myTableModel);
     myChangeListsView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -177,12 +183,6 @@ public class CommittedChangesBrowser extends JPanel {
     }
   }
 
-  public void resortKeepSelection() {
-    if (myTableModel.getRowCount() > 0) {
-      myChangeListsView.resortKeepSelection();
-    }
-  }
-
   public void addToolBar(JComponent toolBar) {
     myLeftPanel.add(toolBar, BorderLayout.NORTH);
   }
@@ -192,10 +192,7 @@ public class CommittedChangesBrowser extends JPanel {
   }
 
   public void setModel(CommittedChangesTableModel tableModel) {
-    ChangeListColumn sortColumn = myTableModel.getSortColumn();
-    int sortingType = myTableModel.getSortingType();
     myTableModel = tableModel;
-    myTableModel.sortByChangesColumn(sortColumn, sortingType);
     myChangeListsView.setModel(tableModel);
     tableModel.fireTableStructureChanged();
   }

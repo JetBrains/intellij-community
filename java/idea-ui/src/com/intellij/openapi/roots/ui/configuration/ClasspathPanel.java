@@ -649,7 +649,7 @@ public class ClasspathPanel extends JPanel {
 
   public void selectOrderEntry(@NotNull OrderEntry entry) {
     for (int row = 0; row < myModel.getRowCount(); row++) {
-      if (entry.equals(myModel.getItemAt(row).getEntry())) {
+      if (entry.getPresentableName().equals(myModel.getItemAt(row).getEntry().getPresentableName())) {
         myEntryTable.getSelectionModel().setSelectionInterval(row, row);
         TableUtil.scrollSelectionToVisible(myEntryTable);
       }

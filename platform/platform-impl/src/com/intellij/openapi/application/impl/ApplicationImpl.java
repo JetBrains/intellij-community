@@ -781,7 +781,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return ref.get();
   }
 
-  public <T>  T getCurrentWriteAction(@NotNull Class<T> actionClass) {
+  public <T>  T getCurrentWriteAction(@Nullable Class<T> actionClass) {
     synchronized (myWriteActionsStack) {
       for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
         Runnable action = myWriteActionsStack.get(i);

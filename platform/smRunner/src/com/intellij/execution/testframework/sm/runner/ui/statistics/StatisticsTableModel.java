@@ -18,7 +18,6 @@ package com.intellij.execution.testframework.sm.runner.ui.statistics;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,18 +35,9 @@ public class StatisticsTableModel extends ListTableModel<SMTestProxy> {
 
   private SMTestProxy myCurrentSuite;
 
-  private final NullableFunction<List<SMTestProxy>, Object> oldReverseModelItemsFun =
-      new NullableFunction<List<SMTestProxy>, Object>() {
-        @Nullable
-        public Object fun(final List<SMTestProxy> proxies) {
-          StatisticsTableModel.super.reverseModelItems(proxies);
-
-          return null;
-        }
-      };
-
   public StatisticsTableModel() {
     super(new ColumnTest(), new ColumnDuration(), new ColumnResults());
+    setSortable(false); // TODO: fix me
   }
 
   public void updateModelOnProxySelected(final SMTestProxy proxy) {
@@ -111,27 +101,6 @@ public class StatisticsTableModel extends ListTableModel<SMTestProxy> {
     list.addAll(suite.getChildren());
 
     return list;
-  }
-
-  @Override
-  protected void reverseModelItems(final List<SMTestProxy> testProxies) {
-    //Invariant: comparator should left Total(initally at row = 0) row as uppermost element!
-    applySortOperation(testProxies, oldReverseModelItemsFun);
-  }
-
-  /**
-   * This function allow sort operation to all except first element(e.g. Total row)
-   * @param proxies Tests or suites
-   * @param sortOperation Closure
-   */
-  protected static void applySortOperation(final List<SMTestProxy> proxies,
-                                           final NullableFunction<List<SMTestProxy>, Object> sortOperation) {
-
-    //Invariant: comparator should left Total(initally at row = 0) row as uppermost element!
-    final int size = proxies.size();
-    if (size > 1) {
-      sortOperation.fun(proxies.subList(1, size));
-    }
   }
 
   public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {

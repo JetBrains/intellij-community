@@ -106,7 +106,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
                                String title,
-                               String groupName) {
+                               String groupName, Object... options) {
     if (isFirstUpdate) {
       myCustomOptions.putValue(groupName, Trinity.<Class<? extends CustomCodeStyleSettings>, String, String>create(settingsClass, fieldName, title));
     }
