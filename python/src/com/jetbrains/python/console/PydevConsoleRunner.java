@@ -257,6 +257,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
             if (!PyConsoleHighlightingUtil.INDENT_PROMPT.equals(console.getPrompt())){
               console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
               scrollDown(currentEditor);
+            }
+            if (myCurrentIndentSize == -1) {
               // compute current indentation
               myCurrentIndentSize = myHelper.getIndent(line, false) + currentPythonIndentSize;
               // In this case we can insert indent automatically
