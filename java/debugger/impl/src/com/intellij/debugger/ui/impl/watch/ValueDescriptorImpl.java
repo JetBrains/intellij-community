@@ -170,7 +170,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   @Nullable
   private static ObjectReference getTargetExceptionWithStackTraceFilled(final EvaluationContextImpl evaluationContext, EvaluateException ex){
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
-    if (exceptionObj != null) {
+    if (exceptionObj != null && evaluationContext != null) {
       try {
         final ReferenceType refType = exceptionObj.referenceType();
         final List<Method> methods = refType.methodsByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");

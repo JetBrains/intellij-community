@@ -26,6 +26,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
@@ -564,6 +565,26 @@ public class DebuggerSession implements AbstractDebuggerSession {
         }
       });
       mySteppingThroughThreads.clear();
+    }
+
+    public void threadStarted(DebugProcess proc, ThreadReference thread) {
+      ((VirtualMachineProxyImpl)proc.getVirtualMachineProxy()).threadStarted(thread);
+      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+        public void run() {
+          final DebuggerStateManager contextManager = getContextManager();
+          contextManager.fireStateChanged(contextManager.getContext(), EVENT_REFRESH_VIEWS_ONLY);
+        }
+      });
+    }
+
+    public void threadStopped(DebugProcess proc, ThreadReference thread) {
+      ((VirtualMachineProxyImpl)proc.getVirtualMachineProxy()).threadStopped(thread);
+      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+        public void run() {
+          final DebuggerStateManager contextManager = getContextManager();
+          contextManager.fireStateChanged(contextManager.getContext(), EVENT_REFRESH_VIEWS_ONLY);
+        }
+      });
     }
   }
 

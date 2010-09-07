@@ -23,8 +23,10 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -198,16 +200,16 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
     final DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
     if (debugProcess != null) {
-      BuildNodeCommand command = getBuildNodeCommand(node);
+      DebuggerCommandImpl command = getBuildNodeCommand(node);
       if (command != null) {
-        command.getNode().add(myNodeManager.createMessageNode(MessageDescriptor.EVALUATING));
+        node.add(myNodeManager.createMessageNode(MessageDescriptor.EVALUATING));
         debugProcess.getManagerThread().schedule(command);
       }
     }
   }
 
   // todo: convert "if" into instance method call
-  protected BuildNodeCommand getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
+  protected DebuggerCommandImpl getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
     if (node.getDescriptor() instanceof StackFrameDescriptorImpl) {
       return new BuildStackFrameCommand(node);
     }
@@ -668,19 +670,24 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
   }
 
-  private class BuildThreadGroupCommand extends BuildNodeCommand {
+  private class BuildThreadGroupCommand extends DebuggerCommandImpl {
+    private final DebuggerTreeNodeImpl myNode;
+    protected final List<DebuggerTreeNode> myChildren = new LinkedList<DebuggerTreeNode>();
+
     public BuildThreadGroupCommand(DebuggerTreeNodeImpl node) {
-      super(node);
+      myNode = node;
     }
 
-    public void threadAction() {
-      ThreadGroupDescriptorImpl groupDescriptor = (ThreadGroupDescriptorImpl)getNode().getDescriptor();
+    protected void action() throws Exception {
+      ThreadGroupDescriptorImpl groupDescriptor = (ThreadGroupDescriptorImpl)myNode.getDescriptor();
       ThreadGroupReferenceProxyImpl threadGroup = groupDescriptor.getThreadGroupReference();
 
       List<ThreadReferenceProxyImpl> threads = new ArrayList<ThreadReferenceProxyImpl>(threadGroup.threads());
       Collections.sort(threads, ThreadReferenceProxyImpl.ourComparator);
 
-      EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
+      final DebuggerContextImpl debuggerContext = getDebuggerContext();
+      final SuspendContextImpl suspendContext = debuggerContext.getSuspendContext();
+      final EvaluationContextImpl evaluationContext = suspendContext != null? debuggerContext.createEvaluationContext() : null;
 
       boolean showCurrent = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD;
 
@@ -702,8 +709,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
       for (ThreadReferenceProxyImpl thread : threads) {
         if (thread != null) {
-          DebuggerTreeNodeImpl threadNode =
-            myNodeManager.createNode(myNodeManager.getThreadDescriptor(groupDescriptor, thread), evaluationContext);
+          final DebuggerTreeNodeImpl threadNode = myNodeManager.createNode(myNodeManager.getThreadDescriptor(groupDescriptor, thread), evaluationContext);
           if (showCurrent && ((ThreadDescriptorImpl)threadNode.getDescriptor()).isCurrent()) {
             threadNodes.add(0, threadNode);
           }
@@ -716,6 +722,18 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       myChildren.addAll(threadNodes);
 
       updateUI(true);
+    }
+
+    protected void updateUI(final boolean scrollToVisible) {
+      DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+        public void run() {
+          myNode.removeAllChildren();
+          for (DebuggerTreeNode debuggerTreeNode : myChildren) {
+            myNode.add(debuggerTreeNode);
+          }
+          myNode.childrenChanged(scrollToVisible);
+        }
+      });
     }
   }
 
