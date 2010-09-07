@@ -30,6 +30,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 
 public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
@@ -46,12 +47,7 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
   }
 
   @Override
-  public Integer getMinOccurs() {
-    return null;
-  }
-
-  @Override
-  public Integer getMaxOccurs() {
+  public XmlElementsGroup getTopGroup() {
     return null;
   }
 

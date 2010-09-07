@@ -19,10 +19,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlAttributeDescriptorsProvider;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
@@ -86,22 +83,6 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
     return getAttributeDescriptor(attribute.getName(), attribute.getParent());
-  }
-
-  /**
-   * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
-   */
-  @Override
-  public Integer getMinOccurs() {
-    return null;
-  }
-
-  /**
-   * @return maximal occurrence constraint value (e.g. 1 or {@link Integer.MAX_VALUE}), on null if not applied
-   */
-  @Override
-  public Integer getMaxOccurs() {
-    return null;
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
