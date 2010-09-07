@@ -11,45 +11,50 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author traff
  */
-public class PythonProcessHandler extends RunnerMediator.CustomDestroyProcessHandler {
+public class PythonProcessHandler extends ColoredProcessHandler {
+  private final String myProcessUid;
 
   private PythonProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, @NotNull String processUid) {
-    super(process, commandLine, processUid);
+    super(process, commandLine.getCommandLineString());
+    myProcessUid = processUid;
   }
 
   @Override
-  protected void detachProcessImpl() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        long millis = System.currentTimeMillis();
-        while (true) {
-          try {
-            getProcess().exitValue();
-            return;
-          }
-          catch (IllegalThreadStateException e) {
-            if (System.currentTimeMillis() - millis > 5000L) {
-              if (Messages.showYesNoDialog("Do you want to terminate the process?", "Process is not responding", null) == 0) {
-                killProcess();
-                return;
-              }
-              else {
-                return;
+  protected void destroyProcessImpl() {
+    super.destroyProcessImpl();
+    if (RunnerMediator.canSendSignals()) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          long millis = System.currentTimeMillis();
+          while (true) {
+            try {
+              getProcess().exitValue();
+              return;
+            }
+            catch (IllegalThreadStateException e) {
+              if (System.currentTimeMillis() - millis > 5000L) {
+
+                if (Messages.showYesNoDialog("Do you want to terminate the process?", "Process is not responding", null) == 0) {
+                  RunnerMediator.sendSigKill(myProcessUid);
+                  return;
+                }
+                else {
+                  return;
+                }
               }
             }
-          }
-          try {
-            synchronized (this) {
-              wait(2000L);
+            try {
+              synchronized (this) {
+                wait(2000L);
+              }
             }
-          }
-          catch (InterruptedException ignore) {
+            catch (InterruptedException ignore) {
+            }
           }
         }
       }
+      );
     }
-    );
-    super.detachProcessImpl();
   }
 
   public static ColoredProcessHandler createProcessHandler(GeneralCommandLine commandLine)
