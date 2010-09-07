@@ -34,18 +34,18 @@ public class RunnerMediator {
     }
   }
 
-  public static void injectRunnerCommand(GeneralCommandLine commandLine) {
+  public static void injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
     commandLine.getParametersList().addAt(0, commandLine.getExePath());
     commandLine.setExePath(getRunnerPath());
   }
 
-  public static String injectUid(GeneralCommandLine commandLine) {
+  public static String injectUid(@NotNull GeneralCommandLine commandLine) {
     String uid = commandLine.getExePath() + ":" + UUID.randomUUID().toString();
     commandLine.getEnvParams().put(UID_KEY_NAME, uid);
     return uid;
   }
 
-  public static ColoredProcessHandler createProcessWithStopInjections(GeneralCommandLine commandLine)
+  public static ColoredProcessHandler createProcessWithStopInjections(@NotNull GeneralCommandLine commandLine)
     throws ExecutionException {
     if (isWindows()) {
       injectRunnerCommand(commandLine);
