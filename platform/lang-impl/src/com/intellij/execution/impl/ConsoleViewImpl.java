@@ -26,7 +26,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +34,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.actions.ToggleStickToEolToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -539,7 +539,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 2);
     }
 
-    if (isAtEndOfDocument) {
+    if (myEditor.getSettings().isForceScrollToEnd() || isAtEndOfDocument) {
       myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
       myEditor.getSelectionModel().removeSelection();
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -1431,12 +1431,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @NotNull
   public AnAction[] createConsoleActions() {
     //Initializing prev and next occurrences actions
-    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    AnAction prevAction = actionsManager.createPrevOccurenceAction(this);
+    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    final AnAction prevAction = actionsManager.createPrevOccurenceAction(this);
     prevAction.getTemplatePresentation().setText(getPreviousOccurenceActionName());
-    AnAction nextAction = actionsManager.createNextOccurenceAction(this);
+    final AnAction nextAction = actionsManager.createNextOccurenceAction(this);
     nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
-    AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction() {
+    final AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction() {
+      @Override
+      protected Editor getEditor(AnActionEvent e) {
+        return myEditor;
+      }
+    };
+    final AnAction stickToEolAction = new ToggleStickToEolToolbarAction() {
       @Override
       protected Editor getEditor(AnActionEvent e) {
         return myEditor;
@@ -1444,12 +1450,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     };
 
     //Initializing custom actions
-    AnAction[] consoleActions = new AnAction[3 + customActions.size()];
+    final AnAction[] consoleActions = new AnAction[4 + customActions.size()];
     consoleActions[0] = prevAction;
     consoleActions[1] = nextAction;
     consoleActions[2] = switchSoftWrapsAction;
+    consoleActions[3] = stickToEolAction;
     for (int i = 0; i < customActions.size(); ++i) {
-      consoleActions[i + 3] = customActions.get(i);
+      consoleActions[i + 4] = customActions.get(i);
     }
     return consoleActions;
   }
