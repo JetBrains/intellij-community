@@ -150,6 +150,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void scrollToEnd() {
+    if (myEditor == null) return;
     myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
   }
 
