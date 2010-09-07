@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
@@ -273,6 +274,29 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   public PsiClassType createType(@NotNull PsiJavaCodeReferenceElement classReference) {
     return new PsiClassReferenceType(classReference, null);
+  }
+
+  @NotNull
+  public PsiClassType createType(@NotNull PsiClass aClass, PsiType parameter) {
+    PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+    assert typeParameters.length == 1;
+
+    Map<PsiTypeParameter, PsiType> map = Collections.singletonMap(typeParameters[0], parameter);
+
+    return createType(aClass, createSubstitutor(map));
+  }
+
+  @NotNull
+  public PsiClassType createType(@NotNull PsiClass aClass, PsiType... parameters) {
+    PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+    assert parameters.length == typeParameters.length;
+
+    Map<PsiTypeParameter, PsiType> map = new java.util.HashMap<PsiTypeParameter, PsiType>();
+    for (int i = 0; i < parameters.length; i++) {
+      map.put(typeParameters[i], parameters[i]);
+    }
+
+    return createType(aClass, createSubstitutor(map));
   }
 
   private static class TypeDetacher extends PsiTypeVisitor<PsiType> {

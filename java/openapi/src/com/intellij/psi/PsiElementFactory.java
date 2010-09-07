@@ -149,6 +149,10 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    */
   @NotNull PsiClassType createType(@NotNull PsiJavaCodeReferenceElement classReference);
 
+  @NotNull PsiClassType createType(@NotNull PsiClass aClass, PsiType parameters);
+
+  @NotNull PsiClassType createType(@NotNull PsiClass aClass, PsiType... parameters);
+
   /**
    * Detaches type from reference(s) or type elements it was created from.
    *
