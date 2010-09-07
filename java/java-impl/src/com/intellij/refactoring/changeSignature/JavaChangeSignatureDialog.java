@@ -131,7 +131,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
     JBTable exceptionsTable = new JBTable(myExceptionsTableModel);
     exceptionsTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
-    exceptionsTable.getColumnModel().getColumn(0).setCellEditor(new CodeFragmentTableCellEditor(myProject));
+    exceptionsTable.getColumnModel().getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));
     return createTablePanelImpl(exceptionsTable, myExceptionsTableModel,
                                 RefactoringBundle.message("changeSignature.exceptions.panel.border.title"), false);
   }
@@ -200,7 +200,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected TableCellEditor createTypeCellEditor() {
-    return new CodeFragmentTableCellEditor(myProject);
+    return new JavaCodeFragmentTableCellEditor(myProject);
   }
 
   @Override
@@ -210,7 +210,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected TableCellEditor createDefaultValueCellEditor() {
-    return new CodeFragmentTableCellEditor(myProject) {
+    return new JavaCodeFragmentTableCellEditor(myProject) {
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         final Component editor = super.getTableCellEditorComponent(table, value, isSelected, row, column);
 

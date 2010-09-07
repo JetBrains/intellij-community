@@ -96,10 +96,13 @@ public class JUnit4TestResultsSender extends RunListener {
       catch (Throwable ignore) {}
     }
 
-    final Matcher matcher =
-      Pattern.compile("\nExpected: \"(.*)\"\n     got: \"(.*)\"\n", Pattern.DOTALL).matcher(assertion.getMessage());
-    if (matcher.matches()){
-      return ComparisonDetailsExtractor.create(assertion, matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+    if (assertion.getMessage() != null) {
+      final Matcher matcher =
+        Pattern.compile("\nExpected: \"(.*)\"\n     got: \"(.*)\"\n", Pattern.DOTALL).matcher(assertion.getMessage());
+      if (matcher.matches()) {
+        return ComparisonDetailsExtractor
+          .create(assertion, matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+      }
     }
     return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
   }

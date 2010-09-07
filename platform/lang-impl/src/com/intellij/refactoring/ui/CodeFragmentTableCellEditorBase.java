@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
@@ -31,21 +29,23 @@ import java.awt.*;
 /**
  * @author dsl
  */
-public class CodeFragmentTableCellEditor extends AbstractCellEditor implements TableCellEditor {
+public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implements TableCellEditor {
   private Document myDocument;
   protected PsiCodeFragment myCodeFragment;
   private final Project myProject;
-  private EditorTextField myEditorTextField;
+  private final FileType myFileType;
+  protected EditorTextField myEditorTextField;
 
-  public CodeFragmentTableCellEditor(final Project project) {
+  public CodeFragmentTableCellEditorBase(final Project project, FileType fileType) {
     myProject = project;
+    myFileType = fileType;
   }
 
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     myCodeFragment = (PsiCodeFragment)value;
 
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myCodeFragment);
-    myEditorTextField = new EditorTextField(myDocument, myProject, StdFileTypes.JAVA) {
+    myEditorTextField = new EditorTextField(myDocument, myProject, myFileType) {
       protected boolean shouldHaveBorder() {
         return false;
       }
@@ -58,10 +58,6 @@ public class CodeFragmentTableCellEditor extends AbstractCellEditor implements T
   }
 
   public boolean stopCellEditing() {
-    final Editor editor = myEditorTextField.getEditor();
-    if (editor != null) {
-      JavaReferenceImporter.autoImportReferenceAtCursor(editor, myCodeFragment, true);
-    }
     super.stopCellEditing();
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     return true;

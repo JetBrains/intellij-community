@@ -23,7 +23,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.changeSignature.ExceptionsTableModel;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
-import com.intellij.refactoring.ui.CodeFragmentTableCellEditor;
+import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -172,7 +172,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     columnModel.getColumn(2).setCellRenderer(new GrCodeFragmentTableCellRenderer(myProject));
     columnModel.getColumn(3).setCellRenderer(new GrCodeFragmentTableCellRenderer(myProject));
 
-    columnModel.getColumn(0).setCellEditor(new CodeFragmentTableCellEditor(myProject));
+    columnModel.getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));
     columnModel.getColumn(1).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
     columnModel.getColumn(2).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
     columnModel.getColumn(3).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
@@ -197,7 +197,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     myExceptionsButtonPanel = EditableRowTable.createButtonsTable(myExceptionsTable, myExceptionTableModel, false);
 
     myExceptionsTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
-    myExceptionsTable.getColumnModel().getColumn(0).setCellEditor(new CodeFragmentTableCellEditor(myProject));
+    myExceptionsTable.getColumnModel().getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));
 
     if (myExceptionTableModel.getRowCount() > 0) {
       myExceptionsTable.setRowSelectionInterval(0, 0);

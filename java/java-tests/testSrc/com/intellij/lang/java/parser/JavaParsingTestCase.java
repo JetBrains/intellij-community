@@ -115,7 +115,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     assert psi != null : chameleon;
     final Project project = psi.getProject();
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final PsiBuilder builder = factory.createBuilder(project, chameleon, chameleon.getElementType().getLanguage(), chameleon.getChars());
+    final PsiBuilder builder = factory.createBuilder(project, chameleon);
 
     builder.setDebugMode(true);
 

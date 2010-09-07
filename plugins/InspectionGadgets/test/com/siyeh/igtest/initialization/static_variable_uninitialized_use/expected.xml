@@ -4,21 +4,21 @@
   <problem>
     <file>StaticVariableUninitializedUse.java</file>
     <line>9</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static variable used before initialization</problem_class>
-    <description>Static variable &lt;code&gt;StaticVariableUninitializedUse.s&lt;/code&gt; used before initialization #loc</description>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static field used before initialization</problem_class>
+    <description>Static field &lt;code&gt;StaticVariableUninitializedUse.s&lt;/code&gt; used before initialization #loc</description>
   </problem>
 
   <problem>
     <file>StaticVariableUninitializedUse.java</file>
     <line>13</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static variable used before initialization</problem_class>
-    <description>Static variable &lt;code&gt;i&lt;/code&gt; used before initialization #loc</description>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static field used before initialization</problem_class>
+    <description>Static field &lt;code&gt;i&lt;/code&gt; used before initialization #loc</description>
   </problem>
 
   <problem>
     <file>StaticVariableUninitializedUse.java</file>
     <line>20</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static variable used before initialization</problem_class>
-    <description>Static variable &lt;code&gt;i&lt;/code&gt; used before initialization #loc</description>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static field used before initialization</problem_class>
+    <description>Static field &lt;code&gt;i&lt;/code&gt; used before initialization #loc</description>
   </problem>
 </problems>

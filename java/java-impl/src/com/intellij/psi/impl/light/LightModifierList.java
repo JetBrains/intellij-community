@@ -23,7 +23,6 @@ import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Set;
 
 public class LightModifierList extends LightElement implements PsiModifierList{
@@ -35,7 +34,7 @@ public class LightModifierList extends LightElement implements PsiModifierList{
 
   public LightModifierList(PsiManager manager, final Language language, String... modifiers){
     super(manager, language);
-    myModifiers = Collections.synchronizedSet(CollectionFactory.newTroveSet(modifiers));
+    myModifiers = CollectionFactory.newTroveSet(modifiers);
   }
 
   public void addModifier(String modifier) {

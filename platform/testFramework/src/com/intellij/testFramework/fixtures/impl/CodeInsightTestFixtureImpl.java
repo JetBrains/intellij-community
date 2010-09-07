@@ -18,7 +18,6 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionContext;
@@ -117,7 +116,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.*;
 
 /**
@@ -1083,9 +1081,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile configureInner(@NotNull final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
     try {
-      final OutputStream outputStream = copy.getOutputStream(null, 0, 0);
-      outputStream.write(loader.newFileText.getBytes(copy.getCharset()));
-      outputStream.close();
+      copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()), 0, 0, null);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -1094,9 +1090,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     setContext(myFile, myFileContext);
     myEditor = createEditor(copy);
     assert myEditor != null : "Editor couldn't be created for file: " + copy.getPath() + ", use copyFileToProject(..) method for this file instead of configureByFile(..)" ;
-    int offset = -1;
     if (loader.caretMarker != null) {
-      offset = loader.caretMarker.getStartOffset();
+      int offset = loader.caretMarker.getStartOffset();
       myEditor.getCaretModel().moveToOffset(offset);
     }
     if (loader.selStartMarker != null && loader.selEndMarker != null) {

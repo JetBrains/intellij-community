@@ -36,9 +36,9 @@ public class DiffTree<OT, NT> {
   private final List<Ref<NT[]>> myNewChildrenLists = new ArrayList<Ref<NT[]>>();
 
   private DiffTree(final FlyweightCapableTreeStructure<OT> oldTree,
-                  final FlyweightCapableTreeStructure<NT> newTree,
-                  final ShallowNodeComparator<OT, NT> comparator,
-                  final DiffTreeChangeBuilder<OT, NT> consumer) {
+                   final FlyweightCapableTreeStructure<NT> newTree,
+                   final ShallowNodeComparator<OT, NT> comparator,
+                   final DiffTreeChangeBuilder<OT, NT> consumer) {
 
     myOldTree = oldTree;
     myNewTree = newTree;
@@ -46,7 +46,10 @@ public class DiffTree<OT, NT> {
     myConsumer = consumer;
   }
 
-  public static <OT, NT> void diff(FlyweightCapableTreeStructure<OT> oldTree, FlyweightCapableTreeStructure<NT> newTree, ShallowNodeComparator<OT, NT> comparator, DiffTreeChangeBuilder<OT, NT> consumer) {
+  public static <OT, NT> void diff(final FlyweightCapableTreeStructure<OT> oldTree,
+                                   final FlyweightCapableTreeStructure<NT> newTree,
+                                   final ShallowNodeComparator<OT, NT> comparator,
+                                   final DiffTreeChangeBuilder<OT, NT> consumer) {
     new DiffTree<OT, NT>(oldTree, newTree, comparator, consumer).build(oldTree.getRoot(), newTree.getRoot(), 0);
   }
 
@@ -57,7 +60,6 @@ public class DiffTree<OT, NT> {
     NOT_EQUAL, // 100% different
   }
 
-  // TODO: disposeChildren
   private void build(OT oldN, NT newN, int level) {
     OT oldNode = myOldTree.prepareForGetChildren(oldN);
     NT newNode = myNewTree.prepareForGetChildren(newN);
@@ -87,7 +89,7 @@ public class DiffTree<OT, NT> {
 
     final ShallowNodeComparator<OT, NT> comparator = myComparator;
     if (oldSize == 0 && newSize == 0) {
-      if (!comparator.hashcodesEqual(oldNode, newNode) || !comparator.typesEqual(oldNode, newNode)) {
+      if (!comparator.hashCodesEqual(oldNode, newNode) || !comparator.typesEqual(oldNode, newNode)) {
         myConsumer.nodeReplaced(oldNode, newNode);
       }
       return;
