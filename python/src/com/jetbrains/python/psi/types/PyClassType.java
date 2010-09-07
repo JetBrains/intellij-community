@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -43,8 +44,8 @@ public class PyClassType implements PyType {
    * @param source        PyClass which defines this type. For builtin or external classes, skeleton files contain the definitions.
    * @param is_definition whether this type describes an instance or a definition of the class.
    */
-  public PyClassType(final @Nullable PyClass source, boolean is_definition) {
-    myClass = source;
+  public PyClassType(@Nullable PyClass source, boolean is_definition) {
+    myClass = source != null ? PsiUtilBase.getOriginalElement(source, PyClass.class) : null;
     myIsDefinition = is_definition;
   }
 
