@@ -199,6 +199,7 @@ public class ToBeMergedDialog extends DialogWrapper {
         JTable table = (JTable)e.getSource();
         int row = table.rowAtPoint(e.getPoint());
         int column = table.columnAtPoint(e.getPoint());
+        if (row == -1 || column == -1) return null;
         listCellRenderer.customizeCellRenderer(table, table.getValueAt(row, column), table.isRowSelected(row), false, row, column);
         final ColoredTreeCellRenderer renderer = listCellRenderer.myRenderer;
         final Rectangle rc = table.getCellRect(row, column, false);
