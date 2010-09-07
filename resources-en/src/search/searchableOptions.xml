@@ -8195,6 +8195,10 @@
     <option name="ignored" hit="Configure Ignored Resources:" />
     <option name="resources" hit="Configure Ignored Resources:" />
     <option name="resources" hit="Resources" />
+    <option name="Default" hit="Default HTML language level" />
+    <option name="html" hit="Default HTML language level" />
+    <option name="language" hit="Default HTML language level" />
+    <option name="level" hit="Default HTML language level" />
   </configurable>
   <configurable id="template.copyright.formatting" configurable_name="Formatting">
     <option name="blank" hit="Add Blank Line After" />
