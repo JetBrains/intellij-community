@@ -204,7 +204,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected TableCellEditor createNameCallEditor() {
+  protected TableCellEditor createNameCellEditor() {
     return new MyNameTableCellEditor(myProject);
   }
 

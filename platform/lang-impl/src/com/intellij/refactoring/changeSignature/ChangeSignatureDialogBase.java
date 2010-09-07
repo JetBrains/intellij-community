@@ -94,7 +94,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected abstract TableCellEditor createTypeCellEditor();
 
-  protected abstract TableCellEditor createNameCallEditor();
+  protected abstract TableCellEditor createNameCellEditor();
 
   protected abstract TableCellEditor createDefaultValueCellEditor();
 
@@ -377,7 +377,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       });
     }
     myParametersTable.getColumnModel().getColumn(0).setCellEditor(createTypeCellEditor());
-    myParametersTable.getColumnModel().getColumn(1).setCellEditor(createNameCallEditor());
+    myParametersTable.getColumnModel().getColumn(1).setCellEditor(createNameCellEditor());
     if (myParametersTable.getColumnCount() > 2) {
       myParametersTable.getColumnModel().getColumn(2).setCellEditor(createDefaultValueCellEditor());
     }
