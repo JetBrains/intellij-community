@@ -119,16 +119,17 @@ public class RemoteDebugger {
     return command.getVariables();
   }
 
-  public void changeVariable(final String threadId, final String frameId, final PyDebugValue var, final String value)
+  public PyDebugValue changeVariable(final String threadId, final String frameId, final PyDebugValue var, final String value)
     throws PyDebuggerException {
     setTempVariable(threadId, frameId, var);
-    doChangeVariable(threadId, frameId, var.getEvaluationExpression(), value);
+    return doChangeVariable(threadId, frameId, var.getEvaluationExpression(), value);
   }
 
-  private void doChangeVariable(final String threadId, final String frameId, final String varName, final String value)
+  private PyDebugValue doChangeVariable(final String threadId, final String frameId, final String varName, final String value)
     throws PyDebuggerException {
     final ChangeVariableCommand command = new ChangeVariableCommand(this, threadId, frameId, varName, value);
     command.execute();
+    return command.getNewValue();
   }
 
   private static String composeName(final PyDebugValue var) {
