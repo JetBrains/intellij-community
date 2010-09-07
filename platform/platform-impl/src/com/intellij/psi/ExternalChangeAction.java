@@ -15,5 +15,15 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.DocumentRunnable;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
+
 public interface ExternalChangeAction extends Runnable{
+  abstract class ExternalDocumentChange extends DocumentRunnable implements ExternalChangeAction {
+    protected ExternalDocumentChange(@Nullable Document document, Project project) {
+      super(document, project);
+    }
+  }
 }

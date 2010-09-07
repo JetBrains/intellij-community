@@ -467,11 +467,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       LOG.error(e);
     }
 
-    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+    final Project project = ProjectLocator.getInstance().guessProjectForFile(file);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(
-          new ExternalChangeAction() {
+          new ExternalChangeAction.ExternalDocumentChange(document, project) {
             public void run() {
               boolean wasWritable = document.isWritable();
               DocumentEx documentEx = (DocumentEx)document;
