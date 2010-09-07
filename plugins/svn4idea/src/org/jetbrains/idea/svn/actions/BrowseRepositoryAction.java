@@ -49,7 +49,7 @@ public class BrowseRepositoryAction extends AnAction implements DumbAware {
       ToolWindow w = manager.getToolWindow(REPOSITORY_BROWSER_TOOLWINDOW);
       if (w == null) {
         RepositoryToolWindowPanel component = new RepositoryToolWindowPanel(project);
-        w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, true, ToolWindowAnchor.BOTTOM);
+        w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
         final Content content = ContentFactory.SERVICE.getInstance().createContent(component, "", false);
         content.setDisposer(component);
         w.getContentManager().addContent(content);

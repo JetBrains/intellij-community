@@ -31,6 +31,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -272,6 +273,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
+    final FileType assignedFileType = file instanceof LightVirtualFile? ((LightVirtualFile)file).getAssignedFileType() : null;
+    if (assignedFileType != null) return assignedFileType;
     // first let file recognize its type
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < mySpecialFileTypes.size(); i++) {
