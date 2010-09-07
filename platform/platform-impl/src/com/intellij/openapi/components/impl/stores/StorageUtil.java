@@ -112,15 +112,7 @@ public class StorageUtil {
           try {
             final VirtualFile virtualFile = getOrCreateVirtualFile(requestor, file);
 
-            OutputStream outputStream = null;
-            try {
-              outputStream = virtualFile.getOutputStream(requestor);
-              outputStream.write(text);
-              outputStream.flush();
-            }
-            finally {
-              if (outputStream != null) outputStream.close();
-            }
+            virtualFile.setBinaryContent(text, -1, -1, requestor);
           }
           catch (IOException e) {
             refIOException.set(e);
