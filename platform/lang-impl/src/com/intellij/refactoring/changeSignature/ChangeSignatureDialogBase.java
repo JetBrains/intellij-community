@@ -199,11 +199,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
       JLabel typePrompt = new JLabel();
       panel.add(typePrompt);
-      final String returnTypeText = myMethod.getReturnTypeText();
-      if (returnTypeText == null) {
-        LOG.error(myMethod.getClass().getName());
-        return panel;
-      }
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
       myReturnTypeField = new EditorTextField(document, myProject, getFileType());
