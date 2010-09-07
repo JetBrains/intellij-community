@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -58,6 +59,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDocumentImpl");
   private volatile XmlProlog myProlog;
   private volatile XmlTag myRootTag;
+  private volatile long myExtResourcesModCount = -1;
 
   public XmlDocumentImpl() {
     this(XmlElementType.XML_DOCUMENT);
@@ -139,6 +141,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
+    long curExtResourcesModCount = ExternalResourceManagerEx.getInstanceEx().getModificationCount(getProject());
+    if (myExtResourcesModCount != curExtResourcesModCount) {
+      myDefaultDescriptorsCacheNotStrict.clear();
+      myDefaultDescriptorsCacheStrict.clear();
+      myExtResourcesModCount = curExtResourcesModCount;
+    }
+
     final ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
     if (strict) {
       defaultDescriptorsCache = myDefaultDescriptorsCacheStrict;
@@ -186,7 +195,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     if (XmlUtil.HTML_URI.equals(namespace)) {
       XmlNSDescriptor nsDescriptor = doctype != null ? getNsDescriptorFormDocType(doctype, containingFile, true) : null;
-      if (nsDescriptor == null) nsDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
+      if (nsDescriptor == null) {
+        String htmlns = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
+        if (htmlns == null || htmlns.length() == 0) {
+          htmlns = XmlUtil.XHTML_URI;
+        }
+        nsDescriptor = getDefaultNSDescriptor(htmlns, false);
+      }
       return new HtmlNSDescriptorImpl(nsDescriptor);
     }
     else if (namespace != null && namespace != XmlUtil.EMPTY_URI) {

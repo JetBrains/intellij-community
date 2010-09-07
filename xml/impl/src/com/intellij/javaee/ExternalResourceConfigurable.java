@@ -45,8 +45,10 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   private JPanel myPanel;
   private List<EditLocationDialog.NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
+  private String myDefaultHtmlDoctype;
   private AddEditRemovePanel<EditLocationDialog.NameLocationPair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
+  private HtmlLanguageLevelForm myHtmlLanguageLevelForm;
   private final Project myProject;
 
   public ExternalResourceConfigurable(Project project) {
@@ -105,15 +107,26 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
         return editIgnoreLocation(o);
       }
     };
+    myHtmlLanguageLevelForm = new HtmlLanguageLevelForm(myProject);
+    myHtmlLanguageLevelForm.addListener(new HtmlLanguageLevelForm.MyListener() {
+      @Override
+      public void doctypeChanged() {
+        if (!myHtmlLanguageLevelForm.getDoctype().equals(myDefaultHtmlDoctype)) {
+          setModified(true);
+        }
+      }
+    });
 
     myPanel.add(myExtPanel,
                 new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
     myPanel.add(myIgnorePanel,
                 new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
+    myPanel.add(myHtmlLanguageLevelForm.getContentPanel(),
+                new GridBagConstraints(0, 2, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(5, 2, 4, 2), 0, 0));
 
     myExtPanel.setData(myPairs);
     myIgnorePanel.setData(myIgnoredUrls);
-    
+
     return myPanel;
   }
 
@@ -139,6 +152,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       String url = (String)myIgnoredUrl;
       manager.addIgnoredResource(url);
     }
+    manager.setDefaultHtmlDoctype(myHtmlLanguageLevelForm.getDoctype(), myProject);
     setModified(false);
   }
 
@@ -171,6 +185,9 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       myIgnorePanel.setData(myIgnoredUrls);
     }
 
+    myDefaultHtmlDoctype = manager.getDefaultHtmlDoctype(myProject);
+    myHtmlLanguageLevelForm.resetFromDoctype(myDefaultHtmlDoctype);
+
     setModified(false);
   }
 
@@ -178,6 +195,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     myPanel = null;
     myExtPanel = null;
     myIgnorePanel = null;
+    myHtmlLanguageLevelForm = null;
   }
 
   public String getHelpTopic() {
@@ -265,7 +283,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
 
     public boolean isEditable(int column) {
-      return false; 
+      return false;
     }
 
     public void setValue(Object aValue, String data, int columnIndex) {

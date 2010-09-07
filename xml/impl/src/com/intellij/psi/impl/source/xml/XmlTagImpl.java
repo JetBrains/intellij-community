@@ -88,6 +88,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   private volatile XmlElementDescriptor myCachedDescriptor;
   private volatile long myDescriptorModCount = -1;
+  private volatile long myExtResourcesModCount = -1;
 
   private volatile boolean myHaveNamespaceDeclarations = false;
   private volatile BidirectionalMap<String, String> myNamespaceMap = null;
@@ -403,9 +404,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   public XmlElementDescriptor getDescriptor() {
     final long curModCount = getManager().getModificationTracker().getModificationCount();
-    if (myDescriptorModCount != curModCount) {
+    long curExtResourcesModCount = ExternalResourceManagerEx.getInstanceEx().getModificationCount(getProject());
+    if (myDescriptorModCount != curModCount || myExtResourcesModCount != curExtResourcesModCount) {
       myCachedDescriptor = computeElementDescriptor();
       myDescriptorModCount = curModCount;
+      myExtResourcesModCount = curExtResourcesModCount;
     }
     return myCachedDescriptor;
   }

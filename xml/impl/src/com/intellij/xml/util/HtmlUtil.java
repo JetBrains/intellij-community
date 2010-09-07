@@ -21,6 +21,7 @@ import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspectio
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.html.index.Html5CustomAttributesIndex;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -361,11 +362,11 @@ public class HtmlUtil {
       return false;
     }
     XmlProlog prolog = doc.getProlog();
-    if (prolog == null) {
-      return false;
+    XmlDoctype doctype = prolog != null ? prolog.getDoctype() : null;
+    if (doctype == null) {
+      return XmlUtil.HTML5_SCHEMA_LOCATION.equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(doc.getProject()));
     }
-    XmlDoctype doctype = prolog.getDoctype();
-    return doctype != null && doctype.getDtdUri() == null && doctype.getPublicId() == null;
+    return doctype.getDtdUri() == null && doctype.getPublicId() == null;
   }
 
   public static boolean isHtml5Context(XmlElement context) {
