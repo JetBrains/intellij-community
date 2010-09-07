@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="LanguageInjectionConfiguration">
+  <injection language="SQLite" injector-id="js">
+    <display-name>&lt;&lt;&lt; SQLite</display-name>
+    <place><![CDATA[jsLiteralExpression().and(jsArgument("executeSql", 0))]]></place>
+  </injection>
+</component>
