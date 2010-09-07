@@ -101,7 +101,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected ColoredProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
-    return PythonProcessHandler.createProcessHandler(null);
+    return PythonProcessHandler.createProcessHandler(commandLine);
   }
 
   public GeneralCommandLine generateCommandLine() throws ExecutionException {

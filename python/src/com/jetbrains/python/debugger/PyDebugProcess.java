@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -47,6 +48,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   private final Map<PySourcePosition, XLineBreakpoint> myRegisteredBreakpoints = new ConcurrentHashMap<PySourcePosition, XLineBreakpoint>();
   private final List<PyThreadInfo> mySuspendedThreads = Lists.newArrayList();
   private final Map<String, List<PyDebugValue>> myStackFrameCache = Maps.newHashMap();
+  private final Map<String, Pair<PyDebugValue, String>> myNewVariableValue = Maps.newHashMap();
 
   protected PyDebugProcess(@NotNull XDebugSession session,
                            final ServerSocket serverSocket,
@@ -190,7 +192,27 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
       List<PyDebugValue> values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
       myStackFrameCache.put(frame.getThreadFrameId(), values);
     }
-    return myStackFrameCache.get(frame.getThreadFrameId());
+    return applyNewValue(myStackFrameCache.get(frame.getThreadFrameId()), frame.getThreadFrameId());
+  }
+
+  private List<PyDebugValue> applyNewValue(List<PyDebugValue> pyDebugValues, String threadFrameId) {
+    if (myNewVariableValue.containsKey(threadFrameId)) {
+      Pair<PyDebugValue, String> newVal = myNewVariableValue.get(threadFrameId);
+      List<PyDebugValue> res = Lists.newArrayList();
+      for (PyDebugValue val : pyDebugValues) {
+        if (val.getName().equals(newVal.first.getName())) {
+          res.add(new PyDebugValue(newVal.first.getName(), newVal.first.getType(), newVal.second, newVal.first.isContainer(),
+                                   newVal.first.getParent(), this));
+        }
+        else {
+          res.add(val);
+        }
+      }
+      return res;
+    }
+    else {
+      return pyDebugValues;
+    }
   }
 
   @Override
@@ -203,14 +225,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   public void changeVariable(final PyDebugValue var, final String value) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     myDebugger.changeVariable(frame.getThreadId(), frame.getFrameId(), var, value);
-    List<PyDebugValue> vals = myStackFrameCache.get(frame.getThreadFrameId());
-    if (vals != null) {
-      for (PyDebugValue v : vals) {
-        if (v.getName().equals(var.getName())) {
-          v.setValue(value);
-        }
-      }
-    }
+    myNewVariableValue.put(frame.getThreadFrameId(), Pair.create(var, value));
   }
 
   @Override
@@ -290,6 +305,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
 
   private void dropFrameCaches() {
     myStackFrameCache.clear();
+    myNewVariableValue.clear();
   }
 
 }
