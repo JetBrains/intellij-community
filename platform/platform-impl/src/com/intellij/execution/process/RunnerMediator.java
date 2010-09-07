@@ -20,6 +20,7 @@ import java.util.*;
  */
 public class RunnerMediator {
   private static final int SIGINT = 2;
+  private static final int SIGKILL = 9;
   private static final String UID_KEY_NAME = "PROCESSUUID";
 
   private RunnerMediator() {
@@ -58,51 +59,8 @@ public class RunnerMediator {
     return new CustomDestroyProcessHandler(p, commandLine, processUid);
   }
 
-  public static class CustomDestroyProcessHandler extends ColoredProcessHandler {
-    private static final char IAC = (char)5;
-    private static final char BRK = (char)3;
-
-    private final String myProcessUid;
-    private final String myCommand;
-
-
-    public CustomDestroyProcessHandler(@NotNull Process process,
-                                       @NotNull GeneralCommandLine commandLine,
-                                       @NotNull String processUid) {
-      super(process, commandLine.getCommandLineString());
-      myProcessUid = processUid;
-      myCommand = commandLine.getExePath();
-    }
-
-    @Override
-    protected void destroyProcessImpl() {
-      if (isWindows()) {
-        sendCtrlBreakThroughStream();
-      }
-      else if (SystemInfo.isLinux || SystemInfo.isMac) {
-        killProcess();
-      }
-      else {
-        super.destroyProcessImpl();
-      }
-    }
-
-    public void killProcess() {
-      sendSigInt(myProcessUid);
-    }
-
-    private void sendCtrlBreakThroughStream() {
-      OutputStream os = getProcessInput();
-      PrintWriter pw = new PrintWriter(os);
-      try {
-        pw.print(IAC);
-        pw.print(BRK);
-        pw.flush();
-      }
-      finally {
-        pw.close();
-      }
-    }
+  public static boolean canSendSignals() {
+    return SystemInfo.isLinux || SystemInfo.isMac;
   }
 
   public static boolean isWindows() {
@@ -113,7 +71,15 @@ public class RunnerMediator {
   }
 
 
-  private static void sendSigInt(String child_uid) {
+  public static void sendSigInt(String processUid) {
+    sendSignal(processUid, SIGINT);
+  }
+
+  public static void sendSigKill(String processUid) {
+    sendSignal(processUid, SIGKILL);
+  }
+
+  public static void sendSignal(String processUid, int signal) {
     if (C_LIB == null) {
       throw new IllegalStateException("no CLIB");
     }
@@ -142,17 +108,17 @@ public class RunnerMediator {
           ProcessInfo.register(pid, parent_pid);
 
           if (parent_pid == our_pid) {
-            if (containsMarker(s, child_uid)) {
+            if (containsMarker(s, processUid)) {
               foundPid = pid;
             }
           }
         }
 
         if (foundPid != 0) {
-          ProcessInfo.killProcTree(foundPid);
+          ProcessInfo.killProcTree(foundPid, signal);
         }
         else {
-          throw new IllegalStateException("process not found: " + our_pid + ", uid=" + child_uid);
+          throw new IllegalStateException("process not found: " + our_pid + ", uid=" + processUid);
         }
 
         StringBuffer errorStr = new StringBuffer();
@@ -199,8 +165,8 @@ public class RunnerMediator {
     return res.toString();
   }
 
-  private static void sendSigInt(int pid) {
-    C_LIB.kill(pid, SIGINT);
+  private static void sendSignal(int pid, int signal) {
+    C_LIB.kill(pid, signal);
   }
 
   interface CLib extends Library {
@@ -223,6 +189,50 @@ public class RunnerMediator {
     }
   }
 
+  public static class CustomDestroyProcessHandler extends ColoredProcessHandler {
+    private static final char IAC = (char)5;
+    private static final char BRK = (char)3;
+
+    private final String myProcessUid;
+    private final String myCommand;
+
+
+    public CustomDestroyProcessHandler(@NotNull Process process,
+                                       @NotNull GeneralCommandLine commandLine,
+                                       @NotNull String processUid) {
+      super(process, commandLine.getCommandLineString());
+      myProcessUid = processUid;
+      myCommand = commandLine.getExePath();
+    }
+
+    @Override
+    protected void destroyProcessImpl() {
+      if (isWindows()) {
+        sendCtrlBreakThroughStream();
+      }
+      else if (canSendSignals()) {
+        sendSigInt(myProcessUid);
+      }
+      else {
+        super.destroyProcessImpl();
+      }
+    }
+
+
+    private void sendCtrlBreakThroughStream() {
+      OutputStream os = getProcessInput();
+      PrintWriter pw = new PrintWriter(os);
+      try {
+        pw.print(IAC);
+        pw.print(BRK);
+        pw.flush();
+      }
+      finally {
+        pw.close();
+      }
+    }
+  }
+
   private static class ProcessInfo {
 
     private ProcessInfo() {
@@ -237,12 +247,12 @@ public class RunnerMediator {
       BY_PARENT.put(parentPid, children);
     }
 
-    static void killProcTree(int pid) {
+    static void killProcTree(int pid, int signal) {
       List<Integer> children = BY_PARENT.get(pid);
       if (children != null) {
-        for (int child : children) killProcTree(child);
+        for (int child : children) killProcTree(child, signal);
       }
-      sendSigInt(pid);
+      sendSignal(pid, signal);
     }
 
   }
