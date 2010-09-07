@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class BuildRecipeImpl implements BuildRecipe {
   private final List<BuildInstruction> myInstructions = new ArrayList<BuildInstruction>();
 
