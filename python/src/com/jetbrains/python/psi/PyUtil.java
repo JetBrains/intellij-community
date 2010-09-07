@@ -444,27 +444,30 @@ public class PyUtil {
   }
 
   /**
-   * For cases when a function is decorated many decorators, and the innermost is a built-in decorator:
+   * When a function is decorated many decorators, finds the deepest builtin decorator:
    * <pre>
    * &#x40;foo
    * &#x40;classmethod <b># &lt;-- that's it</b>
+   * &#x40;bar
    * def moo(cls):
    * &nbsp;&nbsp;pass
    * </pre>
    * @param node the allegedly decorated function
-   * @return name of the only built-in decorator, or null (even if there are multiple or non-built-in decorators!)
+   * @return name of the built-in decorator, or null (even if there are non-built-in decorators).
    */
   public static
   @Nullable
-  String getImmediateBuiltinDecorator(@NotNull final PyFunction node) {
+  String getDeepestBuiltinDecorator(@NotNull final PyFunction node) {
     PyDecoratorList decolist = node.getDecoratorList();
     if (decolist != null) {
       PyDecorator[] decos = decolist.getDecorators();
       if (decos.length > 0) {
-        PyDecorator deco = decos[decos.length - 1];
-        String deconame = deco.getName();
-        if (deco.isBuiltin()) {
-          return deconame;
+        for (int i = decos.length - 1; i >= 0; i -= 1) {
+          PyDecorator deco = decos[i];
+          String deconame = deco.getName();
+          if (deco.isBuiltin()) {
+            return deconame;
+          }
         }
       }
     }
@@ -480,7 +483,7 @@ public class PyUtil {
   @NotNull
   public static Set<PyFunction.Flag> detectDecorationsAndWrappersOf(PyFunction function) {
     Set<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
-    String deconame = getImmediateBuiltinDecorator(function);
+    String deconame = getDeepestBuiltinDecorator(function);
     if (PyNames.CLASSMETHOD.equals(deconame)) {
       flags.add(CLASSMETHOD);
     }

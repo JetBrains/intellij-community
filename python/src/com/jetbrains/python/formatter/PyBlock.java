@@ -385,6 +385,9 @@ public class PyBlock implements ASTBlock {
       while (lastChild != null) {
         IElementType last_type = lastChild.getElementType();
         if ( last_type == PyElementTypes.STATEMENT_LIST && hasLineBreakBefore(lastChild)) {
+          if (dedentAfterLastStatement((PyStatementList)lastChild.getPsi())) {
+            break;
+          }
           statementListsBelow++;
         }
         else if (statementListsBelow > 0 && lastChild.getPsi() instanceof PsiErrorElement) {

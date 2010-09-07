@@ -1,10 +1,13 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
@@ -36,6 +39,9 @@ import java.util.regex.Pattern;
  */
 public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
+  @NonNls private static final String LINK_TYPE_CLASS = "#class#";
+  @NonNls private static final String LINK_TYPE_PARENT = "#parent#";
+
   // provides ctrl+hover info
   public String getQuickNavigateInfo(final PsiElement element) {
     if (element instanceof PyFunction) {
@@ -51,7 +57,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
     else if (element instanceof PyClass) {
       PyClass cls = (PyClass)element;
-      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2)).toString();
+      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, true)).toString();
     }
     return null;
   }
@@ -76,13 +82,16 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     FP.Lambda1<Iterable<String>, Iterable<String>> func_name_wrapper,
     FP.Lambda1<String, String> escaper
   ) {
-    ChainIterable<String> cat = new ChainIterable<String>(null);
-    cat.add("def ").addWith(func_name_wrapper, $(fun.getName()));
+    ChainIterable<String> cat = new ChainIterable<String>();
+    final String name = fun.getName();
+    cat.add("def ").addWith(func_name_wrapper, $(name));
     cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
-    final PyType returnType = fun.getReturnType();
-    cat.add(escaper.apply("\nInferred return type: "));
-    if (returnType == null) cat.add("unknown");
-    else cat.add(returnType.getName());
+    if (!PyNames.INIT.equals(name)) {
+      final PyType returnType = fun.getReturnType();
+      cat.add(escaper.apply("\nInferred return type: "));
+      if (returnType == null) cat.add("unknown");
+      else cat.add(returnType.getName());
+    }
     return cat;
   }
 
@@ -104,17 +113,30 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
    * Creates a HTML description of function definition.
    * @param cls the class
    * @param name_wrapper wrapper to render the name with
+   * @param link_own_name if true, add link to class's own name
    * @return cat for easy chaining
    */
   private static ChainIterable<String> describeClass(
     PyClass cls,
-    FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper
+    FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper,
+    boolean link_own_name
   ) {
     ChainIterable<String> cat = new ChainIterable<String>();
-    cat.add("class ").addWith(name_wrapper, $(cls.getName()));
+    final String name = cls.getName();
+    cat.add("class ");
+    if (link_own_name) cat.addWith(LinkMyClass, $(name));
+    else cat.addWith(name_wrapper, $(name));
     final PyExpression[] ancestors = cls.getSuperClassExpressions();
     if (ancestors.length > 0) {
-      cat.add("(").add(interleave(FP.map(LReadableRepr, ancestors), ", ")).add(")");
+      cat.add("(");
+      boolean is_not_first = false;
+      for (PyExpression parent : ancestors) {
+        if (is_not_first) cat.add(", ");
+        else is_not_first = true;
+        final String parent_name = parent.getName();
+        cat.addWith(new LinkWrapper(LINK_TYPE_PARENT + parent_name), $(parent_name));
+      }
+      cat.add(")");
     }
     return cat;
   }
@@ -220,7 +242,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
                   Maybe<PyFunction> accessor = property.getByDirection(dir);
                   prolog_cat
                     .add("property ").addWith(TagBold, $().addWith(TagCode, $(element_name)))
-                    .add(" of ").add(describeClass(cls, TagCode))
+                    .add(" of ").add(describeClass(cls, TagCode, true))
                   ;
                   if (accessor.isDefined() && property.getDoc() != null) {
                     doc_cat.add(": ").add(property.getDoc()).add(BR);
@@ -264,18 +286,20 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       if (followed instanceof PyClass) {
         cls = (PyClass)followed;
         doc_cat.add(describeDecorators(cls, TagItalic, BR, LCombUp));
-        doc_cat.addWith(TagSmall, describeClass(cls, TagBold));
+        doc_cat.add(describeClass(cls, TagBold, false));
       }
       else if (followed instanceof PyFunction) {
         PyFunction fun = (PyFunction)followed;
         if (! is_property) {
           cls = fun.getContainingClass();
-          if (cls != null) doc_cat.addWith(TagSmall, $("class ", cls.getName(), BR));
+          if (cls != null) {
+            doc_cat.addWith(TagSmall, describeClass(cls, TagCode, true)).add(BR).add(BR);
+          }
         }
         else cls = null;
         doc_cat.add(describeDecorators(fun, TagItalic, BR, LCombUp)).add(describeFunction(fun, TagBold, LCombUp));
         if (docString == null) {
-          addInheritedDocString(fun, cls, doc_cat, epilog_cat);
+          addInheritedDocString(fun, cls, doc_cat, epilog_cat); 
         }
       }
       else if (followed instanceof PyFile) {
@@ -378,39 +402,47 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         element = wrapped_func;
       }
     }
-    else if (element instanceof PyFunction && PyNames.INIT.equals(((PyFunction)element).getName())) {
-      final PyStringLiteralExpression expression = ((PyFunction)element).getDocStringExpression();
-      if (expression == null) {
-        PyClass containingClass = ((PyFunction) element).getContainingClass();
-        if (containingClass != null) {
-          element = containingClass;
-        }
-      }
-    }
     return element;
   }
 
   private static void addInheritedDocString(PyFunction fun, PyClass cls, ChainIterable<String> doc_cat, ChainIterable<String> epilog_cat) {
     boolean not_found = true;
     String meth_name = fun.getName();
-    if (cls != null && meth_name != null ) {
+    if (cls != null && meth_name != null) {
+      final boolean is_constructor = PyNames.INIT.equals(meth_name);
       // look for inherited and its doc
-      for (PyClass ancestor : cls.iterateAncestors()) {
-        PyFunction inherited = ancestor.findMethodByName(meth_name, false);
+      Iterable<PyClass> classes = cls.iterateAncestors();
+      if (is_constructor) {
+        // look at our own class again and maybe inherit class's doc 
+        classes = new ChainIterable<PyClass>(cls).add(classes);
+      }
+      for (PyClass ancestor : classes) {
+        PyStringLiteralExpression doc_elt = null;
+        PyFunction inherited = null;
+        boolean is_from_class = false;
+        if (is_constructor) doc_elt = cls.getDocStringExpression();
+        if (doc_elt != null) is_from_class = true;
+        else inherited = ancestor.findMethodByName(meth_name, false);
         if (inherited != null) {
-          PyStringLiteralExpression doc_elt = inherited.getDocStringExpression();
-          if (doc_elt != null) {
-            String inherited_doc = doc_elt.getStringValue();
-            if (inherited_doc.length() > 1) {
-              epilog_cat
-                .add(BR).add(BR)
-                .add(PyBundle.message("QDOC.copied.from.$0.$1", ancestor.getName(), meth_name))
-                .add(BR).add(BR)
-                .addWith(TagCode, combUpDocString(inherited_doc))
-              ;
-              not_found = false;
-              break;
+          doc_elt = inherited.getDocStringExpression();
+        }
+        if (doc_elt != null) {
+          String inherited_doc = doc_elt.getStringValue();
+          if (inherited_doc.length() > 1) {
+            epilog_cat.add(BR).add(BR);
+            String ancestor_name = ancestor.getName();
+            String marker = (cls == ancestor)? LINK_TYPE_CLASS : LINK_TYPE_PARENT;
+            final String ancestor_link = $().addWith(new LinkWrapper(marker + ancestor_name), $(ancestor_name)).toString();
+            if (is_from_class) epilog_cat.add(PyBundle.message("QDOC.copied.from.class.$0", ancestor_link));
+            else {
+              epilog_cat.add(PyBundle.message("QDOC.copied.from.$0.$1", ancestor_link, meth_name));
             }
+            epilog_cat
+              .add(BR).add(BR)
+              .addWith(TagCode, combUpDocString(inherited_doc))
+            ;
+            not_found = false;
+            break;
           }
         }
       }
@@ -440,6 +472,31 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
   }
 
+  @Override
+  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+    if (link.equals(LINK_TYPE_CLASS)) {
+      return inferContainingClassOf(context);
+    }
+    else if (link.startsWith(LINK_TYPE_PARENT)) {
+      PyClass cls = inferContainingClassOf(context);
+      if (cls != null) {
+        String desired_name = link.substring(LINK_TYPE_PARENT.length());
+        for (PyClass parent : cls.iterateAncestors()) {
+          final String parent_name = parent.getName();
+          if (parent_name != null && parent_name.equals(desired_name)) return parent;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyClass inferContainingClassOf(PsiElement context) {
+    if (context instanceof PyClass) return (PyClass)context;
+    if (context instanceof PyFunction) return ((PyFunction)context).getContainingClass();
+    else return PsiTreeUtil.getParentOfType(context, PyClass.class);
+  }
+
   private static final FP.Lambda1<String, String> LCombUp = new FP.Lambda1<String, String>() {
     public String apply(String argname) {
       return combUp(argname);
@@ -454,7 +511,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
 
   private static ChainIterable<String> wrapInTag(String tag, Iterable<String> content) {
-    return new ChainIterable<String>(Collections.singleton("<" + tag + ">")).add(content).add("</" + tag + ">");
+    return new ChainIterable<String>("<" + tag + ">").add(content).add("</" + tag + ">");
   }
 
   private static ChainIterable<String> $(String... content) {
@@ -480,6 +537,24 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   private static final TagWrapper TagItalic = new TagWrapper("i");
   private static final TagWrapper TagSmall = new TagWrapper("small");
   private static final TagWrapper TagCode = new TagWrapper("code");
+
+  private static class LinkWrapper implements FP.Lambda1<Iterable<String>, Iterable<String>> {
+    private String myLink;
+
+    LinkWrapper(String link) {
+      myLink = link;
+    }
+
+    public Iterable<String> apply(Iterable<String> contents) {
+      return new ChainIterable<String>()
+        .add("<a href=\"").add(DocumentationManager.PSI_ELEMENT_PROTOCOL).add(myLink).add("\">")
+        .add(contents).add("</a>")
+      ;
+    }
+  }
+
+  private static final LinkWrapper LinkMyClass = new LinkWrapper(LINK_TYPE_CLASS); // link item to containing class
+ 
 
   private static final FP.Lambda1<Iterable<String>, Iterable<String>> LSame2 = new FP.Lambda1<Iterable<String>, Iterable<String>>() {
     public Iterable<String> apply(Iterable<String> what) {

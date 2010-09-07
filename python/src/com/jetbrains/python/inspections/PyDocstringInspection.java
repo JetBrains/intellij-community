@@ -2,8 +2,11 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
@@ -45,12 +48,14 @@ public class PyDocstringInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(PyFunction node) {
-      checkDocString(node);
+      final String name = node.getName();
+      if (name != null && !name.startsWith("_")) checkDocString(node);
     }
 
     @Override
     public void visitPyClass(PyClass node) {
-      checkDocString(node);
+      final String name = node.getName();
+      if (name != null && !name.startsWith("_")) checkDocString(node);
     }
 
     private void checkDocString(PyDocStringOwner node) {
@@ -59,9 +64,23 @@ public class PyDocstringInspection extends PyInspection {
       }
       final PyStringLiteralExpression docStringExpression = node.getDocStringExpression();
       if (docStringExpression == null) {
-        registerProblem(node, "Missing docstring"); // node?
-      } else if (StringUtil.isEmptyOrSpaces(docStringExpression.getStringValue())) {
-        registerProblem(docStringExpression, "Empty docstring");
+        PsiElement marker = null;
+        if (node instanceof PyClass) {
+          final ASTNode n = ((PyClass)node).getNameNode();
+          if (n != null) marker = n.getPsi();
+        }
+        else if (node instanceof PyFunction) {
+          final ASTNode n = ((PyFunction)node).getNameNode();
+          if (n != null) marker = n.getPsi();
+        }
+        else if (node instanceof PyFile) {
+          marker = node.findElementAt(0);
+        }
+        if (marker == null) marker = node;
+        registerProblem(marker, PyBundle.message("INSP.no.docstring"));
+      }
+      else if (StringUtil.isEmptyOrSpaces(docStringExpression.getStringValue())) {
+        registerProblem(docStringExpression, PyBundle.message("INSP.empty.docstring"));
       }
     }
   }

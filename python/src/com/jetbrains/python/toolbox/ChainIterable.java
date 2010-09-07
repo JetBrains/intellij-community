@@ -19,6 +19,10 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
   public ChainIterable() {
     super(null);
   }
+  
+  public ChainIterable(T initial) {
+    super(Collections.singleton(initial));
+  }
 
 
   public ChainIterable<T> add(Iterable<T> another) {

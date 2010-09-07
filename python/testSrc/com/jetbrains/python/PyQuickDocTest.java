@@ -6,9 +6,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.psi.PyDocStringOwner;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 import java.io.File;
 import java.util.Map;
@@ -44,10 +43,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     return configureByFile("/quickdoc/" + getTestName(false) + ".py");
   }
 
-  private void processRefDocPair() throws Exception {
+  private void checkRefDocPair() throws Exception {
     Map<String, PsiElement> marks = loadTest();
     assertEquals(2, marks.size());
-    PsiElement doc_elt = marks.get("<the_doc>").getParent(); // ident -> expr
+    final PsiElement original_elt = marks.get("<the_doc>");
+    PsiElement doc_elt = original_elt.getParent(); // ident -> expr
     assertTrue(doc_elt instanceof PyStringLiteralExpression);
     String doc_text = ((PyStringLiteralExpression)doc_elt).getStringValue();
     assertNotNull(doc_text);
@@ -56,38 +56,47 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
     assertEquals(doc_elt, doc_owner.getDocStringExpression());
 
-    checkByHTML(myProvider.generateDoc(doc_owner, null));
+    checkByHTML(myProvider.generateDoc(doc_owner, original_elt));
+  }
+
+  private void checkHTMLOnly() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    final PsiElement original_elt = marks.get("<the_ref>");
+    PsiElement ref_elt = original_elt.getParent(); // ident -> expr
+    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
+    checkByHTML(myProvider.generateDoc(doc_owner, original_elt));
   }
 
   public void testDirectFunc() throws Exception {
-    processRefDocPair();
+    checkRefDocPair();
   }
 
   public void testDirectClass() throws Exception {
-    processRefDocPair();
+    checkRefDocPair();
   }
 
   public void testClassConstructor() throws Exception {
-    processRefDocPair();
+    checkRefDocPair();
   }
 
   public void testClassUndocumentedConstructor() throws Exception {
-    Map<String, PsiElement> marks = loadTest();
-    PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
-    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
-    checkByHTML(myProvider.generateDoc(doc_owner, null));
+    checkHTMLOnly();
+  }
+
+  public void testClassUndocumentedEmptyConstructor() throws Exception {
+    checkHTMLOnly();
   }
 
   public void testCallFunc() throws Exception {
-    processRefDocPair();
+    checkRefDocPair();
   }
 
   public void testModule() throws Exception {
-    processRefDocPair();
+    checkRefDocPair();
   }
 
   public void testMethod() throws Exception {
-    processRefDocPair();
+    checkRefDocPair();
   }
 
   public void testInheritedMethod() throws Exception {
@@ -103,5 +112,51 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     assertNull(doc_owner.getDocStringExpression()); // no direct doc!
 
     checkByHTML(myProvider.generateDoc(doc_owner, null));
+  }
+
+  public void testPropNewGetter() throws Exception {
+    checkHTMLOnly();
+  }
+
+  public void testPropNewSetter() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    PsiElement ref_elt = marks.get("<the_ref>");
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
+    try {
+      final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyTargetExpression)(ref_elt.getParent())).getReference().resolve();
+      checkByHTML(myProvider.generateDoc(doc_owner, ref_elt));
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
+
+  public void testPropNewDeleter() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    PsiElement ref_elt = marks.get("<the_ref>");
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
+    try {
+      final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)(ref_elt.getParent())).getReference().resolve();
+      checkByHTML(myProvider.generateDoc(doc_owner, ref_elt));
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
+
+  public void testPropOldGetter() throws Exception {
+    checkHTMLOnly();
+  }
+
+
+  public void testPropOldSetter() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    PsiElement ref_elt = marks.get("<the_ref>");
+    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyTargetExpression)(ref_elt.getParent())).getReference().resolve();
+    checkByHTML(myProvider.generateDoc(doc_owner, ref_elt));
+  }
+
+  public void testPropOldDeleter() throws Exception {
+    checkHTMLOnly();
   }
 }
