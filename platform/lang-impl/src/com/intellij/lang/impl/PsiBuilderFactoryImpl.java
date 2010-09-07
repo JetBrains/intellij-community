@@ -32,12 +32,6 @@ public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
   }
 
   @Override
-  public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final ASTNode tree, @NotNull final Language lang,
-                                  @NotNull final CharSequence seq) {
-    return createBuilder(project, tree, null, lang, seq);
-  }
-
-  @Override
   public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final ASTNode tree, @Nullable Lexer lexer,
                                   @NotNull final Language lang, @NotNull final CharSequence seq) {
     if (lexer == null) {

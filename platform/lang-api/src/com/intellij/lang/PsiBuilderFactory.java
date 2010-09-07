@@ -35,7 +35,9 @@ public abstract class PsiBuilderFactory {
   /**
    * @deprecated consider using {@link #createBuilder(com.intellij.openapi.project.Project, ASTNode)} instead.
    */
-  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree, @NotNull Language lang, @NotNull CharSequence seq);
+  public PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree, @NotNull Language lang, @NotNull CharSequence seq) {
+    return createBuilder(project, tree, null, lang, seq);
+  }
 
   public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree, @Nullable Lexer lexer,
                                            @NotNull Language lang, @NotNull CharSequence seq);
