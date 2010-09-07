@@ -352,6 +352,34 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return false;
   }
 
+  @Nullable
+  public static PsiElement insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
+    CheckUtil.checkWritable(file);
+    final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
+    PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);
+    if( elementAt == null )
+    {
+      return null;
+    }
+    ASTNode element = SourceTreeToPsiMap.psiElementToTree(elementAt);
+    ASTNode parent = element.getTreeParent();
+    int elementStart = element.getTextRange().getStartOffset();
+    if (element.getElementType() != TokenType.WHITE_SPACE) {
+      /*
+      if (elementStart < offset) return null;
+      Element marker = Factory.createLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length());
+      ChangeUtil.addChild(parent, marker, element);
+      return marker;
+      */
+      return null;
+    }
+
+    ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
+    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
+    parent.addChild(marker, space1.getTreeNext());
+    return SourceTreeToPsiMap.treeElementToPsi(marker);
+  }
+
   public Indent getIndent(String text, FileType fileType) {
     int indent = HelperFactory.createHelper(fileType, myProject).getIndent(text, true);
     int indenLevel = indent / Helper.INDENT_FACTOR;
