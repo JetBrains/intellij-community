@@ -60,6 +60,10 @@ public class SelectBranchPopup {
   }
 
   public static void show(Project project, VirtualFile file, BranchSelectedCallback callback, final String title) {
+    show(project, file, callback, title, null);
+  }
+
+  public static void show(Project project, VirtualFile file, BranchSelectedCallback callback, final String title, final Component component) {
     final SvnFileUrlMapping urlMapping = SvnVcs.getInstance(project).getSvnFileUrlMapping();
     final SVNURL svnurl = urlMapping.getUrlForFile(new File(file.getPath()));
     if (svnurl == null) {
@@ -71,7 +75,7 @@ public class SelectBranchPopup {
     }
 
     // not vcs root but wc root is ok
-    showForBranchRoot(project, rootUrlInfo.getVirtualFile(), callback, title);
+    showForBranchRoot(project, rootUrlInfo.getVirtualFile(), callback, title, component);
   }
 
   public static void showForBranchRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title) {
