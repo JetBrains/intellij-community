@@ -33,7 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 
-public class LightPsiBuilderTest {
+public class PsiBuilderQuickTest {
   private static final IElementType ROOT = new IElementType("ROOT", Language.ANY);
   private static final IElementType LETTER = new IElementType("LETTER", Language.ANY);
   private static final IElementType DIGIT = new IElementType("DIGIT", Language.ANY);

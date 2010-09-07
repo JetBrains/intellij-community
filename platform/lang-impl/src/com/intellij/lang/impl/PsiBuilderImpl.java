@@ -31,6 +31,7 @@ import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.ASTDiffBuilder;
 import com.intellij.psi.impl.source.tree.*;
@@ -70,7 +71,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final MyList myProduction = new MyList();
 
   private final Lexer myLexer;
-  private final boolean myFileLevelParsing;
   private final TokenSet myWhitespaces;
   private TokenSet myComments;
 
@@ -125,34 +125,39 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
-  public PsiBuilderImpl(@NotNull final Language lang, @NotNull final Lexer lexer, @NotNull final ASTNode chameleon,
+  public PsiBuilderImpl(@NotNull final Language lang,
+                        @NotNull final Lexer lexer,
+                        @NotNull final ASTNode chameleon,
                         @NotNull final CharSequence text) {
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
-    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-    assert parserDefinition != null : "ParserDefinition absent for language: " + lang.getID();
     myLexer = lexer;
+
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+    assert parserDefinition != null : "ParserDefinition absent for language: " + lang.getID();
     myWhitespaces = parserDefinition.getWhitespaceTokens();
     myComments = parserDefinition.getCommentTokens();
 
     myCharTable = SharedImplUtil.findCharTableByTree(chameleon);
-
     myOriginalTree = chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED);
 
-    myFileLevelParsing = myCharTable == null || myOriginalTree != null;
     cacheLexemes();
   }
 
   @TestOnly
-  public PsiBuilderImpl(@NotNull final Lexer lexer, @NotNull final TokenSet whitespaces, @NotNull final TokenSet comments,
+  public PsiBuilderImpl(@NotNull final Lexer lexer,
+                        @NotNull final TokenSet whitespaces,
+                        @NotNull final TokenSet comments,
                         @NotNull final CharSequence text) {
-    myWhitespaces = whitespaces;
-    myLexer = lexer;
-    myComments = comments;
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+    myLexer = lexer;
+    myWhitespaces = whitespaces;
+    myComments = comments;
 
-    myFileLevelParsing = true;
+    myCharTable = null;
+    myOriginalTree = null;
+
     cacheLexemes();
   }
 
@@ -767,13 +772,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private ASTNode createRootAST(final StartMarker rootMarker) {
-    final ASTNode rootNode;
-    if (myFileLevelParsing) {
-      rootNode = new FileElement(rootMarker.myType, null);
-      myCharTable = ((FileElement)rootNode).getCharTable();
+    final ASTNode rootNode = createComposite(rootMarker);
+    if (myCharTable == null) {
+      myCharTable = rootNode instanceof FileElement ? ((FileElement)rootNode).getCharTable() : new CharTableImpl();
     }
-    else {
-      rootNode = createComposite(rootMarker);
+    if (!(rootNode instanceof FileElement)) {
       rootNode.putUserData(CharTable.CHAR_TABLE_KEY, myCharTable);
     }
     return rootNode;

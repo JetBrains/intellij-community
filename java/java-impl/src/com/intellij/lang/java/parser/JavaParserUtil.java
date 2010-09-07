@@ -17,7 +17,6 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.*;
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
@@ -28,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
@@ -149,8 +149,8 @@ public class JavaParserUtil {
     final Project project = psi.getProject();
 
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(StdLanguages.JAVA);
-    final PsiBuilder builder = factory.createBuilder(parserDefinition.createLexer(project), StdLanguages.JAVA, chameleon.getChars());
+    chameleon.putUserData(BlockSupport.TREE_TO_BE_REPARSED, null);
+    final PsiBuilder builder = factory.createBuilder(project, chameleon);
 
     final LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
     setLanguageLevel(builder, level);
@@ -160,10 +160,15 @@ public class JavaParserUtil {
 
   @NotNull
   public static ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper) {
+    final PsiElement psi = chameleon.getPsi();
+    assert psi != null : chameleon;
+    final Project project = psi.getProject();
+
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final LanguageLevel level = LanguageLevel.HIGHEST;
-    final PsiBuilder builder = factory.createBuilder(JavaParserDefinition.createLexer(level), StdLanguages.JAVA, chameleon.getChars());
-    setLanguageLevel(builder, level);
+    chameleon.putUserData(BlockSupport.TREE_TO_BE_REPARSED, null);
+    final PsiBuilder builder = factory.createBuilder(project, chameleon);
+
+    setLanguageLevel(builder, LanguageLevel.HIGHEST);
 
     final PsiBuilder.Marker root = builder.mark();
     wrapper.parse(builder);
