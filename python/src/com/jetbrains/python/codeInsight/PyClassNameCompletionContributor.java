@@ -45,6 +45,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                                     @NotNull final CompletionResultSet resultSet) {
         addVariantsFromIndex(resultSet, parameters.getOriginalFile(), PyClassNameIndex.KEY, CLASS_INSERT_HANDLER, Conditions.<PyClass>alwaysTrue());
         addVariantsFromIndex(resultSet, parameters.getOriginalFile(), PyFunctionNameIndex.KEY, FUNCTION_INSERT_HANDLER, TOPLEVEL_FUNCTION);
+        ProjectScope.getAllScope(parameters.getOriginalFile().getProject());
       }
     });
   }
@@ -62,7 +63,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                                                                        final InsertHandler<LookupElement> insertHandler,
                                                                        final Condition<T> condition) {
     final Project project = targetFile.getProject();
-    final GlobalSearchScope scope = ProjectScope.getAllScope(project);
+    final GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
     final Collection<String> allNames = ApplicationManager.getApplication().runReadAction(new Computable<Collection<String>>() {
       public Collection<String> compute() {
         return StubIndex.getInstance().getAllKeys(key, project);

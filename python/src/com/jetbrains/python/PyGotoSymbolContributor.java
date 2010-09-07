@@ -25,7 +25,7 @@ public class PyGotoSymbolContributor implements ChooseByNameContributor {
 
   public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, final boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems
-                                    ? ProjectScope.getAllScope(project) 
+                                    ? PyClassNameIndex.projectWithLibrariesScope(project)
                                     : GlobalSearchScope.projectScope(project);
 
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();
