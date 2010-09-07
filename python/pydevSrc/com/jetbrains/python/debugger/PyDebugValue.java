@@ -22,7 +22,7 @@ public class PyDebugValue extends XValue {
   private final String myName;
   private String myTempName = null;
   private final String myType;
-  private final String myValue;
+  private String myValue;
   private final boolean myContainer;
   private final PyDebugValue myParent;
   private final IPyDebugProcess myDebugProcess;
@@ -59,6 +59,10 @@ public class PyDebugValue extends XValue {
 
   public String getValue() {
     return myValue;
+  }
+
+  public void setValue(String value) {
+    myValue = value;
   }
 
   public boolean isContainer() {

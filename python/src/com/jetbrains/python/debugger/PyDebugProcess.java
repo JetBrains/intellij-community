@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -45,13 +46,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   private final ExecutionConsole myExecutionConsole;
   private final Map<PySourcePosition, XLineBreakpoint> myRegisteredBreakpoints = new ConcurrentHashMap<PySourcePosition, XLineBreakpoint>();
   private final List<PyThreadInfo> mySuspendedThreads = Lists.newArrayList();
+  private final Map<String, List<PyDebugValue>> myStackFrameCache = Maps.newHashMap();
 
   protected PyDebugProcess(@NotNull XDebugSession session,
                            final ServerSocket serverSocket,
                            final ExecutionConsole executionConsole,
                            final ProcessHandler processHandler) {
     super(session);
-    session.setPauseActionSupported(true); 
+    session.setPauseActionSupported(true);
     myDebugger = new RemoteDebugger(this, serverSocket, 10);
     myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this)};
     myEditorsProvider = new PyDebuggerEditorsProvider();
@@ -155,6 +157,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   }
 
   private void resume(final ResumeCommand.Mode mode) {
+    dropFrameCaches();
     if (myDebugger.isConnected()) {
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
         final ResumeCommand command = new ResumeCommand(myDebugger, suspendedThread.getId(), mode);
@@ -165,6 +168,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
 
   @Override
   public void runToPosition(@NotNull final XSourcePosition position) {
+    dropFrameCaches();
     if (myDebugger.isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convert(position);
       final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, pyPosition.getFile(), pyPosition.getLine());
@@ -174,13 +178,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   }
 
   public PyDebugValue evaluate(final String expression, final boolean execute) throws PyDebuggerException {
+    dropFrameCaches();
     final PyStackFrame frame = currentFrame();
     return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute);
   }
 
   public List<PyDebugValue> loadFrame() throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    return myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
+    //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
+    if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
+      List<PyDebugValue> values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
+      myStackFrameCache.put(frame.getThreadFrameId(), values);
+    }
+    return myStackFrameCache.get(frame.getThreadFrameId());
   }
 
   @Override
@@ -193,6 +203,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   public void changeVariable(final PyDebugValue var, final String value) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     myDebugger.changeVariable(frame.getThreadId(), frame.getFrameId(), var, value);
+    List<PyDebugValue> vals = myStackFrameCache.get(frame.getThreadFrameId());
+    if (vals != null) {
+      for (PyDebugValue v : vals) {
+        if (v.getName().equals(var.getName())) {
+          v.setValue(value);
+        }
+      }
+    }
   }
 
   @Override
@@ -268,6 +286,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   @Override
   public void threadResumed(final PyThreadInfo threadInfo) {
     mySuspendedThreads.remove(threadInfo);
+  }
+
+  private void dropFrameCaches() {
+    myStackFrameCache.clear();
   }
 
 }
