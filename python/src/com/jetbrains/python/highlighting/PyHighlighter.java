@@ -12,7 +12,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.intellij.lang.regexp.RegExpTT;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -32,7 +31,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public Lexer getHighlightingLexer() {
     LayeredLexer ret = new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
     ret.registerSelfStoppingLayer(
-      new PyStringLiteralLexer(PyTokenTypes.STRING_LITERAL, false), // TODO: set according to 2.x or 3.0 lang level
+      new PyStringLiteralLexer(PyTokenTypes.STRING_LITERAL, myLanguageLevel.isPy3K()),
       new IElementType[]{PyTokenTypes.STRING_LITERAL}, IElementType.EMPTY_ARRAY
     );
     return ret;
