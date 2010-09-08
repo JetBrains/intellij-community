@@ -39,6 +39,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
 
   public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
     super(name, module, factory);
+    module.init();
   }
 
   public List<Module> getValidModules() {
