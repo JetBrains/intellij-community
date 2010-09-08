@@ -42,11 +42,13 @@ import java.util.List;
 public class BoundIconRenderer extends GutterIconRenderer {
   @NotNull private final PsiElement myElement;
   private Icon myIcon;
+  private final String myQName;
 
-  public BoundIconRenderer(@NotNull final PsiElement field) {
-    myElement = field;
+  public BoundIconRenderer(@NotNull final PsiElement element) {
+    myElement = element;
     if (myElement instanceof PsiField) {
-      final PsiType type = ((PsiField)myElement).getType();
+      final PsiField field = (PsiField)myElement;
+      final PsiType type = field.getType();
       if (type instanceof PsiClassType) {
         PsiClass componentClass = ((PsiClassType)type).resolve();
         if (componentClass != null) {
@@ -59,6 +61,10 @@ public class BoundIconRenderer extends GutterIconRenderer {
           }
         }
       }
+      myQName = field.getContainingClass().getQualifiedName() + "#" + field.getName();
+    }
+    else {
+      myQName = ((PsiClass) element).getQualifiedName();
     }
   }
 
@@ -144,7 +150,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
 
     BoundIconRenderer that = (BoundIconRenderer)o;
 
-    if (!PsiManager.getInstance(myElement.getProject()).areElementsEquivalent(myElement, that.myElement)) return false;
+    if (!myQName.equals(that.myQName)) return false;
     if (myIcon != null ? !myIcon.equals(that.myIcon) : that.myIcon != null) return false;
 
     return true;
