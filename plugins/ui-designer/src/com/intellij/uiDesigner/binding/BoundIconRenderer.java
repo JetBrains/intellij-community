@@ -144,7 +144,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
 
     BoundIconRenderer that = (BoundIconRenderer)o;
 
-    if (!myElement.equals(that.myElement)) return false;
+    if (!PsiManager.getInstance(myElement.getProject()).areElementsEquivalent(myElement, that.myElement)) return false;
     if (myIcon != null ? !myIcon.equals(that.myIcon) : that.myIcon != null) return false;
 
     return true;
