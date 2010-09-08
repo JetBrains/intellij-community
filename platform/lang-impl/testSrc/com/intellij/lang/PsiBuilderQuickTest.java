@@ -19,9 +19,15 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.tree.ASTStructure;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ThreeState;
+import com.intellij.util.diff.DiffTree;
+import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -339,12 +345,48 @@ public class PsiBuilderQuickTest {
     parser.parse(builder);
     rootMarker.done(ROOT);
 
+    // check light tree composition
     final FlyweightCapableTreeStructure<LighterASTNode> lightTree = builder.getLightTree();
     final String lightExpected = expected.replaceAll("PsiErrorElement:.*\n", "PsiErrorElement\n");
     assertEquals(lightExpected, DebugUtil.lightTreeToString(lightTree, text, false));
+    // verify that light tree can be taken multiple times
+    final FlyweightCapableTreeStructure<LighterASTNode> lightTree2 = builder.getLightTree();
+    assertEquals(lightExpected, DebugUtil.lightTreeToString(lightTree2, text, false));
 
+    // check heavy tree composition
     final ASTNode root = builder.getTreeBuilt();
     assertEquals(expected, DebugUtil.nodeTreeToString(root, false));
+
+    // check heavy vs. light tree merging
+    final PsiBuilder builder2 = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, text);
+    final PsiBuilder.Marker rootMarker2 = builder2.mark();
+    parser.parse(builder2);
+    rootMarker2.done(ROOT);
+    DiffTree.diff(
+      new ASTStructure(root), builder2.getLightTree(),
+      new ShallowNodeComparator<ASTNode, LighterASTNode>() {
+        public ThreeState deepEqual(ASTNode oldNode, LighterASTNode newNode) {
+          return ThreeState.UNSURE;
+  }
+        public boolean typesEqual(ASTNode oldNode, LighterASTNode newNode) {
+          return true;
+        }
+        public boolean hashCodesEqual(ASTNode oldNode, LighterASTNode newNode) {
+          return true;
+        }
+      },
+      new DiffTreeChangeBuilder<ASTNode, LighterASTNode>() {
+        public void nodeReplaced(@NotNull ASTNode oldChild, @NotNull LighterASTNode newChild) {
+          fail("replaced(" + oldChild + "," + newChild.getTokenType() + ")");
+        }
+        public void nodeDeleted(@NotNull ASTNode oldParent, @NotNull ASTNode oldNode) {
+          fail("deleted(" + oldParent + "," + oldNode + ")");
+        }
+        public void nodeInserted(@NotNull ASTNode oldParent, @NotNull LighterASTNode newNode, int pos) {
+          fail("inserted(" + oldParent + "," + newNode.getTokenType() + ")");
+        }
+      }
+    );
   }
 
   private static void doFailTest(final String text, final Parser parser, final String expected) {
