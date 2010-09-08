@@ -53,4 +53,11 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   public abstract String getUserResourse(Project project, String url, String version);
   @Nullable
   public abstract String getStdResource(String url, String version);
+
+  @NotNull
+  public abstract String getDefaultHtmlDoctype(@NotNull Project project);
+
+  public abstract void setDefaultHtmlDoctype(@NotNull String defaultHtmlDoctype, @NotNull Project project);
+
+  public abstract long getModificationCount(@NotNull Project project);
 }

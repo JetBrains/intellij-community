@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StateSplitter;
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.PairConsumer;
-import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
@@ -51,6 +48,8 @@ import org.picocontainer.PicoContainer;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 
 //todo: support missing plugins
 
@@ -272,6 +271,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         }
       });
 
+      if (myDir.exists() && !currentNames.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           if (myDir.exists()) {
@@ -298,6 +298,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           }
         }
       });
+      }
 
       myStorageData.clear();
     }

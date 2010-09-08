@@ -41,7 +41,7 @@
                       serviceImplementation="com.intellij.execution.filters.TextConsoleBuilderFactoryImpl"/>
 
   <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
-                      serviceImplementation="com.intellij.lang.PsiBuilderFactoryImpl"/>
+                      serviceImplementation="com.intellij.lang.impl.PsiBuilderFactoryImpl"/>
 
   <applicationService serviceInterface="com.intellij.navigation.ChooseByNameRegistry"
                       serviceImplementation="com.intellij.navigation.ChooseByNameRegistry"/>

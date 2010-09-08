@@ -470,9 +470,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
+    setBinaryContent(content, newModificationStamp, newTimeStamp, this);
+  }
+  public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     OutputStream outputStream = null;
     try {
-      outputStream = getOutputStream(this, newModificationStamp, newTimeStamp);
+      outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp);
       outputStream.write(content);
       outputStream.flush();
     }

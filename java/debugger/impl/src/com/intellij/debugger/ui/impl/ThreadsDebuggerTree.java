@@ -17,14 +17,18 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -66,28 +70,43 @@ public class ThreadsDebuggerTree extends DebuggerTree {
   }
 
   protected void build(DebuggerContextImpl context) {
-    buildWhenPaused(context, new RefreshThreadsTreelCommand(context));
+    DebuggerSession debuggerSession = context.getDebuggerSession();
+    final RefreshThreadsTreeCommand command = new RefreshThreadsTreeCommand(debuggerSession);
+    
+    final int state = debuggerSession.getState();
+    if (ApplicationManager.getApplication().isUnitTestMode() || state == DebuggerSession.STATE_PAUSED || state == DebuggerSession.STATE_RUNNING) {
+      showMessage(MessageDescriptor.EVALUATING);
+      context.getDebugProcess().getManagerThread().schedule(command);
+    }
+    else {
+      showMessage(debuggerSession.getStateDescription());
+    }
   }
 
-  private class RefreshThreadsTreelCommand extends RefreshDebuggerTreeCommand{
-    public RefreshThreadsTreelCommand(DebuggerContextImpl context) {
-      super(context);
+  private class RefreshThreadsTreeCommand extends DebuggerCommandImpl{
+    private final DebuggerSession mySession;
+
+    public RefreshThreadsTreeCommand(DebuggerSession session) {
+      mySession = session;
     }
 
-    public void contextAction() throws Exception {
+    protected void action() throws Exception {
       final DebuggerTreeNodeImpl root = getNodeFactory().getDefaultNode();
 
+      final DebugProcessImpl debugProcess = mySession.getProcess();
+      if(debugProcess == null || !debugProcess.isAttached()) {
+        return;
+      }
+      final DebuggerContextImpl context = mySession.getContextManager().getContext();
+      final SuspendContextImpl suspendContext = context.getSuspendContext();
+      final ThreadReferenceProxyImpl suspendContextThread = suspendContext != null? suspendContext.getThread() : null;
+      
       final boolean showGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
       try {
-        DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
-        if(debugProcess == null || !debugProcess.isAttached()) {
-          return;
-        }
-
-        final ThreadReferenceProxyImpl currentThread = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD ?  getSuspendContext().getThread() : null;
+        final ThreadReferenceProxyImpl currentThread = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD ? suspendContextThread : null;
         final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
 
-        final EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
+        final EvaluationContextImpl evaluationContext = suspendContext != null? getDebuggerContext().createEvaluationContext() : null;
         final NodeManagerImpl nodeManager = getNodeFactory();
 
         if (showGroups) {
@@ -139,12 +158,11 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         }
       }
 
-      final ThreadReferenceProxyImpl thread = getSuspendContext().getThread();
-      final boolean hasThreadToSelect = thread != null; // thread can be null if pause was pressed
+      final boolean hasThreadToSelect = suspendContextThread != null; // thread can be null if pause was pressed
       final List<ThreadGroupReferenceProxyImpl> groups;
       if (hasThreadToSelect && showGroups) {
         groups = new ArrayList<ThreadGroupReferenceProxyImpl>();
-        for(ThreadGroupReferenceProxyImpl group = thread.threadGroupProxy(); group != null; group = group.parent()) {
+        for(ThreadGroupReferenceProxyImpl group = suspendContextThread.threadGroupProxy(); group != null; group = group.parent()) {
           groups.add(group);
         }
         Collections.reverse(groups);
@@ -158,7 +176,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
           getMutableModel().setRoot(root);
           treeChanged();
           if (hasThreadToSelect) {
-            selectThread(groups, thread, true);
+            selectThread(groups, suspendContextThread, true);
           }
         }
       });
@@ -166,8 +184,6 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
     private void selectThread(final List<ThreadGroupReferenceProxyImpl> pathToThread, final ThreadReferenceProxyImpl thread, final boolean expand) {
       LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-
-
       class MyTreeModelAdapter extends TreeModelAdapter {
         private void structureChanged(DebuggerTreeNodeImpl node) {
           for(Enumeration enumeration = node.children(); enumeration.hasMoreElements(); ) {

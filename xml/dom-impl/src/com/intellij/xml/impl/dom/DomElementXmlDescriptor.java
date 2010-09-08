@@ -53,22 +53,6 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
     return myChildrenDescription.getXmlElementName();
   }
 
-  /**
-   * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
-   */
-  @Override
-  public Integer getMinOccurs() {
-    return null;
-  }
-
-  /**
-   * @return maximal occurrence constraint value (e.g. 1 or {@link Integer.MAX_VALUE}), on null if not applied
-   */
-  @Override
-  public Integer getMaxOccurs() {
-    return null;
-  }
-
   @Nullable
   public PsiElement getDeclaration() {
     final DomElement declaration = myChildrenDescription.getUserData(DomExtension.KEY_DECLARATION);

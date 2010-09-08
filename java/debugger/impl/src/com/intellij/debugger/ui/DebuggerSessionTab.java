@@ -46,7 +46,6 @@ import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -55,7 +54,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -466,9 +464,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
   }
 
-  public RunContentDescriptor attachToSession(final DebuggerSession session,
-                                              final ProgramRunner runner,
-                                              final ExecutionEnvironment env)
+  public RunContentDescriptor attachToSession(final DebuggerSession session, final ProgramRunner runner, final ExecutionEnvironment env)
     throws ExecutionException {
     disposeSession();
     myDebuggerSession = session;
@@ -487,7 +483,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
         myStateManager.fireStateChanged(newContext, event);
       }
     });
-    return initUI(getDebugProcess().getExecutionResult());
+    return initUI(session.getProcess().getExecutionResult());
   }
 
   private void attractFramesOnPause(final int event) {

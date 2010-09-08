@@ -149,17 +149,21 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   public static void buildConsoleUiDefault(RunnerLayoutUi ui, final ExecutionConsole console) {
-    DefaultActionGroup consoleActions = new DefaultActionGroup();
+    final Content consoleContent = ui.createContent(ExecutionConsole.CONSOLE_CONTENT_ID, console.getComponent(), "Console",
+                                                      IconLoader.getIcon("/debugger/console.png"),
+                                                      console.getPreferredFocusableComponent());
+
+    addAdditionalConsoleEditorActions(ui, console, consoleContent);
+  }
+
+  public static void addAdditionalConsoleEditorActions(final RunnerLayoutUi ui, final ExecutionConsole console, final Content consoleContent) {
+    final DefaultActionGroup consoleActions = new DefaultActionGroup();
     if (console instanceof ConsoleView) {
       AnAction[] actions = ((ConsoleView)console).createConsoleActions();
       for (AnAction goaction: actions) {
         consoleActions.add(goaction);
       }
     }
-
-    final Content consoleContent = ui.createContent(ExecutionConsole.CONSOLE_CONTENT_ID, console.getComponent(), "Console",
-                                                      IconLoader.getIcon("/debugger/console.png"),
-                                                      console.getPreferredFocusableComponent());
 
     consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
     ui.addContent(consoleContent, 0, PlaceInGrid.bottom, false);

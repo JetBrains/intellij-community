@@ -90,7 +90,7 @@ public class DiffTreeTest extends TestCase {
       return node.getId() == node1.getId();
     }
 
-    public boolean hashcodesEqual(final Node node, final Node node1) {
+    public boolean hashCodesEqual(final Node node, final Node node1) {
       return node.hashCode() == node1.hashCode();
     }
   }

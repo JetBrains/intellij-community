@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;

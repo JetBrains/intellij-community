@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,5 +38,10 @@ public interface CopyPastePostProcessor<T extends TextBlockTransferableData> {
   @Nullable
   T extractTransferableData(final Transferable content);
 
-  void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final T value);
+  void processTransferableData(final Project project,
+                               final Editor editor,
+                               final RangeMarker bounds,
+                               int caretColumn,
+                               Ref<Boolean> indented,
+                               final T value);
 }

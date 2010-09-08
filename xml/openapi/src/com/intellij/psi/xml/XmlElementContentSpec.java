@@ -19,8 +19,9 @@ package com.intellij.psi.xml;
  * @author Mike
  */
 public interface XmlElementContentSpec extends XmlElement {
-  public boolean isEmpty();
-  public boolean isAny();
-  public boolean isMixed();
-  public boolean hasChildren();
+
+  boolean isEmpty();
+  boolean isAny();
+  boolean isMixed();
+  boolean hasChildren();
 }

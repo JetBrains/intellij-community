@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -47,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.*;
 
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
@@ -335,13 +336,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
     }
     if (!Arrays.equals(file.contentsToByteArray(), text)) {
-      OutputStream output = file.getOutputStream(this);
-      try {
-        output.write(text);
-      }
-      finally {
-        output.close();
-      }
+      file.setBinaryContent(text);
     }
 
     return file;

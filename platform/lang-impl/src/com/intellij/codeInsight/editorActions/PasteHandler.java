@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -174,9 +175,10 @@ public class PasteHandler extends EditorActionHandler {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
 
+      final Ref<Boolean> indented = new Ref<Boolean>(Boolean.FALSE);
       for(Map.Entry<CopyPastePostProcessor, TextBlockTransferableData> e: extraData.entrySet()) {
         //noinspection unchecked
-        e.getKey().processTransferableData(project, editor, bounds, e.getValue());
+        e.getKey().processTransferableData(project, editor, bounds, col, indented, e.getValue());
       }
 
       final int indentOptions1 = indentOptions;
@@ -185,11 +187,15 @@ public class PasteHandler extends EditorActionHandler {
           public void run() {
             switch (indentOptions1) {
               case CodeInsightSettings.INDENT_BLOCK:
-                indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), col);
+                if (!indented.get()) {
+                  indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), col);
+                }
                 break;
 
               case CodeInsightSettings.INDENT_EACH_LINE:
-                indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+                if (!indented.get()) {
+                  indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+                }
                 break;
 
               case CodeInsightSettings.REFORMAT_BLOCK:

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
@@ -108,7 +109,11 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor<Refer
     return null;
   }
 
-  public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final ReferenceTransferableData value) {
+  public void processTransferableData(final Project project,
+                                      final Editor editor,
+                                      final RangeMarker bounds,
+                                      int caretColumn,
+                                      Ref<Boolean> indented, final ReferenceTransferableData value) {
     if (DumbService.getInstance(project).isDumb()) {
       return;
     }

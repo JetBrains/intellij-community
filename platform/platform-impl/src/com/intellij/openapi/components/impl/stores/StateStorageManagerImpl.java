@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
@@ -35,6 +36,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
@@ -47,9 +49,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider, ComponentVersionProvider {
-
   private static final Logger LOG = Logger.getInstance("#" + StateStorageManagerImpl.class.getName());
-
   private static final boolean ourHeadlessEnvironment;
 
   static {
@@ -71,6 +71,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private String myVersionsFilePath = null;
 
   private final MultiMap<RoamingType, StreamProvider> myStreamProviders = new MultiMap<RoamingType, StreamProvider>();
+  private boolean isDirty;
 
   public StateStorageManagerImpl(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
                                  final String rootTagName,
@@ -149,22 +150,16 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return versions.containsKey(name) ? versions.get(name).longValue() : 0;
   }
 
+  @TestOnly
   public void changeVersionsFilePath(String newPath) {
     myVersionsFilePath = newPath;
-    resetLocalVersions();
-  }
-
-  public void resetLocalVersions(){
     synchronized (myComponentVersLock) {
       myComponentVersions = null;
     }
+    isDirty=false;
   }
 
   private Map<String, Long> loadVersions() {
-    if (myVersionsFilePath == null) {
-      myVersionsFilePath = getVersionsFilePath();
-    }
-
     TreeMap<String, Long> result = new TreeMap<String, Long>();
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
@@ -214,6 +209,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   public void changeVersion(String name, long version) {
     getComponentVersions().put(name, version);
+    isDirty = true;
   }
 
   @Nullable
@@ -388,7 +384,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     final Matcher matcher = MACRO_PATTERN.matcher(file);
     while (matcher.find()) {
       String m = matcher.group(1);
-      if (!myMacros.containsKey(m) || (!ApplicationManagerEx.getApplication().isUnitTestMode() && myMacros.get(m) == null)) {
+      if (!myMacros.containsKey(m) || !ApplicationManager.getApplication().isUnitTestMode() && myMacros.get(m) == null) {
         throw new IllegalArgumentException("Unknown macro: " + m + " in storage spec: " + file);
       }
     }
@@ -517,7 +513,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     public void finishSave() {
       try {
         LOG.assertTrue(mySession == this);
-      } finally {
+      }
+      finally {
         myCompoundSaveSession.finishSave();
       }
     }
@@ -527,10 +524,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       Set<String> result = new HashSet<String>();
 
-      nextSorage: for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+      nextStorage: for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
         final StateStorage stateStorage = pair.second;
         final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(stateStorage);
-        if (saveSession == null) continue nextSorage;
+        if (saveSession == null) continue nextStorage;
         final Set<String> s = saveSession.analyzeExternalChanges(changedFiles);
 
         if (s == null) return null;
@@ -557,16 +554,17 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public void save() {
+    if (!isDirty) return;
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
       new File(filePath).getParentFile().mkdirs();
       try {
-          JDOMUtil.writeDocument(new Document(createComponentVersionsXml(getComponentVersions())), filePath, "\n");
+        JDOMUtil.writeDocument(new Document(createComponentVersionsXml(getComponentVersions())), filePath, "\n");
+        isDirty = false;
       }
       catch (IOException e) {
         LOG.info(e);
       }
-
     }
   }
 

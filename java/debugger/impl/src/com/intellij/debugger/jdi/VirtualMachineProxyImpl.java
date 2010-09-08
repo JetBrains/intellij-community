@@ -143,6 +143,22 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myAllThreads.values();
   }
 
+  public void threadStarted(ThreadReference thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    final Map<ThreadReference, ThreadReferenceProxyImpl> allThreads = myAllThreads;
+    if (allThreads != null && !allThreads.containsKey(thread)) {
+      allThreads.put(thread, new ThreadReferenceProxyImpl(this, thread));
+    }
+  }
+
+  public void threadStopped(ThreadReference thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    final Map<ThreadReference, ThreadReferenceProxyImpl> allThreads = myAllThreads;
+    if (allThreads != null) {
+      allThreads.remove(thread);
+    }
+  }
+
   public void suspend() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPausePressedCount++;
@@ -564,7 +580,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     if (!myNestedClassesCache.isEmpty()) {
       myNestedClassesCache = new HashMap<ReferenceType, List<ReferenceType>>(myNestedClassesCache.size());
     }
-    myAllThreadsDirty = true;
+    //myAllThreadsDirty = true;
     myTimeStamp++;
   }
 

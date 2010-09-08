@@ -17,20 +17,25 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.impl.DebuggerContextUtil;
-import com.intellij.debugger.impl.DebuggerStateManager;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -39,8 +44,10 @@ import java.awt.event.KeyEvent;
 
 public class ThreadsPanel extends DebuggerTreePanel{
   @NonNls private static final String HELP_ID = "debugging.debugThreads";
+  private final Alarm myUpdateLabelsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private static final int LABELS_UPDATE_DELAY_MS = 200;
 
-  public ThreadsPanel(Project project, DebuggerStateManager stateManager) {
+  public ThreadsPanel(Project project, final DebuggerStateManager stateManager) {
     super(project, stateManager);
 
     final Disposable disposable = DebuggerAction.installEditAction(getThreadsTree(), DebuggerActions.EDIT_FRAME_SOURCE);
@@ -60,8 +67,88 @@ public class ThreadsPanel extends DebuggerTreePanel{
       }
     });
     add(ScrollPaneFactory.createScrollPane(getThreadsTree()), BorderLayout.CENTER);
+    stateManager.addListener(new DebuggerContextListener() {
+      public void changeEvent(DebuggerContextImpl newContext, int event) {
+        if (DebuggerSession.EVENT_ATTACHED == event || DebuggerSession.EVENT_RESUME == event) {
+          startLabelsUpdate();
+        }
+        else if (DebuggerSession.EVENT_PAUSE == event || DebuggerSession.EVENT_DETACHED == event || DebuggerSession.EVENT_DISPOSE == event) {
+          myUpdateLabelsAlarm.cancelAllRequests();
+        }
+        if (DebuggerSession.EVENT_DETACHED == event || DebuggerSession.EVENT_DISPOSE == event) {
+          stateManager.removeListener(this);
+        }
+      }
+    });
+    startLabelsUpdate();
   }
 
+  private void startLabelsUpdate() {
+    myUpdateLabelsAlarm.cancelAllRequests();
+    myUpdateLabelsAlarm.addRequest(new Runnable() {
+      public void run() {
+        boolean updateScheduled = false;
+        try {
+          if (isUpdateEnabled()) {
+            final ThreadsDebuggerTree tree = getThreadsTree();
+            final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl)tree.getModel().getRoot();
+            if (root != null) {
+              final DebugProcessImpl process = getContext().getDebugProcess();
+              if (process != null) {
+                process.getManagerThread().invoke(new DebuggerCommandImpl() {
+                  protected void action() throws Exception {
+                    try {
+                      updateNodeLabels(root);
+                    }
+                    finally {
+                      reschedule();
+                    }
+                  }
+                  protected void commandCancelled() {
+                    reschedule();
+                  }
+                });
+                updateScheduled = true;
+              }
+            }
+          }
+        }
+        finally {
+          if (!updateScheduled) {
+            reschedule();
+          }
+        }
+      }
+
+      private void reschedule() {
+        final DebuggerSession session = getContext().getDebuggerSession();
+        if (session.isAttached() && !session.isPaused()) {
+          myUpdateLabelsAlarm.addRequest(this, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
+        }
+      }
+      
+    }, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(myUpdateLabelsAlarm);
+    super.dispose();
+  }
+
+  private static void updateNodeLabels(DebuggerTreeNodeImpl from) {
+    final int childCount = from.getChildCount();
+    for (int idx = 0; idx < childCount; idx++) {
+      final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)from.getChildAt(idx);
+      child.getDescriptor().updateRepresentation(null, new DescriptorLabelListener() {
+        public void labelChanged() {
+          child.labelChanged();
+        }
+      });
+      updateNodeLabels(child);
+    }
+  }
+  
   protected DebuggerTree createTreeView() {
     return new ThreadsDebuggerTree(getProject());
   }

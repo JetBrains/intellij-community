@@ -39,6 +39,9 @@ public class ContextUtil {
 
   @Nullable
   public static SourcePosition getSourcePosition(final StackFrameContext context) {
+    if (context == null) {
+      return null;
+    }
     DebugProcessImpl debugProcess = (DebugProcessImpl)context.getDebugProcess();
     if(debugProcess == null) {
       return null;

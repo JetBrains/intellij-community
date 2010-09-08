@@ -950,13 +950,13 @@ public class XmlUtil {
       final Language language = file.getLanguage();
       if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
         return new String[][]{new String[]{"", XHTML_URI}};
+        }
       }
-    }
 
     return null;
   }
 
-  private static final String HTML5_SCHEMA_LOCATION;
+  public static final String HTML5_SCHEMA_LOCATION;
   
   static {
     URL schemaLocationURL = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");

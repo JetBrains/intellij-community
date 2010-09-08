@@ -126,9 +126,12 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     int[] selectedRows = getSelectedRows();
     if (selectedRows == null) return result;
     final List<Item> items = getItems();
-    for (int selectedRow : selectedRows) {
-      if (selectedRow >= 0 && selectedRow < items.size()) {
-        result.add(items.get(selectedRow));
+    if (! items.isEmpty()) {
+      for (int selectedRow : selectedRows) {
+        final int correctedIndex = convertRowIndexToModel(selectedRow);
+        if (correctedIndex >= 0 && correctedIndex < items.size()) {
+          result.add(items.get(correctedIndex));
+        }
       }
     }
     return result;

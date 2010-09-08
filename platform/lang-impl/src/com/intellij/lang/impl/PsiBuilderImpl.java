@@ -19,7 +19,6 @@ package com.intellij.lang.impl;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -32,6 +31,7 @@ import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.ASTDiffBuilder;
 import com.intellij.psi.impl.source.tree.*;
@@ -71,7 +71,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final MyList myProduction = new MyList();
 
   private final Lexer myLexer;
-  private final boolean myFileLevelParsing;
   private final TokenSet myWhitespaces;
   private TokenSet myComments;
 
@@ -119,37 +118,46 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   };
 
   @NonNls private static final String UNBALANCED_MESSAGE =
-    "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
+    "Unbalanced tree. Most probably caused by unbalanced markers. " +
+    "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
 
   public static void registerWhitespaceToken(IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
-  public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
+  public PsiBuilderImpl(@NotNull final Language lang,
+                        @NotNull final Lexer lexer,
+                        @NotNull final ASTNode chameleon,
+                        @NotNull final CharSequence text) {
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
-    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+    myLexer = lexer;
+
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     assert parserDefinition != null : "ParserDefinition absent for language: " + lang.getID();
-    myLexer = lexer != null ? lexer : parserDefinition.createLexer(project);
     myWhitespaces = parserDefinition.getWhitespaceTokens();
     myComments = parserDefinition.getCommentTokens();
-    myCharTable = SharedImplUtil.findCharTableByTree(chameleon);
 
+    myCharTable = SharedImplUtil.findCharTableByTree(chameleon);
     myOriginalTree = chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED);
 
-    myFileLevelParsing = myCharTable == null || myOriginalTree != null;
     cacheLexemes();
   }
 
   @TestOnly
-  public PsiBuilderImpl(final Lexer lexer, final TokenSet whitespaces, final TokenSet comments, CharSequence text) {
-    myWhitespaces = whitespaces;
-    myLexer = lexer;
-    myComments = comments;
+  public PsiBuilderImpl(@NotNull final Lexer lexer,
+                        @NotNull final TokenSet whitespaces,
+                        @NotNull final TokenSet comments,
+                        @NotNull final CharSequence text) {
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+    myLexer = lexer;
+    myWhitespaces = whitespaces;
+    myComments = comments;
 
-    myFileLevelParsing = true;
+    myCharTable = null;
+    myOriginalTree = null;
+
     cacheLexemes();
   }
 
@@ -764,13 +772,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private ASTNode createRootAST(final StartMarker rootMarker) {
-    final ASTNode rootNode;
-    if (myFileLevelParsing) {
-      rootNode = new FileElement(rootMarker.myType, null);
-      myCharTable = ((FileElement)rootNode).getCharTable();
+    final ASTNode rootNode = createComposite(rootMarker);
+    if (myCharTable == null) {
+      myCharTable = rootNode instanceof FileElement ? ((FileElement)rootNode).getCharTable() : new CharTableImpl();
     }
-    else {
-      rootNode = createComposite(rootMarker);
+    if (!(rootNode instanceof FileElement)) {
       rootNode.putUserData(CharTable.CHAR_TABLE_KEY, myCharTable);
     }
     return rootNode;
@@ -1004,13 +1010,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         final PsiErrorElement e1 = (PsiErrorElement)oldNode;
         return Comparing.equal(e1.getErrorDescription(), getErrorMessage(newNode)) ? ThreeState.UNSURE : ThreeState.NO;
       }
-      
+
       if (newNode instanceof Token) {
         if (oldNode instanceof ForeignLeafPsiElement) {
           final IElementType type = newNode.getTokenType();
           return type instanceof ForeignLeafType && ((ForeignLeafType)type).getValue().equals(oldNode.getText())
-                                                   ? ThreeState.YES
-                                                   : ThreeState.NO;
+                 ? ThreeState.YES
+                 : ThreeState.NO;
         }
 
         if (oldNode instanceof LeafElement) {
@@ -1045,7 +1051,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return probablyWrapper;
     }
 
-    public boolean hashcodesEqual(final ASTNode n1, final LighterASTNode n2) {
+    public boolean hashCodesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof LeafElement && n2 instanceof Token) {
         if (n1 instanceof ForeignLeafPsiElement && n2.getTokenType() instanceof ForeignLeafType) {
           return n1.getText().equals(((ForeignLeafType)n2.getTokenType()).getValue());

@@ -181,6 +181,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       public boolean contains(final VirtualFile file) {
         return !myBaseScope.contains(file);
       }
+
+      @Override
+      public boolean isSearchOutsideRootModel() {
+        return true;
+      }
     };
   }
 
@@ -236,6 +241,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static GlobalSearchScope directoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
     return new DirectoryScope(directory, withSubdirectories);
+  }
+
+  public static GlobalSearchScope directoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
+    return new DirectoryScope(project, directory, withSubdirectories);
   }
 
   public static GlobalSearchScope fileScope(@NotNull PsiFile psiFile) {
@@ -467,6 +476,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       super(directory.getProject());
       myWithSubdirectories = withSubdirectories;
       myDirectory = directory.getVirtualFile();
+    }
+
+    private DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
+      super(project);
+      myWithSubdirectories = withSubdirectories;
+      myDirectory = directory;
     }
 
     public boolean contains(VirtualFile file) {

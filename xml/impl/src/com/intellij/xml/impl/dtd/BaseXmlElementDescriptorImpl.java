@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 
 import java.util.HashMap;
 
@@ -36,12 +37,7 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   protected BaseXmlElementDescriptorImpl() {}
 
   @Override
-  public Integer getMinOccurs() {
-    return null;
-  }
-
-  @Override
-  public Integer getMaxOccurs() {
+  public XmlElementsGroup getTopGroup() {
     return null;
   }
 

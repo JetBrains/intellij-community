@@ -154,7 +154,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         recalculateUrl(url);
         myBranchField.setText(SVNPathUtil.tail(url));
       }
-    }, SvnBundle.message("select.branch.popup.general.title"));
+    }, SvnBundle.message("select.branch.popup.general.title"), myPanel);
   }
 
   private void recalculateUrl(final String url) {
