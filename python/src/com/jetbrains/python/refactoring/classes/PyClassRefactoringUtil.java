@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.util.containers.*;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.AddImportHelper;
@@ -201,7 +202,11 @@ public class PyClassRefactoringUtil {
         @Override
         public void visitPyReferenceExpression(PyReferenceExpression node) {
           super.visitPyReferenceExpression(node);
-          node.getReference();
+          final PsiPolyVariantReference ref = node.getReference();
+          final PsiElement target = ref.resolve();
+          if (target instanceof PyClass) {
+            result.add((PyClass)target);
+          }
         }
       });
     }
