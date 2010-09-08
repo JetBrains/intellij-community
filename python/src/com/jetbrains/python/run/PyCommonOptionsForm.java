@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-  public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams {
+  public class PyCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private TextFieldWithBrowseButton myWorkingDirectoryTextField;
   private EnvironmentVariablesComponent myEnvsComponent;
   private RawCommandLineEditor myInterpreterOptionsTextField;

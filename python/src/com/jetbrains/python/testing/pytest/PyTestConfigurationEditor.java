@@ -1,9 +1,10 @@
 package com.jetbrains.python.testing.pytest;
 
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ConfigurationException;
-import com.jetbrains.python.run.PyCommonOptionsForm;
+import com.intellij.openapi.options.SettingsEditor;
+import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,10 +17,10 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
   private JPanel myCommonOptionsPlaceholder;
   private JTextField myTestToRunField;
   private JTextField myKeywordsTextField;
-  private final PyCommonOptionsForm myCommonOptionsForm;
+  private final AbstractPyCommonOptionsForm myCommonOptionsForm;
 
   public PyTestConfigurationEditor(PyTestRunConfiguration configuration) {
-    myCommonOptionsForm = new PyCommonOptionsForm(configuration);
+    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration);
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel());
   }
 
