@@ -8,15 +8,15 @@ import java.util.Iterator;
  *
  * @author nik
  */
-public class ServiceLoader<S> implements Iterable<S> {
+public class OwnServiceLoader<S> implements Iterable<S> {
   private Class<S> serviceClass;
 
-  private ServiceLoader(Class<S> serviceClass) {
+  private OwnServiceLoader(Class<S> serviceClass) {
     this.serviceClass = serviceClass;
   }
 
-  public static <S> ServiceLoader<S> load(Class<S> serviceClass) {
-    return new ServiceLoader<S>(serviceClass);
+  public static <S> OwnServiceLoader<S> load(Class<S> serviceClass) {
+    return new OwnServiceLoader<S>(serviceClass);
   }
 
   public Iterator<S> iterator() {

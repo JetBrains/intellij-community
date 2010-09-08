@@ -10,7 +10,7 @@ import org.jetbrains.jps.MacroExpander
 class ArtifactLoader {
   private final Project project
   private final MacroExpander macroExpander
-  private static ServiceLoader<LayoutElementTypeService> elementTypeLoader = ServiceLoader.load(LayoutElementTypeService.class)
+  private static OwnServiceLoader<LayoutElementTypeService> elementTypeLoader = OwnServiceLoader.load(LayoutElementTypeService.class)
   private static Map<String, LayoutElementTypeService> elementTypes = null
 
   def ArtifactLoader(Project project, MacroExpander macroExpander) {

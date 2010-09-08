@@ -9,7 +9,7 @@ import org.jetbrains.jps.Module
 class FacetLoader {
   private final Module module
   private final MacroExpander macroExpander
-  private static final ServiceLoader<FacetTypeService> facetTypeLoader = ServiceLoader.load(FacetTypeService.class)
+  private static final OwnServiceLoader<FacetTypeService> facetTypeLoader = OwnServiceLoader.load(FacetTypeService.class)
   private static Map<String, FacetTypeService> facetTypes = null
 
   def FacetLoader(Module module, MacroExpander macroExpander) {
