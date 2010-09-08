@@ -20,10 +20,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.EvaluatingComputable;
-import com.intellij.debugger.InstanceFilter;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -171,7 +168,15 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
       try {
         ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
           public ExpressionEvaluator compute() throws EvaluateException {
-            return EvaluatorBuilderImpl.getInstance().build(getCondition(), getEvaluationElement(), ContextUtil.getSourcePosition(context));
+            final SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
+            // IMPORTANT: calculate context psi element basing on the location where the exception
+            // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however, 
+            // for method, exception and field breakpoints these locations differ)
+            PsiElement contextPsiElement = ContextUtil.getContextElement(contextSourcePosition);
+            if (contextPsiElement == null) {
+              contextPsiElement = getEvaluationElement(); // as a last resort
+            }
+            return EvaluatorBuilderImpl.getInstance().build(getCondition(), contextPsiElement, contextSourcePosition);
           }
         });
         Value value = evaluator.evaluate(context);
