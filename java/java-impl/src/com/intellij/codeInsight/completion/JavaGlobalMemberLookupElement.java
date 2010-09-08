@@ -4,28 +4,27 @@ import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author peter
  */
 public class JavaGlobalMemberLookupElement extends LookupElement implements StaticallyImportable {
-  private final PsiMethod myMethod;
+  private final PsiMember myMember;
   private final PsiClass myContainingClass;
   private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsertion;
   private final InsertHandler<JavaGlobalMemberLookupElement> myImportInsertion;
   private boolean myShouldImport = false;
 
-  public JavaGlobalMemberLookupElement(PsiMethod method,
+  public JavaGlobalMemberLookupElement(PsiMember member,
                                        PsiClass containingClass,
                                        InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsertion,
                                        InsertHandler<JavaGlobalMemberLookupElement> importInsertion, boolean shouldImport) {
-    myMethod = method;
+    myMember = member;
     myContainingClass = containingClass;
     myQualifiedInsertion = qualifiedInsertion;
     myImportInsertion = importInsertion;
@@ -34,8 +33,8 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
 
   @NotNull
   @Override
-  public PsiMethod getObject() {
-    return myMethod;
+  public PsiMember getObject() {
+    return myMember;
   }
 
   @NotNull
@@ -46,7 +45,7 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
   @NotNull
   @Override
   public String getLookupString() {
-    return myMethod.getName();
+    return assertNotNull(myMember.getName());
   }
 
   @Override
@@ -55,23 +54,25 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
 
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
 
-    final String methodName = myMethod.getName();
+    final String methodName = myMember.getName();
     if (Boolean.FALSE.equals(myShouldImport) && StringUtil.isNotEmpty(className)) {
       presentation.setItemText(className + "." + methodName);
     } else {
       presentation.setItemText(methodName);
     }
 
-    final String params = PsiFormatUtil.formatMethod(myMethod, PsiSubstitutor.EMPTY,
+    final String params = myMember instanceof PsiMethod
+                          ? PsiFormatUtil.formatMethod((PsiMethod)myMember, PsiSubstitutor.EMPTY,
                                                      PsiFormatUtil.SHOW_PARAMETERS,
-                                                     PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+                                                     PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
+                          : "";
     if (Boolean.TRUE.equals(myShouldImport) && StringUtil.isNotEmpty(className)) {
       presentation.setTailText(params + " in " + className);
     } else {
       presentation.setTailText(params);
     }
 
-    final PsiType type = myMethod.getReturnType();
+    final PsiType type = myMember instanceof PsiMethod ? ((PsiMethod)myMember).getReturnType() : ((PsiField) myMember).getType();
     if (type != null) {
       presentation.setTypeText(type.getPresentableText());
     }
