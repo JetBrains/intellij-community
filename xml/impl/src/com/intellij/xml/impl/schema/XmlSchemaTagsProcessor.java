@@ -47,7 +47,7 @@ public abstract class XmlSchemaTagsProcessor {
   protected void doProcessTag(XmlTag tag) {
 
     if (!XmlNSDescriptorImpl.checkSchemaNamespace(tag)) {
-      processTagWithSubTags(tag);
+      processTagWithSubTags(tag, true);
       return;
     }
 
@@ -55,16 +55,16 @@ public abstract class XmlSchemaTagsProcessor {
     if (checkTagName(tagName, "element", "attribute")) {
       XmlAttribute ref = tag.getAttribute("ref");
       if (ref != null) {
-        processTagWithSubTags(resolveReference(ref));
+        processTagWithSubTags(resolveReference(ref), false);
       }
       else {
-        processTagWithSubTags(tag);
+        processTagWithSubTags(tag, false);
       }
     }
     else if (checkTagName(tagName, "group")) {
       String value = tag.getAttributeValue("ref");
       if (value != null) {
-        processTagWithSubTags(myNsDescriptor.findGroup(value));
+        processTagWithSubTags(myNsDescriptor.findGroup(value), true);
       }
     }
     else if (checkTagName(tagName, "attributeGroup")) {
@@ -77,23 +77,25 @@ public abstract class XmlSchemaTagsProcessor {
         group = resolveReference(tag.getAttribute("ref"));
       }
       if (group == null) group = myNsDescriptor.findAttributeGroup(ref);
-      processTagWithSubTags(group);
+      processTagWithSubTags(group, true);
     }
     else if (checkTagName(tagName, "restriction", "extension")) {
-      processTagWithSubTags(resolveReference(tag.getAttribute("base")));
-      processTagWithSubTags(tag);
+      processTagWithSubTags(resolveReference(tag.getAttribute("base")), true);
+      processTagWithSubTags(tag, true);
     }
     else {
-      processTagWithSubTags(tag);
+      processTagWithSubTags(tag, true);
     }
   }
 
-  private void processTagWithSubTags(@Nullable XmlTag tag) {
+  private void processTagWithSubTags(@Nullable XmlTag tag, boolean processSubTags) {
     if (tag == null) return;
     tagStarted(tag, tag.getLocalName());
-    XmlTag[] subTags = tag.getSubTags();
-    for (XmlTag subTag : subTags) {
-      processTag(subTag);
+    if (processSubTags) {
+      XmlTag[] subTags = tag.getSubTags();
+      for (XmlTag subTag : subTags) {
+        processTag(subTag);
+      }
     }
     tagFinished(tag);
   }

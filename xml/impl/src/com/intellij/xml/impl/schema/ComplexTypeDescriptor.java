@@ -106,18 +106,20 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   // Read-only calculation
   private XmlElementDescriptor[] doCollectElements(@Nullable XmlElement context) {
     final Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
-    //new XmlSchemaTagsProcessor(myDocumentDescriptor) {
-    //  @Override
-    //  protected void tagStarted(XmlTag tag, String tagName) {
-    //    if ("element".equals(tagName) && tag.getAttribute("name") != null) {
-    //      XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(tag.getNamespace(), false);
-    //      if (nsDescriptor instanceof XmlNSDescriptorImpl) {
-    //        addElementDescriptor(map, ((XmlNSDescriptorImpl)nsDescriptor).createElementDescriptor(tag));
-    //      }
-    //    }
-    //  }
-    //}.processTag(myTag);
-    collectElements(map, myTag, new THashSet<XmlTag>(), "", context);
+    new XmlSchemaTagsProcessor(myDocumentDescriptor) {
+      @Override
+      protected void tagStarted(XmlTag tag, String tagName) {
+        if ("element".equals(tagName) && tag.getAttribute("name") != null) {
+          addElementDescriptor(map, myDocumentDescriptor.createElementDescriptor(tag));
+        }
+      }
+    }.processTag(myTag);
+    //HashMap<String, XmlElementDescriptor> result = new HashMap<String, XmlElementDescriptor>();
+    //collectElements(result, myTag, new THashSet<XmlTag>(), "", context);
+    //if (result.size() != map.size()) {
+    //  result.clear();
+    //  collectElements(result, myTag, new THashSet<XmlTag>(), "", context);
+    //}
     addSubstitutionGroups(map);
     filterAbstractElements(map);
     return map.values().toArray(
