@@ -68,12 +68,19 @@ public interface KeyboardShortcut extends DomElement {
 
 
         /**
-         * Returns the value of the remove child.
+         * Returns the value of the should current shortcut be removed or not.
          * Attribute remove option
-         * @return the value of the remove child.
+         * @return the value of the should current shortcut be removed or not.
          */
         @NotNull
         GenericAttributeValue<String> getRemove();
 
+        /**
+         * Returns the value of the should all previous shortcuts be removed by that one or not.
+         * Attribute remove option
+         * @return the value of the should all previous shortcuts be removed by that one or not.
+         */
+        @NotNull
+        GenericAttributeValue<String> getReplaceAll();
 
 }

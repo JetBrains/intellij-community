@@ -108,6 +108,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls public static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
   @NonNls public static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
   @NonNls public static final String REMOVE_SHORTCUT_ATTR_NAME = "remove";
+  @NonNls public static final String REPLACE_SHORTCUT_ATTR_NAME = "replace-all";
   @NonNls public static final String KEYMAP_ATTR_NAME = "keymap";
   @NonNls public static final String KEYSTROKE_ATTR_NAME = "keystroke";
   @NonNls public static final String REF_ATTR_NAME = "ref";
@@ -761,9 +762,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);
     final KeyboardShortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
+    final String replaceOption = element.getAttributeValue(REPLACE_SHORTCUT_ATTR_NAME);
     if (Boolean.valueOf(removeOption)) {
       keymap.removeShortcut(actionId, shortcut);
-    } else {
+    }
+    if (Boolean.valueOf(replaceOption)) {
+      keymap.removeAllActionShortcuts(actionId);
+    }
+    if (!Boolean.valueOf(removeOption)) {
       keymap.addShortcut(actionId, shortcut);
     }
   }
