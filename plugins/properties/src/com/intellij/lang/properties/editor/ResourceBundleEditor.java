@@ -172,7 +172,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     int y = 0;
     for (final PropertiesFile propertiesFile : propertiesFiles) {
       final Editor editor = createEditor();
-      myEditors.put(propertiesFile, editor);
+      final Editor oldEditor = myEditors.put(propertiesFile, editor);
+      if (oldEditor != null) {
+        EditorFactory.getInstance().releaseEditor(oldEditor);
+      }
+
       editor.getContentComponent().addFocusListener(new FocusAdapter() {
         public void focusGained(FocusEvent e) {
           mySelectedEditor = editor;

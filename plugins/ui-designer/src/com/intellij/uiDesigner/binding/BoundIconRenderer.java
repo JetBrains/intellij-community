@@ -40,13 +40,15 @@ import java.util.List;
  * @author yole
  */
 public class BoundIconRenderer extends GutterIconRenderer {
-  private final PsiElement myElement;
+  @NotNull private final PsiElement myElement;
   private Icon myIcon;
+  private final String myQName;
 
-  public BoundIconRenderer(final PsiElement field) {
-    myElement = field;
+  public BoundIconRenderer(@NotNull final PsiElement element) {
+    myElement = element;
     if (myElement instanceof PsiField) {
-      final PsiType type = ((PsiField)myElement).getType();
+      final PsiField field = (PsiField)myElement;
+      final PsiType type = field.getType();
       if (type instanceof PsiClassType) {
         PsiClass componentClass = ((PsiClassType)type).resolve();
         if (componentClass != null) {
@@ -59,6 +61,10 @@ public class BoundIconRenderer extends GutterIconRenderer {
           }
         }
       }
+      myQName = field.getContainingClass().getQualifiedName() + "#" + field.getName();
+    }
+    else {
+      myQName = ((PsiClass) element).getQualifiedName();
     }
   }
 
@@ -135,5 +141,25 @@ public class BoundIconRenderer extends GutterIconRenderer {
     }
     result.append("</body></html>");
     return result.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BoundIconRenderer that = (BoundIconRenderer)o;
+
+    if (!myQName.equals(that.myQName)) return false;
+    if (myIcon != null ? !myIcon.equals(that.myIcon) : that.myIcon != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myElement.hashCode();
+    result = 31 * result + (myIcon != null ? myIcon.hashCode() : 0);
+    return result;
   }
 }

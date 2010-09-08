@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -59,11 +58,14 @@ public class VcsDirtyScopeImpl extends VcsAppendableDirtyScope {
     if (myVcs.allowsNestedRoots()) {
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
       final VirtualFile[] roots = vcsManager.getRootsUnderVcs(myVcs);
-      final List<VirtualFile> asList = Arrays.asList(roots);
 
-      final Set<VirtualFile> result = new HashSet<VirtualFile>();
-      for (VirtualFile root : myAffectedContentRoots) {
-        result.addAll(ProjectLevelVcsManagerImpl.getRootsUnder(asList, root));
+      final Set<VirtualFile> result = new HashSet<VirtualFile>(myAffectedContentRoots);
+      for (VirtualFile root : roots) {
+        for (VirtualFile dir : myDirtyDirectoriesRecursively.keySet()) {
+          if (VfsUtil.isAncestor(dir, root, true)) {
+            result.add(root);
+          }
+        }
       }
       return new SmartList<VirtualFile>(result);
     }

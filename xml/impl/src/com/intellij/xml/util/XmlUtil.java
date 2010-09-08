@@ -149,6 +149,7 @@ public class XmlUtil {
   @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
   public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
+  public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
 
 
   private XmlUtil() {

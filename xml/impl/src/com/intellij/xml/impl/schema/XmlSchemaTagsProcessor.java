@@ -64,7 +64,9 @@ public abstract class XmlSchemaTagsProcessor {
     else if (checkTagName(tagName, "group")) {
       String value = tag.getAttributeValue("ref");
       if (value != null) {
-        processTagWithSubTags(myNsDescriptor.findGroup(value), true);
+        XmlTag group = myNsDescriptor.findGroup(value);
+        if (group == null) group = resolveReference(tag.getAttribute("ref"));
+        processTagWithSubTags(group, true);
       }
     }
     else if (checkTagName(tagName, "attributeGroup")) {

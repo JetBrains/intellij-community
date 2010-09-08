@@ -238,7 +238,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   public void testSmartCastCompletionWithoutRParenth() {doSmartTest();}
   public void testSmartCastCompletionWithRParenth() {doSmartTest();}
 
-  public void testWhenSiblingIsStaticallyImported() throws Exception {
+  public void testWhenSiblingIsStaticallyImported_Method() throws Exception {
     myFixture.addFileToProject "foo/Foo.groovy", """package foo
       class Foo {
         static def abcMethod() {}
@@ -249,7 +249,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     myFixture.configureByText("a.groovy", """
       import static foo.Foo.abcMethod
 
-      abdMethod()
+      abcMethod()
       defM<caret>
     """)
     myFixture.completeBasic()
@@ -257,8 +257,32 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
       import static foo.Foo.abcMethod
       import static foo.Foo.defMethod
 
-      abdMethod()
+      abcMethod()
       defMethod()<caret>
+    """
+  }
+
+  public void testWhenSiblingIsStaticallyImported_Field() throws Exception {
+    myFixture.addFileToProject "foo/Foo.groovy", """package foo
+      class Foo {
+        static def abcField = 4
+        static def defField = 2
+      }
+    """
+
+    myFixture.configureByText("a.groovy", """
+      import static foo.Foo.abcField
+
+      println abcField
+      defF<caret>
+    """)
+    myFixture.completeBasic()
+    myFixture.checkResult """
+      import static foo.Foo.abcField
+      import static foo.Foo.defField
+
+      println abcField
+      defField<caret>
     """
   }
 }

@@ -264,39 +264,38 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   private XmlAttributeDescriptor[] doCollectAttributes(@Nullable final XmlElement context) {
     final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
 
-    XmlSchemaTagsProcessor processor = new XmlSchemaTagsProcessor(myDocumentDescriptor) {
-      @Override
-      protected void tagStarted(XmlTag tag, String tagName) {
-        if (ATTRIBUTE_TAG_NAME.equals(tagName)) {
-          String use = tag.getAttributeValue("use");
-          String name = tag.getAttributeValue(NAME_ATTR_NAME);
-
-          if (name != null) {
-            if (PROHIBITED_ATTR_VALUE.equals(use)) {
-              removeAttributeDescriptor(result, name);
-            }
-            else {
-              addAttributeDescriptor(result, myDocumentDescriptor.createAttributeDescriptor(tag));
-            }
-          }
-        }
-      }
-
-      @Override
-      protected void doProcessTag(XmlTag tag) {
-        if (!"element".equals(tag.getLocalName())){
-          super.doProcessTag(tag);
-        }
-      }
-    };
-//    processor.processTag(myTag);
-    List<XmlAttributeDescriptor> descriptors = new ArrayList<XmlAttributeDescriptor>();
+    //XmlSchemaTagsProcessor processor = new XmlSchemaTagsProcessor(myDocumentDescriptor) {
+    //  @Override
+    //  protected void tagStarted(XmlTag tag, String tagName) {
+    //    if (ATTRIBUTE_TAG_NAME.equals(tagName)) {
+    //      String use = tag.getAttributeValue("use");
+    //      String name = tag.getAttributeValue(NAME_ATTR_NAME);
+    //
+    //      if (name != null) {
+    //        if (PROHIBITED_ATTR_VALUE.equals(use)) {
+    //          removeAttributeDescriptor(result, name);
+    //        }
+    //        else {
+    //          addAttributeDescriptor(result, myDocumentDescriptor.createAttributeDescriptor(tag));
+    //        }
+    //      }
+    //    }
+    //  }
+    //
+    //  @Override
+    //  protected void doProcessTag(XmlTag tag) {
+    //    if (!"element".equals(tag.getLocalName())){
+    //      super.doProcessTag(tag);
+    //    }
+    //  }
+    //};
+    //processor.processTag(myTag);
+    //List<XmlAttributeDescriptor> descriptors = new ArrayList<XmlAttributeDescriptor>();
     collectAttributes(result, myTag, new THashSet<XmlTag>(), "",context);
-    if (descriptors.size() != result.size()) {
-      descriptors.clear();
-//      collectAttributes(descriptors, myTag, new THashSet<XmlTag>(), "",context);
-
-    }
+    //if (descriptors.size() != result.size()) {
+    //  descriptors.clear();
+    //  collectAttributes(descriptors, myTag, new THashSet<XmlTag>(), "",context);
+    //}
     return result.toArray(new XmlAttributeDescriptor[result.size()]);
   }
 
