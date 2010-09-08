@@ -230,13 +230,27 @@ class ProjectBuilder {
     return result.asList()
   }
 
+  List<String> projectRuntimeClasspath(boolean tests) {
+    Set<String> result = new LinkedHashSet<String>()
+    ClasspathKind kind = getRuntimeClasspathKind(tests)
+    project.modules.values().each {Module module ->
+      result.addAll(module.getClasspathRoots(kind))
+      module.getClasspath(kind).each {ClasspathItem item ->
+        if (!(item instanceof Module)) {
+          result.addAll(item.getClasspathRoots(kind))
+        }
+      }
+    }
+    return result.asList()
+  }
+
   List<String> moduleRuntimeClasspath(Module module, boolean test) {
     return chunkRuntimeClasspath(chunkForModule(module, test), test)
   }
 
   private List<String> chunkRuntimeClasspath(ModuleChunk chunk, boolean test) {
     Set<String> set = new LinkedHashSet()
-    set.addAll(moduleClasspath(chunk, test ? ClasspathKind.TEST_RUNTIME : ClasspathKind.PRODUCTION_RUNTIME))
+    set.addAll(moduleClasspath(chunk, getRuntimeClasspathKind(test)))
     addModulesOutputs(chunk.modules, false, set)
 
     if (test) {
@@ -244,6 +258,10 @@ class ProjectBuilder {
     }
 
     return set.asList()
+  }
+
+  private ClasspathKind getRuntimeClasspathKind(boolean tests) {
+    return tests ? ClasspathKind.TEST_RUNTIME : ClasspathKind.PRODUCTION_RUNTIME
   }
 
   private def collectModulesFromClasspath(Module module, ClasspathKind kind, Set<Module> result) {

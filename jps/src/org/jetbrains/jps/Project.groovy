@@ -141,6 +141,14 @@ class Project {
     artifactBuilder.buildArtifact(artifact)
   }
 
+  List<String> runtimeClasspath() {
+    return builder.projectRuntimeClasspath(false);
+  }
+
+  List<String> testRuntimeClasspath() {
+    return builder.projectRuntimeClasspath(true);
+  }
+
   def clean() {
     if (!dryRun) {
       if (targetFolder != null) {
