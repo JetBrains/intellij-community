@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="jps">
+    <output-path>$PROJECT_DIR$/out/artifacts/jps</output-path>
+    <root id="archive" name="jps.jar">
+      <element id="module-output" name="jps" />
+      <element id="module-output" name="antlayout" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/javac2-all.jar" path-in-jar="/" />
+      <element id="module-output" name="javaee" />
+    </root>
+  </artifact>
+</component>

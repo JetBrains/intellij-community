@@ -53,6 +53,7 @@
     <include name="**/?*.dtd"/>
     <include name="**/?*.tld"/>
     <include name="**/?*.ftl"/>
+    <include name="**//META-INF/services/?*"/>
   </patternset>
   
   
@@ -60,6 +61,10 @@
   
   <path id="library.ant.classpath">
     <pathelement location="${basedir}/lib/ant-1.7.1.jar"/>
+  </path>
+  
+  <path id="library.groovy.classpath">
+    <pathelement location="${basedir}/lib/groovy-all-1.7.1.jar"/>
   </path>
   
   <path id="library.javac2.classpath">
@@ -74,18 +79,26 @@
   <!-- Global Libraries -->
   
   <path id="library.gant.classpath">
-    <pathelement location="${path.variable.gant_home}/lib/ant-1.8.0.jar"/>
-    <pathelement location="${path.variable.gant_home}/lib/gant_groovy1.7-1.9.2.jar"/>
-    <pathelement location="${path.variable.gant_home}/lib/groovy-all-1.7.1.jar"/>
+    <pathelement location="/home/nik/applications/gant-1.9.1/lib/gant-1.9.1_groovy-1.7.0.jar"/>
+    <pathelement location="/home/nik/applications/groovy-1.7.0/embeddable/groovy-all-1.7.0.jar"/>
+    <pathelement location="/home/nik/applications/groovy-1.7.0/lib/ant-launcher-1.7.1.jar"/>
   </path>
+  <!-- Register Custom Compiler Taskdefs -->
+  <property name="javac2.home" value="${idea.home}/lib"/>
+  <path id="javac2.classpath">
+    <pathelement location="${javac2.home}/javac2.jar"/>
+    <pathelement location="${javac2.home}/jdom.jar"/>
+    <pathelement location="${javac2.home}/asm.jar"/>
+    <pathelement location="${javac2.home}/asm-commons.jar"/>
+    <pathelement location="${javac2.home}/jgoodies-forms.jar"/>
+  </path>
+  <target name="register.custom.compilers">
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="javac2.classpath"/>
+    <taskdef name="instrumentIdeaExtensions" classname="com.intellij.ant.InstrumentIdeaExtensions" classpathref="javac2.classpath"/>
+    <property name="grooovyc.task.sdk" value="library.groovy.classpath"/>
+    <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="${grooovyc.task.sdk}"/>
+  </target>
   
-
-  <!-- Application Server Libraries -->
-
-  <!-- Custom Compiler Taskdefs -->
-  <property name="grooovyc.task.sdk" value="library.gant.classpath"/>
-  <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="${grooovyc.task.sdk}"/>
-
   <!-- Modules -->
   
   
@@ -119,8 +132,8 @@
   </path>
   
   <path id="antlayout.runtime.module.classpath">
-    <pathelement location="${antlayout.output.dir}"/>
     <pathelement location="${antlayout.testoutput.dir}"/>
+    <pathelement location="${antlayout.output.dir}"/>
     <path refid="library.ant.classpath"/>
   </path>
   
@@ -142,12 +155,12 @@
   
   <target name="compile.module.antlayout" depends="compile.module.antlayout.production,compile.module.antlayout.tests" description="Compile module antlayout"/>
   
-  <target name="compile.module.antlayout.production" description="Compile module antlayout; production classes">
+  <target name="compile.module.antlayout.production" depends="register.custom.compilers" description="Compile module antlayout; production classes">
     <mkdir dir="${antlayout.output.dir}"/>
     <javac2 destdir="${antlayout.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true">
       <compilerarg line="${compiler.args.antlayout}"/>
       <bootclasspath refid="antlayout.module.bootclasspath"/>
-      <classpath refid="antlayout.module.classpath"/>
+      <classpath refid="antlayout.module.production.classpath"/>
       <src refid="antlayout.module.sourcepath"/>
       <patternset refid="excluded.from.compilation.antlayout"/>
     </javac2>
@@ -160,7 +173,7 @@
     </copy>
   </target>
   
-  <target name="compile.module.antlayout.tests" depends="compile.module.antlayout.production" description="compile module antlayout; test classes" unless="skip.tests"/>
+  <target name="compile.module.antlayout.tests" depends="register.custom.compilers,compile.module.antlayout.production" description="compile module antlayout; test classes" unless="skip.tests"/>
   
   <target name="clean.module.antlayout" description="cleanup module">
     <delete dir="${antlayout.output.dir}"/>
@@ -202,15 +215,15 @@
     <pathelement location="${jps.output.dir}"/>
     <path refid="library.ant.classpath"/>
     <path refid="library.javac2.classpath"/>
-    <pathelement location="${antlayout.output.dir}"/>
     <pathelement location="${antlayout.testoutput.dir}"/>
+    <pathelement location="${antlayout.output.dir}"/>
     <path refid="library.junit.classpath"/>
     <path refid="library.gant.classpath"/>
   </path>
   
   <path id="jps.runtime.module.classpath">
-    <pathelement location="${jps.output.dir}"/>
     <pathelement location="${jps.testoutput.dir}"/>
+    <pathelement location="${jps.output.dir}"/>
     <path refid="library.ant.classpath"/>
     <path refid="library.javac2.classpath"/>
     <path refid="antlayout.runtime.module.classpath"/>
@@ -242,20 +255,20 @@
   
   <target name="compile.module.jps" depends="compile.module.jps.production,compile.module.jps.tests" description="Compile module jps"/>
   
-  <target name="compile.module.jps.production" depends="compile.module.antlayout" description="Compile module jps; production classes">
+  <target name="compile.module.jps.production" depends="register.custom.compilers,compile.module.antlayout" description="Compile module jps; production classes">
     <mkdir dir="${jps.output.dir}"/>
     <groovyc destdir="${jps.output.dir}" fork="yes">
       <src refid="jps.module.sourcepath"/>
       <classpath refid="jps.module.production.classpath"/>
       <patternset refid="excluded.from.compilation.jps"/>
-      <javac debug="${compiler.debug}" source="1.5" target="1.5">
+      <javac debug="${compiler.debug}">
         <compilerarg line="${compiler.args.jps}"/>
       </javac>
     </groovyc>
     <instrumentIdeaExtensions destdir="${jps.output.dir}">
       <compilerarg line="${compiler.args.jps}"/>
       <bootclasspath refid="jps.module.bootclasspath"/>
-      <classpath refid="jps.module.classpath"/>
+      <classpath refid="jps.module.production.classpath"/>
       <src refid="jps.module.sourcepath"/>
       <patternset refid="excluded.from.compilation.jps"/>
     </instrumentIdeaExtensions>
@@ -268,24 +281,20 @@
     </copy>
   </target>
   
-  <target name="compile.module.jps.tests" depends="compile.module.jps.production" description="compile module jps; test classes" unless="skip.tests">
+  <target name="compile.module.jps.tests" depends="register.custom.compilers,compile.module.jps.production" description="compile module jps; test classes" unless="skip.tests">
     <mkdir dir="${jps.testoutput.dir}"/>
-
     <groovyc destdir="${jps.testoutput.dir}" fork="yes">
       <src refid="jps.module.test.sourcepath"/>
       <classpath refid="jps.module.classpath"/>
       <patternset refid="excluded.from.compilation.jps"/>
-      <javac debug="${compiler.debug}" source="1.5" target="1.5">
+      <javac debug="${compiler.debug}">
         <compilerarg line="${compiler.args.jps}"/>
       </javac>
     </groovyc>
     <instrumentIdeaExtensions destdir="${jps.testoutput.dir}">
       <compilerarg line="${compiler.args.jps}"/>
+      <bootclasspath refid="jps.module.bootclasspath"/>
       <classpath refid="jps.module.classpath"/>
-      <classpath>
-        <path refid="jps.module.classpath"/>
-        <pathelement location="${jps.output.dir}"/>
-      </classpath>
       <src refid="jps.module.test.sourcepath"/>
       <patternset refid="excluded.from.compilation.jps"/>
     </instrumentIdeaExtensions>
@@ -303,13 +312,109 @@
     <delete dir="${jps.testoutput.dir}"/>
   </target>
   
+  
+  <!-- Module javaee -->
+  
+  <dirname property="module.javaee.basedir" file="${ant.file}"/>
+  
+  
+  
+  <property name="compiler.args.javaee" value="${compiler.args}"/>
+  
+  <property name="javaee.output.dir" value="${module.javaee.basedir}/out/production/javaee"/>
+  <property name="javaee.testoutput.dir" value="${module.javaee.basedir}/out/test/javaee"/>
+  
+  <path id="javaee.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="javaee.module.production.classpath">
+    <path refid="library.groovy.classpath"/>
+    <pathelement location="${jps.output.dir}"/>
+    <path refid="library.gant.classpath"/>
+  </path>
+  
+  <path id="javaee.runtime.production.module.classpath">
+    <pathelement location="${javaee.output.dir}"/>
+    <path refid="library.groovy.classpath"/>
+    <path refid="jps.runtime.production.module.classpath"/>
+    <path refid="library.gant.classpath"/>
+  </path>
+  
+  <path id="javaee.module.classpath">
+    <pathelement location="${javaee.output.dir}"/>
+    <path refid="library.groovy.classpath"/>
+    <pathelement location="${jps.testoutput.dir}"/>
+    <pathelement location="${jps.output.dir}"/>
+    <path refid="library.gant.classpath"/>
+  </path>
+  
+  <path id="javaee.runtime.module.classpath">
+    <pathelement location="${javaee.testoutput.dir}"/>
+    <pathelement location="${javaee.output.dir}"/>
+    <path refid="library.groovy.classpath"/>
+    <path refid="jps.runtime.module.classpath"/>
+    <path refid="library.gant.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.javaee">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.javaee">
+    <patternset refid="excluded.from.module.javaee"/>
+  </patternset>
+  
+  <path id="javaee.module.sourcepath">
+    <dirset dir="${module.javaee.basedir}/plugins/javaee">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.javaee" depends="compile.module.javaee.production,compile.module.javaee.tests" description="Compile module javaee"/>
+  
+  <target name="compile.module.javaee.production" depends="register.custom.compilers,compile.module.jps" description="Compile module javaee; production classes">
+    <mkdir dir="${javaee.output.dir}"/>
+    <groovyc destdir="${javaee.output.dir}" fork="yes">
+      <src refid="javaee.module.sourcepath"/>
+      <classpath refid="javaee.module.production.classpath"/>
+      <patternset refid="excluded.from.compilation.javaee"/>
+      <javac debug="${compiler.debug}">
+        <compilerarg line="${compiler.args.javaee}"/>
+      </javac>
+    </groovyc>
+    <instrumentIdeaExtensions destdir="${javaee.output.dir}">
+      <compilerarg line="${compiler.args.javaee}"/>
+      <bootclasspath refid="javaee.module.bootclasspath"/>
+      <classpath refid="javaee.module.production.classpath"/>
+      <src refid="javaee.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.javaee"/>
+    </instrumentIdeaExtensions>
+    
+    <copy todir="${javaee.output.dir}">
+      <fileset dir="${module.javaee.basedir}/plugins/javaee/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.javaee.tests" depends="register.custom.compilers,compile.module.javaee.production" description="compile module javaee; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.javaee" description="cleanup module">
+    <delete dir="${javaee.output.dir}"/>
+    <delete dir="${javaee.testoutput.dir}"/>
+  </target>
+  
   <target name="init" description="Build initialization">
     <!-- Perform any build initialization in this target -->
   </target>
   
-  <target name="clean" depends="clean.module.antlayout, clean.module.jps" description="cleanup all"/>
+  <target name="clean" depends="clean.module.antlayout, clean.module.jps, clean.module.javaee" description="cleanup all"/>
   
-  <target name="build.modules" depends="init, clean, compile.module.antlayout, compile.module.jps" description="build all modules"/>
+  <target name="build.modules" depends="init, clean, compile.module.antlayout, compile.module.jps, compile.module.javaee" description="build all modules"/>
   
   <target name="all" depends="build.modules" description="build all"/>
 </project>

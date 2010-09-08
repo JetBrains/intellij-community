@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="jps-sources">
+    <output-path>$PROJECT_DIR$/out/artifacts/jps_sources</output-path>
+    <root id="archive" name="jps_sources.zip">
+      <element id="dir-copy" path="$PROJECT_DIR$/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/plugins/javaee/src" />
+    </root>
+  </artifact>
+</component>
