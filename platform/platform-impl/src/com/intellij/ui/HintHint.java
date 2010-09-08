@@ -15,7 +15,10 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.ui.awt.RelativePoint;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -25,7 +28,8 @@ public class HintHint {
   private Component myOriginalComponent;
   private Point myOriginalPoint;
 
-  private boolean myStandardHint = false;
+  private boolean myAwtTooltip = false;
+  private Balloon.Position myPreferredPosition = Balloon.Position.below;
 
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
@@ -40,12 +44,61 @@ public class HintHint {
     myOriginalPoint = originalPoint;
   }
 
-  public HintHint setTreatAsStandard(boolean isStandard) {
-    myStandardHint = isStandard;
+  public HintHint setAwtTooltip(boolean awtTooltip) {
+    myAwtTooltip = awtTooltip;
     return this;
   }
 
-  public boolean isStandardHint() {
-    return myStandardHint;
+  public HintHint setPreferredPosition(Balloon.Position position) {
+    myPreferredPosition = position;
+    return this;
+  }
+
+  public boolean isAwtTooltip() {
+    return myAwtTooltip;
+  }
+
+  public Component getOriginalComponent() {
+    return myOriginalComponent;
+  }
+
+  public Point getOriginalPoint() {
+    return myOriginalPoint;
+  }
+
+  public RelativePoint getTargetPoint() {
+    return new RelativePoint(getOriginalComponent(), getOriginalPoint());
+  }
+
+  public Balloon.Position getPreferredPosition() {
+    return myPreferredPosition;
+  }
+
+  public Color getTextForeground() {
+    return getTooltipManager().getTextForeground(myAwtTooltip);
+  }
+
+  public Color getTextBackground() {
+    return getTooltipManager().getTextBackground(myAwtTooltip);
+  }
+
+  public boolean isOwnBorderAllowed() {
+    return getTooltipManager().isOwnBorderAllowed(myAwtTooltip);
+  }
+
+  public Color getBorderColor() {
+    return getTooltipManager().getBorderColor(myAwtTooltip);
+  }
+
+  public boolean isOpaqueAllowed() {
+    return getTooltipManager().isOpaqueAllowed(myAwtTooltip);
+  }
+
+  public Font getTextFont() {
+    return getTooltipManager().getTextFont(myAwtTooltip);
+  }
+
+  private IdeTooltipManager getTooltipManager() {
+    return IdeTooltipManager.getInstance();
   }
 }

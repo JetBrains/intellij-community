@@ -55,7 +55,7 @@ public class TooltipController {
                                      @NotNull final MouseEvent e,
                                      final TooltipRenderer tooltipObject,
                                      final boolean alignToRight,
-                                     @NotNull final TooltipGroup group) {
+                                     @NotNull final TooltipGroup group, final HintHint hintHint) {
     myTooltipAlarm.cancelAllRequests();
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
@@ -80,7 +80,7 @@ public class TooltipController {
             Project project = editor.getProject();
             if (project != null && !project.isOpen()) return;
             if (editor.getContentComponent().isShowing()) {
-              showTooltip(editor, p, tooltipObject, alignToRight, group, new HintHint(e));
+              showTooltip(editor, p, tooltipObject, alignToRight, group, hintHint);
             }
           }
         },

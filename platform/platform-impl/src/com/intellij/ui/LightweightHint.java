@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -30,6 +32,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.EventListener;
 import java.util.EventObject;
 
@@ -51,6 +54,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private boolean myCancelOnClickOutside;
   private boolean myCancelOnOtherWindowOpen;
   private boolean myResizable;
+
+  private IdeTooltip myCurrentIdeTooltip;
 
   public LightweightHint(@NotNull final JComponent component) {
     myComponent = component;
@@ -98,7 +103,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
                    final int x,
                    final int y,
                    final JComponent focusBackComponent,
-                   @NotNull HintHint hintInfo) {
+                   @NotNull final HintHint hintInfo) {
     myParentComponent = parentComponent;
 
     myFocusBackComponent = focusBackComponent;
@@ -108,17 +113,35 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     myComponent.registerKeyboardAction(myEscListener, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                                        JComponent.WHEN_IN_FOCUSED_WINDOW);
     final JLayeredPane layeredPane = parentComponent.getRootPane().getLayeredPane();
+
+    myComponent.validate();
+
     if (!myForceShowAsPopup &&
         (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y))))) {
       beforeShow();
       final Dimension preferredSize = myComponent.getPreferredSize();
-      final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
 
-      myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
-      layeredPane.add(myComponent, JLayeredPane.POPUP_LAYER);
 
-      myComponent.validate();
-      myComponent.repaint();
+      if (hintInfo.isAwtTooltip()) {
+        myCurrentIdeTooltip = IdeTooltipManager.getInstance().showTipNow(new IdeTooltip(hintInfo.getOriginalComponent(), hintInfo.getOriginalPoint(), myComponent) {
+          @Override
+          protected boolean canAutohideOn(MouseEvent me) {
+            return me.getComponent() != hintInfo.getOriginalComponent();
+          }
+
+          @Override
+          protected void onHidden() {
+            fireHintHidden();
+          }
+        });
+      } else {
+        final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
+        myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
+        layeredPane.add(myComponent, JLayeredPane.POPUP_LAYER);
+
+        myComponent.validate();
+        myComponent.repaint();
+      }
     }
     else {
       myIsRealPopup = true;
@@ -181,22 +204,28 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         myPopup = null;
       }
       else {
-        final JRootPane rootPane = myComponent.getRootPane();
-        if (rootPane != null) {
-          final Rectangle bounds = myComponent.getBounds();
-          final JLayeredPane layeredPane = rootPane.getLayeredPane();
+        if (myCurrentIdeTooltip != null) {
+          IdeTooltip tooltip = myCurrentIdeTooltip;
+          myCurrentIdeTooltip = null;
+          tooltip.hide();
+        } else {
+          final JRootPane rootPane = myComponent.getRootPane();
+          if (rootPane != null) {
+            final Rectangle bounds = myComponent.getBounds();
+            final JLayeredPane layeredPane = rootPane.getLayeredPane();
 
-          try {
-            if (myFocusBackComponent != null) {
-              LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
+            try {
+              if (myFocusBackComponent != null) {
+                LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
+              }
+              layeredPane.remove(myComponent);
             }
-            layeredPane.remove(myComponent);
-          }
-          finally {
-            LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-          }
+            finally {
+              LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
+            }
 
-          layeredPane.repaint(bounds.x, bounds.y, bounds.width, bounds.height);
+            layeredPane.repaint(bounds.x, bounds.y, bounds.width, bounds.height);
+          }
         }
       }
     }

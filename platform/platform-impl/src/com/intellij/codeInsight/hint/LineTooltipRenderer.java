@@ -57,7 +57,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     myCurrentWidth = width;
   }
 
-  public LightweightHint show(final Editor editor, final Point p, final boolean alignToRight, final TooltipGroup group, final HintHint hintInfo) {
+  public LightweightHint show(final Editor editor, final Point p, final boolean alignToRight, final TooltipGroup group, final HintHint hintHint) {
     if (myText == null) return null;
 
     //setup text
@@ -65,7 +65,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     final boolean expanded = myCurrentWidth > 0 && dressDescription(editor);
 
     //pane
-    final JEditorPane pane = initPane(myText);
+    final JEditorPane pane = initPane(myText, hintHint);
     pane.setCaretPosition(0);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final JComponent contentComponent = editor.getContentComponent();
@@ -116,8 +116,16 @@ public class LineTooltipRenderer implements TooltipRenderer {
     pane.setMinimumSize(new Dimension(width, height));
     pane.setPreferredSize(new Dimension(width, height));
 
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
+    scrollPane.setOpaque(hintHint.isOpaqueAllowed());
+    scrollPane.getViewport().setOpaque(hintHint.isOpaqueAllowed());
+
+    scrollPane.setBackground(hintHint.getTextBackground());
+    scrollPane.getViewport().setBackground(hintHint.getTextBackground());
+
+    scrollPane.setViewportBorder(null);
 
     final Ref<AnAction> anAction = new Ref<AnAction>();
     final LightweightHint hint = new LightweightHint(scrollPane) {
@@ -139,7 +147,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
         if (myCurrentWidth > 0) {
           stripDescription();
         }
-        createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()).show(editor, new Point(p.x -3, p.y -3), false, group, hintInfo);
+        createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()).show(editor, new Point(p.x -3, p.y -3), false, group, hintHint);
       }
     });
 
@@ -169,7 +177,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
             }
             stripDescription();
             hint.hide();
-            createRenderer(myText, 0).show(editor, new Point(p.x - 3, p.y - 3), false, group, hintInfo);
+            createRenderer(myText, 0).show(editor, new Point(p.x - 3, p.y - 3), false, group, hintHint);
           }
         }
       }
@@ -195,7 +203,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     hintManager.showEditorHint(hint, editor, p,
                                HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_OTHER_HINT |
-                               HintManagerImpl.HIDE_BY_SCROLLING, 0, false, hintInfo);
+                               HintManagerImpl.HIDE_BY_SCROLLING, 0, false, hintHint);
     return hint;
   }
 
@@ -234,19 +242,25 @@ public class LineTooltipRenderer implements TooltipRenderer {
   protected boolean dressDescription(Editor editor) { return false; }
   protected void stripDescription() {}
 
-  static JEditorPane initPane(@NonNls String text) {
-    text = "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + getHtmlBody(text) + "</body></html>";
+  static JEditorPane initPane(@NonNls String text, HintHint hintHint) {
+    text = "<html><head>" + UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground()) + "</head><body>" + getHtmlBody(text) + "</body></html>";
     final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text);
     pane.setEditable(false);
-    pane.setBorder(
-      BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(Color.black),
-        BorderFactory.createEmptyBorder(0, 5, 0, 5)
-      )
-    );
-    pane.setForeground(Color.black);
-    pane.setBackground(HintUtil.INFORMATION_COLOR);
-    pane.setOpaque(true);
+
+    if (hintHint.isOwnBorderAllowed()) {
+      pane.setBorder(
+        BorderFactory.createCompoundBorder(
+          BorderFactory.createLineBorder(hintHint.getBorderColor()),
+          BorderFactory.createEmptyBorder(0, 5, 0, 5)
+        )
+      );
+    } else {
+      pane.setBorder(null);
+    }
+
+    pane.setOpaque(hintHint.isOpaqueAllowed());
+    pane.setBackground(hintHint.getTextBackground());
+
     return pane;
   }
 

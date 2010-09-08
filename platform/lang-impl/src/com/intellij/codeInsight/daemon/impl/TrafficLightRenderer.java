@@ -267,6 +267,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     text += getMessageByRoots(status.noInspectionRoots, status.rootsNumber, "no.inspections.performed");
     text += HTML_FOOTER;
 
+    text = text.replaceAll(" ", "&nbsp;");
+
     return text;
   }
 

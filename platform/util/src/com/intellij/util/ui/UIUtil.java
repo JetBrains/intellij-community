@@ -22,6 +22,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -1005,7 +1006,12 @@ public class UIUtil {
 
   @NonNls
   public static String getCssFontDeclaration(final Font font) {
-    return "<style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style>";
+    return getCssFontDeclaration(font, null);
+  }
+
+  @NonNls
+  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor) {
+    return "<style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + " } </style>";
   }
 
   public static boolean isWinLafOnVista() {

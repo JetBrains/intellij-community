@@ -39,8 +39,10 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -134,7 +136,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (highlighters.isEmpty()) return false;
     TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
     if (bigRenderer != null) {
-      showTooltip(e, bigRenderer);
+      showTooltip(e, bigRenderer, new HintHint(e));
       return true;
     }
     return false;
@@ -555,7 +557,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (e.getY() < buttonHeight && myErrorStripeRenderer != null) {
         String tooltipMessage = myErrorStripeRenderer.getTooltipMessage();
         if (tooltipMessage != null) {
-          showTooltip(e, myTooltipRendererProvider.calcTooltipRenderer(tooltipMessage));
+          showTooltip(e, myTooltipRendererProvider.calcTooltipRenderer(tooltipMessage), new HintHint(e).setAwtTooltip(true).setPreferredPosition(
+            Balloon.Position.atLeft));
         }
         return;
       }
@@ -602,11 +605,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject) {
+  private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject, HintHint hintHint) {
     TooltipController tooltipController = TooltipController.getInstance();
     tooltipController.showTooltipByMouseMove(myEditor, e, tooltipObject,
                                              myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
-                                             ERROR_STRIPE_TOOLTIP_GROUP);
+                                             ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
   }
 
   private ErrorStripeListener[] getCachedErrorMarkerListeners() {
