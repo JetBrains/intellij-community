@@ -45,4 +45,8 @@ public interface FoldingModelEx extends FoldingModel {
 
   @Nullable
   FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group);
+
+  boolean addListener(@NotNull FoldingListener listener);
+
+  boolean removeListener(@NotNull FoldingListener listener);
 }

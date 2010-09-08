@@ -24,17 +24,10 @@ import org.jetbrains.annotations.NotNull;
 */
 public class MockEditorTextRepresentationHelper implements EditorTextRepresentationHelper {
 
-  public static final int DEFAULT_TAB_SIZE_IN_COLUMNS  = 4;
-  public static final int DEFAULT_SPACE_SIZE_IN_PIXELS = 7;
-
   private final int mySpaceSizeInPixels;
   private final int myTabSizeInColumns;
 
-  public MockEditorTextRepresentationHelper() {
-    this(DEFAULT_SPACE_SIZE_IN_PIXELS, DEFAULT_TAB_SIZE_IN_COLUMNS);
-  }
-
-  MockEditorTextRepresentationHelper(int spaceSizeInPixels, int tabSizeInColumns) {
+  public MockEditorTextRepresentationHelper(int spaceSizeInPixels, int tabSizeInColumns) {
     mySpaceSizeInPixels = spaceSizeInPixels;
     myTabSizeInColumns = tabSizeInColumns;
   }
@@ -47,7 +40,13 @@ public class MockEditorTextRepresentationHelper implements EditorTextRepresentat
   public int toVisualColumnSymbolsNumber(@NotNull CharSequence text, int start, int end, int x) {
     int result = 0;
     for (int i = start; i < end; i++) {
-      int width = charWidth(text.charAt(i), x);
+      char c = text.charAt(i);
+      if (c == '\n') {
+        result = 0;
+        x = 0;
+        continue;
+      }
+      int width = charWidth(c, x);
       result += width / mySpaceSizeInPixels;
       if (width % mySpaceSizeInPixels > 0) {
         result++;

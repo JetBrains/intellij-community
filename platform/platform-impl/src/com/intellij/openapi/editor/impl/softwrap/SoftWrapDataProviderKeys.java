@@ -15,23 +15,21 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
-
 /**
- * //TODO den remove
- * Common place to store soft wrap-related constants.
+ * {@link CompositeDataProvider} defines a generic infrastructure for combining multiple {@link DataProvider}s to the
+ * single compound entity. But it should be possible to distinguish the source of
+ * {@link CompositeDataProvider#getData() every data} returned from it.
+ * <p/>
+ * Current enum defines types of sources which data is used during soft wraps calculation.
  *
  * @author Denis Zhdanov
- * @since Aug 23, 2010 6:16:23 PM
+ * @since Aug 31, 2010 12:23:04 PM
  */
-public class SoftWrapConstants {
+public enum SoftWrapDataProviderKeys {
 
-  /** {@link PrioritizedDocumentListener#getPriority() document listener's priority} to use with {@link SoftWrapDocumentChangeManager} */
-  public static final int DOCUMENT_CHANGE_LISTENER_PRIORITY = 5;
-
-  /** {@link PrioritizedDocumentListener#getPriority() document listener's priority} to use with {@link SoftWrapApplianceManagerAAA} */
-  public static final int SOFT_WRAP_APPLIANCE_LISTENER_PRIORITY = 4;
-
-  private SoftWrapConstants() {
-  }
+  // Please note that declaration order pays significant role here. It defines processing order, i.e. soft wraps are processed before,
+  // say, collapsed fold regions located at the same offset.
+  SOFT_WRAP,
+  COLLAPSED_FOLDING,
+  TABULATION
 }

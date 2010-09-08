@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.editor.textarea;
 
+import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.SoftWrapModel;
-import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.VisualPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,24 +37,24 @@ public class TextComponentSoftWrapModel implements SoftWrapModel {
 
   @Nullable
   @Override
-  public TextChange getSoftWrap(int offset) {
+  public SoftWrap getSoftWrap(int offset) {
     return null;
   }
 
   @NotNull
   @Override
-  public List<? extends TextChange> getSoftWrapsForLine(int documentLine) {
+  public List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
     return Collections.emptyList();
   }
 
   @NotNull
   @Override
-  public List<? extends TextChange> getSoftWrapsForRange(int start, int end) {
+  public List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
     return Collections.emptyList();
   }
 
   @Override
-  public boolean isVisible(TextChange softWrap) {
+  public boolean isVisible(SoftWrap softWrap) {
     return false;
   }
 
@@ -73,12 +73,6 @@ public class TextComponentSoftWrapModel implements SoftWrapModel {
   }
 
   @Override
-  public int getSoftWrapIndentWidthInPixels(@NotNull TextChange softWrap) {
-    return 0;
-  }
-
-  @Override
-  public int getSoftWrapIndentWidthInColumns(@NotNull TextChange softWrap) {
-    return 0;
+  public void release() {
   }
 }

@@ -66,10 +66,16 @@ public class DefaultLineWrapPositionStrategy implements LineWrapPositionStrategy
       return endOffset;
     }
 
+    // Normalization.
     int maxPreferredOffsetToUse = maxPreferredOffset >= endOffset ? endOffset - 1 : maxPreferredOffset;
+    maxPreferredOffsetToUse = maxPreferredOffsetToUse < startOffset ? startOffset : maxPreferredOffsetToUse;
+
     // Try to find target offset that is not greater than preferred position.
     for (int i = maxPreferredOffsetToUse; i > startOffset; i--) {
       char c = text.charAt(i);
+      if (c == '\n') {
+        return i + 1;
+      }
 
       if (WHITE_SPACES.contains(c)) {
         return i < maxPreferredOffsetToUse ? i + 1 : i;
@@ -100,6 +106,10 @@ public class DefaultLineWrapPositionStrategy implements LineWrapPositionStrategy
     // Try to find target offset that is greater than preferred position.
     for (int i = maxPreferredOffsetToUse + 1; i < endOffset; i++) {
       char c = text.charAt(i);
+      if (c == '\n') {
+        return i + 1;
+      }
+
       if (WHITE_SPACES.contains(c)) {
         return i;
       }
@@ -120,7 +130,8 @@ public class DefaultLineWrapPositionStrategy implements LineWrapPositionStrategy
         return i;
       }
     }
-    return maxPreferredOffset;
+
+    return allowToBeyondMaxPreferredOffset ? endOffset : maxPreferredOffset;
   }
 
   private static boolean isIdSymbol(char c) {

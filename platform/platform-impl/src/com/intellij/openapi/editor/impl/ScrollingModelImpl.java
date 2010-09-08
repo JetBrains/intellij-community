@@ -142,12 +142,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   private Point calcOffsetsToScroll(LogicalPosition pos, ScrollType scrollType, Rectangle viewRect) {
-    // There is a possible case that the user opens huge document with many number of soft-wrapped line.
-    // Suppose that he or she wants to move viewport to such a logical position that many document lines between current
-    // viewport position and the target one are not displayed before. That means that we can't be sure about vertical offset
-    // to be applied to the viewport. Hence, we ask soft wrap model to roughly define soft wraps on a trail.
     LogicalPosition firstVisibleLineStart = myEditor.xyToLogicalPosition(viewRect.getLocation());
-    myEditor.getSoftWrapModel().defineApproximateSoftWraps(firstVisibleLineStart.line, pos.line);
 
     Point targetLocation = myEditor.logicalPositionToXY(pos);
 

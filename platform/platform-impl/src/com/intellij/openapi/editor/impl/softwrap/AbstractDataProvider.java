@@ -15,23 +15,33 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * //TODO den remove
- * Common place to store soft wrap-related constants.
+ * Abstract super class for {@link DataProvider} implementations that use the same key all the time.
  *
  * @author Denis Zhdanov
- * @since Aug 23, 2010 6:16:23 PM
+ * @since Aug 31, 2010 12:19:32 PM
  */
-public class SoftWrapConstants {
+public abstract class AbstractDataProvider<K extends Comparable<? super K>, V> implements DataProvider<K, V> {
 
-  /** {@link PrioritizedDocumentListener#getPriority() document listener's priority} to use with {@link SoftWrapDocumentChangeManager} */
-  public static final int DOCUMENT_CHANGE_LISTENER_PRIORITY = 5;
+  private final K myKey;
 
-  /** {@link PrioritizedDocumentListener#getPriority() document listener's priority} to use with {@link SoftWrapApplianceManagerAAA} */
-  public static final int SOFT_WRAP_APPLIANCE_LISTENER_PRIORITY = 4;
-
-  private SoftWrapConstants() {
+  public AbstractDataProvider(K key) {
+    myKey = key;
   }
+
+  @Nullable
+  @Override
+  public Pair<K, V> getData() {
+    V data = doGetData();
+    return data == null ? null : new Pair<K, V>(myKey, data);
+  }
+
+  /**
+   * @return    current data
+   */
+  @Nullable
+  protected abstract V doGetData();
 }

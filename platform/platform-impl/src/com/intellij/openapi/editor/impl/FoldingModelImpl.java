@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -42,9 +43,14 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
+
+  private final Set<FoldingListener> myListeners = new CopyOnWriteArraySet<FoldingListener>();
+
   private boolean myIsFoldingEnabled;
   private final EditorImpl myEditor;
   private final FoldRegionsTree myFoldTree;
@@ -264,6 +270,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myFoldRegionsProcessed = true;
     ((FoldRegionImpl) region).setExpandedInternal(true);
+    notifyListenersOnFoldRegionStateChange(region);
   }
 
   public void collapseFoldRegion(FoldRegion region) {
@@ -295,6 +302,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myFoldRegionsProcessed = true;
     ((FoldRegionImpl) region).setExpandedInternal(false);
+    notifyListenersOnFoldRegionStateChange(region);
   }
 
   private void notifyBatchFoldingProcessingDone() {
@@ -418,5 +426,21 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     region.registerInDocument();
     LOG.assertTrue(region.isValid());
     return region;
+  }
+
+  @Override
+  public boolean addListener(@NotNull FoldingListener listener) {
+    return myListeners.add(listener);
+  }
+
+  @Override
+  public boolean removeListener(@NotNull FoldingListener listener) {
+    return myListeners.remove(listener);
+  }
+
+  private void notifyListenersOnFoldRegionStateChange(@NotNull FoldRegion foldRegion) {
+    for (FoldingListener listener : myListeners) {
+      listener.onFoldRegionStateChange(foldRegion);
+    }
   }
 }

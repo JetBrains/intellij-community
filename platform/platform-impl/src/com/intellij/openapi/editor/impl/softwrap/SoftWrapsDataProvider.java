@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.ex;
+package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.SoftWrap;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Defines a contract for the callbacks for soft wraps management notifications (addition/removal).
+ * {@link DataProvider} implementation that exposes information about {@link SoftWrap soft wraps}.
+ * <p/>
+ * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Jul 8, 2010 6:50:17 PM
+ * @since Aug 31, 2010 12:18:49 PM
  */
-public interface SoftWrapChangeListener {
+public class SoftWrapsDataProvider extends AbstractListBasedDataProvider<SoftWrapDataProviderKeys, SoftWrapImpl> {
 
-  /**
-   * This method is assumed to be called every new soft wrap is registered.
-   *
-   * @param softWrap   newly registered soft wrap
-   */
-  void softWrapAdded(@NotNull SoftWrap softWrap);
+  @SuppressWarnings({"unchecked"})
+  public SoftWrapsDataProvider(@NotNull SoftWrapsStorage storage) {
+    super(SoftWrapDataProviderKeys.SOFT_WRAP, storage.getSoftWraps());
+  }
 
-  /**
-   * This method is assumed to be called every time soft wrap(s) is removed.
-   */
-  void softWrapsRemoved();
+  @Override
+  protected int getSortingKey(@NotNull SoftWrapImpl data) {
+    return data.getStart();
+  }
 }

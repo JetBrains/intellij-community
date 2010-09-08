@@ -17,8 +17,8 @@ package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * //TODO den remove
+ *
  * Encapsulates the logic of performing necessary changes on soft wraps during target document change.
  *
  * @author Denis Zhdanov
@@ -51,7 +53,7 @@ public class SoftWrapDocumentChangeManager implements PrioritizedDocumentListene
    * @return          <code>true</code> if given offset points to soft wrap that was made hard wrap; <code>false</code> otherwise
    */
   public boolean makeHardWrap(int offset) {
-    TextChangeImpl softWrap = myStorage.getSoftWrap(offset);
+    SoftWrap softWrap = myStorage.getSoftWrap(offset);
     if (softWrap == null) {
       return false;
     }
@@ -101,13 +103,13 @@ public class SoftWrapDocumentChangeManager implements PrioritizedDocumentListene
   }
 
   private void markSoftWrapsForDeletion(int startOffset, int endOffset) {
-    List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
+    List<SoftWrapImpl> softWraps = myStorage.getSoftWraps();
     int index = myStorage.getSoftWrapIndex(startOffset);
     if (index < 0) {
       index = -index - 1;
     }
     for (int i = index; i < softWraps.size(); i++) {
-      TextChangeImpl softWrap = softWraps.get(i);
+      SoftWrapImpl softWrap = softWraps.get(i);
       if (softWrap.getStart() >= endOffset) {
         break;
       }
@@ -116,7 +118,7 @@ public class SoftWrapDocumentChangeManager implements PrioritizedDocumentListene
   }
 
   private void applyDocumentChangeDiff(DocumentEvent event) {
-    List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
+    List<SoftWrapImpl> softWraps = myStorage.getSoftWraps();
     
     // We use 'offset + 1' here because soft wrap is represented before the document symbol at the same offset, hence, document
     // modification at particular offset doesn't affect soft wrap registered for the same offset.
@@ -127,7 +129,7 @@ public class SoftWrapDocumentChangeManager implements PrioritizedDocumentListene
 
     int diff = event.getNewLength() - event.getOldLength();
     for (int i = index; i < softWraps.size(); i++) {
-      TextChangeImpl softWrap = softWraps.get(i);
+      SoftWrapImpl softWrap = softWraps.get(i);
       if (mySoftWrapsToRemoveIndices.contains(i)) {
         continue;
       }
@@ -135,7 +137,7 @@ public class SoftWrapDocumentChangeManager implements PrioritizedDocumentListene
       // Process only soft wraps not affected by the document change. E.g. there is a possible case that whole document text
       // is replaced, hence, all registered soft wraps are affected by that and no offset advance should be performed.
       if (softWrap.getStart() >= event.getOffset() + event.getOldLength()) {
-        softWrap.advance(diff);
+        softWrap.getChange().advance(diff);
       }
     }
   }

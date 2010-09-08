@@ -39,7 +39,9 @@ public class TextBasedSoftWrapPainter implements SoftWrapPainter {
 
   private final Map<SoftWrapDrawingType, char[]> mySymbols = new EnumMap<SoftWrapDrawingType, char[]>(SoftWrapDrawingType.class);
   private final Map<SoftWrapDrawingType, FontInfo> myFonts = new EnumMap<SoftWrapDrawingType, FontInfo>(SoftWrapDrawingType.class);
-  private final Map<SoftWrapDrawingType, Integer> myWidths = new EnumMap<SoftWrapDrawingType, Integer>(SoftWrapDrawingType.class);
+
+  /** Use array here because profiling indicates that using EnumMap here gives significant performance degradation. */
+  private final int[] myWidths = new int[SoftWrapDrawingType.values().length];
   private final Map<SoftWrapDrawingType, Integer> myVGaps = new EnumMap<SoftWrapDrawingType, Integer>(SoftWrapDrawingType.class);
 
   private final TextDrawingCallback myDrawingCallback;
@@ -77,7 +79,7 @@ public class TextBasedSoftWrapPainter implements SoftWrapPainter {
 
   @Override
   public int getMinDrawingWidth(@NotNull SoftWrapDrawingType drawingType) {
-    return myWidths.get(drawingType);
+    return myWidths[drawingType.ordinal()];
   }
 
   @Override
@@ -107,7 +109,7 @@ public class TextBasedSoftWrapPainter implements SoftWrapPainter {
       mySymbols.put(entry.getKey(), buffer);
       myFonts.put(entry.getKey(), fontInfo);
       FontMetrics metrics = component.getFontMetrics(fontInfo.getFont());
-      myWidths.put(entry.getKey(), metrics.charWidth(buffer[0]));
+      myWidths[entry.getKey().ordinal()] = metrics.charWidth(buffer[0]);
       int vGap = metrics.getDescent();
       myVGaps.put(entry.getKey(), vGap);
     }

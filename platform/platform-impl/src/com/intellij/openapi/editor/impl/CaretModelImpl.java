@@ -221,7 +221,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
             newColumnNumber = myEditor.offsetToVisualPosition(offset).column;
           }
           else {
-            TextChange softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset + 1);
+            SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset + 1);
             // There is a possible case that tabulation symbol is the last document symbol represented on a visual line before
             // soft wrap. We can't just use column from 'offset + 1' because it would point on a next visual line.
             if (softWrap == null) {
@@ -533,8 +533,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     int y = myEditor.visualPositionToXY(visualPosition).y;
     int lineHeight = myEditor.getLineHeight();
     int height = lineHeight;
-    List<? extends TextChange> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
-    for (TextChange softWrap : softWraps) {
+    List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
+    for (SoftWrap softWrap : softWraps) {
       height += StringUtil.countNewLines(softWrap.getText()) * lineHeight;
     }
 

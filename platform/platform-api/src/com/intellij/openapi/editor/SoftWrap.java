@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.ex;
-
-import com.intellij.openapi.editor.SoftWrap;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.openapi.editor;
 
 /**
- * Defines a contract for the callbacks for soft wraps management notifications (addition/removal).
+ * Defines common interface for <code>'soft wrap'</code>, i.e. for virtual line break that doesn't present at actual file on a disk
+ * but is used exclusively during document representation.
  *
  * @author Denis Zhdanov
- * @since Jul 8, 2010 6:50:17 PM
+ * @since Aug 30, 2010 6:07:00 PM
  */
-public interface SoftWrapChangeListener {
+public interface SoftWrap extends TextChange {
 
   /**
-   * This method is assumed to be called every new soft wrap is registered.
-   *
-   * @param softWrap   newly registered soft wrap
+   * @return    number of columns between current soft wrap end and first column on a visual line
    */
-  void softWrapAdded(@NotNull SoftWrap softWrap);
+  int getIndentInColumns();
 
   /**
-   * This method is assumed to be called every time soft wrap(s) is removed.
+   * @return    number of pixels between current soft wrap end and first column on a visual line
    */
-  void softWrapsRemoved();
+  int getIndentInPixels();
 }

@@ -15,26 +15,21 @@
  */
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.FoldRegion;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Defines a contract for the callbacks for soft wraps management notifications (addition/removal).
+ * Defines common contract for clients interested in folding processing.
  *
  * @author Denis Zhdanov
- * @since Jul 8, 2010 6:50:17 PM
+ * @since Sep 8, 2010 11:20:28 AM
  */
-public interface SoftWrapChangeListener {
+public interface FoldingListener {
 
   /**
-   * This method is assumed to be called every new soft wrap is registered.
+   * Informs that <code>'collapsed'</code> state of given fold region is just changed.
    *
-   * @param softWrap   newly registered soft wrap
+   * @param region    fold region that is just collapsed or expanded
    */
-  void softWrapAdded(@NotNull SoftWrap softWrap);
-
-  /**
-   * This method is assumed to be called every time soft wrap(s) is removed.
-   */
-  void softWrapsRemoved();
+  void onFoldRegionStateChange(@NotNull FoldRegion region);
 }

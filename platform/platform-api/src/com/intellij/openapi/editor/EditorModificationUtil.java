@@ -249,12 +249,14 @@ public class EditorModificationUtil {
 
     int caretOffset = caretModel.getOffset();
     int anchorLineEndOffset = document.getLineEndOffset(lineNumber);
-    List<? extends TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logicalPosition.line);
-    for (TextChange softWrap : softWraps) {
+    List<? extends SoftWrap> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logicalPosition.line);
+    for (SoftWrap softWrap : softWraps) {
       if (!editor.getSoftWrapModel().isVisible(softWrap)) {
         continue;
       }
-      if (softWrap.getStart() == caretOffset) {
+
+      int softWrapOffset = softWrap.getStart();
+      if (softWrapOffset == caretOffset) {
         // There are two possible situations:
         //     *) caret is located on a visual line before soft wrap-introduced line feed;
         //     *) caret is located on a visual line after soft wrap-introduced line feed;
@@ -264,17 +266,17 @@ public class EditorModificationUtil {
           return visualCaret.column - position.column - 1;
         }
       }
-      if (softWrap.getStart() > caretOffset) {
-        anchorLineEndOffset = softWrap.getStart();
+      if (softWrapOffset > caretOffset) {
+        anchorLineEndOffset = softWrapOffset;
         break;
       }
 
       // Same offset corresponds to all soft wrap-introduced symbols, however, current method should behave differently in
       // situations when the caret is located just before the soft wrap and at the next visual line.
-      if (softWrap.getStart() == caretOffset) {
+      if (softWrapOffset == caretOffset) {
         boolean visuallyBeforeSoftWrap = caretModel.getVisualPosition().line < editor.offsetToVisualPosition(caretOffset).line;
         if (visuallyBeforeSoftWrap) {
-          anchorLineEndOffset = softWrap.getStart();
+          anchorLineEndOffset = softWrapOffset;
           break;
         }
       }

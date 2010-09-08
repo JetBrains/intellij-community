@@ -123,7 +123,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     revalidateMarkup();
     repaint();
   }
-  
+
   public void paint(Graphics g) {
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
