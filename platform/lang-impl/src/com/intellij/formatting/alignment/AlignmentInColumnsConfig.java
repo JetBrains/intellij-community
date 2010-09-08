@@ -18,9 +18,10 @@ package com.intellij.formatting.alignment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-import java.util.*;
-
-import static java.util.Arrays.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Encapsulates information necessary for correct <code>'align in columns'</code> processing.
@@ -59,7 +60,7 @@ public class AlignmentInColumnsConfig {
                                   IElementType ... targetDeclarationTypes)
   {
     this(Collections.singleton(stopMultilineCheckElementTypes), whiteSpaceTokenTypes, commentTokenTypes, equalType,
-         asList(targetDeclarationTypes));
+         targetDeclarationTypes);
   }
 
   /**
@@ -96,13 +97,13 @@ public class AlignmentInColumnsConfig {
                                   TokenSet whiteSpaceTokenTypes,
                                   TokenSet commentTokenTypes,
                                   IElementType equalType,
-                                  Collection<IElementType> targetDeclarationTypes)
+                                  IElementType... targetDeclarationTypes)
   {
     myStopMultilineCheckElementTypes.addAll(stopMultilineCheckElementTypes);
     myWhiteSpaceTokenTypes = whiteSpaceTokenTypes;
     myCommentTokenTypes = commentTokenTypes;
     myEqualType = equalType;
-    myTargetDeclarationTypes.addAll(targetDeclarationTypes);
+    Collections.addAll(myTargetDeclarationTypes, targetDeclarationTypes);
   }
 
   /**
