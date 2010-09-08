@@ -47,6 +47,8 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
     };
   }
 
+  public void testNothing(){}
+
   @Test(dataProvider = "data")
   public void test(String path, String... results) throws Throwable {
     myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
