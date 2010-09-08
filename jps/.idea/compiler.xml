@@ -20,6 +20,7 @@
       <entry name="?*.dtd" />
       <entry name="?*.tld" />
       <entry name="?*.ftl" />
+      <entry name="/META-INF/services/?*" />
     </wildcardResourcePatterns>
     <annotationProcessing enabled="false" useClasspath="true" />
   </component>
@@ -28,11 +29,8 @@
     <option name="DEPRECATION" value="false" />
   </component>
   <component name="EclipseEmbeddedCompilerSettings">
-    <option name="DEBUGGING_INFO" value="true" />
     <option name="GENERATE_NO_WARNINGS" value="true" />
     <option name="DEPRECATION" value="false" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
 </project>
 

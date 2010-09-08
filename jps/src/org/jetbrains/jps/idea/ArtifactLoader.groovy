@@ -10,7 +10,8 @@ import org.jetbrains.jps.MacroExpander
 class ArtifactLoader {
   private final Project project
   private final MacroExpander macroExpander
-  private final String projectBasePath
+  private static ServiceLoader<LayoutElementTypeService> elementTypeLoader = ServiceLoader.load(LayoutElementTypeService.class)
+  private static Map<String, LayoutElementTypeService> elementTypes = null
 
   def ArtifactLoader(Project project, MacroExpander macroExpander) {
     this.macroExpander = macroExpander
@@ -49,11 +50,6 @@ class ArtifactLoader {
           project.warning("Error in '$artifactName' artifact: file '$jarPath' doesn't exist")
         }
         return new ExtractedDirectoryElement(jarPath: jarPath, pathInJar: pathInJar)
-      case "javaee-facet-resources":
-        return new JavaeeFacetResourcesElement(facetId: tag."@facet");
-      case "javaee-facet-classes":
-        String facetId = tag."@facet"
-        return new ModuleOutputElement(moduleName: facetId.substring(0, facetId.indexOf('/')))
       case "module-output":
         def name = tag."@name"
         if (project.modules[name] == null) {
@@ -63,7 +59,23 @@ class ArtifactLoader {
       case "library":
         return new LibraryFilesElement(libraryLevel: tag."@level", libraryName: tag."@name", moduleName: tag."@module-name");
     }
+
+    LayoutElementTypeService type = findType(id)
+    if (type != null) {
+      return type.createElement(project, tag, macroExpander)
+    }
+
     project.error("unknown element in '$artifactName' artifact: $id");
+  }
+
+  private LayoutElementTypeService findType(String typeId) {
+    if (elementTypes == null) {
+      elementTypes = [:]
+      elementTypeLoader.each {LayoutElementTypeService type ->
+        elementTypes[type.typeId] = type
+      }
+    }
+    return elementTypes[typeId]
   }
 
   List<LayoutElement> loadChildren(Node node, String artifactName) {

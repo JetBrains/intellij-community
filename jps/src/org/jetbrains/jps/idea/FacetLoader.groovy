@@ -1,20 +1,16 @@
 package org.jetbrains.jps.idea
 
-import org.jetbrains.jps.Module
 import org.jetbrains.jps.MacroExpander
+import org.jetbrains.jps.Module
 
-/**
+ /**
  * @author nik
  */
 class FacetLoader {
   private final Module module
   private final MacroExpander macroExpander
-  private static final Map<String, String> OUTPUT_PATHS = [
-          "web.xml": "WEB-INF",
-          "ejb-jar.xml": "META-INF",
-          "application.xml": "META-INF",
-          "context.xml": "META-INF"
-  ]
+  private static final ServiceLoader<FacetTypeService> facetTypeLoader = ServiceLoader.load(FacetTypeService.class)
+  private static Map<String, FacetTypeService> facetTypes = null
 
   def FacetLoader(Module module, MacroExpander macroExpander) {
     this.module = module
@@ -23,28 +19,24 @@ class FacetLoader {
 
 
   def loadFacets(Node facetManagerTag) {
-    def javaeeTypes = ["web", "ejb", "javaeeApplication"] as Set
     facetManagerTag.facet.each {Node facetTag ->
-      def type = facetTag."@type"
-      if (type in javaeeTypes) {
-        def facet = new JavaeeFacet(name: facetTag."@name")
-        facetTag.configuration?.descriptors?.deploymentDescriptor?.each {Node tag ->
-          def outputPath = OUTPUT_PATHS[tag."@name"]
-          if (outputPath == null) {
-            outputPath = type == "web" ? "WEB-INF" : "META-INF"
-          }
-          facet.descriptors << [path: urlToPath(tag."@url"), outputPath: outputPath]
-        }
-        facetTag.configuration?.webroots?.root?.each {Node tag ->
-          facet.webRoots << [path: urlToPath(tag."@url"), outputPath: tag."@relative"]
-        }
-        def id = "${module.name}/$type/${facet.name}"
+      def typeId = facetTag."@type"
+      FacetTypeService type = findFacetType(typeId)
+      if (type != null) {
+        def facet = type.createFacet(module, facetTag."@name", facetTag.configuration[0], macroExpander)
+        def id = "${module.name}/$typeId/${facet.name}"
         module.facets[id] = facet;
       }
     }
   }
 
-  def urlToPath(String url) {
-    return macroExpander.expandMacros(IdeaProjectLoader.pathFromUrl(url))
+  private static FacetTypeService findFacetType(String typeId) {
+    if (facetTypes == null) {
+      facetTypes = [:]
+      facetTypeLoader.each {FacetTypeService type ->
+        facetTypes[type.typeId] = type
+      }
+    }
+    return facetTypes[typeId]
   }
 }

@@ -1,4 +1,6 @@
-package org.jetbrains.jps.idea
+package org.jetbrains.jps.javaee
+
+import org.jetbrains.jps.idea.Facet
 
 /**
  * @author nik
