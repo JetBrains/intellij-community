@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/antLayout/antlayout.iml" filepath="$PROJECT_DIR$/antLayout/antlayout.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaee/javaee.iml" filepath="$PROJECT_DIR$/plugins/javaee/javaee.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/jpa/jpa.iml" filepath="$PROJECT_DIR$/plugins/jpa/jpa.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps.iml" filepath="$PROJECT_DIR$/jps.iml" />
     </modules>
   </component>
