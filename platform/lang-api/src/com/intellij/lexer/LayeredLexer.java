@@ -48,16 +48,16 @@ public class LayeredLexer extends DelegateLexer {
     super(baseLexer);
   }
 
-  public void registerSelfStoppingLayer(Lexer Lexer, IElementType[] startTokens, IElementType[] stopTokens) {
-    registerLayer(Lexer, startTokens);
-    mySelfStoppingLexers.add(Lexer);
-    myStopTokens.put(Lexer, stopTokens);
+  public void registerSelfStoppingLayer(Lexer lexer, IElementType[] startTokens, IElementType[] stopTokens) {
+    registerLayer(lexer, startTokens);
+    mySelfStoppingLexers.add(lexer);
+    myStopTokens.put(lexer, stopTokens);
   }
 
-  public void registerLayer(Lexer Lexer, IElementType... startTokens) {
+  public void registerLayer(Lexer lexer, IElementType... startTokens) {
     for (IElementType startToken : startTokens) {
       LOG.assertTrue(!myStartTokenToLayerLexer.containsKey(startToken));
-      myStartTokenToLayerLexer.put(startToken, Lexer);
+      myStartTokenToLayerLexer.put(startToken, lexer);
     }
   }
 
