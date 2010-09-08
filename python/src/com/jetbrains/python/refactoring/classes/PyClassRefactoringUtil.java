@@ -3,15 +3,22 @@ package com.jetbrains.python.refactoring.classes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.util.containers.*;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.actions.AddImportHelper;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.HashSet;
 
 /**
  * @author Dennis.Ushakov
@@ -170,5 +177,40 @@ public class PyClassRefactoringUtil {
       builder.append(white).append("pass");
     }
     return ignoreNoChanges || hasChanges ? builder.toString() : null;
+  }
+
+  public static void insertImport(PyClass target, PyClass newClass) {
+    if (PyBuiltinCache.getInstance(newClass).hasInBuiltins(newClass)) {
+      return;
+    }
+    final VirtualFile vFile = newClass.getContainingFile().getVirtualFile();
+    assert vFile != null;
+    final PsiFile file = target.getContainingFile();
+    if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
+      final String name = newClass.getQualifiedName();
+      AddImportHelper.addImportStatement(file, name, null);
+    } else {
+      AddImportHelper.addImportFrom(file, ResolveImportUtil.findShortestImportableName(target, vFile), newClass.getName());
+    }
+  }
+
+  public static Set<PyClass> rememberClassReferences(final List<PyFunction> methods) {
+    final HashSet<PyClass> result = new HashSet<PyClass>();
+    for (PyFunction method : methods) {
+      method.acceptChildren(new PyRecursiveElementVisitor() {
+        @Override
+        public void visitPyReferenceExpression(PyReferenceExpression node) {
+          super.visitPyReferenceExpression(node);
+          node.getReference();
+        }
+      });
+    }
+    return result;
+  }
+
+  public static void restoreImports(final PyClass target, final Set<PyClass> rememberedSet) {
+    for (PyClass clazz : rememberedSet) {
+      insertImport(target, clazz);
+    }
   }
 }
