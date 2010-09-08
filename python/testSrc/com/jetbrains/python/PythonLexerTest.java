@@ -154,6 +154,10 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:IDENTIFIER" , "Py:SPACE", "Py:IDENTIFIER");
   }
 
+  public void testIncompleteTripleQuotedString() {  // PY-1768
+    doTest("'''abc\nd", "Py:STRING_LITERAL");
+  }
+
   private static void doTest(String text, String... expectedTokens) {
     doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }
