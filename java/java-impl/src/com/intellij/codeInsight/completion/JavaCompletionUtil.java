@@ -883,12 +883,14 @@ public class JavaCompletionUtil {
       }
     }
 
-    JavaGlobalMemberNameCompletionContributor.completeStaticMembers(element).processMembersOfRegisteredClasses(matcher, new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        set.add(element);
-      }
-    });
+    if (javaReference instanceof PsiReferenceExpression && !((PsiReferenceExpression)javaReference).isQualified()) {
+      JavaGlobalMemberNameCompletionContributor.completeStaticMembers(element).processMembersOfRegisteredClasses(matcher, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          set.add(element);
+        }
+      });
+    }
 
     return set;
   }
