@@ -114,39 +114,81 @@ public class TestsUIUtil {
     String text;
     String balloonText;
     MessageType type;
-    if (root == null) {
-      balloonText = title = ExecutionBundle.message("test.not.started.progress.text");
-      text = "";
-      type = MessageType.WARNING;
-    } else{
-      List allTests = Filter.LEAF.select(root.getAllTests());
-      final List<AbstractTestProxy> failed = Filter.DEFECTIVE_LEAF.select(allTests);
-      int failedCount = failed.size();
-      final List<AbstractTestProxy> notStarted = Filter.NOT_PASSED.select(allTests);
-      notStarted.removeAll(failed);
-      int notStartedCount = notStarted.size();
-      int passedCount = allTests.size() - failedCount - notStartedCount;
-      if (failedCount > 0) {
-        title = ExecutionBundle.message("junit.runing.info.tests.failed.label");
-        text = passedCount + " passed, " + failedCount + " failed" + (notStartedCount > 0 ? ", " + notStartedCount + " not started" : "");
-        type = MessageType.ERROR;
-      }
-      else if (notStartedCount > 0) {
-        title = ExecutionBundle.message("junit.runing.info.failed.to.start.error.message");
-        text = passedCount + " passed, " + notStartedCount + " not started" ;
-        type = MessageType.ERROR;
-      }
-      else {
-        title = ExecutionBundle.message("junit.runing.info.tests.passed.label");
-        text = passedCount + " passed";
-        type = MessageType.INFO;
-      }
-      balloonText = title + ": " + text;
-    }
+    TestResultPresentation testResultPresentation = new TestResultPresentation(root).getPresentation();
+    type = testResultPresentation.getType();
+    balloonText = testResultPresentation.getBalloonText();
+    title = testResultPresentation.getTitle();
+    text = testResultPresentation.getText();
 
     if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
       toolWindowManager.notifyByBalloon(testRunDebugId, type, balloonText, null, null);
     }
     SystemNotifications.getInstance().notify("TestRunner", title, text);
+  }
+
+  public static String getTestSummary(AbstractTestProxy proxy) {
+    return new TestResultPresentation(proxy).getPresentation().getBalloonText();
+  }
+
+  private static class TestResultPresentation {
+    private AbstractTestProxy myRoot;
+    private String myTitle;
+    private String myText;
+    private String myBalloonText;
+    private MessageType myType;
+
+    public TestResultPresentation(AbstractTestProxy root) {
+      myRoot = root;
+    }
+
+    public String getTitle() {
+      return myTitle;
+    }
+
+    public String getText() {
+      return myText;
+    }
+
+    public String getBalloonText() {
+      return myBalloonText;
+    }
+
+    public MessageType getType() {
+      return myType;
+    }
+
+    public TestResultPresentation getPresentation() {
+      if (myRoot == null) {
+        myBalloonText = myTitle = ExecutionBundle.message("test.not.started.progress.text");
+        myText = "";
+        myType = MessageType.WARNING;
+      } else{
+        List allTests = Filter.LEAF.select(myRoot.getAllTests());
+        final List<AbstractTestProxy> failed = Filter.DEFECTIVE_LEAF.select(allTests);
+        int failedCount = failed.size();
+        final List<AbstractTestProxy> notStarted = Filter.NOT_PASSED.select(allTests);
+        notStarted.removeAll(failed);
+        int notStartedCount = notStarted.size();
+        int passedCount = allTests.size() - failedCount - notStartedCount;
+        if (failedCount > 0) {
+          myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
+          myText = passedCount + " passed, " + failedCount + " failed" + (notStartedCount > 0 ? ", " + notStartedCount + " not started" : "");
+          myType = MessageType.ERROR;
+        }
+        else if (notStartedCount > 0) {
+          myTitle = ExecutionBundle.message("junit.runing.info.failed.to.start.error.message");
+          myText = passedCount + " passed, " + notStartedCount + " not started" ;
+          myType = MessageType.ERROR;
+        }
+        else {
+          myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");
+          myText = passedCount + " passed";
+          myType = MessageType.INFO;
+        }
+        myBalloonText = myTitle + ": " + myText;
+      }
+      return this;
+    }
+
   }
 }

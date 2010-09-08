@@ -25,8 +25,8 @@ import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TableUtil;
+import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.ui.*;
 import com.intellij.ui.table.BaseTableView;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.config.Storage;
@@ -46,6 +46,8 @@ class StatisticsPanel extends JPanel implements DataProvider{
   private JUnitRunningModel myModel;
   private final TableView myTable;
   private final Storage.PropertiesComponentStorage myStorage = new Storage.PropertiesComponentStorage("junit_statistics_table_columns");
+  private SimpleColoredComponent myTotalLabel;
+  private SimpleColoredComponent myTimeLabel;
 
   public StatisticsPanel() {
     super(new BorderLayout(0, 0));
@@ -60,17 +62,30 @@ class StatisticsPanel extends JPanel implements DataProvider{
                         IdeActions.GROUP_TESTSTATISTICS_POPUP,
                         ActionPlaces.TESTSTATISTICS_VIEW_POPUP);
 //    add(myTestCaseInfo, BorderLayout.NORTH);
-    add(myTable, BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
+    final JPanel eastPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+
+    myTotalLabel = new SimpleColoredComponent();
+    eastPanel.add(myTotalLabel);
+
+    myTimeLabel = new SimpleColoredComponent();
+    eastPanel.add(myTimeLabel);
+
+    add(eastPanel, BorderLayout.SOUTH);
   }
 
   private void updateStatistics() {
     myTable.setVisible(true);
 //    myTestCaseInfo.setVisible(false);
+    TestProxy proxy = myCurrentTest;
     if (myCurrentTest.isLeaf() && myCurrentTest.getParent() != null) {
-      myChildInfo.updateStatistics(myCurrentTest.getParent());
-    } else{
-      myChildInfo.updateStatistics(myCurrentTest);
+      proxy = myCurrentTest.getParent();
     }
+    myChildInfo.updateStatistics(proxy);
+    myTotalLabel.clear();
+    myTotalLabel.append(TestsUIUtil.getTestSummary(proxy), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    myTimeLabel.clear();
+    myTimeLabel.append("Total time: " + Formatters.statisticsFor(proxy).getTime(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     final int idx = myChildInfo.getIndexOf(myCurrentTest);
     TableUtil.selectRows(myTable, new int[]{idx});
     TableUtil.scrollSelectionToVisible(myTable);
