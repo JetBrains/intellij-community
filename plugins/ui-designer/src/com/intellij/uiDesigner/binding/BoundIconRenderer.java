@@ -40,10 +40,10 @@ import java.util.List;
  * @author yole
  */
 public class BoundIconRenderer extends GutterIconRenderer {
-  private final PsiElement myElement;
+  @NotNull private final PsiElement myElement;
   private Icon myIcon;
 
-  public BoundIconRenderer(final PsiElement field) {
+  public BoundIconRenderer(@NotNull final PsiElement field) {
     myElement = field;
     if (myElement instanceof PsiField) {
       final PsiType type = ((PsiField)myElement).getType();
@@ -135,5 +135,25 @@ public class BoundIconRenderer extends GutterIconRenderer {
     }
     result.append("</body></html>");
     return result.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BoundIconRenderer that = (BoundIconRenderer)o;
+
+    if (!myElement.equals(that.myElement)) return false;
+    if (myIcon != null ? !myIcon.equals(that.myIcon) : that.myIcon != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myElement.hashCode();
+    result = 31 * result + (myIcon != null ? myIcon.hashCode() : 0);
+    return result;
   }
 }
