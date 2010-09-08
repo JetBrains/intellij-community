@@ -1,19 +1,14 @@
 package com.jetbrains.python.run;
 
+import com.intellij.openapi.components.ServiceManager;
+
 /**
  * @author yole
  */
-public class PyCommonOptionsFormFactory {
-  private static PyCommonOptionsFormFactory ourInstance = new PyCommonOptionsFormFactory();
-
-  private PyCommonOptionsFormFactory() {
-  }
-
+public abstract class PyCommonOptionsFormFactory {
   public static PyCommonOptionsFormFactory getInstance() {
-    return ourInstance;
+    return ServiceManager.getService(PyCommonOptionsFormFactory.class);
   }
 
-  public AbstractPyCommonOptionsForm createForm(AbstractPythonRunConfiguration runConfiguration) {
-    return new PyCommonOptionsForm(runConfiguration);
-  }
+  public abstract AbstractPyCommonOptionsForm createForm(AbstractPythonRunConfiguration runConfiguration);
 }

@@ -677,6 +677,18 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @Nullable
+  public static Sdk findSdkByPath(@Nullable String path) {
+    if (path != null) {
+      for (Sdk sdk : getAllSdks()) {
+        if (FileUtil.pathsEqual(path, sdk.getHomePath())) {
+          return sdk;
+        }
+      }
+    }
+    return null;
+  }
+
   public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     if (sdk != null) {
       String version = sdk.getVersionString();
@@ -694,7 +706,7 @@ public class PythonSdkType extends SdkType {
   public boolean isRootTypeApplicable(final OrderRootType type) {
     return type == OrderRootType.CLASSES;
   }
-  
+
 }
 
 class InvalidSdkException extends RuntimeException {

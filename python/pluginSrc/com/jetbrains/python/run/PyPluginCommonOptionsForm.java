@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-  public class PyCommonOptionsForm implements AbstractPyCommonOptionsForm {
+public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private TextFieldWithBrowseButton myWorkingDirectoryTextField;
   private EnvironmentVariablesComponent myEnvsComponent;
   private RawCommandLineEditor myInterpreterOptionsTextField;
@@ -34,7 +34,7 @@ import java.util.Map;
   private JPanel myMainPanel;
   private JRadioButton myUseSpecifiedSdkRadioButton;
 
-  public PyCommonOptionsForm(AbstractPythonRunConfiguration configuration) {
+  public PyPluginCommonOptionsForm(AbstractPythonRunConfiguration configuration) {
     // setting modules
     final List<Module> validModules = configuration.getValidModules();
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
@@ -103,10 +103,8 @@ import java.util.Map;
     final List<Sdk> allSdks = PythonSdkType.getAllSdks();
     Sdk selection = null;
     for (Sdk sdk : allSdks) {
-      if (sdk.getSdkType() instanceof PythonSdkType) {
-        if (FileUtil.pathsEqual(sdk.getHomePath(), sdkHome)) selection = sdk;
-        sdkList.add(sdk);
-      }
+      if (FileUtil.pathsEqual(sdk.getHomePath(), sdkHome)) selection = sdk;
+      sdkList.add(sdk);
     }
 
     myInterpreterComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
