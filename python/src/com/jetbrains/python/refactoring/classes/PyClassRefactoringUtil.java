@@ -181,12 +181,12 @@ public class PyClassRefactoringUtil {
   }
 
   public static void insertImport(PyClass target, PyClass newClass) {
-    if (PyBuiltinCache.getInstance(newClass).hasInBuiltins(newClass)) {
-      return;
-    }
-    final VirtualFile vFile = newClass.getContainingFile().getVirtualFile();
+    if (PyBuiltinCache.getInstance(newClass).hasInBuiltins(newClass)) return;
+    final PsiFile newFile = newClass.getContainingFile();
+    final VirtualFile vFile = newFile.getVirtualFile();
     assert vFile != null;
     final PsiFile file = target.getContainingFile();
+    if (newFile == file) return;
     if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
       final String name = newClass.getQualifiedName();
       AddImportHelper.addImportStatement(file, name, null);
@@ -195,8 +195,8 @@ public class PyClassRefactoringUtil {
     }
   }
 
-  public static Set<PyClass> rememberClassReferences(final List<PyFunction> methods) {
-    final HashSet<PyClass> result = new HashSet<PyClass>();
+  public static Set<PyClass> rememberClassReferences(final List<PyFunction> methods, final Collection<PyClass> extraClasses) {
+    final HashSet<PyClass> result = new HashSet<PyClass>(extraClasses);
     for (PyFunction method : methods) {
       method.acceptChildren(new PyRecursiveElementVisitor() {
         @Override
@@ -216,6 +216,12 @@ public class PyClassRefactoringUtil {
   public static void restoreImports(final PyClass target, final Set<PyClass> rememberedSet) {
     for (PyClass clazz : rememberedSet) {
       insertImport(target, clazz);
+    }
+  }
+
+  public static void restoreImports(final PyClass target, final PyClass origin, final Set<PyClass> rememberedSet) {
+    if (target.getContainingFile() != origin.getContainingFile()) {
+      restoreImports(target, rememberedSet);
     }
   }
 }

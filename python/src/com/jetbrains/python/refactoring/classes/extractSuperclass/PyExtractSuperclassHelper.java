@@ -63,8 +63,7 @@ public class PyExtractSuperclassHelper {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final Set<PyClass> rememberedSet = PyClassRefactoringUtil.rememberClassReferences(methods);
-            rememberedSet.addAll(extractedClasses);
+            final Set<PyClass> rememberedSet = PyClassRefactoringUtil.rememberClassReferences(methods, extractedClasses);
             final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
             final String text = PyClassRefactoringUtil.prepareClassText(clazz, elements, true, true, superBaseName) + "\n";
             final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
