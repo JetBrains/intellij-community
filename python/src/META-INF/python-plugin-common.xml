@@ -175,7 +175,7 @@
     <moduleService serviceInterface="com.jetbrains.python.psi.resolve.PythonPathCache"
                    serviceImplementation="com.jetbrains.python.psi.resolve.PythonPathCache"/>
 
-    <copyPastePostProcessor implementation="com.jetbrains.python.codeInsight.CopyPasteIndentProcessor"/>
+    <preserveIndentOnPaste fileType="Python"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
