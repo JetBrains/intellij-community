@@ -574,4 +574,6 @@
   <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
 
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
+
+  <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
 </extensions>
