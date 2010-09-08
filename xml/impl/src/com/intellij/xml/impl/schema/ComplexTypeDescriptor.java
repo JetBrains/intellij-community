@@ -22,7 +22,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaRefer
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -107,19 +106,18 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   // Read-only calculation
   private XmlElementDescriptor[] doCollectElements(@Nullable XmlElement context) {
     final Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
-    Processor<XmlTag> processor = new Processor<XmlTag>() {
-      @Override
-      public boolean process(XmlTag xmlTag) {
-        if ("element".equals(xmlTag.getLocalName()) && xmlTag.getAttribute("name") != null) {
-          XmlNSDescriptor nsDescriptor = xmlTag.getNSDescriptor(xmlTag.getNamespace(), false);
-          if (nsDescriptor instanceof XmlNSDescriptorImpl) {
-            addElementDescriptor(map, ((XmlNSDescriptorImpl)nsDescriptor).createElementDescriptor(xmlTag));
-          }
-        }
-        return true;
-      }
-    };
-    new XmlSchemaTagsProcessor(myDocumentDescriptor).processTags(myTag, processor);
+    //new XmlSchemaTagsProcessor(myDocumentDescriptor) {
+    //  @Override
+    //  protected void tagStarted(XmlTag tag, String tagName) {
+    //    if ("element".equals(tagName) && tag.getAttribute("name") != null) {
+    //      XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(tag.getNamespace(), false);
+    //      if (nsDescriptor instanceof XmlNSDescriptorImpl) {
+    //        addElementDescriptor(map, ((XmlNSDescriptorImpl)nsDescriptor).createElementDescriptor(tag));
+    //      }
+    //    }
+    //  }
+    //}.processTag(myTag);
+    collectElements(map, myTag, new THashSet<XmlTag>(), "", context);
     addSubstitutionGroups(map);
     filterAbstractElements(map);
     return map.values().toArray(
@@ -127,50 +125,6 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     );
   }
 
-  private void addSubstitutionGroups(Map<String, XmlElementDescriptor> result) {
-    mainLoop: while (true) {
-      for (final XmlElementDescriptor xmlElementDescriptor : result.values()) {
-        XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)xmlElementDescriptor;
-
-        final XmlElementDescriptor[] substitutes = myDocumentDescriptor.getSubstitutes(descriptor.getName(), descriptor.getNamespace());
-        boolean toContinue = false;
-
-        for (XmlElementDescriptor substitute : substitutes) {
-          if (result.get(substitute.getName()) == null) {
-            toContinue = true;
-            result.put(substitute.getName(), substitute);
-          }
-        }
-
-        if (toContinue) continue mainLoop;
-      }
-
-      break;
-    }
-  }
-
-  private static void filterAbstractElements(Map<String,XmlElementDescriptor> result) {
-    for (Iterator<XmlElementDescriptor> iterator = result.values().iterator(); iterator.hasNext();) {
-      XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)iterator.next();
-      if (descriptor.isAbstract()) iterator.remove();
-    }
-  }
-
-  public XmlAttributeDescriptor[] getAttributes(@Nullable XmlElement context) {
-    return myAttributeDescriptorsCache.get(null, this, context);
-  }
-
-  // Read-only calculation
-  private XmlAttributeDescriptor[] doCollectAttributes(@Nullable XmlElement context) {
-    List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
-    collectAttributes(result, myTag, new THashSet<XmlTag>(), "",context);
-
-    return result.toArray(new XmlAttributeDescriptor[result.size()]);
-  }
-
-  public XmlNSDescriptorImpl getNsDescriptors() {
-    return myDocumentDescriptor;
-  }
 
   private void collectElements(Map<String,XmlElementDescriptor> result, XmlTag tag, Set<XmlTag> visited, @NotNull String nsPrefixFromContext,
                                @Nullable XmlElement context) {
@@ -192,7 +146,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           XmlNSDescriptorImpl nsDescriptor = myDocumentDescriptor;
           if (!namespace.equals(myDocumentDescriptor.getDefaultNamespace())) {
             final XmlNSDescriptor namespaceDescriptor = tag.getNSDescriptor(namespace, true);
-            if (namespaceDescriptor instanceof XmlNSDescriptorImpl) nsDescriptor = (XmlNSDescriptorImpl)namespaceDescriptor; 
+            if (namespaceDescriptor instanceof XmlNSDescriptorImpl) nsDescriptor = (XmlNSDescriptorImpl)namespaceDescriptor;
           }
 
           final XmlElementDescriptor element = nsDescriptor.getElementDescriptor(
@@ -213,7 +167,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       if (ref != null) {
         XmlTag groupTag = myDocumentDescriptor.findGroup(ref);
-        
+
         // TODO: This is bad hack, but we need context for "include-style" schemas
         if (groupTag == null && context instanceof XmlTag) {
           final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(getNamespace(tag, nsPrefixFromContext, ref), true);
@@ -227,7 +181,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           XmlTag[] tags = groupTag.getSubTags();
           String nsPrefixFromRef = XmlUtil.findPrefixByQualifiedName(ref);
           if (nsPrefixFromRef.length() == 0) nsPrefixFromRef = nsPrefixFromContext;
-          
+
           for (XmlTag subTag : tags) {
             collectElements(result, subTag, visited, nsPrefixFromRef, context);
           }
@@ -268,6 +222,84 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         collectElements(result, subTag, visited, nsPrefixFromContext, context);
       }
     }
+  }
+
+
+  private void addSubstitutionGroups(Map<String, XmlElementDescriptor> result) {
+    mainLoop: while (true) {
+      for (final XmlElementDescriptor xmlElementDescriptor : result.values()) {
+        XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)xmlElementDescriptor;
+
+        final XmlElementDescriptor[] substitutes = myDocumentDescriptor.getSubstitutes(descriptor.getName(), descriptor.getNamespace());
+        boolean toContinue = false;
+
+        for (XmlElementDescriptor substitute : substitutes) {
+          if (result.get(substitute.getName()) == null) {
+            toContinue = true;
+            result.put(substitute.getName(), substitute);
+          }
+        }
+
+        if (toContinue) continue mainLoop;
+      }
+
+      break;
+    }
+  }
+
+  private static void filterAbstractElements(Map<String,XmlElementDescriptor> result) {
+    for (Iterator<XmlElementDescriptor> iterator = result.values().iterator(); iterator.hasNext();) {
+      XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)iterator.next();
+      if (descriptor.isAbstract()) iterator.remove();
+    }
+  }
+
+  public XmlAttributeDescriptor[] getAttributes(@Nullable XmlElement context) {
+    return myAttributeDescriptorsCache.get(null, this, context);
+  }
+
+  // Read-only calculation
+  private XmlAttributeDescriptor[] doCollectAttributes(@Nullable final XmlElement context) {
+    final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+
+    XmlSchemaTagsProcessor processor = new XmlSchemaTagsProcessor(myDocumentDescriptor) {
+      @Override
+      protected void tagStarted(XmlTag tag, String tagName) {
+        if (ATTRIBUTE_TAG_NAME.equals(tagName)) {
+          String use = tag.getAttributeValue("use");
+          String name = tag.getAttributeValue(NAME_ATTR_NAME);
+
+          if (name != null) {
+            if (PROHIBITED_ATTR_VALUE.equals(use)) {
+              removeAttributeDescriptor(result, name);
+            }
+            else {
+              addAttributeDescriptor(result, myDocumentDescriptor.createAttributeDescriptor(tag));
+            }
+          }
+        }
+      }
+
+      @Override
+      protected void doProcessTag(XmlTag tag) {
+        if (!"element".equals(tag.getLocalName())){
+          super.doProcessTag(tag);
+        }
+      }
+    };
+//    processor.processTag(myTag);
+    List<XmlAttributeDescriptor> descriptors = new ArrayList<XmlAttributeDescriptor>();
+    collectAttributes(result, myTag, new THashSet<XmlTag>(), "",context);
+    if (descriptors.size() != result.size()) {
+      descriptors.clear();
+//      collectAttributes(descriptors, myTag, new THashSet<XmlTag>(), "",context);
+
+    }
+    return result.toArray(new XmlAttributeDescriptor[result.size()]);
+  }
+
+  public XmlNSDescriptorImpl getNsDescriptors() {
+    return myDocumentDescriptor;
   }
 
   private String getNamespace(final XmlTag tag, final String nsPrefixFromContext, final String ref) {
