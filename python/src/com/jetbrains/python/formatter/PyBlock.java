@@ -121,7 +121,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
-      if (childType == PyTokenTypes.RBRACKET) {
+      if (childType == PyTokenTypes.RBRACKET | childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -185,7 +185,7 @@ public class PyBlock implements ASTBlock {
     for (Block block : _subBlocks) {
       if (block instanceof PyBlock) {
         System.out.println("  " + ((PyBlock)block).getNode().getPsi().toString() + " " + block.getTextRange().getStartOffset() + ":" + block
-            .getTextRange().getLength());
+          .getTextRange().getLength());
       }
       else {
         System.out.println("  <unknown block>");
@@ -279,13 +279,13 @@ public class PyBlock implements ASTBlock {
       }
     }
     if (isAround(type1, type2, PyTokenTypes.AUG_ASSIGN_OPERATIONS)) {
-      return getSpacingForOption(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);      
+      return getSpacingForOption(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
     }
     if (isAround(type1, type2, PyTokenTypes.ADDITIVE_OPERATIONS) && parentType != PyElementTypes.PREFIX_EXPRESSION) {
       return getSpacingForOption(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
     }
     if (isAround(type1, type2, PyTokenTypes.MULTIPLICATIVE_OPERATIONS) || type1 == PyTokenTypes.EXP || type2 == PyTokenTypes.EXP) {
-      if (parentType == PyElementTypes.NAMED_PARAMETER || 
+      if (parentType == PyElementTypes.NAMED_PARAMETER ||
           parentType == PyElementTypes.STAR_ARGUMENT_EXPRESSION ||
           parentType == PyElementTypes.STAR_EXPRESSION) {
         return Spacing.createSpacing(0, 0, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -348,7 +348,7 @@ public class PyBlock implements ASTBlock {
 
   private static boolean isStatementOrDeclaration(final IElementType type) {
     return PyElementTypes.STATEMENTS.contains(type) ||
-           type == PyElementTypes.CLASS_DECLARATION || 
+           type == PyElementTypes.CLASS_DECLARATION ||
            type == PyElementTypes.FUNCTION_DECLARATION;
   }
 
@@ -360,7 +360,7 @@ public class PyBlock implements ASTBlock {
       if (_node.getPsi() instanceof PyFile || _node.getElementType() == PyTokenTypes.COLON) {
         return ChildAttributes.DELEGATE_TO_PREV_CHILD;
       }
-      
+
       PyBlock insertAfterBlock = _subBlocks.get(newChildIndex - 1);
 
       ASTNode prevNode = insertAfterBlock.getNode();
@@ -368,7 +368,7 @@ public class PyBlock implements ASTBlock {
 
       // stmt lists, parts and definitions should also think for themselves
       if (prevElt instanceof PyStatementList) {
-        if (dedentAfterLastStatement((PyStatementList) prevElt)) {
+        if (dedentAfterLastStatement((PyStatementList)prevElt)) {
           return new ChildAttributes(Indent.getNoneIndent(), getChildAlignment());
         }
         return ChildAttributes.DELEGATE_TO_PREV_CHILD;
@@ -384,7 +384,7 @@ public class PyBlock implements ASTBlock {
       // doesn't request childAttributes from the correct block
       while (lastChild != null) {
         IElementType last_type = lastChild.getElementType();
-        if ( last_type == PyElementTypes.STATEMENT_LIST && hasLineBreakBefore(lastChild)) {
+        if (last_type == PyElementTypes.STATEMENT_LIST && hasLineBreakBefore(lastChild)) {
           if (dedentAfterLastStatement((PyStatementList)lastChild.getPsi())) {
             break;
           }
@@ -429,7 +429,7 @@ public class PyBlock implements ASTBlock {
     if (statements.length == 0) {
       return false;
     }
-    PyStatement last = statements[statements.length-1];
+    PyStatement last = statements[statements.length - 1];
     return last instanceof PyReturnStatement || last instanceof PyRaiseStatement || last instanceof PyPassStatement;
   }
 
