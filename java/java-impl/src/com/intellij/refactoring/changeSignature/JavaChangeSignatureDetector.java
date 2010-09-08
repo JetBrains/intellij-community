@@ -27,6 +27,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,13 @@ public class JavaChangeSignatureDetector implements ChangeSignatureGestureDetect
       final String newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
       final PsiType returnType = method.getReturnType();
       final CanonicalTypes.Type newReturnType = returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null;
-      final ParameterInfoImpl[] parameterInfos = ParameterInfoImpl.fromMethod(method);
+      final ParameterInfoImpl[] parameterInfos;
+      try {
+        parameterInfos = ParameterInfoImpl.fromMethod(method);
+      }
+      catch (IncorrectOperationException e) {
+        return null;
+      }
       final MyJavaChangeInfo fromMethod = new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, null, method.getName());
       if (changeInfo == null) { //before replacement
         fromMethod.setSuperMethod(method.findDeepestSuperMethod());
