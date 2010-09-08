@@ -145,29 +145,13 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final PsiElement position = parameters.getPosition();
         final PsiElement reference = position.getParent();
         if (reference instanceof GrReferenceElement) {
-          final Map<PsiMethod, LookupElement> staticMethods = hashMap();
-
           ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
             public void consume(Object element) {
-              final LookupElement lookupElement = element instanceof PsiClass
+              result.addElement(element instanceof PsiClass
                                                   ? AllClassesGetter.createLookupItem((PsiClass)element)
-                                                  : GroovyCompletionUtil.getLookupElement(element);
-              if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) {
-                staticMethods.put((PsiMethod)element, lookupElement);
-              } else {
-                result.addElement(lookupElement);
-              }
+                                                  : GroovyCompletionUtil.getLookupElement(element));
             }
           });
-
-          completeStaticMembers(position).processMembersOfRegisteredClasses(result.getPrefixMatcher(), new Consumer<LookupElement>() {
-            @Override
-            public void consume(LookupElement element) {
-              result.addElement(element);
-              staticMethods.remove(element.getObject());
-            }
-          });
-          result.addAllElements(staticMethods.values());
         }
       }
     });
