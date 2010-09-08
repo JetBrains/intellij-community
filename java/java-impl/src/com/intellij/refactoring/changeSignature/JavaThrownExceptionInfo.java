@@ -40,6 +40,16 @@ public class JavaThrownExceptionInfo implements ThrownExceptionInfo {
     setType(type);
   }
 
+  //create identity mapping
+  public static ThrownExceptionInfo[] extractExceptions(PsiMethod method) {
+    PsiClassType[] types = method.getThrowsList().getReferencedTypes();
+    ThrownExceptionInfo[] result = new ThrownExceptionInfo[types.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = new JavaThrownExceptionInfo(i, types[i]);
+    }
+    return result;
+  }
+
   public void setType(PsiClassType type) {
     myType = CanonicalTypes.createTypeWrapper(type);
   }
