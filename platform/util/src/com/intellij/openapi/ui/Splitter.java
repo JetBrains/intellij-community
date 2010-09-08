@@ -359,8 +359,9 @@ public class Splitter extends JPanel {
       myFirstComponent = component;
       if (myFirstComponent != null) {
         super.add(myFirstComponent);
-        myFirstComponent.invalidate();
       }
+      revalidate();
+      repaint();
     }
   }
 
@@ -389,8 +390,9 @@ public class Splitter extends JPanel {
       mySecondComponent = component;
       if (mySecondComponent != null) {
         super.add(mySecondComponent);
-        mySecondComponent.invalidate();
       }
+      revalidate();
+      repaint();
     }
   }
 
