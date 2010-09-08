@@ -29,7 +29,7 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked"})
 public class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
@@ -1088,4 +1088,13 @@ public class ContainerUtil {
     return result;
   }
 
+  public static <K,V> V[] convert(K[] from, V[] to, Function<K,V> fun) {
+    if (to.length < from.length) {
+      to = (V[])Array.newInstance(to.getClass().getComponentType(), from.length);
+    }
+    for (int i = 0; i < from.length; i++) {
+      to[i] = fun.fun(from[i]);
+    }
+    return to;
+  }
 }
