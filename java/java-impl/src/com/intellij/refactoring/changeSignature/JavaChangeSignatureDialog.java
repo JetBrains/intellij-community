@@ -15,11 +15,6 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -27,15 +22,19 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
-import com.intellij.refactoring.ui.*;
+import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
+import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
+import com.intellij.refactoring.ui.JavaVisibilityPanel;
+import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.ui.EditorTextField;
+import com.intellij.ui.EditableRowTable;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
@@ -45,19 +44,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<ParameterInfoImpl, PsiMethod, JavaMethodDescriptor> {
-
-  private static final Logger LOG = Logger.getInstance(JavaChangeSignatureDialog.class.getName());
 
   private ExceptionsTableModel myExceptionsTableModel;
   protected Set<PsiMethod> myMethodsToPropagateExceptions;
@@ -132,8 +127,35 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     JBTable exceptionsTable = new JBTable(myExceptionsTableModel);
     exceptionsTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     exceptionsTable.getColumnModel().getColumn(0).setCellEditor(new JavaCodeFragmentTableCellEditor(myProject));
-    return createTablePanelImpl(exceptionsTable, myExceptionsTableModel,
-                                RefactoringBundle.message("changeSignature.exceptions.panel.border.title"), false);
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("changeSignature.exceptions.panel.border.title")));
+
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(exceptionsTable);
+
+    JPanel tablePanel = new JPanel(new BorderLayout());
+    tablePanel.add(scrollPane, BorderLayout.CENTER);
+
+    tablePanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+    panel.add(tablePanel, BorderLayout.CENTER);
+
+    exceptionsTable.setPreferredScrollableViewportSize(new Dimension(450, exceptionsTable.getRowHeight() * 8));
+    exceptionsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    exceptionsTable.getSelectionModel().setSelectionInterval(0, 0);
+    exceptionsTable.setSurrendersFocusOnKeystroke(true);
+
+    JPanel buttonsPanel = EditableRowTable.createButtonsTable(exceptionsTable, myExceptionsTableModel, false);
+
+    panel.add(buttonsPanel, BorderLayout.EAST);
+
+    myExceptionsTableModel.addTableModelListener(
+      new TableModelListener() {
+        public void tableChanged(TableModelEvent e) {
+          JavaChangeSignatureDialog.this.updateSignature();
+        }
+      }
+    );
+
+    return panel;
   }
 
   @Override
@@ -158,9 +180,10 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected BaseRefactoringProcessor createRefactoringProcessor() {
+    List<ParameterInfoImpl> parameters = getParameters();
     return new ChangeSignatureProcessor(myProject, myMethod.getMethod(), isGenerateDelegate(),
                                         getVisibility(), getMethodName(), getReturnType(),
-                                        getParameters(), getExceptions(),
+                                        parameters.toArray(new ParameterInfoImpl[parameters.size()]), getExceptions(),
                                         myMethodsToPropagateParameters,
                                         myMethodsToPropagateExceptions);
   }
@@ -199,41 +222,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected TableCellEditor createTypeCellEditor() {
-    return new JavaCodeFragmentTableCellEditor(myProject);
-  }
-
-  @Override
-  protected TableCellEditor createNameCellEditor() {
-    return new MyNameTableCellEditor(myProject);
-  }
-
-  @Override
-  protected TableCellEditor createDefaultValueCellEditor() {
-    return new JavaCodeFragmentTableCellEditor(myProject) {
-      public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-        final Component editor = super.getTableCellEditorComponent(table, value, isSelected, row, column);
-
-        if (myCodeFragment instanceof PsiExpressionCodeFragment) {
-          final Object valueAt = table.getValueAt(row, 0);
-          if (valueAt != null) {
-            try {
-              final PsiType type = ((PsiTypeCodeFragment)valueAt).getType();
-              ((PsiExpressionCodeFragment)myCodeFragment).setExpectedType(type);
-            }
-            catch (PsiTypeCodeFragment.TypeSyntaxException ignored) {
-            }
-            catch (PsiTypeCodeFragment.NoTypeException ignored) {
-            }
-          }
-
-        }
-        return editor;
-      }
-    };
-  }
-
-  @Override
   protected String validateAndCommitData() {
     PsiManager manager = PsiManager.getInstance(myProject);
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -257,49 +245,45 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
     }
 
-    final List<PsiCodeFragment> codeFragments = myParametersTableModel.getCodeFragments();
-    final List<PsiCodeFragment> defaultValueFragments = myParametersTableModel.getDefaultValueFragments();
-    ParameterInfoImpl[] parameterInfos = myParametersTableModel.getParameters();
-    final int newParametersNumber = parameterInfos.length;
-    LOG.assertTrue(codeFragments.size() == newParametersNumber);
+    List<ParameterTableModelItemBase<ParameterInfoImpl>> parameterInfos = myParametersTableModel.getItems();
+    final int newParametersNumber = parameterInfos.size();
 
     for (int i = 0; i < newParametersNumber; i++) {
-      ParameterInfoImpl info = parameterInfos[i];
-      PsiTypeCodeFragment psiCodeFragment = (PsiTypeCodeFragment)codeFragments.get(i);
-      PsiCodeFragment defaultValueFragment = defaultValueFragments.get(i);
+      ParameterTableModelItemBase<ParameterInfoImpl> item = parameterInfos.get(i);
 
-      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(info.getName())) {
-        return RefactoringMessageUtil.getIncorrectIdentifierMessage(info.getName());
+      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(item.parameter.getName())) {
+        return RefactoringMessageUtil.getIncorrectIdentifierMessage(item.parameter.getName());
       }
 
       final PsiType type;
       try {
-        type = psiCodeFragment.getType();
+        type = ((PsiTypeCodeFragment)parameterInfos.get(i).typeCodeFragment).getType();
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return RefactoringBundle.message("changeSignature.wrong.type.for.parameter", psiCodeFragment.getText(), info.getName());
+        return RefactoringBundle
+          .message("changeSignature.wrong.type.for.parameter", item.typeCodeFragment.getText(), item.parameter.getName());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        return RefactoringBundle.message("changeSignature.no.type.for.parameter", info.getName());
+        return RefactoringBundle.message("changeSignature.no.type.for.parameter", item.parameter.getName());
       }
 
-      info.setType(type);
+      item.parameter.setType(type);
 
       if (type instanceof PsiEllipsisType && i != newParametersNumber - 1) {
         return RefactoringBundle.message("changeSignature.vararg.not.last");
       }
 
-      if (info.oldParameterIndex < 0) {
-        info.defaultValue = defaultValueFragment.getText();
-        String def = info.defaultValue;
+      if (item.parameter.oldParameterIndex < 0) {
+        item.parameter.defaultValue = item.defaultValueCodeFragment.getText();
+        String def = item.parameter.defaultValue;
         def = def.trim();
         if (!(type instanceof PsiEllipsisType)) {
           if (def.length() == 0) {
-            return RefactoringBundle.message("changeSignature.no.default.value", info.getName());
+            return RefactoringBundle.message("changeSignature.no.default.value", item.parameter.getName());
           }
 
           try {
-            factory.createExpressionFromText(info.defaultValue, null);
+            factory.createExpressionFromText(def, null);
           }
           catch (IncorrectOperationException e) {
             return e.getMessage();
@@ -388,23 +372,20 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     buffer.append(getMethodName());
     buffer.append("(");
 
-    final List<PsiCodeFragment> codeFraments = myParametersTableModel.getCodeFragments();
-
-    final ParameterInfoImpl[] parameterInfos = myParametersTableModel.getParameters();
-    LOG.assertTrue(codeFraments.size() == parameterInfos.length);
     final String indent = "    ";
-    for (int i = 0; i < parameterInfos.length; i++) {
-      ParameterInfoImpl info = parameterInfos[i];
+    List<ParameterTableModelItemBase<ParameterInfoImpl>> items = myParametersTableModel.getItems();
+    for (int i = 0; i < items.size(); i++) {
+      ParameterTableModelItemBase<ParameterInfoImpl> item = items.get(i);
       if (i > 0) {
         buffer.append(",");
       }
       buffer.append("\n");
       buffer.append(indent);
-      buffer.append(codeFraments.get(i).getText());
+      buffer.append(item.typeCodeFragment.getText());
       buffer.append(" ");
-      buffer.append(info.getName());
+      buffer.append(item.parameter.getName());
     }
-    if (parameterInfos.length > 0) {
+    if (!items.isEmpty()) {
       buffer.append("\n");
     }
     buffer.append(")");
@@ -423,42 +404,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
     }
     return buffer.toString();
-  }
-
-  private void completeVariable(EditorTextField editorTextField, PsiType type) {
-    Editor editor = editorTextField.getEditor();
-    String prefix = editorTextField.getText();
-    if (prefix == null) prefix = "";
-    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
-    JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
-
-    LookupElement[] lookupItems = set.toArray(new LookupElement[set.size()]);
-    editor.getCaretModel().moveToOffset(prefix.length());
-    editor.getSelectionModel().removeSelection();
-    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix);
-  }
-
-  private class MyNameTableCellEditor extends StringTableCellEditor {
-    public MyNameTableCellEditor(Project project) {
-      super(project);
-    }
-
-    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      final EditorTextField textField = (EditorTextField)super.getTableCellEditorComponent(table, value, isSelected, row, column);
-      textField.registerKeyboardAction(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          int column = myParametersTable.convertColumnIndexToModel(myParametersTable.getEditingColumn());
-          if (column == 1) {
-            int row = myParametersTable.getEditingRow();
-            PsiType type = ((JavaParameterTableModel)myParametersTableModel).getTypeByRow(row);
-            if (type != null) {
-              completeVariable(textField, type);
-            }
-          }
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
-      return textField;
-    }
   }
 
 }
