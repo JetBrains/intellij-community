@@ -21,16 +21,20 @@ import com.intellij.notification.impl.NotificationModelListener;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +58,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.ui.NotificationsListPanel");
   private static final String REMOVE_KEY = "REMOVE";
 
+  private static final Icon CLOSE_ICON = IconLoader.getIcon("/general/balloonClose.png");
+
   private Project myProject;
   private final Wrapper myWrapper;
   private JComponent myActiveComponent;
@@ -71,6 +77,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     myWrapper = new Wrapper();
     myWrapper.setContent(getCurrentComponent(project));
 
+    setMinimumSize(new Dimension(350, 300));
     add(myWrapper, BorderLayout.CENTER);
   }
 
@@ -163,6 +170,9 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     private final JLabel myIconLabel;
     private Processor<Cursor> myProc;
     private boolean myWasRead;
+    private JList myList;
+    private JTextPane myFakeTextPane;
+    private JViewport myFakeViewport;
 
     private NotificationsListRenderer() {
       setLayout(new BorderLayout());
@@ -182,14 +192,21 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
         }
       };
 
+      myFakeTextPane = new JTextPane();
       myText.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
+      myFakeTextPane.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
       myText.setOpaque(false);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
         myText.setBackground(new Color(0, 0, 0, 0));
       }
 
       myText.setEditable(false);
+      myFakeTextPane.setEditable(false);
       myText.setEditorKit(UIUtil.getHTMLEditorKit());
+      myFakeTextPane.setEditorKit(UIUtil.getHTMLEditorKit());
+
+      myFakeViewport = new JViewport();
+      myFakeViewport.setView(myFakeTextPane);
 
       final Wrapper.North comp = new Wrapper.North(myIconLabel);
       comp.setOpaque(false);
@@ -211,6 +228,22 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
     public void onCursorChanged(Cursor cursor) {
       if (myProc != null) myProc.process(cursor);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      final Container parent = myList.getParent();
+      if (parent != null) {
+        myFakeTextPane.setText(myText.getText());
+        final Dimension size = parent.getSize();
+        myFakeViewport.setSize(size);
+        final Dimension preferredSize = myFakeTextPane.getPreferredSize();
+
+        final Insets insets = getInsets();
+        return new Dimension(Math.min(size.width - 20, preferredSize.width), preferredSize.height + insets.top + insets.bottom);
+      }
+
+      return super.getPreferredSize();
     }
 
     @Override
@@ -257,6 +290,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
                                                   final boolean cellHasFocus) {
       LOG.assertTrue(value instanceof Notification);
       final Notification notification = (Notification)value;
+
+      myList = list;
 
       mySelected = isSelected;
       myHasFocus = cellHasFocus;
@@ -363,6 +398,13 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
           }
         }
       });
+
+      ExpireButton.install(this);
+    }
+
+    @Override
+    protected boolean shouldInstallItemTooltipExpander() {
+      return false;
     }
 
     private void processMouse(final MouseEvent e, final boolean click) {
@@ -490,7 +532,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
     private static JComponent buildFilterBar(final ItemsList list, final Project project) {
       final JPanel box = new JPanel();
-      box.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+      box.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, box.getBackground().darker()),
+                                                       BorderFactory.createEmptyBorder(3, 3, 3, 3)));
       box.setLayout(new BoxLayout(box, BoxLayout.X_AXIS));
 
       final ButtonGroup buttonGroup = new ButtonGroup();
@@ -522,7 +565,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
           myButton.setVisible(i > 0);
           if (i > 0) {
             return String.format("Error (%s)", i);
-          } else if (myButton.isSelected()) {
+          }
+          else if (myButton.isSelected()) {
             switchToAll(buttonGroup);
           }
 
@@ -541,7 +585,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
           myButton.setVisible(i > 0);
           if (i > 0) {
             return String.format("Warning (%s)", i);
-          } else if (myButton.isSelected()) {
+          }
+          else if (myButton.isSelected()) {
             switchToAll(buttonGroup);
           }
 
@@ -560,7 +605,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
           myButton.setVisible(i > 0);
           if (i > 0) {
             return String.format("Information (%s)", i);
-          } else if (myButton.isSelected()) {
+          }
+          else if (myButton.isSelected()) {
             switchToAll(buttonGroup);
           }
 
@@ -599,6 +645,13 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       // TODO: switch filter if removed all of the notifications from current one!
 
       final ItemsList list = new ItemsList(model);
+      list.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          list.setCellRenderer(new NotificationsListRenderer()); // request cell renderer size invalidation
+        }
+      });
+
       final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
       scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -633,6 +686,164 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       panel.add(scrollPane, BorderLayout.CENTER);
 
       return panel;
+    }
+  }
+
+  private static class ExpireButton extends JComponent {
+    private int myIndex = -1;
+    private BaseButtonBehavior myBehavior;
+    private JList myList;
+
+    private ExpireButton(final JList list) {
+      myList = list;
+
+      final MouseAdapter adapter = new MouseAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          showAtPoint(e);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          hideCloseButton(e);
+        }
+      };
+
+      list.addMouseMotionListener(adapter);
+      list.addMouseListener(adapter);
+
+      setOpaque(false);
+      setToolTipText("Delete (" + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("DELETE")) + ")");
+
+      myBehavior = new BaseButtonBehavior(this, TimedDeadzone.NULL) {
+        @Override
+        protected void execute(final MouseEvent e) {
+          expire();
+
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              showAtPoint(e);
+            }
+          });
+        }
+      };
+    }
+
+    private void showAtPoint(MouseEvent e) {
+      final Point point = e.getSource() == myList ? e.getPoint() : SwingUtilities.convertPoint((Component)e.getSource(), e.getPoint(), myList);
+      final int index = myList.locationToIndex(point);
+      if (index > -1) {
+        final Object value = myList.getModel().getElementAt(index);
+        if (value != null && value instanceof Notification) {
+          final Rectangle bounds = myList.getCellBounds(index, index);
+          if (myList.getVisibleRect().contains(bounds) && bounds.contains(point)) {
+            toggle(index, false);
+          }
+        }
+      }
+    }
+
+    private void expire() {
+      if (myIndex != -1) {
+        final ListModel model = myList.getModel();
+        final Object o = model.getElementAt(myIndex);
+        if (o instanceof Notification) {
+          final Notification notification = (Notification)o;
+          if (!notification.isExpired()) {
+            notification.expire();
+          }
+        }
+      }
+
+      myIndex = -1;
+      setVisible(false);
+    }
+
+    public void setIndex(final int index) {
+      myIndex = index;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return getMinimumSize();
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return new Dimension(CLOSE_ICON.getIconWidth() + 2, CLOSE_ICON.getIconHeight() + 2);
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      final Rectangle r = getBounds();
+      if (myBehavior.isPressedByMouse()) {
+        CLOSE_ICON.paintIcon(this, g, r.width - CLOSE_ICON.getIconWidth(), r.height - CLOSE_ICON.getIconHeight());
+      }
+      else {
+        CLOSE_ICON.paintIcon(this, g, r.width - CLOSE_ICON.getIconWidth() - 2, r.height - CLOSE_ICON.getIconHeight() - 2);
+      }
+    }
+
+    public static void install(final JList list) {
+      final ExpireButton button = new ExpireButton(list);
+      button.setVisible(false);
+    }
+
+    public void hideCloseButton(final MouseEvent e) {
+      if (e != null) {
+        final Object source = e.getSource();
+        if (source instanceof JComponent) {
+          final Container parent = getParent();
+          if (parent != null) {
+            final Point point = SwingUtilities.convertPoint((Component) source, e.getPoint(), getParent());
+            if (!getBounds().contains(point)) {
+              toggle(-1, true);
+            }
+          }
+        }
+      }
+      else {
+        toggle(-1, true);
+      }
+    }
+
+    private void toggle(final int index, final boolean hide) {
+      if (hide) {
+        setIndex(index);
+        setVisible(false);
+        return;
+      }
+
+      if (getParent() == null) {
+        final Window window = SwingUtilities.getWindowAncestor(myList);
+        if (!(window instanceof JDialog)) return;
+        final JLayeredPane layeredPane = ((JDialog)window).getLayeredPane();
+        if (layeredPane == null) return;
+        layeredPane.add(this);
+
+        layeredPane.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            toggle(-1, true);
+          }
+        });
+      }
+
+      if (getParent() != null) {
+        final Dimension preferredSize = getPreferredSize();
+        final Rectangle cellBounds = myList.getCellBounds(index, index);
+        Point location = new Point(cellBounds.x + cellBounds.width - preferredSize.width, cellBounds.y);
+        location = SwingUtilities.convertPoint(myList, location, getParent());
+        setIndex(index);
+        setBounds(location.x, location.y, preferredSize.width, preferredSize.height);
+      }
+
+      setVisible(true);
+    }
+
+    public int getIndex() {
+      return myIndex;
     }
   }
 

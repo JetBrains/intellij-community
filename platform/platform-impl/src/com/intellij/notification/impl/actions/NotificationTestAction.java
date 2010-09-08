@@ -61,7 +61,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
     };
 
     final Notification notification = new Notification(TEST_GROUP_ID, "This is a test notification",
-      "You can close this notification by clicking <a href=\"close\">this link</a>.",
+      "You can close this very very very very long notification by clicking <a href=\"close\">this link</a>. Long long long long. It should be long. Very long. Too long.",
       type, listener);
 
     messageBus.syncPublisher(Notifications.TOPIC).notify(notification);
