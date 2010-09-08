@@ -46,6 +46,12 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
     return myElement.getContainingFile();
   }
 
+  @Override
+  public boolean isValid() {
+    //return super.isValid();
+    return myElement.isValid();
+  }
+
   @NotNull
   @Override
   public SearchScope getUseScope() {
