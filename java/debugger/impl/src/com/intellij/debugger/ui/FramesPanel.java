@@ -162,16 +162,21 @@ public class FramesPanel extends UpdatableDebuggerView {
 
   /*invoked in swing thread*/
   protected void rebuild(final boolean updateOnly) {
-    if (!updateOnly) {
+    final DebuggerContextImpl context = getContext();
+    final boolean paused = context.getDebuggerSession().isPaused();
+    
+    if (!paused || !updateOnly) {
       myThreadsCombo.removeAllItems();
       synchronized (myFramesList) {
         myFramesList.clear();
       }
     }
 
-    final DebugProcessImpl process = getContext().getDebugProcess();
-    if (process != null) {
-      process.getManagerThread().schedule(new RefreshFramePanelCommand(updateOnly && myThreadsCombo.getItemCount() != 0));
+    if (paused) {
+      final DebugProcessImpl process = context.getDebugProcess();
+      if (process != null) {
+        process.getManagerThread().schedule(new RefreshFramePanelCommand(updateOnly && myThreadsCombo.getItemCount() != 0));
+      }
     }
   }
 
