@@ -1,22 +1,17 @@
 package org.jetbrains.jps.idea
 
-import org.jetbrains.jps.Library
-import org.jetbrains.jps.MacroExpansion
-import org.jetbrains.jps.Project
 import org.jetbrains.jps.artifacts.Artifact
-import org.jetbrains.jps.Module
-import org.jetbrains.jps.DependencyScope
-import org.jetbrains.jps.PredefinedDependencyScopes
+import org.jetbrains.jps.*
 
-/**
+ /**
  * @author max
  */
-public class IdeaProjectLoader implements MacroExpansion {
+public class IdeaProjectLoader {
   private int libraryCount = 0
   Project project
-  private String projectBasePath
   private String projectOutputPath
   private Map<String, String> pathVariables
+  private ProjectMacroExpander projectMacroExpander
 
   public static String guessHome(Script script) {
     File home = new File(script["gant.file"].substring("file:".length()))
@@ -32,13 +27,13 @@ public class IdeaProjectLoader implements MacroExpansion {
     return null
   }
 
-  public static MacroExpansion loadFromPath(Project project, String path, Map<String, String> pathVariables) {
+  public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables) {
     def loader = new IdeaProjectLoader(project, pathVariables)
     loader.doLoadFromPath(path);
-    return loader;
+    return loader.projectMacroExpander;
   }
 
-  public static MacroExpansion loadFromPath(Project project, String path) {
+  public static ProjectMacroExpander loadFromPath(Project project, String path) {
     return loadFromPath(project, path, [:])
   }
 
@@ -77,7 +72,7 @@ public class IdeaProjectLoader implements MacroExpansion {
 
   def loadFromIpr(String path) {
     def iprFile = new File(path).getAbsoluteFile()
-    projectBasePath = iprFile.getParentFile().getAbsolutePath()
+    projectMacroExpander = new ProjectMacroExpander(pathVariables, iprFile.parentFile.absolutePath)
 
     def root = new XmlParser(false, false).parse(iprFile)
     loadProjectJdkAndOutput(root)
@@ -88,7 +83,7 @@ public class IdeaProjectLoader implements MacroExpansion {
   }
 
   def loadFromDirectoryBased(File dir) {
-    projectBasePath = dir.parentFile.absolutePath
+    projectMacroExpander = new ProjectMacroExpander(pathVariables, dir.parentFile.absolutePath)
     def modulesXml = new File(dir, "modules.xml")
     if (!modulesXml.exists()) project.error("Cannot find modules.xml in $dir")
 
@@ -159,22 +154,22 @@ public class IdeaProjectLoader implements MacroExpansion {
     }
     def outputTag = componentTag.output[0];
     String outputPath = outputTag != null ? pathFromUrl(outputTag.'@url') : null;
-    projectOutputPath = outputPath != null && outputPath.length() > 0 ? expandProjectMacro(outputPath) : null
+    projectOutputPath = outputPath != null && outputPath.length() > 0 ? projectMacroExpander.expandMacros(outputPath) : null
     project.projectSdk = sdk
   }
 
   private NodeList loadProjectLibraries(Node librariesComponent) {
     return librariesComponent?.library?.each {Node libTag ->
-      project.createLibrary(libTag."@name", libraryInitializer(libTag, projectBasePath, null))
+      project.createLibrary(libTag."@name", libraryInitializer(libTag, projectMacroExpander))
     }
   }
 
   def loadArtifacts(Node artifactsComponent) {
     if (artifactsComponent == null) return;
-    ArtifactLoader artifactLoader = new ArtifactLoader(this)
+    ArtifactLoader artifactLoader = new ArtifactLoader(project, projectMacroExpander)
     artifactsComponent.artifact.each {Node artifactTag ->
       def artifactName = artifactTag."@name"
-      def outputPath = expandProjectMacro(artifactTag."output-path"[0]?.text())
+      def outputPath = projectMacroExpander.expandMacros(artifactTag."output-path"[0]?.text())
       def root = artifactLoader.loadLayoutElement(artifactTag.root[0], artifactName)
       def artifact = new Artifact(name: artifactName, rootElement: root, outputPath: outputPath)
       project.artifacts[artifact.name] = artifact;
@@ -183,38 +178,15 @@ public class IdeaProjectLoader implements MacroExpansion {
 
   private def loadModules(Node modulesComponent) {
     modulesComponent?.modules?.module?.each {Node moduleTag ->
-      loadModule(projectBasePath, expandMacro(moduleTag.@filepath, null))
+      loadModule(projectMacroExpander.expandMacros(moduleTag.@filepath))
     }
   }
 
-  public String expandMacro(String path, String moduleDir) {
-    if (path == null) return null
-
-    String answer = expandProjectMacro(path)
-    if (moduleDir != null) {
-      answer = answer.replace("\$MODULE_DIR\$", moduleDir)
-    }
-    return answer
+  private Library loadLibrary(Project project, String name, Node libraryTag, MacroExpander macroExpander) {
+    return new Library(project, name, libraryInitializer(libraryTag, macroExpander))
   }
 
-  public String expandProjectMacro(String path) {
-    if (path == null) return path
-    path = path.replace("\$PROJECT_DIR\$", projectBasePath)
-    pathVariables.each { name, value ->
-      path = path.replace("\$${name}\$", value)
-    }
-    return path
-  }
-
-  private Library loadNamedLibrary(Project project, Node libraryTag, String projectBasePath, String moduleBasePath) {
-    loadLibrary(project, libraryTag."@name", libraryTag, projectBasePath, moduleBasePath)
-  }
-
-  private Library loadLibrary(Project project, String name, Node libraryTag, String projectBasePath, String moduleBasePath) {
-    return new Library(project, name, libraryInitializer(libraryTag, projectBasePath, moduleBasePath))
-  }
-
-  private Closure libraryInitializer(Node libraryTag, String projectBasePath, String moduleBasePath) {
+  private Closure libraryInitializer(Node libraryTag, MacroExpander macroExpander) {
     return {
       Map<String, Boolean> jarDirs = [:]
       libraryTag.jarDirectory.each {Node dirNode ->
@@ -223,7 +195,7 @@ public class IdeaProjectLoader implements MacroExpansion {
 
       libraryTag.CLASSES.root.each {Node rootTag ->
         def url = rootTag.@url
-        def path = expandMacro(pathFromUrl(url), moduleBasePath)
+        def path = macroExpander.expandMacros(pathFromUrl(url))
         if (url in jarDirs.keySet()) {
           def paths = []
           collectChildJars(path, jarDirs[url], paths)
@@ -237,7 +209,7 @@ public class IdeaProjectLoader implements MacroExpansion {
       }
 
       libraryTag.SOURCES.root.each {Node rootTag ->
-        src expandMacro(rootTag.@url, moduleBasePath)
+        src macroExpander.expandMacros(rootTag.@url)
       }
     }
   }
@@ -256,7 +228,7 @@ public class IdeaProjectLoader implements MacroExpansion {
     }
   }
 
-  Object loadModule(String projectBasePath, String imlPath) {
+  private def loadModule(String imlPath) {
     def moduleFile = new File(imlPath)
     if (!moduleFile.exists()) {
       project.error("Module file $imlPath not found")
@@ -264,6 +236,7 @@ public class IdeaProjectLoader implements MacroExpansion {
     }
 
     def moduleBasePath = moduleFile.getParentFile().getAbsolutePath()
+    MacroExpander moduleMacroExpander = new ModuleMacroExpander(projectMacroExpander, moduleBasePath)
     def currentModuleName = moduleName(imlPath)
     project.createModule(currentModuleName) {
       Module currentModule = project.modules[currentModuleName]
@@ -289,7 +262,7 @@ public class IdeaProjectLoader implements MacroExpansion {
               def libraryTag = entryTag.library[0]
               def libraryName = libraryTag."@name"
               def moduleLibrary = loadLibrary(project, libraryName != null ? libraryName : "moduleLibrary#${libraryCount++}",
-                                              libraryTag, projectBasePath, moduleBasePath)
+                                              libraryTag, moduleMacroExpander)
               dependency(moduleLibrary, scope)
 
               if (libraryName != null) {
@@ -342,7 +315,7 @@ public class IdeaProjectLoader implements MacroExpansion {
         def srcFolderExists = componentTag.content.sourceFolder[0] != null;
 
         componentTag.content.sourceFolder.each {Node folderTag ->
-          String path = expandMacro(pathFromUrl(folderTag.@url), moduleBasePath)
+          String path = moduleMacroExpander.expandMacros(pathFromUrl(folderTag.@url))
           String prefix = folderTag.@packagePrefix
 
           if (folderTag.attribute("isTestSource") == "true") {
@@ -358,7 +331,7 @@ public class IdeaProjectLoader implements MacroExpansion {
         }
 
         componentTag.content.excludeFolder.each {Node exTag ->
-          String path = expandMacro(pathFromUrl(exTag.@url), moduleBasePath)
+          String path = moduleMacroExpander.expandMacros(pathFromUrl(exTag.@url))
           exclude path
         }
 
@@ -378,8 +351,8 @@ public class IdeaProjectLoader implements MacroExpansion {
             currentModule.testOutputPath = new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath
           }
           else {
-            currentModule.outputPath = expandMacro(pathFromUrl(componentTag.output[0]?.@url), moduleBasePath)
-            currentModule.testOutputPath = expandMacro(pathFromUrl(componentTag."output-test"[0]?.'@url'), moduleBasePath)
+            currentModule.outputPath = moduleMacroExpander.expandMacros(pathFromUrl(componentTag.output[0]?.@url))
+            currentModule.testOutputPath = moduleMacroExpander.expandMacros(pathFromUrl(componentTag."output-test"[0]?.'@url'))
             if (currentModule.testOutputPath == null) {
               currentModule.testOutputPath = currentModule.outputPath
             }
@@ -389,7 +362,7 @@ public class IdeaProjectLoader implements MacroExpansion {
 
       def facetManagerTag = getComponent(root, "FacetManager")
       if (facetManagerTag != null) {
-        def facetLoader = new FacetLoader(this, currentModule, moduleBasePath)
+        def facetLoader = new FacetLoader(currentModule, moduleMacroExpander)
         facetLoader.loadFacets(facetManagerTag)
       }
     }

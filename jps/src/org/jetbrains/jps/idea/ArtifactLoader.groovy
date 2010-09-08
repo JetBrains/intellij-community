@@ -2,18 +2,19 @@ package org.jetbrains.jps.idea
 
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.artifacts.*
+import org.jetbrains.jps.MacroExpander
 
 /**
  * @author nik
  */
 class ArtifactLoader {
   private final Project project
-  private final IdeaProjectLoader loader
+  private final MacroExpander macroExpander
   private final String projectBasePath
 
-  def ArtifactLoader(IdeaProjectLoader loader) {
-    this.loader = loader
-    this.project = loader.project
+  def ArtifactLoader(Project project, MacroExpander macroExpander) {
+    this.macroExpander = macroExpander
+    this.project = project
   }
 
   LayoutElement loadLayoutElement(Node tag, String artifactName) {
@@ -28,20 +29,20 @@ class ArtifactLoader {
       case "artifact":
         return new ArtifactLayoutElement(artifactName: tag."@artifact-name")
       case "file-copy":
-        def path = loader.expandProjectMacro(tag."@path")
+        def path = macroExpander.expandMacros(tag."@path")
         if (!new File(path).exists()) {
            project.warning("Error in '$artifactName' artifact: file '$path' doesn't exist")
         }
         return new FileCopyElement(filePath: path,
                                    outputFileName: tag."@output-file-name");
       case "dir-copy":
-        def path = loader.expandProjectMacro(tag."@path")
+        def path = macroExpander.expandMacros(tag."@path")
         if (!new File(path).exists()) {
           project.warning("Error in '$artifactName' artifact: directory '$path' doesn't exist")
         }
         return new DirectoryCopyElement(dirPath: path);
       case "extracted-dir":
-        def jarPath = loader.expandProjectMacro(tag."@path")
+        def jarPath = macroExpander.expandMacros(tag."@path")
         String pathInJar = tag."@path-in-jar"
         if (pathInJar == null) pathInJar = "/"
         if (!new File(pathInJar).exists()) {

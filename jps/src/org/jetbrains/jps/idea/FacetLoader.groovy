@@ -1,14 +1,14 @@
 package org.jetbrains.jps.idea
 
 import org.jetbrains.jps.Module
+import org.jetbrains.jps.MacroExpander
 
 /**
  * @author nik
  */
 class FacetLoader {
   private final Module module
-  private final String moduleBasePath
-  IdeaProjectLoader loader
+  private final MacroExpander macroExpander
   private static final Map<String, String> OUTPUT_PATHS = [
           "web.xml": "WEB-INF",
           "ejb-jar.xml": "META-INF",
@@ -16,10 +16,9 @@ class FacetLoader {
           "context.xml": "META-INF"
   ]
 
-  def FacetLoader(IdeaProjectLoader loader, Module module, String moduleBasePath) {
-    this.loader = loader
+  def FacetLoader(Module module, MacroExpander macroExpander) {
     this.module = module
-    this.moduleBasePath = moduleBasePath
+    this.macroExpander = macroExpander
   }
 
 
@@ -46,6 +45,6 @@ class FacetLoader {
   }
 
   def urlToPath(String url) {
-    return loader.expandMacro(IdeaProjectLoader.pathFromUrl(url), moduleBasePath)
+    return macroExpander.expandMacros(IdeaProjectLoader.pathFromUrl(url))
   }
 }
