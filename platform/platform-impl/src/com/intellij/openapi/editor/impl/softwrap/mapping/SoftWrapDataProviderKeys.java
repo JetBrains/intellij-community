@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.impl.softwrap;
+package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 /**
  * {@link CompositeDataProvider} defines a generic infrastructure for combining multiple {@link DataProvider}s to the

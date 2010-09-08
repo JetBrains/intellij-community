@@ -24,7 +24,8 @@ import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
 
-  private final CachingSoftWrapDataMapper     myDataMapper;
+  private final CachingSoftWrapDataMapper myDataMapper;
   private final SoftWrapsStorage              myStorage;
   private final SoftWrapPainter               myPainter;
   private final SoftWrapApplianceManager      myApplianceManager;

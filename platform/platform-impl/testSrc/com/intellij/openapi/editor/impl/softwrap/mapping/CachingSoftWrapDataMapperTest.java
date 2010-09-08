@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.impl.softwrap;
+package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.mock.MockFoldRegion;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
+import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import gnu.trove.TIntHashSet;
@@ -98,7 +99,7 @@ public class CachingSoftWrapDataMapperTest {
   private final TIntHashSet      myFoldedOffsets = new TIntHashSet();
   private final List<FoldRegion> myFoldRegions   = new ArrayList<FoldRegion>();
 
-  private CachingSoftWrapDataMapper          myMapper;
+  private CachingSoftWrapDataMapper myMapper;
   private Mockery                            myMockery;
   private EditorEx                           myEditor;
   private Document                           myDocument;
@@ -162,6 +163,8 @@ public class CachingSoftWrapDataMapperTest {
 
       // Folding.
       allowing(myEditor).getFoldingModel();will(returnValue(myFoldingModel));
+      allowing(myFoldingModel).isFoldingEnabled(); returnValue(true);
+      allowing(myFoldingModel).setFoldingEnabled(with(any(boolean.class)));
       allowing(myFoldingModel).isOffsetCollapsed(with(any(int.class))); will(new CustomAction("isOffsetCollapsed()") {
         @Override
         public Object invoke(Invocation invocation) throws Throwable {
