@@ -297,11 +297,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void refresh(final boolean refreshViewsOnly) {
-    if (getState() == DebuggerSession.STATE_PAUSED) {
-      DebuggerContextImpl context = myContextManager.getContext();
-      DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(this, context.getSuspendContext(), context.getThreadProxy(), context.getFrameProxy());
-      myContextManager.setState(newContext, STATE_PAUSED, refreshViewsOnly? EVENT_REFRESH_VIEWS_ONLY : EVENT_REFRESH, null);
-    }
+    final int state = getState();
+    DebuggerContextImpl context = myContextManager.getContext();
+    DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(this, context.getSuspendContext(), context.getThreadProxy(), context.getFrameProxy());
+    myContextManager.setState(newContext, state, refreshViewsOnly? EVENT_REFRESH_VIEWS_ONLY : EVENT_REFRESH, null);
   }
 
   public void dispose() {

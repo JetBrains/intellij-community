@@ -385,11 +385,10 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
     myDebuggerContext = context;
     saveState();
-    process.getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
-      public void threadAction() {
+    process.getManagerThread().schedule(new DebuggerCommandImpl() {
+      protected void action() throws Exception {
         getNodeFactory().setHistoryByContext(context);
       }
-
       public Priority getPriority() {
         return Priority.NORMAL;
       }

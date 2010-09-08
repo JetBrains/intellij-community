@@ -31,9 +31,10 @@ public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
   }
 
   public boolean equals(Object object) {
-    if(!(object instanceof ThreadData)) return false;
-
-    return ((ThreadData)object).myThread == myThread;
+    if(!(object instanceof ThreadData)) {
+      return false;
+    }
+    return myThread.equals(((ThreadData)object).myThread);
   }
 
   public int hashCode() {
