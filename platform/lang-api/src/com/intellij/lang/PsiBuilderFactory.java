@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author yole
@@ -42,5 +43,6 @@ public abstract class PsiBuilderFactory {
   public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree, @Nullable Lexer lexer,
                                            @NotNull Language lang, @NotNull CharSequence seq);
 
+  @TestOnly
   public abstract PsiBuilder createBuilder(@NotNull Lexer lexer, @NotNull Language lang, @NotNull CharSequence seq);
 }

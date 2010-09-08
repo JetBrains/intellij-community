@@ -19,6 +19,7 @@ package com.intellij.lang.impl;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -63,6 +64,8 @@ import java.util.List;
  */
 public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
+
+  private Project myProject;
 
   private int[] myLexStarts;
   private IElementType[] myLexTypes;
@@ -125,10 +128,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
-  public PsiBuilderImpl(@NotNull final Language lang,
+  public PsiBuilderImpl(@NotNull final Project project,
+                        @NotNull final Language lang,
                         @NotNull final Lexer lexer,
                         @NotNull final ASTNode chameleon,
                         @NotNull final CharSequence text) {
+    myProject = project;
+
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     myLexer = lexer;
@@ -149,6 +155,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final TokenSet whitespaces,
                         @NotNull final TokenSet comments,
                         @NotNull final CharSequence text) {
+    myProject = null;
+
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     myLexer = lexer;
@@ -191,6 +199,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexStarts[i] = myText.length();
 
     myLexemeCount = i;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   public void enforceCommentTokens(TokenSet tokens) {

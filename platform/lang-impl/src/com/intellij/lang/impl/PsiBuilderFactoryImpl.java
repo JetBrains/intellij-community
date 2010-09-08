@@ -21,6 +21,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author yole
@@ -39,9 +40,10 @@ public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
       assert parserDefinition != null : "ParserDefinition absent for language: " + lang.getID();
       lexer = parserDefinition.createLexer(project);
     }
-    return new PsiBuilderImpl(lang, lexer, tree, seq);
+    return new PsiBuilderImpl(project, lang, lexer, tree, seq);
   }
 
+  @TestOnly
   @Override
   public PsiBuilder createBuilder(@NotNull final Lexer lexer, @NotNull final Language lang, @NotNull final CharSequence seq) {
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
