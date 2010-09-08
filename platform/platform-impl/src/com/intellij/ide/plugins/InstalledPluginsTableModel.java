@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.util.Function;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   public static Map<PluginId, Integer> NewVersions2Plugins = new HashMap<PluginId, Integer>();
   public static Set<PluginId> updatedPlugins = new HashSet<PluginId>();
   private final Map<PluginId, Boolean> myEnabled = new HashMap<PluginId, Boolean>();
+  private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<PluginId, Set<PluginId>>();
 
   public InstalledPluginsTableModel() {
     super.columns = new ColumnInfo[]{new EnabledPluginInfo(), new NameColumnInfo(), new BundledColumnInfo()};
@@ -80,7 +82,49 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private void reset(final List<IdeaPluginDescriptor> list) {
     for (IdeaPluginDescriptor ideaPluginDescriptor : list) {
       if (ideaPluginDescriptor instanceof IdeaPluginDescriptorImpl) {
-        myEnabled.put(ideaPluginDescriptor.getPluginId(), ((IdeaPluginDescriptorImpl)ideaPluginDescriptor).isEnabled());
+        final boolean enabled = ((IdeaPluginDescriptorImpl)ideaPluginDescriptor).isEnabled();
+        myEnabled.put(ideaPluginDescriptor.getPluginId(), enabled);
+      }
+    }
+
+    updatePluginDependencies();
+  }
+
+  public Map<PluginId, Set<PluginId>> getDependentToRequiredListMap() {
+    return myDependentToRequiredListMap;
+  }
+
+  private void updatePluginDependencies() {
+    myDependentToRequiredListMap.clear();
+
+    final int rowCount = getRowCount();
+    for (int i = 0; i < rowCount; i++) {
+      final IdeaPluginDescriptor descriptor = getObjectAt(i);
+      final PluginId pluginId = descriptor.getPluginId();
+      myDependentToRequiredListMap.remove(pluginId);
+      if (myEnabled.get(pluginId)) {
+        PluginManager.checkDependants(descriptor, new Function<PluginId, IdeaPluginDescriptor>() {
+          @Nullable
+          public IdeaPluginDescriptor fun(final PluginId pluginId) {
+            return PluginManager.getPlugin(pluginId);
+          }
+        }, new Condition<PluginId>() {
+          public boolean value(final PluginId pluginId) {
+            final Boolean enabled = myEnabled.get(pluginId);
+            if (enabled == null || !enabled.booleanValue()) {
+              Set<PluginId> required = myDependentToRequiredListMap.get(descriptor.getPluginId());
+              if (required == null) {
+                required = new HashSet<PluginId>();
+                myDependentToRequiredListMap.put(descriptor.getPluginId(), required);
+              }
+
+              required.add(pluginId);
+              //return false;
+            }
+
+            return true;
+          }
+        });
       }
     }
   }
@@ -181,6 +225,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     public void setValue(final IdeaPluginDescriptorImpl ideaPluginDescriptor, final Boolean value) {
       myEnabled.put(ideaPluginDescriptor.getPluginId(), value);
+      updatePluginDependencies();
       if (value.booleanValue()) {
         final Set<PluginId> deps = new HashSet<PluginId>();
         PluginManager.checkDependants(ideaPluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
@@ -211,6 +256,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
             for (PluginId pluginId : deps) {
               myEnabled.put(pluginId, Boolean.TRUE);
             }
+
+            updatePluginDependencies();
           }
         }
       }
@@ -223,13 +270,14 @@ public class InstalledPluginsTableModel extends PluginTableModel {
             if (myEnabled.get(o2.getPluginId())) {
               return 0;
             }
-            return -1;
+
+            return 1;
           }
           else {
             if (!myEnabled.get(o2.getPluginId())) {
               return 0;
             }
-            return 1;
+            return -1;
           }
         }
       };
@@ -298,26 +346,25 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         else {
           cellRenderer.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
         }
-        final Boolean enabled = myEnabled.get(ideaPluginDescriptor.getPluginId());
-        if (enabled != null && enabled.booleanValue()) {
-          PluginManager.checkDependants(ideaPluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
-            @Nullable
-            public IdeaPluginDescriptor fun(final PluginId pluginId) {
-              return PluginManager.getPlugin(pluginId);
+
+        final PluginId pluginId = ideaPluginDescriptor.getPluginId();
+        final Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
+        if (required != null && required.size() > 0) {
+          cellRenderer.setForeground(Color.RED);
+
+          final StringBuilder s = new StringBuilder("Required plugin").append(required.size() == 1 ? " \"" : "s \"");
+          s.append(StringUtil.join(required, new Function<PluginId, String>() {
+            @Override
+            public String fun(final PluginId id) {
+              final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+              return plugin == null ? id.getIdString() : plugin.getName();
             }
-          }, new Condition<PluginId>() {
-            public boolean value(final PluginId pluginId) {
-              final Boolean enabled = myEnabled.get(pluginId);
-              if (enabled == null || !enabled.booleanValue()) {
-                cellRenderer.setForeground(Color.red);
-                final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-                cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.tooltip.warning", plugin != null ? plugin.getName() : pluginId.getIdString()));
-                return false;
-              }
-              return true;
-            }
-          });
+          }, ","));
+
+          s.append(required.size() == 1 ? "\" is not enabled!" : "\" are not enabled!");
+          cellRenderer.setToolTipText(s.toString());
         }
+
         if (PluginManager.isIncompatible(ideaPluginDescriptor)) {
           cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.incompatible.tooltip.warning", ApplicationNamesInfo.getInstance().getFullProductName()));
           cellRenderer.setForeground(Color.red);

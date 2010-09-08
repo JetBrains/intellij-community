@@ -66,6 +66,11 @@ public class PluginTable extends Table {
     column.setMaxWidth(width);
   }
 
+  @Override
+  protected boolean isSortOnUpdates() {
+    return false;
+  }
+
   public void setValueAt(final Object aValue, final int row, final int column) {
     super.setValueAt(aValue, row, column);
     repaint(); //in order to update invalid plugins
@@ -73,7 +78,7 @@ public class PluginTable extends Table {
 
   public TableCellRenderer getCellRenderer(final int row, final int column) {
     final ColumnInfo columnInfo = ((PluginTableModel)getModel()).getColumnInfos()[column];
-    return columnInfo.getRenderer(((PluginTableModel)getModel()).getObjectAt(row));
+    return columnInfo.getRenderer(getObjectAt(row));
   }
 
   private void initializeHeader() {
@@ -86,15 +91,17 @@ public class PluginTable extends Table {
   }
 
   public IdeaPluginDescriptor getObjectAt(int row) {
-    return ((PluginTableModel)getModel()).getObjectAt(row);
+    return ((PluginTableModel)getModel()).getObjectAt(convertRowIndexToModel(row));
   }
+
   public void select(IdeaPluginDescriptor... descriptors) {
     PluginTableModel tableModel = (PluginTableModel)getModel();
     getSelectionModel().clearSelection();
     for (int i=0; i<tableModel.getRowCount();i++) {
       IdeaPluginDescriptor descriptorAt = tableModel.getObjectAt(i);
       if (ArrayUtil.find(descriptors,descriptorAt) != -1) {
-        getSelectionModel().addSelectionInterval(i, i);
+        final int row = convertRowIndexToView(i);
+        getSelectionModel().addSelectionInterval(row, row);
       }
     }
     TableUtil.scrollSelectionToVisible(this);

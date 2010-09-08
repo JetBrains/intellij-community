@@ -101,6 +101,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       final SortableColumnModel sortableModel = (SortableColumnModel)model;
       if (sortableModel.isSortable()) {
         final TableRowSorter<TableModel> rowSorter = createRowSorter(model);
+        rowSorter.setSortsOnUpdates(isSortOnUpdates());
         setRowSorter(rowSorter);
         final RowSorter.SortKey sortKey = sortableModel.getDefaultSortKey();
         if (sortKey != null && sortKey.getColumn() >= 0 && sortKey.getColumn() < model.getColumnCount()) {
@@ -115,6 +116,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       }
     }
+  }
+
+  protected boolean isSortOnUpdates() {
+    return true;
   }
 
   @Override
@@ -304,7 +309,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       super(model);
       setModelWrapper(new TableRowSorterModelWrapper(model));
       setMaxSortKeys(1);
-      setSortsOnUpdates(true);
     }
 
     @Override
