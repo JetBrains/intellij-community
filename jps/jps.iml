@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="antlayout" />
     <orderEntry type="library" scope="TEST" name="JUnit" level="project" />
     <orderEntry type="library" exported="" name="Gant" level="application" />
-    <orderEntry type="module" module-name="javaee" />
   </component>
 </module>
 
