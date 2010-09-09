@@ -17,18 +17,15 @@ package com.intellij.lang.annotation;
 
 import com.intellij.psi.PsiFile;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Implemented by a custom language plugin to process the files in a language by an
  * external annotation tool. The external annotator is expected to be slow and is started
  * after the regular annotator has completed its work.
  *
  * @author ven
+ * @see com.intellij.lang.ExternalLanguageAnnotators
  */
 public interface ExternalAnnotator {
-  List<ExternalAnnotator> EMPTY_LIST = Collections.unmodifiableList(Collections.<ExternalAnnotator>emptyList());
 
   /**
    * Annotates the specified file.
