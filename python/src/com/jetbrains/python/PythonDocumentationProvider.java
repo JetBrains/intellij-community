@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -387,7 +386,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", element.getText())).add(BR));
         reassignment_marked = true;
       }
-      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)element).followAssignmentsChain();
+      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)element).followAssignmentsChain(TypeEvalContext.fast());
       element = resolveResult.isImplicit() ? null : resolveResult.getElement();
     }
     // it may be a call to a standard wrapper

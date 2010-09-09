@@ -86,7 +86,7 @@ public class PyStringFormatInspection extends PyInspection {
           return 1;
         }
         else if (rightExpression instanceof PyReferenceExpression) {
-          final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain().getElement();
+          final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(myTypeEvalContext).getElement();
           if (pyElement == null) {
             return -1;
           }

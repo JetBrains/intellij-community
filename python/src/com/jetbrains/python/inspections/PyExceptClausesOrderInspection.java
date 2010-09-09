@@ -1,6 +1,6 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -25,14 +25,14 @@ public class PyExceptClausesOrderInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class PyExceptClausesOrderInspection extends PyInspection {
         for (PyExceptPart exceptPart : exceptParts) {
           PyExpression exceptClass = exceptPart.getExceptClass();
           if (exceptClass instanceof PyReferenceExpression) {
-            PsiElement element = ((PyReferenceExpression) exceptClass).followAssignmentsChain().getElement();
+            PsiElement element = ((PyReferenceExpression) exceptClass).followAssignmentsChain(myTypeEvalContext).getElement();
             if (element instanceof PyClass) {
               PyClass pyClass = (PyClass)element;
               if (exceptClasses.contains(pyClass)) {

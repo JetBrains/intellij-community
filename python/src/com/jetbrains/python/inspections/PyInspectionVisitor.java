@@ -19,7 +19,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
   public PyInspectionVisitor(@Nullable final ProblemsHolder holder) {
     myHolder = holder;
-    myTypeEvalContext = TypeEvalContext.fast();
+    myTypeEvalContext = TypeEvalContext.fastStubOnly();
   }
 
   public PyInspectionVisitor(@Nullable ProblemsHolder problemsHolder,
@@ -29,7 +29,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
       context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
       if (context == null) {
-        context = TypeEvalContext.fast();
+        context = TypeEvalContext.fastStubOnly();
         session.putUserData(INSPECTION_TYPE_EVAL_CONTEXT, context);
       }
     }

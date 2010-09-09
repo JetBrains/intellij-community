@@ -102,7 +102,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private final QualifiedResolveResult EMPTY_RESULT = new QualifiedResolveResultEmpty();
 
   @NotNull
-  public QualifiedResolveResult followAssignmentsChain() {
+  public QualifiedResolveResult followAssignmentsChain(TypeEvalContext context) {
     PyReferenceExpression seeker = this;
     QualifiedResolveResult ret = null;
     PyExpression last_qualifier = null;
@@ -110,10 +110,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     visited.add(this);
     SEARCH:
     while (ret == null) {
-      ResolveResult[] targets = seeker.getReference().multiResolve(false);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+      ResolveResult[] targets = seeker.getReference(resolveContext).multiResolve(false);
       for (ResolveResult target : targets) {
         PsiElement elt = target.getElement();
         if (elt instanceof PyTargetExpression) {
+          if (!context.maySwitchToAST((PyTargetExpression)elt)) {
+            break;
+          }
           PyExpression assigned_from = ((PyTargetExpression)elt).findAssignedValue();
           if (assigned_from instanceof PyReferenceExpression) {
             if (visited.contains(assigned_from)) {
@@ -218,7 +222,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return type;
       }
 
-      ResolveResult[] targets = getReference(PyResolveContext.noImplicits()).multiResolve(false);
+      ResolveResult[] targets = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context)).multiResolve(false);
       if (targets.length == 0) return null;
       for (ResolveResult resolveResult : targets) {
         PsiElement target = resolveResult.getElement();

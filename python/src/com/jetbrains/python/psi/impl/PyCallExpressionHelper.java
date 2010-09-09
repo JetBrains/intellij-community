@@ -82,7 +82,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       // dereference
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      resolveResult = ref.followAssignmentsChain();
+      resolveResult = ref.followAssignmentsChain(TypeEvalContext.fast());
       resolved = resolveResult.getElement();
     }
     else {
@@ -111,7 +111,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       // dereference
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      resolveResult = ref.followAssignmentsChain();
+      resolveResult = ref.followAssignmentsChain(context);
       resolved = resolveResult.getElement();
     }
     else {
