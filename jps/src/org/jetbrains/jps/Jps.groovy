@@ -39,7 +39,7 @@ final class Jps {
     binding.setVariable("layout", {String dir, Closure body ->
       def old = binding.getVariable("module")
 
-      ["module", "jar", "zip", "dir"].each {tag ->
+      ["module", "zip", "dir"].each {tag ->
         binding.setVariable(tag, {Object[] args ->
           if (args.length == 1) {
             binding.ant."$tag"(name: args[0])
@@ -52,6 +52,14 @@ final class Jps {
           }
         })
       }
+      binding.setVariable("jar", {Object[] args ->
+        if (args.length == 2) {
+          binding.ant.jar(name: args[0], compress: project.builder.compressJars, args[1])
+        }
+        else {
+          project.error("unexpected number of parameters for 'jar' task: $args.length")
+        }
+      })
 
       binding.setVariable("renamedFile", {Object[] args ->
         if (args.length != 2) {

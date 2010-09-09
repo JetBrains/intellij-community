@@ -2,7 +2,7 @@ package org.jetbrains.jps.artifacts
 
 import org.jetbrains.jps.Project
 
-/**
+ /**
  * @author nik
  */
 abstract class CompositeLayoutElement extends LayoutElement {
@@ -60,8 +60,9 @@ class ArchiveElement extends CompositeLayoutElement {
 
   def build(Project project) {
     if (name.endsWith(".jar")) {
-      project.binding.ant.jar(name: name, filesetmanifest: "mergewithoutmain", duplicate: "preserve", {
-        buildChildren(project)
+      project.binding.ant.jar(name: name, filesetmanifest: "mergewithoutmain", duplicate: "preserve",
+                              compress: project.builder.compressJars, {
+            buildChildren(project)
       })
     }
     else {

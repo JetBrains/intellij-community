@@ -30,6 +30,7 @@ class ProjectBuilder {
   final List<JpsBuildListener> listeners = [new BuildStatisticsListener()]
   BuildInfoPrinter buildInfoPrinter = new DefaultBuildInfoPrinter()
   boolean useInProcessJavac
+  boolean compressJars = true
 
   def ProjectBuilder(GantBinding binding, Project project) {
     this.project = project

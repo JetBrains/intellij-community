@@ -150,13 +150,13 @@ public class IdeaProjectLoader {
 
   private def loadProjectJdkAndOutput(Node root) {
     def componentTag = getComponent(root, "ProjectRootManager")
-    def sdkName = componentTag."@project-jdk-name"
+    def sdkName = componentTag?."@project-jdk-name"
     def sdk = project.sdks[sdkName]
     if (sdk == null) {
       project.info("Project SDK '$sdkName' is not defined. Embedded javac will be used")
     }
-    def outputTag = componentTag.output[0];
-    String outputPath = outputTag != null ? pathFromUrl(outputTag.'@url') : null;
+    def outputTag = componentTag?.output?.getAt(0)
+    String outputPath = outputTag != null ? pathFromUrl(outputTag.'@url') : null
     projectOutputPath = outputPath != null && outputPath.length() > 0 ? projectMacroExpander.expandMacros(outputPath) : null
     project.projectSdk = sdk
   }

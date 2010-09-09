@@ -16,6 +16,14 @@ abstract class JpsBuildTestCase extends TestCase {
   }
 
   def doTest(String projectPath, Map<String, String> pathVariables, Closure initProject, Closure expectedOutput) {
+    Project project = buildAll(projectPath, pathVariables, initProject)
+
+    def root = new FileSystemItem(name: "<root>")
+    initFileSystemItem(root, expectedOutput)
+    root.assertDirectoryEqual(new File(project.targetFolder), "");
+  }
+
+  def protected buildAll(String projectPath, Map<String, String> pathVariables, Closure initProject) {
     def binding = new GantBinding()
     binding.includeTool << Jps
     def project = new Project(binding)
@@ -26,10 +34,7 @@ abstract class JpsBuildTestCase extends TestCase {
     project.clean()
     project.makeAll()
     project.buildArtifacts()
-
-    def root = new FileSystemItem(name: "<root>")
-    initFileSystemItem(root, expectedOutput)
-    root.assertDirectoryEqual(target, "");
+    return project
   }
 
   def initFileSystemItem(FileSystemItem item, Closure initializer) {
