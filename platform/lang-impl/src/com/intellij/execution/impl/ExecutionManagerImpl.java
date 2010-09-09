@@ -38,7 +38,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,9 +96,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return handlers.toArray(new ProcessHandler[handlers.size()]);
   }
 
-  public void compileAndRun(final Runnable startRunnable,
-                            final RunProfile configuration,
-                            final RunProfileState state) {
+  public void compileAndRun(final Runnable startRunnable, final RunProfile configuration, final RunProfileState state, @Nullable final Runnable onCancelRunnable) {
     if (configuration instanceof RunConfiguration) {
       final RunConfiguration runConfiguration = (RunConfiguration)configuration;
       final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
@@ -119,6 +119,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
               .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
             for (BeforeRunTaskProvider<BeforeRunTask> provider : activeProviders.keySet()) {
               if(!provider.executeTask(dataContext, runConfiguration, activeProviders.get(provider))) {
+                if (onCancelRunnable != null) {
+                  SwingUtilities.invokeLater(onCancelRunnable);
+                }
                 return;
               }
             }
@@ -179,7 +182,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       startRunnable.run();
     }
     else {
-      compileAndRun(startRunnable, profile, state);
+      compileAndRun(startRunnable, profile, state, new Runnable() {
+        public void run() {
+          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);
+        }
+      });
     }
   }
 

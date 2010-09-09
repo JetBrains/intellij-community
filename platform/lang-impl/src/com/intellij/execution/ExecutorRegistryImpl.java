@@ -156,6 +156,10 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     return new Trinity<Project, String, String>(project, executorId, env.getConfigurationSettings().getRunnerId());
   }
 
+  public boolean isStarting(Project project, final String executorId, final String runnerId) {
+    return myInProgress.contains(new Trinity<Project, String, String>(project, executorId, runnerId));
+  }
+  
   public synchronized void disposeComponent() {
     if (myExecutors.size() > 0) {
       List<Executor> executors = new ArrayList<Executor>(myExecutors);
@@ -192,7 +196,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       final RunnerAndConfigurationSettings selectedConfiguration = getConfiguration(project);
       if (selectedConfiguration != null) {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
-        enabled = runner != null && !myInProgress.contains(new Trinity<Project, String, String>(project, myExecutor.getId(), runner.getRunnerId()));
+        enabled = runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId());
 
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
@@ -216,8 +220,11 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       if (project == null || project.isDisposed()) {
         return;
       }
-
-      ProgramRunnerUtil.executeConfiguration(project, getConfiguration(project), myExecutor);
+      final RunnerAndConfigurationSettings configuration = getConfiguration(project);
+      if (configuration == null) {
+        return;
+      }
+      ProgramRunnerUtil.executeConfiguration(project, configuration, myExecutor);
     }
   }
 }
