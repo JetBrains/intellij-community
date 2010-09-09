@@ -87,6 +87,18 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   @Override
   public void projectClosed() {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    for (PsiFile file : myListenerMap.keySet()) {
+      final MyDocumentChangeAdapter adapter = myListenerMap.get(file);
+      if (adapter != null) {
+        final Document document = documentManager.getDocument(file);
+        if (document != null) {
+          document.removeDocumentListener(adapter);
+        }
+      }
+    }
+    myListenerMap.clear();
+
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(this);
     EditorFactory.getInstance().removeEditorFactoryListener(this);
   }
