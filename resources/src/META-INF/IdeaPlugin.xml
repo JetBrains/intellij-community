@@ -321,7 +321,7 @@
 
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringActionHandlerFactoryImpl"/>
-    <changeSignatureDetector implementation="com.intellij.refactoring.changeSignature.JavaChangeSignatureDetector"/>
+    <changeSignatureDetector language="JAVA" implementationClass="com.intellij.refactoring.changeSignature.JavaChangeSignatureDetector"/>
 
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringSettings"
                         serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>

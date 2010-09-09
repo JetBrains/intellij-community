@@ -38,7 +38,7 @@ import java.util.HashSet;
  * User: anna
  * Date: Sep 6, 2010
  */
-public class JavaChangeSignatureDetector implements ChangeSignatureGestureDetectorExtension {
+public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetector {
   private static final Logger LOG = Logger.getInstance("#" + JavaChangeSignatureDetector.class.getName());
 
   @Override

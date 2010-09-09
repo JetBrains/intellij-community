@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -41,7 +42,7 @@ public class ChangeSignatureGestureVisistor implements HighlightVisitor {
 
   @Override
   public boolean suitableForFile(PsiFile file) {
-    return true;
+    return file != null && ApplicationManagerEx.getApplicationEx().isInternal() && LanguageChangeSignatureDetectors.isSuitableForLanguage(file.getLanguage());
   }
 
   @Override

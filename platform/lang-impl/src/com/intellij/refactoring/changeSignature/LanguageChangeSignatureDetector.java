@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: Sep 6, 2010
  */
-public interface ChangeSignatureGestureDetectorExtension {
-  ExtensionPointName<ChangeSignatureGestureDetectorExtension> EP_NAME = ExtensionPointName.create("com.intellij.changeSignatureDetector");
+public interface LanguageChangeSignatureDetector {
+
 
   @Nullable
   ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,

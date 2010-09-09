@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -51,53 +50,32 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     return project.getComponent(ChangeSignatureGestureDetector.class);
   }
 
-  @Nullable
-  protected static ChangeInfo createCurrentChangeInfo(@NotNull PsiElement element, @Nullable ChangeInfo changeInfo) {
-    for (ChangeSignatureGestureDetectorExtension detectorExtension : Extensions
-      .getExtensions(ChangeSignatureGestureDetectorExtension.EP_NAME)) {
-      final ChangeInfo newChangeInfo = detectorExtension.createCurrentChangeSignature(element, changeInfo);
-      if (newChangeInfo != null) return newChangeInfo;
-    }
-    return null;
-  }
-
-
-
-  public boolean isChangeSignatureAvailable(PsiElement element) {
+  public boolean isChangeSignatureAvailable(@NotNull PsiElement element) {
     final MyDocumentChangeAdapter adapter = myListenerMap.get(element.getContainingFile());
     if (adapter != null && adapter.getCurrentInfo() != null) {
-      for (ChangeSignatureGestureDetectorExtension extension : Extensions
-        .getExtensions(ChangeSignatureGestureDetectorExtension.EP_NAME)) {
-        if (extension.isChangeSignatureAvailable(element, adapter.getCurrentInfo())) {
-          return true;
-        }
-      }
+      final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
+      LOG.assertTrue(detector != null);
+      return detector.isChangeSignatureAvailable(element, adapter.getCurrentInfo());
     }
     return false;
   }
 
   @Nullable
-  public static TextRange getHighlightingRange(PsiElement element) {
-    for (ChangeSignatureGestureDetectorExtension extension : Extensions
-      .getExtensions(ChangeSignatureGestureDetectorExtension.EP_NAME)) {
-      final TextRange range = extension.getHighlightingRange(element);
-      if (range != null) return range;
-    }
-    return null;
+  public static TextRange getHighlightingRange(@NotNull PsiElement element) {
+    final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
+    LOG.assertTrue(detector != null);
+    return detector.getHighlightingRange(element);
   }
 
   public void changeSignature(PsiFile file) {
     try {
       myDeaf = true;
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
-
-      for (ChangeSignatureGestureDetectorExtension detectorExtension : Extensions
-        .getExtensions(ChangeSignatureGestureDetectorExtension.EP_NAME)) {
-        if (detectorExtension.showDialog(changeBean.getCurrentInfo(), changeBean.getInitialText())) {
-          changeBean.setInitialText(null);
-          changeBean.setCurrentInfo(null);
-          return;
-        }
+      final ChangeInfo currentInfo = changeBean.getCurrentInfo();
+      final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
+      if (detector.showDialog(currentInfo, changeBean.getInitialText())) {
+        changeBean.setInitialText(null);
+        changeBean.setCurrentInfo(null);
       }
     }
     finally {
@@ -138,7 +116,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     if (file != null) {
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
       if (changeBean != null && changeBean.getInitialText() != null) {
-        final ChangeInfo info = createCurrentChangeInfo(event.getChild(), changeBean.getCurrentInfo());
+        final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(event.getChild(), changeBean.getCurrentInfo());
         changeBean.setCurrentInfo(info);
         if (info == null) {
           changeBean.setInitialText(null);
@@ -199,7 +177,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
           if (file != null) {
             final PsiElement element = file.findElementAt(e.getOffset());
             if (element != null) {
-              final ChangeInfo info = createCurrentChangeInfo(element, myCurrentInfo);
+              final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(element, myCurrentInfo);
               if (info != null) {
                 myInitialText = document.getText();
                 myCurrentInfo = info;
@@ -210,4 +188,5 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       }
     }
   }
+
 }
