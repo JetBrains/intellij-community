@@ -150,7 +150,13 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
             return new ChangeSignatureProcessor(myProject, new MyJavaChangeInfo(info.getNewVisibility(), info.getSuperMethod(),
                                                                                 info.getNewReturnType(),
                                                                                 (ParameterInfoImpl[])info.getNewParameters(),
-                                                                                info.getNewExceptions(), info.getOldName()));
+                                                                                info.getNewExceptions(), info.getOldName()) {
+              @Override
+              protected void fillOldParams(PsiMethod method) {
+                oldParameterNames = info.getOldParameterNames();
+                oldParameterTypes = info.getOldParameterTypes();
+              }
+            });
           }
 
           @Override
