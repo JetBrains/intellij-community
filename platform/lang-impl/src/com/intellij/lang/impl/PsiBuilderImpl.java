@@ -790,7 +790,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private ASTNode createRootAST(final StartMarker rootMarker) {
-    final ASTNode rootNode = createComposite(rootMarker);
+    final IElementType type = rootMarker.getTokenType();
+    final ASTNode rootNode = type instanceof IFileElementType ?
+                             ASTFactory.lazy((ILazyParseableElementType)type, null) : createComposite(rootMarker);
     if (myCharTable == null) {
       myCharTable = rootNode instanceof FileElement ? ((FileElement)rootNode).getCharTable() : new CharTableImpl();
     }
