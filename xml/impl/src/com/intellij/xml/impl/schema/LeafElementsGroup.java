@@ -13,35 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xml;
-
-import java.util.List;
+package com.intellij.xml.impl.schema;
 
 /**
  * @author Dmitry Avdeev
  */
-public interface XmlElementsGroup {
-
-  enum Type {
-    SEQUENCE,
-    CHOICE,
-    ALL,
-    GROUP,
-
-    LEAF
-  }
-
-  /**
-   * @return minimal occurrence constraint value (e.g. 0 or 1)
-   */
-  int getMinOccurs();
-
-  /**
-   * @return maximal occurrence constraint value (e.g. 1 or {@link Integer#MAX_VALUE})
-   */
-  int getMaxOccurs();
-
-  Type getGroupType();
-  List<XmlElementsGroup> getSubGroups();
-  XmlElementDescriptor getLeafDescriptor();
+public class LeafElementsGroup {
 }

@@ -155,7 +155,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   @Override
   public XmlElementsGroup getTopGroup() {
-    return null;
+    TypeDescriptor type = getType();
+    return type instanceof ComplexTypeDescriptor ? ((ComplexTypeDescriptor)type).getTopGroup() : null;
   }
 
   @Nullable
