@@ -111,6 +111,11 @@ public class ClasspathPanel extends JPanel {
         return myEntryTable.getSelectedRow();
       }
 
+      @Override
+      protected int convertIndexToModel(int viewIndex) {
+        return myEntryTable.convertRowIndexToModel(viewIndex);
+      }
+
       public Object[] getAllElements() {
         final int count = myModel.getRowCount();
         Object[] elements = new Object[count];
@@ -128,7 +133,8 @@ public class ClasspathPanel extends JPanel {
         final int count = myModel.getRowCount();
         for (int row = 0; row < count; row++) {
           if (element.equals(myModel.getItemAt(row))) {
-            myEntryTable.getSelectionModel().setSelectionInterval(row, row);
+            final int viewRow = myEntryTable.convertRowIndexToView(row);
+            myEntryTable.getSelectionModel().setSelectionInterval(viewRow, viewRow);
             TableUtil.scrollSelectionToVisible(myEntryTable);
             break;
           }
@@ -146,14 +152,14 @@ public class ClasspathPanel extends JPanel {
           final int[] selectedRows = myEntryTable.getSelectedRows();
           boolean currentlyMarked = true;
           for (final int selectedRow : selectedRows) {
-            final TableItem item = myModel.getItemAt(selectedRow);
+            final TableItem item = myModel.getItemAt(myEntryTable.convertRowIndexToModel(selectedRow));
             if (selectedRow < 0 || !item.isExportable()) {
               return;
             }
             currentlyMarked &= item.isExported();
           }
           for (final int selectedRow : selectedRows) {
-            myModel.getItemAt(selectedRow).setExported(!currentlyMarked);
+            myModel.getItemAt(myEntryTable.convertRowIndexToModel(selectedRow)).setExported(!currentlyMarked);
           }
           myModel.fireTableDataChanged();
           TableUtil.selectRows(myEntryTable, selectedRows);
