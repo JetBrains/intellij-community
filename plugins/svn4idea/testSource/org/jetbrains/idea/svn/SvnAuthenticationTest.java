@@ -103,13 +103,14 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           //long start = System.currentTimeMillis();
           //waitListenerStep(start, listener, 3);
 
+          listener.reset();
           SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
           commonScheme(url, false, null);
           //start = System.currentTimeMillis();
           //waitListenerStep(start, listener, 4);
-          Assert.assertEquals(4, listener.getCnt());
+          Assert.assertEquals((SystemInfo.isWindows ? 1 : 2), listener.getCnt());
         }
         catch (SVNException e) {
           exception[0] = e;
@@ -120,7 +121,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     Assert.assertTrue(result[0]);
     myTestInteraction.assertNothing();
-    Assert.assertEquals(4, listener.getCnt());
+    Assert.assertEquals((SystemInfo.isWindows ? 1 : 2), listener.getCnt());
     listener.assertForAwt();
     savedOnceListener.assertForAwt();
 
@@ -1008,6 +1009,12 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       synchronized (mySynchObject) {
         mySynchObject.notifyAll();
       }
+    }
+
+    public void reset() {
+      myExpectedSequence.clear();
+      myCnt = 0;
+      mySuccess = true;
     }
 
     @Override
