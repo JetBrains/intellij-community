@@ -595,7 +595,7 @@ public class PyUtil {
     if (elt == null) {
       return null;
     }
-    PsiElement parent = elt.getParent();
+    PsiElement parent = PsiTreeUtil.getStubOrPsiParent(elt);
     boolean jump_over = false;
     while (parent != null) {
       if (parent instanceof PyClass || parent instanceof Callable) {
@@ -609,7 +609,7 @@ public class PyUtil {
       else if (parent instanceof PsiFile) {
         break;
       }
-      parent = parent.getParent();
+      parent = PsiTreeUtil.getStubOrPsiParent(parent);
     }
     return null;
   }
