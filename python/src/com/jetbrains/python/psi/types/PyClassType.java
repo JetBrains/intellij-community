@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.patterns.ParentMatcher;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
@@ -70,25 +71,28 @@ public class PyClassType implements PyType {
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction) {
+  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
     assert myClass != null;
-    Property property = myClass.findProperty(name);
-    if (property != null) {
-      Maybe<PyFunction> accessor = property.getByDirection(direction);
-      if (accessor.isDefined()) {
-        Callable accessor_code = accessor.value();
-        SmartList<PsiElement> ret = new SmartList<PsiElement>();
-        if (accessor_code != null) ret.add(accessor_code);
-        PyTargetExpression site = property.getDefinitionSite();
-        if (site != null) ret.add(site);
-        if (ret.size() > 0) {
-          return ret;
+    if (resolveContext.allowProperties()) {
+      Property property = myClass.findProperty(name);
+      if (property != null) {
+        Maybe<PyFunction> accessor = property.getByDirection(direction);
+        if (accessor.isDefined()) {
+          Callable accessor_code = accessor.value();
+          SmartList<PsiElement> ret = new SmartList<PsiElement>();
+          if (accessor_code != null) ret.add(accessor_code);
+          PyTargetExpression site = property.getDefinitionSite();
+          if (site != null) ret.add(site);
+          if (ret.size() > 0) {
+            return ret;
+          }
+          else {
+            return null;
+          } // property is found, but the required accessor is explicitly absent
         }
-        else {
-          return null;
-        } // property is found, but the required accessor is explicitly absent
       }
     }
+
     final PsiElement classMember = resolveClassMember(myClass, name);
     if (classMember != null) {
       return new SmartList<PsiElement>(classMember);

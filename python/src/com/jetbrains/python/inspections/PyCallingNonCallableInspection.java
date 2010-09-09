@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -51,7 +52,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
             return;
           }
           if (!classType.isDefinition()) {
-            final List<? extends PsiElement> calls = classType.resolveMember("__call__", AccessDirection.READ);
+            final List<? extends PsiElement> calls = classType.resolveMember("__call__", AccessDirection.READ, PyResolveContext.defaultContext());
             if (calls == null || calls.size() == 0) {
               PyClass pyClass = classType.getPyClass();
               if (pyClass != null) {

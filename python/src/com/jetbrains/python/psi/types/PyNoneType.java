@@ -5,8 +5,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -21,7 +20,7 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction) {
+  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
     return null;
   }
 

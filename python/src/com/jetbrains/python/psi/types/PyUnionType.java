@@ -7,7 +7,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -23,12 +23,12 @@ public class PyUnionType implements PyType {
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(String name, AccessDirection direction) {
+  public List<? extends PsiElement> resolveMember(String name, AccessDirection direction, PyResolveContext resolveContext) {
     SmartList<PsiElement> ret = new SmartList<PsiElement>();
     boolean all_nulls = true;
     for (PyType member : myMembers) {
       if (member != null) {
-        List<? extends PsiElement> result = member.resolveMember(name, direction);
+        List<? extends PsiElement> result = member.resolveMember(name, direction, resolveContext);
         if (result != null) {
           all_nulls = false;
           ret.addAll(result);

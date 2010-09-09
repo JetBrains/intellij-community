@@ -5,7 +5,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public abstract class PyTypeReferenceImpl implements PyTypeReference {
   @NotNull
-  public List<? extends PsiElement> resolveMember(String name, AccessDirection direction) {
+  public List<? extends PsiElement> resolveMember(String name, AccessDirection direction, PyResolveContext resolveContext) {
     return Collections.emptyList();
   }
 

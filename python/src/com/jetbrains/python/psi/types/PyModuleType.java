@@ -12,6 +12,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction) {
+  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
     //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
     final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, myModule, false);
     if (result != null) return new SmartList<PsiElement>(result);

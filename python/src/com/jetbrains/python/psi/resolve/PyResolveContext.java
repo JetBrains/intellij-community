@@ -7,15 +7,18 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
  */
 public class PyResolveContext {
   private final boolean myAllowImplicits;
+  private final boolean myAllowProperties;
   private final TypeEvalContext myTypeEvalContext;
 
-  private PyResolveContext(boolean allowImplicits) {
+  private PyResolveContext(boolean allowImplicits, boolean allowProperties) {
     myAllowImplicits = allowImplicits;
+    myAllowProperties = allowProperties;
     myTypeEvalContext = null;
   }
 
-  private PyResolveContext(boolean allowImplicits, TypeEvalContext typeEvalContext) {
+  private PyResolveContext(boolean allowImplicits, boolean allowProperties, TypeEvalContext typeEvalContext) {
     myAllowImplicits = allowImplicits;
+    myAllowProperties = allowProperties;
     myTypeEvalContext = typeEvalContext;
   }
 
@@ -23,8 +26,13 @@ public class PyResolveContext {
     return myAllowImplicits;
   }
 
-  private static final PyResolveContext ourDefaultContext = new PyResolveContext(true);
-  private static final PyResolveContext ourNoImplicitsContext = new PyResolveContext(false);
+  public boolean allowProperties() {
+    return myAllowProperties;
+  }
+
+  private static final PyResolveContext ourDefaultContext = new PyResolveContext(true, true);
+  private static final PyResolveContext ourNoImplicitsContext = new PyResolveContext(false, true);
+  private static final PyResolveContext ourNoPropertiesContext = new PyResolveContext(false, false);
 
   public static PyResolveContext defaultContext() {
     return ourDefaultContext;
@@ -34,8 +42,12 @@ public class PyResolveContext {
     return ourNoImplicitsContext;
   }
 
+  public static PyResolveContext noProperties() {
+    return ourNoPropertiesContext;
+  }
+
   public PyResolveContext withTypeEvalContext(TypeEvalContext context) {
-    return new PyResolveContext(myAllowImplicits, context);
+    return new PyResolveContext(myAllowImplicits, myAllowProperties, context);
   }
 
   public TypeEvalContext getTypeEvalContext() {

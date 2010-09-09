@@ -131,7 +131,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     for(PyExpression expr: superExpressions) {
       if (expr instanceof PyReferenceExpression) {
         PyReferenceExpression ref = (PyReferenceExpression) expr;
-        final PsiElement result = ref.getReference(PyResolveContext.noImplicits()).resolve();
+        final PsiElement result = ref.getReference(PyResolveContext.noProperties()).resolve();
         if (result != null) {
           superClasses.add(result);
         }
