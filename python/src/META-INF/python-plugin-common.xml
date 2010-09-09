@@ -9,7 +9,7 @@
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
-    <lang.foldingBuilder language="DjangoTemplate" implementationClass="com.jetbrains.django.editor.DjangoTemplateFoldingBuilder"/>
+    <lang.foldingBuilder language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.PythonFormattingModelBuilder"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
@@ -218,11 +218,11 @@
 
     <colorSettingsPage implementation="com.jetbrains.django.lang.template.highlighting.DjangoTemplateColorsPage"/>
 
-    <lang.commenter language="DjangoTemplate" implementationClass="com.jetbrains.django.editor.DjangoTemplateCommenter"/>
+    <lang.commenter language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCommenter"/>
 
-    <basicWordSelectionFilter implementation="com.jetbrains.django.editor.DjangoTemplateWordSelectionFilter"/>
-    <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagSelectionHandler"/>
-    <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagNameSelectionHandler"/>
+    <basicWordSelectionFilter implementation="com.jetbrains.django.lang.template.editor.DjangoTemplateWordSelectionFilter"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.django.lang.template.editor.DjangoTemplateTagSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.django.lang.template.editor.DjangoTemplateTagNameSelectionHandler"/>
 
     <lang.namesValidator language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.inspection.DjangoTemplateNamesValidator"/>
 
@@ -258,7 +258,9 @@
 
     <lang.psiStructureViewFactory language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.structureView.DjangoStructureViewBuilderFactory"/>
 
-    <editorSmartKeysConfigurable instance="com.jetbrains.django.editor.DjangoEditorSmartKeysConfigurable"/>
+    <editorSmartKeysConfigurable instance="com.jetbrains.django.lang.template.editor.DjangoEditorSmartKeysConfigurable"/>
+
+    <enterHandlerDelegate implementation="com.jetbrains.django.lang.template.editor.EnterBetweenDjangoTagsHandler"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
