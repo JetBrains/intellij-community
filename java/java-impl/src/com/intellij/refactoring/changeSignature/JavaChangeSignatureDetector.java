@@ -48,9 +48,10 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     if (method != null && isInsideMethodSignature(element, method)) {
       final String newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
       final PsiType returnType = method.getReturnType();
-      final CanonicalTypes.Type newReturnType = returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null;
+      final CanonicalTypes.Type newReturnType;
       final ParameterInfoImpl[] parameterInfos;
       try {
+        newReturnType = returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null;
         parameterInfos = ParameterInfoImpl.fromMethod(method);
       }
       catch (IncorrectOperationException e) {
