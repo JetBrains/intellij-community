@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
@@ -38,63 +39,55 @@ public class PyStringFormatInspection extends PyInspection {
     private static class Inspection {
       private static final String FORMAT_FLAGS = "#0- +";
       private static final String FORMAT_LENGTH = "hlL";
-      private static final Map<Character, String> FORMAT_CONVERSIONS = new HashMap<Character, String>();
-
-      static {
-        FORMAT_CONVERSIONS.put('d', "int");
-        FORMAT_CONVERSIONS.put('i', "int");
-        FORMAT_CONVERSIONS.put('o', "int");
-        FORMAT_CONVERSIONS.put('u', "int");
-        FORMAT_CONVERSIONS.put('x', "int");
-        FORMAT_CONVERSIONS.put('X', "int");
-        FORMAT_CONVERSIONS.put('e', "float");
-        FORMAT_CONVERSIONS.put('E', "float");
-        FORMAT_CONVERSIONS.put('f', "float");
-        FORMAT_CONVERSIONS.put('F', "float");
-        FORMAT_CONVERSIONS.put('g', "float");
-        FORMAT_CONVERSIONS.put('G', "float");
-        FORMAT_CONVERSIONS.put('c', "str");
-        FORMAT_CONVERSIONS.put('r', "str");
-        FORMAT_CONVERSIONS.put('s', "str");
-      }
+      private static final ImmutableMap<Character, String> FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
+        .put('d', "int")
+        .put('i', "int")
+        .put('o', "int")
+        .put('u', "int")
+        .put('x', "int")
+        .put('X', "int")
+        .put('e', "float")
+        .put('E', "float")
+        .put('f', "float")
+        .put('F', "float")
+        .put('g', "float")
+        .put('G', "float")
+        .put('c', "str")
+        .put('r', "str")
+        .put('s', "str")
+        .build();
 
       private final Map<String, Boolean> myUsedMappingKeys = new HashMap<String, Boolean>();
       private int myExpectedArguments = 0;
       private boolean myProblemRegister = false;
       private final Visitor myVisitor;
-      private final PyBinaryExpression myExpression;
       private final TypeEvalContext myTypeEvalContext;
 
       private final Map<String, String> myFormatSpec = new HashMap<String, String>();
 
-      public Inspection(Visitor visitor, PyBinaryExpression expression, TypeEvalContext typeEvalContext) {
+      public Inspection(Visitor visitor, TypeEvalContext typeEvalContext) {
         myVisitor = visitor;
-        myExpression = expression;
         myTypeEvalContext = typeEvalContext;
       }
 
       // return number of arguments or -1 if it can not be computed
-      private int inspectArguments(@Nullable final PyExpression rightExpression) {
+      private int inspectArguments(@Nullable final PyExpression rightExpression, final PsiElement problemTarget) {
         final Class[] SIMPLE_RHS_EXPRESSIONS =
           {PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class};
 
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
             assert rightExpression != null;
-            checkExpressionType(rightExpression, myFormatSpec.get("1"));
+            checkExpressionType(rightExpression, myFormatSpec.get("1"), problemTarget);
           }
           return 1;
         }
         else if (rightExpression instanceof PyReferenceExpression) {
           final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(myTypeEvalContext).getElement();
-          if (pyElement == null) {
+          if (!(pyElement instanceof PyExpression)) {
             return -1;
           }
-          PsiElement element = pyElement.copy();
-          if (!(element instanceof PyExpression)) {
-            return -1;
-          }
-          return inspectArguments((PyExpression)element);
+          return inspectArguments((PyExpression)pyElement, problemTarget);
         }
         else if (rightExpression instanceof PyCallExpression) {
           final PyCallExpression.PyMarkedCallee markedFunction = ((PyCallExpression)rightExpression).resolveCallee(myTypeEvalContext);
@@ -122,7 +115,8 @@ public class PyStringFormatInspection extends PyInspection {
           return -1;
         }
         else if (rightExpression instanceof PyParenthesizedExpression) {
-          return inspectArguments(((PyParenthesizedExpression)rightExpression).getContainedExpression());
+          final PyExpression rhs = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
+          return inspectArguments(rhs, rhs);
         }
         else if (rightExpression instanceof PyTupleExpression) {
           final PyExpression[] expressions = ((PyTupleExpression)rightExpression).getElements();
@@ -130,7 +124,7 @@ public class PyStringFormatInspection extends PyInspection {
           for (PyExpression expression : expressions) {
             final String formatSpec = myFormatSpec.get(Integer.toString(i));
             if (formatSpec != null) {
-              checkExpressionType(expression, formatSpec);
+              checkExpressionType(expression, formatSpec, problemTarget);
             }
             ++i;
           }
@@ -138,9 +132,6 @@ public class PyStringFormatInspection extends PyInspection {
         }
         else if (rightExpression instanceof PyDictLiteralExpression) {
           final PyKeyValueExpression[] expressions = ((PyDictLiteralExpression)rightExpression).getElements();
-          if (expressions == null) {
-            return 0;
-          }
           if (myUsedMappingKeys.isEmpty() && expressions.length != 0) {
             registerProblem(rightExpression, "Format doesn't require a mapping");
           }
@@ -152,7 +143,7 @@ public class PyStringFormatInspection extends PyInspection {
                 myUsedMappingKeys.put(name, true);
                 final PyExpression value = expression.getValue();
                 if (value != null) {
-                  checkExpressionType(value, myFormatSpec.get(name));
+                  checkExpressionType(value, myFormatSpec.get(name), problemTarget);
                 }
               }
             }
@@ -167,42 +158,39 @@ public class PyStringFormatInspection extends PyInspection {
         }
         else if (rightExpression instanceof PyListLiteralExpression) {
           if (myFormatSpec.get("1") != null) {
-            checkTypeCompatible(rightExpression, "str", myFormatSpec.get("1"));
+            checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
             return 1;
           }
         }
         else if (rightExpression instanceof PySliceExpression) {
           if (myFormatSpec.get("1") != null) {
-            checkTypeCompatible(rightExpression, "str", myFormatSpec.get("1"));
+            checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
             return 1;
           }
         }
         else if (rightExpression instanceof PyListCompExpression) {
           if (myFormatSpec.get("1") != null) {
-            checkTypeCompatible(rightExpression, "str", myFormatSpec.get("1"));
+            checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
             return 1;
           }
         }
         return -1;
       }
 
-      private void registerProblem(@NotNull PyExpression expression, @NotNull final String message) {
+      private void registerProblem(@NotNull PsiElement problemTarget, @NotNull final String message) {
         myProblemRegister = true;
-        if (!expression.isPhysical()) {
-          expression = myExpression.getRightExpression();
-        }
-        myVisitor.registerProblem(expression, message);
+        myVisitor.registerProblem(problemTarget, message);
       }
 
-      private void checkExpressionType(@NotNull final PyExpression expression, @NotNull final String expectedTypeName) {
+      private void checkExpressionType(@NotNull final PyExpression expression, @NotNull final String expectedTypeName, PsiElement problemTarget) {
         final PyType type = myTypeEvalContext.getType(expression);
         if (type != null && !(type instanceof PyTypeReference)) {
           final String typeName = type.getName();
-          checkTypeCompatible(expression, typeName, expectedTypeName);
+          checkTypeCompatible(problemTarget, typeName, expectedTypeName);
         }
       }
 
-      private void checkTypeCompatible(@NotNull final PyExpression expression,
+      private void checkTypeCompatible(@NotNull final PsiElement problemTarget,
                                        @Nullable final String typeName,
                                        @NotNull final String expectedTypeName) {
         if ("str".equals(expectedTypeName)) {
@@ -211,7 +199,7 @@ public class PyStringFormatInspection extends PyInspection {
         if ("int".equals(typeName) || "float".equals(typeName)) {
           return;
         }
-        registerProblem(expression, "Unexpected type " + typeName);
+        registerProblem(problemTarget, "Unexpected type " + typeName);
       }
 
       private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {
@@ -320,7 +308,7 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void inspectArgumentsNumber(@NotNull final PyExpression rightExpression) {
-        final int arguments = inspectArguments(rightExpression);
+        final int arguments = inspectArguments(rightExpression, rightExpression);
         if (myUsedMappingKeys.isEmpty() && arguments >= 0) {
           if (myExpectedArguments < arguments) {
             registerProblem(rightExpression, "Too many arguments for format string");
@@ -339,7 +327,7 @@ public class PyStringFormatInspection extends PyInspection {
     @Override
     public void visitPyBinaryExpression(final PyBinaryExpression node) {
       if (node.getLeftExpression() instanceof PyStringLiteralExpression && node.isOperator("%")) {
-        final Inspection inspection = new Inspection(this, node, myTypeEvalContext);
+        final Inspection inspection = new Inspection(this, myTypeEvalContext);
         final PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
         inspection.inspectFormat(literalExpression);
         if (inspection.isProblem()) {
