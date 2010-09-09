@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.impl.softwrap.TextChangeImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -208,7 +209,7 @@ public class TypedHandler implements TypedActionHandler {
 
     if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
         CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-        !editor.getSelectionModel().hasBlockSelection()) {
+        !editor.getSelectionModel().hasBlockSelection() && fileType != StdFileTypes.PLAIN_TEXT) {
       handleAfterLParen(editor, fileType, charTyped);
     }
     else if ('}' == charTyped) {
