@@ -7,7 +7,7 @@
       </pattern>
     </extension>
     <extension name="snapshooter" />
-    <module name="jps" />
+    <module name="" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" value="" />
     <option name="PACKAGE_NAME" value="org.jetbrains.jps" />
