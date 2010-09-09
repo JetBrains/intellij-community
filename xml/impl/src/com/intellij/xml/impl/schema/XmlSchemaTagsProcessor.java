@@ -20,7 +20,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -29,7 +28,7 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlSchemaTagsProcessor {
+public abstract class XmlSchemaTagsProcessor {
 
   private final Set<XmlTag> myVisited = new HashSet<XmlTag>();
   private final XmlNSDescriptorImpl myNsDescriptor;
@@ -38,51 +37,74 @@ public class XmlSchemaTagsProcessor {
     myNsDescriptor = nsDescriptor;
   }
 
-  public boolean processTags(XmlTag tag, Processor<XmlTag> processor) {
+  public void processTag(XmlTag tag) {
 
-    if (myVisited.contains(tag)) return true;
+    if (myVisited.contains(tag)) return;
     myVisited.add(tag);
-    if (checkTagName(tag, "element")) {
-      if (tag.getAttribute("name") != null) {
-        return processor.process(tag);
+    doProcessTag(tag);
+  }
+
+  protected void doProcessTag(XmlTag tag) {
+
+    if (!XmlNSDescriptorImpl.checkSchemaNamespace(tag)) {
+      processTagWithSubTags(tag, true);
+      return;
+    }
+
+    String tagName = tag.getLocalName();
+    if (checkTagName(tagName, "element", "attribute")) {
+      XmlAttribute ref = tag.getAttribute("ref");
+      if (ref != null) {
+        processTagWithSubTags(resolveReference(ref), false);
       }
       else {
-        XmlTag referenced = resolveReference(tag.getAttribute("ref"));
-        if (referenced != null) {
-          return processor.process(referenced);
-        }
+        processTagWithSubTags(tag, false);
       }
     }
-    else if (checkTagName(tag, "group")) {
+    else if (checkTagName(tagName, "group")) {
       String value = tag.getAttributeValue("ref");
       if (value != null) {
         XmlTag group = myNsDescriptor.findGroup(value);
-        return processTagWithSubTags(group, processor);
+        if (group == null) group = resolveReference(tag.getAttribute("ref"));
+        processTagWithSubTags(group, true);
       }
     }
-    else if (checkTagName(tag, "restriction", "extension")) {
-      return processTagWithSubTags(resolveReference(tag.getAttribute("base")), processor) &&
-             processTagWithSubTags(tag, processor);
+    else if (checkTagName(tagName, "attributeGroup")) {
+      String ref = tag.getAttributeValue("ref");
+      if (ref == null) return;
+      XmlTag group = null;
+      XmlTag parentTag = tag.getParentTag();
+      if (XmlNSDescriptorImpl.equalsToSchemaName(parentTag, "attributeGroup") &&
+        ref.equals(parentTag.getAttributeValue("name"))) {
+        group = resolveReference(tag.getAttribute("ref"));
+      }
+      if (group == null) group = myNsDescriptor.findAttributeGroup(ref);
+      processTagWithSubTags(group, true);
+    }
+    else if (checkTagName(tagName, "restriction", "extension")) {
+      processTagWithSubTags(resolveReference(tag.getAttribute("base")), true);
+      processTagWithSubTags(tag, true);
     }
     else {
-      return processTagWithSubTags(tag, processor);
+      processTagWithSubTags(tag, true);
     }
-    return true;
   }
 
-  private boolean processTagWithSubTags(@Nullable XmlTag tag, Processor<XmlTag> processor) {
-    if (tag == null) return true;
-    if (!processor.process(tag)) {
-      return false;
-    }
-    XmlTag[] subTags = tag.getSubTags();
-    for (XmlTag subTag : subTags) {
-      if (!processTags(subTag, processor)) {
-        return false;
+  private void processTagWithSubTags(@Nullable XmlTag tag, boolean processSubTags) {
+    if (tag == null) return;
+    tagStarted(tag, tag.getLocalName());
+    if (processSubTags) {
+      XmlTag[] subTags = tag.getSubTags();
+      for (XmlTag subTag : subTags) {
+        processTag(subTag);
       }
     }
-    return true;
+    tagFinished(tag);
   }
+
+  protected abstract void tagStarted(XmlTag tag, String tagName);
+
+  protected void tagFinished(XmlTag tag) {}
 
   @Nullable
   private static XmlTag resolveReference(XmlAttribute ref) {
@@ -98,7 +120,7 @@ public class XmlSchemaTagsProcessor {
     return null;
   }
 
-  protected static boolean checkTagName(XmlTag tag, String... names) {
-    return ArrayUtil.contains(tag.getLocalName(), names) && XmlNSDescriptorImpl.checkSchemaNamespace(tag);
+  protected static boolean checkTagName(String tagName, String... names) {
+    return ArrayUtil.contains(tagName, names);
   }
 }

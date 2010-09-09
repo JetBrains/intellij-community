@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,8 +17,8 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
                        PsiManager manager,
                        @NonNls String name,
                        @NonNls @NotNull String type,
-                       PsiElement element) {
-    super(modifierList, manager, name, type, element);
+                       @NotNull PsiElement element) {
+    super(modifierList, manager, name, type, getDeclarationScope(element));
     this.myElement = element;
   }
 
@@ -24,15 +26,36 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
                        PsiManager manager,
                        @NonNls String name,
                        @NotNull PsiType type,
-                       PsiElement element) {
-    super(modifierList, manager, new GrLightIdentifier(manager, name), type, false, element);
+                       @NotNull PsiElement element) {
+    super(modifierList, manager, new GrLightIdentifier(manager, name), type, false, getDeclarationScope(element));
     this.myElement = element;
+  }
+
+  private static PsiElement getDeclarationScope(PsiElement navigationElement) {
+    return navigationElement.getContainingFile();
   }
 
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
     return myElement;
+  }
+
+  @Override
+  public PsiFile getContainingFile() {
+    return myElement.getContainingFile();
+  }
+
+  @Override
+  public boolean isValid() {
+    //return super.isValid();
+    return myElement.isValid();
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    return new LocalSearchScope(getDeclarationScope());
   }
 
   @Override

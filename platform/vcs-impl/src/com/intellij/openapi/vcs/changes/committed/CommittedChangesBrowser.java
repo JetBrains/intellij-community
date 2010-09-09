@@ -121,6 +121,7 @@ public class CommittedChangesBrowser extends JPanel {
 
     final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(1, 1, 1, 1), 0, 0);
+    gb.gridwidth = 2;
 
     myLeftPanel.add(listContainer, gb);
     if (tableModel instanceof CommittedChangesNavigation) {

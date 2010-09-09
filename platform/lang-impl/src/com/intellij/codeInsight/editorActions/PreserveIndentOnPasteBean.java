@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
- * @author ik
+ * @author yole
  */
-public interface CharTable {
-  Key<CharTable> CHAR_TABLE_KEY = new Key<CharTable>("Char table");
+public class PreserveIndentOnPasteBean {
+  public static final ExtensionPointName<PreserveIndentOnPasteBean> EP_NAME = ExtensionPointName.create("com.intellij.preserveIndentOnPaste");
 
-  CharSequence intern(CharSequence text);
-
-  CharSequence intern(CharSequence baseText, int startOffset, int endOffset);
+  @Attribute("fileType")
+  public String fileType;
 }

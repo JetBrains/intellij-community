@@ -123,7 +123,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       return;
     }
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (plVcsManager.getAllActiveVcss().length == 0) {
+    if (! plVcsManager.hasActiveVcss()) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
       return;

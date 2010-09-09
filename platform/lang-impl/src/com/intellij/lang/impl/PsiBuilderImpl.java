@@ -367,11 +367,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return pre;
   }
 
-  private class Token extends Node {
+  private static class Token extends Node {
+    public PsiBuilderImpl myBuilder;
     public IElementType myTokenType;
     public int myTokenStart;
     public int myTokenEnd;
     public int myHC = -1;
+
+    public void clean() {
+      myBuilder = null;
+      myHC = -1;
+    }
 
     public int hc() {
       if (myHC == -1) {
@@ -385,8 +391,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         else {
           final int start = myTokenStart;
           final int end = myTokenEnd;
-          final CharSequence buf = myText;
-          final char[] bufArray = myTextArray;
+          final CharSequence buf = myBuilder.myText;
+          final char[] bufArray = myBuilder.myTextArray;
 
           for (int i = start; i < end; i++) {
             hc += bufArray != null ? bufArray[i] : buf.charAt(i);
@@ -412,7 +418,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return ((TokenWrapper)myTokenType).getValue();
       }
 
-      return myText.subSequence(myTokenStart, myTokenEnd);
+      return myBuilder.myText.subSequence(myTokenStart, myTokenEnd);
     }
 
     public IElementType getTokenType() {
@@ -782,13 +788,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return rootNode;
   }
 
-  private class MyBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
+  private static class MyBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
     private final ASTDiffBuilder myDelegate;
     private final ASTConverter myConverter;
 
-    public MyBuilder(PsiFileImpl file, LighterASTNode rootNode) {
+    public MyBuilder(PsiFileImpl file, StartMarker rootNode) {
       myDelegate = new ASTDiffBuilder(file);
-      myConverter = new ASTConverter((Node)rootNode);
+      myConverter = new ASTConverter(rootNode);
     }
 
     public void nodeDeleted(@NotNull final ASTNode oldParent, @NotNull final ASTNode oldNode) {
@@ -1001,7 +1007,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return null;
   }
 
-  private class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
+  private static class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
     public ThreeState deepEqual(final ASTNode oldNode, final LighterASTNode newNode) {
       boolean oldIsErrorElement = oldNode instanceof PsiErrorElement;
       boolean newIsErrorElement = newNode.getTokenType() == TokenType.ERROR_ELEMENT;
@@ -1012,22 +1018,24 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
 
       if (newNode instanceof Token) {
+        final IElementType type = newNode.getTokenType();
+        final Token token = (Token)newNode;
+
         if (oldNode instanceof ForeignLeafPsiElement) {
-          final IElementType type = newNode.getTokenType();
           return type instanceof ForeignLeafType && ((ForeignLeafType)type).getValue().equals(oldNode.getText())
                  ? ThreeState.YES
                  : ThreeState.NO;
         }
 
         if (oldNode instanceof LeafElement) {
-          return ((LeafElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd)
+          return ((LeafElement)oldNode).textMatches(token.getText())
                  ? ThreeState.YES
                  : ThreeState.NO;
         }
 
-        if (oldNode.getElementType() instanceof ILazyParseableElementType && newNode.getTokenType() instanceof ILazyParseableElementType ||
-            oldNode.getElementType() instanceof CustomParsingType && newNode.getTokenType() instanceof CustomParsingType) {
-          return ((TreeElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd)
+        if (oldNode.getElementType() instanceof ILazyParseableElementType && type instanceof ILazyParseableElementType ||
+            oldNode.getElementType() instanceof CustomParsingType && type instanceof CustomParsingType) {
+          return ((TreeElement)oldNode).textMatches(token.getText())
                  ? ThreeState.YES
                  : ThreeState.NO;
         }
@@ -1038,13 +1046,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public boolean typesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof PsiWhiteSpaceImpl) {
-        return ourAnyLanguageWhitespaceTokens.contains(n2.getTokenType()) || myWhitespaces.contains(n2.getTokenType());
+        return ourAnyLanguageWhitespaceTokens.contains(n2.getTokenType()) ||
+               n2 instanceof Token && ((Token)n2).myBuilder.myWhitespaces.contains(n2.getTokenType());
       }
 
       return derefToken(n1.getElementType()) == derefToken(n2.getTokenType());
     }
 
-    public IElementType derefToken(IElementType probablyWrapper) {
+    public static IElementType derefToken(IElementType probablyWrapper) {
       if (probablyWrapper instanceof TokenWrapper) {
         return derefToken(((TokenWrapper)probablyWrapper).getDelegate());
       }
@@ -1057,7 +1066,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           return n1.getText().equals(((ForeignLeafType)n2.getTokenType()).getValue());
         }
 
-        return ((LeafElement)n1).textMatches(myText, ((Token)n2).myTokenStart, ((Token)n2).myTokenEnd);
+        return ((LeafElement)n1).textMatches(((Token)n2).getText());
       }
 
       if (n1 instanceof PsiErrorElement && n2.getTokenType() == TokenType.ERROR_ELEMENT) {
@@ -1072,7 +1081,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private class MyTreeStructure implements FlyweightCapableTreeStructure<LighterASTNode> {
     private final LimitedPool<Token> myPool = new LimitedPool<Token>(1000, new LimitedPool.ObjectFactory<Token>() {
       public void cleanup(final Token token) {
-        token.myHC = -1;
+        token.clean();
       }
 
       public Token create() {
@@ -1173,6 +1182,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     private void insertLeaf(Ref<LighterASTNode[]> into, int start, int end, IElementType type) {
       Token lexeme = myPool.alloc();
+      lexeme.myBuilder = PsiBuilderImpl.this;
       lexeme.myTokenType = type;
       lexeme.myTokenStart = start;
       lexeme.myTokenEnd = end;
@@ -1181,16 +1191,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
-  private class ASTConverter implements Convertor<Node, ASTNode> {
-    private final Node myRoot;
+  private static class ASTConverter implements Convertor<Node, ASTNode> {
+    private final StartMarker myRoot;
 
-    public ASTConverter(final Node root) {
+    public ASTConverter(final StartMarker root) {
       myRoot = root;
     }
 
     public ASTNode convert(final Node n) {
       if (n instanceof Token) {
-        return createLeaf(n.getTokenType(), ((Token)n).myTokenStart, ((Token)n).myTokenEnd);
+        final Token token = (Token)n;
+        return token.myBuilder.createLeaf(token.getTokenType(), token.myTokenStart, token.myTokenEnd);
       }
       else if (n instanceof ErrorItem) {
         final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
@@ -1198,8 +1209,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return errorElement;
       }
       else {
-        final CompositeElement composite = n == myRoot ? (CompositeElement)createRootAST((StartMarker)myRoot) : createComposite((StartMarker)n);
-        bind(composite, (StartMarker)n);
+        final StartMarker startMarker = (StartMarker)n;
+        final CompositeElement composite = n == myRoot ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot) : createComposite(startMarker);
+        startMarker.myBuilder.bind(composite, startMarker);
         return composite;
       }
     }
@@ -1257,7 +1269,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     MyList() {
       super(256);
     }
-    
+
     public int lastIndexOf(final Object o) {
       if (cachedElementData == null) return super.lastIndexOf(o);
       for (int i = size()-1; i >= 0; i--)

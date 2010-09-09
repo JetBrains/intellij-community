@@ -31,6 +31,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -145,29 +147,41 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final PsiElement position = parameters.getPosition();
         final PsiElement reference = position.getParent();
         if (reference instanceof GrReferenceElement) {
-          final Map<PsiMethod, LookupElement> staticMethods = hashMap();
+          final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
 
           ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
             public void consume(Object element) {
               final LookupElement lookupElement = element instanceof PsiClass
                                                   ? AllClassesGetter.createLookupItem((PsiClass)element)
                                                   : GroovyCompletionUtil.getLookupElement(element);
-              if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) {
-                staticMethods.put((PsiMethod)element, lookupElement);
-              } else {
-                result.addElement(lookupElement);
+              final Object object = lookupElement.getObject();
+              if ((object instanceof PsiMethod || object instanceof PsiField) && ((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
+                if (lookupElement.getLookupString().equals(((PsiMember)object).getName())) {
+                  staticMembers.put((PsiModifierListOwner)object, lookupElement);
+                  return;
+                }
               }
+              result.addElement(lookupElement);
             }
           });
 
-          completeStaticMembers(position).processMembersOfRegisteredClasses(result.getPrefixMatcher(), new Consumer<LookupElement>() {
-            @Override
-            public void consume(LookupElement element) {
-              result.addElement(element);
-              staticMethods.remove(element.getObject());
-            }
-          });
-          result.addAllElements(staticMethods.values());
+          if (((GrReferenceElement)reference).getQualifier() == null) {
+            completeStaticMembers(position).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
+              @Override
+              public void consume(PsiMember member, PsiClass psiClass) {
+                if (member instanceof GrAccessorMethod) {
+                  member = ((GrAccessorMethod)member).getProperty();
+                }
+                final String name = member.getName();
+                if (name == null || !result.getPrefixMatcher().prefixMatches(name)) {
+                  staticMembers.remove(member);
+                  return;
+                }
+                staticMembers.put(member, new JavaGlobalMemberLookupElement(member, psiClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, true));
+              }
+            });
+          }
+          result.addAllElements(staticMembers.values());
         }
       }
     });
@@ -390,10 +404,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       @NotNull
       @Override
       protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
-        if (member instanceof PsiMethod) {
-          return new JavaGlobalMemberLookupElement((PsiMethod)member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
-        }
-        return GroovyCompletionUtil.getLookupElement(member); //todo;
+        return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
       }
     };
     final PsiFile file = position.getContainingFile();

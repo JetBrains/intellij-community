@@ -111,8 +111,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       classPathBuilder.addVirtualFiles(Arrays.asList(libraries[0].getFiles(OrderRootType.CLASSES)));
     }
 
-    classPathBuilder.addVirtualFiles(chunk.getCompilationBootClasspathFiles());
-    classPathBuilder.addVirtualFiles(chunk.getCompilationClasspathFiles());
+    classPathBuilder.addVirtualFiles(chunk.getCompilationBootClasspathFiles(false));
+    classPathBuilder.addVirtualFiles(chunk.getCompilationClasspathFiles(false));
     appendOutputPath(module, classPathBuilder, false);
     if (tests) {
       appendOutputPath(module, classPathBuilder, true);

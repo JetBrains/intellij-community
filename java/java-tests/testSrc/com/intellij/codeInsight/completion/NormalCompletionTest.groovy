@@ -676,6 +676,44 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     """
   }
 
+  public void testSuggestMembersOfStaticallyImportedClassesUnqualifiedOnly() throws Exception {
+    def old = CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE
+    CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE = true
+
+    try {
+      myFixture.addClass("""package foo;
+      public class Foo {
+        public static void foo() {}
+        public static void bar() {}
+      }
+      """)
+      myFixture.configureByText("a.java", """
+      import foo.Foo;
+      import static foo.Foo.foo;
+
+      class Bar {{
+        foo();
+        new Foo().ba<caret>z
+      }}
+      """)
+      complete()
+      assertOneElement(myFixture.getLookupElements())
+      myFixture.type '\t'
+      myFixture.checkResult """
+      import foo.Foo;
+      import static foo.Foo.foo;
+
+      class Bar {{
+        foo();
+        new Foo().bar();<caret>
+      }}
+      """
+    }
+    finally {
+      CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE = old
+    }
+  }
+
   public void testInstanceMagicMethod() throws Exception {
     myFixture.configureByText("a.java", """
       public class JavaClass {

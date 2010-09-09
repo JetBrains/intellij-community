@@ -26,13 +26,14 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // competes to calculate The Result
 public class ConcurrentTasks<T> {
   private volatile boolean myResultKnown;
   private final Semaphore mySemaphore;
   private volatile T myResult;
-  private volatile int myCntAlive;
+  private AtomicInteger myCntAlive;
   private final ProgressIndicator myParentIndicator;
   private final List<Consumer<Consumer<T>>> myTasks;
 
@@ -46,13 +47,13 @@ public class ConcurrentTasks<T> {
         super.checkCanceled();
       }
     };
-    myCntAlive = myTasks.size();
+    myCntAlive = new AtomicInteger(myTasks.size());
     mySemaphore.down();
 
     final List<Future<?>> futures = new LinkedList<Future<?>>();
     for (final Consumer<Consumer<T>> task : myTasks) {
       if (myResultKnown) {
-        -- myCntAlive;
+        myCntAlive.decrementAndGet();
         continue;
       }
       final Runnable computableProxy = new Runnable() {
@@ -67,8 +68,8 @@ public class ConcurrentTasks<T> {
             });
           }
           finally {
-            -- myCntAlive;
-            if (myCntAlive == 0 || myResultKnown) {
+            final int decremented = myCntAlive.decrementAndGet();
+            if (decremented == 0 || myResultKnown) {
               mySemaphore.up();
             }
           }
@@ -84,7 +85,7 @@ public class ConcurrentTasks<T> {
 
     while (true) {
       if (myResultKnown) break;
-      if (myCntAlive <= 0) break;
+      if (myCntAlive.get() <= 0) break;
       pi.checkCanceled();
       mySemaphore.waitFor(300);
     }

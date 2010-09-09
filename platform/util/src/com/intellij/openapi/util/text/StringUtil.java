@@ -57,6 +57,14 @@ public class StringUtil {
     };
   }
 
+  public static Function<String, String> TRIMMER = new Function<String, String>() {
+    @SuppressWarnings({"ConstantConditions"})
+    @Override
+    public String fun(String s) {
+      return s == null ? null : s.trim();
+    }
+  };
+
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
   }

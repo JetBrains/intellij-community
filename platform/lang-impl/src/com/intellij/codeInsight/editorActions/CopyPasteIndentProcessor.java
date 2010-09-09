@@ -1,16 +1,17 @@
-package com.jetbrains.python.codeInsight;
+package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
-import com.intellij.codeInsight.editorActions.IndentTransferableData;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharArrayUtil;
 
@@ -28,12 +29,16 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
                                                           Editor editor,
                                                           int[] startOffsets,
                                                           int[] endOffsets) {
+    if (!acceptFileType(file.getFileType())) {
+      return null;
+    }
+
     if (startOffsets.length != 1) {
       return null;
     }
     Document document = editor.getDocument();
-    int selStartLine = document.getLineNumber(startOffsets [0]);
-    int selEndLine = document.getLineNumber(endOffsets [0]);
+    int selStartLine = document.getLineNumber(startOffsets[0]);
+    int selEndLine = document.getLineNumber(endOffsets[0]);
     if (selStartLine == selEndLine) {
       return null;
     }
@@ -53,9 +58,18 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
         minIndent = Math.min(minIndent, indent);
       }
     }
-    int firstNonSpaceChar = CharArrayUtil.shiftForward(document.getCharsSequence(), startOffsets [0], " \t");
+    int firstNonSpaceChar = CharArrayUtil.shiftForward(document.getCharsSequence(), startOffsets[0], " \t");
     int firstLineLeadingSpaces = (firstNonSpaceChar <= document.getLineEndOffset(selStartLine)) ? firstNonSpaceChar - startOffsets[0] : 0;
     return new IndentTransferableData(minIndent, firstLineLeadingSpaces);
+  }
+
+  private static boolean acceptFileType(FileType fileType) {
+    for(PreserveIndentOnPasteBean bean: Extensions.getExtensions(PreserveIndentOnPasteBean.EP_NAME)) {
+      if (fileType.getName().equals(bean.fileType)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static int getIndent(CharSequence chars, int start, int end, int tabSize) {
@@ -103,6 +117,10 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
                                       final IndentTransferableData value) {
     if (value.getIndent() > 0) {
       final Document document = editor.getDocument();
+      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile == null || !acceptFileType(psiFile.getFileType())) {
+        return;
+      }
       //System.out.println("--- before indent ---\n" + document.getText());
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override

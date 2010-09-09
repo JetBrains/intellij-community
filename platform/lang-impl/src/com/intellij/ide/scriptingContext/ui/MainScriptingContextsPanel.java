@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.ide.scriptingContext.ui;
 
-import com.intellij.openapi.util.Key;
+import javax.swing.*;
 
 /**
- * @author ik
+ * @author Rustam Vishnyakov
  */
-public interface CharTable {
-  Key<CharTable> CHAR_TABLE_KEY = new Key<CharTable>("Char table");
+public class MainScriptingContextsPanel {
+  private JPanel myTopPanel;
 
-  CharSequence intern(CharSequence text);
+  private void createUIComponents() {
+    // TODO: place custom component creation code here 
+  }
 
-  CharSequence intern(CharSequence baseText, int startOffset, int endOffset);
+  public JPanel getTopPanel() {
+    return myTopPanel;
+  }
 }
