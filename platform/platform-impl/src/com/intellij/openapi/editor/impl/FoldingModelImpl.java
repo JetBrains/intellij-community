@@ -335,13 +335,19 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     int column = -1;
     int line = -1;
+    int offsetToUse = -1;
 
     FoldRegion collapsed = myFoldTree.fetchOutermost(caretOffset);
     if (myCaretPositionSaved) {
       int savedOffset = myEditor.logicalPositionToOffset(new LogicalPosition(mySavedCaretY, mySavedCaretX));
       FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
-      column = mySavedCaretX;
-      line = collapsedAtSaved != null ? collapsedAtSaved.getDocument().getLineNumber(collapsedAtSaved.getStartOffset()) : mySavedCaretY;
+      if (collapsedAtSaved == null) {
+        column = mySavedCaretX;
+        line = mySavedCaretY;
+      }
+      else {
+        offsetToUse = collapsedAtSaved.getStartOffset();
+      }
     }
 
     if (collapsed != null && column == -1) {
@@ -351,7 +357,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     boolean oldCaretPositionSaved = myCaretPositionSaved;
 
-    if (column != -1) {
+    if (offsetToUse >= 0) {
+      myEditor.getCaretModel().moveToOffset(offsetToUse);
+    }
+    else if (column != -1) {
       myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
     }
     else {

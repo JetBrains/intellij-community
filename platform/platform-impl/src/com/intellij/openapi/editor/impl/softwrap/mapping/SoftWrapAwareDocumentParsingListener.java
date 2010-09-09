@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -83,20 +82,26 @@ interface SoftWrapAwareDocumentParsingListener {
    * <p/>
    * <pre>
    * <ul>
-   *   <li>{@link #onRangeRecalculationStart(TextRange)};</li>
+   *   <li>{@link #onRecalculationStart(int, int)};</li>
    *   <li>number of calls like {@link #onProcessedSymbol(ProcessingContext)}, {@link #onCollapsedFoldRegion(FoldRegion, int, int)} etc;</li>
-   *   <li>{@link #onRangeRecalculationEnd(TextRange)};</li>
+   *   <li>{@link #onRecalculationEnd(int, int)};</li>
    * </ul>
    * </pre>
    *
-   * @param range   document range that is about to be recalculated
+   * @param startOffset   start offset of document range that is about to be recalculated
+   * @param endOffset     end offset of document range that is about to be recalculated
    */
-  void onRangeRecalculationStart(@NotNull TextRange range);
+  void onRecalculationStart(int startOffset, int endOffset);
 
   /**
    * Notifies that given document range is recalculated.
+   * <p/>
+   * <b>Note:</b> given offsets may differ from the one given to {@link #onRecalculationStart(int, int)}. E.g. there is a possible
+   * case that user removes particular block of text. {@link #onRecalculationStart(int, int)} is called with offsets of logical lines
+   * that hold that block and this method is called with //TODO den add doc
    *
-   * @param range   document range that is recalculated
+   * @param startOffset   start offset of document range that is recalculated
+   * @param endOffset     end offset of document range that is recalculated
    */
-  void onRangeRecalculationEnd(@NotNull TextRange range);
+  void onRecalculationEnd(int startOffset, int endOffset);
 }

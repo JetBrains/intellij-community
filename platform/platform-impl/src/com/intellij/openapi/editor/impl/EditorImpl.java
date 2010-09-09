@@ -2942,6 +2942,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  //TODO den remove
+  long depth;
+
   private void moveCaretToScreenPos(int x, int y) {
     if (x < 0) {
       x = 0;
@@ -2970,7 +2973,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (lineNumber >= totalLines) {
+      //TODO den remove
+      depth++;
+      if (depth > 100) {
+        int abc = 1;
+      }
       moveCaretToScreenPos(x, visibleLineNumberToYPosition(getVisibleLineCount() - 1));
+      //TODO den remove
+      depth--;
       return;
     }
 

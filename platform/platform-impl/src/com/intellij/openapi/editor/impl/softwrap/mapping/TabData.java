@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 class TabData implements Cloneable {
 
   public final int widthInColumns;
-  public final int offset;
+  public int offset;
 
   TabData(@NotNull ProcessingContext context) {
     widthInColumns = context.symbolWidthInColumns;

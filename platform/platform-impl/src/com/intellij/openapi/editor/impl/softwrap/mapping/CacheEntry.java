@@ -171,6 +171,23 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     myTabPositions.add(tabData);
   }
 
+  public void advance(final int offsetDiff) {
+    startOffset += offsetDiff;
+    endOffset += offsetDiff;
+    for (TabData tabData : myTabPositions) {
+      tabData.offset += offsetDiff;
+    }
+    final TIntObjectHashMap<FoldingData> newFoldingData = new TIntObjectHashMap<FoldingData>();
+    myFoldingData.forEachEntry(new TIntObjectProcedure<FoldingData>() {
+      @Override
+      public boolean execute(int offset, FoldingData foldingData) {
+        newFoldingData.put(offset + offsetDiff, foldingData);
+        return true;
+      }
+    });
+    myFoldingData = newFoldingData;
+  }
+
   @Override
   public int compareTo(CacheEntry e) {
     return visualLine - e.visualLine;

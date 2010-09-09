@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
@@ -354,24 +353,27 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   }
 
   @Override
-  public void onRangeRecalculationStart(@NotNull TextRange range) {
-    myBeforeChangeState.from(range);
+  public void onRecalculationStart(int startOffset, int endOffset) {
+    myBeforeChangeState.updateByDocumentOffsets(startOffset, endOffset);
     if (!myBeforeChangeState.valid) {
       return;
     }
     myNotAffectedByUpdateTailCacheEntries.clear();
     myNotAffectedByUpdateTailCacheEntries.addAll(myCache.subList(myBeforeChangeState.endCacheEntryIndex + 1, myCache.size()));
+    myCache.subList(myBeforeChangeState.startCacheEntryIndex + 1, myCache.size()).clear();
     for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
       entry.locked = true;
     }
   }
 
   @Override
-  public void onRangeRecalculationEnd(@NotNull TextRange range) {
+  public void onRecalculationEnd(int startOffset, int endOffset) {
     if (!myBeforeChangeState.valid) {
       return;
     }
-    myAfterChangeState.from(range);
+    int endIndex = myCache.size() - 2; // -1 because of zero-based indexing; one more -1 in assumption that re-parsing always adds
+                                       // number of target cache entries plus one (because of line feed at the end).
+    myAfterChangeState.updateByCacheIndices(myBeforeChangeState.startCacheEntryIndex, endIndex);
     myCache.subList(myAfterChangeState.endCacheEntryIndex + 1, myCache.size()).clear();
     myCache.addAll(myNotAffectedByUpdateTailCacheEntries);
     for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
@@ -400,46 +402,75 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     int logicalLinesDiff = myAfterChangeState.logicalLines - myBeforeChangeState.logicalLines;
     int softWrappedLinesDiff = myAfterChangeState.softWrapLines - myBeforeChangeState.softWrapLines;
     int foldedLinesDiff = myAfterChangeState.foldedLines - myBeforeChangeState.foldedLines;
+    int offsetsDiff = (myAfterChangeState.endOffset - myAfterChangeState.startOffset)
+                      - (myBeforeChangeState.endOffset - myBeforeChangeState.startOffset);
 
-    int i = MappingUtil.getCacheEntryIndexForOffset(myAfterChangeState.endOffset, myEditor.getDocument(), myCache) + 1;
-    for (; i < myCache.size(); i++) {
+    int cacheIndex = myAfterChangeState.endCacheEntryIndex + 1;
+    for (int i = cacheIndex; i < myCache.size(); i++) {
       CacheEntry cacheEntry = myCache.get(i);
       cacheEntry.visualLine += visualLinesDiff;
       cacheEntry.startLogicalLine += logicalLinesDiff;
       cacheEntry.endLogicalLine += logicalLinesDiff;
+      cacheEntry.advance(offsetsDiff);
       cacheEntry.startSoftWrapLinesBefore += softWrappedLinesDiff;
       cacheEntry.endSoftWrapLinesBefore += softWrappedLinesDiff;
       cacheEntry.startFoldedLines += foldedLinesDiff;
       cacheEntry.endFoldedLines += foldedLinesDiff;
     }
+
+    if (offsetsDiff == 0) {
+      return;
+    }
+
+    int softWrapIndex = myStorage.getSoftWrapIndex(myCache.get(cacheIndex).startOffset);
+    if (softWrapIndex < 0) {
+      softWrapIndex = -softWrapIndex - 1;
+    }
+
+    List<SoftWrapImpl> softWraps = myStorage.getSoftWraps();
+    for (int i = softWrapIndex; i < softWraps.size(); i++) {
+      softWraps.get(i).advance(offsetsDiff);
+    }
   }
 
   private class CacheState {
 
-    public int     visualLines;
-    public int     logicalLines;
-    public int     softWrapLines;
-    public int     foldedLines;
-    public int     endOffset;
-    public int     endCacheEntryIndex;
-    public boolean valid;
+    public boolean valid = true;
 
-    public void from(@NotNull TextRange range) {
-      reset();
+    public int visualLines;
+    public int logicalLines;
+    public int softWrapLines;
+    public int foldedLines;
+    public int startOffset;
+    public int endOffset;
+    public int startCacheEntryIndex;
+    public int endCacheEntryIndex;
 
-      endOffset = range.getEndOffset();
-      int startIndex = MappingUtil.getCacheEntryIndexForOffset(range.getStartOffset(), myEditor.getDocument(), myCache);
+    public void updateByDocumentOffsets(int startOffset, int endOffset) {
+      this.startOffset = startOffset;
+      this.endOffset = endOffset;
+      startCacheEntryIndex = MappingUtil.getCacheEntryIndexForOffset(startOffset, myEditor.getDocument(), myCache);
+      endCacheEntryIndex = MappingUtil.getCacheEntryIndexForOffset(endOffset, myEditor.getDocument(), myCache);
 
-      if (startIndex < 0) {
+      if (startCacheEntryIndex < 0 || endCacheEntryIndex < 0) {
+        valid = false;
         // This is correct situation for, say, initial cache update.
         return;
       }
-      valid = true;
-      endCacheEntryIndex = MappingUtil.getCacheEntryIndexForOffset(endOffset, myEditor.getDocument(), myCache);
-      visualLines = endCacheEntryIndex - startIndex + 1;
+      updateByCacheIndices(startCacheEntryIndex, endCacheEntryIndex);
+
+    }
+
+    public void updateByCacheIndices(int startIndex, int endIndex) {
+      reset();
+      startOffset = myCache.get(startIndex).startOffset;
+      endOffset = myCache.get(endIndex).endOffset;
+      startCacheEntryIndex = startIndex;
+      endCacheEntryIndex = endIndex;
+      visualLines = endIndex - startIndex + 1;
 
       CacheEntry startEntry = myCache.get(startIndex);
-      CacheEntry endEntry = myCache.get(endCacheEntryIndex);
+      CacheEntry endEntry = myCache.get(endIndex);
       logicalLines = endEntry.endLogicalLine - startEntry.startLogicalLine + 1;
       foldedLines = endEntry.endFoldedLines - startEntry.startFoldedLines;
       softWrapLines = endEntry.endSoftWrapLinesBefore + endEntry.endSoftWrapLinesCurrent - startEntry.startSoftWrapLinesBefore
@@ -451,7 +482,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       softWrapLines = 0;
       foldedLines = 0;
       endCacheEntryIndex = 0;
-      valid = false;
+      valid = true;
     }
   }
 }

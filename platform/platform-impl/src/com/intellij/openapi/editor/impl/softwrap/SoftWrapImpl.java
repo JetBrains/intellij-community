@@ -72,6 +72,10 @@ public class SoftWrapImpl implements SoftWrap {
     return myChange;
   }
 
+  public void advance(int diff) {
+    myChange.advance(diff);
+  }
+
   @Override
   public String toString() {
     return myChange.toString();

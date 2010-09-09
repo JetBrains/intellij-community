@@ -53,7 +53,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
   private final SoftWrapsStorage              myStorage;
   private final SoftWrapPainter               myPainter;
   private final SoftWrapApplianceManager      myApplianceManager;
-  private final SoftWrapDocumentChangeManager myDocumentChangeManager;
 
   private final EditorEx myEditor;
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
@@ -71,23 +70,22 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
                            EditorTextRepresentationHelper representationHelper) {
     this(
       editor, storage, painter, new SoftWrapApplianceManager(storage, editor, painter, representationHelper),
-      new CachingSoftWrapDataMapper(editor, storage, representationHelper), new SoftWrapDocumentChangeManager(editor, storage)
+      new CachingSoftWrapDataMapper(editor, storage, representationHelper)
     );
     myApplianceManager.addListener(myDataMapper);
   }
 
   public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
-                           @NotNull SoftWrapApplianceManager applianceManager, @NotNull CachingSoftWrapDataMapper dataMapper,
-                           @NotNull SoftWrapDocumentChangeManager documentChangeManager)
+                           @NotNull SoftWrapApplianceManager applianceManager, @NotNull CachingSoftWrapDataMapper dataMapper)
   {
     myEditor = editor;
     myStorage = storage;
     myPainter = painter;
     myApplianceManager = applianceManager;
     myDataMapper = dataMapper;
-    myDocumentChangeManager = documentChangeManager;
 
-    myDocumentListeners.add(myDocumentChangeManager);
+    //myDocumentListeners.add(myDocumentChangeManager);
+    myDocumentListeners.add(myApplianceManager);
     Collections.sort(myDocumentListeners, PrioritizedDocumentListener.COMPARATOR);
 
     myEditor.getFoldingModel().addListener(myApplianceManager);
@@ -176,7 +174,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     if (!isSoftWrappingEnabled()) {
       return;
     }
-    myDocumentChangeManager.syncSoftWraps();
 
     myActive++;
     try {
@@ -392,10 +389,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     if (!isInsideSoftWrap(visualCaretPosition)) {
       return;
     }
-    if (myDocumentChangeManager.makeHardWrap(caretModel.getOffset())) {
-      // Restore caret position.
-      caretModel.moveToVisualPosition(visualCaretPosition);
-    }
+    //TODO den implement
+    //if (myDocumentChangeManager.makeHardWrap(caretModel.getOffset())) {
+    //  // Restore caret position.
+    //  caretModel.moveToVisualPosition(visualCaretPosition);
+    //}
   }
 
   @Override
