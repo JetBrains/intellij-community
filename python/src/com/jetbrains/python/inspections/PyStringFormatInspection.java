@@ -93,7 +93,7 @@ public class PyStringFormatInspection extends PyInspection {
           final PyCallExpression.PyMarkedCallee markedFunction = ((PyCallExpression)rightExpression).resolveCallee(myTypeEvalContext);
           if (markedFunction != null && !markedFunction.isImplicitlyResolved()) {
             final Callable callable = markedFunction.getCallable();
-            if (callable instanceof PyFunction) {
+            if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST((PyFunction) callable)) {
               PyStatementList statementList = ((PyFunction)callable).getStatementList();
               PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
               int expressionsSize = -1;
