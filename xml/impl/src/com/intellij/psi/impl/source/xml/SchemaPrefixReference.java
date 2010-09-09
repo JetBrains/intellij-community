@@ -49,7 +49,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
    * @param tagNameReference
    */
   public SchemaPrefixReference(XmlElement element, TextRange range, String name, @Nullable TagNameReference tagNameReference) {
-    super(element, range, true);
+    super(element, range, false);
     myName = name;
     myTagNameReference = tagNameReference;
     if (myElement instanceof XmlAttribute && (((XmlAttribute)myElement).isNamespaceDeclaration())) {
