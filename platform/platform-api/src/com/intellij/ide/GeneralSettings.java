@@ -474,6 +474,14 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myConfirmExit = confirmExit;
   }
 
+  /**
+   * @return
+   * <ul>
+   * <li>0 if new project should be opened in new window
+   * <li>1 if new project should be opened in same window
+   * <li>-1 if a confirmation dialog should be shown
+   * </ul>
+   */
   public int getConfirmOpenNewProject() {
     return myConfirmOpenNewProject;
   }
