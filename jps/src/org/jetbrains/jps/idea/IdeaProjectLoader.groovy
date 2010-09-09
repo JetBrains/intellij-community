@@ -142,6 +142,9 @@ public class IdeaProjectLoader {
     if (pattern.indexOf('/') == -1) {
       return "**/" + pattern
     }
+    if (pattern.startsWith("/")) {
+      return pattern.substring(1)
+    }
     return pattern
   }
 
