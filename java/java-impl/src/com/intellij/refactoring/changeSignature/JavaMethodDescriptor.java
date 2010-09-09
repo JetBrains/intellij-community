@@ -18,9 +18,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiTypeElement;
 import com.intellij.util.VisibilityUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,13 +67,6 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl>
   @Override
   public int getParametersCount() {
     return myMethod.getParameterList().getParametersCount();
-  }
-
-  @Nullable
-  @Override
-  public String getReturnTypeText() {
-    final PsiTypeElement typeElement = myMethod.getReturnTypeElement();
-    return typeElement != null ? typeElement.getText() : null;
   }
 
   @Override

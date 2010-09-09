@@ -59,9 +59,11 @@ import java.util.StringTokenizer;
 public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M extends PsiElement, D extends MethodDescriptor<P>>
   extends RefactoringDialog {
 
+  protected static final String EXIT_SILENTLY = "";
+
   protected final D myMethod;
   private final boolean myAllowDelegation;
-  private EditorTextField myNameField;
+  protected EditorTextField myNameField;
   protected EditorTextField myReturnTypeField;
   protected TableView<ParameterTableModelItemBase<P>> myParametersTable;
   protected final ParameterTableModelBase<P> myParametersTableModel;
@@ -382,14 +384,13 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     TableUtil.stopEditing(myParametersTable);
     String message = validateAndCommitData();
     if (message != null) {
-      CommonRefactoringUtil
-        .showErrorMessage(RefactoringBundle.message("error.incorrect.data"), message, "refactoring.changeSignature", myProject);
+      if (message != EXIT_SILENTLY) {
+        CommonRefactoringUtil
+          .showErrorMessage(RefactoringBundle.message("changeSignature.refactoring.name"), message, "refactoring.changeSignature",
+                            myProject);
+      }
       return;
     }
-    if (!checkMethodConflicts()) {
-      return;
-    }
-
     if (myMethodsToPropagateParameters != null && !mayPropagateParameters()) {
       Messages.showWarningDialog(myProject, RefactoringBundle.message("changeSignature.parameters.wont.propagate"),
                                  ChangeSignatureHandler.REFACTORING_NAME);
@@ -397,19 +398,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
 
     invokeRefactoring(createRefactoringProcessor());
-  }
-
-  private boolean checkMethodConflicts() {
-    for (P info : getParameters()) {
-      if (!isResolvableType(info, myMethod)) {
-        final int ret = Messages.showOkCancelDialog(myProject,
-                                                    RefactoringBundle.message("changeSignature.cannot.resolve.type", info.getTypeText()),
-                                                    ChangeSignatureHandler.REFACTORING_NAME, Messages.getErrorIcon());
-        if (ret != 0) return false;
-      }
-
-    }
-    return true;
   }
 
   @Override
