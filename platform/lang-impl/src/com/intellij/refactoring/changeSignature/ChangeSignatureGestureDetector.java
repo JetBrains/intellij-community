@@ -58,6 +58,11 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     return false;
   }
 
+  public boolean containsChangeSignatureChange(@NotNull PsiFile file) {
+    final MyDocumentChangeAdapter adapter = myListenerMap.get(file);
+    return adapter != null && adapter.getCurrentInfo() != null;
+  }
+
   public void changeSignature(PsiFile file) {
     try {
       myDeaf = true;
@@ -137,9 +142,19 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     }
   }
 
+  public void clearSignatureChange(PsiFile file) {
+    final MyDocumentChangeAdapter adapter = myListenerMap.get(file);
+    if (adapter != null) {
+      adapter.setBannedChangeInfo(adapter.getCurrentInfo());
+      adapter.setCurrentInfo(null);
+      adapter.setInitialText(null);
+    }
+  }
+
   private class MyDocumentChangeAdapter extends DocumentAdapter {
     private String myInitialText;
     private ChangeInfo myCurrentInfo;
+    private ChangeInfo myBannedChangeInfo;
 
     public void setCurrentInfo(ChangeInfo currentInfo) {
       myCurrentInfo = currentInfo;
@@ -168,6 +183,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
           if (file != null) {
             final PsiElement element = file.findElementAt(e.getOffset());
             if (element != null) {
+              if (myBannedChangeInfo != null && LanguageChangeSignatureDetectors.wasBanned(element, myBannedChangeInfo)) return;
+              myBannedChangeInfo = null;
               final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(element, myCurrentInfo);
               if (info != null) {
                 myInitialText = document.getText();
@@ -177,6 +194,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
           }
         }
       }
+    }
+
+    public void setBannedChangeInfo(ChangeInfo bannedChangeInfo) {
+      myBannedChangeInfo = bannedChangeInfo;
     }
   }
 

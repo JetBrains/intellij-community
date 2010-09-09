@@ -36,7 +36,7 @@ import java.awt.*;
  * User: anna
  * Date: Sep 8, 2010
  */
-public class ChangeSignatureGestureVisistor implements HighlightVisitor {
+public class ChangeSignatureGestureVisitor implements HighlightVisitor {
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureGestureDetector.class.getName());
   @NonNls private static final String SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED = "Signature should be possibly changed";
 
@@ -68,7 +68,7 @@ public class ChangeSignatureGestureVisistor implements HighlightVisitor {
 
   @Override
   public HighlightVisitor clone() {
-    return new ChangeSignatureGestureVisistor();
+    return new ChangeSignatureGestureVisitor();
   }
 
   @Override

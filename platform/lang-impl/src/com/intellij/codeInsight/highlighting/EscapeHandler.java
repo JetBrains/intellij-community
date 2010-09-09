@@ -16,6 +16,8 @@
 
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -25,6 +27,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
 
 import java.util.Map;
 
@@ -39,19 +43,29 @@ public class EscapeHandler extends EditorActionHandler {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
     editor.setHeaderComponent(null);
-    if (project != null && ((HighlightManagerImpl)HighlightManager.getInstance(project)).hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE |
-                                                                                                                HighlightManager .HIDE_BY_ANY_KEY)) {
-      WindowManager.getInstance().getStatusBar(project).setInfo(""); //??
-      FindManager findManager = FindManager.getInstance(project);
-      FindModel model = findManager.getFindNextModel(editor);
-      if (model != null) {
-        model.setSearchHighlighters(false);
-        findManager.setFindNextModel(model);
+    if (project != null) {
+      if (((HighlightManagerImpl)HighlightManager.getInstance(project)).hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE |
+                                                                                               HighlightManager.HIDE_BY_ANY_KEY)) {
+        WindowManager.getInstance().getStatusBar(project).setInfo(""); //??
+        FindManager findManager = FindManager.getInstance(project);
+        FindModel model = findManager.getFindNextModel(editor);
+        if (model != null) {
+          model.setSearchHighlighters(false);
+          findManager.setFindNextModel(model);
+        }
+        return;
+      }
+      else {
+        final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+        final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(project);
+        if (file != null && detector.containsChangeSignatureChange(file)) {
+          detector.clearSignatureChange(file);
+          DaemonCodeAnalyzer.getInstance(project).restart();
+          return;
+        }
       }
     }
-    else{
-      myOriginalHandler.execute(editor, dataContext);
-    }
+    myOriginalHandler.execute(editor, dataContext);
   }
 
   public boolean isEnabled(Editor editor, DataContext dataContext) {
@@ -69,6 +83,10 @@ public class EscapeHandler extends EditorActionHandler {
             return true;
           }
         }
+      }
+      final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+      if (file != null && ChangeSignatureGestureDetector.getInstance(project).containsChangeSignatureChange(file)) {
+        return true;
       }
     }
 

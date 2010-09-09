@@ -37,4 +37,6 @@ public interface LanguageChangeSignatureDetector {
 
   @Nullable
   TextRange getHighlightingRange(PsiElement element);
+
+  boolean wasBanned(PsiElement element, @NotNull ChangeInfo bannedInfo);
 }

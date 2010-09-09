@@ -47,4 +47,9 @@ class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeS
   public static TextRange getHighlightingRange(@NotNull PsiElement element) {
     return INSTANCE.forLanguage(element.getLanguage()).getHighlightingRange(element);
   }
+
+  public static boolean wasBanned(@NotNull PsiElement element, ChangeInfo bannedInfo) {
+    return INSTANCE.forLanguage(element.getLanguage()).wasBanned(element, bannedInfo);
+
+  }
 }
