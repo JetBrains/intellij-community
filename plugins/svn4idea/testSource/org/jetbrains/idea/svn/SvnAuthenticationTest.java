@@ -96,21 +96,28 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
-          listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.save));
+          if (SystemInfo.isWindows) {
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.save));
+          } else {
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
+          }
 
           commonScheme(url, false, null);
-          Assert.assertEquals((SystemInfo.isWindows ? 3 : 2), listener.getCnt());
+          Assert.assertEquals(3, listener.getCnt());
           //long start = System.currentTimeMillis();
           //waitListenerStep(start, listener, 3);
 
           listener.reset();
           SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+          if (! SystemInfo.isWindows) {
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
+          }
           commonScheme(url, false, null);
           //start = System.currentTimeMillis();
           //waitListenerStep(start, listener, 4);
-          Assert.assertEquals((SystemInfo.isWindows ? 1 : 2), listener.getCnt());
+          Assert.assertEquals((SystemInfo.isWindows ? 1 : 3), listener.getCnt());
         }
         catch (SVNException e) {
           exception[0] = e;
@@ -121,16 +128,12 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     Assert.assertTrue(result[0]);
     myTestInteraction.assertNothing();
-    Assert.assertEquals((SystemInfo.isWindows ? 1 : 2), listener.getCnt());
+    Assert.assertEquals((SystemInfo.isWindows ? 1 : 3), listener.getCnt());
     listener.assertForAwt();
     savedOnceListener.assertForAwt();
 
-    if (SystemInfo.isWindows) {
-      savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
-    } else {
-      savedOnceListener.assertNotSaved(url, ISVNAuthenticationManager.PASSWORD);
-    }
-    
+    savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
+
     if (exception[0] != null) {
       throw exception[0];
     }
