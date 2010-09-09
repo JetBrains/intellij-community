@@ -221,21 +221,20 @@ public class PyCallExpressionHelper {
       if (decos.length == 1) {
         PyDecorator deco = decos[0];
         String deconame = deco.getName();
-        if (deco.isBuiltin()) {
-          if (PyNames.STATICMETHOD.equals(deconame)) {
-            if (flags != null) {
-              flags.add(PyFunction.Flag.STATICMETHOD);
-            }
-            if (isByInstance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
+        // rare case, remove check for better performance: if (deco.isBuiltin()) {
+        if (PyNames.STATICMETHOD.equals(deconame)) {
+          if (flags != null) {
+            flags.add(PyFunction.Flag.STATICMETHOD);
           }
-          else if (PyNames.CLASSMETHOD.equals(deconame)) {
-            if (flags != null) {
-              flags.add(PyFunction.Flag.CLASSMETHOD);
-            }
-            if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
-          }
-          // else could be custom decorator processing
+          if (isByInstance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
         }
+        else if (PyNames.CLASSMETHOD.equals(deconame)) {
+          if (flags != null) {
+            flags.add(PyFunction.Flag.CLASSMETHOD);
+          }
+          if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
+        }
+        //}
       }
     }
     return implicit_offset;
