@@ -17,15 +17,17 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,9 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   private final Set<String> myContextActionIdSet = new HashSet<String>();
   private final Map<String, AnAction> myId2Action = new HashMap<String, AnAction>();
   private final Map<String, AnAction> myContextActionId2Action = new HashMap<String, AnAction>();
+
+  // [Project, ExecutorId, RunnerId]
+  private final Set<Trinity<Project, String, String>> myInProgress = new java.util.HashSet<Trinity<Project, String, String>>(); 
 
   public ExecutorRegistryImpl(ActionManager actionManager) {
     myActionManager = actionManager;
@@ -121,10 +126,34 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   public void initComponent() {
+    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+      public void projectOpened(final Project project) {
+        final MessageBusConnection connect = project.getMessageBus().connect(project);
+        connect.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter(){
+          public void processStartScheduled(String executorId, ExecutionEnvironment env) {
+            myInProgress.add(createExecutionId(executorId, env, project));
+          }
+
+          public void processNotStarted(String executorId, @NotNull ExecutionEnvironment env) {
+            myInProgress.remove(createExecutionId(executorId, env, project));
+          }
+
+          public void processStarted(String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+            myInProgress.remove(createExecutionId(executorId, env, project));
+          }
+        });
+      }
+    });
+    
+    
     final Executor[] executors = Extensions.getExtensions(Executor.EXECUTOR_EXTENSION_NAME);
     for (Executor executor : executors) {
       initExecutor(executor);
     }
+  }
+
+  private static Trinity<Project, String, String> createExecutionId(String executorId, ExecutionEnvironment env, Project project) {
+    return new Trinity<Project, String, String>(project, executorId, env.getConfigurationSettings().getRunnerId());
   }
 
   public synchronized void disposeComponent() {
@@ -140,7 +169,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     myActionManager = null;
   }
 
-  private static class ExecutorAction extends AnAction implements DumbAware {
+  private class ExecutorAction extends AnAction implements DumbAware {
     private final Executor myExecutor;
 
     private ExecutorAction(@NotNull final Executor executor) {
@@ -162,9 +191,8 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
       final RunnerAndConfigurationSettings selectedConfiguration = getConfiguration(project);
       if (selectedConfiguration != null) {
-        final ProgramRunner runner =
-          RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
-        enabled = runner != null;
+        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
+        enabled = runner != null && !myInProgress.contains(new Trinity<Project, String, String>(project, myExecutor.getId(), runner.getRunnerId()));
 
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
@@ -178,7 +206,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     @Nullable
-    private static RunnerAndConfigurationSettings getConfiguration(@NotNull final Project project) {
+    private RunnerAndConfigurationSettings getConfiguration(@NotNull final Project project) {
       return RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
     }
 
