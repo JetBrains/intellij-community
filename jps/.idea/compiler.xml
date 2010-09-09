@@ -23,7 +23,7 @@
       <entry name="?*.dtd" />
       <entry name="?*.tld" />
       <entry name="?*.ftl" />
-      <entry name="/META-INF/services/?*" />
+      <entry name="META-INF/services/?*" />
     </wildcardResourcePatterns>
     <annotationProcessing enabled="false" useClasspath="true" />
   </component>
