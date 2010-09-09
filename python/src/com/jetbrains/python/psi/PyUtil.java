@@ -455,9 +455,8 @@ public class PyUtil {
    * @param node the allegedly decorated function
    * @return name of the built-in decorator, or null (even if there are non-built-in decorators).
    */
-  public static
   @Nullable
-  String getDeepestBuiltinDecorator(@NotNull final PyFunction node) {
+  public static String getClassOrStaticMethodDecorator(@NotNull final PyFunction node) {
     PyDecoratorList decolist = node.getDecoratorList();
     if (decolist != null) {
       PyDecorator[] decos = decolist.getDecorators();
@@ -465,7 +464,7 @@ public class PyUtil {
         for (int i = decos.length - 1; i >= 0; i -= 1) {
           PyDecorator deco = decos[i];
           String deconame = deco.getName();
-          if (deco.isBuiltin()) {
+          if (PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) {
             return deconame;
           }
         }
@@ -483,7 +482,7 @@ public class PyUtil {
   @NotNull
   public static Set<PyFunction.Flag> detectDecorationsAndWrappersOf(PyFunction function) {
     Set<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
-    String deconame = getDeepestBuiltinDecorator(function);
+    String deconame = getClassOrStaticMethodDecorator(function);
     if (PyNames.CLASSMETHOD.equals(deconame)) {
       flags.add(CLASSMETHOD);
     }
