@@ -15,15 +15,18 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -191,6 +194,11 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
         final Document document = e.getDocument();
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
         if (!documentManager.isUncommited(document)) {
+          final String currentCommandName = CommandProcessor.getInstance().getCurrentCommandName();
+          if (!Comparing.strEqual(EditorBundle.message("typing.in.editor.command.name"), currentCommandName) &&
+              !Comparing.strEqual(EditorBundle.message("paste.command.name"), currentCommandName)) {
+            return;
+          }
           final PsiFile file = documentManager.getPsiFile(document);
           if (file != null) {
             final PsiElement element = file.findElementAt(e.getOffset());

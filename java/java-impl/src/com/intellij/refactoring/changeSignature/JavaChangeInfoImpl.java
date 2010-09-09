@@ -409,7 +409,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     if (!newName.equals(that.newName)) return false;
     if (newNameIdentifier != null ? !newNameIdentifier.equals(that.newNameIdentifier) : that.newNameIdentifier != null) return false;
     if (!Arrays.equals(newParms, that.newParms)) return false;
-    if (newReturnType != null ? !newReturnType.equals(that.newReturnType) : that.newReturnType != null) return false;
+    if (newReturnType != null ? !newReturnType.getTypeText().equals(that.newReturnType.getTypeText()) : that.newReturnType != null) return false;
     if (newVisibility != null ? !newVisibility.equals(that.newVisibility) : that.newVisibility != null) return false;
     if (!oldName.equals(that.oldName)) return false;
     if (!Arrays.equals(oldParameterNames, that.oldParameterNames)) return false;
@@ -431,7 +431,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     result = 31 * result + Arrays.hashCode(oldParameterNames);
     result = 31 * result + Arrays.hashCode(oldParameterTypes);
     result = 31 * result + newName.hashCode();
-    result = 31 * result + (newReturnType != null ? newReturnType.hashCode() : 0);
+    result = 31 * result + (newReturnType != null ? newReturnType.getTypeText().hashCode() : 0);
     result = 31 * result + Arrays.hashCode(newParms);
     result = 31 * result + Arrays.hashCode(newExceptions);
     result = 31 * result + Arrays.hashCode(toRemoveParm);

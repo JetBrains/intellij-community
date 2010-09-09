@@ -267,6 +267,10 @@ public class JavaParserUtil {
       myDelegate = delegate;
     }
 
+    public Project getProject() {
+      return myDelegate.getProject();
+    }
+
     public CharSequence getOriginalText() {
       return myDelegate.getOriginalText();
     }

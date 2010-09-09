@@ -44,13 +44,14 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   @Override
   public ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,
                                                  final @Nullable ChangeInfo changeInfo) {
-    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    if (method != null && isInsideMethodSignature(element, method.getBody())) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+    if (method != null && isInsideMethodSignature(element, method)) {
       final String newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
       final PsiType returnType = method.getReturnType();
-      final CanonicalTypes.Type newReturnType = returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null;
+      final CanonicalTypes.Type newReturnType;
       final ParameterInfoImpl[] parameterInfos;
       try {
+        newReturnType = returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null;
         parameterInfos = ParameterInfoImpl.fromMethod(method);
       }
       catch (IncorrectOperationException e) {
@@ -149,7 +150,13 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
             return new ChangeSignatureProcessor(myProject, new MyJavaChangeInfo(info.getNewVisibility(), info.getSuperMethod(),
                                                                                 info.getNewReturnType(),
                                                                                 (ParameterInfoImpl[])info.getNewParameters(),
-                                                                                info.getNewExceptions(), info.getOldName()));
+                                                                                info.getNewExceptions(), info.getOldName()) {
+              @Override
+              protected void fillOldParams(PsiMethod method) {
+                oldParameterNames = info.getOldParameterNames();
+                oldParameterTypes = info.getOldParameterTypes();
+              }
+            });
           }
 
           @Override
@@ -188,7 +195,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   @Override
   public boolean isChangeSignatureAvailable(PsiElement element, ChangeInfo currentInfo) {
     if (currentInfo instanceof JavaChangeInfo) {
-      return Comparing.equal(currentInfo.getMethod(), element);
+      return element instanceof PsiIdentifier && Comparing.equal(currentInfo.getMethod(), element.getParent());
     }
     return false;
   }
@@ -196,6 +203,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   @Nullable
   @Override
   public TextRange getHighlightingRange(PsiElement element) {
+    element = element.getParent();
     if (element instanceof PsiMethod) {
       final PsiCodeBlock body = ((PsiMethod)element).getBody();
       return new TextRange(element.getTextRange().getStartOffset(), body == null ? element.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
@@ -205,10 +213,15 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
 
   @Override
   public boolean wasBanned(PsiElement element, @NotNull ChangeInfo bannedInfo) {
-    return Comparing.equal(PsiTreeUtil.getParentOfType(element, PsiMethod.class), bannedInfo.getMethod());
+    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    return method != null && isInsideMethodSignature(element, method) && Comparing.equal(method, bannedInfo.getMethod());
   }
 
-  private static boolean isInsideMethodSignature(PsiElement element, PsiCodeBlock body) {
-    return body == null || element.getTextOffset() < body.getTextOffset();
+  private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    if (body != null) {
+      return element.getTextOffset() < body.getTextOffset() && element.getTextOffset() > method.getModifierList().getTextRange().getEndOffset();
+    }
+    return method.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 }
