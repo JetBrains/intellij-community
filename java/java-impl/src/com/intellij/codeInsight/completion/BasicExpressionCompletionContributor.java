@@ -17,26 +17,17 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.lookup.KeywordLookupItem;
-import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PsiJavaPatterns;
-import static com.intellij.patterns.PsiJavaPatterns.psiClass;
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ContextGetter;
-import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
-import com.intellij.psi.filters.getters.FilterGetter;
 import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.filters.getters.ThisGetter;
 import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -46,6 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiClass;
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.not;
 
 /**
  * @author peter
@@ -85,19 +80,12 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
     });
 
     extend(not(psiElement().afterLeaf(".")), new CollectionsUtilityMethodsProvider());
+    extend(not(psiElement().afterLeaf(".")), new ClassLiteralGetter());
 
     extend(not(psiElement().afterLeaf(".")), new CompletionProvider<JavaSmartCompletionParameters>() {
       protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         final PsiType expectedType = parameters.getExpectedType();
-        final FilterGetter baseGetter = new FilterGetter(new ContextGetter() {
-          public Object[] get(final PsiElement context, final CompletionContext completionContext) {
-            return new Object[]{expectedType};
-          }
-        }, new ExcludeDeclaredFilter(ElementClassFilter.CLASS));
-        for (final LookupElement element : ClassLiteralGetter.getClassLiterals(position, null, result.getPrefixMatcher(), baseGetter)) {
-          result.addElement(element);
-        }
 
         for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
           if (!template.isDeactivated() && template.getTemplateContext().isEnabled(new SmartCompletionContextType())) {
