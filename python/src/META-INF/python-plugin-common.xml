@@ -258,6 +258,8 @@
 
     <lang.psiStructureViewFactory language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.structureView.DjangoStructureViewBuilderFactory"/>
 
+    <editorSmartKeysConfigurable instance="com.jetbrains.django.editor.DjangoEditorSmartKeysConfigurable"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
