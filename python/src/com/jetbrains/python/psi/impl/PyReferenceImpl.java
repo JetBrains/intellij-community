@@ -573,7 +573,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (qualifier == null) {
       return HighlightSeverity.ERROR;
     }
-    if (qualifier.getType(context) != null) {
+    if (context.getType(qualifier) != null) {
       return HighlightSeverity.WARNING;
     }
     return null;

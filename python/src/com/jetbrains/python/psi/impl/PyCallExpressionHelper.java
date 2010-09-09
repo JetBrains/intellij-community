@@ -141,7 +141,7 @@ public class PyCallExpressionHelper {
       final PyExpression callReference = us.getCallee();
       boolean is_by_instance = isByInstance(callReference, context);
       if (lastQualifier != null) {
-        PyType qualifier_type = lastQualifier.getType(context);
+        PyType qualifier_type = context.getType(lastQualifier);
         is_by_instance |=
           (qualifier_type != null && qualifier_type instanceof PyClassType && !((PyClassType)qualifier_type).isDefinition());
       }
@@ -245,7 +245,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       PyExpression qualifier = ((PyReferenceExpression)callee).getQualifier();
       if (qualifier != null) {
-        PyType type = qualifier.getType(context);
+        PyType type = context.getType(qualifier);
         if ((type instanceof PyClassType) && (!((PyClassType)type).isDefinition())) {
           // we're calling an instance method of qualifier
           return true;

@@ -195,7 +195,7 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void checkExpressionType(@NotNull final PyExpression expression, @NotNull final String expectedTypeName) {
-        final PyType type = expression.getType(myTypeEvalContext);
+        final PyType type = myTypeEvalContext.getType(expression);
         if (type != null && !(type instanceof PyTypeReference)) {
           final String typeName = type.getName();
           checkTypeCompatible(expression, typeName, expectedTypeName);
@@ -308,7 +308,7 @@ public class PyStringFormatInspection extends PyInspection {
           inspectValues(((PyParenthesizedExpression)rightExpression).getContainedExpression());
         }
         else {
-          final PyType type = rightExpression.getType(myTypeEvalContext);
+          final PyType type = myTypeEvalContext.getType(rightExpression);
           if (type != null) {
             if (myUsedMappingKeys.size() > 0 && !("dict".equals(type.getName()))) {
               registerProblem(rightExpression, "Format requires a mapping");

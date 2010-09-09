@@ -65,13 +65,13 @@ public class PyStatementEffectInspection extends PyInspection {
         String method = operator == null ? null : operator.getSpecialMethodName();
         if (method != null) {
           // maybe the op is overridden and may produce side effects, like cout << "hello"
-          PyType type = binary.getLeftExpression().getType(myTypeEvalContext);
+          PyType type = myTypeEvalContext.getType(binary.getLeftExpression());
           if (type != null && ! type.isBuiltin() && type.resolveMember(method, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
             return;
           }
           final PyExpression rhs = binary.getRightExpression();
           if (rhs != null) {
-            type = rhs.getType(myTypeEvalContext);
+            type = myTypeEvalContext.getType(rhs);
             if (type != null) {
               String rmethod = "__r" + method.substring(2); // __add__ -> __radd__
               if (! type.isBuiltin() && type.resolveMember(rmethod, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {

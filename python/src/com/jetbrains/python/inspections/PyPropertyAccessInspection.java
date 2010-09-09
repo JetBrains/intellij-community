@@ -61,7 +61,7 @@ public class PyPropertyAccessInspection extends PyInspection {
     private void checkExpression(PyQualifiedExpression node) {
       PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
-        PyType type = qualifier.getType(myTypeEvalContext);
+        PyType type = myTypeEvalContext.getType(qualifier);
         if (type instanceof PyClassType) {
           PyClass cls = ((PyClassType)type).getPyClass();
           String name = node.getName();

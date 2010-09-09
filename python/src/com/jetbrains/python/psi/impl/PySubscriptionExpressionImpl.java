@@ -36,7 +36,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   public PyType getType(@NotNull TypeEvalContext context) {
     final PyExpression indexExpression = getIndexExpression();
     if (indexExpression != null) {
-      final PyType type = getOperand().getType(context);
+      final PyType type = context.getType(getOperand());
       if (type instanceof PySubscriptableType) {
         return ((PySubscriptableType)type).getElementType(indexExpression, context);
       }

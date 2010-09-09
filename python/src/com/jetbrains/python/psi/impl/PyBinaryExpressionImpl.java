@@ -97,8 +97,8 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     PyExpression rhs = getRightExpression();
     final PsiElement operator = getPsiOperator();
     if (lhs != null && rhs != null && operator != null) {
-      PyType lhsType = lhs.getType(context);
-      PyType rhsType = rhs.getType(context);
+      PyType lhsType = context.getType(lhs);
+      PyType rhsType = context.getType(rhs);
       String op = operator.getText();
       if (PyClassType.is("int", lhsType) && PyClassType.is("int", rhsType) && (op.equals("+") || op.equals("-")))  {
         return lhsType;

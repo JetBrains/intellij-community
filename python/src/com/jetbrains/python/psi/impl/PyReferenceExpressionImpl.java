@@ -199,7 +199,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (maybe_type != null) return maybe_type;
         final String name = getName();
         if (name != null) {
-          PyType qualifier_type = qualifier.getType(context);
+          PyType qualifier_type = context.getType(qualifier);
           if (qualifier_type instanceof PyClassType) {
             Property property = ((PyClassType)qualifier_type).getPyClass().findProperty(name);
             if (property != null) {

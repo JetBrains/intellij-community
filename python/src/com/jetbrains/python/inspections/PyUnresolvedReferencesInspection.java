@@ -77,7 +77,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private void checkSlots(PyQualifiedExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
-        final PyType type = qualifier.getType(myTypeEvalContext);
+        final PyType type = myTypeEvalContext.getType(qualifier);
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
           if (pyClass != null && pyClass.isNewStyleClass()) {
@@ -192,7 +192,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (reference.getElement() instanceof PyQualifiedExpression) {
           final PyExpression qexpr = ((PyQualifiedExpression)reference.getElement()).getQualifier();
           if (qexpr != null) {
-            PyType qtype = qexpr.getType(myTypeEvalContext);
+            PyType qtype = myTypeEvalContext.getType(qexpr);
             if (qtype != null) {
               if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
                   (qtype instanceof PyUnionType && ((PyUnionType) qtype).isWeak())) {

@@ -133,7 +133,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
               else if ("fset".equals(param_name)) checkSetter(callable, argument);
               else if ("fdel".equals(param_name)) checkDeleter(callable, argument);
               else if ("doc".equals(param_name)) {
-                PyType type = argument.getType(myTypeEvalContext);
+                PyType type = myTypeEvalContext.getType(argument);
                 if (! (type instanceof PyClassType && myStringClasses.contains(((PyClassType)type).getPyClass()))) {
                   registerProblem(argument, PyBundle.message("INSP.doc.param.should.be.str"));
                 }

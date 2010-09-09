@@ -406,13 +406,13 @@ public class PyUtil {
       if (qualifier != null) {
         String attr_name = getIdentifier(ref);
         if ("__class__".equals(attr_name)) {
-          PyType qual_type = qualifier.getType(context);
+          PyType qual_type = context.getType(qualifier);
           if (qual_type instanceof PyClassType) {
             return new PyClassType(((PyClassType)qual_type).getPyClass(), true); // always as class, never instance
           }
         }
         else if ("__dict__".equals(attr_name)) {
-          PyType qual_type = qualifier.getType(context);
+          PyType qual_type = context.getType(qualifier);
           if (qual_type instanceof PyClassType && ((PyClassType)qual_type).isDefinition()) {
             return PyBuiltinCache.getInstance(ref).getDictType();
           }

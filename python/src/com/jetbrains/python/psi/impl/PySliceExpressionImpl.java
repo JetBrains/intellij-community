@@ -20,7 +20,7 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    return getOperand().getType(context);
+    return context.getType(getOperand());
   }
 
   public PyExpression getOperand() {

@@ -47,7 +47,7 @@ public class PyTupleItemAssignmentInspection extends PyInspection {
           PsiElement element = referenceExpression.followAssignmentsChain(myTypeEvalContext).getElement();
           if (element instanceof PyExpression) {
             PyExpression expression = (PyExpression)element;
-            PyType type = expression.getType(myTypeEvalContext);
+            PyType type = myTypeEvalContext.getType(expression);
             if (type instanceof PyTupleType) {
               registerProblem(node, PyBundle.message("INSP.tuples.never.assign.items")); 
             }
