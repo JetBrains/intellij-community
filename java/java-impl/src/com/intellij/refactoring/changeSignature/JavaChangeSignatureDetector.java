@@ -45,7 +45,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   public ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,
                                                  final @Nullable ChangeInfo changeInfo) {
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    if (method != null && isInsideMethodSignature(element, method.getBody())) {
+    if (method != null && isInsideMethodSignature(element, method)) {
       final String newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
       final PsiType returnType = method.getReturnType();
       final CanonicalTypes.Type newReturnType = returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null;
@@ -208,7 +208,11 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     return Comparing.equal(PsiTreeUtil.getParentOfType(element, PsiMethod.class), bannedInfo.getMethod());
   }
 
-  private static boolean isInsideMethodSignature(PsiElement element, PsiCodeBlock body) {
-    return body == null || element.getTextOffset() < body.getTextOffset();
+  private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    if (body != null) {
+      return element.getTextOffset() < body.getTextOffset() && element.getTextOffset() > method.getModifierList().getTextRange().getEndOffset();
+    }
+    return method.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 }
