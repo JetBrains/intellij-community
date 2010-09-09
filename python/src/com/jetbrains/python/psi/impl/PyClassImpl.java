@@ -280,9 +280,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyClass[] getSuperClasses() {
-    List<PyClass> stubSuperClasses = resolveSuperClassesFromStub();
-    if (stubSuperClasses != null) {
-      return stubSuperClasses.toArray(new PyClass[stubSuperClasses.size()]);
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      final List<PyClass> pyClasses = resolveSuperClassesFromStub();
+      return pyClasses == null ? EMPTY_ARRAY : pyClasses.toArray(new PyClass[pyClasses.size()]);
     }
 
     PsiElement[] superClassElements = getSuperClassElements();
