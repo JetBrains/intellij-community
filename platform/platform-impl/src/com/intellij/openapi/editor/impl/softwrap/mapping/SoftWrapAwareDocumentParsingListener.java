@@ -48,7 +48,7 @@ interface SoftWrapAwareDocumentParsingListener {
    * @param collapsedFoldingWidthInColumns    width in columns of the symbols of the given fold regions
    * @param visualLine                        visual line where given fold region is located
    */
-  void onFoldRegion(@NotNull FoldRegion foldRegion, int collapsedFoldingWidthInColumns, int visualLine);
+  void onCollapsedFoldRegion(@NotNull FoldRegion foldRegion, int collapsedFoldingWidthInColumns, int visualLine);
 
   /**
    * Notifies that soft wrap is encountered.
@@ -84,7 +84,7 @@ interface SoftWrapAwareDocumentParsingListener {
    * <pre>
    * <ul>
    *   <li>{@link #onRangeRecalculationStart(TextRange)};</li>
-   *   <li>number of calls like {@link #onProcessedSymbol(ProcessingContext)}, {@link #onFoldRegion(FoldRegion, int, int)} etc;</li>
+   *   <li>number of calls like {@link #onProcessedSymbol(ProcessingContext)}, {@link #onCollapsedFoldRegion(FoldRegion, int, int)} etc;</li>
    *   <li>{@link #onRangeRecalculationEnd(TextRange)};</li>
    * </ul>
    * </pre>

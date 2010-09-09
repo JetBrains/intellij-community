@@ -162,6 +162,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       final FoldingGroup group = region.getGroup();
       if (group != null) {
         myGroups.putValue(group, region);
+        for (FoldingListener listener : myListeners) {
+          listener.onFoldRegionStateChange(region);
+        }
       }
       return true;
     }
@@ -306,6 +309,16 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   private void notifyBatchFoldingProcessingDone() {
+    try {
+      doNotifyBatchFoldingProcessingDone();
+    } finally {
+      for (FoldingListener listener : myListeners) {
+        listener.onFoldProcessingEnd();
+      }
+    }
+  }
+
+  private void doNotifyBatchFoldingProcessingDone() {
     myFoldTree.rebuild();
 
     myEditor.updateCaretCursor();
@@ -333,16 +346,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     if (collapsed != null && column == -1) {
       line = collapsed.getDocument().getLineNumber(collapsed.getStartOffset());
-      column = myEditor.getCaretModel().getVisualPosition().column;
+      column = myEditor.offsetToLogicalPosition(collapsed.getStartOffset()).column;
     }
 
     boolean oldCaretPositionSaved = myCaretPositionSaved;
 
     if (column != -1) {
-      LogicalPosition log = new LogicalPosition(line, 0);
-      VisualPosition vis = myEditor.logicalToVisualPosition(log);
-      VisualPosition pos = new VisualPosition(vis.line, column);
-      myEditor.getCaretModel().moveToVisualPosition(pos);
+      myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
     }
     else {
       myEditor.getCaretModel().moveToLogicalPosition(caretPosition);

@@ -135,7 +135,6 @@ public class SoftWrapsStorage {
   }
 
   /**
-   * //TODO den check if it's safe to remove this method
    * Allows to remove all soft wraps registered at the current storage with offsets from <code>[start; end)</code> range if any.
    *
    * @param startOffset   start offset to use (inclusive)

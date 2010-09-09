@@ -2225,6 +2225,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       Color fontColor,
                                       AtomicReference<LogicalPosition> startDrawingLogicalPosition)
   {
+
     int startToUse = start;
 
     // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
@@ -2262,6 +2263,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // to draw soft wrap indent if any and 'after soft wrap' sign.
         int i = CharArrayUtil.lastIndexOf(softWrapChars, '\n', 0, softWrapChars.length);
         if (i < softWrapChars.length - 1) {
+          position.x = 0; // Soft wrap starts new visual line
           position.x = drawString(
             g, softWrapChars, i + 1, softWrapChars.length, position, clip, effectColor, effectType, fontType, fontColor
           );

@@ -28,8 +28,16 @@ public interface FoldingListener {
 
   /**
    * Informs that <code>'collapsed'</code> state of given fold region is just changed.
+   * <p/>
+   * <b>Note:</b> listener should delay fold region state processing until {@link #onFoldProcessingEnd()} is called.
+   * I.e. folding model may return inconsistent data between current moment and {@link #onFoldProcessingEnd()}.
    *
    * @param region    fold region that is just collapsed or expanded
    */
   void onFoldRegionStateChange(@NotNull FoldRegion region);
+
+  /**
+   * Informs that fold processing is done.
+   */
+  void onFoldProcessingEnd();
 }

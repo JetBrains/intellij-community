@@ -18,18 +18,13 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.*;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -58,8 +53,11 @@ import java.util.List;
 public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAwareDocumentParsingListener {
 
   /** Caches information for the document visual line starts sorted in ascending order. */
-  private final List<CacheEntry> myCache = new ArrayList<CacheEntry>();
-  private final CacheEntry mySearchKey = new CacheEntry(0);
+  private final List<CacheEntry> myCache                               = new ArrayList<CacheEntry>();
+  private final CacheEntry       mySearchKey                           = new CacheEntry(0, null, null, null);
+  private final List<CacheEntry> myNotAffectedByUpdateTailCacheEntries = new ArrayList<CacheEntry>();
+  private final CacheState       myBeforeChangeState                   = new CacheState();
+  private final CacheState       myAfterChangeState                    = new CacheState();
 
   private final EditorEx myEditor;
   private final SoftWrapsStorage myStorage;
@@ -94,19 +92,24 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       }
     }
 
-    return calculate(new VisualToLogicalCalculationStrategy(visual));
+    return calculate(new VisualToLogicalCalculationStrategy(visual, myCache, myEditor, myStorage, myRepresentationHelper));
   }
 
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
-    return calculate(new OffsetToLogicalCalculationStrategy(offset));
+    return calculate(new OffsetToLogicalCalculationStrategy(offset, myEditor, myRepresentationHelper, myCache, myStorage));
   }
 
   @Override
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition softWrapUnawareVisual)
     throws IllegalStateException
   {
+    // We can't use standard strategy-based approach with logical -> visual mapping because folding processing quite often
+    // temporarily disables folding. So, there is an inconsistency between cached data (folding aware) and current folding
+    // state. So, we use direct soft wraps adjustment instead of normal calculation.
+
+
     if (logical.visualPositionAware) {
       // We don't need to recalculate logical position adjustments because given object already has them.
       return logical.toVisualPosition();
@@ -239,7 +242,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   }
 
   @Override
-  public void onFoldRegion(@NotNull FoldRegion foldRegion, int x, int visualLine) {
+  public void onCollapsedFoldRegion(@NotNull FoldRegion foldRegion, int x, int visualLine) {
     CacheEntry cacheEntry = getCacheEntryForVisualLine(visualLine);
     cacheEntry.store(foldRegion, x);
   }
@@ -339,7 +342,10 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     CacheEntry result;
     if (i < 0) {
       i = -i - 1;
-      myCache.add(i, result = new CacheEntry(visualLine));
+      myCache.add(i, result = new CacheEntry(visualLine, myEditor, myRepresentationHelper, myCache));
+    }
+    else if (myBeforeChangeState.valid && i > myBeforeChangeState.endCacheEntryIndex && myCache.get(i).locked) {
+      myCache.set(i, result = myCache.get(i).clone());
     }
     else {
       result = myCache.get(i);
@@ -349,816 +355,103 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
 
   @Override
   public void onRangeRecalculationStart(@NotNull TextRange range) {
+    myBeforeChangeState.from(range);
+    if (!myBeforeChangeState.valid) {
+      return;
+    }
+    myNotAffectedByUpdateTailCacheEntries.clear();
+    myNotAffectedByUpdateTailCacheEntries.addAll(myCache.subList(myBeforeChangeState.endCacheEntryIndex + 1, myCache.size()));
+    for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
+      entry.locked = true;
+    }
   }
 
   @Override
   public void onRangeRecalculationEnd(@NotNull TextRange range) {
+    if (!myBeforeChangeState.valid) {
+      return;
+    }
+    myAfterChangeState.from(range);
+    myCache.subList(myAfterChangeState.endCacheEntryIndex + 1, myCache.size()).clear();
+    myCache.addAll(myNotAffectedByUpdateTailCacheEntries);
+    for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
+      entry.locked = false;
+    }
+    applyStateChange();
   }
 
   /**
-   * Caches information about number of logical columns inside the collapsed single line folding.
+   * Is assumed to be called for updating {@link #myCache document dimensions cache} entries that lay after document position identified
+   * by {@link #myAfterChangeState} in order to apply to them diff between {@link #myBeforeChangeState} and {@link #myAfterChangeState}.
+   * <p/>
+   * I.e. the general idea of incremental cache update is the following:
+   * <p/>
+   * <pre>
+   * <ol>
+   *   <li>We are notified on document region update;</li>
+   *   <li>We remember significant information about target region;</li>
+   *   <li>Region data recalculation is performed;</li>
+   *   <li>Diff between current region state and remembered one is applied to the cache;</li>
+   * </ol>
+   </pre>
    */
-  private class FoldingData {
+  private void applyStateChange() {
+    int visualLinesDiff = myAfterChangeState.visualLines - myBeforeChangeState.visualLines;
+    int logicalLinesDiff = myAfterChangeState.logicalLines - myBeforeChangeState.logicalLines;
+    int softWrappedLinesDiff = myAfterChangeState.softWrapLines - myBeforeChangeState.softWrapLines;
+    int foldedLinesDiff = myAfterChangeState.foldedLines - myBeforeChangeState.foldedLines;
 
-    private final FoldRegion myFoldRegion;
-    private int myWidthInColumns = -1;
-    private int myStartX;
-
-    FoldingData(FoldRegion foldRegion, int startX) {
-      myFoldRegion = foldRegion;
-      myStartX = startX;
-    }
-
-    public int getCollapsedSymbolsWidthInColumns() {
-      if (myWidthInColumns < 0) {
-        Document document = myEditor.getDocument();
-        myWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(
-          document.getCharsSequence(), myFoldRegion.getStartOffset(), myFoldRegion.getEndOffset(), myStartX
-        );
-      }
-
-      return myWidthInColumns;
+    int i = MappingUtil.getCacheEntryIndexForOffset(myAfterChangeState.endOffset, myEditor.getDocument(), myCache) + 1;
+    for (; i < myCache.size(); i++) {
+      CacheEntry cacheEntry = myCache.get(i);
+      cacheEntry.visualLine += visualLinesDiff;
+      cacheEntry.startLogicalLine += logicalLinesDiff;
+      cacheEntry.endLogicalLine += logicalLinesDiff;
+      cacheEntry.startSoftWrapLinesBefore += softWrappedLinesDiff;
+      cacheEntry.endSoftWrapLinesBefore += softWrappedLinesDiff;
+      cacheEntry.startFoldedLines += foldedLinesDiff;
+      cacheEntry.endFoldedLines += foldedLinesDiff;
     }
   }
 
-  private static class TabData {
+  private class CacheState {
 
-    public final int widthInColumns;
-    public final int offset;
+    public int     visualLines;
+    public int     logicalLines;
+    public int     softWrapLines;
+    public int     foldedLines;
+    public int     endOffset;
+    public int     endCacheEntryIndex;
+    public boolean valid;
 
-    TabData(@NotNull ProcessingContext context) {
-      widthInColumns = context.symbolWidthInColumns;
-      offset = context.offset;
+    public void from(@NotNull TextRange range) {
+      reset();
+
+      endOffset = range.getEndOffset();
+      int startIndex = MappingUtil.getCacheEntryIndexForOffset(range.getStartOffset(), myEditor.getDocument(), myCache);
+
+      if (startIndex < 0) {
+        // This is correct situation for, say, initial cache update.
+        return;
+      }
+      valid = true;
+      endCacheEntryIndex = MappingUtil.getCacheEntryIndexForOffset(endOffset, myEditor.getDocument(), myCache);
+      visualLines = endCacheEntryIndex - startIndex + 1;
+
+      CacheEntry startEntry = myCache.get(startIndex);
+      CacheEntry endEntry = myCache.get(endCacheEntryIndex);
+      logicalLines = endEntry.endLogicalLine - startEntry.startLogicalLine + 1;
+      foldedLines = endEntry.endFoldedLines - startEntry.startFoldedLines;
+      softWrapLines = endEntry.endSoftWrapLinesBefore + endEntry.endSoftWrapLinesCurrent - startEntry.startSoftWrapLinesBefore
+                      - startEntry.startSoftWrapLinesCurrent;
+    }
+
+    public void reset() {
+      logicalLines = 0;
+      softWrapLines = 0;
+      foldedLines = 0;
+      endCacheEntryIndex = 0;
+      valid = false;
     }
   }
-
-  private static final TIntObjectHashMap<FoldingData> DUMMY = new TIntObjectHashMap<FoldingData>();
-
-  //TODO den remove
-  private static long counter;
-
-  /**
-   * Encapsulates information to cache for the single visual line.
-   */
-  @SuppressWarnings("unchecked")
-  private class CacheEntry implements Comparable<CacheEntry> {
-
-    public int visualLine;
-
-    public int startLogicalLine;
-    public int startLogicalColumn;
-    public int startOffset;
-    public int startSoftWrapLinesBefore;
-    public int startSoftWrapLinesCurrent;
-    public int startSoftWrapColumnDiff;
-    public int startFoldedLines;
-    public int startFoldingColumnDiff;
-
-    public int endOffset;
-    public int endLogicalLine;
-    public int endLogicalColumn;
-    public int endVisualColumn;
-    public int endSoftWrapLinesBefore;
-    public int endSoftWrapLinesCurrent;
-    public int endSoftWrapColumnDiff;
-    public int endFoldedLines;
-    public int endFoldingColumnDiff;
-
-    /** Holds positions for the tabulation symbols on a target visual line sorted by offset in ascending order. */
-    private List<TabData> myTabPositions = Collections.EMPTY_LIST;
-
-    /** Holds information about single line fold regions representation data. */
-    private TIntObjectHashMap<FoldingData> myFoldingData = DUMMY;
-
-    CacheEntry(int visualLine) {
-      this.visualLine = visualLine;
-      //TODO den remove
-      counter++;
-      if (counter > 200000) {
-        int i = 1;
-      }
-    }
-
-    public void setLineStartPosition(@NotNull ProcessingContext context, int i) {
-      assert context.visualColumn == 0;
-      startLogicalLine = context.logicalLine;
-      startLogicalColumn = context.logicalColumn;
-      visualLine = context.visualLine;
-      startOffset = context.offset;
-      startSoftWrapLinesBefore = context.softWrapLinesBefore;
-      startSoftWrapLinesCurrent = context.softWrapLinesCurrent;
-      startSoftWrapColumnDiff = context.softWrapColumnDiff;
-      startFoldedLines = context.foldedLines;
-      startFoldingColumnDiff = context.foldingColumnDiff;
-
-      if (i > 1 && (startOffset - myCache.get(i - 1).endOffset) > 1) {
-        assert false;
-      }
-    }
-
-    public void setLineEndPosition(@NotNull ProcessingContext context) {
-      endOffset = context.offset;
-      endLogicalLine = context.logicalLine;
-      endLogicalColumn = context.logicalColumn;
-      endVisualColumn = context.visualColumn;
-      endSoftWrapLinesBefore = context.softWrapLinesBefore;
-      endSoftWrapLinesCurrent = context.softWrapLinesCurrent;
-      endSoftWrapColumnDiff = context.softWrapColumnDiff;
-      endFoldedLines = context.foldedLines;
-      endFoldingColumnDiff = context.foldingColumnDiff;
-    }
-
-    public ProcessingContext buildStartLineContext() {
-      ProcessingContext result = new ProcessingContext(myEditor, myRepresentationHelper);
-      result.logicalLine = startLogicalLine;
-      result.logicalColumn = startLogicalColumn;
-      result.offset = startOffset;
-      result.visualLine = visualLine;
-      result.visualColumn = 0;
-      result.softWrapLinesBefore = startSoftWrapLinesBefore;
-      result.softWrapLinesCurrent = startSoftWrapLinesCurrent;
-      result.softWrapColumnDiff = startSoftWrapColumnDiff;
-      result.foldedLines = startFoldedLines;
-      result.foldingColumnDiff = startFoldingColumnDiff;
-      return result;
-    }
-
-    public ProcessingContext buildEndLineContext() {
-      ProcessingContext result = new ProcessingContext(myEditor, myRepresentationHelper);
-      result.logicalLine = endLogicalLine;
-      result.logicalColumn = endLogicalColumn;
-      result.offset = endOffset;
-      result.visualLine = visualLine;
-      result.visualColumn = endVisualColumn;
-      result.softWrapLinesBefore = endSoftWrapLinesBefore;
-      result.softWrapLinesCurrent = endSoftWrapLinesCurrent;
-      result.softWrapColumnDiff = endSoftWrapColumnDiff;
-      result.foldedLines = endFoldedLines;
-      result.foldingColumnDiff = endFoldingColumnDiff;
-      return result;
-    }
-
-    public void store(FoldRegion foldRegion, int startX) {
-      if (myFoldingData == DUMMY) {
-        myFoldingData = new TIntObjectHashMap<FoldingData>();
-      }
-      myFoldingData.put(foldRegion.getStartOffset(), new FoldingData(foldRegion, startX));
-    }
-
-    public TIntObjectHashMap<FoldingData> getFoldingData() {
-      return myFoldingData;
-    }
-
-    public List<TabData> getTabData() {
-      return myTabPositions;
-    }
-
-    public void storeTabData(ProcessingContext context) {
-      if (myTabPositions == Collections.EMPTY_LIST) {
-        myTabPositions = new ArrayList<TabData>();
-      }
-      myTabPositions.add(new TabData(context));
-    }
-
-    @Override
-    public int compareTo(CacheEntry e) {
-      return visualLine - e.visualLine;
-    }
-
-    @Override
-    public String toString() {
-      return "visual line: " + visualLine + ", offsets: " + startOffset + "-" + endOffset;
-    }
-  }
-
-  private static class TabulationDataProvider extends AbstractListBasedDataProvider<SoftWrapDataProviderKeys, TabData> {
-
-    TabulationDataProvider(@NotNull List<TabData> data) {
-      super(SoftWrapDataProviderKeys.TABULATION, data);
-    }
-
-    @Override
-    protected int getSortingKey(@NotNull TabData data) {
-      return data.offset;
-    }
-  }
-
-  /**
-   * Defines contract for the strategy that knows how to map one document dimension to another (e.g. visual position to logical position).
-   *
-   * @param <T>     target dimension type
-   */
-  private interface MappingStrategy<T> {
-
-    /**
-     * @return    target mapped dimension if it's possible to perform the mapping eagerly; <code>null</code> otherwise
-     */
-    @Nullable
-    T eagerMatch();
-
-    /**
-     * Builds initial context to start calculation from.
-     * <p/>
-     * It's assumed that we store information about 'anchor' document positions like visual line starts and calculate
-     * target result starting from the nearest position.
-     *
-     * @return    initial context to use for target result calculation
-     */
-    @NotNull
-    ProcessingContext buildInitialContext();
-
-    /**
-     * Notifies current strategy that there are no special symbols and regions between the document position identified
-     * by the current state of the given context and given offset. I.e. it's safe to assume that all symbols between the offset
-     * identified by the given context and given offset have occupy one visual and logical column.
-     *
-     * @param context   context that identifies currently processed position
-     * @param offset    nearest offset to the one identified by the given context that conforms to requirement that every symbol
-     *                  between them increments offset, visual and logical position by one
-     * @return          resulting dimension if it's located between the document position identified by the given context
-     *                  and given offset if any; <code>null</code> otherwise
-     */
-    @Nullable
-    T advance(ProcessingContext context, int offset);
-
-    /**
-     * Notifies current strategy that soft wrap is encountered during the processing. There are two ways to continue the processing then:
-     * <pre>
-     * <ul>
-     *   <li>Target dimension is located after the given soft wrap;</li>
-     *   <li>Target dimension is located within the given soft wrap bounds;</li>
-     * </ul>
-     * </pre>
-     *
-     * @param context     current processing context
-     * @param softWrap    soft wrap encountered during the processing
-     * @return            target document dimension if it's located within the bounds of the given soft wrap; <code>null</code> otherwise
-     */
-    @Nullable
-    T processSoftWrap(ProcessingContext context, SoftWrap softWrap);
-
-    /**
-     * Notifies current strategy that collapsed fold region is encountered during the processing. There are two ways to
-     * continue the processing then:
-     * <pre>
-     * <ul>
-     *   <li>Target dimension is located after the given fold region;</li>
-     *   <li>Target dimension is located within the given fold region bounds;</li>
-     * </ul>
-     * </pre>
-     *
-     * @param context       current processing context
-     * @param foldRegion    collapsed fold region encountered during the processing
-     * @return              target document dimension if it's located within the bounds of the given fold region;
-     *                      <code>null</code> otherwise
-     */
-    @Nullable
-    T processFoldRegion(ProcessingContext context, FoldRegion foldRegion);
-
-    /**
-     * Notifies current strategy that tabulation symbols is encountered during the processing. Tabulation symbols
-     * have special treatment because they may occupy different number of visual and logical columns.
-     * See {@link EditorUtil#nextTabStop(int, Editor)} for more details. So, there are two ways to continue the processing then:
-     * <pre>
-     * <ul>
-     *   <li>Target dimension is located after the given tabulation symbol bounds;</li>
-     *   <li>Target dimension is located within the given tabulation symbol bounds;</li>
-     * </ul>
-     * </pre>
-     *
-     * @param context       current processing context
-     * @param tabData       document position for the active tabulation symbol encountered during the processing
-     * @return              target document dimension if it's located within the bounds of the given fold region;
-     *                      <code>null</code> otherwise
-     */
-    @Nullable
-    T processTabulation(ProcessingContext context, TabData tabData);
-
-    /**
-     * This method is assumed to be called when there are no special symbols between the document position identified by the
-     * given context and target dimension. E.g. this method may be called when we perform {@code visual -> logical} mapping
-     * and there are no soft wraps, collapsed fold regions and tabulation symbols on a current visual line.
-     *
-     * @param context   current processing context that identifies active document position
-     * @return          resulting dimension that is built on the basis of the given context and target anchor dimension
-     */
-    @NotNull
-    T build(ProcessingContext context);
-  }
-
-  /**
-   * Abstract super class for mapping strategies that encapsulates shared logic of advancing the context to the points
-   * of specific types. I.e. it's main idea is to ask sub-class if target dimension lays inside particular region
-   * (e.g. soft wrap, fold region etc) and use common algorithm for advancing context to the region's end in the case
-   * of negative answer.
-   *
-   * @param <T>     resulting document dimension type
-   */
-  private abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
-
-    protected final CacheEntry myCacheEntry;
-    private final T myEagerMatch;
-
-    protected AbstractMappingStrategy(Computable<Pair<CacheEntry, T>> cacheEntryProvider) throws IllegalStateException {
-      Pair<CacheEntry, T> pair = cacheEntryProvider.compute();
-      myCacheEntry = pair.first;
-      myEagerMatch = pair.second;
-    }
-
-    @Nullable
-    @Override
-    public T eagerMatch() {
-      return myEagerMatch;
-    }
-
-    @NotNull
-    @Override
-    public ProcessingContext buildInitialContext() {
-      return myCacheEntry.buildStartLineContext();
-    }
-
-    protected FoldingData getFoldRegionData(FoldRegion foldRegion) {
-      return myCacheEntry.getFoldingData().get(foldRegion.getStartOffset());
-    }
-
-    @Override
-    public T advance(ProcessingContext context, int offset) {
-      T result = buildIfExceeds(context, offset);
-      if (result != null) {
-        return result;
-      }
-
-      // Update context state and continue processing.
-      context.logicalLine = myEditor.getDocument().getLineNumber(offset);
-      int diff = offset - context.offset;
-      context.visualColumn += diff;
-      context.logicalColumn += diff;
-      context.offset = offset;
-      return null;
-    }
-
-    @Nullable
-    protected abstract T buildIfExceeds(ProcessingContext context, int offset);
-
-    @Override
-    public T processFoldRegion(ProcessingContext context, FoldRegion foldRegion) {
-      T result = buildIfExceeds(context, foldRegion);
-      if (result != null) {
-        return result;
-      }
-
-      Document document = myEditor.getDocument();
-      int endOffsetLogicalLine = document.getLineNumber(foldRegion.getEndOffset());
-      int collapsedSymbolsWidthInColumns;
-      if (context.logicalLine == endOffsetLogicalLine) {
-        // Single-line fold region.
-        FoldingData foldingData = getFoldRegionData(foldRegion);
-        if (foldingData == null) {
-          assert false;
-          collapsedSymbolsWidthInColumns = context.visualColumn * myRepresentationHelper.textWidth(" ", 0, 1, Font.PLAIN, 0);
-        }
-        else {
-          collapsedSymbolsWidthInColumns = foldingData.getCollapsedSymbolsWidthInColumns();
-        }
-      }
-      else {
-        // Multi-line fold region.
-        collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(
-          document.getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), 0
-        );
-        context.softWrapColumnDiff = 0;
-        context.softWrapLinesBefore += context.softWrapLinesCurrent;
-        context.softWrapLinesCurrent = 0;
-      }
-
-      context.advance(foldRegion, collapsedSymbolsWidthInColumns);
-      return null;
-    }
-
-    @Nullable
-    protected abstract T buildIfExceeds(ProcessingContext context, FoldRegion foldRegion);
-
-    @Override
-    public T processTabulation(ProcessingContext context, TabData tabData) {
-      T result = buildIfExceeds(context, tabData);
-      if (result != null) {
-        return result;
-      }
-
-      context.visualColumn += tabData.widthInColumns;
-      context.logicalColumn += tabData.widthInColumns;
-      context.offset++;
-      return null;
-    }
-
-    @Nullable
-    protected abstract T buildIfExceeds(ProcessingContext context, TabData tabData);
-  }
-
-  private class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<LogicalPosition> {
-
-    private final VisualPosition myTargetVisual;
-
-    VisualToLogicalCalculationStrategy(@NotNull final VisualPosition targetVisual) {
-      super(new Computable<Pair<CacheEntry, LogicalPosition>>() {
-        @Override
-        public Pair<CacheEntry, LogicalPosition> compute() {
-          mySearchKey.visualLine = targetVisual.line;
-          int i = Collections.binarySearch(myCache, mySearchKey);
-          if (i >= 0) {
-            CacheEntry cacheEntry = myCache.get(i);
-            LogicalPosition eager = null;
-            if (targetVisual.column == 0) {
-              eager = cacheEntry.buildStartLineContext().buildLogicalPosition();
-            }
-            return new Pair<CacheEntry, LogicalPosition>(cacheEntry, eager);
-          }
-
-          // Handle situation with corrupted cache.
-          throw new IllegalStateException(String.format(
-            "Can't map visual position (%s) to logical. Reason: no cached information information about target visual line is found. "
-            + "Registered entries: %s", targetVisual, myCache
-          ));
-        }
-      });
-      myTargetVisual = targetVisual;
-    }
-
-    @Nullable
-    @Override
-    public LogicalPosition eagerMatch() {
-      return null;
-    }
-
-    @Override
-    protected LogicalPosition buildIfExceeds(ProcessingContext context, int offset) {
-      // There is a possible case that target visual line starts with soft wrap. We want to process that at 'processSoftWrap()' method.
-      if (offset == myCacheEntry.startOffset && myStorage.getSoftWrap(offset) != null) {
-        return null;
-      }
-
-      // Return eagerly if target visual position remains between current context position and the one defined by the given offset.
-      if (offset > myCacheEntry.endOffset || (context.visualColumn + offset - context.offset >= myTargetVisual.column)) {
-        int diff = myTargetVisual.column - context.visualColumn;
-        context.offset = Math.min(myCacheEntry.endOffset, context.offset + diff);
-        context.logicalColumn += diff;
-        context.visualColumn = myTargetVisual.column;
-        return context.buildLogicalPosition();
-      }
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public LogicalPosition processSoftWrap(ProcessingContext context, SoftWrap softWrap) {
-      // There is a possible case that current visual line starts with soft wrap and target visual position points to its
-      // virtual space.
-      if (myCacheEntry.startOffset == softWrap.getStart()) {
-        if (myTargetVisual.column <= softWrap.getIndentInColumns()) {
-          ProcessingContext resultingContext = myCacheEntry.buildStartLineContext();
-          resultingContext.visualColumn = myTargetVisual.column;
-          resultingContext.softWrapColumnDiff += myTargetVisual.column;
-          return resultingContext.buildLogicalPosition();
-        }
-        else {
-          context.visualColumn = softWrap.getIndentInColumns();
-          context.softWrapColumnDiff += softWrap.getIndentInColumns();
-          return null;
-        }
-      }
-
-      // We assume that target visual position points to soft wrap-introduced virtual space if this method is called (we expect
-      // to iterate only a single visual line and also expect soft wrap to have line feed symbol at the first position).
-      ProcessingContext targetContext = myCacheEntry.buildEndLineContext();
-      targetContext.softWrapColumnDiff += myTargetVisual.column - targetContext.visualColumn;
-      targetContext.visualColumn = myTargetVisual.column;
-      return targetContext.buildLogicalPosition();
-    }
-
-    @Override
-    protected LogicalPosition buildIfExceeds(ProcessingContext context, FoldRegion foldRegion) {
-      // We assume that fold region placeholder contains only 'simple' symbols, i.e. symbols that occupy single visual column.
-      String placeholder = foldRegion.getPlaceholderText();
-
-      // Check if target visual position points inside collapsed fold region placeholder
-      if (myTargetVisual.column < /* note that we don't use <= here */ context.visualColumn + placeholder.length()) {
-        // Map all visual positions that point inside collapsed fold region as the logical position of it's start.
-        return context.buildLogicalPosition();
-      }
-
-      return null;
-    }
-
-    @Override
-    protected LogicalPosition buildIfExceeds(ProcessingContext context, TabData tabData) {
-      if (context.visualColumn + tabData.widthInColumns >= myTargetVisual.column) {
-        context.logicalColumn += myTargetVisual.column - context.visualColumn;
-        context.visualColumn = myTargetVisual.column;
-        return context.buildLogicalPosition();
-      }
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public LogicalPosition build(ProcessingContext context) {
-      int diff = myTargetVisual.column - context.visualColumn;
-      context.logicalColumn += diff;
-      context.offset += diff;
-      context.visualColumn = myTargetVisual.column;
-      return context.buildLogicalPosition();
-    }
-  }
-
-  private class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<LogicalPosition> {
-
-    private final int myTargetOffset;
-
-    private OffsetToLogicalCalculationStrategy(final int targetOffset) {
-      super(new Computable<Pair<CacheEntry, LogicalPosition>>() {
-        @Override
-        public Pair<CacheEntry, LogicalPosition> compute() {
-          if (targetOffset >= myEditor.getDocument().getTextLength()) {
-            if (myCache.isEmpty()) {
-              return new Pair<CacheEntry, LogicalPosition>(null, new LogicalPosition(0, 0, 0, 0, 0, 0, 0));
-            }
-            else {
-              CacheEntry lastEntry = myCache.get(myCache.size() - 1);
-              LogicalPosition eager = new LogicalPosition(
-                lastEntry.endLogicalLine, lastEntry.endLogicalColumn + 1, lastEntry.endSoftWrapLinesBefore,
-                lastEntry.endSoftWrapLinesCurrent, lastEntry.endSoftWrapColumnDiff, lastEntry.endFoldedLines,
-                lastEntry.endFoldingColumnDiff
-              );
-              return new Pair<CacheEntry, LogicalPosition>(null, eager);
-            }
-          }
-
-          int start = 0;
-          int end = myCache.size() - 1;
-
-          // We inline binary search here because profiling indicates that it becomes bottleneck to use Collections.binarySearch().
-          while (start <= end) {
-            int i = (end + start) >>> 1;
-            CacheEntry cacheEntry = myCache.get(i);
-            if (cacheEntry.endOffset < targetOffset) {
-              start = i + 1;
-              continue;
-            }
-            if (cacheEntry.startOffset > targetOffset) {
-              end = i - 1;
-              continue;
-            }
-
-            // There is a possible case that currently found cache entry corresponds to soft-wrapped line and soft wrap occurred
-            // at target offset. We need to return cache entry for the next visual line then (because document offset shared with
-            // soft wrap offset is assumed to point to 'after soft wrap' position).
-            if (targetOffset == cacheEntry.endOffset && i < myCache.size() - 1) {
-              CacheEntry nextLineCacheEntry = myCache.get(i + 1);
-              if (nextLineCacheEntry.startOffset == targetOffset) {
-                return new Pair<CacheEntry, LogicalPosition>(nextLineCacheEntry, null);
-              }
-            }
-            return new Pair<CacheEntry, LogicalPosition>(cacheEntry, null);
-          }
-
-          throw new IllegalStateException(String.format(
-            "Can't map offset (%d) to logical position. Reason: no cached information information about target visual line is found. "
-            + "Registered entries: %s", targetOffset, myCache
-          ));
-        }
-      });
-      myTargetOffset = targetOffset;
-    }
-
-    @Override
-    protected LogicalPosition buildIfExceeds(ProcessingContext context, int offset) {
-      if (myTargetOffset > offset) {
-        return null;
-      }
-
-      // Process use-case when target offset points to 'after soft wrap' position.
-      SoftWrap softWrap = myStorage.getSoftWrap(offset);
-      if (softWrap != null && offset < myCacheEntry.endOffset) {
-        context.visualColumn = softWrap.getIndentInColumns();
-        context.softWrapColumnDiff = context.visualColumn - context.logicalColumn;
-        return context.buildLogicalPosition();
-      }
-
-      int diff = myTargetOffset - context.offset;
-      context.logicalColumn += diff;
-      context.visualColumn += diff;
-      context.offset = myTargetOffset;
-      return context.buildLogicalPosition();
-    }
-
-    @Override
-    protected LogicalPosition buildIfExceeds(ProcessingContext context, FoldRegion foldRegion) {
-      if (myTargetOffset >= foldRegion.getEndOffset()) {
-        return null;
-      }
-
-      Document document = myEditor.getDocument();
-      int targetLogicalLine = document.getLineNumber(myTargetOffset);
-      if (targetLogicalLine == context.logicalLine) {
-        // Target offset is located on the same logical line as folding start.
-        FoldingData cachedData = getFoldRegionData(foldRegion);
-        context.logicalColumn += myRepresentationHelper.toVisualColumnSymbolsNumber(
-          document.getCharsSequence(), foldRegion.getStartOffset(), myTargetOffset, cachedData.myStartX
-        );
-      }
-      else {
-        // Target offset is located on a different line with folding start.
-        context.logicalColumn = myRepresentationHelper.toVisualColumnSymbolsNumber(
-          document.getCharsSequence(), foldRegion.getStartOffset(), myTargetOffset, 0
-        );
-        context.softWrapColumnDiff = 0;
-        int linesDiff = document.getLineNumber(myTargetOffset) - document.getLineNumber(foldRegion.getStartOffset());
-        context.logicalLine += linesDiff;
-        context.foldedLines += linesDiff;
-        context.softWrapLinesBefore += context.softWrapLinesCurrent;
-        context.softWrapLinesCurrent = 0;
-      }
-
-      context.foldingColumnDiff = context.visualColumn - context.softWrapColumnDiff - context.logicalColumn;
-      context.offset = myTargetOffset;
-      return context.buildLogicalPosition();
-    }
-
-    @Nullable
-    @Override
-    protected LogicalPosition buildIfExceeds(ProcessingContext context, TabData tabData) {
-      if (tabData.offset == myTargetOffset) {
-        return context.buildLogicalPosition();
-      }
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public LogicalPosition processSoftWrap(ProcessingContext context, SoftWrap softWrap) {
-      context.visualColumn = softWrap.getIndentInColumns();
-      context.softWrapColumnDiff += softWrap.getIndentInColumns();
-      if (softWrap.getStart() == myTargetOffset) {
-        return context.buildLogicalPosition();
-      }
-      if (softWrap.getStart() == myCacheEntry.startOffset) {
-        return null;
-      }
-      assert false;
-      return context.buildLogicalPosition();
-    }
-
-    @NotNull
-    @Override
-    public LogicalPosition build(ProcessingContext context) {
-      int diff = myTargetOffset - context.offset;
-      context.logicalColumn += diff;
-      context.visualColumn += diff;
-      context.offset = myTargetOffset;
-      return context.buildLogicalPosition();
-    }
-  }
-
-  // We can't use standard strategy-based approach with logical -> visual mapping because folding processing quite often
-  // temporarily disables folding. So, there is an inconsistency between cached data (folding aware) and current folding
-  // state. So, we use direct soft wraps adjustment instead of normal calculation.
-
-  //private class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosition> {
-  //
-  //  private final LogicalPosition myTargetLogical;
-  //
-  //  LogicalToVisualMappingStrategy(@NotNull final LogicalPosition logical) throws IllegalStateException {
-  //    super(new Computable<CacheEntry>() {
-  //      @Override
-  //      public CacheEntry compute() {
-  //        int start = 0;
-  //        int end = myCache.size() - 1;
-  //
-  //        // We inline binary search here because profiling indicates that it becomes bottleneck to use Collections.binarySearch().
-  //        while (start <= end) {
-  //          int i = (end + start) >>> 1;
-  //          CacheEntry cacheEntry = myCache.get(i);
-  //
-  //          // There is a possible case that single logical line is represented on multiple visual lines due to soft wraps processing.
-  //          // Hence, we check for bot logical line and logical columns during searching 'anchor' cache entry.
-  //
-  //          if (cacheEntry.endLogicalLine < logical.line
-  //              || (cacheEntry.endLogicalLine == logical.line && myStorage.getSoftWrap(cacheEntry.endOffset) != null
-  //                  && cacheEntry.endLogicalColumn <= logical.column))
-  //          {
-  //            start = i + 1;
-  //            continue;
-  //          }
-  //          if (cacheEntry.startLogicalLine > logical.line
-  //              || (cacheEntry.startLogicalLine == logical.line
-  //                  && cacheEntry.startLogicalColumn > logical.column))
-  //          {
-  //            end = i - 1;
-  //            continue;
-  //          }
-  //
-  //          // There is a possible case that currently found cache entry corresponds to soft-wrapped line and soft wrap occurred
-  //          // at target logical column. We need to return cache entry for the next visual line then (because single logical column
-  //          // is shared for 'before soft wrap' and 'after soft wrap' positions and we want to use the one that points to
-  //          // 'after soft wrap' position).
-  //          if (cacheEntry.endLogicalLine == logical.line && cacheEntry.endLogicalColumn == logical.column && i < myCache.size() - 1) {
-  //            CacheEntry nextLineCacheEntry = myCache.get(i + 1);
-  //            if (nextLineCacheEntry.startLogicalLine == logical.line
-  //                && nextLineCacheEntry.startLogicalColumn == logical.column)
-  //            {
-  //              return nextLineCacheEntry;
-  //            }
-  //          }
-  //          return cacheEntry;
-  //        }
-  //
-  //        throw new IllegalStateException(String.format(
-  //          "Can't map logical position (%s) to visual position. Reason: no cached information information about target visual "
-  //          + "line is found. Registered entries: %s", logical, myCache
-  //        ));
-  //      }
-  //    });
-  //    myTargetLogical = logical;
-  //  }
-  //
-  //  @Override
-  //  protected VisualPosition buildIfExceeds(ProcessingContext context, int offset) {
-  //    if (context.logicalLine < myTargetLogical.line) {
-  //       return null;
-  //    }
-  //
-  //    int diff = myTargetLogical.column - context.logicalColumn;
-  //    if (offset - context.offset < diff) {
-  //      return null;
-  //    }
-  //
-  //    context.visualColumn += diff;
-  //    // Don't update other dimensions like logical position and offset because we need only visual position here.
-  //    return context.buildVisualPosition();
-  //  }
-  //
-  //  @Override
-  //  protected VisualPosition buildIfExceeds(ProcessingContext context, FoldRegion foldRegion) {
-  //    int foldEndLine = myEditor.getDocument().getLineNumber(foldRegion.getEndOffset());
-  //    if (myTargetLogical.line > foldEndLine) {
-  //      return null;
-  //    }
-  //
-  //    if (myTargetLogical.line < foldEndLine) {
-  //      // Map all logical position that point inside collapsed fold region to visual position of its start.
-  //      return context.buildVisualPosition();
-  //    }
-  //
-  //    int foldEndColumn = getFoldRegionData(foldRegion).getCollapsedSymbolsWidthInColumns();
-  //    if (foldEndLine == context.logicalLine) {
-  //      // Single-line fold region.
-  //      foldEndColumn += context.logicalColumn;
-  //    }
-  //
-  //    if (foldEndColumn <= myTargetLogical.column) {
-  //      return null;
-  //    }
-  //
-  //    // Map all logical position that point inside collapsed fold region to visual position of its start.
-  //    return context.buildVisualPosition();
-  //  }
-  //
-  //  @Override
-  //  protected VisualPosition buildIfExceeds(ProcessingContext context, TabData tabData) {
-  //    if (context.logicalLine < myTargetLogical.line) {
-  //      return null;
-  //    }
-  //
-  //    int diff = myTargetLogical.column - context.logicalColumn;
-  //    if (diff >= tabData.widthInColumns) {
-  //      return null;
-  //    }
-  //
-  //    context.logicalColumn += diff;
-  //    context.visualColumn += diff;
-  //
-  //    return context.buildVisualPosition();
-  //  }
-  //
-  //  @Override
-  //  public VisualPosition processSoftWrap(ProcessingContext context, SoftWrap softWrap) {
-  //    context.visualColumn = softWrap.getIndentInColumns();
-  //    context.softWrapColumnDiff += softWrap.getIndentInColumns();
-  //
-  //    if (context.logicalLine < myTargetLogical.line || context.logicalColumn != myTargetLogical.column) {
-  //      return null;
-  //    }
-  //    return context.buildVisualPosition();
-  //  }
-  //
-  //  @NotNull
-  //  @Override
-  //  public VisualPosition build(ProcessingContext context) {
-  //    int diff = myTargetLogical.column - context.logicalColumn;
-  //    context.logicalColumn += diff;
-  //    context.visualColumn += diff;
-  //    context.offset += diff;
-  //    return context.buildVisualPosition();
-  //  }
-  //}
 }

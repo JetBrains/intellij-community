@@ -428,7 +428,7 @@ public class EditorUtil {
     for (int i = end - 1; i >= start; i--) {
       switch (text.charAt(i)) {
         case '\n': startToUse = i + 1; break loop;
-        case '\t': lastTabSymbolIndex = i;
+        case '\t': if (lastTabSymbolIndex < 0) lastTabSymbolIndex = i;
       }
     }
 
@@ -444,6 +444,10 @@ public class EditorUtil {
 
     // Calculate number of columns up to the latest tabulation symbol.
     for (int i = startToUse; i <= lastTabSymbolIndex; i++) {
+      SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(i);
+      if (softWrap != null) {
+        x = softWrap.getIndentInPixels();
+      }
       char c = text.charAt(i);
       prevX = x;
       switch (c) {

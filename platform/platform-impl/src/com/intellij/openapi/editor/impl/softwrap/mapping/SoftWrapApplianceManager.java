@@ -100,14 +100,10 @@ public class SoftWrapApplianceManager implements FoldingListener {
   }
 
   public void registerSoftWrapIfNecessary(@NotNull Rectangle clip, int startOffset) {
-    //TODO den    implement perform full soft wraps recalculation at background thread, calculate soft wraps only for the target
+    //TODO den    perform full soft wraps recalculation at background thread, calculate soft wraps only for the target
     //TODO den    visible clip at EDT
     dropDataIfNecessary();
-    if (myVisibleAreaWidth <= 0 || myDirtyRanges.isEmpty()) {
-      return;
-    }
     recalculateSoftWraps();
-
   }
 
   public void release() {
@@ -117,15 +113,30 @@ public class SoftWrapApplianceManager implements FoldingListener {
   }
 
   private void recalculateSoftWraps() {
+    if (myVisibleAreaWidth <= 0 || myDirtyRanges.isEmpty()) {
+      return;
+    }
+
+    //TODO den think about sorting and merging dirty ranges here.
     for (TextRange dirtyRange : myDirtyRanges) {
       recalculateSoftWraps(dirtyRange);
     }
     myDirtyRanges.clear();
   }
 
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
   private void recalculateSoftWraps(TextRange range) {
+    notifyListenersOnRangeRecalculation(range, true);
+    myStorage.removeInRange(range.getStartOffset(), range.getEndOffset());
+    try {
+      doRecalculateSoftWraps(range);
+    }
+    finally {
+      notifyListenersOnRangeRecalculation(range, false);
+    }
+  }
 
+  @SuppressWarnings({"AssignmentToForLoopParameter"})
+  private void doRecalculateSoftWraps(TextRange range) {
     // Define start of the visual line that holds target range start.
     int start = range.getStartOffset();
     int end;
@@ -237,7 +248,7 @@ public class SoftWrapApplianceManager implements FoldingListener {
           continue;
         }
 
-        if (offset2widthInPixels.contains(context.offset)) {
+        if (offset2widthInPixels.contains(context.offset) && context.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/) {
           newX = context.x + offset2widthInPixels.get(context.offset);
         }
         else {
@@ -347,6 +358,7 @@ public class SoftWrapApplianceManager implements FoldingListener {
       offset2fontType.clear();
       startLineContext.from(context);
       logicalLineData.update(context.logicalLine, spaceWidth, myEditor);
+      context.x = 0;
       return;
     }
 
@@ -447,7 +459,7 @@ public class SoftWrapApplianceManager implements FoldingListener {
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
-      listener.onFoldRegion(foldRegion, collapsedFoldingWidthInColumns, visualLine);
+      listener.onCollapsedFoldRegion(foldRegion, collapsedFoldingWidthInColumns, visualLine);
     }
   }
 
@@ -475,6 +487,20 @@ public class SoftWrapApplianceManager implements FoldingListener {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
       listener.afterSoftWrapLineFeed(context);
+    }
+  }
+
+  @SuppressWarnings({"ForLoopReplaceableByForEach"})
+  private void notifyListenersOnRangeRecalculation(@NotNull TextRange range, boolean start) {
+    for (int i = 0; i < myListeners.size(); i++) {
+      // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
+      SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
+      if (start) {
+        listener.onRangeRecalculationStart(range);
+      }
+      else {
+        listener.onRangeRecalculationEnd(range);
+      }
     }
   }
 
@@ -533,7 +559,6 @@ public class SoftWrapApplianceManager implements FoldingListener {
 
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
-    //TODO den think about sorting dirty ranges here.
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
     Document document = myEditor.getDocument();
@@ -544,6 +569,10 @@ public class SoftWrapApplianceManager implements FoldingListener {
     int endOffset = document.getLineEndOffset(endLine);
 
     myDirtyRanges.add(new TextRange(startOffset, endOffset));
+  }
+
+  @Override
+  public void onFoldProcessingEnd() {
     recalculateSoftWraps();
   }
 }

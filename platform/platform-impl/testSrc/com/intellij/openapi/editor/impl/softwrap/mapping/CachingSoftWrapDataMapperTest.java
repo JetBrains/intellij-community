@@ -683,7 +683,7 @@ public class CachingSoftWrapDataMapperTest {
       insideFolding = false;
       MockFoldRegion foldRegion = new MockFoldRegion(foldingStartOffset, offset);
       myFoldRegions.add(foldRegion);
-      myMapper.onFoldRegion(foldRegion, foldingStartX, foldingStartVisualLine);
+      myMapper.onCollapsedFoldRegion(foldRegion, foldingStartX, foldingStartVisualLine);
     }
 
     public void onNewSymbol(char c) {
