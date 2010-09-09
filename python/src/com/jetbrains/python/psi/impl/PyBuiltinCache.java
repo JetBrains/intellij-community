@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -194,16 +193,9 @@ public class PyBuiltinCache {
    * @return found element, or null.
    */
   @Nullable
-  public <T extends PsiNamedElement> T getByName(@NonNls String name, @NotNull Class<T> type) {
+  public PsiElement getByName(@NonNls String name) {
     if (myBuiltinsFile != null) {
-      for(PsiElement element: myBuiltinsFile.getChildren()) {
-        if (type.isInstance(element)) {
-          final T cast = type.cast(element);
-          if ((name != null) && name.equals(cast.getName())) {
-            return cast;
-          }
-        }
-      }
+      return myBuiltinsFile.findExportedName(name);
     }
     return null;
   }

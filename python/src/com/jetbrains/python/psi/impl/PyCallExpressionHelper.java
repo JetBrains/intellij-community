@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -48,7 +47,7 @@ public class PyCallExpressionHelper {
       if ((PyNames.CLASSMETHOD.equals(refname) || PyNames.STATICMETHOD.equals(refname))) {
         PsiElement redefining_func = refex.getReference().resolve();
         if (redefining_func != null) {
-          PsiNamedElement true_func = PyBuiltinCache.getInstance(us).getByName(refname, PsiNamedElement.class);
+          PsiElement true_func = PyBuiltinCache.getInstance(us).getByName(refname);
           if (true_func instanceof PyClass) true_func = ((PyClass)true_func).findInitOrNew(true);
           if (true_func == redefining_func) {
             // yes, really a case of "foo = classmethod(foo)"
