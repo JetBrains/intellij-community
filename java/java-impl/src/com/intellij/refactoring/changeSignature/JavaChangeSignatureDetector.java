@@ -139,44 +139,48 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     if (changeInfo instanceof MyJavaChangeInfo) {
       final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
       final PsiMethod method = info.getSuperMethod();
-      new JavaChangeSignatureDialog(method.getProject(), new JavaMethodDescriptor(info.getMethod()){
-        @Override
-        public String getReturnTypeText() {
-          return info.getNewReturnType().getTypeText();
-        }
-      }, true, method) {
-        protected BaseRefactoringProcessor createRefactoringProcessor() {
-          return new ChangeSignatureProcessor(myProject, new MyJavaChangeInfo(info.getNewVisibility(), info.getSuperMethod(), info.getNewReturnType(),
-                                                                              (ParameterInfoImpl[])info.getNewParameters(), info.getNewExceptions(), info.getOldName()));
-        }
+      final JavaChangeSignatureDialog dialog =
+        new JavaChangeSignatureDialog(method.getProject(), new JavaMethodDescriptor(info.getMethod()) {
+          @Override
+          public String getReturnTypeText() {
+            return info.getNewReturnType().getTypeText();
+          }
+        }, true, method) {
+          protected BaseRefactoringProcessor createRefactoringProcessor() {
+            return new ChangeSignatureProcessor(myProject, new MyJavaChangeInfo(info.getNewVisibility(), info.getSuperMethod(),
+                                                                                info.getNewReturnType(),
+                                                                                (ParameterInfoImpl[])info.getNewParameters(),
+                                                                                info.getNewExceptions(), info.getOldName()));
+          }
 
-        @Override
-        protected void invokeRefactoring(final BaseRefactoringProcessor processor) {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable(){
-            @Override
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  final PsiFile file = method.getContainingFile();
-                  final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
-                  final Document document = documentManager.getDocument(file);
-                  if (document != null) {
-                    document.setText(oldText);
-                    documentManager.commitDocument(document);
+          @Override
+          protected void invokeRefactoring(final BaseRefactoringProcessor processor) {
+            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+              @Override
+              public void run() {
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    final PsiFile file = method.getContainingFile();
+                    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+                    final Document document = documentManager.getDocument(file);
+                    if (document != null) {
+                      document.setText(oldText);
+                      documentManager.commitDocument(document);
+                    }
                   }
-                }
-              });
-              doRefactor(processor);
-            }
-          }, RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(info.getMethod())), null);
-        }
+                });
+                doRefactor(processor);
+              }
+            }, RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(info.getMethod())), null);
+          }
 
-        private void doRefactor(BaseRefactoringProcessor processor) {
-          super.invokeRefactoring(processor);
-        }
-      }.show();
-      return true;
+          private void doRefactor(BaseRefactoringProcessor processor) {
+            super.invokeRefactoring(processor);
+          }
+        };
+      dialog.show();
+      return dialog.isOK();
     }
     return false;
 
