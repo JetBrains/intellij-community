@@ -60,22 +60,31 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected final RefactoringActionHandler getHandler(DataContext dataContext) {
+
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element != null) {
+      RefactoringActionHandler handler = getHandler(element.getLanguage(), element);
+      if (handler != null) {
+        return handler;
+      }
+    }
+
+    Editor editor = LangDataKeys.EDITOR.getData(dataContext);
+    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    if (editor != null && file != null) {
+      element = getElementAtCaret(editor, file);
+      if (element != null) {
+        return getHandler(element.getLanguage(), element);
+      }
+    }
+
     final Language[] languages = LangDataKeys.CONTEXT_LANGUAGES.getData(dataContext);
     if (languages != null) {
-      Editor editor = LangDataKeys.EDITOR.getData(dataContext);
-      PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-      PsiElement elementAtCaret = editor == null || file == null ? null : getElementAtCaret(editor, file);
       for (Language language : languages) {
-        RefactoringActionHandler handler = getHandler(language, elementAtCaret);
+        RefactoringActionHandler handler = getHandler(language, element);
         if (handler != null) {
           return handler;
         }
-      }
-    }
-    else {
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (element != null) {
-        return getHandler(element.getLanguage(), element);
       }
     }
     return null;
@@ -85,7 +94,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   private RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
     List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
     if (providers.isEmpty()) return null;
-    if (providers.size() == 1) return getRefactoringHandler(providers.get(0));
+    if (element == null && !providers.isEmpty()) return getRefactoringHandler(providers.get(0));
     if (element != null) {
       for (RefactoringSupportProvider provider : providers) {
         if (provider.isAvailable(element)) {
