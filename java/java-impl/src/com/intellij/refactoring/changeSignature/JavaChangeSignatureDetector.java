@@ -189,7 +189,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   @Override
   public boolean isChangeSignatureAvailable(PsiElement element, ChangeInfo currentInfo) {
     if (currentInfo instanceof JavaChangeInfo) {
-      return Comparing.equal(currentInfo.getMethod(), element);
+      return element instanceof PsiIdentifier && Comparing.equal(currentInfo.getMethod(), element.getParent());
     }
     return false;
   }
@@ -197,6 +197,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   @Nullable
   @Override
   public TextRange getHighlightingRange(PsiElement element) {
+    element = element.getParent();
     if (element instanceof PsiMethod) {
       final PsiCodeBlock body = ((PsiMethod)element).getBody();
       return new TextRange(element.getTextRange().getStartOffset(), body == null ? element.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
@@ -206,7 +207,8 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
 
   @Override
   public boolean wasBanned(PsiElement element, @NotNull ChangeInfo bannedInfo) {
-    return Comparing.equal(PsiTreeUtil.getParentOfType(element, PsiMethod.class), bannedInfo.getMethod());
+    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    return method != null && isInsideMethodSignature(element, method) && Comparing.equal(method, bannedInfo.getMethod());
   }
 
   private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {
