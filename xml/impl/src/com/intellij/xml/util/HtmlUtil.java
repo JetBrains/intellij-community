@@ -341,8 +341,8 @@ public class HtmlUtil {
     return descriptors;
   }
 
-  public static boolean isHtml5Document(XmlDocument doc) {
-    if (!(doc instanceof HtmlDocumentImpl)) {
+  public static boolean isHtml5Document(XmlDocument doc, boolean orXhtml) {
+    if (!orXhtml && !(doc instanceof HtmlDocumentImpl)) {
       return false;
     }
     XmlProlog prolog = doc.getProlog();
@@ -350,12 +350,16 @@ public class HtmlUtil {
     if (doctype == null) {
       return XmlUtil.HTML5_SCHEMA_LOCATION.equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(doc.getProject()));
     }
-    return doctype.getDtdUri() == null && doctype.getPublicId() == null;
+    return isHtml5Doctype(doctype);
+  }
+
+  public static boolean isHtml5Doctype(XmlDoctype doctype) {
+    return doctype.getDtdUri() == null && doctype.getPublicId() == null && doctype.getMarkupDecl() == null;
   }
 
   public static boolean isHtml5Context(XmlElement context) {
     XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
-    return isHtml5Document(doc);
+    return isHtml5Document(doc, false);
   }
 
   private static class TerminateException extends RuntimeException {
