@@ -49,7 +49,7 @@ public class ChangeSignatureGestureVisistor implements HighlightVisitor {
   public void visit(PsiElement element, HighlightInfoHolder holder) {
     final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(element.getProject());
     if (detector.isChangeSignatureAvailable(element)) {
-      final TextRange range = ChangeSignatureGestureDetector.getHighlightingRange(element);
+      final TextRange range = LanguageChangeSignatureDetectors.getHighlightingRange(element);
       LOG.assertTrue(range != null);
       final HighlightInfo info = new HighlightInfo(new TextAttributes(null, null, Color.RED, EffectType.BOXED, Font.PLAIN),
                                                    HighlightInfoType.INFORMATION, range.getStartOffset(), range.getEndOffset(),

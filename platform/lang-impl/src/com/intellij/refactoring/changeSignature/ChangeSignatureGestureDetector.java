@@ -24,11 +24,9 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -58,13 +56,6 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       return detector.isChangeSignatureAvailable(element, adapter.getCurrentInfo());
     }
     return false;
-  }
-
-  @Nullable
-  public static TextRange getHighlightingRange(@NotNull PsiElement element) {
-    final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
-    LOG.assertTrue(detector != null);
-    return detector.getHighlightingRange(element);
   }
 
   public void changeSignature(PsiFile file) {
