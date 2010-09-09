@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="LanguageInjectionConfiguration">
   <injection language="SQLite" injector-id="js">
-    <display-name>&lt;&lt;&lt; SQLite</display-name>
+    <display-name>HTML5 SQL Database (SQLite)</display-name>
     <place><![CDATA[jsLiteralExpression().and(jsArgument("executeSql", 0))]]></place>
+  </injection>
+  <injection language="SQLite" injector-id="js">
+    <display-name>flash.data (SQLite)</display-name>
+    <place><![CDATA[jsLiteralExpression().and(asAssignedValue("text", "flash.data.SQLStatement"))]]></place>
+    <place><![CDATA[jsLiteralExpression().and(asAssignedValue("text", "*", "dbStatement"))]]></place>
+    <place><![CDATA[jsLiteralExpression().and(asAssignedValue("text", "*", "statement", "st").withText(string().matchesBrics(".*(((SELECT|DELETE) .*FROM)|(INSERT .*INTO)|(UPDATE .*SET)|(CREATE +(TABLE|INDEX))) .*")))]]></place>
   </injection>
 </component>
