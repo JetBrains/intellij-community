@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -192,11 +191,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
       else {
-        PyType maybe_type = PyUtil.getSpecialAttributeType(this);
+        PyType maybe_type = PyUtil.getSpecialAttributeType(this, context);
         if (maybe_type != null) return maybe_type;
         final String name = getName();
         if (name != null) {
-          PyType qualifier_type = qualifier.getType(TypeEvalContext.fast());
+          PyType qualifier_type = qualifier.getType(context);
           if (qualifier_type instanceof PyClassType) {
             Property property = ((PyClassType)qualifier_type).getPyClass().findProperty(name);
             if (property != null) {

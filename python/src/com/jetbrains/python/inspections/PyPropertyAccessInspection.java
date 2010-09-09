@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElementVisitor;
@@ -34,15 +35,15 @@ public class PyPropertyAccessInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   public static class Visitor extends PyInspectionVisitor {
     private final HashMap<Pair<PyClass, String>, Property> myPropertyCache = new HashMap<Pair<PyClass, String>, Property>();
 
-    public Visitor(@Nullable final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
@@ -60,7 +61,7 @@ public class PyPropertyAccessInspection extends PyInspection {
     private void checkExpression(PyQualifiedExpression node) {
       PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
-        PyType type = qualifier.getType(TypeEvalContext.fast());
+        PyType type = qualifier.getType(myTypeEvalContext);
         if (type instanceof PyClassType) {
           PyClass cls = ((PyClassType)type).getPyClass();
           String name = node.getName();

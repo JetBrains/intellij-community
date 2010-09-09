@@ -42,7 +42,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, final LocalInspectionToolSession session) {
-    final Visitor visitor = new Visitor(holder);
+    final Visitor visitor = new Visitor(holder, session);
     session.putUserData(KEY, visitor);
     return visitor;
   }
@@ -61,8 +61,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private Set<NameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
     private Set<NameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
 
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private void checkSlots(PyQualifiedExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
-        final PyType type = qualifier.getType(TypeEvalContext.fast());
+        final PyType type = qualifier.getType(myTypeEvalContext);
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
           if (pyClass != null && pyClass.isNewStyleClass()) {
@@ -112,7 +112,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (reference.isSoft()) continue;
         HighlightSeverity severity = HighlightSeverity.ERROR;
         if (reference instanceof PsiReferenceEx) {
-          severity = ((PsiReferenceEx) reference).getUnresolvedHighlightSeverity();
+          severity = ((PsiReferenceEx) reference).getUnresolvedHighlightSeverity(myTypeEvalContext);
           if (severity == null) continue;
         }
         boolean unresolved;
@@ -192,7 +192,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (reference.getElement() instanceof PyQualifiedExpression) {
           final PyExpression qexpr = ((PyQualifiedExpression)reference.getElement()).getQualifier();
           if (qexpr != null) {
-            PyType qtype = qexpr.getType(TypeEvalContext.fast());
+            PyType qtype = qexpr.getType(myTypeEvalContext);
             if (qtype != null) {
               if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
                   (qtype instanceof PyUnionType && ((PyUnionType) qtype).isWeak())) {

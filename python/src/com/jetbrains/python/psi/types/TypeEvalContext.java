@@ -12,7 +12,7 @@ import java.util.Map;
 public class TypeEvalContext {
   private boolean myAllowDataFlow;
 
-  private Map<PyExpression, PyType> myEvaluated = new HashMap<PyExpression, PyType>();
+  private final Map<PyExpression, PyType> myEvaluated = new HashMap<PyExpression, PyType>();
 
   private TypeEvalContext(boolean allowDataFlow) {
     myAllowDataFlow = allowDataFlow;
@@ -36,11 +36,15 @@ public class TypeEvalContext {
 
   @Nullable
   public PyType getType(PyExpression expr) {
-    if (myEvaluated.containsKey(expr)) {
-      return myEvaluated.get(expr);
+    synchronized (myEvaluated) {
+      if (myEvaluated.containsKey(expr)) {
+        return myEvaluated.get(expr);
+      }
     }
     PyType result = expr.getType(this);
-    myEvaluated.put(expr, result);
+    synchronized (myEvaluated) {
+      myEvaluated.put(expr, result);
+    }
     return result;
   }
 }

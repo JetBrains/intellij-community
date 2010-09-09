@@ -1,11 +1,13 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,20 +27,20 @@ public class PyArgumentListInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   public static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
     public void visitPyArgumentList(final PyArgumentList node) {
       // analyze
-      inspectPyArgumentList(node, getHolder());
+      inspectPyArgumentList(node, getHolder(), myTypeEvalContext);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class PyArgumentListInspection extends PyInspection {
       for (PyDecorator deco : decos) {
         if (! deco.hasArgumentList()) {
           // empty arglist; deco function must have a non-kwarg first arg
-          PyCallExpression.PyMarkedCallee mkfunc = deco.resolveCallee();
+          PyCallExpression.PyMarkedCallee mkfunc = deco.resolveCallee(myTypeEvalContext);
           if (mkfunc != null && !mkfunc.isImplicitlyResolved()) {
             Callable callable = mkfunc.getCallable();
             int first_param_offset =  mkfunc.getImplicitOffset();
@@ -78,9 +80,9 @@ public class PyArgumentListInspection extends PyInspection {
 
   }
 
-  public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder) {
-    PyArgumentList.AnalysisResult result = node.analyzeCall();
-    if (result != null && !result.isImplicitlyResolved()) {
+  public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context) {
+    PyArgumentList.AnalysisResult result = node.analyzeCall(context);
+    if (!result.isImplicitlyResolved()) {
       for (Map.Entry<PyExpression, EnumSet<PyArgumentList.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
         EnumSet<PyArgumentList.ArgFlag> flags = arg_entry.getValue();
         if (!flags.isEmpty()) { // something's wrong

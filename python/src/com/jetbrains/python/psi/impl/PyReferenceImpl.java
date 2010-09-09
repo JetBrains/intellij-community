@@ -567,13 +567,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  public HighlightSeverity getUnresolvedHighlightSeverity() {
+  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
     if (isBuiltInConstant()) return null;
     final PyExpression qualifier = myElement.getQualifier();
     if (qualifier == null) {
       return HighlightSeverity.ERROR;
     }
-    if (qualifier.getType(TypeEvalContext.fast()) != null) {
+    if (qualifier.getType(context) != null) {
       return HighlightSeverity.WARNING;
     }
     return null;

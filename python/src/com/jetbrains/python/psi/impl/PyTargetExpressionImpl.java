@@ -129,7 +129,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         if (assignedValue != null) {
           if (assignedValue instanceof PyReferenceExpression) {
             final PyReferenceExpression refex = (PyReferenceExpression)assignedValue;
-            PyType maybe_type = PyUtil.getSpecialAttributeType(refex);
+            PyType maybe_type = PyUtil.getSpecialAttributeType(refex, context);
             if (maybe_type != null) return maybe_type;
             final ResolveResult[] resolveResult = refex.getReference(PyResolveContext.noImplicits()).multiResolve(false);
             if (resolveResult.length == 1) {

@@ -105,8 +105,8 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     PyCallExpressionHelper.addArgument(this, expression);
   }
 
-  public PyMarkedCallee resolveCallee() {
-    PyMarkedCallee callee = PyCallExpressionHelper.resolveCallee(this);
+  public PyMarkedCallee resolveCallee(TypeEvalContext context) {
+    PyMarkedCallee callee = PyCallExpressionHelper.resolveCallee(this, context);
     if (callee == null) return null;
     if (! hasArgumentList()) {
       // NOTE: that +1 thing looks fishy

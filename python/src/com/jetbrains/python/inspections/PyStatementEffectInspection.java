@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,14 +26,14 @@ public class PyStatementEffectInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
@@ -64,13 +65,13 @@ public class PyStatementEffectInspection extends PyInspection {
         String method = operator == null ? null : operator.getSpecialMethodName();
         if (method != null) {
           // maybe the op is overridden and may produce side effects, like cout << "hello"
-          PyType type = binary.getLeftExpression().getType(TypeEvalContext.fast());
+          PyType type = binary.getLeftExpression().getType(myTypeEvalContext);
           if (type != null && ! type.isBuiltin() && type.resolveMember(method, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
             return;
           }
           final PyExpression rhs = binary.getRightExpression();
           if (rhs != null) {
-            type = rhs.getType(TypeEvalContext.fast());
+            type = rhs.getType(myTypeEvalContext);
             if (type != null) {
               String rmethod = "__r" + method.substring(2); // __add__ -> __radd__
               if (! type.isBuiltin() && type.resolveMember(rmethod, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {

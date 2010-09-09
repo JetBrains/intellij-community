@@ -101,7 +101,7 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us) {
+  public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us, TypeEvalContext context) {
     PyFunction.Flag wrappedFlag = null;
     boolean isConstructorCall = false;
 
@@ -139,9 +139,9 @@ public class PyCallExpressionHelper {
       EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
       PyExpression lastQualifier = resolveResult != null ? resolveResult.getLastQualifier() : null;
       final PyExpression callReference = us.getCallee();
-      boolean is_by_instance = isByInstance(callReference);
+      boolean is_by_instance = isByInstance(callReference, context);
       if (lastQualifier != null) {
-        PyType qualifier_type = lastQualifier.getType(TypeEvalContext.fast()); // NOTE: ...or slow()?
+        PyType qualifier_type = lastQualifier.getType(context);
         is_by_instance |=
           (qualifier_type != null && qualifier_type instanceof PyClassType && !((PyClassType)qualifier_type).isDefinition());
       }
@@ -165,7 +165,7 @@ public class PyCallExpressionHelper {
    * @return a non-negative number of parameters that are implicit to this call.
    */
   public static int getImplicitArgumentCount(final PyExpression callReference, PyFunction functionBeingCalled) {
-    return getImplicitArgumentCount(callReference, functionBeingCalled, null, null, isByInstance(callReference));
+    return getImplicitArgumentCount(callReference, functionBeingCalled, null, null, isByInstance(callReference, TypeEvalContext.fast()));
   }
 
   /**
@@ -241,11 +241,11 @@ public class PyCallExpressionHelper {
     return implicit_offset;
   }
 
-  protected static boolean isByInstance(final PyExpression callee) {
+  protected static boolean isByInstance(final PyExpression callee, TypeEvalContext context) {
     if (callee instanceof PyReferenceExpression) {
       PyExpression qualifier = ((PyReferenceExpression)callee).getQualifier();
       if (qualifier != null) {
-        PyType type = qualifier.getType(TypeEvalContext.fast());
+        PyType type = qualifier.getType(context);
         if ((type instanceof PyClassType) && (!((PyClassType)type).isDefinition())) {
           // we're calling an instance method of qualifier
           return true;

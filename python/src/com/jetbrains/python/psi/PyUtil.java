@@ -400,19 +400,19 @@ public class PyUtil {
    * @return type, or null (if type cannot be determined, reference is not to a known attribute, etc.)
    */
   @Nullable
-  public static PyType getSpecialAttributeType(@Nullable PyReferenceExpression ref) {
+  public static PyType getSpecialAttributeType(@Nullable PyReferenceExpression ref, TypeEvalContext context) {
     if (ref != null) {
       PyExpression qualifier = ref.getQualifier();
       if (qualifier != null) {
         String attr_name = getIdentifier(ref);
         if ("__class__".equals(attr_name)) {
-          PyType qual_type = qualifier.getType(TypeEvalContext.fast());
+          PyType qual_type = qualifier.getType(context);
           if (qual_type instanceof PyClassType) {
             return new PyClassType(((PyClassType)qual_type).getPyClass(), true); // always as class, never instance
           }
         }
         else if ("__dict__".equals(attr_name)) {
-          PyType qual_type = qualifier.getType(TypeEvalContext.fast());
+          PyType qual_type = qualifier.getType(context);
           if (qual_type instanceof PyClassType && ((PyClassType)qual_type).isDefinition()) {
             return PyBuiltinCache.getInstance(ref).getDictType();
           }

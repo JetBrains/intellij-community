@@ -1,6 +1,6 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -30,8 +30,8 @@ public class PyStringFormatInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   public static class Visitor extends PyInspectionVisitor {
@@ -63,12 +63,14 @@ public class PyStringFormatInspection extends PyInspection {
       private boolean myProblemRegister = false;
       private final Visitor myVisitor;
       private final PyBinaryExpression myExpression;
+      private final TypeEvalContext myTypeEvalContext;
 
       private final Map<String, String> myFormatSpec = new HashMap<String, String>();
 
-      public Inspection(Visitor visitor, PyBinaryExpression expression) {
+      public Inspection(Visitor visitor, PyBinaryExpression expression, TypeEvalContext typeEvalContext) {
         myVisitor = visitor;
         myExpression = expression;
+        myTypeEvalContext = typeEvalContext;
       }
 
       // return number of arguments or -1 if it can not be computed
@@ -95,7 +97,7 @@ public class PyStringFormatInspection extends PyInspection {
           return inspectArguments((PyExpression)element);
         }
         else if (rightExpression instanceof PyCallExpression) {
-          final PyCallExpression.PyMarkedCallee markedFunction = ((PyCallExpression)rightExpression).resolveCallee();
+          final PyCallExpression.PyMarkedCallee markedFunction = ((PyCallExpression)rightExpression).resolveCallee(myTypeEvalContext);
           if (markedFunction != null && !markedFunction.isImplicitlyResolved()) {
             final Callable callable = markedFunction.getCallable();
             if (callable instanceof PyFunction) {
@@ -193,7 +195,7 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void checkExpressionType(@NotNull final PyExpression expression, @NotNull final String expectedTypeName) {
-        final PyType type = expression.getType(TypeEvalContext.fast());
+        final PyType type = expression.getType(myTypeEvalContext);
         if (type != null && !(type instanceof PyTypeReference)) {
           final String typeName = type.getName();
           checkTypeCompatible(expression, typeName, expectedTypeName);
@@ -306,7 +308,7 @@ public class PyStringFormatInspection extends PyInspection {
           inspectValues(((PyParenthesizedExpression)rightExpression).getContainedExpression());
         }
         else {
-          final PyType type = rightExpression.getType(TypeEvalContext.fast());
+          final PyType type = rightExpression.getType(myTypeEvalContext);
           if (type != null) {
             if (myUsedMappingKeys.size() > 0 && !("dict".equals(type.getName()))) {
               registerProblem(rightExpression, "Format requires a mapping");
@@ -330,14 +332,14 @@ public class PyStringFormatInspection extends PyInspection {
       }
     }
 
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
     public void visitPyBinaryExpression(final PyBinaryExpression node) {
       if (node.getLeftExpression() instanceof PyStringLiteralExpression && node.isOperator("%")) {
-        final Inspection inspection = new Inspection(this, node);
+        final Inspection inspection = new Inspection(this, node, myTypeEvalContext);
         final PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
         inspection.inspectFormat(literalExpression);
         if (inspection.isProblem()) {
