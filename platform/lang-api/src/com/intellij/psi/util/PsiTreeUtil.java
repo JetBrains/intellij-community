@@ -342,6 +342,11 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  public static PsiElement getStubOrPsiParent(@Nullable PsiElement element) {
+    return getStubOrPsiParentOfType(element, PsiElement.class);
+  }
+
+  @Nullable
   public static <E extends PsiElement> E getStubOrPsiParentOfType(@Nullable PsiElement element, final Class<E> parentClass) {
     if (element instanceof StubBasedPsiElement) {
       StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
