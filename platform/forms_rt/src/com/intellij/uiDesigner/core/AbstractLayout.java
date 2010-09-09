@@ -179,7 +179,7 @@ public abstract class AbstractLayout implements LayoutManager2 {
 
     final GridConstraints[] newConstraints = new GridConstraints[myConstraints.length + 1];
     System.arraycopy(myConstraints, 0, newConstraints, 0, myConstraints.length);
-    newConstraints[myConstraints.length] = (GridConstraints)constraints;
+    newConstraints[myConstraints.length] = (GridConstraints)((GridConstraints)constraints).clone();
     myConstraints = newConstraints;
   }
 
