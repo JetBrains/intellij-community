@@ -521,6 +521,17 @@ new Foo().foo().substr<caret>a
     assertEmpty myFixture.completeBasic()
   }
 
+  public void testDeclaredReturnTypeInTypedContext() throws Exception {
+    configureGppScript """
+class Foo {
+  String getFoo() { "aaa" }
+}
+new Foo().foo.substr<caret>a
+"""
+    myFixture.completeBasic()
+    assertOrderedEquals myFixture.lookupElementStrings, "substring", "substring"
+  }
+
 }
 
 class GppProjectDescriptor extends DefaultLightProjectDescriptor {

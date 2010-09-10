@@ -163,6 +163,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
       if (nominal != null && nominal.equals(PsiType.VOID)) return nominal;
 
       if (GppTypeConverter.hasTypedContext(method)) {
+        if (nominal != null) return nominal;
+
         return PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
       }
 
