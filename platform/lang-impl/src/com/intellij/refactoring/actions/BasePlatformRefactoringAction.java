@@ -74,7 +74,10 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     if (editor != null && file != null) {
       element = getElementAtCaret(editor, file);
       if (element != null) {
-        return getHandler(element.getLanguage(), element);
+        RefactoringActionHandler handler = getHandler(element.getLanguage(), element);
+        if (handler != null) {
+          return handler;
+        }
       }
     }
 
