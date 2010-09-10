@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
@@ -121,13 +122,24 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   @Override
+  public void childRemoved(PsiTreeChangeEvent event) {
+    if (myDeaf) return;
+    change(event.getParent());
+  }
+
+  @Override
   public void childReplaced(PsiTreeChangeEvent event) {
     if (myDeaf) return;
-    final PsiFile file = event.getChild().getContainingFile();
+    change(event.getChild());
+  }
+
+  private void change(PsiElement child) {
+    if (child == null) return;
+    final PsiFile file = child.getContainingFile();
     if (file != null) {
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
       if (changeBean != null && changeBean.getInitialText() != null) {
-        final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(event.getChild(), changeBean.getCurrentInfo());
+        final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(child, changeBean.getCurrentInfo());
         changeBean.setCurrentInfo(info);
         if (info == null) {
           changeBean.setInitialText(null);
@@ -138,7 +150,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   @Override
   public void editorCreated(EditorFactoryEvent event) {
-    final Document document = event.getEditor().getDocument();
+    addDocListener(event.getEditor().getDocument());
+  }
+
+  public void addDocListener(Document document) {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file != null) {
       final MyDocumentChangeAdapter adapter = new MyDocumentChangeAdapter();
@@ -149,7 +164,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   @Override
   public void editorReleased(EditorFactoryEvent event) {
-    final Document document = event.getEditor().getDocument();
+    removeDocListener(event.getEditor().getDocument());
+  }
+
+  public void removeDocListener(Document document) {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     final MyDocumentChangeAdapter adapter = myListenerMap.remove(file);
     if (adapter != null) {
@@ -194,9 +212,11 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
         final Document document = e.getDocument();
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
         if (!documentManager.isUncommited(document)) {
-          final String currentCommandName = CommandProcessor.getInstance().getCurrentCommandName();
+          final CommandProcessor processor = CommandProcessor.getInstance();
+          final String currentCommandName = processor.getCurrentCommandName();
           if (!Comparing.strEqual(EditorBundle.message("typing.in.editor.command.name"), currentCommandName) &&
-              !Comparing.strEqual(EditorBundle.message("paste.command.name"), currentCommandName)) {
+              !Comparing.strEqual(EditorBundle.message("paste.command.name"), currentCommandName) &&
+              !Comparing.equal(EditorActionUtil.DELETE_COMMAND_GROUP, processor.getCurrentCommandGroupId())) {
             return;
           }
           final PsiFile file = documentManager.getPsiFile(document);
