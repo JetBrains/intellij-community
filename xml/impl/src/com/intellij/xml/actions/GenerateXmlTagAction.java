@@ -17,6 +17,8 @@ package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.actions.SimpleCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,13 +34,18 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 
 /**
  * @author Dmitry Avdeev
@@ -66,10 +73,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           XmlElementDescriptor descriptor = (XmlElementDescriptor)value;
           append(descriptor.getName());
-          XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
-          if (nsDescriptor instanceof XmlNSDescriptorImpl) {
-            append(" " + ((XmlNSDescriptorImpl)nsDescriptor).getDefaultNamespace(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
+          append(" " + getNamespace(descriptor), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
       });
       JBPopupFactory.getInstance().createListPopupBuilder(list).setTitle("Choose Tag Name").setItemChoosenCallback(new Runnable() {
@@ -86,12 +90,16 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           new WriteCommandAction.Simple(project, "Generate XML Tag", file) {
             @Override
             protected void run() {
-              String namespace = selected instanceof XmlNSDescriptorImpl ? ((XmlNSDescriptorImpl)selected).getDefaultNamespace() : "";
-              XmlTag newTag = contextTag.createChildTag(selected.getQualifiedName(), null, "", true);
-              XmlTag tag = contextTag.addSubTag(newTag, false);
+              XmlTag newTag = createTag(contextTag, selected);
+              newTag = contextTag.addSubTag(newTag, false);
+              final ComplexTypeDescriptor typeDescriptor = getType(selected, newTag);
               for (XmlElementDescriptor descriptor : values) {
-
+                if (true || typeDescriptor.canContainTag(descriptor.getName(), getNamespace(descriptor), newTag)) {
+                  newTag.addSubTag(createTag(newTag, descriptor), false);
+                }
               }
+              TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(newTag);
+
             }
           }.execute();
 
@@ -101,6 +109,26 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
       HintManager.getInstance().showErrorHint(editor, e.getMessage());
     }
+  }
+
+  private static XmlTag createTag(XmlTag contextTag, XmlElementDescriptor selected) {
+    return contextTag.createChildTag(selected.getName(), getNamespace(selected), null, false);
+  }
+
+  @Nullable
+  private static ComplexTypeDescriptor getType(XmlElementDescriptor selected, XmlTag contextTag) {
+    if (selected instanceof XmlElementDescriptorImpl) {
+      TypeDescriptor type = ((XmlElementDescriptorImpl)selected).getType(contextTag);
+      if (type instanceof ComplexTypeDescriptor) {
+        return (ComplexTypeDescriptor)type;
+      }
+    }
+    return null;
+  }
+
+  private static String getNamespace(XmlElementDescriptor selected) {
+    return selected.getNSDescriptor() instanceof XmlNSDescriptorImpl
+           ? ((XmlNSDescriptorImpl)selected.getNSDescriptor()).getDefaultNamespace() : "";
   }
 
   @Nullable
