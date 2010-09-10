@@ -124,14 +124,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     isVisibilityChanged = !method.hasModifierProperty(newVisibility);
 
     isNameChanged = !newName.equals(this.oldName);
-    if (!method.isConstructor()){
-      try {
-        isReturnTypeChanged = !newReturnType.getType(this.method, manager).equals(this.method.getReturnType());
-      }
-      catch (IncorrectOperationException e) {
-        isReturnTypeChanged = true;
-      }
-    }
+
     if (oldParameterNames.length != newParms.length){
       isParameterSetOrOrderChanged = true;
     }
@@ -215,6 +208,14 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
       oldParameterNames[i] = parameter.getName();
       oldParameterTypes[i] =
         JavaPsiFacade.getInstance(parameter.getProject()).getElementFactory().createTypeElement(parameter.getType()).getText();
+    }
+    if (!method.isConstructor()){
+      try {
+        isReturnTypeChanged = !newReturnType.getType(this.method, method.getManager()).equals(this.method.getReturnType());
+      }
+      catch (IncorrectOperationException e) {
+        isReturnTypeChanged = true;
+      }
     }
   }
 

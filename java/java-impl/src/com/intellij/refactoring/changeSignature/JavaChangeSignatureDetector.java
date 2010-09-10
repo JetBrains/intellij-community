@@ -88,12 +88,33 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
                                                       parameterInfo.getTypeWrapper().getType(element, element.getManager()),
                                                       oldParameterIndex == -1 ? "intellijidearulezzz" : "");
           }
+          if (info.isReturnTypeChanged()) {
+            final String visibility = info.getNewVisibility();
+            if (Comparing.strEqual(visibility, PsiModifier.PRIVATE) &&
+                !info.isArrayToVarargs() &&
+                !info.isExceptionSetOrOrderChanged() &&
+                !info.isExceptionSetChanged() &&
+                !info.isNameChanged() &&
+                !info.isParameterSetOrOrderChanged() &&
+                !info.isParameterNamesChanged() &&
+                !info.isParameterTypesChanged()) {
+              return null;
+            }
+          }
           final MyJavaChangeInfo javaChangeInfo =
             new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, info.getNewExceptions(), info.getOldName()) {
               @Override
               protected void fillOldParams(PsiMethod method) {
                 oldParameterNames = info.getOldParameterNames();
                 oldParameterTypes = info.getOldParameterTypes();
+                if (!method.isConstructor()) {
+                  try {
+                    isReturnTypeChanged = info.isReturnTypeChanged || !info.getNewReturnType().equals(newReturnType);
+                  }
+                  catch (IncorrectOperationException e) {
+                    isReturnTypeChanged = true;
+                  }
+                }
               }
             };
           javaChangeInfo.setSuperMethod(info.getSuperMethod());
@@ -201,6 +222,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
                                                                            info.getNewExceptions(), info.getOldName()) {
       @Override
       protected void fillOldParams(PsiMethod method) {
+        super.fillOldParams(method);
         oldParameterNames = info.getOldParameterNames();
         oldParameterTypes = info.getOldParameterTypes();
       }
