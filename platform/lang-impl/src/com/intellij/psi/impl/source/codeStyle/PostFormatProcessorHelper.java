@@ -23,11 +23,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author lesya
  */
-public class AbstractPostFormatProcessor {
+public class PostFormatProcessorHelper {
   public final CodeStyleSettings mySettings;
   private TextRange myResultTextRange;
 
-  public AbstractPostFormatProcessor(final CodeStyleSettings settings) {
+  public PostFormatProcessorHelper(final CodeStyleSettings settings) {
     mySettings = settings;
   }
 
@@ -38,7 +38,7 @@ public class AbstractPostFormatProcessor {
                                       myResultTextRange.getEndOffset()  - oldTextLength + newTextLength);
   }
 
-  public boolean checkElementContainsRange(final PsiElement element) {
+  public boolean isElementPartlyInRange(final PsiElement element) {
     if (myResultTextRange == null) return true;
 
     final TextRange elementRange = element.getTextRange();
@@ -47,7 +47,7 @@ public class AbstractPostFormatProcessor {
 
   }
 
-  public boolean checkRangeContainsElement(final PsiElement element) {
+  public boolean isElementFullyInRange(final PsiElement element) {
     if (myResultTextRange == null) return true;
 
     final TextRange elementRange = element.getTextRange();

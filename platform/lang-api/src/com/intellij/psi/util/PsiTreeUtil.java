@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class PsiTreeUtil {
@@ -194,27 +195,19 @@ public class PsiTreeUtil {
     return parents;
   }
 
-  @Nullable
-  public static <T extends PsiElement> T findChildOfType(@NotNull final PsiElement element, @NotNull final Class<T> aClass) {
+  @Nullable public static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element, @NotNull final Class<T> aClass) {
     return findChildOfType(element, aClass, true);
   }
 
-  @Nullable
-  public static <T extends PsiElement> T findChildOfType(@NotNull final PsiElement element,
-                                                         @NotNull final Class<T> aClass,
-                                                         final boolean strict) {
+  @Nullable public static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element, @NotNull final Class<T> aClass, final boolean strict) {
     return findChildOfAnyType(element, strict, aClass);
   }
 
-  @Nullable
-  public static <T extends PsiElement> T findChildOfAnyType(@NotNull final PsiElement element, @NotNull final Class<T>... classes) {
+  @Nullable public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, @NotNull final Class<T>... classes) {
     return findChildOfAnyType(element, true, classes);
   }
 
-  @Nullable
-  public static <T extends PsiElement> T findChildOfAnyType(@NotNull final PsiElement element,
-                                                            final boolean strict,
-                                                            @NotNull final Class<T>... classes) {
+  @Nullable public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, final boolean strict, @NotNull final Class<T>... classes) {
     PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
       @Override
       public boolean execute(PsiElement each) {
@@ -232,9 +225,9 @@ public class PsiTreeUtil {
     return (T)processor.getFoundElement();
   }
 
-  @Nullable
-  public static <T extends PsiElement> T getChildOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+  @Nullable public static <T extends PsiElement> T getChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return null;
+    for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
       if (instanceOf(aClass, child)) return (T)child;
     }
     return null;
@@ -247,8 +240,9 @@ public class PsiTreeUtil {
     return child;
   }
 
-  @Nullable
-  public static <T extends PsiElement> T[] getChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+  @Nullable public static <T extends PsiElement> T[] getChildrenOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return null;
+
     List<T> result = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (instanceOf(aClass, child)) {
@@ -259,8 +253,9 @@ public class PsiTreeUtil {
     return result == null ? null : ArrayUtil.toObjectArray(result, aClass);
   }
 
-  @NotNull
-  public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+  @NotNull public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return Collections.emptyList();
+
     List<T> result = new SmartList<T>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (instanceOf(aClass, child)) {
@@ -296,28 +291,28 @@ public class PsiTreeUtil {
    * @return the element, or null if none was found.
    * @since 5.1
    */
-  @Nullable
-  public static <T extends PsiElement> T getChildOfAnyType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      for (Class<? extends T> aClass : classes) {
+  @Nullable public static <T extends PsiElement> T getChildOfAnyType(@Nullable PsiElement element, @NotNull Class<? extends T>... classes) {
+    if (element == null) return null;
+    for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
+      for(Class<? extends T> aClass : classes) {
         if (instanceOf(aClass, child)) return (T)child;
       }
     }
     return null;
   }
 
-  @Nullable
-  public static <T extends PsiElement> T getNextSiblingOfType(@NotNull PsiElement sibling, @NotNull Class<T> aClass) {
-    for (PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()) {
+  @Nullable public static <T extends PsiElement> T getNextSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
+    if (sibling == null) return null;
+    for(PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()){
       if (instanceOf(aClass, child)) return (T)child;
     }
     return null;
   }
 
-  @Nullable
-  public static <T extends PsiElement> T getPrevSiblingOfType(@NotNull PsiElement sibling, @NotNull Class<T> aClass) {
-    for (PsiElement child = sibling.getPrevSibling(); child != null; child = child.getPrevSibling()) {
-      if (instanceOf(aClass, child)) return (T)child;
+  @Nullable public static <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
+    if (sibling == null) return null;
+    for(PsiElement child = sibling.getPrevSibling(); child != null; child = child.getPrevSibling()){
+      if (instanceOf(aClass,  child)) return (T)child;
     }
     return null;
   }
