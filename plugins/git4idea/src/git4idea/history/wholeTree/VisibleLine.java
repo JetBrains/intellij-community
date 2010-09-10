@@ -15,10 +15,10 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.util.containers.ReadonlyList;
-
 /**
  * @author irengrig
  */
-public interface TreeSkeleton extends ReadonlyList<VisibleLine>, TreeNavigation {
+public interface VisibleLine {
+  boolean isDecoration();
+  Object getData();
 }

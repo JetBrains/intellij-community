@@ -15,10 +15,21 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.util.containers.ReadonlyList;
+import com.intellij.util.containers.SLRUMap;
+import git4idea.history.browser.GitCommit;
 
 /**
  * @author irengrig
  */
-public interface TreeSkeleton extends ReadonlyList<VisibleLine>, TreeNavigation {
+public class LinesCache {
+  private final static int ourSize = 400; // todo ?
+  private final SLRUMap<String, GitCommit> myCache;
+
+  public LinesCache() {
+    myCache = new SLRUMap<String, GitCommit>(ourSize, 50);
+  }
+
+  public GitCommit get(final String hash) {
+    return myCache.get(hash);
+  }
 }

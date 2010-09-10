@@ -15,10 +15,13 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.util.containers.ReadonlyList;
+import git4idea.history.browser.ChangesFilter;
+
+import java.util.Collection;
 
 /**
- * @author irengrig
- */
-public interface TreeSkeleton extends ReadonlyList<VisibleLine>, TreeNavigation {
+* @author irengrig
+*/
+public interface Loader {
+  void loadSkeleton(final Collection<String> startingPoints, final Collection<ChangesFilter.Filter> filters);
 }

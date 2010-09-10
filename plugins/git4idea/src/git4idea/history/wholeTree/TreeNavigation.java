@@ -15,10 +15,16 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.util.containers.ReadonlyList;
+import com.intellij.openapi.vcs.Ring;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Iterator;
 
 /**
  * @author irengrig
  */
-public interface TreeSkeleton extends ReadonlyList<VisibleLine>, TreeNavigation {
+public interface TreeNavigation {
+  @Nullable
+  Ring<Integer> getUsedWires(int row);
+  Iterator<TreeSkeletonImpl.WireEvent> createWireEventsIterator(int rowInclusive);
 }

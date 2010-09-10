@@ -25,7 +25,7 @@ import java.util.*;
 // todo introduce synchronization here?
 public class Portion implements AsynchConsumer<GitCommit> {
   private final Map<String, SHAHash> myNameToHash;
-  private final Map<SHAHash, Integer> myHolder;
+  private final Map<String, Integer> myHolder;
   private boolean myStartFound;
 
   // ordered
@@ -33,7 +33,7 @@ public class Portion implements AsynchConsumer<GitCommit> {
 
   private final boolean myChildrenWasSet;
 
-  private final MultiMap<SHAHash, GitCommit> myOrphanMap;
+  private final MultiMap<String, GitCommit> myOrphanMap;
 
   private final Set<String> myUsers;
 
@@ -48,13 +48,13 @@ public class Portion implements AsynchConsumer<GitCommit> {
     myChildrenWasSet = startingPoints == null || startingPoints.isEmpty();
     
     myNameToHash = new HashMap<String, SHAHash>();
-    myHolder = new HashMap<SHAHash, Integer>();
+    myHolder = new HashMap<String, Integer>();
     myOrdered = new LinkedList<GitCommit>();
     
     myRoots = new LinkedList<GitCommit>();
     myLeafs = new LinkedList<GitCommit>();
 
-    myOrphanMap = new MultiMap<SHAHash, GitCommit>();
+    myOrphanMap = new MultiMap<String, GitCommit>();
     myUsers = new HashSet<String>();
   }
 
@@ -71,8 +71,8 @@ public class Portion implements AsynchConsumer<GitCommit> {
     myUsers.add(commit.getCommitter());
 
     myOrdered.add(commit);
-    myHolder.put(commit.getHash(), myOrdered.size() - 1);
-    final Collection<GitCommit> orphans = myOrphanMap.get(commit.getHash());
+    myHolder.put(commit.getShortHash(), myOrdered.size() - 1);
+    final Collection<GitCommit> orphans = myOrphanMap.get(commit.getShortHash());
     for (GitCommit orphan : orphans) {
       orphan.addParentLink(commit);
     }
@@ -92,11 +92,11 @@ public class Portion implements AsynchConsumer<GitCommit> {
       }
     }
 
-    final Set<SHAHash> parentHashes = commit.getParentsHashes();
+    final Set<String> parentHashes = commit.getParentsHashes();
     if (parentHashes.isEmpty()) {
       myStartFound = true;
     } else {
-      for (SHAHash parentHash : parentHashes) {
+      for (String parentHash : parentHashes) {
         final Integer idx = myHolder.get(parentHash);
         if (idx != null) {
           final GitCommit parent = myOrdered.get(idx);
