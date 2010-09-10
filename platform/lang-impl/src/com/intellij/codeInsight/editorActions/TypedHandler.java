@@ -196,7 +196,9 @@ public class TypedHandler implements TypedActionHandler {
 
     if (!editor.getSelectionModel().hasBlockSelection()) {
       if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
-        if (handleRParen(editor, fileType, charTyped)) return;
+        if (StdFileTypes.PLAIN_TEXT != fileType) {
+          if (handleRParen(editor, fileType, charTyped)) return;
+        }
       }
       else if ('"' == charTyped || '\'' == charTyped) {
         if (handleQuote(editor, charTyped, dataContext, file)) return;
