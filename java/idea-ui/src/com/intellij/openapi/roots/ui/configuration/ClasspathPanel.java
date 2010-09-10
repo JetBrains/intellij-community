@@ -1059,6 +1059,10 @@ public class ClasspathPanel extends JPanel {
       if (myIsOk) {
         myChosenLibrary = library;
       }
+      else {
+        myChosenLibrary = null;
+        libraryModifiableModel.removeLibrary(library);
+      }
     }
 
     public boolean isOK() {
