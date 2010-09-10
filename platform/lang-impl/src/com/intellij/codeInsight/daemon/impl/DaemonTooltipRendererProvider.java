@@ -34,6 +34,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,10 +89,10 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       });
       final HighlightInfoComposite composite = new HighlightInfoComposite(infos);
       if (bigRenderer == null) {
-        bigRenderer = new MyRenderer(composite.toolTip);
+        bigRenderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.toolTip));
       }
       else {
-        final LineTooltipRenderer renderer = new MyRenderer(composite.toolTip);
+        final LineTooltipRenderer renderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.toolTip));
         renderer.addBelow(bigRenderer.getText());
         bigRenderer = renderer;
       }

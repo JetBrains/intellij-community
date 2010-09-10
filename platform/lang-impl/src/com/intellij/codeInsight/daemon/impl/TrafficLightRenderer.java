@@ -32,6 +32,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -267,7 +268,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     text += getMessageByRoots(status.noInspectionRoots, status.rootsNumber, "no.inspections.performed");
     text += HTML_FOOTER;
 
-    text = text.replaceAll(" ", "&nbsp;");
+    text = UIUtil.convertSpace2Nbsp(text);
 
     return text;
   }

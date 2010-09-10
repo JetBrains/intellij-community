@@ -1278,6 +1278,36 @@ public class UIUtil {
     return String.format("<p style=\"margin: 0 %dpx 0 %dpx;\">%s</p>", hPadding, hPadding, html);
   }
 
+  public static String convertSpace2Nbsp(String html) {
+    StringBuffer result = new StringBuffer();
+    int currentPos = 0;
+    int braces = 0;
+    while (currentPos < html.length()) {
+      String each = html.substring(currentPos, currentPos + 1);
+      if ("<".equals(each)) {
+        braces++;
+      } else if (">".equals(each)) {
+        braces--;
+      }
+
+      if (" ".equals(each) && braces == 0) {
+        result.append("&nbsp;");
+      } else {
+        result.append(each);
+      }
+      currentPos++;
+    }
+
+    String text = result.toString();
+    int htmlTag = text.toLowerCase().lastIndexOf("</html>");
+
+    if (htmlTag >= 0) {
+      text = text.substring(0, htmlTag) + "<br><br>" + text.substring(htmlTag);
+    }
+
+    return result.toString();
+  }
+
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
     if (SwingUtilities.isEventDispatchThread()) {
       runnable.run();

@@ -123,17 +123,20 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
 
       if (hintInfo.isAwtTooltip()) {
-        myCurrentIdeTooltip = IdeTooltipManager.getInstance().showTipNow(new IdeTooltip(hintInfo.getOriginalComponent(), hintInfo.getOriginalPoint(), myComponent) {
+        IdeTooltip tooltip = new IdeTooltip(hintInfo.getOriginalComponent(), hintInfo.getOriginalPoint(), myComponent) {
           @Override
-          protected boolean canAutohideOn(MouseEvent me) {
-            return me.getComponent() != hintInfo.getOriginalComponent();
+          protected boolean canAutohideOn(MouseEvent me, boolean isInsideBalloon) {
+            return me.getComponent() != hintInfo.getOriginalComponent() && !isInsideBalloon;
           }
 
           @Override
           protected void onHidden() {
             fireHintHidden();
           }
-        });
+        };
+        tooltip.setPreferredPosition(hintInfo.getPreferredPosition());
+        myComponent.validate();
+        myCurrentIdeTooltip = IdeTooltipManager.getInstance().showTipNow(tooltip);
       } else {
         final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
         myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
@@ -286,5 +289,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   @Override
   public String toString() {
     return getComponent().toString();
+  }
+
+  public boolean canControlAutoHide() {
+    return myCurrentIdeTooltip != null;
   }
 }

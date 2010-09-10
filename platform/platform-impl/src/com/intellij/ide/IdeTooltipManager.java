@@ -17,12 +17,12 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -40,7 +40,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private RegistryValue myIsEnabled;
 
   private Component myCurrentComponent;
-  private Balloon myCurrentTipUi;
+  private BalloonImpl myCurrentTipUi;
   private MouseEvent myCurrentEvent;
   private boolean myCurrentTipIsCentered;
 
@@ -231,7 +231,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       beforeShow.run();
     }
 
-    myCurrentTipUi = builder.createBalloon();
+    myCurrentTipUi = (BalloonImpl)builder.createBalloon();
     myCurrentComponent = tooltip.getComponent();
     myX = effectivePoint.x;
     myY = effectivePoint.y;
@@ -282,7 +282,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me) {
-    if (me != null && myCurrentTooltip != null && !myCurrentTooltip.canAutohideOn(me)) return false;
+    if (me != null && myCurrentTooltip != null && myCurrentTipUi != null) {
+      if (!myCurrentTooltip.canAutohideOn(me, myCurrentTipUi.isInsideBalloon(me))) return false;
+    }
 
     if (myCurrentTipUi != null) {
       myCurrentTipUi.hide();

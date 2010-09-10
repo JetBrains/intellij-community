@@ -136,7 +136,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (highlighters.isEmpty()) return false;
     TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
     if (bigRenderer != null) {
-      showTooltip(e, bigRenderer, new HintHint(e));
+      showTooltip(e, bigRenderer, new HintHint(e).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft));
       return true;
     }
     return false;

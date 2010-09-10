@@ -64,20 +64,19 @@ public class LineTooltipRenderer implements TooltipRenderer {
     myText = myText.replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
     final boolean expanded = myCurrentWidth > 0 && dressDescription(editor);
 
-    //pane
-    final JEditorPane pane = initPane(myText, hintHint);
-    pane.setCaretPosition(0);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final JComponent contentComponent = editor.getContentComponent();
 
     final JComponent editorComponent = editor.getComponent();
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
+    //pane
+    final JEditorPane pane = initPane(myText, hintHint, layeredPane);
+    pane.setCaretPosition(0);
+
     int widthLimit = layeredPane.getWidth() - 10;
     int heightLimit = layeredPane.getHeight() - 5;
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
-    scrollPane.setBorder(null);
     int width = expanded ? 3 * myCurrentWidth / 2 : pane.getPreferredSize().width;
     int height = expanded ? Math.max(pane.getPreferredSize().height, 150) : pane.getPreferredSize().height;
 
@@ -108,13 +107,19 @@ public class LineTooltipRenderer implements TooltipRenderer {
       p.y = 3;
     }
 
-    locateOutsideMouseCursor(editor, layeredPane, p, width, height, heightLimit);
+    if (!hintHint.isAwtTooltip()) {
+      locateOutsideMouseCursor(editor, layeredPane, p, width, height, heightLimit);
 
-    // in order to restrict tooltip size
-    pane.setSize(width, height);
-    pane.setMaximumSize(new Dimension(width, height));
-    pane.setMinimumSize(new Dimension(width, height));
-    pane.setPreferredSize(new Dimension(width, height));
+      // in order to restrict tooltip size
+      pane.setSize(width, height);
+      pane.setMaximumSize(new Dimension(width, height));
+      pane.setMinimumSize(new Dimension(width, height));
+      pane.setPreferredSize(new Dimension(width, height));
+    }
+
+
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
+    scrollPane.setBorder(null);
 
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -242,9 +247,15 @@ public class LineTooltipRenderer implements TooltipRenderer {
   protected boolean dressDescription(Editor editor) { return false; }
   protected void stripDescription() {}
 
-  static JEditorPane initPane(@NonNls String text, HintHint hintHint) {
+  static JEditorPane initPane(@NonNls String text, HintHint hintHint, JLayeredPane layeredPane) {
+    final Ref<Dimension> prefSize = new Ref<Dimension>(null);
     text = "<html><head>" + UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground()) + "</head><body>" + getHtmlBody(text) + "</body></html>";
-    final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text);
+    final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text) {
+      @Override
+      public Dimension getPreferredSize() {
+        return prefSize.get() != null ? prefSize.get() : super.getPreferredSize();
+      }
+    };
     pane.setEditable(false);
 
     if (hintHint.isOwnBorderAllowed()) {
@@ -257,6 +268,20 @@ public class LineTooltipRenderer implements TooltipRenderer {
     } else {
       pane.setBorder(null);
     }
+
+    if (hintHint.isAwtTooltip()) {
+      Dimension size = layeredPane.getSize();
+      int fitWidth = (int)(size.width * 0.8);
+      Dimension prefSizeOriginal = pane.getPreferredSize();
+      if (prefSizeOriginal.width > fitWidth) {
+        pane.setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
+        Dimension fixedWidthSize = pane.getPreferredSize();
+        prefSize.set(new Dimension(fitWidth, fixedWidthSize.height));
+      } else {
+        prefSize.set(prefSizeOriginal);
+      }
+    }
+
 
     pane.setOpaque(hintHint.isOpaqueAllowed());
     pane.setBackground(hintHint.getTextBackground());

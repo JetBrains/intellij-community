@@ -69,7 +69,7 @@ public class IdeTooltip {
     return myToCenter;
   }
 
-  protected boolean canAutohideOn(MouseEvent me) {
+  protected boolean canAutohideOn(MouseEvent me, boolean isInsideBalloon) {
     return true;
   }
 
