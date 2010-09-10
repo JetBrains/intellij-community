@@ -41,8 +41,12 @@ public class HighlightDisplayLevel {
   private final HighlightSeverity mySeverity;
 
   public static HighlightDisplayLevel find(String name) {
-    for (HighlightSeverity severity : ourMap.keySet()) {
-      if (Comparing.strEqual(severity.toString(), name)) return ourMap.get(severity);
+    for (Map.Entry<HighlightSeverity, HighlightDisplayLevel> entry : ourMap.entrySet()) {
+      HighlightSeverity severity = entry.getKey();
+      HighlightDisplayLevel displayLevel = entry.getValue();
+      if (Comparing.strEqual(severity.toString(), name)) {
+        return displayLevel;
+      }
     }
     return null;
   }

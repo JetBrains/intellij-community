@@ -92,6 +92,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   }
 
   private void updateChangesForDocument(@NotNull Document document) {
+    if (DaemonListeners.isUnderIgnoredAction(null)) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
     if (toUpdate != null) {
       for (Pair<PsiElement, Boolean> changedElement : toUpdate) {

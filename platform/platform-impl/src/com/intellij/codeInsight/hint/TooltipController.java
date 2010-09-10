@@ -44,7 +44,7 @@ public class TooltipController {
     hideCurrentTooltip();
   }
 
-  public void cancelTooltip(TooltipGroup groupId) {
+  public void cancelTooltip(@NotNull TooltipGroup groupId) {
     if (groupId.equals(myCurrentTooltipGroup)) {
       cancelTooltips();
     }
@@ -137,4 +137,4 @@ public class TooltipController {
     }
     return false;
   }
-}
+      }

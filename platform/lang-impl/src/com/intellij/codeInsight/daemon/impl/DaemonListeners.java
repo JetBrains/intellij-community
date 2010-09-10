@@ -109,9 +109,11 @@ class DaemonListeners implements Disposable {
     eventMulticaster.addDocumentListener(new DocumentAdapter() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       public void beforeDocumentChange(final DocumentEvent e) {
+        if (isUnderIgnoredAction(null)) return;
         Document document = e.getDocument();
         VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-        if (!worthBothering(document, virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile))) {
+        Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
+        if (!worthBothering(document, project)) {
           return; //no need to stop daemon if something happened in the console
         }
         stopDaemon(true);
@@ -250,6 +252,12 @@ class DaemonListeners implements Disposable {
     LaterInvocator.addModalityStateListener(myModalityStateListener);
   }
 
+  static boolean isUnderIgnoredAction(Object action) {
+    if (action instanceof DocumentRunnable.IgnoreDocumentRunnable) return true;
+    DocumentRunnable currentWriteAction = ApplicationManager.getApplication().getCurrentWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
+    return currentWriteAction instanceof DocumentRunnable.IgnoreDocumentRunnable;
+  }
+
   private boolean worthBothering(final Document document, Project project) {
     if (document == null) return true;
     if (project != null && project != myProject) return false;
@@ -310,32 +318,28 @@ class DaemonListeners implements Disposable {
 
   private class MyApplicationListener extends ApplicationAdapter {
     public void beforeWriteActionStart(Object action) {
-      if (!myDaemonCodeAnalyzer.isRunning()) return;
+      if (!myDaemonCodeAnalyzer.isRunning()) return; // we'll restart in writeActionFinished()
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by write action:" + action);
       }
-      if (containsDocumentWorthBothering()) {
-        stopDaemon(false);
+      if (containsDocumentWorthBothering(action)) {
+        stopDaemon(true);
       }
-    }
-
-    private boolean containsDocumentWorthBothering() {
-      DocumentRunnable currentWriteAction = ApplicationManager.getApplication().getCurrentWriteAction(DocumentRunnable.class);
-      if (currentWriteAction != null) {
-        if (currentWriteAction instanceof DocumentRunnable.IgnoreDocumentRunnable) return false;
-        Document document = currentWriteAction.getDocument();
-        if (!worthBothering(document, currentWriteAction.getProject())) {
-          return false;
-        }
-      }
-      return true;
     }
 
     public void writeActionFinished(Object action) {
-      if (myDaemonCodeAnalyzer.isRunning()) return;
-      if (containsDocumentWorthBothering()) {
+      if (containsDocumentWorthBothering(action)) {
         stopDaemon(true);
       }
+    }
+
+    private boolean containsDocumentWorthBothering(Object action) {
+      if (isUnderIgnoredAction(action)) return false;
+      DocumentRunnable currentWriteAction = action instanceof DocumentRunnable ? (DocumentRunnable)action
+                                                                               : ApplicationManager.getApplication().getCurrentWriteAction(DocumentRunnable.class);
+      if (currentWriteAction == null) return true;
+      Document document = currentWriteAction.getDocument();
+      return worthBothering(document, currentWriteAction.getProject());
     }
   }
 
@@ -345,9 +349,8 @@ class DaemonListeners implements Disposable {
 
     public void commandStarted(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (!worthBothering(affectedDocument, event.getProject())) {
-        return;
-      }
+      if (isUnderIgnoredAction(null)) return;
+      if (!worthBothering(affectedDocument, event.getProject())) return;
 
       cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
       if (!myDaemonCodeAnalyzer.isRunning()) return;
@@ -373,9 +376,8 @@ class DaemonListeners implements Disposable {
 
     public void commandFinished(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (!worthBothering(affectedDocument, event.getProject())) {
-        return;
-      }
+      if (isUnderIgnoredAction(null)) return;
+      if (!worthBothering(affectedDocument, event.getProject())) return;
 
       if (myEscPressed) {
         myEscPressed = false;

@@ -372,13 +372,19 @@ public class FileWatcher {
 
     synchronized (LOCK) {
       for (String root : myRecursiveWatchRoots) {
-        if (FileUtil.startsWith(path, root)) return true;
+        if (FileUtil.startsWith(path, root)) {
+          return true;
+        }
       }
 
       for (String root : myFlatWatchRoots) {
-        if (FileUtil.pathsEqual(path, root)) return true;
+        if (FileUtil.pathsEqual(path, root)) {
+          return true;
+        }
         final File parentFile = new File(path).getParentFile();
-        if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) return true;
+        if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) {
+          return true;
+        }
       }
     }
 

@@ -415,4 +415,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
     }
   }
 
+  public VirtualFile getFile() {
+    return myFile;
+  }
 }

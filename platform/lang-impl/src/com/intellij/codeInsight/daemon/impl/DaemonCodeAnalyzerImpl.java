@@ -28,7 +28,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.concurrency.Job;
 import com.intellij.ide.PowerSaveMode;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +42,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -88,8 +86,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private final DaemonCodeAnalyzerSettings mySettings;
   private final EditorTracker myEditorTracker;
   private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator(); //guarded by this
-
-  private DaemonProgressIndicator myUpdateVisibleProgress = new DaemonProgressIndicator(); //guarded by this
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
 
@@ -311,37 +307,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void updateVisibleHighlighters(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (true) return;  // no need, will not work anyway
-
-    if (!myUpdateByTimerEnabled) return;
-    if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
-
-    final TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    BackgroundEditorHighlighter highlighter = textEditor.getBackgroundHighlighter();
-    if (highlighter == null) return;
-    final HighlightingPass[] highlightingPasses = highlighter.createPassesForVisibleArea();
-
-    DaemonProgressIndicator progress;
-    synchronized (this) {
-      recreateVisibleProgress();
-
-      progress = myUpdateVisibleProgress;
-    }
-    myPassExecutorService.renewVisiblePasses(textEditor, highlightingPasses, progress);
-  }
-
-  private synchronized void cancelVisibleProgress() {
-    if (myUpdateVisibleProgress != null) {
-      myUpdateVisibleProgress.cancel();
-      myUpdateVisibleProgress = null;
-    }
-  }
-
-  private synchronized void recreateVisibleProgress() {
-    if (myUpdateVisibleProgress == null) {
-      myUpdateVisibleProgress = new DaemonProgressIndicator();
-      myUpdateVisibleProgress.start();
-    }
+    // no need, will not work anyway
   }
 
   public void setUpdateByTimerEnabled(boolean value) {
@@ -404,8 +370,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     stopProcess(true);
   }
 
-  public List<TextEditorHighlightingPass> getPassesToShowProgressFor(PsiFile file) {
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+  public List<TextEditorHighlightingPass> getPassesToShowProgressFor(Document document) {
     List<TextEditorHighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(allPasses.size());
     for (TextEditorHighlightingPass pass : allPasses) {
@@ -416,7 +381,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return result;
   }
 
-  public boolean isAllAnalysisFinished(PsiFile file) {
+  public boolean isAllAnalysisFinished(@NotNull PsiFile file) {
     if (myDisposed) return false;
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     return document != null &&
@@ -462,15 +427,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (myUpdateProgress != null) {
       myUpdateProgress.cancel();
       myPassExecutorService.cancelAll(false);
-      cancelVisibleProgress();
       myUpdateProgress = null;
     }
-  }
-
-  private static DaemonProgressIndicator recreateProgress() {
-    DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator();
-    myUpdateProgress.start();
-    return myUpdateProgress;
   }
 
   public static boolean processHighlights(@NotNull Document document,
@@ -748,7 +706,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         myAlarm.cancelAllRequests();
         DaemonProgressIndicator progress;
         synchronized (DaemonCodeAnalyzerImpl.this) {
-          myUpdateProgress = progress = recreateProgress();
+          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+          indicator.start();
+          myUpdateProgress = progress = indicator;
         }
         myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
       }

@@ -61,7 +61,6 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -69,7 +68,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
-  static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
 
@@ -105,7 +103,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  int endOffset,
                                  boolean updateAll,
                                  @NotNull TextRange priorityRange) {
-    super(project, document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file, true);
+    super(project, document, PRESENTABLE_NAME, file, true);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;

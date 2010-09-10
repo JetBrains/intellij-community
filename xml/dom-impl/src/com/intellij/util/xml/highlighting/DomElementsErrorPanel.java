@@ -154,17 +154,16 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
       final DaemonCodeAnalyzerStatus status = super.getDaemonCodeAnalyzerStatus(fillErrorsCount);
       if (status != null && isInspectionCompleted()) {
         status.errorAnalyzingFinished = true;
-        for (final DaemonCodeAnalyzerStatus.PassStatus passStatus : status.passStati) {
-          passStatus.inProgressIcon = null;
-        }
       }
       return status;
     }
 
     @Override
-    protected void fillDaemonCodeAnalyzerErrorsStatus(DaemonCodeAnalyzerStatus status, boolean fillErrorsCount) {
+    protected void fillDaemonCodeAnalyzerErrorsStatus(DaemonCodeAnalyzerStatus status,
+                                                      boolean fillErrorsCount,
+                                                      SeverityRegistrar severityRegistrar) {
       for (int i = 0; i < status.errorCount.length; i++) {
-        final HighlightSeverity minSeverity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
+        final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(i);
         if (minSeverity == null) {
           continue;
         }
