@@ -115,31 +115,29 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
                                       final int caretColumn,
                                       final Ref<Boolean> indented,
                                       final IndentTransferableData value) {
-    if (value.getIndent() > 0) {
-      final Document document = editor.getDocument();
-      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (psiFile == null || !acceptFileType(psiFile.getFileType())) {
-        return;
-      }
-      //System.out.println("--- before indent ---\n" + document.getText());
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          int startLine = document.getLineNumber(bounds.getStartOffset());
-          int endLine = document.getLineNumber(bounds.getEndOffset());
-          int startLineStart = document.getLineStartOffset(startLine);
-          // don't indent first line if there's any text before it
-          final String textBeforeFirstLine = document.getText(new TextRange(startLineStart, bounds.getStartOffset()));
-          if (textBeforeFirstLine.trim().length() == 0) {
-            EditorActionUtil.indentLine(project, editor, startLine, -value.getFirstLineLeadingSpaces());
-          }
-          for (int i = startLine+1; i <= endLine; i++) {
-            EditorActionUtil.indentLine(project, editor, i, caretColumn - value.getIndent());
-          }
-          indented.set(Boolean.TRUE);
-        }
-      });
-      //System.out.println("--- after indent ---\n" + document.getText());
+    final Document document = editor.getDocument();
+    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile == null || !acceptFileType(psiFile.getFileType())) {
+      return;
     }
+    //System.out.println("--- before indent ---\n" + document.getText());
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        int startLine = document.getLineNumber(bounds.getStartOffset());
+        int endLine = document.getLineNumber(bounds.getEndOffset());
+        int startLineStart = document.getLineStartOffset(startLine);
+        // don't indent first line if there's any text before it
+        final String textBeforeFirstLine = document.getText(new TextRange(startLineStart, bounds.getStartOffset()));
+        if (textBeforeFirstLine.trim().length() == 0) {
+          EditorActionUtil.indentLine(project, editor, startLine, -value.getFirstLineLeadingSpaces());
+        }
+        for (int i = startLine+1; i <= endLine; i++) {
+          EditorActionUtil.indentLine(project, editor, i, caretColumn - value.getIndent());
+        }
+        indented.set(Boolean.TRUE);
+      }
+    });
+    //System.out.println("--- after indent ---\n" + document.getText());
   }
 }
