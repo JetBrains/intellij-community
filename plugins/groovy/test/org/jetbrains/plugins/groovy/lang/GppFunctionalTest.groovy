@@ -511,6 +511,16 @@ println x
     myFixture.checkHighlighting(true, false, false)
   }
 
+  public void testNoReturnTypeInferenceInTypedContext() throws Exception {
+    configureGppScript """
+class Foo {
+  def foo() { "aaa" }
+}
+new Foo().foo().substr<caret>a
+"""
+    assertEmpty myFixture.completeBasic()
+  }
+
 }
 
 class GppProjectDescriptor extends DefaultLightProjectDescriptor {
