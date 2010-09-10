@@ -27,6 +27,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_DELETE = "EditorDelete";
   @NonNls String ACTION_EDITOR_DELETE_TO_WORD_START = "EditorDeleteToWordStart";
   @NonNls String ACTION_EDITOR_DELETE_TO_WORD_END = "EditorDeleteToWordEnd";
+  @NonNls String ACTION_EDITOR_DELETE_LINE = "EditorDeleteLine";
   @NonNls String ACTION_EDITOR_ENTER = "EditorEnter";
   @NonNls String ACTION_EDITOR_START_NEW_LINE = "EditorStartNewLine";
   @NonNls String ACTION_EDITOR_SPLIT = "EditorSplitLine";
