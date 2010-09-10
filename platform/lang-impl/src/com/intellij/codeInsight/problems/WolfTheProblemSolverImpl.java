@@ -229,13 +229,15 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress, ProgressableTextEditorHighlightingPass pass) throws ProcessCanceledException{
     if (!myProject.isOpen()) return;
 
-    int size;
     List<VirtualFile> files;
     synchronized (myCheckingQueue) {
       files = new ArrayList<VirtualFile>(myCheckingQueue);
-      size = files.size();
     }
-    pass.setProgressLimit(size);
+    long progressLimit = 0;
+    for (VirtualFile file : files) {
+      progressLimit += file.getLength(); // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
+    }
+    pass.setProgressLimit(progressLimit);
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     String oldInfo = saveStatusBarInfo(statusBar);
     try {
@@ -244,13 +246,14 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         if (virtualFile == null) break;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (progress.isCanceled()) return;
             statusBar.setInfo("Checking '" + virtualFile.getPresentableUrl() + "'");
           }
         });
         if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress)) {
           doRemove(virtualFile);
         }
-        pass.advanceProgress(1);
+        pass.advanceProgress(virtualFile.getLength());
       }
     }
     finally {

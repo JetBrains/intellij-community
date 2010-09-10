@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
@@ -63,57 +64,14 @@ public class LineTooltipRenderer implements TooltipRenderer {
     myText = myText.replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
     final boolean expanded = myCurrentWidth > 0 && dressDescription(editor);
 
-    //pane
-    final JEditorPane pane = initPane(myText);
-    pane.setCaretPosition(0);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final JComponent contentComponent = editor.getContentComponent();
 
-    final JComponent editorComponent = editor.getComponent();
-    final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-
-    int widthLimit = layeredPane.getWidth() - 10;
-    int heightLimit = layeredPane.getHeight() - 5;
+    final JEditorPane pane = initPane(myText);
+    correctLocation(editor, pane, p, alignToRight, expanded, myCurrentWidth);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
     scrollPane.setBorder(null);
-    int width = expanded ? 3 * myCurrentWidth / 2 : pane.getPreferredSize().width;
-    int height = expanded ? Math.max(pane.getPreferredSize().height, 150) : pane.getPreferredSize().height;
-
-    if (alignToRight) {
-      p.x = Math.max(0, p.x - width);
-    }
-
-    // try to make cursor outside tooltip. SCR 15038
-    p.x += 3;
-    p.y += 3;
-
-    if (p.x >= widthLimit - width) {
-      p.x = widthLimit - width;
-      width = Math.min(width, widthLimit);
-      height += 20;
-    }
-
-    if (p.x < 3) {
-      p.x = 3;
-    }
-
-    if (p.y > heightLimit - height) {
-      p.y = heightLimit - height;
-      height = Math.min(heightLimit, height);
-    }
-
-    if (p.y < 3) {
-      p.y = 3;
-    }
-
-    locateOutsideMouseCursor(editor, layeredPane, p, width, height, heightLimit);
-
-    // in order to restrict tooltip size
-    pane.setSize(width, height);
-    pane.setMaximumSize(new Dimension(width, height));
-    pane.setMinimumSize(new Dimension(width, height));
-    pane.setPreferredSize(new Dimension(width, height));
 
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -193,9 +151,77 @@ public class LineTooltipRenderer implements TooltipRenderer {
     });
 
     hintManager.showEditorHint(hint, editor, p,
-                               HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_OTHER_HINT |
-                               HintManagerImpl.HIDE_BY_SCROLLING, 0, false);
+                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |
+                               HintManager.HIDE_BY_SCROLLING, 0, false);
     return hint;
+  }
+
+  public static void correctLocation(Editor editor,
+                                     JComponent tooltipComponent,
+                                     Point p,
+                                     boolean alignToRight,
+                                     boolean expanded,
+                                     int currentWidth) {
+    final JComponent editorComponent = editor.getComponent();
+    final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+
+    int widthLimit = layeredPane.getWidth() - 10;
+    int heightLimit = layeredPane.getHeight() - 5;
+
+    Dimension dimension = correctLocation(editor, p, alignToRight, expanded, tooltipComponent, layeredPane, widthLimit, heightLimit, currentWidth);
+
+    // in order to restrict tooltip size
+    tooltipComponent.setSize(dimension);
+    tooltipComponent.setMaximumSize(dimension);
+    tooltipComponent.setMinimumSize(dimension);
+    tooltipComponent.setPreferredSize(dimension);
+  }
+
+  private static Dimension correctLocation(Editor editor,
+                                           Point p,
+                                           boolean alignToRight,
+                                           boolean expanded,
+                                           JComponent tooltipComponent,
+                                           JLayeredPane layeredPane,
+                                           int widthLimit,
+                                           int heightLimit,
+                                           int currentWidth) {
+    Dimension preferredSize = tooltipComponent.getPreferredSize();
+    int width = expanded ? 3 * currentWidth / 2 : preferredSize.width;
+    int height = expanded ? Math.max(preferredSize.height, 150) : preferredSize.height;
+    Dimension dimension = new Dimension(width, height);
+
+    if (alignToRight) {
+      p.x = Math.max(0, p.x - width);
+    }
+
+    // try to make cursor outside tooltip. SCR 15038
+    p.x += 3;
+    p.y += 3;
+
+    if (p.x >= widthLimit - width) {
+      p.x = widthLimit - width;
+      width = Math.min(width, widthLimit);
+      height += 20;
+      dimension = new Dimension(width, height);
+    }
+
+    if (p.x < 3) {
+      p.x = 3;
+    }
+
+    if (p.y > heightLimit - height) {
+      p.y = heightLimit - height;
+      height = Math.min(heightLimit, height);
+      dimension = new Dimension(width, height);
+    }
+
+    if (p.y < 3) {
+      p.y = 3;
+    }
+
+    locateOutsideMouseCursor(editor, layeredPane, p, width, height, heightLimit);
+    return dimension;
   }
 
   private static void locateOutsideMouseCursor(Editor editor,
@@ -237,16 +263,26 @@ public class LineTooltipRenderer implements TooltipRenderer {
     text = "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + getHtmlBody(text) + "</body></html>";
     final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text);
     pane.setEditable(false);
+    setColors(pane);
+    setBorder(pane);
+
+    pane.setCaretPosition(0);
+    return pane;
+  }
+
+  public static void setColors(JComponent pane) {
+    pane.setForeground(Color.black);
+    pane.setBackground(HintUtil.INFORMATION_COLOR);
+    pane.setOpaque(true);
+  }
+
+  public static void setBorder(JComponent pane) {
     pane.setBorder(
       BorderFactory.createCompoundBorder(
         BorderFactory.createLineBorder(Color.black),
         BorderFactory.createEmptyBorder(0, 5, 0, 5)
       )
     );
-    pane.setForeground(Color.black);
-    pane.setBackground(HintUtil.INFORMATION_COLOR);
-    pane.setOpaque(true);
-    return pane;
   }
 
   public void addBelow(String text) {
@@ -284,11 +320,11 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     final LineTooltipRenderer lineTooltipRenderer = (LineTooltipRenderer)o;
 
-    return myText == null ? lineTooltipRenderer.myText == null : myText.equals(lineTooltipRenderer.myText);
+    return Comparing.strEqual(myText, lineTooltipRenderer.myText);
   }
 
   public int hashCode() {
-    return myText != null ? myText.hashCode() : 0;
+    return myText == null ? 0 : myText.hashCode();
   }
 
   public String getText() {
