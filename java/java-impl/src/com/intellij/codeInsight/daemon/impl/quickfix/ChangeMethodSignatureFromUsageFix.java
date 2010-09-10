@@ -156,7 +156,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
             return ++usagesFound[0] < myMinUsagesNumberToShowDialog;
           }
         };
-        
+
         handler.processElementUsages(method, processor, options);
       }
     };
@@ -190,7 +190,8 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, false, refExpr);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
-      myNewParametersInfo = dialog.getParameters();
+      List<ParameterInfoImpl> parameters = dialog.getParameters();
+      myNewParametersInfo = parameters.toArray(new ParameterInfoImpl[parameters.size()]);
     }
   }
 

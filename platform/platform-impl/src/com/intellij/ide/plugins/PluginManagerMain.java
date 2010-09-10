@@ -557,6 +557,11 @@ public class PluginManagerMain implements Disposable {
       super(cmp);
     }
 
+    @Override
+    protected int convertIndexToModel(int viewIndex) {
+      return getComponent().convertRowIndexToModel(viewIndex);
+    }
+
     public int getSelectedIndex() {
       return myComponent.getSelectedRow();
     }

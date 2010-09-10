@@ -47,6 +47,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.SearchSession;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -350,7 +351,7 @@ public class FindUsagesManager implements JDOMExternalizable {
             }
           });
 
-        options.fastTrack = new SearchRequestCollector();
+        options.fastTrack = new SearchRequestCollector(new SearchSession());
 
         try {
           for (final PsiElement element : elements) {

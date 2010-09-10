@@ -115,7 +115,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     return null;
   }
 
-  @Nullable
+  @NotNull
   public GrExpression[] getCallArguments() {
     final GrListOrMap literal = getElement();
     if (literal.isMap()) {
@@ -129,16 +129,15 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
           return new GrExpression[]{expression};
         }
 
-        return null;
+        return GrExpression.EMPTY_ARRAY;
       }
     }
     return literal.getInitializers();
   }
 
-  @Nullable
+  @NotNull
   private PsiType[] getCallArgumentTypes() {
     final GrExpression[] arguments = getCallArguments();
-    if (arguments == null) return null;
     return ContainerUtil.map2Array(arguments, PsiType.class, new NullableFunction<GrExpression, PsiType>() {
       @Override
       public PsiType fun(GrExpression grExpression) {

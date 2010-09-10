@@ -17,7 +17,7 @@ package com.intellij.patterns.compiler;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
     new ExtensionPointName<PatternClassBean>("com.intellij.patterns.patternClass");
 
 
-  private final Map<String, Class[]> myClasses = new FactoryMap<String, Class[]>() {
+  private final Map<String, Class[]> myClasses = new ConcurrentFactoryMap<String, Class[]>() {
     @Override
     protected Class[] create(String key) {
       final ArrayList<Class> result = new ArrayList<Class>(1);
@@ -44,7 +44,7 @@ public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
       return result.isEmpty()? ArrayUtil.EMPTY_CLASS_ARRAY : result.toArray(new Class[result.size()]);
     }
   };
-  private final Map<Class[], PatternCompiler> myCompilers = new FactoryMap<Class[], PatternCompiler>() {
+  private final Map<Class[], PatternCompiler> myCompilers = new ConcurrentFactoryMap<Class[], PatternCompiler>() {
     @Override
     protected PatternCompiler create(Class[] key) {
       return new PatternCompilerImpl(key);

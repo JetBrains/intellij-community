@@ -444,6 +444,8 @@
   <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
 
   <extensionPoint name="stacktrace.fold" beanClass="com.intellij.execution.console.CustomizableConsoleFoldingBean"/>
+  <extensionPoint name="changeSignatureDetector"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="preserveIndentOnPaste" beanClass="com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean"/>
 

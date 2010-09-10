@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
@@ -67,6 +64,9 @@ public class RestartAction extends AnAction implements DumbAware {
 
   private void doRestart(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId())) {
+      return;   
+    }
     try {
       final ExecutionEnvironment old = myEnvironment;
       myRunner.execute(myExecutor, new ExecutionEnvironment(old.getRunProfile(), project, old.getRunnerSettings(),
@@ -87,7 +87,7 @@ public class RestartAction extends AnAction implements DumbAware {
       myProcessHandler = null; // already terminated
     }
 
-    presentation.setEnabled(!isRunning /*&& myRunner.canRun(, myProfile)*/);
+    presentation.setEnabled(!isRunning /*&& myRunner.canRun(, myProfile)*/ && !ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId()));
   }
 
   public void registerShortcut(final JComponent component) {

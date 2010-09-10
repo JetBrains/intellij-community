@@ -201,4 +201,14 @@ Foo f2 = ['super':['super':'a']]
     assertEquals 2, MethodReferencesSearch.search(JavaPsiFacade.getInstance(project).findClass("Bar").constructors[0]).findAll().size()
   }
 
+  public void testCannibalisticConstructor() throws Exception {
+    myFixture.addFileToProject "a.gpp", """
+      class Foo {
+        Foo(Foo... children) {}
+      }
+      Foo f = [['a']]
+    """
+    assertEquals 2, MethodReferencesSearch.search(JavaPsiFacade.getInstance(project).findClass("Foo").constructors[0]).findAll().size()
+  }
+
 }

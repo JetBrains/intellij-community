@@ -111,6 +111,11 @@ public class ProcessedModulesTable extends JPanel {
         return myTable.getSelectedRow();
       }
 
+      @Override
+      protected int convertIndexToModel(int viewIndex) {
+        return myTable.convertRowIndexToModel(viewIndex);
+      }
+
       public Object[] getAllElements() {
         final int count = myTableModel.getRowCount();
         Object[] elements = new Object[count];
@@ -128,7 +133,8 @@ public class ProcessedModulesTable extends JPanel {
         final int count = myTableModel.getRowCount();
         for (int row = 0; row < count; row++) {
           if (element.equals(myTableModel.getModuleAt(row))) {
-            myTable.getSelectionModel().setSelectionInterval(row, row);
+            final int viewRow = myTable.convertRowIndexToView(row);
+            myTable.getSelectionModel().setSelectionInterval(viewRow, viewRow);
             TableUtil.scrollSelectionToVisible(myTable);
             break;
           }

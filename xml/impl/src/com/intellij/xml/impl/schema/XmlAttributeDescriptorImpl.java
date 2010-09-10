@@ -206,7 +206,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
 
         if (type instanceof ComplexTypeDescriptor) {
           final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
-          attributeShouldBeQualified = typeDescriptor.canContainAttribute(name, targetNs) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain;
+          attributeShouldBeQualified = typeDescriptor.canContainAttribute(targetNs) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain;
         }
 
         if (!attributeShouldBeQualified && contextNs.length() == 0 && targetNs.length() > 0) {
