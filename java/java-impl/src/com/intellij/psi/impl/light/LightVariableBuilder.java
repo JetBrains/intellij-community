@@ -14,7 +14,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class LightVariableBuilder extends LightElement implements PsiVariable {
+public class LightVariableBuilder<T extends LightVariableBuilder> extends LightElement implements PsiVariable {
   private final String myName;
   private final PsiType myType;
   private volatile LightModifierList myModifierList;
@@ -53,9 +53,9 @@ public class LightVariableBuilder extends LightElement implements PsiVariable {
     return myModifierList;
   }
 
-  public LightVariableBuilder setModifiers(String... modifiers) {
+  public T setModifiers(String... modifiers) {
     myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
-    return this;
+    return (T)this;
   }
 
   @Override
@@ -112,10 +112,8 @@ public class LightVariableBuilder extends LightElement implements PsiVariable {
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
-  public LightVariableBuilder setBaseIcon(Icon baseIcon) {
+  public T setBaseIcon(Icon baseIcon) {
     myBaseIcon = baseIcon;
-    return this;
+    return (T)this;
   }
-
-
 }

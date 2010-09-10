@@ -127,6 +127,20 @@ public class ResolveUtil {
     return true;
   }
 
+  public static boolean processAllDeclarations(@NotNull PsiType type,
+                                               @NotNull PsiScopeProcessor processor,
+                                               @NotNull ResolveState state,
+                                               @NotNull GroovyPsiElement place) {
+    if (type instanceof PsiClassType) {
+      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+      final PsiClass psiClass = resolveResult.getElement();
+      if (psiClass != null) {
+        if (!psiClass.processDeclarations(processor, state, null, place)) return false;
+      }
+    }
+    return processNonCodeMethods(type, processor, place);
+  }
+
   public static boolean processNonCodeMethods(PsiType type,
                                               PsiScopeProcessor processor,
                                               GroovyPsiElement place) {
