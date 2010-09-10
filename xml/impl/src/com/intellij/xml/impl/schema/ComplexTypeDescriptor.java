@@ -82,13 +82,45 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         @Override
         protected void tagStarted(XmlTag tag, XmlTag context, String tagName) {
-
+          XmlElementsGroup.Type type = XmlElementsGroupImpl.getTagType(tag);
+          if (type != null) {
+            XmlElementsGroupImpl group = new XmlElementsGroupImpl(tag);
+            addSubGroup(group);
+            groups.push(group);
+          }
+          else if ("element".equals(tagName)) {
+            XmlElementsGroup group = new XmlElementsGroupLeaf(tag, myDocumentDescriptor.createElementDescriptor(tag));
+            if (!groups.empty()) {
+              addSubGroup(group);
+            }
+            else {
+              groups.push(group);
+            }
+          }
         }
+
+        @Override
+        protected void tagFinished(XmlTag tag) {
+          if (!groups.empty() && XmlElementsGroupImpl.getTagType(tag) != null) {
+            groups.pop();
+          }
+        }
+
+        private void addSubGroup(XmlElementsGroup group) {
+          if (!groups.empty()) {
+            XmlElementsGroup last = groups.peek();
+            if (last instanceof XmlElementsGroupImpl) {
+              ((XmlElementsGroupImpl)last).addSubGroup(group);
+            }
+          }
+        }
+
       }.startProcessing(myTag);
 
       return groups.isEmpty() ? null : groups.get(0);
     }
   };
+
 
   private volatile XmlElementDescriptor[] myElementDescriptors = null;
   private volatile XmlAttributeDescriptor[] myAttributeDescriptors = null;

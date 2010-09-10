@@ -39,7 +39,7 @@ public abstract class XmlSchemaTagsProcessor {
     myTagsToIgnore = ArrayUtil.append(tagsToIgnore, "annotation");
   }
 
-  public void startProcessing(XmlTag tag) {
+  public final void startProcessing(XmlTag tag) {
     processTag(tag, null);
   }
 

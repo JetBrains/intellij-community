@@ -73,6 +73,10 @@
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
+    <action id="GenerateXmlTag" class="com.intellij.xml.actions.GenerateXmlTagAction">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
     <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction"
             text="Open in _Browser" description="Open a selected file in browser"
             icon="/nodes/ppWeb.png">
