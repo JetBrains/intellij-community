@@ -15,21 +15,33 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ReadonlyList;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author irengrig
  */
-public class ReadonlyListsMerger<T extends Comparable<T>> {
+public class ReadonlyListsMerger<T> {
   private final List<ReadonlyList<T>> myLists;
   private final Consumer<CompoundNumber> myConsumer;
+  private final Comparator<Pair<CompoundNumber, T>> myComparator;
 
-  public ReadonlyListsMerger(final List<ReadonlyList<T>> lists, final Consumer<CompoundNumber> consumer) {
+  private ReadonlyListsMerger(final List<ReadonlyList<T>> lists, final Consumer<CompoundNumber> consumer, final Comparator<Pair<CompoundNumber, T>> comparator) {
     myLists = lists;
     myConsumer = consumer;
+    myComparator = comparator;
+  }
+
+  public static<T extends Comparable<T>> void merge(final List<ReadonlyList<T>> lists, final Consumer<CompoundNumber> consumer) {
+    new ReadonlyListsMerger<T>(lists, consumer, new ComparableComparator<T>()).execute();
+  }
+
+  public static<T> void merge(final List<ReadonlyList<T>> lists, final Consumer<CompoundNumber> consumer, final Comparator<Pair<CompoundNumber, T>> comparator) {
+    new ReadonlyListsMerger<T>(lists, consumer, comparator).execute();
   }
 
   public void execute() {
@@ -40,19 +52,26 @@ public class ReadonlyListsMerger<T extends Comparable<T>> {
     }
 
     while (true) {
-      T minValue = null;
-      int minValueIdx = -1;
+      CompoundNumber minIdxs = null;
       for (int i = 0; i < idxs.length; i++) {
         if (idxs[i] == -1) continue;  // at end
         final ReadonlyList<T> list = myLists.get(i);
-        if ((minValue == null) || (list.get(idxs[i]).compareTo(minValue) <= 0)) {
-          minValue = list.get(idxs[i]);
-          minValueIdx = i;
+        if ((minIdxs == null) || (myComparator.compare(new Pair<CompoundNumber,T>(new CompoundNumber(i, idxs[i]), list.get(idxs[i])),
+                new Pair<CompoundNumber,T>(minIdxs, myLists.get(minIdxs.getMemberNumber()).get(minIdxs.getIdx()))) <= 0)) {
+          minIdxs = new CompoundNumber(i, idxs[i]);
         }
       }
-      if (minValueIdx == -1) return;
-      myConsumer.consume(new CompoundNumber(minValueIdx, idxs[minValueIdx]));
-      idxs[minValueIdx] = (myLists.get(minValueIdx).getSize() == (idxs[minValueIdx] + 1) ? -1 : idxs[minValueIdx] + 1);
+      if (minIdxs == null) return;
+      myConsumer.consume(minIdxs);
+      final int memberIdx = minIdxs.getMemberNumber();
+      idxs[memberIdx] = (myLists.get(memberIdx).getSize() == (idxs[memberIdx] + 1) ? -1 : idxs[memberIdx] + 1);
+    }
+  }
+
+  private static class ComparableComparator<T extends Comparable<T>> implements Comparator<Pair<CompoundNumber, T>> {
+    @Override
+    public int compare(Pair<CompoundNumber, T> o1, Pair<CompoundNumber, T> o2) {
+      return o1.getSecond().compareTo(o2.getSecond());
     }
   }
 }

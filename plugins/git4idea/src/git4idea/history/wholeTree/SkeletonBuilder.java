@@ -16,6 +16,7 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.vcs.Ring;
+import com.intellij.util.AsynchConsumer;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.*;
@@ -23,7 +24,7 @@ import java.util.*;
 /**
  * @author irengrig
  */
-public class SkeletonBuilder {
+public class SkeletonBuilder implements AsynchConsumer<CommitHashPlusParents> {
   private final TreeSkeletonImpl mySkeleton;
   private final MultiMap<String, WaitingCommit> myAwaitingParents;
   // next available idx
@@ -43,7 +44,8 @@ public class SkeletonBuilder {
     mySeizedWires = new HashMap<Integer, Integer>();
   }
 
-  public void accept(final CommitHashPlusParents obj) {
+  @Override
+  public void consume(final CommitHashPlusParents obj) {
     int wireNumber = -1;
 
     final Collection<WaitingCommit> awaiting = myAwaitingParents.remove(obj.getHash());
@@ -68,7 +70,7 @@ public class SkeletonBuilder {
       }
 
       for (final WaitingCommit commit : awaitingList) {
-        final TreeSkeletonImpl.Commit correspCommit = mySkeleton.getCommitAt(commit.myIdx);
+        final TreeSkeletonImpl.Commit correspCommit = mySkeleton.get(commit.myIdx);
         commit.parentFound();
 
         if (commit.isMerge()) {
@@ -120,12 +122,13 @@ public class SkeletonBuilder {
   }
 
   public void finished() {
-
+    mySkeleton.refreshIndex();
     // recount of wires
     recountWires();
   }
 
   private void recountWires() {
+    // todo with reset
     final Ring.IntegerRing ring = new Ring.IntegerRing();
     
     final Map<Integer, Integer> recalculateMap = new HashMap<Integer, Integer>();
@@ -135,7 +138,7 @@ public class SkeletonBuilder {
     for (; iterator.hasNext(); ) {
       final TreeSkeletonImpl.WireEvent we = iterator.next();
       for (int i = runningCommitNumber; i <= we.getCommitIdx(); i++) {
-        final TreeSkeletonImpl.Commit commit = mySkeleton.getCommitAt(i);
+        final TreeSkeletonImpl.Commit commit = mySkeleton.get(i);
         final Integer newWire = recalculateMap.get(commit.getWireNumber());
         if (newWire != null) {
           commit.setWireNumber(newWire);
@@ -150,7 +153,7 @@ public class SkeletonBuilder {
         }
       }
       if (we.isStart()) {
-        final TreeSkeletonImpl.Commit thisCommit = mySkeleton.getCommitAt(we.getCommitIdx());
+        final TreeSkeletonImpl.Commit thisCommit = mySkeleton.get(we.getCommitIdx());
         final int thisWireNum = thisCommit.getWireNumber();
         final Integer newNum = ring.getFree();
         if (newNum != thisWireNum) {
@@ -160,7 +163,7 @@ public class SkeletonBuilder {
         }
       }
       if (we.isEnd()) {
-        ring.back(mySkeleton.getCommitAt(we.getCommitIdx()).getWireNumber());
+        ring.back(mySkeleton.get(we.getCommitIdx()).getWireNumber());
       }
       final int[] commitsStarts = we.getCommitsStarts();
       if (commitsStarts.length > 0 && (! we.isEnd())) {

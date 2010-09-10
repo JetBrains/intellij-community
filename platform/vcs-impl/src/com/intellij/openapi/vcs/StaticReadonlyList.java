@@ -13,12 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.history.wholeTree;
+package com.intellij.openapi.vcs;
 
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ReadonlyList;
 
 /**
  * @author irengrig
  */
-public interface TreeSkeleton extends ReadonlyList<VisibleLine>, TreeNavigation {
+public class StaticReadonlyList<T> implements ReadonlyList<T>, Consumer<T> {
+  private final BigArray<T> myList;
+
+  public StaticReadonlyList(final int size2power) {
+    myList = new BigArray<T>(size2power);
+  }
+
+  @Override
+  public T get(int idx) {
+    return myList.get(idx);
+  }
+
+  @Override
+  public int getSize() {
+    return myList.getSize();
+  }
+
+  @Override
+  public void consume(T t) {
+    myList.add(t);
+  }
 }

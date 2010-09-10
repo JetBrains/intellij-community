@@ -15,10 +15,24 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.util.containers.ReadonlyList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author irengrig
  */
-public interface TreeSkeleton extends ReadonlyList<VisibleLine>, TreeNavigation {
+public class Join {
+  private final Runnable myOnFinish;
+  private AtomicInteger myCnt;
+
+  public Join(int cnt, Runnable onFinish) {
+    myCnt = new AtomicInteger(cnt);
+    myOnFinish = onFinish;
+  }
+
+  public void complete() {
+    final int result = myCnt.decrementAndGet();
+    if (result == 0) {
+      myOnFinish.run();
+    }
+  }
 }

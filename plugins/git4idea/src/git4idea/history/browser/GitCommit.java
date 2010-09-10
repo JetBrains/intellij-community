@@ -22,6 +22,8 @@ import java.util.*;
 
 public class GitCommit {
   @NotNull
+  private final String myShortHash;
+  @NotNull
   private final SHAHash myHash;
   private final String myAuthor;
   private final String myCommitter;
@@ -34,14 +36,24 @@ public class GitCommit {
   private final List<String> myTags;
   private final List<String> myBranches;
 
-  private final Set<SHAHash> myParentsHashes;
+  private final Set<String> myParentsHashes;
   private final Set<GitCommit> myParentsLinks;
 
   private final List<FilePath> myPathsList;
 
-  public GitCommit(@NotNull final SHAHash hash, final String author, final String committer, final Date date, final String description,
-                   final Set<SHAHash> parentsHashes, final List<FilePath> pathsList,
-                   final String authorEmail, final String comitterEmail, List<String> tags, List<String> branches) {
+  public GitCommit(@NotNull final String shortHash,
+                   @NotNull final SHAHash hash,
+                   final String author,
+                   final String committer,
+                   final Date date,
+                   final String description,
+                   final Set<String> parentsHashes,
+                   final List<FilePath> pathsList,
+                   final String authorEmail,
+                   final String comitterEmail,
+                   List<String> tags,
+                   List<String> branches) {
+    myShortHash = shortHash;
     myAuthor = author;
     myCommitter = committer;
     myDate = date;
@@ -82,7 +94,7 @@ public class GitCommit {
   }
 
   // todo think of interface
-  public Set<SHAHash> getParentsHashes() {
+  public Set<String> getParentsHashes() {
     return myParentsHashes;
   }
 
@@ -139,5 +151,10 @@ public class GitCommit {
   @Override
   public String toString() {
     return myHash.getValue();
+  }
+
+  @NotNull
+  public String getShortHash() {
+    return myShortHash;
   }
 }
