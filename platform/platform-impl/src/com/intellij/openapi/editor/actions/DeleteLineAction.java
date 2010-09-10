@@ -29,8 +29,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 
-public class DeleteLineAtCaretAction extends TextComponentEditorAction {
-  public DeleteLineAtCaretAction() {
+public class DeleteLineAction extends TextComponentEditorAction {
+  public DeleteLineAction() {
     super(new Handler());
   }
 
