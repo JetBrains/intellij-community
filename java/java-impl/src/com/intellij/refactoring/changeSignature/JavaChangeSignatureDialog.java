@@ -212,8 +212,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected PsiCodeFragment createReturnTypeCodeFragment() {
+    String returnTypeText = StringUtil.notNullize(myMethod.getReturnTypeText());
     return JavaPsiFacade.getInstance(myProject).getElementFactory()
-      .createTypeCodeFragment(myMethod.getReturnTypeText(), myMethod.getMethod(), true, true);
+      .createTypeCodeFragment(returnTypeText, myMethod.getMethod(), true, true);
   }
 
   @Override
@@ -318,6 +319,31 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
     }
 
+    // warnings
+    try {
+      if (!myMethod.isConstructor()) {
+        if (!RefactoringUtil.isResolvableType(((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType())) {
+          if (Messages.showOkCancelDialog(myProject, RefactoringBundle
+            .message("changeSignature.cannot.resolve.return.type", myReturnTypeCodeFragment.getText()),
+                                          RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getWarningIcon()) != 0) {
+            return EXIT_SILENTLY;
+          }
+        }
+      }
+      for (ParameterTableModelItemBase<ParameterInfoImpl> item : parameterInfos) {
+
+        if (!RefactoringUtil.isResolvableType(((PsiTypeCodeFragment)item.typeCodeFragment).getType())) {
+          if (Messages.showOkCancelDialog(myProject, RefactoringBundle
+            .message("changeSignature.cannot.resolve.parameter.type", item.typeCodeFragment.getText(), item.parameter.getName()),
+                                          RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getWarningIcon()) !=
+              0) {
+            return EXIT_SILENTLY;
+          }
+        }
+      }
+    }
+    catch (PsiTypeCodeFragment.IncorrectTypeException ignored) {
+    }
     return null;
   }
 

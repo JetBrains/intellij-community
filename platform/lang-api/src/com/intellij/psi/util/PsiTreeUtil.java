@@ -33,13 +33,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class PsiTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
 
   private static final Key<Integer> INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
-  private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.INDEX");
+  private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.MARKER");
 
   private PsiTreeUtil() {
   }
@@ -195,24 +196,24 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T findChildOfType(@NotNull final PsiElement element, @NotNull final Class<T> aClass) {
+  public static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element, @NotNull final Class<T> aClass) {
     return findChildOfType(element, aClass, true);
   }
 
   @Nullable
-  public static <T extends PsiElement> T findChildOfType(@NotNull final PsiElement element,
+  public static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element,
                                                          @NotNull final Class<T> aClass,
                                                          final boolean strict) {
     return findChildOfAnyType(element, strict, aClass);
   }
 
   @Nullable
-  public static <T extends PsiElement> T findChildOfAnyType(@NotNull final PsiElement element, @NotNull final Class<T>... classes) {
+  public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, @NotNull final Class<T>... classes) {
     return findChildOfAnyType(element, true, classes);
   }
 
   @Nullable
-  public static <T extends PsiElement> T findChildOfAnyType(@NotNull final PsiElement element,
+  public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element,
                                                             final boolean strict,
                                                             @NotNull final Class<T>... classes) {
     PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
@@ -233,7 +234,8 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T getChildOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> T getChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (instanceOf(aClass, child)) return (T)child;
     }
@@ -248,7 +250,9 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T[] getChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> T[] getChildrenOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return null;
+
     List<T> result = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (instanceOf(aClass, child)) {
@@ -260,7 +264,9 @@ public class PsiTreeUtil {
   }
 
   @NotNull
-  public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return Collections.emptyList();
+
     List<T> result = new SmartList<T>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (instanceOf(aClass, child)) {
@@ -297,7 +303,8 @@ public class PsiTreeUtil {
    * @since 5.1
    */
   @Nullable
-  public static <T extends PsiElement> T getChildOfAnyType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
+  public static <T extends PsiElement> T getChildOfAnyType(@Nullable PsiElement element, @NotNull Class<? extends T>... classes) {
+    if (element == null) return null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       for (Class<? extends T> aClass : classes) {
         if (instanceOf(aClass, child)) return (T)child;
@@ -307,7 +314,8 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T getNextSiblingOfType(@NotNull PsiElement sibling, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> T getNextSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
+    if (sibling == null) return null;
     for (PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()) {
       if (instanceOf(aClass, child)) return (T)child;
     }
@@ -315,7 +323,8 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T getPrevSiblingOfType(@NotNull PsiElement sibling, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
+    if (sibling == null) return null;
     for (PsiElement child = sibling.getPrevSibling(); child != null; child = child.getPrevSibling()) {
       if (instanceOf(aClass, child)) return (T)child;
     }
@@ -347,7 +356,7 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <E extends PsiElement> E getStubOrPsiParentOfType(@Nullable PsiElement element, final Class<E> parentClass) {
+  public static <E extends PsiElement> E getStubOrPsiParentOfType(@Nullable PsiElement element, @NotNull Class<E> parentClass) {
     if (element instanceof StubBasedPsiElement) {
       StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
       if (stub != null) {

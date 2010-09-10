@@ -171,13 +171,13 @@ public class AlignmentInColumnsHelper {
 
   /**
    * There is a possible case that given base node doesn't have {@link AlignmentInColumnsConfig#getTargetDeclarationTypes() target type}
-   * but it's first child node or first child node of the first child node etc does.
+   * but its first child node or first child node of the first child node etc does.
    * <p/>
    * This method tries to derive node of the target type from the given node.
    *
    * @param baseNode          base node to process
    * @param targetTypes       target node types
-   * @return                  base node or it's first descendant child that has
+   * @return                  base node or its first descendant child that has
    *                          {@link AlignmentInColumnsConfig#getTargetDeclarationTypes() target type} target type if the one if found;
    *                          <code>null</code> otherwise
    */
@@ -302,7 +302,7 @@ public class AlignmentInColumnsHelper {
    * @param type    target child node type
    * @return        <code>true</code> if given parent node contains direct child of the given type; <code>false</code> otherwise
    */
-  public static boolean containsSubNodeOfType(ASTNode node, IElementType type) {
+  private static boolean containsSubNodeOfType(ASTNode node, IElementType type) {
     for(ASTNode child = node.getFirstChildNode(); child != null && child.getTreeParent() == node; child = child.getTreeNext()) {
       if (child.getElementType() == type) {
         return true;

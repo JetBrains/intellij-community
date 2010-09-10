@@ -72,13 +72,15 @@ public class ComboboxEditorTextField extends EditorTextField {
     UIUtil.setComboBoxEditorBounds(x, y, width, height, this);
   }
 
+  protected void updateBorder(@NotNull final EditorEx editor) {
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      editor.setBorder(isEnabled() ? EDITOR_TEXTFIELD_BORDER : EDITOR_TEXTFIELD_DISABLED_BORDER);
+    }
+  }
+
   @Override
   protected EditorEx createEditor() {
     final EditorEx result = super.createEditor();
-
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      result.setBorder(isEnabled() ? EDITOR_TEXTFIELD_BORDER : EDITOR_TEXTFIELD_DISABLED_BORDER);
-    }
 
     result.addFocusListener(new FocusChangeListener() {
       @Override

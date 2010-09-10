@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.inline;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -26,7 +25,6 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.refactoring.inline.GenericInlineHandler;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -37,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -100,6 +97,7 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   public void testParameterIsUsedAfterCall() throws Throwable { doTest(); }
   public void testFieldAsParameter() throws Throwable { doTest(); }
   public void testWritableVariable() throws Throwable { doTest(); }
+  public void testSingleExpression() {doTest();}
   public void _testInlineInGString() throws Throwable {doTest(); }
 
   public void testInlineAll() throws Throwable {
@@ -115,17 +113,17 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     });
   }
 
-  protected void doTest() throws IncorrectOperationException, InvalidDataException, IOException {
+  protected void doTest() {
     doTest(new GroovyInlineHandler());
 
   }
 
-  protected void doTest(InlineHandler handler) throws IOException {
+  protected void doTest(InlineHandler handler) {
     doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", false, handler);
   }
 
   public static void doInlineTest(final JavaCodeInsightTestFixture fixture, final String testFile, boolean withCaret,
-                                  InlineHandler inlineHandler) throws IOException {
+                                  InlineHandler inlineHandler) {
     final List<String> data = TestUtils.readInput(testFile);
     String fileText = data.get(0);
 

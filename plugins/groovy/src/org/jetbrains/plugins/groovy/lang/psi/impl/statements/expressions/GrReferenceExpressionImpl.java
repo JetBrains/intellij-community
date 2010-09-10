@@ -797,7 +797,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return RESOLVER.resolve(this, true);
   }
 
-  public void setQualifierExpression(GrReferenceExpression newQualifier) {
+  public void setQualifierExpression(GrExpression newQualifier) {
     final GrExpression oldQualifier = getQualifierExpression();
     final ASTNode node = getNode();
     final PsiElement refNameElement = getReferenceNameElement();
