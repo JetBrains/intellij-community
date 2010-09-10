@@ -26,10 +26,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 
 public class DeleteLineAtCaretAction extends TextComponentEditorAction {
@@ -40,6 +37,18 @@ public class DeleteLineAtCaretAction extends TextComponentEditorAction {
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      SelectionModel selectionModel = editor.getSelectionModel();
+
+      if (selectionModel.hasSelection()) {
+        Document document = editor.getDocument();
+        int selectionStart = selectionModel.getSelectionStart();
+        int selectionEnd = selectionModel.getSelectionEnd();
+        selectionModel.removeSelection();
+        int lineStartOffset = document.getLineStartOffset(document.getLineNumber(selectionStart));
+        int lineEndOffset = document.getLineEndOffset(document.getLineNumber(selectionEnd));
+        document.deleteString(lineStartOffset, lineEndOffset);
+        return;
+      }
       deleteLineAtCaret(editor);
     }
   }

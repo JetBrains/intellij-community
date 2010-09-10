@@ -40,10 +40,10 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
   private static final @NonNls String PAGE_DIRECTIVE = "page";
   private static final @NonNls String IMPORT_ATT = "import";
 
-  private final AbstractPostFormatProcessor myPostProcessor;
+  private final PostFormatProcessorHelper myPostProcessor;
 
   public ImportsFormatter(final CodeStyleSettings settings, PsiFile file) {
-    myPostProcessor = new AbstractPostFormatProcessor(settings);
+    myPostProcessor = new PostFormatProcessorHelper(settings);
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
     myIndentOptions = settings.getIndentOptions(file.getFileType());
   }
@@ -65,7 +65,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
   @Override public void visitXmlAttribute(XmlAttribute attribute) {
     if (isPageDirectiveTag(attribute.getParent())) {
       final XmlAttributeValue valueElement = attribute.getValueElement();
-      if (valueElement != null && checkRangeContainsElement(attribute) && isImportAttribute(attribute) && AbstractPostFormatProcessor
+      if (valueElement != null && checkRangeContainsElement(attribute) && isImportAttribute(attribute) && PostFormatProcessorHelper
         .isMultiline(valueElement)) {
         final int oldLength = attribute.getTextLength();
         ASTNode valueToken = findValueToken(valueElement.getNode());
@@ -147,11 +147,11 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
   }
 
   protected boolean checkElementContainsRange(final PsiElement element) {
-    return myPostProcessor.checkElementContainsRange(element);
+    return myPostProcessor.isElementPartlyInRange(element);
   }
 
   protected boolean checkRangeContainsElement(final PsiElement element) {
-    return myPostProcessor.checkRangeContainsElement(element);
+    return myPostProcessor.isElementFullyInRange(element);
   }
 
   public PsiElement process(PsiElement formatted) {

@@ -49,7 +49,7 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement,
   @NotNull
   GroovyResolveResult[] getSameNameVariants();
 
-  void setQualifierExpression(GrReferenceExpression qualifierExpression);
+  void setQualifierExpression(GrExpression qualifierExpression);
 
   GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiClass qualifierClass);
 }

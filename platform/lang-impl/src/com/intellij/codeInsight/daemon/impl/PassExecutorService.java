@@ -163,7 +163,7 @@ public abstract class PassExecutorService implements Disposable {
       List<TextEditorHighlightingPass> passes = textPasses.get(fileEditors.get(0));
       threadsToStartCountdown.addAndGet(passes.size());
 
-      // create one scheduled pass per unique id (possibly for multiple fileeditors. they all will be applied at the pass finish)
+      // create one scheduled pass per unique id (possibly for multiple file editors. they all will be applied at the pass finish)
       ContainerUtil.quickSort(passes, new Comparator<TextEditorHighlightingPass>() {
         public int compare(final TextEditorHighlightingPass o1, final TextEditorHighlightingPass o2) {
           return o1.getId() - o2.getId();
@@ -209,7 +209,7 @@ public abstract class PassExecutorService implements Disposable {
     toBeSubmitted.put(key, scheduledPass);
     for (int predecessorId : pass.getCompletionPredecessorIds()) {
       ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
-                                                              updateProgress, threadsToStartCountdown, jobPriority, predecessorId, passId);
+                                                              updateProgress, threadsToStartCountdown, jobPriority, predecessorId);
       if (predecessor != null) {
         predecessor.mySuccessorsOnCompletion.add(scheduledPass);
         scheduledPass.myRunningPredecessorsCount.incrementAndGet();
@@ -217,7 +217,7 @@ public abstract class PassExecutorService implements Disposable {
     }
     for (int predecessorId : pass.getStartingPredecessorIds()) {
       ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
-                                                              updateProgress, threadsToStartCountdown, jobPriority, predecessorId, passId);
+                                                              updateProgress, threadsToStartCountdown, jobPriority, predecessorId);
       if (predecessor != null) {
         predecessor.mySuccessorsOnSubmit.add(scheduledPass);
         scheduledPass.myRunningPredecessorsCount.incrementAndGet();
@@ -237,9 +237,9 @@ public abstract class PassExecutorService implements Disposable {
                                                     final DaemonProgressIndicator updateProgress,
                                                     final AtomicInteger myThreadsToStartCountdown,
                                                     final int jobPriority,
-                                                    final int predecessorId, int passId) {
-    Pair<Document, Integer> predkey = Pair.create(document, predecessorId);
-    ScheduledPass predecessor = toBeSubmitted.get(predkey);
+                                                    final int predecessorId) {
+    Pair<Document, Integer> predKey = Pair.create(document, predecessorId);
+    ScheduledPass predecessor = toBeSubmitted.get(predKey);
     if (predecessor == null) {
       TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
       predecessor = textEditorPass == null ? null : createScheduledPass(fileEditors, textEditorPass, toBeSubmitted, textEditorHighlightingPasses, freePasses,
@@ -264,7 +264,6 @@ public abstract class PassExecutorService implements Disposable {
       Job<Void> job = JobUtil.submitToJobThread(pass, pass.myJobPriority, new Consumer<Future>() {
         @Override
         public void consume(Future future) {
-          mySubmittedPasses.remove(pass);
           try {
             future.get();
           }
@@ -279,18 +278,6 @@ public abstract class PassExecutorService implements Disposable {
       });
       mySubmittedPasses.put(pass, job);
     }
-  }
-
-  public void renewVisiblePasses(final TextEditor textEditor, final HighlightingPass[] highlightingPasses,
-                          final DaemonProgressIndicator visibleProgress) {
-    for (ScheduledPass pass : mySubmittedPasses.keySet()) {
-      if (pass.myUpdateProgress == visibleProgress) {
-        return; //already scheduled. whenever something changes, it will be rescheduled anyway
-      }
-    }
-    Map<FileEditor, HighlightingPass[]> passes = Collections.<FileEditor, HighlightingPass[]>singletonMap(textEditor, highlightingPasses);
-    // higher priority
-    submitPasses(passes, visibleProgress, Job.DEFAULT_PRIORITY-10);
   }
 
   private class ScheduledPass implements Runnable {
@@ -451,12 +438,18 @@ public abstract class PassExecutorService implements Disposable {
   protected abstract void afterApplyInformationToEditor(TextEditorHighlightingPass pass, FileEditor fileEditor, ProgressIndicator updateProgress);
 
   public List<TextEditorHighlightingPass> getAllSubmittedPasses() {
-    ArrayList<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(mySubmittedPasses.size());
+    List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(mySubmittedPasses.size());
     for (ScheduledPass scheduledPass : mySubmittedPasses.keySet()) {
       if (!scheduledPass.myUpdateProgress.isCanceled()) {
         result.add(scheduledPass.myPass);
       }
     }
+    ContainerUtil.quickSort(result, new Comparator<TextEditorHighlightingPass>() {
+      @Override
+      public int compare(TextEditorHighlightingPass o1, TextEditorHighlightingPass o2) {
+        return o1.getId() - o2.getId();
+      }
+    });
     return result;
   }
 

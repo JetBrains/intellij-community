@@ -575,4 +575,10 @@ set<caret>Foo(2)
     PsiElement resolved = ref.resolve()
     assertInstanceOf resolved, PsiMethod
   }
+
+  public void testCollectionItemFields() {
+    PsiReference ref = configureByFile("collectionItemFields/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf resolved, PsiField
+  }
 }

@@ -44,7 +44,7 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
     XmlTag rootTag = document.getRootTag();
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
 
-    if (nsDescriptor instanceof Validator && !HtmlUtil.isHtml5Document(document, true)) {
+    if (nsDescriptor instanceof Validator && !HtmlUtil.isHtml5Document(document)) {
       ((Validator<XmlDocument>)nsDescriptor).validate(document, this);
     }
   }

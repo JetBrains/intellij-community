@@ -60,6 +60,9 @@
   <extensionPoint name="daemon.highlightInfoFilter"
                   interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
 
+  <extensionPoint name="daemon.externalAnnotatorsFilter"
+                  interface="com.intellij.lang.ExternalAnnotatorsFilter"/>
+
   <extensionPoint name="severitiesProvider"
                   interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
 

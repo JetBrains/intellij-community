@@ -94,8 +94,14 @@ public abstract class TestUtils {
     return text.substring(0, index) + text.substring(index + END_MARKER.length());
   }
 
-  public static List<String> readInput(String filePath) throws IOException {
-    String content = new String(FileUtil.loadFileText(new File(filePath)));
+  public static List<String> readInput(String filePath) {
+    String content;
+    try {
+      content = new String(FileUtil.loadFileText(new File(filePath)));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     Assert.assertNotNull(content);
 
     List<String> input = new ArrayList<String>();

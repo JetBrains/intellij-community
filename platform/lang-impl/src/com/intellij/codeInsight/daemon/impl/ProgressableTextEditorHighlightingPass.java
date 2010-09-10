@@ -19,13 +19,19 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -35,14 +41,15 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private volatile boolean myFinished;
   private volatile long myProgessLimit = 0;
   private final AtomicLong myProgressCount = new AtomicLong();
-  private final Icon myInProgressIcon;
   private final String myPresentableName;
   protected final PsiFile myFile;
 
-  protected ProgressableTextEditorHighlightingPass(final Project project, @Nullable final Document document, final Icon inProgressIcon,
-                                                   final String presentableName, @NotNull PsiFile file, boolean runIntentionPassAfter) {
+  protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
+                                                   @Nullable final Document document,
+                                                   @NotNull String presentableName,
+                                                   @NotNull PsiFile file,
+                                                   boolean runIntentionPassAfter) {
     super(project, document, runIntentionPassAfter);
-    myInProgressIcon = inProgressIcon;
     myPresentableName = presentableName;
     myFile = file;
   }
@@ -50,6 +57,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   public final void doCollectInformation(final ProgressIndicator progress) {
     myFinished = false;
     collectInformationWithProgress(progress);
+    repaintTrafficIcon();
   }
 
   protected abstract void collectInformationWithProgress(final ProgressIndicator progress);
@@ -59,6 +67,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     applyInformationWithProgress();
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());
+    repaintTrafficIcon();
   }
 
   protected abstract void applyInformationWithProgress();
@@ -69,18 +78,22 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
    */
   public double getProgress() {
     if (myProgessLimit == 0) return -1;
-    return (double)myProgressCount.get() / myProgessLimit;
+    return ((double)myProgressCount.get()) / myProgessLimit;
+  }
+
+  public long getProgressLimit() {
+    return myProgessLimit;
+  }
+
+  public long getProgressCount() {
+    return myProgressCount.get();
   }
 
   public boolean isFinished() {
     return myFinished;
   }
 
-  protected final Icon getInProgressIcon() {
-    return myInProgressIcon;
-  }
-
-  protected final String getPresentableName() {
+  protected String getPresentableName() {
     return myPresentableName;
   }
 
@@ -88,12 +101,44 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myProgessLimit = limit;
   }
 
-  public void advanceProgress(int delta) {
-    myProgressCount.addAndGet(delta);
+  private final Alarm repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  public void advanceProgress(long delta) {
+    long l = myProgressCount.addAndGet(delta);
+    repaintTrafficIcon();
   }
 
+  private void repaintTrafficIcon() {
+    if (repaintIconAlarm.getActiveRequestCount() == 0 || getProgressCount() >= getProgressLimit()) {
+      repaintIconAlarm.addRequest(new Runnable() {
+        public void run() {
+          if (myProject.isDisposed()) return;
+          Editor editor = getEditorForFile(myFile);
+          if (editor == null || editor.isDisposed()) return;
+          EditorMarkupModelImpl markup = (EditorMarkupModelImpl)editor.getMarkupModel();
+          markup.repaintTrafficLightIcon();
+        }
+      }, 50, null);
+    }
+  }
+
+  private static Editor getEditorForFile(@NotNull final PsiFile psiFile) {
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) {
+      PsiFile originalFile = psiFile.getOriginalFile();
+      virtualFile = originalFile.getVirtualFile();
+      if (virtualFile == null) return null;
+    }
+    final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
+    for (FileEditor editor : editors) {
+      if (editor instanceof TextEditor) {
+        return ((TextEditor)editor).getEditor();
+      }
+    }
+    return null;
+  }
+  
   public static class EmptyPass extends TextEditorHighlightingPass {
-    public EmptyPass(final Project project, @Nullable final Document document, Icon icon, String text) {
+    public EmptyPass(final Project project, @Nullable final Document document) {
       super(project, document, false);
     }
 

@@ -40,7 +40,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer {
 
   private final Define myDefine;
 
-  public OverriddenDefineRenderer(Define define) {
+  public OverriddenDefineRenderer(@NotNull Define define) {
     myDefine = define;
   }
 
@@ -83,5 +83,22 @@ class OverriddenDefineRenderer extends GutterIconRenderer {
   @Nullable
   public String getTooltipText() {
     return "Is overridden";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    OverriddenDefineRenderer that = (OverriddenDefineRenderer)o;
+
+    if (!myDefine.equals(that.myDefine)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myDefine.hashCode();
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -37,6 +38,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -44,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -96,6 +99,16 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           conflicts.putValue(info.declaration, GroovyRefactoringBundle.message("field.is.not.accessible.form.context.0", name));
         }
       }
+      final Ref<Boolean> hasSuper = new Ref<Boolean>(false);
+      info.expression.accept(new GroovyRecursiveElementVisitor() {
+        @Override
+        public void visitSuperExpression(GrSuperReferenceExpression superExpression) {
+          hasSuper.set(true);
+        }
+      });
+      if (hasSuper.get()) {
+        conflicts.putValue(info.expression, GroovyRefactoringBundle.message("super.reference.is.used"));
+      }
     }
 
     return conflicts;
@@ -136,10 +149,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       // Variable declaration for qualifier expression
       GrVariableDeclaration qualifierDeclaration = null;
       GrReferenceExpression innerQualifier = null;
+      GrExpression qualifier = null;
       if (call instanceof GrMethodCallExpression && ((GrMethodCallExpression) call).getInvokedExpression() != null) {
         GrExpression invoked = ((GrMethodCallExpression) call).getInvokedExpression();
         if (invoked instanceof GrReferenceExpression && ((GrReferenceExpression) invoked).getQualifierExpression() != null) {
-          GrExpression qualifier = ((GrReferenceExpression) invoked).getQualifierExpression();
+          qualifier = ((GrReferenceExpression) invoked).getQualifierExpression();
           if (!GroovyInlineMethodUtil.hasNoSideEffects(qualifier)) {
             String qualName = generateQualifierName(call, method, project, qualifier);
             qualifier = (GrExpression)PsiUtil.skipParentheses(qualifier, false);
@@ -151,14 +165,15 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         }
       }
 
-      GrMethod newMethod = prepareNewMethod(call, method, innerQualifier);
-      GrExpression result = getAloneResultExpression(newMethod);
-      if (result != null) {
+      if (getAloneResultExpression(method) != null) {
+        GrMethod newMethod = prepareNewMethod(call, method, qualifier);
+        GrExpression result = getAloneResultExpression(newMethod);
         GrExpression expression = call.replaceWithExpression(result, false);
         TextRange range = expression.getTextRange();
         return editor != null ? editor.getDocument().createRangeMarker(range.getStartOffset(), range.getEndOffset(), true) : null;
       }
 
+      GrMethod newMethod = prepareNewMethod(call, method, innerQualifier);
       String resultName = InlineMethodConflictSolver.suggestNewName("result", newMethod, call);
 
       // Add variable for method result
@@ -339,7 +354,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   /*
   Prepare temporary method with non-conflicting local names
   */
-  private static GrMethod prepareNewMethod(GrCallExpression call, GrMethod method, GrReferenceExpression qualifier) throws IncorrectOperationException {
+  private static GrMethod prepareNewMethod(GrCallExpression call, GrMethod method, GrExpression qualifier) throws IncorrectOperationException {
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     GrMethod newMethod = factory.createMethodFromText(method.getText());
@@ -355,9 +370,9 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     for (PsiNamedElement namedElement : innerDefinitions) {
       String name = namedElement.getName();
       if (name != null) {
-        String newName = qualifier != null ?
-            InlineMethodConflictSolver.suggestNewName(name, method, call, qualifier.getName()) :
-            InlineMethodConflictSolver.suggestNewName(name, method, call);
+        String newName = qualifier instanceof GrReferenceExpression ?
+                         InlineMethodConflictSolver.suggestNewName(name, method, call, ((GrReferenceExpression)qualifier).getName()) :
+                         InlineMethodConflictSolver.suggestNewName(name, method, call);
         if (!newName.equals(namedElement.getName())) {
           final Collection<PsiReference> refs = ReferencesSearch.search(namedElement, GlobalSearchScope.projectScope(namedElement.getProject()), false).findAll();
           for (PsiReference ref : refs) {

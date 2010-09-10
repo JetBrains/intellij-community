@@ -23,6 +23,7 @@
     <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>
     <vetoRenameCondition implementation="com.intellij.lang.ant.refactoring.AntVetoRenameCondition"/>
     <renamePsiElementProcessor implementation="com.intellij.lang.ant.dom.AntRenameProcessor"/>
+    <daemon.externalAnnotatorsFilter implementation="com.intellij.lang.ant.validation.AntAnnotatorsFilter"/>
     <!--<xml.fileNSInfoProvider implementation="com.intellij.lang.ant.AntDefaultNSProvider"/>-->
     <lang.documentationProvider language="XML" implementationClass="com.intellij.lang.ant.doc.AntDomDocumentationProvider"/>
 

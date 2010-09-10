@@ -18,17 +18,16 @@ package com.intellij.openapi.diff.impl.util;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class GutterActionRenderer extends GutterIconRenderer {
   private final AnAction myAction;
   public static final Icon REPLACE_ARROW = IconLoader.getIcon("/diff/arrow.png");
   public static final Icon REMOVE_CROSS = IconLoader.getIcon("/diff/remove.png");
 
-  public GutterActionRenderer(AnAction action) {
+  public GutterActionRenderer(@NotNull AnAction action) {
     myAction = action;
   }
 
@@ -37,4 +36,21 @@ public class GutterActionRenderer extends GutterIconRenderer {
   public AnAction getClickAction() { return myAction; }
   public String getTooltipText() { return myAction.getTemplatePresentation().getText(); }
   public boolean isNavigateAction() { return true; }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GutterActionRenderer that = (GutterActionRenderer)o;
+
+    if (!myAction.equals(that.myAction)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myAction.hashCode();
+  }
 }
