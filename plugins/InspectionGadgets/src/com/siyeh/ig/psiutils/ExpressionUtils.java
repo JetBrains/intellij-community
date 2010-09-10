@@ -27,12 +27,17 @@ public class ExpressionUtils {
 
     private ExpressionUtils() {}
 
-    public static Object computeConstantExpression(PsiExpression expression) {
+    public static Object computeConstantExpression(
+            @Nullable PsiExpression expression) {
         return computeConstantExpression(expression, false);
     }
 
     public static Object computeConstantExpression(
-            PsiExpression expression, boolean throwExceptionOnOverflow) {
+            @Nullable PsiExpression expression,
+            boolean throwExceptionOnOverflow) {
+        if (expression == null) {
+            return null;
+        }
         final Project project = expression.getProject();
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
         final PsiConstantEvaluationHelper constantEvaluationHelper =
