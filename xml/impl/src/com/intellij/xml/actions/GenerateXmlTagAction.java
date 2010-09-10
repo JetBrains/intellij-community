@@ -37,7 +37,6 @@ import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,8 +110,14 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     }
   }
 
-  private static XmlTag createTag(XmlTag contextTag, XmlElementDescriptor selected) {
-    return contextTag.createChildTag(selected.getName(), getNamespace(selected), null, false);
+  private static XmlTag createTag(XmlTag contextTag, XmlElementDescriptor descriptor) {
+    String bodyText = null;
+    if (descriptor instanceof XmlElementDescriptorImpl) {
+      if (((XmlElementDescriptorImpl)descriptor).getType() instanceof ComplexTypeDescriptor) {
+        bodyText = "";
+      }
+    }
+    return contextTag.createChildTag(descriptor.getName(), getNamespace(descriptor), bodyText, false);
   }
 
   @Nullable
@@ -126,9 +131,8 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return null;
   }
 
-  private static String getNamespace(XmlElementDescriptor selected) {
-    return selected.getNSDescriptor() instanceof XmlNSDescriptorImpl
-           ? ((XmlNSDescriptorImpl)selected.getNSDescriptor()).getDefaultNamespace() : "";
+  private static String getNamespace(XmlElementDescriptor descriptor) {
+    return descriptor instanceof XmlElementDescriptorImpl ? ((XmlElementDescriptorImpl)descriptor).getNamespace() : "";
   }
 
   @Nullable
