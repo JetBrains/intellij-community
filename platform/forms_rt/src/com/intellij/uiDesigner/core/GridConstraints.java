@@ -210,9 +210,8 @@ public final class GridConstraints implements Cloneable {
    */
   public Object clone() {
     return new GridConstraints(
-      getRow(), getColumn(), getRowSpan(), getColSpan(), getAnchor(), getFill(), getHSizePolicy(), getVSizePolicy(),
-      new Dimension(myMinimumSize), new Dimension(myPreferredSize), new Dimension(myMinimumSize), getIndent(), isUseParentLayout()
-    );
+      myRow, myColumn, myRowSpan, myColSpan, myAnchor, myFill, myHSizePolicy, myVSizePolicy,
+      new Dimension(myMinimumSize), new Dimension(myPreferredSize), new Dimension(myMaximumSize), myIndent, myUseParentLayout);
   }
 
   public int getColumn(){
