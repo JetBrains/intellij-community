@@ -308,7 +308,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     final XmlElement element = getXmlElement();
     assert element != null;
-    return getXmlTag().createChildTag(localName, tagName.getNamespace(element, getFile()), "", false);
+    return getXmlTag().createChildTag(localName, tagName.getNamespace(element, getFile()), null, false);
   }
 
   public boolean isValid() {

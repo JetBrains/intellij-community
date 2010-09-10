@@ -117,7 +117,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         }
 
         final XmlTag parent = attr.getParent();
-        final XmlTag attrTag = parent.createChildTag("attribute", XsltSupport.XSLT_NS, "", false);
+      final XmlTag attrTag = parent.createChildTag("attribute", XsltSupport.XSLT_NS, null, false);
         attrTag.setAttribute("name", attr.getName()); // local name?
 
         final String value = attr.getNamespace();
@@ -127,14 +127,14 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         for (Pair<String, Boolean> chunk : chunks) {
             final XmlTag child;
             if (chunk.second) {
-                child = parent.createChildTag("value-of", XsltSupport.XSLT_NS, "", false);
+              child = parent.createChildTag("value-of", XsltSupport.XSLT_NS, null, false);
                 child.setAttribute("select", chunk.first);
 //            } else if (chunks.size() == 1) {
                 // TODO: really? or always create an xsl:text?
 //                attrTag.add(attrTag.getManager().getElementFactory().createDisplayText(chunk.first));
 //                continue;
             } else {
-                child = parent.createChildTag("text", XsltSupport.XSLT_NS, "", false);
+              child = parent.createChildTag("text", XsltSupport.XSLT_NS, null, false);
                 child.add(XmlElementFactory.getInstance(child.getProject()).createDisplayText(chunk.first));
             }
             attrTag.add(child);
