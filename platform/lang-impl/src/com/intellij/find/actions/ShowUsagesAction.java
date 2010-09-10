@@ -377,6 +377,11 @@ public class ShowUsagesAction extends AnAction {
         return table.getSelectedRow();
       }
 
+      @Override
+      protected int convertIndexToModel(int viewIndex) {
+        return table.convertRowIndexToModel(viewIndex);
+      }
+
       protected Object[] getAllElements() {
         return ArrayUtil.toObjectArray(data);
       }
@@ -393,7 +398,8 @@ public class ShowUsagesAction extends AnAction {
       protected void selectElement(Object element, String selectedText) {
         int i = data.indexOf(element);
         if (i == -1) return;
-        table.getSelectionModel().setSelectionInterval(i, i);
+        final int viewRow = table.convertRowIndexToView(i);
+        table.getSelectionModel().setSelectionInterval(viewRow, viewRow);
       }
     };
     speedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
@@ -528,7 +534,7 @@ public class ShowUsagesAction extends AnAction {
       }
 
       public int getColumnCount() {
-        return data.get(0) instanceof UsageNode ? 3 : 1;
+        return !data.isEmpty() && data.get(0) instanceof UsageNode ? 3 : 1;
       }
 
       public Object getValueAt(int rowIndex, int columnIndex) {

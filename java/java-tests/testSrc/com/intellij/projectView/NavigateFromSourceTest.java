@@ -41,15 +41,13 @@ import com.intellij.testFramework.IdeaTestUtil;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class NavigateFromSourceTest extends BaseProjectViewTestCase {
   public void testShowClassMembers() throws Exception {
     useStandardProviders();
     final PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(getPackageDirectory());
-    sortClasses(classes);
+    sortClassesByName(classes);
     PsiClass psiClass = classes[0];
 
     final AbstractProjectViewPSIPane pane = createPane();

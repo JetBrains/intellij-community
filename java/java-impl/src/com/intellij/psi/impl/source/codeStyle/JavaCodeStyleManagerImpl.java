@@ -31,10 +31,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -315,7 +312,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         longTypeName = "java.lang.Object";
       }
       String name = map.nameByType(longTypeName);
-      if (name != null && JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
+      if (name != null && isIdentifier(name)) {
         return new String[]{name};
       }
     }
@@ -560,15 +557,48 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       names3 = null;
     }
 
-    LinkedHashSet<String> names = new LinkedHashSet<String>();
+    final LinkedHashSet<String> names = new LinkedHashSet<String>();
+    final String[] fromLiterals = suggestVariableNameFromLiterals(expr, variableKind);
+    if (fromLiterals != null) {
+      ContainerUtil.addAll(names, fromLiterals);
+    }
     ContainerUtil.addAll(names, names1.names);
     ContainerUtil.addAll(names, names2.names);
     if (names3 != null) {
       ContainerUtil.addAll(names, names3);
     }
+
     String[] namesArray = ArrayUtil.toStringArray(names);
     String propertyName = names1.propertyName != null ? names1.propertyName : names2.propertyName;
     return new NamesByExprInfo(propertyName, namesArray);
+  }
+
+  @Nullable
+  private String[] suggestVariableNameFromLiterals(PsiExpression expr, VariableKind variableKind) {
+    final PsiElement[] literals = PsiTreeUtil.collectElements(expr, new PsiElementFilter() {
+      @Override
+      public boolean isAccepted(PsiElement element) {
+        if (isStringPsiLiteral(element) && StringUtil.isJavaIdentifier(StringUtil.unquoteString(element.getText()))) {
+          final PsiElement exprList = element.getParent();
+          if (exprList instanceof PsiExpressionList) {
+            final PsiElement call = exprList.getParent();
+            if (call instanceof PsiNewExpression) {
+              return true;
+            } else if (call instanceof PsiMethodCallExpression) {
+              //TODO: exclude or not getA().getB("name").getC(); or getA(getB("name").getC()); It works fine for now in the most cases
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+    });
+
+    if (literals.length == 1) {
+      final String text = StringUtil.unquoteString(literals[0].getText());
+      return getSuggestionsByName(text, variableKind, expr.getType() instanceof PsiArrayType);
+    }
+    return null;
   }
 
   private NamesByExprInfo suggestVariableNameByExpressionOnly(PsiExpression expr, final VariableKind variableKind) {
@@ -639,6 +669,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         if (names.length > 0) {
           return new NamesByExprInfo(null, constantValueToConstantName(names));
         }
+      }
+    } else if (expr instanceof PsiParenthesizedExpression) {
+      return suggestVariableNameByExpressionOnly(((PsiParenthesizedExpression)expr).getExpression(), variableKind);
+    } else if (expr instanceof PsiTypeCastExpression) {
+      return suggestVariableNameByExpressionOnly(((PsiTypeCastExpression)expr).getOperand(), variableKind);
+    } else if (expr instanceof PsiLiteralExpression) {
+      final String text = StringUtil.stripQuotesAroundValue(expr.getText());
+      if (isIdentifier(text)) {
+        return new NamesByExprInfo(text, getSuggestionsByName(text, variableKind, false));
       }
     }
 
@@ -833,75 +872,25 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private String[] getSuggestionsByName(String name, VariableKind variableKind, boolean isArray) {
+    boolean upperCaseStyle = variableKind == VariableKind.STATIC_FINAL_FIELD;
+    boolean preferLongerNames = getSettings().PREFER_LONGER_NAMES;
     String prefix = getPrefixByVariableKind(variableKind);
-    ArrayList<String> list = new ArrayList<String>();
-    String[] words = NameUtil.nameToWords(name);
+    String suffix = getSuffixByVariableKind(variableKind);
 
-    for (int step = 0; step < words.length; step++) {
-      int wordCount = getSettings().PREFER_LONGER_NAMES ? words.length - step : step + 1;
-
-      String startWord = words[words.length - wordCount];
-      char c = startWord.charAt(0);
-      if( c == '_' || !Character.isJavaIdentifierStart( c ) )
-      {
-        continue;
-      }
-
-      StringBuilder buffer = new StringBuilder();
-      buffer.append(prefix);
-
-      if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
-        startWord = startWord.toUpperCase();
-      }
-      else {
-        if (prefix.length() == 0 || StringUtil.endsWithChar(prefix, '_')) {
-          startWord = startWord.toLowerCase();
-        }
-        else {
-          startWord = Character.toUpperCase(c) + startWord.substring(1);
-        }
-      }
-      buffer.append(startWord);
-
-      for (int i = words.length - wordCount + 1; i < words.length; i++) {
-        String word = words[i];
-        String prevWord = words[i - 1];
-        if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
-          word = word.toUpperCase();
-          if (prevWord.charAt(prevWord.length() - 1) != '_') {
-            word = "_" + word;
-          }
-        }
-        else {
-          if (prevWord.charAt(prevWord.length() - 1) == '_') {
-            word = word.toLowerCase();
-          }
-        }
-        buffer.append(word);
-      }
-
-      String suggestion = buffer.toString();
-
-      if (isArray) {
-        suggestion = StringUtil.pluralize(suggestion);
-        if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
-          suggestion = suggestion.toUpperCase();
-        }
-      }
-
-      suggestion = changeIfNotIdentifier(suggestion + getSuffixByVariableKind(variableKind));
-
-      if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(suggestion, LanguageLevel.HIGHEST)) {
-        list.add(suggestion);
+    List<String> answer = new ArrayList<String>();
+    for (String suggestion : NameUtil.getSuggestionsByName(name, prefix, suffix, upperCaseStyle, preferLongerNames, isArray)) {
+      String s = changeIfNotIdentifier(suggestion);
+      if (isIdentifier(s)) {
+        answer.add(s);
       }
     }
 
-    return ArrayUtil.toStringArray(list);
+    return ArrayUtil.toStringArray(answer);
   }
 
   public String suggestUniqueVariableName(String baseName, PsiElement place, boolean lookForward) {
     int index = 0;
-    final PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class);
+    PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     NextName:
     while (true) {
       String name = baseName;
@@ -1073,15 +1062,25 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @NonNls
   private String changeIfNotIdentifier(String name) {
-    PsiManager manager = PsiManager.getInstance(myProject);
-
-    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
+    if (!isIdentifier(name)) {
       return StringUtil.fixVariableNameDerivedFromPropertyName(name);
     }
     return name;
   }
 
+  private boolean isIdentifier(String name) {
+    return JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST);
+  }
+
   private CodeStyleSettings getSettings() {
     return CodeStyleSettingsManager.getSettings(myProject);
+  }
+
+  public static boolean isStringPsiLiteral(PsiElement element) {
+    if (element instanceof PsiLiteralExpression) {
+      final String text = element.getText();
+      return text.length() > 1 && StringUtil.isQuotedString(text);
+    }
+    return false;
   }
 }

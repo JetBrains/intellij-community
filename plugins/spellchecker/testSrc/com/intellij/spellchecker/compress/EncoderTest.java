@@ -15,9 +15,6 @@
  */
 package com.intellij.spellchecker.compress;
 
-import com.intellij.spellchecker.compress.Alphabet;
-import com.intellij.spellchecker.compress.Encoder;
-import com.intellij.spellchecker.compress.UnitBitSet;
 import junit.framework.TestCase;
 
 public class EncoderTest extends TestCase {
@@ -93,7 +90,7 @@ public class EncoderTest extends TestCase {
 
 
     public void testWithPredefinedAlphabet() {
-        Encoder encoder = new Encoder(Alphabet.create("abcdefghijklmnopqrst"));
+        Encoder encoder = new Encoder(new Alphabet("abcdefghijklmnopqrst"));
         final String wordToTest1 = "asia";
         //letter 'a' will be added at the end
         final UnitBitSet bitSet = encoder.encode(wordToTest1, true);

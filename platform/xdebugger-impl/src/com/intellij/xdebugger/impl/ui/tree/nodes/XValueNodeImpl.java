@@ -114,10 +114,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-  @Nullable
-  public String getName() {
-    return myName;
-  }
+
 
   @Override
   public XDebuggerNodeLink getLink() {
@@ -130,6 +127,16 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       };
     }
     return null;
+  }
+
+  @Nullable
+  public String getName() {
+    return myName;
+  }
+
+  @Nullable
+  public String getType() {
+    return myType;
   }
 
   @Nullable

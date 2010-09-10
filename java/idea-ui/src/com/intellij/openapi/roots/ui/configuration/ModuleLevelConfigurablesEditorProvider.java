@@ -15,19 +15,19 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.ModuleConfigurableEP;
 
 import javax.swing.*;
 import java.util.ArrayList;
 
 public class ModuleLevelConfigurablesEditorProvider implements ModuleConfigurationEditorProvider, ModuleComponent {
-  public static final ExtensionPointName<Configurable> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
+  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
 
   private final Module myModule;
 
@@ -41,8 +41,9 @@ public class ModuleLevelConfigurablesEditorProvider implements ModuleConfigurati
     for (final Configurable moduleConfigurable : moduleConfigurables) {
       result.add(new ConfigurableWrapper(moduleConfigurable));
     }
-    for(Configurable configurable: Extensions.getExtensions(MODULE_CONFIGURABLES, myModule)) {
-      result.add(new ConfigurableWrapper(configurable));
+    final ModuleConfigurableEP[] extensions = myModule.getExtensions(MODULE_CONFIGURABLES);
+    for(ModuleConfigurableEP extension : extensions) {
+      result.add(new ConfigurableWrapper(extension.createConfigurable()));
     }
 
     return result.toArray(new ModuleConfigurationEditor[result.size()]);

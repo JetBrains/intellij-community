@@ -11,11 +11,12 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 
 import java.io.File;
@@ -29,6 +30,7 @@ import java.util.List;
  */
 public class GroovyHotSwapper extends JavaProgramPatcher {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper");
+  private static final String GROOVY_HOTSWAP_AGENT_PATH = "groovy.hotswap.agent.path";
 
   private static boolean endsWithAny(String s, List<String> endings) {
     for (String extension : endings) {
@@ -44,9 +46,12 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     for (String extension : GroovyFileTypeLoader.getAllGroovyExtensions()) {
       extensions.add("." + extension);
     }
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     for (String fileName : FilenameIndex.getAllFilenames(project)) {
       if (endsWithAny(fileName, extensions)) {
-        return true;
+        if (!FilenameIndex.getVirtualFilesByName(project, fileName, scope).isEmpty()) {
+          return true;
+        }
       }
     }
     return false;
@@ -74,13 +79,23 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     }
 
     if (containsGroovyClasses(project)) {
-      javaParameters.getVMParametersList().add("-javaagent:" + handleSpacesInPath(getAgentJarPath()));
+      final String agentPath = handleSpacesInPath(getAgentJarPath());
+      if (agentPath != null) {
+        javaParameters.getVMParametersList().add("-javaagent:" + agentPath);
+      }
     }
   }
 
+  @Nullable
   private static String handleSpacesInPath(String agentPath) {
-    if (SystemInfo.isUnix && agentPath.contains(" ")) {
+    if (agentPath.contains(" ")) {
       final File dir = new File(PathManager.getSystemPath(), "groovyHotSwap");
+      if (dir.getAbsolutePath().contains(" ")) {
+        LOG.info("Groovy hot-swap not used since the agent path contains spaces: " + agentPath + "\n" +
+                 "One can move the agent to a directory with no spaces in path and specify its path in idea.properties as " + GROOVY_HOTSWAP_AGENT_PATH + "=<path>");
+        return null;
+      }
+
       final File toFile = new File(dir, "gragent.jar");
       try {
         FileUtil.copy(new File(agentPath), toFile);
@@ -94,6 +109,11 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
   }
 
   private static String getAgentJarPath() {
+    final String userDefined = System.getProperty(GROOVY_HOTSWAP_AGENT_PATH);
+    if (userDefined != null && new File(userDefined).exists()) {
+      return userDefined;
+    }
+
     final File ourJar = new File(PathUtil.getJarPathForClass(GroovyHotSwapper.class));
     if (ourJar.isDirectory()) { //development mode
       return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";

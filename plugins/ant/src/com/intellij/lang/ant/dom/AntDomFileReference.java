@@ -22,7 +22,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AntDomFileReference extends FileReference {
+public class AntDomFileReference extends FileReference implements AntDomReference{
+
+  private boolean mySkipByAnnotator;
+
   public AntDomFileReference(final AntDomFileReferenceSet set, final TextRange range, final int index, final String text) {
     super(set, range, index, text);
   }
@@ -52,5 +55,13 @@ public class AntDomFileReference extends FileReference {
   public String getCanonicalRepresentationText() {
     final String value = getCanonicalText();
     return AntStringResolver.computeString(getFileReferenceSet().getAttributeValue(), value);
+  }
+
+  public boolean shouldBeSkippedByAnnotator() {
+    return mySkipByAnnotator;
+  }
+
+  public void setShouldBeSkippedByAnnotator(boolean value) {
+    mySkipByAnnotator = value;
   }
 }

@@ -30,7 +30,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
@@ -78,7 +78,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class DaemonListeners implements Disposable {
+class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
 
   private final ApplicationListener myApplicationListener = new MyApplicationListener();
@@ -287,7 +287,7 @@ public class DaemonListeners implements Disposable {
 
   private boolean canUndo(VirtualFile virtualFile) {
     for (FileEditor editor : FileEditorManager.getInstance(myProject).getEditors(virtualFile)) {
-      if (UndoManagerImpl.getInstance(myProject).isUndoAvailable(editor)) return true;
+      if (UndoManager.getInstance(myProject).isUndoAvailable(editor)) return true;
     }
     return false;
   }
@@ -314,26 +314,28 @@ public class DaemonListeners implements Disposable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by write action:" + action);
       }
-      if (action instanceof DocumentRunnable) {
-        Document document = ((DocumentRunnable)action).getDocument();
-        if (!worthBothering(document, ((DocumentRunnable)action).getProject())) {
-          return;
+      if (containsDocumentWorthBothering()) {
+        stopDaemon(false);
+      }
+    }
+
+    private boolean containsDocumentWorthBothering() {
+      DocumentRunnable currentWriteAction = ApplicationManager.getApplication().getCurrentWriteAction(DocumentRunnable.class);
+      if (currentWriteAction != null) {
+        if (currentWriteAction instanceof DocumentRunnable.IgnoreDocumentRunnable) return false;
+        Document document = currentWriteAction.getDocument();
+        if (!worthBothering(document, currentWriteAction.getProject())) {
+          return false;
         }
       }
-      stopDaemon(false);
+      return true;
     }
 
     public void writeActionFinished(Object action) {
-      if (myDaemonCodeAnalyzer.isRunning()) {
-        return;
+      if (myDaemonCodeAnalyzer.isRunning()) return;
+      if (containsDocumentWorthBothering()) {
+        stopDaemon(true);
       }
-      if (action instanceof DocumentRunnable) {
-        Document document = ((DocumentRunnable)action).getDocument();
-        if (!worthBothering(document, ((DocumentRunnable)action).getProject())) {
-          return;
-        }
-      }
-      stopDaemon(true);
     }
   }
 
@@ -450,10 +452,16 @@ public class DaemonListeners implements Disposable {
 
       boolean shown = false;
       try {
-        LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
+        // There is a possible case that cursor is located at soft wrap-introduced virtual space (that is mapped to offset
+        // of the document symbol just after soft wrap). We don't want to show any tooltips for it then.
+        VisualPosition visual = editor.xyToVisualPosition(e.getMouseEvent().getPoint());
+        if (editor.getSoftWrapModel().isInsideOrBeforeSoftWrap(visual)) {
+          return;
+        }
+        LogicalPosition logical = editor.visualToLogicalPosition(visual);
         if (e.getArea() == EditorMouseEventArea.EDITING_AREA) {
-          int offset = editor.logicalPositionToOffset(pos);
-          if (editor.offsetToLogicalPosition(offset).column != pos.column) return; // we are in virtual space
+          int offset = editor.logicalPositionToOffset(logical);
+          if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
           if (info == null || info.description == null) return;
           DaemonTooltipUtil.showInfoTooltip(info, editor, offset);

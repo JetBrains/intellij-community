@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,6 +134,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     public Dimension getMaximumSize() {
       return getPreferredSize();
     }
+
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
@@ -146,6 +148,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
 
   }
+
   protected abstract KeyType getCellKeyForPoint(Point point);
 
   @NotNull
@@ -233,16 +236,13 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
-    Component rComponent;
-    rComponent = getRendererComponent(key);
+    Pair<Component, Rectangle> rendererAndBounds = getRendererAndBounds(key);
+    if (rendererAndBounds == null) return null;
 
-    if (!(rComponent instanceof JComponent)) {
-      return null;
-    }
+    Component renderer = rendererAndBounds.first;
+    if (!(renderer instanceof JComponent)) return null;
 
-    Rectangle cellBounds = getCellBounds(key, rComponent);
-    if (cellBounds == null) return null;
-
+    Rectangle cellBounds = rendererAndBounds.second;
     Rectangle visibleRect = getVisibleRect(key);
 
     int width = cellBounds.x + cellBounds.width - (visibleRect.x + visibleRect.width);
@@ -258,7 +258,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.setClip(null);
     doFillBackground(height, width, g);
     g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
-    doPaintTooltipImage(rComponent, cellBounds, height, g, key);
+    doPaintTooltipImage(renderer, cellBounds, height, g, key);
 
     if (doPaintBorder(key)) {
       g.translate((visibleRect.x + visibleRect.width - cellBounds.x), 0);
@@ -272,7 +272,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     g.dispose();
 
-    myComponent.remove(rComponent);
+    myComponent.remove(renderer);
 
     return new Point(visibleRect.x + visibleRect.width, cellBounds.y);
   }
@@ -298,7 +298,6 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return myComponent.getVisibleRect();
   }
 
-  protected abstract Rectangle getCellBounds(KeyType key, Component rendererComponent);
-
-  protected abstract Component getRendererComponent(KeyType key);
+  @Nullable
+  protected abstract Pair<Component, Rectangle> getRendererAndBounds(KeyType key);
 }

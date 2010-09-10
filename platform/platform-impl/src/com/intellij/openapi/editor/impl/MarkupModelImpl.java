@@ -24,40 +24,37 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.event.MarkupModelEvent;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.MarkupModelImpl");
   private final DocumentImpl myDocument;
 
-  private final HighlighterList myHighlighterList;
-  private final Collection<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   private RangeHighlighter[] myCachedHighlighters;
-  private final List<MarkupModelListener> myListeners = new ArrayList<MarkupModelListener>();
-  private MarkupModelListener[] myCachedListeners;
+  private final List<MarkupModelListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final RangeHighlighterTree myHighlighterTree;
 
   MarkupModelImpl(DocumentImpl document) {
     myDocument = document;
-    myHighlighterList = new HighlighterList(document) {
-      @Override
-      protected void assertDispatchThread() {
-        MarkupModelImpl.this.assertDispatchThread();
-      }
-    };
+    myHighlighterTree = new RangeHighlighterTree(myDocument);
   }
 
   protected void assertDispatchThread() {
@@ -65,13 +62,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public void dispose() {
-    myHighlighterList.dispose();
   }
 
   @NotNull
   public RangeHighlighter addLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
     if (lineNumber >= getDocument().getLineCount() || lineNumber < 0) {
-      throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Shold be in [0, " + (getDocument().getLineCount() - 1) + "]");
+      throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (getDocument().getLineCount() - 1) + "]");
     }
 
     int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
@@ -105,7 +101,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
     if (myCachedHighlighters == null) {
-      myCachedHighlighters = myHighlighters.toArray(new RangeHighlighter[myHighlighters.size()]);
+      ArrayList<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+      myHighlighterTree.process(new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list));
+      myCachedHighlighters = list.toArray(new RangeHighlighter[list.size()]);
     }
     return myCachedHighlighters;
   }
@@ -116,14 +114,22 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                TextAttributes textAttributes,
                                                HighlighterTargetArea targetArea,
                                                boolean isPersistent) {
-    RangeHighlighterImpl segmentHighlighter = new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea,
-                                                                       textAttributes, isPersistent);
-    myHighlighters.add(segmentHighlighter);
-    myCachedHighlighters = null;
-    myHighlighterList.addSegmentHighlighter(segmentHighlighter);
-    fireSegmentHighlighterChanged(segmentHighlighter);
-    return segmentHighlighter;
+    RangeHighlighterEx segmentHighlighter = isPersistent
+                                            ? new PersistentRangeHighlighterImpl(this, startOffset, layer, targetArea, textAttributes)
+                                            : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes);
 
+    RangeMarkerImpl marker = (RangeMarkerImpl)segmentHighlighter;
+    marker.registerInDocument();
+
+    myCachedHighlighters = null;
+    fireAfterAdded(segmentHighlighter);
+    return segmentHighlighter;
+  }
+
+  void addRangeHighlighter(RangeHighlighterEx marker) {
+    marker.setValid(true);
+    ((RangeMarkerImpl)marker).myNode = (IntervalTreeImpl.MyNode)myHighlighterTree.add(marker);
+    myHighlighterTree.checkMax(true);
   }
 
   @NotNull
@@ -136,20 +142,24 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public void removeHighlighter(RangeHighlighter segmentHighlighter) {
-    boolean removed = myHighlighters.remove(segmentHighlighter);
-    LOG.assertTrue(removed);
     myCachedHighlighters = null;
-    myHighlighterList.removeSegmentHighlighter(segmentHighlighter);
-    fireSegmentHighlighterChanged(segmentHighlighter);
+    if (!segmentHighlighter.isValid()) return;
+
+    fireBeforeRemoved((RangeHighlighterEx)segmentHighlighter);
+
+    boolean removed = myHighlighterTree.remove((RangeHighlighterEx)segmentHighlighter);
+    LOG.assertTrue(removed);
   }
 
   public void removeAllHighlighters() {
-    for (RangeHighlighter highlighter : myHighlighters) {
-      fireSegmentHighlighterChanged(highlighter);
-      myHighlighterList.removeSegmentHighlighter(highlighter);
-    }
-    myHighlighters.clear();
+    myHighlighterTree.process(new Processor<RangeMarkerEx>() {
+      public boolean process(RangeMarkerEx rangeMarkerEx) {
+        fireBeforeRemoved((RangeHighlighterEx)rangeMarkerEx);
+        return true;
+      }
+    });
     myCachedHighlighters = null;
+    myHighlighterTree.clear();
   }
 
   @NotNull
@@ -157,41 +167,58 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return myDocument;
   }
 
-  public void addMarkupModelListener(MarkupModelListener listener) {
+  public void addMarkupModelListener(@NotNull MarkupModelListener listener) {
     myListeners.add(listener);
-    myCachedListeners = null;
   }
 
-  public void removeMarkupModelListener(MarkupModelListener listener) {
+  public void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
     boolean success = myListeners.remove(listener);
     LOG.assertTrue(success);
-    myCachedListeners = null;
   }
 
-  public void setRangeHighlighterAttributes(final RangeHighlighter highlighter, final TextAttributes textAttributes) {
+  public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, final TextAttributes textAttributes) {
     ((RangeHighlighterImpl)highlighter).setTextAttributes(textAttributes);
   }
 
-  private MarkupModelListener[] getCachedListeners() {
-    if (myCachedListeners == null) {
-      myCachedListeners = myListeners.isEmpty() ? MarkupModelListener.EMPTY_ARRAY : myListeners.toArray(new MarkupModelListener[myListeners.size()]);
-    }
-    return myCachedListeners;
-  }
-
-  protected void fireSegmentHighlighterChanged(RangeHighlighter segmentHighlighter) {
-    MarkupModelEvent event = new MarkupModelEvent(this, segmentHighlighter);
-    MarkupModelListener[] listeners = getCachedListeners();
-    for (MarkupModelListener listener : listeners) {
-      listener.rangeHighlighterChanged(event);
+  protected void fireAttributesChanged(RangeHighlighterEx segmentHighlighter) {
+    for (MarkupModelListener listener : myListeners) {
+      listener.attributesChanged(segmentHighlighter);
     }
   }
-
-  public HighlighterList getHighlighterList() {
-    return myHighlighterList;
+  private void fireAfterAdded(RangeHighlighterEx segmentHighlighter) {
+    for (MarkupModelListener listener : myListeners) {
+      listener.afterAdded(segmentHighlighter);
+    }
+  }
+  private void fireBeforeRemoved(RangeHighlighterEx segmentHighlighter) {
+    for (MarkupModelListener listener : myListeners) {
+      listener.beforeRemoved(segmentHighlighter);
+    }
   }
 
-  public boolean containsHighlighter(RangeHighlighter highlighter) {
-    return myHighlighters.contains(highlighter);
+  public boolean containsHighlighter(@NotNull final RangeHighlighter highlighter) {
+    return !myHighlighterTree.processOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), new Processor<RangeHighlighterEx>() {
+      public boolean process(RangeHighlighterEx h) {
+        return h.getId() != ((RangeHighlighterEx)highlighter).getId();
+      }
+    });
   }
+
+  public boolean processHighlightsOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+    return myHighlighterTree.processOverlappingWith(start, end, processor);
+  }
+
+  public Iterator<RangeHighlighterEx> iterator() {
+    return myHighlighterTree.iterator();
+  }
+
+  @NotNull
+  public Iterator<RangeHighlighterEx> iteratorFrom(@NotNull Interval interval) {
+    return myHighlighterTree.iteratorFrom(interval);
+  }
+
+  public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
+    return myHighlighterTree.sweep(start, end, sweepProcessor);
+  }
+
 }

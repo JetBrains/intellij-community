@@ -18,13 +18,15 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class XBreakpointPanelAction<B extends XBreakpoint<?>> {
+public abstract class XBreakpointPanelAction<B extends XBreakpoint<?>> implements ActionListener {
   protected final XBreakpointsPanel<B> myBreakpointsPanel;
   private final String myName;
 
@@ -39,6 +41,11 @@ public abstract class XBreakpointPanelAction<B extends XBreakpoint<?>> {
 
   public abstract boolean isEnabled(@NotNull Collection<? extends B> breakpoints);
 
-  public abstract void perform(@NotNull Collection<? extends B> breakpoints, final JComponent parentComponent);
+  public abstract void perform(@NotNull Collection<? extends B> breakpoints);
 
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    List<B> list = myBreakpointsPanel.getTree().getSelectedBreakpoints();
+    perform(list);
+  }
 }

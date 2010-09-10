@@ -17,38 +17,52 @@ package com.intellij.codeInsight.template.zencoding;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.CustomLiveTemplate;
-import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.LiveTemplateBuilder;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter;
-import com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator;
+import com.intellij.codeInsight.template.zencoding.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.nodes.*;
 import com.intellij.codeInsight.template.zencoding.tokens.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.HashSet;
 import com.intellij.xml.XmlBundle;
+import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
 
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class ZenCodingTemplate implements CustomLiveTemplate {
+public class ZenCodingTemplate implements CustomLiveTemplate {
   public static final char MARKER = '$';
   private static final String DELIMS = ">+*()";
   public static final String ATTRS = "ATTRS";
+  private static final String SELECTORS = ".#[";
+  private static final String ID = "id";
+  private static final String CLASS = "class";
+  private static final String DEFAULT_TAG = "div";
 
   private static int parseNonNegativeInt(@NotNull String s) {
     try {
@@ -59,9 +73,176 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     return -1;
   }
 
+  private static String getPrefix(@NotNull String templateKey) {
+    for (int i = 0, n = templateKey.length(); i < n; i++) {
+      char c = templateKey.charAt(i);
+      if (SELECTORS.indexOf(c) >= 0) {
+        return templateKey.substring(0, i);
+      }
+    }
+    return templateKey;
+  }
+
   @Nullable
-  private ZenCodingNode parse(@NotNull String text, @NotNull CustomTemplateCallback callback) {
-    List<ZenCodingToken> tokens = lex(text, callback);
+  private static Pair<String, String> parseAttrNameAndValue(@NotNull String text) {
+    int eqIndex = text.indexOf('=');
+    if (eqIndex > 0) {
+      String value = text.substring(eqIndex + 1);
+      if (value.length() >= 2 && (
+        (value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'') ||
+        (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"'))) {
+        value = value.substring(1, value.length() - 1);
+      }
+      return new Pair<String, String>(text.substring(0, eqIndex), value);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static TemplateToken parseSelectors(@NotNull String text) {
+    String templateKey = null;
+    List<Pair<String, String>> attributes = new ArrayList<Pair<String, String>>();
+    Set<String> definedAttrs = new HashSet<String>();
+    final List<String> classes = new ArrayList<String>();
+    StringBuilder builder = new StringBuilder();
+    char lastDelim = 0;
+    text += MARKER;
+    int classAttrPosition = -1;
+    for (int i = 0, n = text.length(); i < n; i++) {
+      char c = text.charAt(i);
+      if (c == '#' || c == '.' || c == '[' || c == ']' || i == n - 1) {
+        if (c != ']') {
+          switch (lastDelim) {
+            case 0:
+              templateKey = builder.toString();
+              break;
+            case '#':
+              if (!definedAttrs.add(ID)) {
+                return null;
+              }
+              attributes.add(new Pair<String, String>(ID, builder.toString()));
+              break;
+            case '.':
+              if (builder.length() <= 0) {
+                return null;
+              }
+              if (classAttrPosition < 0) {
+                classAttrPosition = attributes.size();
+              }
+              classes.add(builder.toString());
+              break;
+            case ']':
+              if (builder.length() > 0) {
+                return null;
+              }
+              break;
+            default:
+              return null;
+          }
+        }
+        else if (lastDelim != '[') {
+          return null;
+        }
+        else {
+          Pair<String, String> pair = parseAttrNameAndValue(builder.toString());
+          if (pair == null || !definedAttrs.add(pair.first)) {
+            return null;
+          }
+          attributes.add(pair);
+        }
+        lastDelim = c;
+        builder = new StringBuilder();
+      }
+      else {
+        builder.append(c);
+      }
+    }
+    if (classes.size() > 0) {
+      if (definedAttrs.contains(CLASS)) {
+        return null;
+      }
+      StringBuilder classesAttrValue = new StringBuilder();
+      for (int i = 0; i < classes.size(); i++) {
+        classesAttrValue.append(classes.get(i));
+        if (i < classes.size() - 1) {
+          classesAttrValue.append(' ');
+        }
+      }
+      assert classAttrPosition >= 0;
+      attributes.add(classAttrPosition, new Pair<String, String>(CLASS, classesAttrValue.toString()));
+    }
+    return new TemplateToken(templateKey, attributes);
+  }
+
+  private static boolean isXML11ValidQName(String str) {
+    final int colon = str.indexOf(':');
+    if (colon == 0 || colon == str.length() - 1) {
+      return false;
+    }
+    if (colon > 0) {
+      final String prefix = str.substring(0, colon);
+      final String localPart = str.substring(colon + 1);
+      return XML11Char.isXML11ValidNCName(prefix) && XML11Char.isXML11ValidNCName(localPart);
+    }
+    return XML11Char.isXML11ValidNCName(str);
+  }
+
+  private static boolean isHtml(CustomTemplateCallback callback) {
+    FileType type = callback.getFileType();
+    return type == StdFileTypes.HTML || type == StdFileTypes.XHTML;
+  }
+
+  private static void addMissingAttributes(XmlTag tag, List<Pair<String, String>> value) {
+    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(value);
+    for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+      Pair<String, String> pair = iterator.next();
+      if (tag.getAttribute(pair.first) != null) {
+        iterator.remove();
+      }
+    }
+    addAttributesBefore(tag, attr2value);
+  }
+
+  @SuppressWarnings({"deprecation"})
+  private static void addAttributesBefore(XmlTag tag, List<Pair<String, String>> attr2value) {
+    XmlAttribute[] attributes = tag.getAttributes();
+    XmlAttribute firstAttribute = attributes.length > 0 ? attributes[0] : null;
+    XmlElementFactory factory = XmlElementFactory.getInstance(tag.getProject());
+    for (Pair<String, String> pair : attr2value) {
+      XmlAttribute xmlAttribute = factory.createXmlAttribute(pair.first, "");
+      if (firstAttribute != null) {
+        tag.addBefore(xmlAttribute, firstAttribute);
+      }
+      else {
+        tag.add(xmlAttribute);
+      }
+    }
+  }
+
+  @Nullable
+  private static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context) {
+    for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
+      if (generator.isMyContext(context) && generator.isAppliedByDefault(context)) {
+        return generator;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  private static XmlFile parseXmlFileInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
+    XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(callback.getProject())
+      .createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), createPhysicalFile);
+    VirtualFile vFile = xmlFile.getVirtualFile();
+    if (vFile != null) {
+      vFile.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
+    }
+    return xmlFile;
+  }
+
+  @Nullable
+  private static ZenCodingNode parse(@NotNull String text, @NotNull CustomTemplateCallback callback, ZenCodingGenerator generator) {
+    List<ZenCodingToken> tokens = lex(text, callback, generator);
     if (tokens == null) {
       return null;
     }
@@ -71,7 +252,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   @Nullable
-  private List<ZenCodingToken> lex(@NotNull String text, @NotNull CustomTemplateCallback callback) {
+  private static List<ZenCodingToken> lex(@NotNull String text, @NotNull CustomTemplateCallback callback, ZenCodingGenerator generator) {
     String filterString = null;
 
     int filterDelim = text.indexOf('|');
@@ -102,7 +283,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
           result.add(new NumberToken(num));
         }
         else {
-          TemplateToken token = parseTemplateKey(key, callback);
+          TemplateToken token = parseTemplateKey(key, callback, generator);
           if (token != null) {
             result.add(token);
           }
@@ -149,49 +330,60 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   @Nullable
-  protected abstract TemplateToken parseTemplateKey(String key, CustomTemplateCallback callback);
-
-  protected static String computeKey(Editor editor, int startOffset) {
-    int offset = editor.getCaretModel().getOffset();
-    String s = editor.getDocument().getCharsSequence().subSequence(startOffset, offset).toString();
-    int index = 0;
-    while (index < s.length() && Character.isWhitespace(s.charAt(index))) {
-      index++;
-    }
-    String key = s.substring(index);
-    int lastWhitespaceIndex = -1;
-    int lastQuoteIndex = -1;
-    int lastApostropheIndex = -1;
-    for (int i = 0; i < key.length(); i++) {
-      char c = key.charAt(i);
-      if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {
-        if (c == '"') {
-          lastQuoteIndex = -1;
-        }
-        else if (c == '\'') lastApostropheIndex = -1;
+  protected static TemplateToken parseTemplateKey(String key, CustomTemplateCallback callback, ZenCodingGenerator generator) {
+    String prefix = getPrefix(key);
+    boolean useDefaultTag = false;
+    if (prefix.length() == 0) {
+      if (!isHtml(callback)) {
+        return null;
       }
-      else if (Character.isWhitespace(c)) {
-        lastWhitespaceIndex = i;
-      }
-      else if (c == '"') {
-        lastQuoteIndex = i;
-      }
-      else if (c == '\'') {
-        lastApostropheIndex = i;
+      else {
+        useDefaultTag = true;
+        prefix = DEFAULT_TAG;
+        key = prefix + key;
       }
     }
-    if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {
-      int max = Math.max(lastQuoteIndex, lastApostropheIndex);
-      return max < key.length() - 1 ? key.substring(max) : null;
+    TemplateImpl template = callback.findApplicableTemplate(prefix);
+    if (template == null && !isXML11ValidQName(prefix)) {
+      return null;
     }
-    if (lastWhitespaceIndex >= 0 && lastWhitespaceIndex < key.length() - 1) {
-      return key.substring(lastWhitespaceIndex + 1);
+    final TemplateToken token = parseSelectors(key);
+    if (token == null) {
+      return null;
     }
-    return key;
+    if (useDefaultTag && token.getAttribute2Value().size() == 0) {
+      return null;
+    }
+    if (template == null) {
+      template = generator.createTemplateByKey(token.getKey());
+    }
+    if (template == null) {
+      return null;
+    }
+    assert prefix.equals(token.getKey());
+    token.setTemplate(template);
+    final XmlFile xmlFile = parseXmlFileInTemplate(template.getString(), callback, true);
+    token.setFile(xmlFile);
+    XmlDocument document = xmlFile.getDocument();
+    final XmlTag tag = document != null ? document.getRootTag() : null;
+    if (token.getAttribute2Value().size() > 0 && tag == null) {
+      return null;
+    }
+    if (tag != null) {
+      if (!containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            addMissingAttributes(tag, token.getAttribute2Value());
+          }
+        });
+      }
+    }
+    return token;
   }
 
-  protected boolean checkTemplateKey(String key, CustomTemplateCallback callback) {
-    return parse(key, callback) != null;
+
+  public static boolean checkTemplateKey(String key, CustomTemplateCallback callback, ZenCodingGenerator generator) {
+    return parse(key, callback, generator) != null;
   }
 
   public void expand(String key, @NotNull CustomTemplateCallback callback) {
@@ -228,11 +420,14 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     while (node instanceof FilterNode) {
       FilterNode filterNode = (FilterNode)node;
       String filterSuffix = filterNode.getFilter();
+      boolean filterFound = false;
       for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
         if (filter.isMyContext(context) && filter.getSuffix().equals(filterSuffix)) {
+          filterFound = true;
           result.add(filter);
         }
       }
+      assert filterFound;
       node = filterNode.getNode();
     }
 
@@ -247,14 +442,18 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
 
-  private void expand(String key,
-                      @NotNull CustomTemplateCallback callback,
-                      String surroundedText) {
-    ZenCodingNode node = parse(key, callback);
+  private static void expand(String key,
+                             @NotNull CustomTemplateCallback callback,
+                             String surroundedText) {
+    ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext());
+    assert defaultGenerator != null;
+
+    ZenCodingNode node = parse(key, callback, defaultGenerator);
     assert node != null;
     if (surroundedText == null) {
       if (node instanceof TemplateNode) {
-        if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) && callback.findApplicableTemplates(key).size() > 1) {
+        if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) &&
+            callback.findApplicableTemplates(key, defaultGenerator.getContextTypes()).size() > 1) {
           callback.startTemplate();
           return;
         }
@@ -277,10 +476,41 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
         end = e;
       }
     }
-    if (end < builder.length()) {
+    /*if (end < builder.length() && end >= 0) {
       builder.insertVariableSegment(end, TemplateImpl.END);
-    }
-    callback.startTemplate(builder.buildTemplate(), null);
+    }*/
+    callback.startTemplate(builder.buildTemplate(), null, new TemplateEditingAdapter() {
+      private TextRange myEndVarRange;
+      private Editor myEditor;
+
+      @Override
+      public void beforeTemplateFinished(TemplateState state, Template template) {
+        int variableNumber = state.getCurrentVariableNumber();
+        if (variableNumber >= 0 && template instanceof TemplateImpl) {
+          TemplateImpl t = (TemplateImpl)template;
+          while (variableNumber < t.getVariableCount()) {
+            String varName = t.getVariableNameAt(variableNumber);
+            if (LiveTemplateBuilder.isEndVariable(varName)) {
+              myEndVarRange = state.getVariableRange(varName);
+              myEditor = state.getEditor();
+              break;
+            }
+            variableNumber++;
+          }
+        }
+      }
+
+      @Override
+      public void templateFinished(Template template, boolean brokenOff) {
+        if (brokenOff && myEndVarRange != null && myEditor != null) {
+          int offset = myEndVarRange.getStartOffset();
+          if (offset >= 0 && offset != myEditor.getCaretModel().getOffset()) {
+            myEditor.getCaretModel().moveToOffset(offset);
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          }
+        }
+      }
+    });
   }
 
   public void wrap(final String selection,
@@ -288,7 +518,9 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   ) {
     InputValidatorEx validator = new InputValidatorEx() {
       public String getErrorText(String inputString) {
-        if (!checkTemplateKey(inputString, callback)) {
+        ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext());
+        assert generator != null;
+        if (!checkTemplateKey(inputString, callback, generator)) {
           return XmlBundle.message("zen.coding.incorrect.abbreviation.error");
         }
         return null;
@@ -320,14 +552,12 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     }
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
     PsiElement element = CustomTemplateCallback.getContext(file, offset);
-    return isApplicable(element);
+    return findApplicableDefaultGenerator(element) != null;
   }
 
-  protected abstract boolean isApplicable(@NotNull PsiElement element);
-
-  protected void doWrap(final String selection,
-                        final String abbreviation,
-                        final CustomTemplateCallback callback) {
+  protected static void doWrap(final String selection,
+                               final String abbreviation,
+                               final CustomTemplateCallback callback) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(callback.getProject(), new Runnable() {
@@ -361,6 +591,16 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     return false;
   }
 
+  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+    ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext());
+    assert generator != null;
+    return generator.computeTemplateKey(callback);
+  }
+
+  public boolean supportsWrapping() {
+    return true;
+  }
+
   private static class MyParser {
     private final List<ZenCodingToken> myTokens;
     private int myIndex = 0;
@@ -378,7 +618,11 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       ZenCodingToken filter = nextToken();
       ZenCodingNode result = add;
       while (filter instanceof FilterToken) {
-        result = new FilterNode(result, ((FilterToken)filter).getSuffix());
+        String suffix = ((FilterToken)filter).getSuffix();
+        if (!ZenCodingParser.checkFilterSuffix(suffix)) {
+          return null;
+        }
+        result = new FilterNode(result, suffix);
         myIndex++;
         filter = nextToken();
       }

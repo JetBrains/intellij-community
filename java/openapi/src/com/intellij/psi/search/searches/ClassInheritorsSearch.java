@@ -31,6 +31,7 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -161,8 +162,18 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     });
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname)) {
       return AllClassesSearch.search(searchScope, baseClass.getProject(), parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
-        public boolean process(PsiClass aClass) {
+        public boolean process(final PsiClass aClass) {
           ProgressManager.checkCanceled();
+          final String qname1 = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            @Nullable
+            public String compute() {
+              return aClass.getQualifiedName();
+            }
+          });
+          if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname1)) {
+            return true;
+          }
+
           return consumer.process(aClass);
         }
       });

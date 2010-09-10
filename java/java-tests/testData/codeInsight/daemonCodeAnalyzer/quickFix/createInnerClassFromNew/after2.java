@@ -7,7 +7,7 @@ public class Test {
     }
 
     private static class MyArrayList extends ArrayList {
-        public MyArrayList(int i, String s) {<caret>
+        public MyArrayList(int i, String test) {<caret>
         }
     }
 }

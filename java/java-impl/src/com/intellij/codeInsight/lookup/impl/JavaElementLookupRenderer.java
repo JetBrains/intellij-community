@@ -218,7 +218,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
     return CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_AFTER_COMMA;
   }
 
-  private static boolean isToStrikeout(LookupItem<?> item) {
+  public static boolean isToStrikeout(LookupItem<?> item) {
     final List<PsiMethod> allMethods = item.getUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE);
     if (allMethods != null){
       for (PsiMethod method : allMethods) {

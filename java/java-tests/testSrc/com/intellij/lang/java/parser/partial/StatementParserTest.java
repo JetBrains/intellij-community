@@ -25,117 +25,127 @@ public class StatementParserTest extends JavaParsingTestCase {
     super("parser-partial/statements");
   }
 
-  public void testAssertNormal0() { doParserTest("{ assert cond; }"); }
-  public void testAssertNormal1() { doParserTest("{ assert cond : message; }"); }
+  public void testBlockSimple() { doBlockParserTest("{ {} }"); }
+  public void testBlockEmpty() { doBlockParserTest("{ ; }"); }
+  public void testAnonymousInSmartCompletion() { doBlockParserTest("{ new Foo(hash\n#) {};\n new Foo(hash\n#, bar) {};\n new Foo(hash\n#x) {}; }"); }
+  public void testBlockIncomplete0() { doBlockParserTest("{ /*}"); }
+  public void testBlockIncomplete1() { doBlockParserTest("{ { }"); }
+  public void testBlockIncomplete2() { doBlockParserTest("{ else; catch; finally; }"); }
+  public void testSCR5202() { doBlockParserTest("{ String.class.\n String[] strings; }"); }
 
-  public void testAssignmentSimple() { doParserTest("{ int[] a;\n a[0] = 0; }"); }
+  public void testAssertNormal0() { doParserTest("assert cond;"); }
+  public void testAssertNormal1() { doParserTest("assert cond : message;"); }
 
-  public void testBlockSimple() { doParserTest("{ {} }"); }
-  public void testBlockEmpty() { doParserTest("{ ; }"); }
-  public void testAnonymousInSmartCompletion() { doParserTest("{ new Foo(hash\n#) {};\n new Foo(hash\n#, bar) {};\n new Foo(hash\n#x) {}; }"); }
-  public void testBlockIncomplete0() { doParserTest("{ "); }
-  public void testBlockIncomplete1() { doParserTest("{ { }"); }
-  public void testBlockIncomplete2() { doParserTest("{ else; catch; finally; }"); }
+  public void testAssignmentSimple0() { doParserTest("int[] a;\n a[0] = 0;"); }
+  public void testAssignmentSimple1() { doParserTest("a=1; int b=2;"); }
 
-  public void testBreakNormal0() { doParserTest("{ break; }"); }
-  public void testBreakNormal1() { doParserTest("{ break LABEL; }"); }
+  public void testBreakNormal0() { doParserTest("break;"); }
+  public void testBreakNormal1() { doParserTest("break LABEL;"); }
 
-  public void testContinueNormal0() { doParserTest("{ continue; }"); }
-  public void testContinueNormal1() { doParserTest("{ continue LABEL; }"); }
+  public void testContinueNormal0() { doParserTest("continue;"); }
+  public void testContinueNormal1() { doParserTest("continue LABEL;"); }
 
-  public void testLocalVar() { doParserTest("{ List<Integer> list; }"); }
-  public void testFor() { doParserTest("{ for(Iterator<String> it = null; it.hasNext();) { String s = it.next(); } }"); }
+  public void testLocalVar() { doParserTest("List<Integer> list;"); }
+  public void testFor() { doParserTest("for(Iterator<String> it = null; it.hasNext();) { String s = it.next(); }"); }
 
-  public void testDoNormal() { doParserTest("{ do{}while(true); }"); }
-  public void testDoIncomplete0() { doParserTest("{ do }"); }
-  public void testDoIncomplete1() { doParserTest("{ do foo(); }"); }
-  public void testDoIncomplete2() { doParserTest("{ do foo(); while }"); }
-  public void testDoIncomplete3() { doParserTest("{ do foo(); while( }"); }
-  public void testDoIncomplete4() { doParserTest("{ do foo(); while(); }"); }
-  public void testDoIncomplete5() { doParserTest("{ do foo(); while(\n g(); }"); }
-  public void testDoIncomplete6() { doParserTest("{ do foo(); while(cond) }"); }
+  public void testDoNormal() { doParserTest("do{}while(true);"); }
+  public void testDoIncomplete0() { doParserTest("do"); }
+  public void testDoIncomplete1() { doParserTest("do foo();"); }
+  public void testDoIncomplete2() { doParserTest("do foo(); while"); }
+  public void testDoIncomplete3() { doParserTest("do foo(); while("); }
+  public void testDoIncomplete4() { doParserTest("do foo(); while();"); }
+  public void testDoIncomplete5() { doParserTest("do foo(); while(\n g();"); }
+  public void testDoIncomplete6() { doParserTest("do foo(); while(cond)"); }
 
-  public void testForNormal0() { doParserTest("{ for(int i = 0; i < 10; i++)\n ; }"); }
-  public void testForNormal1() { doParserTest("{ for( ; ; ) foo(); }"); }
-  public void testForEach() { doParserTest("{ for(Object o : map.entrySet()) ; }"); }
-  public void testForIncomplete0() { doParserTest("{ for }"); }
-  public void testForIncomplete1() { doParserTest("{ for( }"); }
-  public void testForIncomplete2() { doParserTest("{ for(int i = 0; }"); }
-  public void testForIncomplete3() { doParserTest("{ for(int i = 0; i < 10 }"); }
-  public void testForIncomplete4() { doParserTest("{ for(int i = 0; i < 10; }"); }
-  public void testForIncomplete5() { doParserTest("{ for(int i = 0; i < 10; i++ }"); }
-  public void testForIncomplete6() { doParserTest("{ for(int i = 0; i < 10; i++) }"); }
-  public void testForIncomplete7() { doParserTest("{ for() foo(); }"); }
-  public void testForIncomplete8() { doParserTest("{ for(int i = 0;) foo(); }"); }
-  public void testForIncomplete9() { doParserTest("{ for(int i = 0; i < 0) foo(); }"); }
+  public void testForNormal0() { doParserTest("for(int i = 0; i < 10; i++)\n ;"); }
+  public void testForNormal1() { doParserTest("for( ; ; ) foo();"); }
+  public void testForEach() { doParserTest("for(Object o : map.entrySet()) ;"); }
+  public void testForIncomplete0() { doParserTest("for"); }
+  public void testForIncomplete1() { doParserTest("for("); }
+  public void testForIncomplete2() { doParserTest("for(int i = 0;"); }
+  public void testForIncomplete3() { doParserTest("for(int i = 0; i < 10"); }
+  public void testForIncomplete4() { doParserTest("for(int i = 0; i < 10;"); }
+  public void testForIncomplete5() { doParserTest("for(int i = 0; i < 10; i++"); }
+  public void testForIncomplete6() { doParserTest("for(int i = 0; i < 10; i++)"); }
+  public void testForIncomplete7() { doParserTest("for() foo();"); }
+  public void testForIncomplete8() { doParserTest("for(int i = 0;) foo();"); }
+  public void testForIncomplete9() { doParserTest("for(int i = 0; i < 0) foo();"); }
 
-  public void testIfNormalWithElse() { doParserTest("{ if (a){ f1(); } else{ f2(); } }"); }
-  public void testIfNormalNoElse() { doParserTest("{ if (a) f1(); }"); }
-  public void testIfIncomplete0() { doParserTest("{ if }"); }
-  public void testIfIncomplete1() { doParserTest("{ if ( }"); }
-  public void testIfIncomplete2() { doParserTest("{ if (\n foo(); }"); }
-  public void testIfIncomplete3() { doParserTest("{ if (cond }"); }
-  public void testIfIncomplete4() { doParserTest("{ if (cond) }"); }
-  public void testIfIncomplete5() { doParserTest("{ if () foo(); }"); }
-  public void testIfIncomplete6() { doParserTest("{ if (cond) foo(); else }"); }
+  public void testIfNormalWithElse() { doParserTest("if (a){ f1(); } else{ f2(); }"); }
+  public void testIfNormalNoElse() { doParserTest("if (a) f1();"); }
+  public void testIfIncomplete0() { doParserTest("if"); }
+  public void testIfIncomplete1() { doParserTest("if ("); }
+  public void testIfIncomplete2() { doParserTest("if (\n foo();"); }
+  public void testIfIncomplete3() { doParserTest("if (cond"); }
+  public void testIfIncomplete4() { doParserTest("if (cond)"); }
+  public void testIfIncomplete5() { doParserTest("if () foo();"); }
+  public void testIfIncomplete6() { doParserTest("if (cond) foo(); else"); }
 
-  public void testLabelSimple() { doParserTest("{ Loop:\n while(true) ; }"); }
+  public void testLabelSimple() { doParserTest("Loop:\n while(true) ;"); }
 
-  public void testReturnNoResult() { doParserTest("{ return; }"); }
-  public void testReturnWithResult() { doParserTest("{ return 10; }"); }
-  public void testReturnIncomplete0() { doParserTest("{ return }"); }
-  public void testReturnIncomplete1() { doParserTest("{ return a }"); }
+  public void testReturnNoResult() { doParserTest("return;"); }
+  public void testReturnWithResult() { doParserTest("return 10;"); }
+  public void testReturnIncomplete0() { doParserTest("return"); }
+  public void testReturnIncomplete1() { doParserTest("return a"); }
 
-  public void testSwitchNormal() { doParserTest("{ switch(o){} }"); }
-  public void testSwitchIncomplete0() { doParserTest("{ switch }"); }
-  public void testSwitchIncomplete1() { doParserTest("{ switch( }"); }
-  public void testSwitchIncomplete2() { doParserTest("{ switch(o }"); }
-  public void testSwitchIncomplete3() { doParserTest("{ switch(o) }"); }
-  public void testSwitchIncomplete4() { doParserTest("{ switch(){} }"); }
-  public void testSwitchIncomplete5() { doParserTest("{ switch(\n foo(); }"); }
+  public void testSwitchNormal() { doParserTest("switch(o){}"); }
+  public void testSwitchIncomplete0() { doParserTest("switch"); }
+  public void testSwitchIncomplete1() { doParserTest("switch("); }
+  public void testSwitchIncomplete2() { doParserTest("switch(o"); }
+  public void testSwitchIncomplete3() { doParserTest("switch(o)"); }
+  public void testSwitchIncomplete4() { doParserTest("switch(){}"); }
+  public void testSwitchIncomplete5() { doParserTest("switch(\n foo();"); }
 
-  public void testSwitchLabelsNormal() { doParserTest("{ case 1: break; default: break; }"); }
-  public void testSwitchLabelsIncomplete0() { doParserTest("{ case }"); }
-  public void testSwitchLabelsIncomplete1() { doParserTest("{ case 2 }"); }
-  public void testSwitchLabelsIncomplete2() { doParserTest("{ default }"); }
-  public void testSwitchLabelsIncomplete3() { doParserTest("{ default 3: }"); }
+  public void testSwitchLabelsNormal() { doParserTest("case 1: break; default: break;"); }
+  public void testSwitchLabelsIncomplete0() { doParserTest("case"); }
+  public void testSwitchLabelsIncomplete1() { doParserTest("case 2"); }
+  public void testSwitchLabelsIncomplete2() { doParserTest("default"); }
+  public void testSwitchLabelsIncomplete3() { doParserTest("default 3:"); }
 
-  public void testSyncNormal() { doParserTest("{ synchronized(o){} }"); }
-  public void testSyncIncomplete0() { doParserTest("{ synchronized }"); }
-  public void testSyncIncomplete1() { doParserTest("{ synchronized( }"); }
-  public void testSyncIncomplete2() { doParserTest("{ synchronized(o }"); }
-  public void testSyncIncomplete3() { doParserTest("{ synchronized(o) }"); }
-  public void testSyncIncomplete4() { doParserTest("{ synchronized(){} }"); }
-  public void testSyncIncomplete5() { doParserTest("{ synchronized(\n foo(); }"); }
+  public void testSyncNormal() { doParserTest("synchronized(o){}"); }
+  public void testSyncIncomplete0() { doParserTest("synchronized"); }
+  public void testSyncIncomplete1() { doParserTest("synchronized("); }
+  public void testSyncIncomplete2() { doParserTest("synchronized(o"); }
+  public void testSyncIncomplete3() { doParserTest("synchronized(o)"); }
+  public void testSyncIncomplete4() { doParserTest("synchronized(){}"); }
+  public void testSyncIncomplete5() { doParserTest("synchronized(\n foo();"); }
 
-  public void testThrowNormal() { doParserTest("{ throw e; }"); }
-  public void testThrowIncomplete0() { doParserTest("{ throw }"); }
-  public void testThrowIncomplete1() { doParserTest("{ throw e }"); }
+  public void testThrowNormal() { doParserTest("throw e;"); }
+  public void testThrowIncomplete0() { doParserTest("throw"); }
+  public void testThrowIncomplete1() { doParserTest("throw e"); }
 
-  public void testTryNormal0() { doParserTest("{ try{}catch(E e){} }"); }
-  public void testTryNormal1() { doParserTest("{ try{}catch(E e){}finally{} }"); }
-  public void testTryNormal2() { doParserTest("{ try{}finally{} }"); }
-  public void testTryIncomplete0() { doParserTest("{ try }"); }
-  public void testTryIncomplete1() { doParserTest("{ try{} }"); }
-  public void testTryIncomplete2() { doParserTest("{ try{}catch }"); }
-  public void testTryIncomplete3() { doParserTest("{ try{}catch( }"); }
-  public void testTryIncomplete4() { doParserTest("{ try{}catch(E }"); }
-  public void testTryIncomplete5() { doParserTest("{ try{}catch(E e }"); }
-  public void testTryIncomplete6() { doParserTest("{ try{}catch(E e) }"); }
-  public void testTryIncomplete7() { doParserTest("{ try{}finally }"); }
+  public void testTryNormal0() { doParserTest("try{}catch(E e){}"); }
+  public void testTryNormal1() { doParserTest("try{}catch(E e){}finally{}"); }
+  public void testTryNormal2() { doParserTest("try{}finally{}"); }
+  public void testTryIncomplete0() { doParserTest("try"); }
+  public void testTryIncomplete1() { doParserTest("try{}"); }
+  public void testTryIncomplete2() { doParserTest("try{}catch"); }
+  public void testTryIncomplete3() { doParserTest("try{}catch("); }
+  public void testTryIncomplete4() { doParserTest("try{}catch(E"); }
+  public void testTryIncomplete5() { doParserTest("try{}catch(E e"); }
+  public void testTryIncomplete6() { doParserTest("try{}catch(E e)"); }
+  public void testTryIncomplete7() { doParserTest("try{}finally"); }
 
-  public void testWhileNormal() { doParserTest("{ while (true) foo(); }"); }
-  public void testWhileIncomplete0() { doParserTest("{ while }"); }
-  public void testWhileIncomplete1() { doParserTest("{ while ( }"); }
-  public void testWhileIncomplete2() { doParserTest("{ while(\n foo(); }"); }
-  public void testWhileIncomplete3() { doParserTest("{ while(cond }"); }
-  public void testWhileIncomplete4() { doParserTest("{ while(cond) }"); }
-  public void testWhileIncomplete5() { doParserTest("{ while() foo(); }"); }
+  public void testWhileNormal() { doParserTest("while (true) foo();"); }
+  public void testWhileIncomplete0() { doParserTest("while"); }
+  public void testWhileIncomplete1() { doParserTest("while ("); }
+  public void testWhileIncomplete2() { doParserTest("while(\n foo();"); }
+  public void testWhileIncomplete3() { doParserTest("while(cond"); }
+  public void testWhileIncomplete4() { doParserTest("while(cond)"); }
+  public void testWhileIncomplete5() { doParserTest("while() foo();"); }
+
+  private void doBlockParserTest(final String text) {
+    doParserTest(text, new TestParser() {
+      public void parse(final PsiBuilder builder) {
+        StatementParser.parseCodeBlockDeep(builder, true);
+      }
+    });
+  }
 
   private void doParserTest(final String text) {
     doParserTest(text, new TestParser() {
       public void parse(final PsiBuilder builder) {
-        StatementParser.parseCodeBlockDeep(builder, true);
+        StatementParser.parseStatements(builder);
       }
     });
   }

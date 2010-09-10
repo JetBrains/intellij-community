@@ -30,7 +30,7 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
 import org.jetbrains.annotations.Nullable;
 
-public class ViewBreakpointsAction extends AnAction {
+public class ViewBreakpointsAction extends AnAction implements AnAction.TransparentUpdate {
   private Object myInitialBreakpoint;
 
   public ViewBreakpointsAction(){

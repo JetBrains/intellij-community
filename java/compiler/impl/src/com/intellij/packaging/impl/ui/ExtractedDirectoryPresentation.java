@@ -54,7 +54,7 @@ public class ExtractedDirectoryPresentation extends PackagingElementPresentation
         commentAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
       }
     }
-    presentationData.addText("Unpacked '" + PathUtil.getFileName(myJarPath) + myPathInJar + "'", mainAttributes);
+    presentationData.addText("Extracted '" + PathUtil.getFileName(myJarPath) + myPathInJar + "'", mainAttributes);
     presentationData.addText(" (" + parentPath + ")", commentAttributes);
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
@@ -36,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -317,7 +316,9 @@ public class SvnUtil {
 
     public Collection<File> handleWorkingCopyRoot(File root, ProgressIndicator progress) {
       final Collection<File> result = new HashSet<File>();
+      String oldText = null;
       if (progress != null) {
+        oldText = progress.getText();
         progress.setText(SvnBundle.message("progress.text.discovering.location", root.getAbsolutePath()));
       }
       try {
@@ -329,6 +330,9 @@ public class SvnUtil {
       }
       catch (SVNException e) {
         //
+      }
+      if (progress != null) {
+        progress.setText(oldText);
       }
       return result;
     }
@@ -628,5 +632,19 @@ public class SvnUtil {
         repository.closeSession();
       }
     }
+  }
+
+  public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws SVNException {
+    final SVNRepository repository;
+    repository = vcs.createRepository(url);
+    final Ref<Boolean> result = new Ref<Boolean>(true);
+    repository.getDir("", -1, null, new ISVNDirEntryHandler() {
+      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+        if (dirEntry != null) {
+          result.set(false);
+        }
+      }
+    });
+    return result.get();
   }
 }

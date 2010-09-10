@@ -199,10 +199,6 @@ public class FormatTextRanges {
 
   @Override
   public String toString() {
-    return "FormatTextRanges{" + StringUtil.join(myRanges, new Function<FormatTextRange, String>() {
-      public String fun(FormatTextRange formatTextRange) {
-        return formatTextRange.toString();
-      }
-    }, ",");
+    return "FormatTextRanges{" + StringUtil.join(myRanges, StringUtil.createToStringFunction(FormatTextRange.class), ",");
   }
 }

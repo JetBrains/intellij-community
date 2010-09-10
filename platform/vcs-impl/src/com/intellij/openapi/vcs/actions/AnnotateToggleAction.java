@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -497,7 +498,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       myFileAnnotation = fileAnnotation;
       myVcs = vcs;
       myFile = file;
-      final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
       currentLine = -1;
     }
 
@@ -526,13 +526,16 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       if (revisionNumber != null) {
         final VcsException[] exc = new VcsException[1];
         final List<Change> changes = new LinkedList<Change>();
+        final FilePath[] targetPath = new FilePath[1];
         ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
                                                                   "Loading revision " + revisionNumber.asString() + " contents", true, BackgroundFromStartOption.getInstance()) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
             try {
-              final CommittedChangeList cl = provider.getOneList(myFile, revisionNumber);
+              final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(myFile, revisionNumber);
+              targetPath[0] = pair.getSecond() == null ? new FilePathImpl(myFile) : pair.getSecond();
+              final CommittedChangeList cl = pair.getFirst();
               if (cl == null) {
                 ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
                 return;
@@ -550,7 +553,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
             if (exc[0] != null) {
               ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "Can not show diff: " + exc[0].getMessage(), MessageType.ERROR);
             } else if (! changes.isEmpty()) {
-              int idx = findSelfInList(changes);
+              int idx = findSelfInList(changes, targetPath[0]);
               final ShowDiffUIContext context = new ShowDiffUIContext(true);
               context.setDiffNavigationContext(createDiffNavigationContext(actualNumber));
               ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), idx, myVcs.getProject(), context);
@@ -560,9 +563,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       }
     }
 
-    private int findSelfInList(List<Change> changes) {
+    private int findSelfInList(List<Change> changes, final FilePath filePath) {
       int idx = -1;
-      final File ioFile = new File(myFile.getPath());
+      final File ioFile = filePath.getIOFile();
       for (int i = 0; i < changes.size(); i++) {
         final Change change = changes.get(i);
         if ((change.getAfterRevision() != null) && (change.getAfterRevision().getFile().getIOFile().equals(ioFile))) {
@@ -589,12 +592,35 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     private DiffNavigationContext createDiffNavigationContext(final int actualLine) {
       final MyContentsLines contentsLines = new MyContentsLines(myFileAnnotation.getAnnotatedContent());
 
+      final Pair<Integer, String> pair = correctActualLineIfTextEmpty(contentsLines, actualLine);
       return new DiffNavigationContext(new Iterable<String>() {
         @Override
         public Iterator<String> iterator() {
-          return new CacheOneStepIterator<String>(new ContextLineIterator(contentsLines, myFileAnnotation, actualLine));
+          return new CacheOneStepIterator<String>(new ContextLineIterator(contentsLines, myFileAnnotation, pair.getFirst()));
         }
-      }, contentsLines.getLineContents(actualLine));
+      }, pair.getSecond());
+    }
+
+    private final static int ourVicinity = 5;
+    private Pair<Integer, String> correctActualLineIfTextEmpty(final MyContentsLines contentsLines, final int actualLine) {
+      final VcsRevisionNumber revision = myFileAnnotation.getLineRevisionNumber(actualLine);
+
+      for (int i = actualLine; (i < (actualLine + ourVicinity)) && (! contentsLines.isLineEndsFinished()); i++) {
+        if (! revision.equals(myFileAnnotation.getLineRevisionNumber(i))) continue;
+        final String lineContents = contentsLines.getLineContents(i);
+        if (! StringUtil.isEmptyOrSpaces(lineContents)) {
+          return new Pair<Integer, String>(i, lineContents);
+        }
+      }
+      int bound = Math.max(actualLine - ourVicinity, 0);
+      for (int i = actualLine - 1; (i >= bound); --i) {
+        if (! revision.equals(myFileAnnotation.getLineRevisionNumber(i))) continue;
+        final String lineContents = contentsLines.getLineContents(i);
+        if (! StringUtil.isEmptyOrSpaces(lineContents)) {
+          return new Pair<Integer, String>(i, lineContents);
+        }
+      }
+      return new Pair<Integer, String>(actualLine, contentsLines.getLineContents(actualLine));
     }
 
     private static class MySplittingIterator implements Iterator<Integer> {
@@ -675,8 +701,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                                  (number + 1 >= myLinesStartOffsets.size())
                                                  ? myContents.length()
                                                  : myLinesStartOffsets.get(number + 1));
-        text = text.endsWith("\r\n") ? text.substring(0, text.length() - 2) : text.substring(0, text.length() - 1);
+        text = text.endsWith("\r\n") ? text.substring(0, text.length() - 2) : text;
+        text = (text.endsWith("\r") || text.endsWith("\n")) ? text.substring(0, text.length() - 1) : text;
         return text;
+      }
+
+      public boolean isLineEndsFinished() {
+        return myLineEndsFinished;
       }
 
       public int getKnownLinesNumber() {

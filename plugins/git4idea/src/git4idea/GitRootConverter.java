@@ -38,6 +38,8 @@ public class GitRootConverter implements AbstractVcs.RootsConvertor {
   public List<VirtualFile> convertRoots(List<VirtualFile> result) {
     // The method relies on the fact that VFS caches metadata about files,
     // so the query should be relatively fast and work mostly with in-memory structures.
+
+    // todo useless?
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
     HashSet<VirtualFile> listed = new HashSet<VirtualFile>();
     for (VirtualFile f : result) {

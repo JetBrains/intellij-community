@@ -96,6 +96,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createEmptyCOWList();
+  private ModificationTracker myModificationTracker;
 
   public static MavenProjectsManager getInstance(Project p) {
     return p.getComponent(MavenProjectsManager.class);
@@ -104,6 +105,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
   public MavenProjectsManager(Project project) {
     super(project);
     myEmbeddersManager = new MavenEmbeddersManager(myProject);
+    myModificationTracker = new MavenModificationTracker(this);
   }
 
   public MavenProjectsManagerState getState() {
@@ -119,6 +121,10 @@ public class MavenProjectsManager extends SimpleProjectComponent
       applyStateToTree();
       scheduleUpdateAllProjects(false);
     }
+  }
+
+  public ModificationTracker getModificationTracker() {
+    return myModificationTracker;
   }
 
   public MavenGeneralSettings getGeneralSettings() {

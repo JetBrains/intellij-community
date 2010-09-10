@@ -15,9 +15,7 @@
  */
 package org.zmlx.hg4idea.test;
 
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.testng.annotations.BeforeMethod;
 import org.zmlx.hg4idea.HgVcs;
 
@@ -38,8 +36,8 @@ public class HgCollaborativeTestCase extends HgAbstractTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myParentRepo = createRepository();
-    myRepo = cloneFrom(myParentRepo);
+    myParentRepo = HgTestRepository.create(this);
+    myRepo = myParentRepo.cloneRepository();
 
     myProjectDir = new File(myRepo.getDirFixture().getTempDirPath());
 
@@ -47,20 +45,8 @@ public class HgCollaborativeTestCase extends HgAbstractTestCase {
     activateVCS(HgVcs.VCS_NAME);
     myChangeListManager = new HgTestChangeListManager(myProject);
 
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-  }
-
-  /**
-   * Clones a repository from the given one. New repository is located in a temporary test directory.
-   * @param parent repository to clone from.
-   * @return New repository cloned from the given parent.
-   */
-  protected HgTestRepository cloneFrom(HgTestRepository parent) throws Exception {
-    final TempDirTestFixture dirFixture = createFixtureDir();
-    final ProcessOutput processOutput = runHg(null, "clone", parent.getDirFixture().getTempDirPath(), dirFixture.getTempDirPath());
-    verify(processOutput);
-    return new HgTestRepository(this, dirFixture);
+    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
+    doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
 }

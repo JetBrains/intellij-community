@@ -39,15 +39,15 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     private final SearchRequestCollector myOptimizer;
     private final boolean isSharedOptimizer;
 
-    public SearchParameters(PsiElement elementToSearch, SearchScope scope, boolean ignoreAccessScope, @Nullable SearchRequestCollector optimizer) {
+    public SearchParameters(@NotNull PsiElement elementToSearch, SearchScope scope, boolean ignoreAccessScope, @Nullable SearchRequestCollector optimizer) {
       myElementToSearch = elementToSearch;
       myScope = scope;
       myIgnoreAccessScope = ignoreAccessScope;
       isSharedOptimizer = optimizer != null;
-      myOptimizer = optimizer == null ? new SearchRequestCollector() : optimizer;
+      myOptimizer = optimizer == null ? new SearchRequestCollector(new SearchSession()) : optimizer;
     }
 
-    public SearchParameters(final PsiElement elementToSearch, final SearchScope scope, final boolean ignoreAccessScope) {
+    public SearchParameters(@NotNull final PsiElement elementToSearch, final SearchScope scope, final boolean ignoreAccessScope) {
       this(elementToSearch, scope, ignoreAccessScope, null);
     }
 
@@ -119,7 +119,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   }
   public static void searchOptimized(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope,
                                      @NotNull SearchRequestCollector collector, final boolean inReadAction, PairProcessor<PsiReference, SearchRequestCollector> processor) {
-    final SearchRequestCollector nested = new SearchRequestCollector();
+    final SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
     collector.searchQuery(new QuerySearchRequest(search(new SearchParameters(element, searchScope, ignoreAccessScope, nested)), nested,
                                                  inReadAction, processor));
   }

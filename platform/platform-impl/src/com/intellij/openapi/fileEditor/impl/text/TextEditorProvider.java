@@ -70,11 +70,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     }
 
     final FileType ft = file.getFileType();
-    if (ft.isBinary()) {
-      return BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
-    }
-
-    return true;
+    return !ft.isBinary() || BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
   }
 
   @NotNull
@@ -124,7 +120,8 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return FileEditorPolicy.NONE;
   }
 
-  @NotNull public TextEditor getTextEditor(@NotNull Editor editor) {
+  @NotNull
+  public TextEditor getTextEditor(@NotNull Editor editor) {
     TextEditor textEditor = editor.getUserData(TEXT_EDITOR_KEY);
     if (textEditor == null) {
       textEditor = createWrapperForEditor(editor);
@@ -143,12 +140,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     if (editor instanceof DocumentsEditor) {
       DocumentsEditor documentsEditor = (DocumentsEditor)editor;
       Document[] documents = documentsEditor.getDocuments();
-      if (documents.length > 0) {
-        return documents;
-      }
-      else {
-        return null;
-      }
+      return documents.length > 0 ? documents : null;
     }
 
     if (editor instanceof TextEditor) {
@@ -182,7 +174,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     state.SELECTION_END = editor.getSelectionModel().getSelectionEnd();
 
     // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
-    // scrolling proportion restored sligtly differs from what have been saved.
+    // scrolling proportion restored slightly differs from what have been saved.
     state.VERTICAL_SCROLL_PROPORTION = level == FileEditorStateLevel.UNDO ? -1 : EditorUtil.calcVerticalScrollProportion(editor);
     return state;
   }

@@ -91,12 +91,24 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   public PsiVariable resolveReferencedVariable(@NotNull String referenceText, PsiElement context) {
+    return resolveVar(referenceText, context, null);
+  }
+
+  @Override
+  public PsiVariable resolveAccessibleReferencedVariable(@NotNull String referenceText, PsiElement context) {
+    final boolean[] problemWithAccess = new boolean[1];
+    PsiVariable variable = resolveVar(referenceText, context, problemWithAccess);
+    return problemWithAccess[0] ? null : variable;
+  }
+
+  @Nullable
+  private PsiVariable resolveVar(String referenceText, PsiElement context, boolean[] problemWithAccess) {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
     TreeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
     if (ref == null) return null;
     holderElement.rawAddChildren(ref);
     PsiJavaCodeReferenceElement psiRef = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(ref);
-    return ResolveVariableUtil.resolveVariable(psiRef, null, null);
+    return ResolveVariableUtil.resolveVariable(psiRef, problemWithAccess, null);
   }
 
   public boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
@@ -502,7 +514,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (paramBound == null) return null;
       ConstraintType constrType = wildcardParam.isExtends() ? ConstraintType.SUPERTYPE : ConstraintType.SUBTYPE;
       if (arg instanceof PsiWildcardType) {
-        if (((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends()) {
+        if (((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends() && ((PsiWildcardType)arg).isBounded() == wildcardParam.isBounded()) {
           Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(paramBound, ((PsiWildcardType)arg).getBound(),
                                                                                    patternType, constrType, depth);
           if (res != null) return res;

@@ -15,22 +15,17 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.apache.tools.ant.Task;
 
-import java.io.File;
-import java.util.List;
-
 /**
  * @author Eugene Zhuravlev
  *         Date: Jul 1, 2010
  */
-public abstract class AntDomTypeDef extends AntDomNamedElement{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomTypeDef");
+public abstract class AntDomTypeDef extends AntDomCustomClasspathComponent{
 
   @Attribute("classname")
   public abstract GenericAttributeValue<String> getClassName();
@@ -46,28 +41,17 @@ public abstract class AntDomTypeDef extends AntDomNamedElement{
   @Attribute("format")
   public abstract GenericAttributeValue<String> getFormat();
 
-  @Attribute("classpath")
-  @Convert(value = AntMultiPathStringConverter.class)
-  public abstract GenericAttributeValue<List<File>> getClasspath();
-
-  @Attribute("classpathref")
-  @Convert(value = AntDomRefIdConverter.class)
-  public abstract GenericAttributeValue<AntDomElement> getClasspathRef();
-
-  @Attribute("loaderref")
-  public abstract GenericAttributeValue<String> getLoaderRef();
-
-  @Attribute("uri")
-  public abstract GenericAttributeValue<String> getUri();
-
   @Attribute("adapter")
   public abstract GenericAttributeValue<String> getAdapter();
 
   @Attribute("adaptto")
   public abstract GenericAttributeValue<String> getAdaptto();
 
-
-  private boolean isTask(final Class clazz) {
+  public final boolean hasTypeLoadingErrors() {
+    return CustomAntElementsRegistry.getInstance(getAntProject()).hasTypeLoadingErrors(this);
+  }
+  
+  public boolean isTask(final Class clazz) {
     if ("taskdef".equals(getXmlTag().getName())) { // in taskdef, the adapter is always set to Task
       return true;
     }

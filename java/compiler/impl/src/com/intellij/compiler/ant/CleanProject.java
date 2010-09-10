@@ -15,13 +15,17 @@
  */
 package com.intellij.compiler.ant;
 
-import com.intellij.compiler.ant.taskdefs.Target;
 import com.intellij.compiler.ant.artifacts.ArtifactsGenerator;
+import com.intellij.compiler.ant.taskdefs.Target;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -30,20 +34,17 @@ import java.io.PrintWriter;
 public class CleanProject extends Generator {
   private final Target myTarget;
 
-  public CleanProject(@NotNull GenerationOptions genOptions, @NotNull ArtifactsGenerator artifactsGenerator) {
-    StringBuffer dependencies = new StringBuffer();
+  public CleanProject(Project project, @NotNull GenerationOptions genOptions, @NotNull ArtifactsGenerator artifactsGenerator) {
+    List<String> dependencies = new ArrayList<String>();
     final ModuleChunk[] chunks = genOptions.getModuleChunks();
-    for (int idx = 0; idx < chunks.length; idx++) {
-      if (idx > 0) {
-        dependencies.append(", ");
-      }
-      dependencies.append(BuildProperties.getModuleCleanTargetName(chunks[idx].getName()));
+    for (ModuleChunk chunk : chunks) {
+      dependencies.add(BuildProperties.getModuleCleanTargetName(chunk.getName()));
     }
-    for (String target : artifactsGenerator.getCleanTargetNames()) {
-      if (dependencies.length() > 0) dependencies.append(", ");
-      dependencies.append(target);
+    dependencies.addAll(artifactsGenerator.getCleanTargetNames());
+    for (ChunkBuildExtension extension : ChunkBuildExtension.EP_NAME.getExtensions()) {
+      dependencies.addAll(extension.getCleanTargetNames(project, genOptions));
     }
-    myTarget = new Target(BuildProperties.TARGET_CLEAN, dependencies.toString(),
+    myTarget = new Target(BuildProperties.TARGET_CLEAN, StringUtil.join(dependencies, ", "),
                           CompilerBundle.message("generated.ant.build.clean.all.task.comment"), null);
   }
 

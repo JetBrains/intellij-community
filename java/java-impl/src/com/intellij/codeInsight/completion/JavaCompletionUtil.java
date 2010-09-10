@@ -15,18 +15,22 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypeInfoImpl;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,9 +57,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairFunction;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
@@ -881,6 +883,16 @@ public class JavaCompletionUtil {
       }
     }
 
+    if (javaReference instanceof PsiReferenceExpression && !((PsiReferenceExpression)javaReference).isQualified()) {
+      final StaticMemberProcessor memberProcessor = JavaGlobalMemberNameCompletionContributor.completeStaticMembers(element);
+      memberProcessor.processMembersOfRegisteredClasses(matcher, new PairConsumer<PsiMember, PsiClass>() {
+        @Override
+        public void consume(PsiMember member, PsiClass psiClass) {
+          set.add(memberProcessor.createLookupElement(member, psiClass, true));
+        }
+      });
+    }
+
     return set;
   }
 
@@ -1030,11 +1042,13 @@ public class JavaCompletionUtil {
   }
 
   public static LookupItem qualify(final LookupItem ret) {
-    final PsiMember completionElement = (PsiMember)ret.getObject();
-    final PsiClass containingClass = completionElement.getContainingClass();
-    if (containingClass != null) {
-      final String className = containingClass.getName();
-      ret.setLookupString(className + "." + ret.getLookupString());
+    if (!(ret instanceof JavaMethodCallElement)) {
+      final PsiMember completionElement = (PsiMember)ret.getObject();
+      final PsiClass containingClass = completionElement.getContainingClass();
+      if (containingClass != null) {
+        final String className = containingClass.getName();
+        ret.setLookupString(className + "." + ret.getLookupString());
+      }
     }
     return ret.forceQualify();
   }
@@ -1062,18 +1076,195 @@ public class JavaCompletionUtil {
 
   @Nullable
   static ElementFilter recursionFilter(PsiElement element) {
-    if (com.intellij.patterns.PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
+    if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
       return new ExcludeDeclaredFilter(ElementClassFilter.METHOD);
     }
 
-    if (com.intellij.patterns.PsiJavaPatterns.psiElement().inside(
+    if (PsiJavaPatterns.psiElement().inside(
         PsiJavaPatterns.or(
             PsiJavaPatterns.psiElement(PsiAssignmentExpression.class),
             PsiJavaPatterns.psiElement(PsiVariable.class))).
-        andNot(com.intellij.patterns.PsiJavaPatterns.psiElement().afterLeaf(".")).accepts(element)) {
+        andNot(PsiJavaPatterns.psiElement().afterLeaf(".")).accepts(element)) {
       return new AndFilter(new ExcludeSillyAssignment(),
                                                    new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class)));
     }
     return null;
+  }
+
+  public static int insertClassReference(@NotNull PsiClass psiClass, @NotNull PsiFile file, int offset) {
+    return insertClassReference(psiClass, file, offset, offset);
+  }
+
+  public static int insertClassReference(PsiClass psiClass, PsiFile file, int startOffset, int endOffset) {
+    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+    if (!psiClass.isValid()) {
+      return startOffset;
+    }
+
+    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(psiClass);
+    LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
+    LOG.assertTrue(
+      ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
+
+    final PsiManager manager = file.getManager();
+
+    final Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
+
+    final PsiReference reference = file.findReferenceAt(startOffset);
+    if (reference != null) {
+      final PsiElement resolved = reference.resolve();
+      if (resolved instanceof PsiClass) {
+        if (((PsiClass)resolved).getQualifiedName() == null || manager.areElementsEquivalent(psiClass, resolved)) {
+          return startOffset;
+        }
+      }
+    }
+
+    String name = psiClass.getName();
+    document.replaceString(startOffset, endOffset, name);
+
+    final RangeMarker toDelete = insertSpace(startOffset + name.length(), document);
+
+    PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
+
+    int newStartOffset = startOffset;
+    PsiElement element = file.findElementAt(startOffset);
+    if (element instanceof PsiIdentifier) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified() && !(parent.getParent() instanceof PsiPackageStatement)) {
+        PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
+
+        if (!psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
+          final PsiElement pointerElement = pointer.getElement();
+          if (pointerElement instanceof PsiClass) {
+            PsiElement newElement;
+            if (!(ref instanceof PsiImportStaticReferenceElement)) {
+              newElement = ref.bindToElement(pointerElement);
+            }
+            else {
+              newElement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass)pointerElement);
+            }
+            RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
+            CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
+            newStartOffset = marker.getStartOffset();
+          }
+        }
+      }
+    }
+
+    if (toDelete.isValid()) {
+      document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+    }
+
+    return newStartOffset;
+  }
+
+  @Nullable
+  static PsiElement resolveReference(final PsiReference psiReference) {
+    if (psiReference instanceof PsiPolyVariantReference) {
+      final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(true);
+      if (results.length == 1) return results[0].getElement();
+    }
+    return psiReference.resolve();
+  }
+
+  public static RangeMarker insertSpace(final int endOffset, final Document document) {
+    final CharSequence chars = document.getCharsSequence();
+    final int length = chars.length();
+    final RangeMarker toDelete;
+    if (endOffset < length && Character.isJavaIdentifierPart(chars.charAt(endOffset))){
+      document.insertString(endOffset, " ");
+      toDelete = document.createRangeMarker(endOffset, endOffset + 1);
+    } else if (endOffset >= length) {
+      toDelete = document.createRangeMarker(length, length);
+    }
+    else {
+      toDelete = document.createRangeMarker(endOffset, endOffset);
+    }
+    toDelete.setGreedyToLeft(true);
+    toDelete.setGreedyToRight(true);
+    return toDelete;
+  }
+
+  public static void insertParentheses(final InsertionContext context, final LookupElement item, boolean overloadsMatter, boolean hasParams) {
+    final Editor editor = context.getEditor();
+    final TailType tailType = getTailType(item, context);
+    final PsiFile file = context.getFile();
+
+    context.setAddCompletionChar(false);
+
+
+    final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
+    final boolean needRightParenth = shouldInsertRParenth(context.getCompletionChar(), tailType, hasParams);
+
+    if (needLeftParenth) {
+      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+      ParenthesesInsertHandler.getInstance(hasParams,
+                                           styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
+                                           styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
+                                           needRightParenth,
+                                           styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
+      ).handleInsert(context, item);
+    }
+
+    if (needLeftParenth && hasParams) {
+      // Invoke parameters popup
+      AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
+    }
+    if (tailType == TailType.SMART_COMPLETION || needLeftParenth && needRightParenth) {
+      tailType.processTail(editor, context.getTailOffset());
+    }
+  }
+
+  public static boolean shouldInsertRParenth(char completionChar, TailType tailType, boolean hasParams) {
+    if (tailType == TailType.SMART_COMPLETION) {
+      return false;
+    }
+
+    if (completionChar == '(' && !hasParams) {
+      //it's highly probable that the user will type ')' next and it may not be overwritten if the flag is off
+      return CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
+    }
+
+    return true;
+  }
+
+  @NotNull
+  public static TailType getTailType(final LookupElement item, InsertionContext context) {
+    final char completionChar = context.getCompletionChar();
+    if (completionChar == '!') return item instanceof LookupItem ? ((LookupItem)item).getTailType() : TailType.NONE;
+    if (completionChar == '(') {
+      final Object o = item.getObject();
+      if (o instanceof PsiMethod) {
+        final PsiMethod psiMethod = (PsiMethod)o;
+        return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
+               ? TailType.NONE : TailType.SEMICOLON;
+      } else if (o instanceof PsiClass) { // it may be a constructor
+        return TailType.NONE;
+      }
+    }
+    if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailType.SMART_COMPLETION;
+    if (!context.shouldAddCompletionChar()) {
+      return TailType.NONE;
+    }
+
+    return LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
+  }
+
+  public static boolean isToInsertParenth(PsiElement place){
+    if (place == null) return true;
+    return !(place.getParent() instanceof PsiImportStaticReferenceElement);
+  }
+
+  //need to shorten references in type argument list
+  public static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+    final Document document = manager.getDocument(file);
+    assert document != null;
+    manager.commitDocument(document);
+    final PsiReference ref = file.findReferenceAt(offset);
+    if (ref instanceof PsiJavaCodeReferenceElement) {
+      JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences((PsiJavaCodeReferenceElement)ref);
+    }
   }
 }

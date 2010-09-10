@@ -58,6 +58,7 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
     else {
       setSelected(((Boolean)value).booleanValue());
     }
+    setEnabled(table.isCellEditable(row, column));
     return this;
   }
 }

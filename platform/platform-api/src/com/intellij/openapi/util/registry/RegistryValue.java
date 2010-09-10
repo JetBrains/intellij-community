@@ -191,4 +191,8 @@ public class RegistryValue {
     myIntCachedValue = null;
     myBooleanCachedValue = null;
   }
+
+  public boolean isBoolean() {
+    return "true".equals(myStringCachedValue) || "false".equals(myStringCachedValue);
+  }
 }

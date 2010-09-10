@@ -27,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
-import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveHandler;
 import org.jetbrains.annotations.NonNls;
@@ -322,17 +321,11 @@ class MoveDropTargetListener implements DropTargetListener {
     }
 
     private RefactoringActionHandler getActionHandler(final DataContext dataContext) {
-      final MoveAction.MoveProvider moveProvider = MoveAction.MoveProvider.DATA_KEY.getData(dataContext);
-      if (moveProvider != null) {
-        return moveProvider.getHandler(dataContext);
-      }
-      else {
-        return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
-      }
+      return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     }
 
     public boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode) {
-      return sourceNode.getParent() == targetNode;
+      return sourceNode.getParent() == targetNode || MoveHandler.isMoveRedundant(getPsiElement(sourceNode), getPsiElement(targetNode));
     }
 
     public boolean shouldDelegateToParent(TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {

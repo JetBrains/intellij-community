@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +31,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -67,12 +67,14 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   private RangeMarker wrapElement(final PsiElement element) {
-    return myDocument.createRangeMarker(element.getTextRange().shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(element)));
+    TextRange range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, element.getTextRange());
+    return myDocument.createRangeMarker(range);
   }
 
   private RangeMarker wrapReference(final PsiReference ref) {
+    PsiElement element = ref.getElement();
     return myDocument.createRangeMarker(ref.getRangeInElement().shiftRight(
-      ref.getElement().getTextRange().getStartOffset() + PsiUtilBase.findInjectedElementOffsetInRealDocument(ref.getElement())
+      InjectedLanguageManager.getInstance(myFile.getProject()).injectedToHost(element, element.getTextRange().getStartOffset())
     ));
   }
 
@@ -113,20 +115,19 @@ public class TemplateBuilderImpl implements TemplateBuilder {
 
   public void replaceElement(PsiElement element, Expression expression) {
     final RangeMarker key = wrapElement(element);
-    myExpressions.put(key, expression);
-    myElements.add(key);
+    replaceElement(key, expression);
   }
 
   public void replaceRange(TextRange rangeWithinElement, String replacementText) {
     final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(myContainerElement.getStartOffset()));
-    myExpressions.put(key, new ConstantNode(replacementText));
-    myElements.add(key);
+
+    ConstantNode value = new ConstantNode(replacementText);
+    replaceElement(key, value);
   }
 
   public void replaceRange(TextRange rangeWithinElement, Expression expression) {
     final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement);
-    myExpressions.put(key, expression);
-    myElements.add(key);
+    replaceElement(key, expression);
   }
 
   /**
@@ -234,8 +235,8 @@ public class TemplateBuilderImpl implements TemplateBuilder {
 
   public void replaceElement(PsiElement element, TextRange rangeWithinElement, String replacementText) {
     final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(element.getTextRange().getStartOffset()));
-    myExpressions.put(key, new ConstantNode(replacementText));
-    myElements.add(key);
+    ConstantNode value = new ConstantNode(replacementText);
+    replaceElement(key, value);
   }
 
   public void run() {

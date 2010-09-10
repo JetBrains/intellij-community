@@ -92,7 +92,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     init();
     
     generateFromUrl.setText(file.getPresentableUrl());
-    resultSchemaFileName.setText(file.getName() + ".xsd");
+    resultSchemaFileName.setText(file.getNameWithoutExtension() + ".xsd");
   }
 
   private void validateData() {

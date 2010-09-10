@@ -23,9 +23,9 @@ import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.sun.jdi.VMDisconnectedException;
 
@@ -37,7 +37,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
   private final Project myProject;
   private final DebuggerStateManager myStateManager;
   protected final Alarm myRebuildAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private volatile boolean myRefreshNeeded = true;
+  protected volatile boolean myRefreshNeeded = true;
   protected final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
   private boolean myUpdateEnabled;
 
@@ -118,9 +118,9 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
   }
 
   public void dispose() {
-    myRebuildAlarm.dispose();
+    Disposer.dispose(myRebuildAlarm);
     for (Disposable disposable : myDisposables) {
-      disposable.dispose();
+      Disposer.dispose(disposable);
     }
     myDisposables.clear();
   }

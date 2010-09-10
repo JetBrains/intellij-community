@@ -65,6 +65,7 @@ public interface Editor extends UserDataHolder {
   /**
    * Returns the component for the content area of the editor (the area displaying the document text).
    * The component can be used, for example, for converting logical to screen coordinates.
+   * The instance is implementing {@link com.intellij.openapi.actionSystem.DataProvider}
    *
    * @return the component instance.
    */

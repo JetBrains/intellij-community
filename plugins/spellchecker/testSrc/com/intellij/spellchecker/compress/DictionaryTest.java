@@ -48,8 +48,8 @@ public class DictionaryTest extends TestCase {
   }
 
   {
-    times.put(JETBRAINS_DIC, 100);
-    times.put(ENGLISH_DIC, 5000);
+    times.put(JETBRAINS_DIC, 1000);
+    times.put(ENGLISH_DIC, 50000);
   }
 
   public void testDictionary() throws IOException {
@@ -131,7 +131,7 @@ public class DictionaryTest extends TestCase {
     CompressedDictionary dictionary = CompressedDictionary.create(loader, new Transformation());
     for (String s : sets.getSecond()) {
       if (!sets.getFirst().contains(s)) {
-        assertFalse(dictionary.contains(s));
+        assertFalse(s, dictionary.contains(s));
       }
     }
   }

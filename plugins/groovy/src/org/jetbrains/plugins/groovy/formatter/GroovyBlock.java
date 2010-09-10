@@ -178,5 +178,8 @@ public class GroovyBlock implements Block, GroovyElementTypes {
     return myNode.getFirstChildNode() == null;
   }
 
-
+  @Override
+  public String toString() {
+    return myNode.getTextRange() + ": " + myNode;
+  }
 }

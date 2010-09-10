@@ -20,10 +20,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ThreadReference;
 import com.sun.jdi.Value;
 import com.sun.jdi.event.MethodExitEvent;
+import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.MethodExitRequest;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
@@ -36,30 +38,36 @@ public class MethodReturnValueWatcher  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.requests.MethodReturnValueWatcher");
   private @Nullable Method myLastExecutedMethod;
   private @Nullable Value myLastMethodReturnValue;
-  private @NotNull final MethodExitRequest myWatchMethodReturnValueRequest;
+  private @Nullable MethodExitRequest myRequest;
   private java.lang.reflect.Method myReturnValueMethod;
-  private volatile boolean myIsTrackingEnabled;
+  private volatile boolean myEnabled;
   private boolean myFeatureEnabled;
+  private final EventRequestManager myRequestManager;
 
-  public MethodReturnValueWatcher(final MethodExitRequest request) {
-    myWatchMethodReturnValueRequest = request;
-    myIsTrackingEnabled = request.isEnabled();
+  public MethodReturnValueWatcher(EventRequestManager requestManager) {
+    myRequestManager = requestManager;
     myFeatureEnabled = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
   }
 
   public boolean processMethodExitEvent(MethodExitEvent event) {
-    if (event.request() != myWatchMethodReturnValueRequest) {
+    if (event.request() != myRequest) {
       return false;
     }
     try {
-      myLastExecutedMethod = event.method();
+      final Method method = event.method();
       //myLastMethodReturnValue = event.returnValue();
       try {
         if (myReturnValueMethod == null) {
           //noinspection HardCodedStringLiteral
           myReturnValueMethod = MethodExitEvent.class.getDeclaredMethod("returnValue", ArrayUtil.EMPTY_CLASS_ARRAY);
         }
-        myLastMethodReturnValue = (Value)myReturnValueMethod.invoke(event);
+        final Value retVal = (Value)myReturnValueMethod.invoke(event);
+        
+        if (method == null || !"void".equals(method.returnTypeName())) {
+          // remember methods with non-void return types only
+          myLastExecutedMethod = method;
+          myLastMethodReturnValue = retVal;
+        }
       }
       catch (NoSuchMethodException ignored) {
       }
@@ -89,38 +97,54 @@ public class MethodReturnValueWatcher  {
     return myFeatureEnabled;
   }
 
-  public boolean isTrackingEnabled() {
-    return myIsTrackingEnabled;
+  public boolean isEnabled() {
+    return myEnabled;
   }
 
   public void setFeatureEnabled(final boolean featureEnabled) {
     myFeatureEnabled = featureEnabled;
-    updateRequestState(featureEnabled && myIsTrackingEnabled);
     myLastExecutedMethod = null;
     myLastMethodReturnValue = null;
   }
 
-  public void setTrackingEnabled(boolean trackingEnabled) {
-    myIsTrackingEnabled = trackingEnabled;
-    updateRequestState(trackingEnabled && myFeatureEnabled);
+  public void enable(ThreadReference thread) {
+    setTrackingEnabled(true, thread);
+  }
+  
+  public void disable() {
+    setTrackingEnabled(false, null);
+  }
+  
+  private void setTrackingEnabled(boolean trackingEnabled, final ThreadReference thread) {
+    myEnabled = trackingEnabled;
+    updateRequestState(trackingEnabled && myFeatureEnabled, thread);
   }
 
-  private void updateRequestState(final boolean enabled) {
+  private void updateRequestState(final boolean enabled, @Nullable final ThreadReference thread) {
     try {
+      final MethodExitRequest request = myRequest;
+      if (request != null) {
+        myRequest = null;
+        myRequestManager.deleteEventRequest(request);
+      }
       if (enabled) {
         myLastExecutedMethod = null;
         myLastMethodReturnValue = null;
-        if (!myWatchMethodReturnValueRequest.isEnabled()) {
-          myWatchMethodReturnValueRequest.enable();
-        }
-      }
-      else {
-        if (myWatchMethodReturnValueRequest.isEnabled()) {
-          myWatchMethodReturnValueRequest.disable();
-        }
+        myRequest = createRequest(thread);
+        myRequest.enable();
       }
     }
     catch (ObjectCollectedException ignored) {
     }
   }
+  
+  private MethodExitRequest createRequest(@Nullable final ThreadReference thread) {
+    final MethodExitRequest request = myRequestManager.createMethodExitRequest();
+    request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+    if (thread != null) {
+      request.addThreadFilter(thread);
+    }
+    return request;
+  }
+  
 }

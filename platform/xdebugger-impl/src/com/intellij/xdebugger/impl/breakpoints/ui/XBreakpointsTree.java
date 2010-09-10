@@ -15,7 +15,10 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SimpleTextAttributes;
@@ -40,15 +43,17 @@ import java.util.*;
 public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
   private final TreeNodeComparator myComparator;
   private final CheckedTreeNode myRoot;
+  private DialogWrapper myParentDialog;
   private final Map<B, BreakpointNode<B>> myNodes = new HashMap<B, BreakpointNode<B>>();
   private List<XBreakpointGroupingRule<B, ?>> myGroupingRules;
   private final Map<XBreakpointGroup, BreakpointsGroupNode> myGroupNodes = new HashMap<XBreakpointGroup, BreakpointsGroupNode>();
   private final MultiValuesMap<XBreakpointGroupingRule<B, ?>, XBreakpointGroup> myGroups = new MultiValuesMap<XBreakpointGroupingRule<B,?>, XBreakpointGroup>();
 
   private XBreakpointsTree(final XBreakpointType<B, ?> type, final CheckedTreeNode root,
-                           Collection<XBreakpointGroupingRule<B, ?>> groupingRules) {
+                           Collection<XBreakpointGroupingRule<B, ?>> groupingRules, DialogWrapper parentDialog) {
     super(new BreakpointsTreeCellRenderer(), root);
     myRoot = root;
+    myParentDialog = parentDialog;
     myComparator = new TreeNodeComparator<B>(type);
     setGroupingRulesInternal(groupingRules);
   }
@@ -58,11 +63,14 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
     setShowsRootHandles(!groupingRules.isEmpty());
   }
 
-  public static <B extends XBreakpoint<?>> XBreakpointsTree<B> createTree(final XBreakpointType<B, ?> type, final Collection<XBreakpointGroupingRule<B, ?>> groupingRules) {
-    return new XBreakpointsTree<B>(type, new CheckedTreeNode(null), groupingRules);
+  public static <B extends XBreakpoint<?>> XBreakpointsTree<B> createTree(final XBreakpointType<B, ?> type,
+                                                                          final Collection<XBreakpointGroupingRule<B, ?>> groupingRules,
+                                                                          DialogWrapper parentDialog) {
+    return new XBreakpointsTree<B>(type, new CheckedTreeNode("root"), groupingRules, parentDialog);
   }
 
   public void buildTree(@NotNull Collection<? extends B> breakpoints) {
+    final TreeState state = TreeState.createOn(this, myRoot);
     myRoot.removeAllChildren();
     myNodes.clear();
     myGroupNodes.clear();
@@ -76,6 +84,7 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
     TreeUtil.sort(myRoot, myComparator);
     ((DefaultTreeModel)getModel()).nodeStructureChanged(myRoot);
     expandPath(new TreePath(myRoot));
+    state.applyTo(this, myRoot);
   }
 
 
@@ -101,6 +110,17 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
       parent.add(groupNode);
     }
     return groupNode;
+  }
+
+  @Override
+  protected void onDoubleClick(CheckedTreeNode node) {
+    if (node instanceof BreakpointNode<?>) {
+      final Navigatable navigatable = ((BreakpointNode)node).getBreakpoint().getNavigatable();
+      if (navigatable != null) {
+        navigatable.navigate(true);
+        myParentDialog.close(DialogWrapper.OK_EXIT_CODE);
+      }
+    }
   }
 
   @Nullable
@@ -145,6 +165,7 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
       TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
         public boolean accept(final Object node) {
           if (node instanceof BreakpointNode) {
+            //noinspection unchecked
             list.add(((BreakpointNode<B>)node).getBreakpoint());
           }
           return true;
@@ -185,7 +206,7 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
     private final int myLevel;
 
     private BreakpointsGroupNode(G group, int level) {
-      super(null);
+      super(group);
       myLevel = level;
       setChecked(false);
       myGroup = group;
@@ -204,7 +225,7 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
     private final B myBreakpoint;
 
     private BreakpointNode(final B breakpoint) {
-      super(null);
+      super(breakpoint);
       myBreakpoint = breakpoint;
       setChecked(breakpoint.isEnabled());
     }

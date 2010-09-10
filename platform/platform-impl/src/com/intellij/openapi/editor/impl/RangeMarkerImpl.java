@@ -36,8 +36,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private boolean isExpandToRight = false;
 
   private static final AtomicLong counter = new AtomicLong();
+  //private static long counter;
   private final long myId;
   private volatile int modCount;
+  IntervalTreeImpl<RangeMarkerEx>.MyNode myNode;
 
   protected RangeMarkerImpl(@NotNull DocumentEx document, int start, int end) {
     if (start < 0) {
@@ -54,11 +56,18 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     myStart = start;
     myEnd = end;
     myId = counter.getAndIncrement();
-    registerInDocument();
+    //myId = counter++;
   }
 
   protected void registerInDocument() {
+    myNode = null;
     myDocument.addRangeMarker(this);
+    assert myNode != null;
+  }
+  protected boolean unregisterInDocument() {
+    boolean b = myDocument.removeRangeMarker(this);
+    myNode = null;
+    return b;
   }
 
   public long getId() {
@@ -66,11 +75,11 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   public int getStartOffset() {
-    return myStart;
+    return myStart + IntervalTreeImpl.computeDeltaUpToRoot(myNode);
   }
 
   public int getEndOffset() {
-    return myEnd;
+    return myEnd + IntervalTreeImpl.computeDeltaUpToRoot(myNode);
   }
 
   public boolean isValid() {
@@ -87,11 +96,19 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   public void setGreedyToLeft(boolean greedy) {
+    if (!isValid()) return;
+    boolean b = unregisterInDocument();
+    assert b;
     isExpandToLeft = greedy;
+    registerInDocument();
   }
 
   public void setGreedyToRight(boolean greedy) {
+    if (!isValid()) return;
+    boolean b = unregisterInDocument();
+    assert b;
     isExpandToRight = greedy;
+    registerInDocument();
   }
 
   public boolean isGreedyToLeft() {
@@ -203,4 +220,26 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return "RangeMarker" + (isGreedyToLeft() ? "[" : "(") + (isValid ? "valid" : "invalid") + "," + getStartOffset() + "," + getEndOffset() + (
       isGreedyToRight() ? "]" : ")");
   }
+
+  public int intervalStart() {
+    return myStart;
+  }
+
+  public int intervalEnd() {
+    return myEnd;
+  }
+  
+  public int setIntervalStart(int start) {
+    return myStart = start;
+  }
+
+  public int setIntervalEnd(int end) {
+    return myEnd = end;
+  }
+
+  public boolean setValid(boolean value) {
+    isValid = value;
+    return value;
+  }
+
 }

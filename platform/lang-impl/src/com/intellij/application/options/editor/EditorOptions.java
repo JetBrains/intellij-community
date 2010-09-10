@@ -17,7 +17,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -25,15 +25,19 @@ import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.util.List;
 
 public class EditorOptions implements SearchableConfigurable.Parent {
-
   @NonNls public static final String ID = "preferences.editor";
-
   private EditorOptionsPanel myEditorOptionsPanel;
+  private Configurable[] myChildren;
 
   public Configurable[] getConfigurables() {
-    return Extensions.getExtensions(EditorOptionsProvider.EP_NAME);
+    if (myChildren == null) {
+      final List<EditorOptionsProvider> configurables = AbstractConfigurableEP.createConfigurables(EditorOptionsProviderEP.EP_NAME);
+      myChildren = configurables.toArray(new EditorOptionsProvider[configurables.size()]);
+    }
+    return myChildren;
   }
 
   public String getDisplayName() {

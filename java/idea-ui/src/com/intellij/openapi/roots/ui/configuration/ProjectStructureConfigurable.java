@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.facet.Facet;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.*;
@@ -470,7 +471,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   public static ProjectStructureConfigurable getInstance(final Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ProjectStructureConfigurable.class);
+    return ServiceManager.getService(project, ProjectStructureConfigurable.class);
   }
 
   public ProjectSdksModel getProjectJdksModel() {

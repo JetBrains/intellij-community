@@ -58,12 +58,17 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     return myProject != null && CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS;
   }
 
-  public boolean isUnsuitableCodestyleConfigurable(final Configurable c) {
+  public boolean isUnsuitableCodeStyleConfigurable(final Configurable c) {
     return false;
   }
 
   public int getRightMargin() {
     return CodeStyleSettingsManager.getSettings(myProject).RIGHT_MARGIN;
+  }
+
+  @Override
+  public boolean isWrapWhenTypingReachesRightMargin() {
+    return CodeStyleSettingsManager.getSettings(myProject).WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN;
   }
 
   public int getTabSize(final FileType fileType) {

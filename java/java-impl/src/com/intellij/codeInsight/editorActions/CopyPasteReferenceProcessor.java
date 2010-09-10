@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
@@ -39,10 +40,10 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
+public class CopyPasteReferenceProcessor implements CopyPastePostProcessor<ReferenceTransferableData> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor");
   
-  public TextBlockTransferableData collectTransferableData(PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+  public ReferenceTransferableData collectTransferableData(PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     if (file instanceof PsiCompiledElement) {
       file = (PsiFile) ((PsiCompiledElement) file).getMirror();
     }
@@ -86,7 +87,7 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
   }
 
   @Nullable
-  public TextBlockTransferableData extractTransferableData(final Transferable content) {
+  public ReferenceTransferableData extractTransferableData(final Transferable content) {
     ReferenceTransferableData referenceData = null;
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
       try {
@@ -108,7 +109,11 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
     return null;
   }
 
-  public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final TextBlockTransferableData value) {
+  public void processTransferableData(final Project project,
+                                      final Editor editor,
+                                      final RangeMarker bounds,
+                                      int caretColumn,
+                                      Ref<Boolean> indented, final ReferenceTransferableData value) {
     if (DumbService.getInstance(project).isDumb()) {
       return;
     }
@@ -120,7 +125,7 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final ReferenceTransferableData.ReferenceData[] referenceData = ((ReferenceTransferableData)value).getData();
+    final ReferenceTransferableData.ReferenceData[] referenceData = value.getData();
     final PsiJavaCodeReferenceElement[] refs = findReferencesToRestore(file, bounds, referenceData);
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK) {
       askReferencesToRestore(project, refs, referenceData);

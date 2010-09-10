@@ -26,7 +26,6 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -164,7 +163,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   private void perform(final RuntimeConfigurationProducer producer, final ConfigurationContext context) {
-    final RunnerAndConfigurationSettings configuration = context.getConfiguration(producer);
+    final RunnerAndConfigurationSettings configuration = context.updateConfiguration(producer);
     if (configuration != null) {
       perform(context);
     }
@@ -190,7 +189,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
       if (existing == null && !producers.isEmpty()) {
         //todo[nik,anna] it's dirty fix. Otherwise wrong configuration will be returned from context.getConfiguration()
-        context.getConfiguration(producers.get(0));
+        context.updateConfiguration(producers.get(0));
       }
       final String name = suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());
       updatePresentation(presentation, existing != null || producers.size() <= 1 ? " " + name : "", context);

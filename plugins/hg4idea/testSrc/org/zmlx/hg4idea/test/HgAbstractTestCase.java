@@ -14,16 +14,16 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 import org.testng.annotations.BeforeMethod;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
@@ -66,30 +66,16 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
     myTraceClient = true;
   }
 
-  /**
-   * Creates a new Mercurial repository in a temporary test directory.
-   * @return created repository
-   */
-  protected HgTestRepository createRepository() throws Exception {
-    final TempDirTestFixture dirFixture = createFixtureDir();
-    final File repo = new File(dirFixture.getTempDirPath());
-    ProcessOutput processOutput = runHg(repo, "init");
-    verify(processOutput);
-    return new HgTestRepository(this, dirFixture);
-  }
-
-  protected static TempDirTestFixture createFixtureDir() throws Exception {
-    final TempDirTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-    fixture.setUp();
-    return fixture;
-  }
-
-  protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
+  protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {
     setStandardConfirmation(HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
   }
 
-  protected void disableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
+  protected void doNothingSilently(final VcsConfiguration.StandardConfirmation op) {
     setStandardConfirmation(HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
+  }
+
+  protected void showConfirmation(final VcsConfiguration.StandardConfirmation op) {
+    setStandardConfirmation(HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.SHOW_CONFIRMATION);
   }
 
   /**
@@ -131,8 +117,17 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
     }
     return new HgFile(myWorkingCopyDir, fileToInclude);
   }
-                       
 
+  /**
+   * Registers HgMockVcsHelper as the AbstractVcsHelper.
+   */
+  protected HgMockVcsHelper registerMockVcsHelper() {
+    final String key = "com.intellij.openapi.vcs.AbstractVcsHelper";
+    final MutablePicoContainer picoContainer = (MutablePicoContainer) myProject.getPicoContainer();
+    picoContainer.unregisterComponent(key);
+    picoContainer.registerComponentImplementation(key, HgMockVcsHelper.class);
+    return (HgMockVcsHelper) AbstractVcsHelper.getInstance(myProject);
+  }
 
   protected VirtualFile makeFile(File file) throws IOException {
     file.createNewFile();

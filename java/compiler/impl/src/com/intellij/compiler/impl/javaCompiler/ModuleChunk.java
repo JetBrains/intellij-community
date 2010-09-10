@@ -197,19 +197,28 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   public OrderedSet<VirtualFile> getCompilationClasspathFiles() {
+    return getCompilationClasspathFiles(true);
+  }
+
+  public OrderedSet<VirtualFile> getCompilationClasspathFiles(final boolean exportedOnly) {
     final Set<Module> modules = getNodes();
 
     OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
-      OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).compileOnly().satisfying(new AfterJdkOrderEntryCondition());
-      if ((mySourcesFilter & TEST_SOURCES) == 0) {
-        enumerator = enumerator.productionOnly();
-      }
-      Collections.addAll(cpFiles, enumerator.recursively().exportedOnly().getClassesRoots());
+      Collections.addAll(cpFiles, orderEnumerator(module, exportedOnly, new AfterJdkOrderEntryCondition()).getClassesRoots());
     }
     cpFiles = JarClasspathHelper.patchFiles(cpFiles, myContext.getProject());
 
     return cpFiles;
+  }
+
+  private OrderEnumerator orderEnumerator(Module module, boolean exportedOnly, Condition<OrderEntry> condition) {
+    OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).compileOnly().satisfying(condition);
+    if ((mySourcesFilter & TEST_SOURCES) == 0) {
+      enumerator = enumerator.productionOnly();
+    }
+    enumerator = enumerator.recursively();
+    return exportedOnly ? enumerator.exportedOnly() : enumerator;
   }
 
   public String getCompilationBootClasspath() {
@@ -217,15 +226,15 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   public OrderedSet<VirtualFile> getCompilationBootClasspathFiles() {
+    return getCompilationBootClasspathFiles(true);
+  }
+
+  public OrderedSet<VirtualFile> getCompilationBootClasspathFiles(final boolean exportedOnly) {
     final Set<Module> modules = getNodes();
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
-      OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).compileOnly().satisfying(new BeforeJdkOrderEntryCondition());
-      if ((mySourcesFilter & TEST_SOURCES) == 0) {
-        enumerator = enumerator.productionOnly();
-      }
-      Collections.addAll(cpFiles, enumerator.recursively().exportedOnly().getClassesRoots());
+      Collections.addAll(cpFiles, orderEnumerator(module, exportedOnly, new BeforeJdkOrderEntryCondition()).getClassesRoots());
       Collections.addAll(jdkFiles, OrderEnumerator.orderEntries(module).sdkOnly().getClassesRoots());
     }
     cpFiles.addAll(jdkFiles);

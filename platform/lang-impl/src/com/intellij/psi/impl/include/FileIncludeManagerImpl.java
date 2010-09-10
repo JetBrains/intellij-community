@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -30,14 +31,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -46,10 +45,11 @@ import java.util.*;
  */
 public class FileIncludeManagerImpl extends FileIncludeManager {
 
+  private static final Key<CachedValue<Map<String, PsiFileSystemItem>>> RESOLVE_CACHE_KEY = Key.create("include resolve cache");
+
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final PsiFileFactory myPsiFileFactory;
-  private final Map<String, FileIncludeProvider> myProviderMap;
   private final CachedValuesManager myCachedValuesManager;
 
   private final IncludeCacheHolder myIncludedHolder = new IncludeCacheHolder("compile time includes", "runtime includes") {
@@ -124,9 +124,9 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     myPsiFileFactory = psiFileFactory;
 
     FileIncludeProvider[] providers = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
-    myProviderMap = new HashMap<String, FileIncludeProvider>(providers.length);
+    Map<String, FileIncludeProvider> providerMap = new HashMap<String, FileIncludeProvider>(providers.length);
     for (FileIncludeProvider provider : providers) {
-      FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);
+      FileIncludeProvider old = providerMap.put(provider.getId(), provider);
       assert old == null;
     }
     myCachedValuesManager = cachedValuesManager;
@@ -148,11 +148,27 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   }
 
   @Override
-  public PsiFileSystemItem resolveFileInclude(FileIncludeInfo info, PsiFile context) {
+  public PsiFileSystemItem resolveFileInclude(final FileIncludeInfo info, final PsiFile context) {
+    if (true) return doResolve(info, context);
+    Map<String, PsiFileSystemItem> value = myCachedValuesManager.getCachedValue(context, RESOLVE_CACHE_KEY, new CachedValueProvider<Map<String, PsiFileSystemItem>>() {
+      @Override
+      public Result<Map<String, PsiFileSystemItem>> compute() {
+        Map<String, PsiFileSystemItem> map = new FactoryMap<String, PsiFileSystemItem>() {
+          @Override
+          protected PsiFileSystemItem create(String key) {
+            return doResolve(info, context);
+          }
+        };
+        return Result.create(map, context, VirtualFileManager.getInstance());
+      }
+    }, false);
+    return value.get(info.path);
+  }
 
+  @Nullable
+  private PsiFileSystemItem doResolve(FileIncludeInfo info, PsiFile context) {
     PsiFileImpl psiFile = (PsiFileImpl)myPsiFileFactory.createFileFromText("dummy.txt", info.path);
     psiFile.setOriginalFile(context);
-
     return new FileReferenceSet(psiFile) {
       @Override
       protected boolean useIncludingFileAsContext() {
@@ -222,7 +238,11 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     public CachedValueProvider.Result<VirtualFile[]> compute(PsiFile param) {
       VirtualFile[] value = computeFiles(param, myRuntimeOnly);
       // todo: we need "url modification tracker" for VirtualFile 
-      return CachedValueProvider.Result.create(value, ArrayUtil.append(value, param.getVirtualFile()));
+      Object[] deps = new Object[value.length + 2];
+      deps[deps.length - 2] = param.getVirtualFile();
+      deps[deps.length - 1] = VirtualFileManager.getInstance();
+
+      return CachedValueProvider.Result.create(value, deps);
     }
   }
 }

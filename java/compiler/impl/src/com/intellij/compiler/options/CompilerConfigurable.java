@@ -46,10 +46,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
   private final CompilerUIConfigurable myCompilerUIConfigurable;
   private Configurable[] myKids;
 
-  public static CompilerConfigurable getInstance(Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, CompilerConfigurable.class);
-  }
-
   public CompilerConfigurable(Project project) {
     myProject = project;
     myCompilerUIConfigurable = new CompilerUIConfigurable(myProject);

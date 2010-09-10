@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.refactoring;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -63,6 +64,12 @@ public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
           protected void addReferenceAtCaret(Collection<PsiReference> refs) {}
 
         };
+      }
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.out.println("Reference: " + reference);
+      if (reference != null) {
+        System.out.println("Resolved: " + reference.resolve());
       }
     }
     return null;

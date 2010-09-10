@@ -26,17 +26,14 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
-import static com.intellij.refactoring.util.RefactoringUtil.*;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
-
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,9 +58,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+
+import static com.intellij.refactoring.util.RefactoringUtil.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isNewLine;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
 /**
  * @author ilyas
@@ -71,12 +71,7 @@ import java.util.*;
 public abstract class GroovyRefactoringUtil {
 
   public static final Collection<String> KEYWORDS = ContainerUtil.map(
-      GroovyTokenTypes.KEYWORDS.getTypes(),
-      new Function<IElementType, String>() {
-        public String fun(IElementType type) {
-          return type.toString();
-        }
-      });
+      GroovyTokenTypes.KEYWORDS.getTypes(), StringUtil.createToStringFunction(IElementType.class));
 
   private static final String[] finalModifiers = new String[]{PsiModifier.FINAL};
 

@@ -17,11 +17,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobImpl;
 import com.intellij.concurrency.JobUtil;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -35,13 +35,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -49,7 +49,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -80,7 +83,7 @@ public abstract class PassExecutorService implements Disposable {
       for (Job<Void> job : mySubmittedPasses.values()) {
         try {
           JobImpl ji = (JobImpl)job;
-          if (!job.isDone()) ji.waitForTermination(ji.getTasks());
+          if (!job.isDone()) ji.waitForTermination();
         }
         catch (Throwable throwable) {
           LOG.error(throwable);
@@ -106,6 +109,7 @@ public abstract class PassExecutorService implements Disposable {
       Document document = null;
       if (fileEditor instanceof TextEditor) {
         Editor editor = ((TextEditor)fileEditor).getEditor();
+        LOG.assertTrue(!(editor instanceof EditorWindow));
         document = editor.getDocument();
       }
 
@@ -238,11 +242,6 @@ public abstract class PassExecutorService implements Disposable {
     ScheduledPass predecessor = toBeSubmitted.get(predkey);
     if (predecessor == null) {
       TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
-      if (textEditorPass == null && predecessorId == Pass.UPDATE_VISIBLE && passId != Pass.UPDATE_ALL && findPassById(Pass.UPDATE_ALL, textEditorHighlightingPasses) != null) {
-        // when UPDATE_VISIBLE pass is not going to run, pretend that all dependent passes are depend on UPDATE_ALL pass instead
-        return findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses, updateProgress,
-                                           myThreadsToStartCountdown, jobPriority, Pass.UPDATE_ALL, passId);
-      }
       predecessor = textEditorPass == null ? null : createScheduledPass(fileEditors, textEditorPass, toBeSubmitted, textEditorHighlightingPasses, freePasses,
                                                                         updateProgress, myThreadsToStartCountdown, jobPriority);
     }
@@ -260,9 +259,24 @@ public abstract class PassExecutorService implements Disposable {
     return textEditorPass;
   }
 
-  private void submit(ScheduledPass pass) {
+  private void submit(final ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job<Void> job = JobUtil.submitToJobThread(pass, pass.myJobPriority);
+      Job<Void> job = JobUtil.submitToJobThread(pass, pass.myJobPriority, new Consumer<Future>() {
+        @Override
+        public void consume(Future future) {
+          mySubmittedPasses.remove(pass);
+          try {
+            future.get();
+          }
+          catch (CancellationException ignored) {
+          }
+          catch (InterruptedException ignored) {
+          }
+          catch (ExecutionException e) {
+            LOG.error(e.getCause());
+          }
+        }
+      });
       mySubmittedPasses.put(pass, job);
     }
   }
@@ -333,10 +347,12 @@ public abstract class PassExecutorService implements Disposable {
                 myUpdateProgress.cancel(); //in case when some smartasses throw PCE just for fun
               }
               catch (RuntimeException e) {
+                myUpdateProgress.cancel();
                 LOG.error(e);
                 throw e;
               }
               catch (Error e) {
+                myUpdateProgress.cancel();
                 LOG.error(e);
                 throw e;
               }

@@ -29,6 +29,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,15 +142,22 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       return map;
     }
 
-    final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new ConcurrentHashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
-    mergeMaps(problems, myCachedErrors.get(domElement));
-    if (DomUtil.hasXml(domElement)) {
-      domElement.acceptChildren(new DomElementVisitor() {
-        public void visitDomElement(DomElement element) {
-          mergeMaps(problems, getProblemsMap(element));
-        }
-      });
+    final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new THashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
+    if (domElement == myElement) {
+      for (Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> listMap : myCachedErrors.values()) {
+        mergeMaps(problems, listMap);
+      }
+    } else {
+      mergeMaps(problems, myCachedErrors.get(domElement));
+      if (DomUtil.hasXml(domElement)) {
+        domElement.acceptChildren(new DomElementVisitor() {
+          public void visitDomElement(DomElement element) {
+            mergeMaps(problems, getProblemsMap(element));
+          }
+        });
+      }
     }
+
     myCachedChildrenErrors.put(domElement, problems);
     return problems;
   }

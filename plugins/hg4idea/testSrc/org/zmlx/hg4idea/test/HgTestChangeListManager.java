@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import org.testng.Assert;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,6 +49,7 @@ public class HgTestChangeListManager {
    */
   public void addUnversionedFilesToVcs(VirtualFile... files) {
     peer.addUnversionedFiles(peer.getDefaultChangeList(), Arrays.asList(files));
+    ensureUpToDate();
   }
 
   /**
@@ -59,7 +59,7 @@ public class HgTestChangeListManager {
    * @param files Files to be checked.
    */
   public void checkFilesAreInList(boolean only, VirtualFile... files) {
-    peer.ensureUpToDate(false);
+    ensureUpToDate();
 
     final Collection<Change> changes = peer.getDefaultChangeList().getChanges();
     if (only) {
@@ -78,6 +78,7 @@ public class HgTestChangeListManager {
    * Commits all changes of the given files.
    */
   public void commitFiles(VirtualFile... files) {
+    ensureUpToDate();
     final List<Change> changes = new ArrayList<Change>(files.length);
     for (VirtualFile f : files) {
       changes.addAll(peer.getChangesIn(f));
@@ -86,20 +87,17 @@ public class HgTestChangeListManager {
     assertNotNull(list);
     list.setComment("A comment to a commit");
     Assert.assertTrue(peer.commitChangesSynchronouslyWithResult(list, changes));
+    ensureUpToDate();
   }
 
-  public void removeFiles(final VirtualFile file) {
-     ApplicationManager.getApplication().runWriteAction(new Runnable() {
-       @Override
-       public void run() {
-         try {
-           file.delete(this);
-         }
-         catch (IOException e) {
-           e.printStackTrace();
-         }
-       }
-     });
+  /**
+   * Ensures the ChangelistManager is up to date.
+   * It is called after each operation in the HgTestChangeListManager.
+   */
+  public void ensureUpToDate() {
+    if (!ApplicationManager.getApplication().isDispatchThread()) { // for dispatch thread no need to force update.
+      peer.ensureUpToDate(false);
+    }
   }
 
 }

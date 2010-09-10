@@ -20,16 +20,12 @@
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>    
     <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
     <extendWordSelectionHandler implementation="com.intellij.lang.ant.AntPropertyRefSelectioner"/>
-    <annotator language="ANT" implementationClass="com.intellij.lang.ant.validation.AntAnnotator"/>
-    <lang.documentationProvider language="ANT" implementationClass="com.intellij.lang.ant.doc.AntDocumentationProvider"/>
-    <lang.namesValidator language="ANT" implementationClass="com.intellij.lang.ant.AntNamesValidator"/>
-    <lang.parserDefinition language="ANT" implementationClass="com.intellij.lang.ant.AntParserDefinition"/>
-    <lang.findUsagesProvider language="ANT" implementationClass="com.intellij.lang.ant.psi.usages.AntUsagesProvider"/>
-    <lang.commenter language="ANT" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
-    <lang.psiStructureViewFactory language="ANT" implementationClass="com.intellij.lang.ant.AntStructureViewBuilderFactory"/>
     <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>
     <vetoRenameCondition implementation="com.intellij.lang.ant.refactoring.AntVetoRenameCondition"/>
-    <xml.fileNSInfoProvider implementation="com.intellij.lang.ant.AntDefaultNSProvider"/>
+    <renamePsiElementProcessor implementation="com.intellij.lang.ant.dom.AntRenameProcessor"/>
+    <daemon.externalAnnotatorsFilter implementation="com.intellij.lang.ant.validation.AntAnnotatorsFilter"/>
+    <!--<xml.fileNSInfoProvider implementation="com.intellij.lang.ant.AntDefaultNSProvider"/>-->
+    <lang.documentationProvider language="XML" implementationClass="com.intellij.lang.ant.doc.AntDomDocumentationProvider"/>
 
     <breadcrumbsInfoProvider implementation="com.intellij.lang.ant.config.impl.AntBreadcrumbsInfoProvider"/>
     <fileBasedIndex implementation="com.intellij.lang.ant.psi.impl.AntImportsIndex"/>
@@ -39,8 +35,25 @@
     <refactoring.elementListenerProvider implementation="com.intellij.lang.ant.refactoring.AntTargetRenameListenerProvider"/>
     <inspectionToolProvider implementation="com.intellij.lang.ant.AntInspectionToolProvider"/>
 
-    <!--<dom.fileDescription implementation="com.intellij.lang.ant.dom.AntDomFileDescription"/>-->
-    <!--<dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>-->
+    <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntDomFileDescription"/>
+    <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription"/>
+    <dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>
+    <pom.declarationSearcher implementation="com.intellij.lang.ant.dom.AntDomIdDeclarationSearcher"/>
+    
+    <!--Type Presentation-->
+    <typeName className="com.intellij.lang.ant.dom.AntDomMacroDef" name="macro definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomMacrodefElement" name="macrodef nested element"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTypeDef" name="type definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTaskdef" name="task definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPresetDef" name="preset definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomScriptDef" name="script definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomProperty" name="property"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomDirSet" name="directory set"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomFileSet" name="file set"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomFileList" name="file list"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPath" name="path"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="target"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="antcall parameter"/>
 
   </extensions>
 
@@ -58,10 +71,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.lang.ant.config.impl.AntToolwindowRegistrar</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.lang.ant.config.impl.AntProjectComponent</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

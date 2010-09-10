@@ -16,19 +16,28 @@
 
 package com.intellij.psi.util;
 
+import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -36,12 +45,10 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.injected.editor.DocumentWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 public class PsiUtilBase {
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
@@ -578,41 +585,62 @@ public class PsiUtilBase {
     while (true);
   }
 
-  public static int findInjectedElementOffsetInRealDocument(final PsiElement element) {
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) return -1;
-    Document document = PsiDocumentManager.getInstance(containingFile.getProject()).getDocument(containingFile);
-    if (document instanceof DocumentWindow && !((DocumentWindow)document).isValid()) {
-      return -1;
-    }
-    final PsiElement context = containingFile.getContext();
-    if (!(context instanceof PsiLanguageInjectionHost)) {
-      return 0;
-    }
-    final int[] result = new int[1];
-    ((PsiLanguageInjectionHost)context).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        if (injectedPsi != containingFile) {
-          return;
-        }
-        final PsiLanguageInjectionHost.Shred shred = places.get(0);
-        final TextRange textRange = element.getTextRange();
-        if (shred.prefix != null && textRange.getEndOffset() < shred.prefix.length()) {
-          result[0] = -1;
-          return;
-        }
-        final int injectedStart = shred.getRangeInsideHost().getStartOffset() +
-                                  shred.host.getTextRange().getStartOffset() - (shred.prefix != null ? shred.prefix.length():0);
-        result[0] = injectedStart;
-      }
-    });
-    return result[0];
-  }
-
   public static Language getNotAnyLanguage(ASTNode node) {
     if (node == null) return Language.ANY;
 
     final Language lang = node.getElementType().getLanguage();
     return lang == Language.ANY ? getNotAnyLanguage(node.getTreeParent()) : lang;
+  }
+
+  /**
+   * Tries to find editor for the given element.
+   * <p/>
+   * There are at least to approaches to achieve the target. Current method is intended to encapsulate both of them::
+   * <pre>
+   * <ul>
+   *   <li>target editor works with a real file that remains at file system;</li>
+   *   <li>target editor works with a virtual file;</li>
+   * </ul>
+   * </pre>
+   *
+   * @param element   target element
+   * @return          editor that works with a given element if the one is found; <code>null</code> otherwise
+   */
+  @Nullable
+  public static Editor findEditor(@NotNull PsiElement element) {
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) {
+      return null;
+    }
+    VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
+    if (virtualFile == null) {
+      return null;
+    }
+
+    VirtualFileSystem fileSystem = virtualFile.getFileSystem();
+    if (fileSystem instanceof LocalFileSystem) {
+      // Try to find editor for the real file.
+      final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
+      for (FileEditor editor : editors) {
+        if (editor instanceof TextEditor) {
+          return ((TextEditor)editor).getEditor();
+        }
+      }
+    }
+    else if (SwingUtilities.isEventDispatchThread()) {
+      // We assume that data context from focus-based retrieval should success if performed from EDT.
+      AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
+      if (asyncResult.isDone()) {
+        Editor editor = PlatformDataKeys.EDITOR.getData(asyncResult.getResult());
+        if (editor != null) {
+          Document cachedDocument = PsiDocumentManager.getInstance(psiFile.getProject()).getCachedDocument(psiFile);
+          // Ensure that target editor is found by checking its document against the one from given PSI element.
+          if (cachedDocument == editor.getDocument()) {
+            return editor;
+          }
+        }
+      }
+    }
+    return null;
   }
 }

@@ -15,17 +15,22 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.ui.ItemRemovable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class TableUtil {
+  private TableUtil() {
+  }
+
   public interface ItemChecker {
     boolean isOperationApplyable(TableModel model, int row);
   }
@@ -34,11 +39,11 @@ public class TableUtil {
     return removeSelectedItems(table, null);
   }
 
-  public static void selectRows(JTable table, int[] rows) {
+  public static void selectRows(final JTable table, final int[] viewRows) {
     ListSelectionModel selectionModel = table.getSelectionModel();
     selectionModel.clearSelection();
     int count = table.getRowCount();
-    for (int row : rows) {
+    for (int row : viewRows) {
       if (row >= 0 && row < count) {
         selectionModel.addSelectionInterval(row, row);
       }
@@ -188,5 +193,51 @@ public class TableUtil {
   public static void ensureSelectionExists(JTable table) {
     if (table.getSelectedRow() != -1 || table.getRowCount() == 0) return;
     table.setRowSelectionInterval(0, 0);
+  }
+
+  public static void configureAllowedCellSelection(final JTable table, final Condition<Point> cellCondition) {
+    for (String keyStroke : new String[]{"ENTER","TAB","shift TAB","RIGHT","LEFT","UP","DOWN"}) {
+      final Object key = SwingActionWrapper.getKeyForActionMap(table, KeyStroke.getKeyStroke(keyStroke));
+      if (key != null) {
+        new MyFocusAction(table, cellCondition, key);
+      }
+    }
+  }
+
+  public static class MyFocusAction extends SwingActionWrapper<JTable> {
+
+    private final Condition<Point> myCellCondition;
+
+    public MyFocusAction(JTable table, Condition<Point> cellCondition, Object key) {
+      super(table, key);
+      myCellCondition = cellCondition;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      final JTable table = getComponent();
+      int originalRow = table.getSelectedRow();
+      int originalColumn = table.getSelectedColumn();
+
+      getDelegate().actionPerformed(e);
+
+      final Point coord = new Point(table.getSelectedColumn(), table.getSelectedRow());
+
+      while (!myCellCondition.value(coord)) {
+        getDelegate().actionPerformed(e);
+
+        if (coord.y == table.getSelectedRow()
+            && coord.x == table.getSelectedColumn()) {
+          table.changeSelection(originalRow, originalColumn, false, false);
+          break;
+        }
+
+        coord.y = table.getSelectedRow();
+        coord.x = table.getSelectedColumn();
+
+        if (coord.y == originalRow && coord.x == originalColumn) {
+          break;
+        }
+      }
+    }
   }
 }

@@ -37,8 +37,4 @@ public abstract class DebuggerSettingsPanelProvider {
   public Configurable getRootConfigurable() {
     return null;
   }
-
-  public boolean hasAnySettingsPanels() {
-    return true;
-  }
 }

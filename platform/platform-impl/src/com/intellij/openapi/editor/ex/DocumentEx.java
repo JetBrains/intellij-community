@@ -18,12 +18,16 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface DocumentEx extends Document {
-  void stripTrailingSpaces(boolean inChangedLinesOnly);
+  /**
+   * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret being in the way
+   */
+  boolean stripTrailingSpaces(boolean inChangedLinesOnly);
   void setStripTrailingSpacesEnabled(boolean isEnabled);
 
   @NotNull LineIterator createLineIterator();
@@ -45,8 +49,7 @@ public interface DocumentEx extends Document {
 
   void clearLineModificationFlags();
 
-
-  void removeRangeMarker(@NotNull RangeMarkerEx rangeMarker);
+  boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker);
   void addRangeMarker(@NotNull RangeMarkerEx rangeMarker);
 
   boolean isInBulkUpdate();
@@ -55,6 +58,10 @@ public interface DocumentEx extends Document {
 
   @NotNull
   List<RangeMarker> getGuardedBlocks();
+
+  boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor);
+  boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor);
+  boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor);
 }
 
 

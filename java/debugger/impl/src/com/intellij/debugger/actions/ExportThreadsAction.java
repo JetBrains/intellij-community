@@ -40,7 +40,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class ExportThreadsAction extends AnAction {
+public class ExportThreadsAction extends AnAction implements AnAction.TransparentUpdate {
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {

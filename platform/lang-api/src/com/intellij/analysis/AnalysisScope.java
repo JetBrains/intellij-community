@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.ProjectProfileManager;
@@ -469,6 +470,14 @@ public class AnalysisScope {
       indicator.setText2("");
     }
     return myFilesSet.size();
+  }
+
+  public boolean checkScopeWritable(Project project) {
+    if (myFilesSet == null) initFilesSet();
+    final ReadonlyStatusHandler statusHandler = ReadonlyStatusHandler.getInstance(project);
+    final ReadonlyStatusHandler.OperationStatus status =
+      statusHandler.ensureFilesWritable(myFilesSet);
+    return status.hasReadonlyFiles();
   }
 
   public void invalidate(){

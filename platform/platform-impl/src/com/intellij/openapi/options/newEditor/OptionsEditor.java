@@ -73,6 +73,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   @NonNls private static final String SEARCH_VISIBLE = "options.searchVisible";
 
+  @NonNls private static final String NOT_A_NEW_COMPONENT = "component.was.already.instantiated";
+
   private final Project myProject;
 
   private final OptionsEditorContext myContext;
@@ -239,6 +241,19 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       public void hideNotify() {
       }
     });
+  }
+
+  public ActionCallback select(Class<? extends Configurable> configurableClass) {
+    final Configurable configurable = findConfigurable(configurableClass);
+    if (configurable == null) {
+      return new ActionCallback.Rejected();
+    }
+    return select(configurable);
+  }
+
+  @Nullable
+  public <T extends Configurable> T findConfigurable(Class<T> configurableClass) {
+    return myTree.findConfigurable(configurableClass);
   }
 
   public ActionCallback select(Configurable configurable) {
@@ -1119,6 +1134,16 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     Simple(final Configurable configurable) {
       myConfigurable = configurable;
       myComponent = configurable.createComponent();
+
+      if (myComponent != null) {
+        final Object clientProperty = myComponent.getClientProperty(NOT_A_NEW_COMPONENT);
+        if (clientProperty != null && ((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+          LOG.warn(String.format("Settings component for '%s' MUST be recreated, please dispose it in disposeUIResources() and create a new instance in createComponent()!",
+                                 configurable.getClass().getCanonicalName()));
+        } else {
+          myComponent.putClientProperty(NOT_A_NEW_COMPONENT, Boolean.TRUE);
+        }
+      }
     }
 
     void set(final ContentWrapper wrapper) {

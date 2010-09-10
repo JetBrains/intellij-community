@@ -19,27 +19,23 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author ven
  */
 public class GrClassReferenceType extends PsiClassType {
-  private final GrCodeReferenceElement myReferenceElement;
+  private final GrReferenceElement myReferenceElement;
 
-  public GrClassReferenceType(GrCodeReferenceElement referenceElement) {
+  public GrClassReferenceType(GrReferenceElement referenceElement) {
     super(LanguageLevel.JDK_1_5);
     myReferenceElement = referenceElement;
   }
-  public GrClassReferenceType(GrCodeReferenceElement referenceElement, LanguageLevel languageLevel) {
+  public GrClassReferenceType(GrReferenceElement referenceElement, LanguageLevel languageLevel) {
     super(languageLevel);
     myReferenceElement = referenceElement;
   }
@@ -173,7 +169,6 @@ public class GrClassReferenceType extends PsiClassType {
   }
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    GrClassReferenceType copy = new GrClassReferenceType(myReferenceElement,languageLevel);
-    return copy;
+    return new GrClassReferenceType(myReferenceElement,languageLevel);
   }
 }

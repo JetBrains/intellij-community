@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.util;
 
-import java.util.Arrays;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
 
-/**
- *
- */
 public class Pair<A, B> {
   public final A first;
   public final B second;
@@ -42,23 +40,23 @@ public class Pair<A, B> {
     return new Pair<A,B>(first, second);
   }
 
-  public final boolean equals(Object o){
+  @SuppressWarnings({"UnusedDeclaration"})
+  public static <A, B> Function<A, Pair<A, B>> createFunction(@Nullable final B value) {
+    return new Function<A, Pair<A, B>>() {
+      public Pair<A, B> fun(A a) {
+        return create(a, value);
+      }
+    };
+  }
+
+  public final boolean equals(Object o) {
     return o instanceof Pair && Comparing.equal(first, ((Pair)o).first) && Comparing.equal(second, ((Pair)o).second);
   }
 
-  public final int hashCode(){
-    int hashCode = 0;
-    if (first != null){
-      hashCode += hashCode(first);
-    }
-    if (second != null){
-      hashCode += hashCode(second);
-    }
-    return hashCode;
-  }
-
-  private static int hashCode(final Object o) {
-    return (o instanceof Object[]) ? Arrays.hashCode((Object[])o) : o.hashCode();
+  public int hashCode() {
+    int result = first != null ? first.hashCode() : 0;
+    result = 31 * result + (second != null ? second.hashCode() : 0);
+    return result;
   }
 
   public String toString() {

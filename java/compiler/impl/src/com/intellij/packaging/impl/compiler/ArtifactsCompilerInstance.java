@@ -112,7 +112,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
           targets.add(new ArtifactBuildTarget(artifact));
         }
         if (selectedOnly) {
-          myContext.putUserData(ArtifactsCompiler.AFFECTED_ARTIFACTS, artifacts);
+          ArtifactsCompiler.setAffectedArtifacts(ArtifactsCompilerInstance.this.myContext, artifacts);
         }
       }
     }.execute();
@@ -285,7 +285,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
   }
 
   private void onBuildStartedOrFinished(final boolean finished) throws Exception {
-    final Set<Artifact> artifacts = myContext.getUserData(ArtifactsCompiler.AFFECTED_ARTIFACTS);
+    final Set<Artifact> artifacts = ArtifactsCompiler.getAffectedArtifacts(myContext);
     if (artifacts != null) {
       for (Artifact artifact : artifacts) {
         for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
@@ -335,7 +335,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
     for (ArtifactCompilerCompileItem item : processedItems) {
       consumer.addProcessedItem(item);
     }
-    myContext.putUserData(ArtifactsCompiler.WRITTEN_PATHS_KEY, writtenPaths);
+    ArtifactsCompiler.addWrittenPaths(myContext, writtenPaths);
   }
 
   private THashSet<String> deleteFiles(List<GenericCompilerCacheState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> obsoleteItems,

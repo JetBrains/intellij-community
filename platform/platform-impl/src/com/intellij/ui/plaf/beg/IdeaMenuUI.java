@@ -16,6 +16,7 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.Patches;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -44,8 +45,9 @@ public class IdeaMenuUI extends BasicMenuUI{
   private static final Rectangle ourIconRect = new Rectangle();
   private static final Rectangle ourViewRect = new Rectangle(32767, 32767);
 
-  private static final Border SELECTED_BACKGROUND_PAINTER = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
-  private static final Icon INVERTED_ARROW_ICON = (Icon) UIManager.get("Menu.invertedArrowIcon");
+  private Border myAquaSelectedBackgroundPainter;
+  private Icon myAquaInvertedArrowIcon;
+  private Icon myAquaDisabledArrowIcon;
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -54,6 +56,12 @@ public class IdeaMenuUI extends BasicMenuUI{
 
   public IdeaMenuUI() {
     myMaxGutterIconWidth = 18;
+
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      if (myAquaSelectedBackgroundPainter == null) myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
+      if (myAquaInvertedArrowIcon == null) myAquaInvertedArrowIcon = (Icon) UIManager.get("Menu.invertedArrowIcon");
+      if (myAquaDisabledArrowIcon == null) myAquaDisabledArrowIcon = (Icon) UIManager.get("Menu.disabledArrowIcon");
+    }
   }
 
   protected MenuKeyListener createMenuKeyListener(JComponent c){
@@ -114,7 +122,7 @@ public class IdeaMenuUI extends BasicMenuUI{
       g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
         if (UIUtil.isUnderAquaLookAndFeel()) {
-           SELECTED_BACKGROUND_PAINTER.paintBorder(comp, g, 0, 0, jMenu.getWidth(), jMenu.getHeight());
+           myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, jMenu.getWidth(), jMenu.getHeight());
         } else {
           g.setColor(selectionBackground);
           if (allowedIcon != null) {
@@ -188,8 +196,10 @@ public class IdeaMenuUI extends BasicMenuUI{
       }
       if (useCheckAndArrow()){
         try {
-          if (UIUtil.isUnderAquaLookAndFeel() && buttonmodel.isSelected() && INVERTED_ARROW_ICON != null) {
-            INVERTED_ARROW_ICON.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
+          if (SystemInfo.isMac && myAquaInvertedArrowIcon != null && (buttonmodel.isArmed() || buttonmodel.isSelected()) && UIUtil.isUnderAquaLookAndFeel()) {
+            myAquaInvertedArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
+          } else if (SystemInfo.isMac && myAquaDisabledArrowIcon != null && !buttonmodel.isEnabled() && UIUtil.isUnderAquaLookAndFeel()) {
+            myAquaDisabledArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
           } else arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
         }
         catch (NullPointerException npe) {
@@ -213,7 +223,7 @@ public class IdeaMenuUI extends BasicMenuUI{
     if (i1 == 0){
       return new MenuElement[0];
     }
-    java.awt.Container container = menuItem.getParent();
+    Container container = menuItem.getParent();
     MenuElement amenuelement1[];
     if (amenuelement[i1 - 1].getComponent() == container){
       amenuelement1 = new MenuElement[i1 + 1];

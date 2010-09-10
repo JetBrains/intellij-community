@@ -1,0 +1,15 @@
+def foo() {}
+
+
+/**<caret>
+def bar(aaa, bbb) {}
+-----
+def foo() {}
+
+/**
+ * 
+ * @param aaa
+ * @param bbb
+ * @return
+ */
+def bar(aaa, bbb) {}

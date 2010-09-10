@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,19 @@ public class GeneralCommandLine {
   private File myWorkDirectory = null;
   private ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
+
+  /**
+   * Appends a value to the end os a path-like environment variable, using system-dependent path separator.
+   * @param source path-like string to append to
+   * @param value what to append
+   * @return modified path-like string
+   */
+  @NotNull
+  public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
+    if (source != null) source = value + File.pathSeparator + source;
+    else source = value;
+    return source;
+  }
 
   public void setExePath(@NonNls final String exePath) {
     myExePath = exePath.trim();

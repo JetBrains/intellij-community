@@ -9,7 +9,7 @@
         a consistent copyright notice.
     </description>
     <extensions defaultExtensionNs="com.intellij">
-      <projectConfigurable implementation="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
+      <projectConfigurable instance="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
       <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
       <checkinHandlerFactory implementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerFactory"/>
       <projectService serviceInterface="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerState" 

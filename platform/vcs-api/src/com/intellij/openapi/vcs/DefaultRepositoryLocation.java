@@ -48,6 +48,14 @@ public class DefaultRepositoryLocation implements RepositoryLocation {
     return myURL + "|" + myLocation;
   }
 
+  @Override
+  public void onBeforeBatch() throws VcsException {
+  }
+
+  @Override
+  public void onAfterBatch() {
+  }
+
   public String getLocation() {
     return myLocation;
   }

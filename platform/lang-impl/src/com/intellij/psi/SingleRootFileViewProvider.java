@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
@@ -52,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
+  public static final Key<Boolean> ourNoSizeLimitKey = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   private final PsiManager myManager;
   private final VirtualFile myVirtualFile;
@@ -251,6 +253,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public static boolean isTooLarge(final VirtualFile vFile) {
+    if (Boolean.TRUE.equals(vFile.getUserData(ourNoSizeLimitKey))) return false;
     return fileSizeIsGreaterThan(vFile, PersistentFS.MAX_INTELLISENSE_FILESIZE);
   }
 

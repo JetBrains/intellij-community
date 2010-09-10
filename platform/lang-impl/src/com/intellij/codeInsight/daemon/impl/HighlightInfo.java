@@ -29,6 +29,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -39,11 +40,13 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -53,17 +56,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Comparator;
 import java.util.List;
 
-public class HighlightInfo {
+public class HighlightInfo implements Segment {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfo");
 
-  public static final Comparator<HighlightInfo> BY_START_OFFSET = new Comparator<HighlightInfo>() {
-    public int compare(HighlightInfo o1, HighlightInfo o2) {
-      return o1.startOffset - o2.startOffset;
-    }
-  };
   public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   private final boolean myNeedsUpdateOnTyping;
   public JComponent fileLevelComponent;
@@ -398,10 +395,15 @@ public class HighlightInfo {
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon) {
+      this(action, options, displayName, icon, null);
+    }
+
+    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon, HighlightDisplayKey key) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
       myIcon = icon;
+      myKey = key;
     }
 
     @NotNull
@@ -411,6 +413,10 @@ public class HighlightInfo {
 
     @Nullable
     public List<IntentionAction> getOptions(@NotNull PsiElement element) {
+      Editor editor = PsiUtilBase.findEditor(element);
+      if (editor != null && Boolean.FALSE.equals(editor.getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
+        return null;
+      }
       List<IntentionAction> options = myOptions;
       HighlightDisplayKey key = myKey;
       if (options != null || key == null) {
@@ -462,5 +468,15 @@ public class HighlightInfo {
     public Icon getIcon() {
       return myIcon;
     }
+  }
+
+  @Override
+  public int getStartOffset() {
+    return getActualStartOffset();
+  }
+
+  @Override
+  public int getEndOffset() {
+    return getActualEndOffset();
   }
 }

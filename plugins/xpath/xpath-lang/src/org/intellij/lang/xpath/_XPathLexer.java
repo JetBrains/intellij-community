@@ -967,11 +967,6 @@ class _XPathLexer implements FlexLexer {
     yybegin(initialState);
   }
 
-  // For Demetra compatibility
-  public void reset(CharSequence buffer, int initialState){
-    reset(buffer, 0, buffer.length(), initialState);
-  }
-
   /**
    * Refills the input buffer.
    *

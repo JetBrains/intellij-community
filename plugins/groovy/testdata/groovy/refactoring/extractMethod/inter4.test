@@ -27,5 +27,4 @@ private def testMethod() {
   cl.call()
 }
 
-
 println i

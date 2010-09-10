@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -130,7 +129,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
         public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
           for (String each : collectPossibleNameForCollectionParameter(parameterName)) {
             DomExtension inner = registrar.registerCollectionChildrenExtension(new XmlName(each), MavenDomConfigurationParameter.class);
-            inner.putUserData(DomExtension.KEY_DECLARATION, data.parameter);
+            inner.setDeclaringElement(data.parameter);
           }
         }
       });
@@ -142,7 +141,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
       addRequiredAnnotation(e, data);
     }
 
-    e.putUserData(DomExtension.KEY_DECLARATION, data.parameter);
+    e.setDeclaringElement(data.parameter);
 
     data.parameter.getXmlElement().putUserData(PLUGIN_PARAMETER_KEY, data);
   }

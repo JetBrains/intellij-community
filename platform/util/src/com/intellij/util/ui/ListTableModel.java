@@ -15,26 +15,40 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
+
+import javax.swing.*;
 import java.util.*;
 
 public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRemovable {
   private ColumnInfo[] myColumnInfos;
   private List<Item> myItems;
   private int mySortByColumn;
-  private int mySortingType = SortableColumnModel.SORT_ASCENDING;
 
-  private boolean myIsSortable = true;
+  private boolean myIsSortable = false;
+  private SortOrder mySortOrder = SortOrder.ASCENDING;
 
   public ListTableModel(ColumnInfo... columnInfos) {
-    this(columnInfos, new ArrayList<Item>(), 0);
+    this(columnInfos, new ArrayList<Item>(), 0, SortOrder.ASCENDING);
   }
 
   public ListTableModel(ColumnInfo[] columnNames, List<Item> items, int selectedColumn) {
+    this(columnNames, items, selectedColumn, SortOrder.ASCENDING);
+  }
+
+  public ListTableModel(ColumnInfo[] columnNames, List<Item> items, int selectedColumn, final SortOrder order) {
     myColumnInfos = columnNames;
     myItems = items;
     mySortByColumn = selectedColumn;
-    setSortable(true);
-    resort();
+    mySortOrder = order;
+
+    setSortable(ContainerUtil.find(columnNames, new Condition<ColumnInfo>() {
+      @Override
+      public boolean value(ColumnInfo columnInfo) {
+        return columnInfo.isSortable();
+      }
+    }) != null);
   }
 
   public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -57,6 +71,20 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     return myItems.size();
   }
 
+  @Override
+  public RowSorter.SortKey getDefaultSortKey() {
+    if (mySortByColumn != -1) {
+      return new RowSorter.SortKey(mySortByColumn, mySortOrder);
+    }
+
+    return null;
+  }
+
+  @Override
+  public Object getRowValue(int row) {
+    return myItems.get(row);
+  }
+
   public int getColumnCount() {
     return myColumnInfos.length;
   }
@@ -64,7 +92,6 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   public void setItems(List<Item> items) {
     myItems = items;
     fireTableDataChanged();
-    resort();
   }
 
   public Object getValueAt(int rowIndex, int columnIndex) {
@@ -98,68 +125,8 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     return Collections.unmodifiableList(myItems);
   }
 
-  public void sortByColumn(int columnIndex) {
-    if (mySortByColumn == columnIndex) {
-      reverseOrder(columnIndex);
-    }
-    else {
-      mySortByColumn = columnIndex;
-      mySortingType = SortableColumnModel.SORT_ASCENDING;
-      resort();
-    }
-  }
-
-  public void sortByColumn(int columnIndex, int sortingType) {
-    if (mySortByColumn != columnIndex) {
-      mySortByColumn = columnIndex;
-      mySortingType = sortingType;
-      resort();
-    }
-    else if (mySortingType != sortingType) {
-      reverseOrder(columnIndex);
-    }
-  }
-
-  private void reverseOrder(final int columnIndex) {
-    if (mySortingType == SortableColumnModel.SORT_ASCENDING) {
-      mySortingType = SortableColumnModel.SORT_DESCENDING;
-    }
-    else {
-      mySortingType = SortableColumnModel.SORT_ASCENDING;
-    }
-    if (myIsSortable && myColumnInfos[columnIndex].isSortable()) {
-      reverseModelItems(myItems);
-      fireTableDataChanged();
-    }
-  }  
-
-  protected void reverseModelItems(final List<Item> items) {
-    Collections.reverse(items);
-  }
-
   protected Object getAspectOf(int aspectIndex, Object item) {
     return myColumnInfos[aspectIndex].valueOf(item);
-  }
-
-  private void resort() {
-    if (myIsSortable && mySortByColumn >= 0 && mySortByColumn < myColumnInfos.length) {
-      final ColumnInfo columnInfo = myColumnInfos[mySortByColumn];
-      if (columnInfo.isSortable()) {
-        columnInfo.sort(myItems);
-        if (mySortingType == SortableColumnModel.SORT_DESCENDING) {
-          reverseModelItems(myItems);
-        }
-        fireTableDataChanged();
-      }
-    }
-  }
-
-  public int getSortedColumnIndex() {
-    return mySortByColumn;
-  }
-
-  public int getSortingType() {
-    return mySortingType;
   }
 
   public void setSortable(boolean aBoolean) {
@@ -179,6 +146,16 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     fireTableRowsDeleted(idx, idx);
   }
 
+  public void exchangeRows(int idx1, int idx2) {
+    Collections.swap(myItems, idx1, idx2);
+    if (idx1 < idx2) {
+      fireTableRowsUpdated(idx1, idx2);
+    }
+    else {
+      fireTableRowsUpdated(idx2, idx1);
+    }
+  }
+
   public void addRow(Item item) {
     myItems.add(item);
     fireTableRowsInserted(myItems.size() - 1, myItems.size() - 1);
@@ -187,7 +164,6 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   public void addRows(final Collection<Item> items) {
     myItems.addAll(items);
     fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
-//    resort();
   }
 
   public Object getItem(final int rowIndex) {

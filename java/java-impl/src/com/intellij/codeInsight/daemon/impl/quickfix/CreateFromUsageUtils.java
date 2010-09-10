@@ -56,7 +56,6 @@ import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -206,11 +205,7 @@ public class CreateFromUsageUtils {
 
   public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
                                            final PsiSubstitutor substitutor, final PsiExpression[] arguments) {
-    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map2List(arguments, new Function<PsiExpression, Pair<PsiExpression, PsiType>>() {
-      public Pair<PsiExpression, PsiType> fun(PsiExpression psiExpression) {
-        return Pair.create(psiExpression, null);
-      }
-    }));
+    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map2List(arguments, Pair.<PsiExpression, PsiType>createFunction(null)));
   }
 
   public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,

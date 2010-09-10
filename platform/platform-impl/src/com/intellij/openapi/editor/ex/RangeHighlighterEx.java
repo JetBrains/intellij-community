@@ -25,8 +25,19 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
-public interface RangeHighlighterEx extends RangeHighlighter {
+public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   boolean isAfterEndOfLine();
   void setAfterEndOfLine(boolean val);
+
+  int getAffectedAreaStartOffset();
+
+  int getAffectedAreaEndOffset();
+  long getId();
+
+  void setTextAttributes(TextAttributes textAttributes);
+
+  void changeAttributesInBatch(@NotNull Runnable change);
 }

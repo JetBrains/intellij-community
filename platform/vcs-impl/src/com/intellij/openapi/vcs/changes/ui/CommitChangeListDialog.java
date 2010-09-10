@@ -38,8 +38,8 @@ import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
@@ -243,8 +243,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     });
 
-    myCommitMessageArea = new CommitMessage();
-    myCommitMessageArea.init();
+    myCommitMessageArea = new CommitMessage(project);
 
     if (comment != null) {
       setCommitMessage(comment);
@@ -373,7 +372,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitMessageArea.requestFocusInMessage();
     
     for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
-      support.installSearch(myCommitMessageArea.getTextField(), myCommitMessageArea.getTextField());
+      support.installSearch(myCommitMessageArea.getEditorField(), myCommitMessageArea.getEditorField());
     }
 
   }
@@ -934,7 +933,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
   
   public JComponent getPreferredFocusedComponent() {
-    return myCommitMessageArea.getTextField();
+    return myCommitMessageArea.getEditorField();
   }
 
   public void calcData(DataKey key, DataSink sink) {
@@ -980,24 +979,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  private static class DiffCommitMessageEditor extends JPanel implements Disposable {
+  private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
     private CommitChangeListDialog myCommitDialog;
-    private final JTextArea myArea = new JTextArea();
 
     public DiffCommitMessageEditor(final CommitChangeListDialog dialog) {
-      super(new BorderLayout());
-      myArea.setText(dialog.getCommitMessage());
-      myArea.setLineWrap(true);      
-      myArea.setWrapStyleWord(true);
-      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myArea);
-      setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("diff.commit.message.title")));
-      add(scrollPane, BorderLayout.CENTER);
+      super(dialog.getProject());
+      getEditorField().setText(dialog.getCommitMessage());
       myCommitDialog = dialog;
     }
 
     public void dispose() {
       if (myCommitDialog != null) {
-        myCommitDialog.setCommitMessageText(myArea.getText());
+        myCommitDialog.setCommitMessageText(getEditorField().getText());
         myCommitDialog = null;
       }
     }

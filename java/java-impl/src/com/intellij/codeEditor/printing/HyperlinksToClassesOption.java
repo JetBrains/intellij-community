@@ -23,14 +23,16 @@ package com.intellij.codeEditor.printing;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class HyperlinksToClassesOption implements PrintOption {
+public class HyperlinksToClassesOption extends PrintOption {
   private JCheckBox myCbGenerateHyperlinksToClasses;
   private boolean isGenerateHyperlinksToClasses = false;
 
@@ -40,27 +42,6 @@ public class HyperlinksToClassesOption implements PrintOption {
 
   public void setGenerateHyperlinksToClasses(boolean generateHyperlinksToClasses) {
     isGenerateHyperlinksToClasses = generateHyperlinksToClasses;
-  }
-
-  public JComponent createComponent() {
-    myCbGenerateHyperlinksToClasses = new JCheckBox(CodeEditorBundle.message("export.to.html.generate.hyperlinks.checkbox"), isGenerateHyperlinksToClasses);
-    return myCbGenerateHyperlinksToClasses;
-  }
-
-  public boolean isModified() {
-    return myCbGenerateHyperlinksToClasses.isSelected() != isGenerateHyperlinksToClasses;
-  }
-
-  public void apply() throws ConfigurationException {
-    isGenerateHyperlinksToClasses = myCbGenerateHyperlinksToClasses.isSelected();
-  }
-
-  public void reset() {
-    myCbGenerateHyperlinksToClasses.setSelected(isGenerateHyperlinksToClasses);
-  }
-
-  public void disposeUIResources() {
-    myCbGenerateHyperlinksToClasses = null;
   }
 
   @Nullable
@@ -74,6 +55,12 @@ public class HyperlinksToClassesOption implements PrintOption {
       }
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public UnnamedConfigurable createConfigurable() {
+    return new HyperlinksToClassesConfigurable();
   }
 
 
@@ -95,4 +82,25 @@ public class HyperlinksToClassesOption implements PrintOption {
     }
   }
 
+  private class HyperlinksToClassesConfigurable implements UnnamedConfigurable {
+    public JComponent createComponent() {
+      myCbGenerateHyperlinksToClasses = new JCheckBox(CodeEditorBundle.message("export.to.html.generate.hyperlinks.checkbox"), isGenerateHyperlinksToClasses);
+      return myCbGenerateHyperlinksToClasses;
+    }
+
+    public boolean isModified() {
+      return myCbGenerateHyperlinksToClasses.isSelected() != isGenerateHyperlinksToClasses;
+    }
+
+    public void apply() throws ConfigurationException {
+      isGenerateHyperlinksToClasses = myCbGenerateHyperlinksToClasses.isSelected();
+    }
+
+    public void reset() {
+      myCbGenerateHyperlinksToClasses.setSelected(isGenerateHyperlinksToClasses);
+    }
+
+    public void disposeUIResources() {
+    }
+  }
 }

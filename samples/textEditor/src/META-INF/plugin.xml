@@ -1,0 +1,30 @@
+<idea-plugin version="2">
+  <name>Text Editor</name>
+  <description>This plugin illustrates how to create a simple text editor and work with document files.</description>
+  <version>1.0</version>
+  <vendor>JetBrains</vendor>
+    <!--
+  <idea-version since-build="8000"/>
+    -->
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+      
+  </project-components>
+
+  <actions>
+    <!-- Add your actions here -->
+      <action id="documentFiles.myActionID" class="myDocumentFiles.MyActionClass" text="Text _Editor"
+              description="a sample custom editor of text files.">
+          <add-to-group group-id="FileMenu" anchor="after" relative-to-action="PowerSaveGroup"/>
+          <keyboard-shortcut keymap="$default" first-keystroke="ctrl F10"/>
+      </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+</idea-plugin>

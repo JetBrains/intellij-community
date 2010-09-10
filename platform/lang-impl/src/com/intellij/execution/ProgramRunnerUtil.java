@@ -54,6 +54,9 @@ public class ProgramRunnerUtil {
     if (runner == null) {
       LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration);
     }
+    if (runner == null || ExecutorRegistry.getInstance().isStarting(project, executor.getId(), runner.getRunnerId())){
+      return;
+    }
 
     if (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
       final boolean result = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
@@ -62,7 +65,7 @@ public class ProgramRunnerUtil {
       }
 
       while (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
-        if (0 == Messages.showOkCancelDialog(project, "Configuration is still wrong. Do you want to edit it again?", "Change configuration settings", Messages.getErrorIcon())) {
+        if (0 == Messages.showYesNoDialog(project, "Configuration is still wrong. Do you want to edit it again?", "Change configuration settings", Messages.getErrorIcon())) {
           final boolean result2 = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
           if (!result2) {
             return;

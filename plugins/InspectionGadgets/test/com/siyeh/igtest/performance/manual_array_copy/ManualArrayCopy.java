@@ -75,4 +75,9 @@ public class ManualArrayCopy
         }
         return array;
     }
+
+    void ButItIsWrong(int sp, int kp, int[][] varcov, int[] eval) {
+        for (int i = 0; i < sp; i++)
+            varcov[i][i] = eval[i + kp];
+    }
 }

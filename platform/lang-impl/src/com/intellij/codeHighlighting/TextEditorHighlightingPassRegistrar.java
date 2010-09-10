@@ -86,7 +86,7 @@ public abstract class TextEditorHighlightingPassRegistrar {
         //todo
         ids = new int[]{Pass.UPDATE_ALL,
           Pass.UPDATE_FOLDING, Pass.UPDATE_OVERRIDEN_MARKERS,
-          Pass.UPDATE_VISIBLE, Pass.EXTERNAL_TOOLS,
+          Pass.EXTERNAL_TOOLS,
           Pass.LOCAL_INSPECTIONS, Pass.POPUP_HINTS, Pass.POST_UPDATE_ALL};
         break;
     }

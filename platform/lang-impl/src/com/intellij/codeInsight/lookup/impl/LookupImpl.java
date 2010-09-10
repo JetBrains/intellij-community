@@ -188,19 +188,26 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void addItem(LookupElement item) {
-    final CollectConsumer<LookupElementAction> consumer = new CollectConsumer<LookupElementAction>();
-    for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
-      provider.fillActions(item, this, consumer);
-    }
-    myItemActions.put(item, consumer.getResult());
-
-    int maxWidth = myCellRenderer.updateMaximumWidth(item);
-    myLookupWidth = Math.max(maxWidth, myLookupWidth);
+    updateItemActions(item);
+    updateLookupWidth(item);
 
     synchronized (myItems) {
       myItems.add(item);
       mySortedItems = null;
     }
+  }
+
+  public void updateLookupWidth(LookupElement item) {
+    int maxWidth = myCellRenderer.updateMaximumWidth(item);
+    myLookupWidth = Math.max(maxWidth, myLookupWidth);
+  }
+
+  public void updateItemActions(LookupElement item) {
+    final CollectConsumer<LookupElementAction> consumer = new CollectConsumer<LookupElementAction>();
+    for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
+      provider.fillActions(item, this, consumer);
+    }
+    myItemActions.put(item, consumer.getResult());
   }
 
   public Collection<LookupElementAction> getActionsFor(LookupElement element) {
@@ -580,14 +587,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         final int i = myList.locationToIndex(point);
         if (i >= 0) {
           final LookupElement selected = (LookupElement)myList.getModel().getElementAt(i);
-          if (selected != null) {
-            final Collection<LookupElementAction> actions = getActionsFor(selected);
-            if (!actions.isEmpty() &&
-                e.getClickCount() == 1 &&
-                point.x >= myList.getCellBounds(i, i).width - PopupIcons.EMPTY_ICON.getIconWidth()) {
-              ShowLookupActionsHandler.showItemActions(LookupImpl.this, actions);
-              return;
-            }
+          if (selected != null && 
+              e.getClickCount() == 1 &&
+              point.x >= myList.getCellBounds(i, i).width - PopupIcons.EMPTY_ICON.getIconWidth() &&
+              ShowLookupActionsHandler.showItemActions(LookupImpl.this, selected)) {
+            return;
           }
         }
 
@@ -839,8 +843,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myInitialSelection = myEditor.getDocument().createRangeMarker(new TextRange(selStart, selEnd));
   }
 
+  @Nullable
   public PsiFile getPsiFile() {
-    return PsiDocumentManager.getInstance(myEditor.getProject()).getPsiFile(myEditor.getDocument());
+    return PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
   }
 
   public boolean isCompletion() {
@@ -895,6 +900,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void dispose() {
+    assert ApplicationManager.getApplication().isDispatchThread();
     assert myHidden;
     assert !myDisposed;
     myDisposed = true;

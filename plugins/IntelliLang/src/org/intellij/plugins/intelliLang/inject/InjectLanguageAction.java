@@ -142,11 +142,8 @@ public class InjectLanguageAction implements IntentionAction {
         final String string = (String)list.getSelectedValue();
         onChosen.process(string);
       }
-    }).setFilteringEnabled(new Function<Object, String>() {
-      public String fun(Object o) {
-        return (String)o;
-      }
-    }).createPopup().showInBestPositionFor(DataManager.getInstance().getDataContext());
+    }).setFilteringEnabled(new Function.Self<Object, String>())
+      .createPopup().showInBestPositionFor(DataManager.getInstance().getDataContext());
     return true;
   }
 

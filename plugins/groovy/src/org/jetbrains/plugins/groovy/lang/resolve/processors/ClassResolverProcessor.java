@@ -30,6 +30,6 @@ public class ClassResolverProcessor extends ResolverProcessor {
   }
 
   public ClassResolverProcessor(String refName, PsiElement place) {
-    super(refName, EnumSet.of(ClassHint.ResolveKind.CLASS), place, PsiType.EMPTY_ARRAY);
+    super(refName, RESOLVE_KINDS_CLASS, place, PsiType.EMPTY_ARRAY);
   }
 }

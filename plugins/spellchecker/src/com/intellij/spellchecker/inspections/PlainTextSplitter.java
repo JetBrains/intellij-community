@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -30,19 +31,34 @@ public class PlainTextSplitter extends BaseSplitter {
 
 
   @NonNls
-  private static final Pattern COMPLEX =
-    Pattern.compile("([\\p{L}0-9\\.\\-\\_]+@([\\p{L}0-9\\-\\_]+\\.)+(com|net|[a-z]{2}))|((ftp|http|file|https)://([^/]+)(/.*)?(/.*))");
+  private static final Pattern MAIL =
+    Pattern.compile("([\\p{L}0-9\\.\\-\\_]+@([\\p{L}0-9\\-\\_]+\\.)+(com|net|[a-z]{2}))");
+
+  @NonNls
+  private static final Pattern URL =
+    Pattern.compile("((ftp|http|file|https)://([^/]+)(/.*)?(/.*))");
 
 
   public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
     if (text == null || StringUtil.isEmpty(text)) {
       return null;
     }
-    if (Verifier.checkCharacterData(text.substring(range.getStartOffset(), range.getEndOffset())) != null) {
+    if (Verifier.checkCharacterData(range.substring(text)) != null) {
       return null;
     }
 
-    List<TextRange> toCheck = excludeByPattern(text, range, COMPLEX, 0);
+    List<TextRange> toCheck;
+    if (text.indexOf('@')>0) {
+      toCheck = excludeByPattern(text, range, MAIL, 0);
+    }
+    else
+    if (text.indexOf(':')>0) {
+      toCheck = excludeByPattern(text, range, URL, 0);
+    }
+    else
+    {
+      toCheck = Collections.singletonList(range);
+    }
 
     if (toCheck == null) return null;
 

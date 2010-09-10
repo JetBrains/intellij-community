@@ -18,7 +18,6 @@ package com.intellij.lang.ant.psi.impl.reference;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntElementRole;
-import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
@@ -33,10 +32,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.StringSetSpinAllocator;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +89,7 @@ public class AntPropertyReference extends AntGenericReference {
 
   public PsiElement resolveInner() {
     final AntElement elem = getElement();
-    final AntFile contextFile = AntConfigurationBase.getInstance(elem.getProject()).getEffectiveContextFile(elem.getAntFile());
+    final AntFile contextFile = null/*AntConfigurationBase.getInstance(elem.getProject()).getEffectiveContextFile(elem.getAntFile())*/;
     if (contextFile == null) {
       return null;
     }

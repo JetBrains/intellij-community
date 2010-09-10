@@ -30,12 +30,14 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
@@ -166,13 +168,13 @@ public class CodeInsightTestUtil {
           editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
         }
       }.execute().throwException();
-    }
-    finally {
       assert renamer != null;
       renamer.finish();
 
       TemplateManagerImpl.getTemplateState(editor).gotoEnd();
       renamer.performAutomaticRename(newName, element);
+    }
+    finally {
       templateManager.setTemplateTesting(false);
     }
 
@@ -184,5 +186,13 @@ public class CodeInsightTestUtil {
     fixture.configureByFile(file + "." + extension);
     doInlineRename(handler, newName, fixture);
     fixture.checkResultByFile(file + "_after." + extension);
+  }
+
+  public static void doActionTest(AnAction action, String file, CodeInsightTestFixture fixture) {
+    String extension = FileUtil.getExtension(file);
+    String name = FileUtil.getNameWithoutExtension(file);
+    fixture.configureByFile(file);
+    fixture.testAction(action);
+    fixture.checkResultByFile(name + "_after." + extension);
   }
 }

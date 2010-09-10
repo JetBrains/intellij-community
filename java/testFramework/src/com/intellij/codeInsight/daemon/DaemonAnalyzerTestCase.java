@@ -290,21 +290,19 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       toIgnore.add(Pass.POPUP_HINTS);
       toIgnore.add(Pass.POST_UPDATE_ALL);
       toIgnore.add(Pass.UPDATE_ALL);
-      toIgnore.add(Pass.UPDATE_VISIBLE);
       toIgnore.add(Pass.UPDATE_OVERRIDEN_MARKERS);
       toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
     }
 
     boolean canChange = canChangeDocumentDuringHighlighting();
-    CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), toIgnore.toNativeArray(), canChange);
+    List<HighlightInfo> infos = CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), toIgnore.toNativeArray(), canChange);
 
     if (!canChange) {
       Document document = getDocument(getFile());
       ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileStatusMap().assertAllDirtyScopesAreNull(document);
     }
 
-    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
-    return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
+    return infos;
   }
 
   @Retention(RetentionPolicy.RUNTIME)

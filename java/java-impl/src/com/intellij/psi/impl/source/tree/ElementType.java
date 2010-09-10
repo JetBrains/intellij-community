@@ -90,4 +90,5 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType,
   TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, ENUM_CONSTANT, METHOD, ANNOTATION_METHOD);
   TokenSet FULL_MEMBER_BIT_SET = TokenSet.orSet(MEMBER_BIT_SET,
                                                 TokenSet.create(CLASS_INITIALIZER));
+  TokenSet ANNOTATIONS = TokenSet.create(ANNOTATION);
 }

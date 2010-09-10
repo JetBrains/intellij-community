@@ -23,11 +23,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +37,18 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class BaseRefactoringAction extends AnAction {
+  private final Condition<Language> myLanguageCondition = new Condition<Language>() {
+    @Override
+    public boolean value(Language language) {
+      return isAvailableForLanguage(language);
+    }
+  };
+
   protected abstract boolean isAvailableInEditorOnly();
 
   protected abstract boolean isEnabledOnElements(PsiElement[] elements);
 
-  protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
     return true;
   }
 
@@ -92,7 +100,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     PsiFile file = e.getData(LangDataKeys.PSI_FILE);
     if (file != null) {
       if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
-        disableAction(e);
+        hideAction(e);
         return;
       }
     }
@@ -117,11 +125,15 @@ public abstract class BaseRefactoringAction extends AnAction {
         }
         element = getElementAtCaret(editor, file);
       }
-      boolean isVisible = element != null &&
-                          !(element instanceof SyntheticElement) &&
-                          isAvailableForLanguage(PsiUtilBase.getLanguageInEditor(editor, project));
+      Language[] languages = e.getData(LangDataKeys.CONTEXT_LANGUAGES);
+      if (element == null || element instanceof SyntheticElement || languages == null) {
+        hideAction(e);
+        return;
+      }
+
+      boolean isVisible = ContainerUtil.find(languages, myLanguageCondition) != null;      
       if (isVisible) {
-        boolean isEnabled = isAvailableOnElementInEditor(element, editor);
+        boolean isEnabled = isAvailableOnElementInEditorAndFile(element, editor, file, dataContext);
         if (!isEnabled) {
           disableAction(e);
         }
@@ -167,9 +179,6 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   private static void disableAction(final AnActionEvent e) {
     e.getPresentation().setEnabled(false);
-    if (ActionPlaces.isPopupPlace(e.getPlace()) && e.getPresentation().isVisible()) {
-      hideAction(e);
-    }
   }
 
   protected boolean isAvailableForLanguage(Language language) {

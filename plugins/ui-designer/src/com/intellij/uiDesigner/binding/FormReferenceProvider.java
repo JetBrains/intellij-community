@@ -141,8 +141,11 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     final XmlAttribute classToBind = rootTag.getAttribute("bind-to-class", null);
     if (classToBind != null) {
       // reference to class
-      final String className = classToBind.getValue().replace('$','.');
       final XmlAttributeValue valueElement = classToBind.getValueElement();
+      if (valueElement == null) {
+        return;
+      }
+      final String className = valueElement.getValue().replace('$','.');
       final PsiReference[] referencesByString = new JavaClassReferenceProvider(project).getReferencesByString(className, file, valueElement.getTextRange().getStartOffset() + 1);
       if(referencesByString.length < 1){
         // There are no references there

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
+import static com.intellij.lang.java.parser.JavaParserUtil.emptyElement;
 
 
 public class ReferenceParser {
@@ -45,18 +46,18 @@ public class ReferenceParser {
 
   @Nullable
   public static TypeInfo parseType(final PsiBuilder builder) {
-    return parseTypeWithInfo(builder, true, true);
+    return parseTypeWithInfo(builder, true, true, false);
   }
 
   @Nullable
-  public static PsiBuilder.Marker parseType(final PsiBuilder builder, final boolean eatLastDot, final boolean wildcard) {
-    final TypeInfo typeInfo = parseTypeWithInfo(builder, eatLastDot, wildcard);
+  public static PsiBuilder.Marker parseType(final PsiBuilder builder, final boolean eatLastDot, final boolean wildcard, final boolean diamonds) {
+    final TypeInfo typeInfo = parseTypeWithInfo(builder, eatLastDot, wildcard, diamonds);
     return typeInfo != null ? typeInfo.marker : null;
   }
 
   @Nullable
   public static PsiBuilder.Marker parseTypeWithEllipsis(final PsiBuilder builder, final boolean eatLastDot, final boolean wildcard) {
-    final TypeInfo typeInfo = parseTypeWithInfo(builder, eatLastDot, wildcard);
+    final TypeInfo typeInfo = parseTypeWithInfo(builder, eatLastDot, wildcard, false);
     if (typeInfo == null) return null;
 
     PsiBuilder.Marker type = typeInfo.marker;
@@ -70,7 +71,7 @@ public class ReferenceParser {
   }
 
   @Nullable
-  private static TypeInfo parseTypeWithInfo(final PsiBuilder builder, final boolean eatLastDot, final boolean wildcard) {
+  private static TypeInfo parseTypeWithInfo(final PsiBuilder builder, final boolean eatLastDot, final boolean wildcard, final boolean diamonds) {
     if (builder.getTokenType() == null) return null;
 
     final TypeInfo typeInfo = new TypeInfo();
@@ -86,12 +87,18 @@ public class ReferenceParser {
       typeInfo.isPrimitive = true;
     }
     else if (tokenType == JavaTokenType.IDENTIFIER) {
-      parseJavaCodeReference(builder, eatLastDot, true, annotationsSupported, false, false, typeInfo);
+      parseJavaCodeReference(builder, eatLastDot, true, annotationsSupported, false, false, diamonds, typeInfo);
     }
     else if (wildcard && tokenType == JavaTokenType.QUEST) {
       type.drop();
       typeInfo.marker = parseWildcardType(builder);
       return typeInfo.marker != null ? typeInfo : null;
+    }
+    else if (diamonds && tokenType == JavaTokenType.GT) {
+      emptyElement(builder, JavaElementType.DIAMOND_TYPE);
+      type.done(JavaElementType.TYPE);
+      typeInfo.marker = type;
+      return typeInfo;
     }
     else {
       type.drop();
@@ -104,13 +111,17 @@ public class ReferenceParser {
         DeclarationParser.parseAnnotations(builder);
       }
 
+      final PsiBuilder.Marker bracket = builder.mark();
       if (!expect(builder, JavaTokenType.LBRACKET)) {
+        bracket.drop();
         break;
       }
+      if (!expect(builder, JavaTokenType.RBRACKET)) {
+        bracket.rollbackTo();
+        break;
+      }
+      bracket.drop();
       typeInfo.isArray = true;
-      if (!expectOrError(builder, JavaTokenType.RBRACKET, JavaErrorMessages.message("expected.rbracket"))) {
-        break;
-      }
 
       type = type.precede();
     }
@@ -125,7 +136,7 @@ public class ReferenceParser {
     builder.advanceLexer();
 
     if (expect(builder, WILDCARD_KEYWORD_SET)) {
-      final PsiBuilder.Marker boundType = parseType(builder, true, false);
+      final PsiBuilder.Marker boundType = parseType(builder, true, false, false);
       if (boundType == null) {
         error(builder, JavaErrorMessages.message("expected.type"));
       }
@@ -137,13 +148,13 @@ public class ReferenceParser {
 
   @Nullable
   public static PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot,
-                                                         final boolean parameterList, final boolean annotations) {
-    return parseJavaCodeReference(builder, eatLastDot, parameterList, annotations, false, false, new TypeInfo());
+                                                         final boolean parameterList, final boolean annotations, final boolean diamonds) {
+    return parseJavaCodeReference(builder, eatLastDot, parameterList, annotations, false, false, diamonds, new TypeInfo());
   }
 
   public static boolean parseImportCodeReference(final PsiBuilder builder, final boolean isStatic) {
     final TypeInfo typeInfo = new TypeInfo();
-    parseJavaCodeReference(builder, true, false, false, true, isStatic, typeInfo);
+    parseJavaCodeReference(builder, true, false, false, true, isStatic, false, typeInfo);
     return !typeInfo.hasErrors;
   }
 
@@ -151,7 +162,7 @@ public class ReferenceParser {
   private static PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot,
                                                           final boolean parameterList, final boolean annotations,
                                                           final boolean isImport, final boolean isStaticImport,
-                                                          final TypeInfo typeInfo) {
+                                                          final boolean diamonds, final TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
     if (annotations) {
@@ -169,7 +180,7 @@ public class ReferenceParser {
 
     if (parameterList) {
       typeInfo.isParameterized = (builder.getTokenType() == JavaTokenType.LT);
-      parseReferenceParameterList(builder, true);
+      parseReferenceParameterList(builder, true, diamonds);
     }
     else {
       if (!isStaticImport || builder.getTokenType() == JavaTokenType.DOT) {
@@ -219,7 +230,7 @@ public class ReferenceParser {
 
       if (parameterList) {
         typeInfo.isParameterized = (builder.getTokenType() == JavaTokenType.LT);
-        parseReferenceParameterList(builder, true);
+        parseReferenceParameterList(builder, true, diamonds);
       }
       else if (!isStaticImport || builder.getTokenType() == JavaTokenType.DOT) {
         emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
@@ -231,7 +242,7 @@ public class ReferenceParser {
   }
 
   @NotNull
-  public static PsiBuilder.Marker parseReferenceParameterList(final PsiBuilder builder, final boolean wildcard) {
+  public static PsiBuilder.Marker parseReferenceParameterList(final PsiBuilder builder, final boolean wildcard, final boolean diamonds) {
     final PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
       list.done(JavaElementType.REFERENCE_PARAMETER_LIST);
@@ -239,7 +250,7 @@ public class ReferenceParser {
     }
 
     while (true) {
-      final PsiBuilder.Marker type = parseType(builder, true, wildcard);
+      final PsiBuilder.Marker type = parseType(builder, true, wildcard, diamonds);
       if (type == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
       }
@@ -319,7 +330,7 @@ public class ReferenceParser {
 
     if (expect(builder, start)) {
       while (true) {
-        final PsiBuilder.Marker classReference = parseJavaCodeReference(builder, true, true, true);
+        final PsiBuilder.Marker classReference = parseJavaCodeReference(builder, true, true, true, false);
         if (classReference == null) {
           error(builder, JavaErrorMessages.message("expected.identifier"));
         }

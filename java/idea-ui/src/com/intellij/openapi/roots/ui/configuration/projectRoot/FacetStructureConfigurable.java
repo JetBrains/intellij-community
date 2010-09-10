@@ -26,12 +26,12 @@ import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -71,7 +71,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   public static FacetStructureConfigurable getInstance(final @NotNull Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, FacetStructureConfigurable.class);
+    return ServiceManager.getService(project, FacetStructureConfigurable.class);
   }
 
   public static boolean isEnabled() {

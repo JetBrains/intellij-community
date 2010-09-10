@@ -586,7 +586,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       return cached;
     }
     
-    final ClassLoader loader = new AntResourcesClassLoader(urls, parentLoader, false, false);
+    final AntResourcesClassLoader loader = new AntResourcesClassLoader(urls, parentLoader, false, false);
+    loader.setAcceptUnescapedUrls(true);
     LOADERS_CACHE.setClassLoader(urls, loader);
     return loader;
   }

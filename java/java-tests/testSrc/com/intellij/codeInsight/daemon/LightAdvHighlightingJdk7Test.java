@@ -13,6 +13,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
+  public void testDuplicateAnnotations() throws Exception {
+    doTest(false, false);
+  }
+
   public void testSwitchByString() throws Exception {
     doTest(true, false);
   }

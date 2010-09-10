@@ -23,7 +23,10 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -106,10 +109,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private int myMaxKeyLength = 0;
   private char myDefaultShortcutChar = TAB_CHAR;
   private String myLastSelectedTemplateKey;
-  @NonNls
-  public static final String XML_EXTENSION = ".xml";
   private final SchemesManager<TemplateGroup, TemplateGroup> mySchemesManager;
-  private final SchemeProcessor<TemplateGroup> myProcessor;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/templates";
 
   private static class TemplateKey {
@@ -146,10 +146,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
 
-
-    myProcessor = new BaseSchemeProcessor<TemplateGroup>() {
+    SchemeProcessor<TemplateGroup> processor = new BaseSchemeProcessor<TemplateGroup>() {
+      @Nullable
       public TemplateGroup readScheme(final Document schemeContent)
-          throws InvalidDataException, IOException, JDOMException {
+        throws InvalidDataException, IOException, JDOMException {
         return readTemplateFile(schemeContent, schemeContent.getRootElement().getAttributeValue("group"), false, false,
                                 getClass().getClassLoader());
       }
@@ -198,7 +198,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
     };
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, myProcessor, RoamingType.PER_USER);
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
 
     loadTemplates();
   }
@@ -317,6 +317,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return myTemplates.get(key);
   }
 
+  @Nullable
   public TemplateImpl getTemplate(@NonNls String key, String group) {
     final Collection<TemplateImpl> templates = myTemplates.get(key);
     for (TemplateImpl template : templates) {
@@ -365,10 +366,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   private void addTemplateImpl(Template template) {
-    addTemplateImpl(template, false);
-  }
-
-  private void addTemplateImpl(Template template, boolean overwrite) {
     final TemplateImpl templateImpl = (TemplateImpl)template;
     if (getTemplate(templateImpl.getKey(), templateImpl.getGroupName()) == null) {
       myTemplates.putValue(template.getKey(), templateImpl);
@@ -448,7 +445,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       Collection<TemplateImpl> templates = group.getElements();
 
       for (TemplateImpl template : templates) {
-        addTemplateImpl(template, true);
+        addTemplateImpl(template);
       }
     }
 
@@ -459,11 +456,17 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     try {
       for(DefaultLiveTemplatesProvider provider: Extensions.getExtensions(DefaultLiveTemplatesProvider.EP_NAME)) {
         for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
-          String templateName = getDefaultTemplateName(defTemplate);
-          InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
-          if (inputStream != null) {
-            readDefTemplateFile(inputStream, templateName, provider.getClass().getClassLoader());
+          readDefTemplate(provider, defTemplate, true);
+        }
+        try {
+          String[] hidden = provider.getHiddenLiveTemplateFiles();
+          if (hidden != null) {
+            for (String s : hidden) {
+              readDefTemplate(provider, s, false);
+            }
           }
+        }
+        catch (AbstractMethodError ignore) {
         }
       }
     } catch (Exception e) {
@@ -471,21 +474,21 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
   }
 
+  private void readDefTemplate(DefaultLiveTemplatesProvider provider, String defTemplate, boolean registerTemplate)
+    throws JDOMException, InvalidDataException, IOException {
+    String templateName = getDefaultTemplateName(defTemplate);
+    InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
+    if (inputStream != null) {
+      readDefTemplateFile(inputStream, templateName, provider.getClass().getClassLoader(), registerTemplate);
+    }
+  }
+
   public static String getDefaultTemplateName(String defTemplate) {
     return defTemplate.substring(defTemplate.lastIndexOf("/") + 1);
   }
 
-  public void readDefTemplateFile(InputStream inputStream, String defGroupName) throws JDOMException, InvalidDataException, IOException {
-    readDefTemplateFile(inputStream, defGroupName, getClass().getClassLoader());
-  }
-
-  public void readDefTemplateFile(InputStream inputStream, String defGroupName, ClassLoader classLoader) throws JDOMException, InvalidDataException, IOException {
-    readTemplateFile(JDOMUtil.loadDocument(inputStream), defGroupName, true, true, classLoader);
-  }
-
-  @Nullable
-  public TemplateGroup readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate) throws InvalidDataException {
-    return readTemplateFile(document, defGroupName, isDefault, registerTemplate, getClass().getClassLoader()  );
+  public void readDefTemplateFile(InputStream inputStream, String defGroupName, ClassLoader classLoader, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
+    readTemplateFile(JDOMUtil.loadDocument(inputStream), defGroupName, true, registerTemplate, classLoader);
   }
 
   @Nullable
@@ -530,6 +533,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         clearPreviouslyRegistered(template);
         addTemplateImpl(template);
       }
+      addTemplateById(template);
 
       result.addElement(template);
     }
@@ -543,6 +547,12 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     return result.isEmpty() ? null : result;
 
+  }
+
+  /** Use {@link com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider} instead */
+  @Deprecated()
+  public void readHiddenTemplateFile(Document document) throws InvalidDataException {
+    readTemplateFile(document, null, false, false, getClass().getClassLoader());
   }
 
   private TemplateImpl readTemplateFromElement(final boolean isDefault,
@@ -590,23 +600,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return template;
   }
 
-  public void readHiddenTemplateFile(Document document) throws InvalidDataException {
-    if (document == null) {
-      throw new InvalidDataException();
-    }
-    Element root = document.getRootElement();
-    if (root == null || !TEMPLATE_SET.equals(root.getName())) {
-      throw new InvalidDataException();
-    }
-
-    for (final Object o1 : root.getChildren(TEMPLATE)) {
-
-      addTemplateById(readTemplateFromElement(false, null, (Element)o1, getClass().getClassLoader()));
-    }
-
-
-  }
-
   private static void saveTemplate(TemplateImpl template, Element templateSetElement) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
@@ -644,7 +637,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       Element contextElement = new Element(CONTEXT);
       template.getTemplateContext().writeExternal(contextElement);
       element.addContent(contextElement);
-    } catch (WriteExternalException e) {
+    } catch (WriteExternalException ignore) {
     }
     templateSetElement.addContent(element);
   }

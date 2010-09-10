@@ -4,10 +4,10 @@
                     interface="com.intellij.util.xml.DomFileDescription"/>
 
     <extensionPoint name="dom.implementation"
-                    interface="com.intellij.util.xml.impl.DomImplementationClassEP"/>
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"/>
 
     <extensionPoint name="dom.extender"
-                    interface="com.intellij.util.xml.reflect.DomExtenderEP"/>
+                    beanClass="com.intellij.util.xml.reflect.DomExtenderEP"/>
 
     <extensionPoint name="dom.customAnnotationChecker"
                     interface="com.intellij.util.xml.highlighting.DomCustomAnnotationChecker"/>

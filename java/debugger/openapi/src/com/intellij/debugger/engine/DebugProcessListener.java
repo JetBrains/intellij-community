@@ -18,6 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
+import com.sun.jdi.ThreadReference;
 
 import java.util.EventListener;
 
@@ -39,5 +40,9 @@ public interface DebugProcessListener extends EventListener{
   void processAttached(DebugProcess process);
 
   void attachException(RunProfileState state, ExecutionException exception, RemoteConnection remoteConnection);
+  
+  void threadStarted(DebugProcess proc, ThreadReference thread);
+  
+  void threadStopped(DebugProcess proc, ThreadReference thread);
 }
 

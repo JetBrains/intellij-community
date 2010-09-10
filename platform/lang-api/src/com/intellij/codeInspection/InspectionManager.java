@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public abstract class InspectionManager {
+  public static final String INSPECTION_GROUP_ID = "Inspections";  // for use in notifications
+
   public static InspectionManager getInstance(Project project) {
     return ServiceManager.getService(project, InspectionManager.class);
   }

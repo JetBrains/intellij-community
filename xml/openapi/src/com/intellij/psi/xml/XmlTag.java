@@ -66,6 +66,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   XmlAttribute setAttribute(@NonNls String qname, @NonNls String value) throws IncorrectOperationException;
 
   XmlTag createChildTag(@NonNls String localName, @NonNls String namespace, @NonNls String bodyText, boolean enforceNamespacesDeep);
+  XmlTag addSubTag(XmlTag subTag, boolean first);
 
   @NotNull XmlTag[] getSubTags();
   @NotNull XmlTag[] findSubTags(@NonNls String qname);

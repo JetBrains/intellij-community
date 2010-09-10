@@ -63,7 +63,7 @@ public class NavigateToTestDataAction extends AnAction {
           Notifications.Bus.notify(notification, method.getProject());
         }
         else {
-          new TestDataNavigationHandler(fileNames).navigate(method, JBPopupFactory.getInstance().guessBestPopupLocation(editor));
+          new TestDataNavigationHandler().navigate(method, JBPopupFactory.getInstance().guessBestPopupLocation(editor));
         }
       }
     }

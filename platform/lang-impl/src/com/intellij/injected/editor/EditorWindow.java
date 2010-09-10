@@ -36,8 +36,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -56,7 +55,7 @@ import java.util.Iterator;
 /**
  * @author Alexey
  */
-public class EditorWindow implements EditorEx, UserDataHolderEx {
+public class EditorWindow extends UserDataHolderBase implements EditorEx {
   private final DocumentWindowImpl myDocumentWindow;
   private final EditorImpl myDelegate;
   private volatile PsiFile myInjectedFile;
@@ -81,7 +80,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
           }
         }
         if (editorWindow.getDocument().areRangesEqual(documentRange)) {
-          int i = 0;
+          //int i = 0;
         }
       }
       window = new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
@@ -294,6 +293,11 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     int lineStartOffset = myDocumentWindow.getLineStartOffset(lineNumber);
     int column = calcLogicalColumnNumber(offset-lineStartOffset, lineNumber, lineStartOffset);
     return new LogicalPosition(lineNumber, column);
+  }
+
+  @Override
+  public boolean isCaretActive() {
+    return myDelegate.isCaretActive();
   }
 
   @NotNull
@@ -577,23 +581,6 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   @NotNull
   public EditorGutter getGutter() {
     return myDelegate.getGutter();
-  }
-
-  public <T> T getUserData(@NotNull final Key<T> key) {
-    return myDelegate.getUserData(key);
-  }
-
-  public <T> void putUserData(@NotNull final Key<T> key, final T value) {
-    myDelegate.putUserData(key, value);
-  }
-
-  @NotNull
-  public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
-    return myDelegate.putUserDataIfAbsent(key, value);
-  }
-
-  public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
-    return myDelegate.replace(key, oldValue, newValue);
   }
 
   public boolean equals(final Object o) {

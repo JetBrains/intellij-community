@@ -67,7 +67,7 @@ public abstract class DiffRequest {
   public abstract String getWindowTitle();
 
   /**
-   * <B>Work in progess. Don't rely on this functionality</B><br>
+   * <B>Work in progress. Don't rely on this functionality</B><br>
    */
   public void customizeToolbar(DiffToolbar toolbar) {
     myToolbarAddons.customize(toolbar);
@@ -106,7 +106,7 @@ public abstract class DiffRequest {
   }
 
   /**
-   * <B>Work in progess. Don't rely on this functionality</B><br>
+   * <B>Work in progress. Don't rely on this functionality</B><br>
    */
   public static interface ToolbarAddons {
     /**

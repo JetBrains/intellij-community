@@ -15,9 +15,23 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.SubTagList;
+
+import java.util.List;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jul 8, 2010
  */
-public abstract class AntDomScriptDef extends AntDomNamedElement{
+public abstract class AntDomScriptDef extends AntDomCustomClasspathComponent{
+
+  @SubTagList("attribute")
+  public abstract List<AntDomScriptdefAttribute> getScriptdefAttributes();
+
+  @SubTagList("element")
+  public abstract List<AntDomScriptdefElement> getScriptdefElements();
+  
+  @SubTag("classpath")
+  public abstract AntDomClasspath getClasspathElement();
 }

@@ -399,6 +399,15 @@ public class TypesUtil {
   }
 
   @Nullable
+  public static PsiType getLeastUpperBoundNullable(@Nullable PsiType type1, @Nullable PsiType type2, PsiManager manager) {
+    if (type1 == null) return type2;
+    if (type2 == null) return type1;
+    if (type1.isAssignableFrom(type2)) return type1;
+    if (type2.isAssignableFrom(type1)) return type2;
+    return getLeastUpperBound(type1, type2, manager);
+  }
+
+  @Nullable
   public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, PsiManager manager) {
     if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
       GrTupleType tuple1 = (GrTupleType)type1;

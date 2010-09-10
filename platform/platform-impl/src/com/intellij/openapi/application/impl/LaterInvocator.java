@@ -25,9 +25,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"SSBasedInspection"})
 public class LaterInvocator {
@@ -70,7 +70,7 @@ public class LaterInvocator {
     }
   }
 
-  private static final List<Object> ourModalEntities = new CopyOnWriteArrayList<Object>();
+  private static final List<Object> ourModalEntities = ContainerUtil.createEmptyCOWList();
   private static final List<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>(); //protected by LOCK
   private static volatile int ourQueueSkipCount = 0; // optimization
   private static final Runnable ourFlushQueueRunnable = new FlushQueue();

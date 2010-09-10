@@ -52,4 +52,10 @@ public class GrNamedArgumentImpl extends GroovyPsiElementImpl implements GrNamed
   public GrExpression getExpression() {
     return findChildByClass(GrExpression.class);
   }
+
+  @Override
+  public String getLabelName() {
+    final GrArgumentLabel label = getLabel();
+    return label == null ? null : label.getName();
+  }
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.ClosableByLeftArrow;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,43 +44,64 @@ public class ShowLookupActionsHandler extends LookupActionHandler {
       return;
     }
 
-    final Collection<LookupElementAction> actions = lookup.getActionsFor(element);
-    if (actions.isEmpty()) {
+    if (!showItemActions(lookup, element)) {
       lookup.getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, true);
-      return;
     }
-
-    showItemActions(lookup, actions);
   }
 
-  public static void showItemActions(LookupImpl lookup, Collection<LookupElementAction> actions) {
-    final BaseListPopupStep<LookupElementAction> step = new LookupActionsStep(actions, lookup);
+  public static boolean showItemActions(LookupImpl lookup, LookupElement element) {
+    final Collection<LookupElementAction> actions = lookup.getActionsFor(element);
+    if (actions.isEmpty()) {
+      return false;
+    }
+
+    final BaseListPopupStep<LookupElementAction> step = new LookupActionsStep(actions, lookup, element);
 
     final Rectangle bounds = lookup.getCurrentItemBounds();
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     final JComponent component = lookup.getComponent();
     popup.show(new RelativePoint(component, new Point(bounds.x + bounds.width,
                                                       bounds.y)));
+    return true;
   }
 
   private static class LookupActionsStep extends BaseListPopupStep<LookupElementAction> implements ClosableByLeftArrow {
     private final LookupImpl myLookup;
+    private final LookupElement myLookupElement;
+    private final Icon myEmptyIcon;
 
-    public LookupActionsStep(Collection<LookupElementAction> actions, LookupImpl lookup) {
+    public LookupActionsStep(Collection<LookupElementAction> actions, LookupImpl lookup, LookupElement lookupElement) {
       super(null, new ArrayList<LookupElementAction>(actions));
       myLookup = lookup;
+      myLookupElement = lookupElement;
+
+      int w = 0, h = 0;
+      for (LookupElementAction action : actions) {
+        final Icon icon = action.getIcon();
+        if (icon != null) {
+          w = Math.max(w, icon.getIconWidth());
+          h = Math.max(h, icon.getIconHeight());
+        }
+      }
+      myEmptyIcon = new EmptyIcon(w, h);
     }
 
     @Override
     public PopupStep onChosen(LookupElementAction selectedValue, boolean finalChoice) {
-      selectedValue.performLookupAction();
-      myLookup.hide();
+      final LookupElementAction.Result result = selectedValue.performLookupAction();
+      if (result == LookupElementAction.Result.HIDE_LOOKUP) {
+        myLookup.hide();
+      } else {
+        myLookup.updateItemActions(myLookupElement);
+        myLookup.updateLookupWidth(myLookupElement);
+        myLookup.refreshUi();
+      }
       return FINAL_CHOICE;
     }
 
     @Override
     public Icon getIconFor(LookupElementAction aValue) {
-      return aValue.getIcon();
+      return LookupCellRenderer.augmentIcon(aValue.getIcon(), myEmptyIcon);
     }
 
     @NotNull

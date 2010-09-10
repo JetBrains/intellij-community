@@ -55,10 +55,14 @@ public class ParamsGroup implements Cloneable{
     }
   }
 
-  public void addParameters(final List<String> parameters) {
+  public void addParameters(@NotNull final List<String> parameters) {
     for (final String parameter : parameters) {
       addParameter(parameter);
     }
+  }
+
+  public void addParametersString(@NotNull @NonNls final String parametersString) {
+    addParameters(ParametersList.parse(parametersString));
   }
 
   public List<String> getParameters() {

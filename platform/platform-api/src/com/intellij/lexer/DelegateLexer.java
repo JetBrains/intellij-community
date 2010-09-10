@@ -29,7 +29,7 @@ public class DelegateLexer extends LexerBase {
     myDelegate = delegate;
   }
 
-  public Lexer getDelegate() {
+  public final Lexer getDelegate() {
     return myDelegate;
   }
 
@@ -58,7 +58,7 @@ public class DelegateLexer extends LexerBase {
     myDelegate.advance();
   }
 
-  public CharSequence getBufferSequence() {
+  public final CharSequence getBufferSequence() {
     return myDelegate.getBufferSequence();
   }
 

@@ -130,7 +130,7 @@ public class MavenTypingTest extends MavenDomTestCase {
   }
 
   public void testDoNotHandleNonMavenFiles() throws Exception {
-    VirtualFile f = createProjectSubFile("foo.txt", "$<caret>");
+    VirtualFile f = createProjectSubFile("foo.xml", "$<caret>");
 
     assertTypeResultInRegularFile(f, '{', "${<caret>");
   }
@@ -216,7 +216,7 @@ public class MavenTypingTest extends MavenDomTestCase {
   }
 
   public void testDoNotHandleDeletionInsideRegularFile() throws Exception {
-    VirtualFile f = createProjectSubFile("foo.txt", "${<caret>}");
+    VirtualFile f = createProjectSubFile("foo.html", "${<caret>}");
     assertBackspaceResultInRegularFile(f, "$<caret>}");
   }
 

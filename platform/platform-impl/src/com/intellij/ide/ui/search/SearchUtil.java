@@ -32,7 +32,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +63,7 @@ public class SearchUtil {
   }
 
   public static void processProjectConfigurables(Project project, HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options) {
-    processConfigurables(new ProjectConfigurablesGroup(project, false).getConfigurables(), options);
+    processConfigurables(new ProjectConfigurablesGroup(project).getConfigurables(), options);
     processConfigurables(new IdeConfigurablesGroup().getConfigurables(), options);
   }
 
@@ -408,13 +407,15 @@ public class SearchUtil {
       int idx = 0;
       for (String word : selectedWords) {
         text = text.substring(idx);
-        textRenderer.append(text.substring(0, text.indexOf(word)), new SimpleTextAttributes(background, foreground, null, style));
+        final String before = text.substring(0, text.indexOf(word));
+        if (before.length() > 0) textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
         idx = text.indexOf(word) + word.length();
-        textRenderer.append(text.substring(idx - word.length(), idx), new SimpleTextAttributes(UIUtil.getTreeSelectionBackground(),
-                                                                                               UIUtil.getTreeSelectionForeground(), null,
-                                                                                               style));
+        textRenderer.append(text.substring(idx - word.length(), idx), new SimpleTextAttributes(background,
+                                                                                               foreground, null,
+                                                                                               style | SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
-      textRenderer.append(text.substring(idx, text.length()), new SimpleTextAttributes(background, foreground, null, style));
+      final String after = text.substring(idx, text.length());
+      if (after.length() > 0) textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
     }
   }
 

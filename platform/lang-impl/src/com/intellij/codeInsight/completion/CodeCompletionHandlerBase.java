@@ -43,7 +43,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -218,7 +217,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
               if (items.length == 0) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
-                    if (project.isDisposed()) return;
+                    if (project.isDisposed() || !project.isOpen()) return;
 
                     if (indicator != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
                     final Lookup lookup = LookupManager.getActiveLookup(editor);
@@ -400,7 +399,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (fileCopy == null) {
       PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
       if (wasInjected) {
-        LOG.error("No injected fragmnent found at offset " + hostStartOffset + " in the patched file copy, found: " + elementAfterCommit);
+        LOG.error("No injected fragment found at offset " + hostStartOffset + " in the patched file copy, found: " + elementAfterCommit);
       }
       fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
     }

@@ -73,9 +73,13 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
         break;
       case COMPLETE_INDEX:
         if (testsRoot.getChildren().size() == 0) {
-        msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found.with.errors")
-                                    : SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found");
+          msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found.with.errors")
+                                      : SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found");
           type = MessageType.ERROR;
+          break;
+        } else if (testsRoot.isEmptySuite()) {
+          msg = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.empty.test.suite");
+          type = MessageType.WARNING;
           break;
         }
         // else same as: PASSED_INDEX 

@@ -206,6 +206,13 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       return NO_SPACING;
     }
 
+    if ((leftType == GDOC_INLINED_TAG && rightType == mGDOC_COMMENT_DATA)
+      || (leftType == mGDOC_COMMENT_DATA && rightType == GDOC_INLINED_TAG))
+    {
+      // Keep formatting between groovy doc text and groovy doc reference tag as is.
+      return NO_SPACING;
+    }
+
     if (leftType == CLASS_TYPE_ELEMENT && rightType == mTRIPLE_DOT) {
       return NO_SPACING;
     }

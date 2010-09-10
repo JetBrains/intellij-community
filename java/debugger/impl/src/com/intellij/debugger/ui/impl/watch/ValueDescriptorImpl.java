@@ -170,7 +170,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   @Nullable
   private static ObjectReference getTargetExceptionWithStackTraceFilled(final EvaluationContextImpl evaluationContext, EvaluateException ex){
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
-    if (exceptionObj != null) {
+    if (exceptionObj != null && evaluationContext != null) {
       try {
         final ReferenceType refType = exceptionObj.referenceType();
         final List<Method> methods = refType.methodsByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
@@ -415,10 +415,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public ValueMarkup getMarkup(final DebugProcess debugProcess) {
     final Value value = getValue();
     if (value instanceof ObjectReference) {
-      final long id = ((ObjectReference)value).uniqueID();
-      final Map<Long, ValueMarkup> map = getMarkupMap(debugProcess);
+      final ObjectReference objRef = (ObjectReference)value;
+      final Map<ObjectReference, ValueMarkup> map = getMarkupMap(debugProcess);
       if (map != null) {
-        return map.get(id);
+        return map.get(objRef);
       }
     }
     return null;
@@ -427,14 +427,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public void setMarkup(final DebugProcess debugProcess, @Nullable final ValueMarkup markup) {
     final Value value = getValue();
     if (value instanceof ObjectReference) {
-      final Map<Long, ValueMarkup> map = getMarkupMap(debugProcess);
+      final Map<ObjectReference, ValueMarkup> map = getMarkupMap(debugProcess);
       if (map != null) {
-        final long id = ((ObjectReference)value).uniqueID();
+        final ObjectReference objRef = (ObjectReference)value;
         if (markup != null) {
-          map.put(id, markup);
+          map.put(objRef, markup);
         }
         else {
-          map.remove(id);
+          map.remove(objRef);
         }
       }
     }

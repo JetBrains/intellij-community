@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.InconsistentDebugInfoException;
 import com.sun.jdi.InvalidStackFrameException;
+import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   private HashMap<Key, Object> myUserData;
 
   private final List<NodeDescriptorImpl> myChildren = new ArrayList<NodeDescriptorImpl>();
-  private static final Key<Map<Long, ValueMarkup>> MARKUP_MAP_KEY = new Key<Map<Long, ValueMarkup>>("ValueMarkupMap");
+  private static final Key<Map<ObjectReference, ValueMarkup>> MARKUP_MAP_KEY = new Key<Map<ObjectReference, ValueMarkup>>("ValueMarkupMap");
 
   public String getName() {
     return null;
@@ -154,13 +155,13 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   }
 
   @Nullable
-  public static Map<Long, ValueMarkup> getMarkupMap(final DebugProcess process) {
+  public static Map<ObjectReference, ValueMarkup> getMarkupMap(final DebugProcess process) {
     if (process == null) {
       return null;
     }
-    Map<Long, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
+    Map<ObjectReference, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
     if (map == null) {
-      map = new java.util.HashMap<Long, ValueMarkup>();
+      map = new java.util.HashMap<ObjectReference, ValueMarkup>();
       process.putUserData(MARKUP_MAP_KEY, map);
     }
     return map;

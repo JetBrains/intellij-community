@@ -532,19 +532,5 @@ public class MavenModelConverter {
   public static MavenArtifactInfo convertArtifactInfo(ArtifactInfo a) {
     return new MavenArtifactInfo(a.groupId, a.artifactId, a.version, a.packaging, a.classifier, a.classNames, a.repository);
   }
-
-  public static MavenArtifactInfo convertArtifactInfo(ArtifactType t) {
-    return new MavenArtifactInfo(t.getGroupId(),
-                                 t.getArtifactId(),
-                                 t.getVersion(),
-                                 t.getPackaging(),
-                                 t.getClassifier(),
-                                 null,
-                                 t.getRepoId());
-  }
-
-  public static MavenRepositoryInfo convertRepositoryInfo(RepositoryType repo) {
-    return new MavenRepositoryInfo(repo.getId(), repo.getName(), repo.getContentResourceURI());
-  }
 }
 

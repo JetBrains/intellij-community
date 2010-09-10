@@ -16,7 +16,7 @@
 package com.intellij.lang.ant.config;
 
 import com.intellij.lang.ant.config.impl.BuildTask;
-import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.dom.AntDomProject;
 import org.jetbrains.annotations.Nullable;
 
 public interface AntBuildModelBase extends AntBuildModel {
@@ -27,8 +27,7 @@ public interface AntBuildModelBase extends AntBuildModel {
   @Nullable
   BuildTask findTask(final String targetName, final String taskName);
 
-  @Nullable
-  AntProject getAntProject();
+  @Nullable AntDomProject getAntProject();
 
   boolean hasTargetWithActionId(final String id);
 }

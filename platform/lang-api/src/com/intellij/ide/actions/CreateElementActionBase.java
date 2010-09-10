@@ -35,6 +35,10 @@ import javax.swing.*;
  * @since 5.1
  */
 public abstract class CreateElementActionBase extends AnAction {
+
+  protected CreateElementActionBase() {
+  }
+
   protected CreateElementActionBase(String text, String description, Icon icon) {
     super(text, description, icon);
   }

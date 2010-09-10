@@ -28,6 +28,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.ContentManager;
 
 import java.awt.*;
+import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * @author yole
@@ -37,7 +39,7 @@ public class PlatformDataKeys {
   public static final DataKey<Editor> EDITOR = DataKey.create("editor");
 
   /**
-   * Returns com.intellij.openapi.editor.Editor even if foces currently is in find bar
+   * Returns com.intellij.openapi.editor.Editor even if focus currently is in find bar
    */
   public static final DataKey<Editor> EDITOR_EVEN_IF_INACTIVE = DataKey.create("editor.even.if.inactive");
   public static final DataKey<Navigatable> NAVIGATABLE = DataKey.create("Navigatable");
@@ -70,7 +72,7 @@ public class PlatformDataKeys {
   public static final DataKey<Project> PROJECT_CONTEXT = DataKey.create("context.Project");
 
   /**
-   * Returns java.awt.Component currently in focus, DataContext should be retreived for
+   * Returns java.awt.Component currently in focus, DataContext should be retrieved for
    */
   public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create("contextComponent");
   public static final DataKey<CopyProvider> COPY_PROVIDER = DataKey.create("copyProvider");
@@ -89,4 +91,17 @@ public class PlatformDataKeys {
   public static final DataKey<ContentManager> NONEMPTY_CONTENT_MANAGER = DataKey.create("nonemptyContentManager");
   public static final DataKey<ModalityState> MODALITY_STATE = DataKey.create("ModalityState");
   public static final DataKey<Boolean> SOURCE_NAVIGATION_LOCKED = DataKey.create("sourceNavigationLocked");
+
+  /**
+   * It's allowed to assign multiple actions to the same keyboard shortcut. Actions system filters them on the current
+   * context basis during processing (e.g. we can have two actions assigned to the same shortcut but one of them is
+   * configured to be inapplicable in modal dialog context).
+   * <p/>
+   * However, there is a possible case that there is still more than one action applicable for particular keyboard shortcut
+   * after filtering. The first one is executed then. Hence, actions processing order becomes very important.
+   * <p/>
+   * Current key allows to specify custom actions sorter to use if any. I.e. every component can define it's custom
+   * sorting rule in order to define priorities for target actions (classes of actions).
+   */
+  public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
 }

@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,10 +60,13 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   @Override
   public int textWidth(@NotNull CharSequence text, int start, int end, int fontType, int x) {
     int startToUse = start;
-    int lastLineFeedIndex = StringUtil.lastIndexOf(text, '\n', start, end);
-    if (lastLineFeedIndex > 0) {
-      startToUse = lastLineFeedIndex + 1;
+    for (int i = end - 1; i >= start; i--) {
+      if (text.charAt(i) == '\n') {
+        startToUse = i + 1;
+        break;
+      }
     }
+
     int result = 0;
 
     // Symbol width retrieval is detected to be a bottleneck, hence, we perform a caching here in assumption that every representation
@@ -76,6 +78,7 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
     for (int i = startToUse; i < end; i++) {
       char c = text.charAt(i);
       if (c != '\t') {
+        mySharedKey.c = c;
         result += charWidth(c);
         continue;
       }
@@ -102,23 +105,25 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   private static class Key {
-    public String fontName;
-    private int fontSize;
-    private int fontType;
+    public  String fontName;
+    private int    fontSize;
+    private int    fontType;
+    private char   c;
 
     private Key() {
-      this(null, 0, 0);
+      this(null, 0, 0, ' ');
     }
 
-    Key(String fontName, int fontSize, int fontType) {
+    Key(String fontName, int fontSize, int fontType, char c) {
       this.fontName = fontName;
       this.fontSize = fontSize;
       this.fontType = fontType;
+      this.c = c;
     }
 
     @Override
     protected Key clone() {
-      return new Key(fontName, fontSize, fontType);
+      return new Key(fontName, fontSize, fontType, c);
     }
 
     @Override
@@ -126,6 +131,7 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
       int result = fontName != null ? fontName.hashCode() : 0;
       result = 31 * result + fontSize;
       result = 31 * result + fontType;
+      result = 31 * result + c;
       return result;
     }
 
@@ -138,6 +144,7 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
 
       if (fontSize != key.fontSize) return false;
       if (fontType != key.fontType) return false;
+      if (c != key.c) return false;
       if (fontName != null ? !fontName.equals(key.fontName) : key.fontName != null) return false;
 
       return true;

@@ -654,7 +654,7 @@ public class SoftWrapDataMapperTest {
     }
 
     public void onSoftWrapEnd() {
-      myStorage.storeOrReplace(new TextChangeImpl(mySoftWrapBuffer.toString(), softWrapStartOffset));
+      myStorage.storeOrReplace(new TextChangeImpl(mySoftWrapBuffer.toString(), softWrapStartOffset), false);
       mySoftWrapBuffer.setLength(0);
       insideSoftWrap = false;
       x += SOFT_WRAP_DRAWING_WIDTH;

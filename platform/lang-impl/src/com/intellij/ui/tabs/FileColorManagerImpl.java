@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.LightColors;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -45,6 +46,7 @@ import java.util.List;
     id = "other",
     file = "$WORKSPACE_FILE$")})
 public class FileColorManagerImpl extends FileColorManager implements PersistentStateComponent<Element> {
+  public static final Color DEFAULT_NON_PROJECT_FILES_COLOR = new Color(255, 255, 228);
   private boolean myEnabled = true;
 
   private final FileColorsModel myModel;
@@ -54,6 +56,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   private final Project myProject;
   private boolean myEnabledForTabs = true;
   private boolean myHighlightNonProjectFiles = true;
+  private Color myNonProjectFilesColor = DEFAULT_NON_PROJECT_FILES_COLOR;
 
   private static final Map<String, Color> ourDefaultColors;
   private static final Map<String, Color> ourHiddenColors;
@@ -69,8 +72,6 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     ourDefaultColors.put("Rose", new Color(242, 206, 202));
     ourDefaultColors.put("Violet", new Color(222, 213, 241));
     ourDefaultColors.put("Yellow", new Color(247, 241, 203));
-
-    ourHiddenColors.put(OUT_OF_PROJECT_SCOPE_COLOR, new Color(255, 255, 228));
   }
 
   public FileColorManagerImpl(@NotNull final Project project) {
@@ -114,6 +115,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
       element.setAttribute("enabled", Boolean.toString(myEnabled));
       element.setAttribute("enabledForTabs", Boolean.toString(myEnabledForTabs));
       element.setAttribute("highlightNonProjectFiles", Boolean.toString(myHighlightNonProjectFiles));
+      element.setAttribute("nonProjectFilesColor", ColorUtil.toHex(myNonProjectFilesColor));
     }
 
     myModel.save(element, shared);
@@ -124,6 +126,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public Color getColor(@NotNull final String name) {
+    if (OUT_OF_PROJECT_SCOPE_COLOR.equals(name)) return myNonProjectFilesColor;
     final Color color = ourDefaultColors.get(name);
     return color == null ? ourHiddenColors.get(name) : color;
   }
@@ -152,6 +155,8 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
       final String highlightNonProjectFiles = state.getAttributeValue("highlightNonProjectFiles");
       myHighlightNonProjectFiles = highlightNonProjectFiles == null ? true : Boolean.valueOf(highlightNonProjectFiles);
+
+      myNonProjectFilesColor = ColorUtil.fromHex(state.getAttributeValue("nonProjectFilesColor"), DEFAULT_NON_PROJECT_FILES_COLOR);
     }
 
     myModel.load(state, shared);
@@ -226,5 +231,13 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   public List<FileColorConfiguration> getSharedConfigurations() {
     return myModel.getSharedConfigurations();
+  }
+
+  public Color getNonProjectFilesColor() {
+    return myNonProjectFilesColor;
+  }
+
+  public void setNonProjectFilesColor(Color color) {
+    myNonProjectFilesColor = color;
   }
 }

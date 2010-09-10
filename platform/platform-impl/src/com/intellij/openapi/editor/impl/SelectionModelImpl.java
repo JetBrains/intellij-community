@@ -40,9 +40,11 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,12 +55,13 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
 
   private final CopyOnWriteArrayList<SelectionListener> mySelectionListeners = ContainerUtil.createEmptyCOWList();
-  private MyRangeMarker mySelectionMarker = null;
+  private final AtomicReference<MyRangeMarker> mySelectionMarker = new AtomicReference<MyRangeMarker>();
   private final EditorImpl myEditor;
   private int myLastSelectionStart;
   private LogicalPosition myBlockStart;
@@ -88,7 +91,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       if (!isValid()) {
         myLastSelectionStart = myEditor.getCaretModel().getOffset();
         release();
-        mySelectionMarker = null;
+        mySelectionMarker.set(null);
         fireSelectionChanged(startBefore, endBefore, myLastSelectionStart, myLastSelectionStart);
         return;
       }
@@ -109,8 +112,9 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   public void documentChanged(DocumentEvent event) {
     if (myIsInUpdate == event) {
       myIsInUpdate = null;
-      if (mySelectionMarker != null && mySelectionMarker.isValid()) {
-        mySelectionMarker.documentChanged(event);
+      MyRangeMarker marker = mySelectionMarker.get();
+      if (marker != null && marker.isValid()) {
+        marker.documentChanged(event);
       }
     }
   }
@@ -125,8 +129,13 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   public int getSelectionStart() {
     validateContext(false);
-    if (!hasSelection()) return myEditor.getCaretModel().getOffset();
-    return mySelectionMarker.getStartOffset();
+    if (hasSelection()) {
+      MyRangeMarker marker = mySelectionMarker.get();
+      if (marker != null) {
+        return marker.getStartOffset();
+      }
+    }
+    return myEditor.getCaretModel().getOffset();
   }
 
   private void validateContext(boolean isWrite) {
@@ -144,17 +153,23 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   public int getSelectionEnd() {
     validateContext(false);
-    if (!hasSelection()) return myEditor.getCaretModel().getOffset();
-    return mySelectionMarker.getEndOffset();
+    if (hasSelection()) {
+      MyRangeMarker marker = mySelectionMarker.get();
+      if (marker != null) {
+        return marker.getEndOffset();
+      }
+    }
+    return myEditor.getCaretModel().getOffset();
   }
 
   public boolean hasSelection() {
     validateContext(false);
-    if (mySelectionMarker != null && !mySelectionMarker.isValid()) {
+    MyRangeMarker marker = mySelectionMarker.get();
+    if (marker != null && !marker.isValid()) {
       removeSelection();
     }
 
-    return mySelectionMarker != null;
+    return marker != null;
   }
 
   public void setSelection(int startOffset, int endOffset) {
@@ -187,19 +202,20 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     int oldSelectionEnd;
 
     if (hasSelection()) {
-      oldSelectionStart = mySelectionMarker.getStartOffset();
-      oldSelectionEnd = mySelectionMarker.getEndOffset();
+      oldSelectionStart = getSelectionStart();
+      oldSelectionEnd = getSelectionEnd();
       if (oldSelectionStart == startOffset && oldSelectionEnd == endOffset) return;
     }
     else {
       oldSelectionStart = oldSelectionEnd = myEditor.getCaretModel().getOffset();
     }
 
-    if (mySelectionMarker != null) {
-      mySelectionMarker.release();
+    MyRangeMarker marker = mySelectionMarker.get();
+    if (marker != null) {
+      marker.release();
     }
 
-    mySelectionMarker = new MyRangeMarker((DocumentEx)doc, startOffset, endOffset);
+    mySelectionMarker.set(new MyRangeMarker((DocumentEx)doc, startOffset, endOffset));
 
     fireSelectionChanged(oldSelectionStart, oldSelectionEnd, startOffset, endOffset);
 
@@ -271,11 +287,12 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     validateContext(true);
     removeBlockSelection();
     myLastSelectionStart = myEditor.getCaretModel().getOffset();
-    if (mySelectionMarker != null) {
-      int startOffset = mySelectionMarker.getStartOffset();
-      int endOffset = mySelectionMarker.getEndOffset();
-      mySelectionMarker.release();
-      mySelectionMarker = null;
+    MyRangeMarker marker = mySelectionMarker.get();
+    if (marker != null) {
+      int startOffset = marker.getStartOffset();
+      int endOffset = marker.getEndOffset();
+      marker.release();
+      mySelectionMarker.set(null);
       fireSelectionChanged(startOffset, endOffset, myLastSelectionStart, myLastSelectionStart);
     }
   }
@@ -433,11 +450,20 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   public int getLeadSelectionOffset() {
     validateContext(false);
     int caretOffset = myEditor.getCaretModel().getOffset();
-    if (!hasSelection()) return caretOffset;
-    int startOffset = mySelectionMarker.getStartOffset();
-    int endOffset = mySelectionMarker.getEndOffset();
-    if (caretOffset == endOffset) return startOffset;
-    return endOffset;
+    if (hasSelection()) {
+      MyRangeMarker marker = mySelectionMarker.get();
+      if (marker != null) {
+        int startOffset = marker.getStartOffset();
+        int endOffset = marker.getEndOffset();
+        if (caretOffset == endOffset) {
+          return startOffset;
+        }
+        else {
+          return endOffset;
+        }
+      }
+    }
+    return caretOffset;
   }
 
   public void selectLineAtCaret() {
@@ -448,9 +474,9 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       return;
     }
 
-    VisualPosition caret = myEditor.getCaretModel().getVisualPosition();
-    LogicalPosition lineStart = myEditor.visualToLogicalPosition(new VisualPosition(caret.line, 0));
-    LogicalPosition nextLineStart = myEditor.visualToLogicalPosition(new VisualPosition(caret.line + 1, 0));
+    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLinesRange(myEditor);
+    LogicalPosition lineStart = lines.first;
+    LogicalPosition nextLineStart = lines.second;
 
     int start = myEditor.logicalPositionToOffset(lineStart);
     int end = myEditor.logicalPositionToOffset(nextLineStart);

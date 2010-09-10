@@ -273,5 +273,15 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the PSI element.
    */
+  @Nullable
   PsiElement getPsi();
+
+  /**
+   * Checks and returns the PSI element for this node.
+   *
+   * @param clazz expected psi class
+   * @return the PSI element.
+   */
+  @Nullable
+  <T extends PsiElement> T getPsi(Class<T> clazz);
 }

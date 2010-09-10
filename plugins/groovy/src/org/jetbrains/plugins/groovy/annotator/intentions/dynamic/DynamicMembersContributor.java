@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -13,7 +14,7 @@ public class DynamicMembersContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     GroovyPsiElement place,
                                      ResolveState state) {
     final DynamicManager manager = DynamicManager.getInstance(place.getProject());
     for (String qName : ResolveUtil.getAllSuperTypes(qualifierType, place.getProject()).keySet()) {

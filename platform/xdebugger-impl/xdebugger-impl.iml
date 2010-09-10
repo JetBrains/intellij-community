@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 

@@ -24,4 +24,9 @@ public class XmlDefaultLiveTemplatesProvider implements DefaultLiveTemplatesProv
   public String[] getDefaultLiveTemplateFiles() {
     return new String[] { "/liveTemplates/html_xml", "/liveTemplates/zen_html", "/liveTemplates/zen_xsl" };
   }
+
+  @Override
+  public String[] getHiddenLiveTemplateFiles() {
+    return null;
+  }
 }

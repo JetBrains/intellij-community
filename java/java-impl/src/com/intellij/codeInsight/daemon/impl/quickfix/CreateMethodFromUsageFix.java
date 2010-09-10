@@ -31,12 +31,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,11 +90,15 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     if (document == null) return true;
 
     PsiExpressionList argumentList = call.getArgumentList();
-    List<HighlightInfo> errorsInArgList = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, project,
+    final TextRange argRange = argumentList.getTextRange();
+    return !DaemonCodeAnalyzerImpl.processHighlights(document, project, HighlightSeverity.ERROR,
                                                      //strictly inside arg list
-                                                     argumentList.getTextRange().getStartOffset()+1,
-                                                                      argumentList.getTextRange().getEndOffset()-1);
-    return !errorsInArgList.isEmpty();
+                                                     argRange.getStartOffset()+1,
+                                                     argRange.getEndOffset()-1, new Processor<HighlightInfo>() {
+        public boolean process(HighlightInfo info) {
+          return !(info.getActualStartOffset() > argRange.getStartOffset() && info.getActualEndOffset() < argRange.getEndOffset());
+        }
+      });
   }
 
   protected PsiElement getElement() {
@@ -180,11 +185,9 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
       PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       doCreate(targetClass, method, shouldBeAbstract(targetClass),
-               ContainerUtil.map2List(arguments, new Function<PsiExpression, Pair<PsiExpression, PsiType>>() {
-        public Pair<PsiExpression, PsiType> fun(PsiExpression psiExpression) {
-          return Pair.create(psiExpression, null);
-        }
-      }), getTargetSubstitutor(expression), CreateFromUsageUtils.guessExpectedTypes(expression, true),
+               ContainerUtil.map2List(arguments, Pair.<PsiExpression, PsiType>createFunction(null)),
+               getTargetSubstitutor(expression),
+               CreateFromUsageUtils.guessExpectedTypes(expression, true),
                context);
     }
     catch (IncorrectOperationException e) {

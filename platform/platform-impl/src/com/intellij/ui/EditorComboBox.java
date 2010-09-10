@@ -20,8 +20,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -30,15 +30,20 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 /**
  * @author max
  */
+// TODO[pegov]: should extend ComboBox not JComboBox!
 public class EditorComboBox extends JComboBox implements DocumentListener {
   public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<EditorComboBox>() {
     public String getText(EditorComboBox component) {
@@ -120,6 +125,13 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.documentChanged(event);
     }
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+
+    MacUIUtil.drawComboboxFocusRing(this, g);
   }
 
   public Project getProject() {
@@ -244,12 +256,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   }
 
   private void setEditor() {
-    myEditorField = new EditorTextField(myDocument, myProject, myFileType, myIsViewer) {
-      @Override
-      protected boolean shouldHaveBorder() {
-        return UIManager.getBorder("ComboBox.border") == null;
-      }
-    };
+    myEditorField = new ComboboxEditorTextField(myDocument, myProject, myFileType, myIsViewer);
     final ComboBoxEditor editor = new MyEditor();
     setEditor(editor);
     setRenderer(new EditorComboBoxRenderer(editor));
@@ -310,7 +317,9 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
       }
       return preferredSize;
     }
-    return new Dimension(100, 20);
+
+    //final int cbHeight = new JComboBox().getPreferredSize().height; // should be used actually
+    return new Dimension(100, UIUtil.fixComboBoxHeight(20));
   }
 
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {

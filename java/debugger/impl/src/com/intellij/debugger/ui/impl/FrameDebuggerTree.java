@@ -29,6 +29,9 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
@@ -47,7 +50,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -59,7 +61,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FrameDebuggerTree extends DebuggerTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.FrameDebuggerTree");
@@ -106,7 +107,7 @@ public class FrameDebuggerTree extends DebuggerTree {
   }
 
 
-  protected BuildNodeCommand getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
+  protected DebuggerCommandImpl getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
     if (node.getDescriptor() instanceof StackFrameDescriptorImpl) {
       return new BuildFrameTreeVariablesCommand(node);
     }
@@ -119,16 +120,18 @@ public class FrameDebuggerTree extends DebuggerTree {
     }
     
     protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
-      final SourcePosition sourcePosition = getDebuggerContext().getSourcePosition();
+      final DebuggerContextImpl debuggerContext = getDebuggerContext();
+      final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
       if (sourcePosition == null) {
         return;
       }
       try {
         final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(stackDescriptor);
+        final EvaluationContextImpl evalContext = debuggerContext.createEvaluationContext();
         final Pair<Set<String>, Set<TextWithImports>> usedVars =
           ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
             public Pair<Set<String>, Set<TextWithImports>> compute() {
-              return findReferencedVars(visibleVariables.keySet(), sourcePosition);
+              return findReferencedVars(visibleVariables.keySet(), sourcePosition, evalContext);
             }
           });
         // add locals
@@ -215,7 +218,9 @@ public class FrameDebuggerTree extends DebuggerTree {
     return true;
   }
 
-  private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final Set<String> visibleVars, final SourcePosition position) {
+  private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final Set<String> visibleVars,
+                                                                            final SourcePosition position,
+                                                                            EvaluationContextImpl evalContext) {
     final int line = position.getLine();
     if (line < 0) {
       return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
@@ -271,7 +276,7 @@ public class FrameDebuggerTree extends DebuggerTree {
         else {
           final Set<String> vars = new HashSet<String>();
           final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
-          final PsiElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars);
+          final PsiElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars, position, evalContext);
           element.accept(variablesCollector);
 
           return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
@@ -441,35 +446,47 @@ public class FrameDebuggerTree extends DebuggerTree {
     private final TextRange myLineRange;
     private final Set<TextWithImports> myExpressions;
     private final Set<String> myVars;
+    private final SourcePosition myPosition;
+    private final EvaluationContextImpl myEvalContext;
 
-    public VariablesCollector(final Set<String> visibleLocals, final TextRange lineRange, final Set<TextWithImports> expressions, final Set<String> vars) {
+    public VariablesCollector(final Set<String> visibleLocals,
+                              final TextRange lineRange,
+                              final Set<TextWithImports> expressions,
+                              final Set<String> vars,
+                              SourcePosition position, EvaluationContextImpl evalContext) {
       myVisibleLocals = visibleLocals;
       myLineRange = lineRange;
       myExpressions = expressions;
       myVars = vars;
+      myPosition = position;
+      myEvalContext = evalContext;
     }
 
-    @Override public void visitElement(final PsiElement element) {
+    @Override 
+    public void visitElement(final PsiElement element) {
       if (myLineRange.intersects(element.getTextRange())) {
         super.visitElement(element);
       }
     }
 
-    @Override public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+    @Override 
+    public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
       final PsiMethod psiMethod = expression.resolveMethod();
-      if (psiMethod != null && !hasSideEffects(expression)) {
+      if (psiMethod != null && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
         myExpressions.add(new TextWithImportsImpl(expression));
       }
       super.visitMethodCallExpression(expression);
     }
 
-    @Override public void visitReferenceExpression(final PsiReferenceExpression reference) {
+    @Override 
+    public void visitReferenceExpression(final PsiReferenceExpression reference) {
       if (myLineRange.intersects(reference.getTextRange())) {
         final PsiElement psiElement = reference.resolve();
         if (psiElement instanceof PsiVariable) {
           final PsiVariable var = (PsiVariable)psiElement;
           if (var instanceof PsiField) {
-            if (!hasSideEffects(reference)) {
+            if (!DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
+              /*
               if (var instanceof PsiEnumConstant && reference.getQualifier() == null) {
                 final PsiClass enumClass = ((PsiEnumConstant)var).getContainingClass();
                 if (enumClass != null) {
@@ -484,6 +501,21 @@ public class FrameDebuggerTree extends DebuggerTree {
               else {
                 myExpressions.add(new TextWithImportsImpl(reference));
               }
+              */
+              final PsiModifierList modifierList = var.getModifierList();
+              boolean isConstant = (var instanceof PsiEnumConstant) || 
+                                   (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL));
+              if (!isConstant) {
+                final TextWithImportsImpl textWithImports = new TextWithImportsImpl(reference);
+                try {
+                  final ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(textWithImports, reference, myPosition);
+                  evaluator.evaluate(myEvalContext);
+                  //collect only expressions that do not produce any exceptions on evaluation
+                  myExpressions.add(textWithImports);
+                }
+                catch (EvaluateException ignored) {
+                }
+              }
             }
           }
           else {
@@ -496,19 +528,22 @@ public class FrameDebuggerTree extends DebuggerTree {
       super.visitReferenceExpression(reference);
     }
 
-    @Override public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
-      if (!hasSideEffects(expression)) {
+    @Override 
+    public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+      if (!DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
         myExpressions.add(new TextWithImportsImpl(expression));
       }
       super.visitArrayAccessExpression(expression);
     }
 
-    @Override public void visitParameter(final PsiParameter parameter) {
+    @Override 
+    public void visitParameter(final PsiParameter parameter) {
       processVariable(parameter);
       super.visitParameter(parameter);
     }
 
-    @Override public void visitLocalVariable(final PsiLocalVariable variable) {
+    @Override 
+    public void visitLocalVariable(final PsiLocalVariable variable) {
       processVariable(variable);
       super.visitLocalVariable(variable);
     }
@@ -519,61 +554,9 @@ public class FrameDebuggerTree extends DebuggerTree {
       }
     }
 
-    @Override public void visitClass(final PsiClass aClass) {
+    @Override 
+    public void visitClass(final PsiClass aClass) {
       // Do not step in to local and anonymous classes...
     }
-    
-    private boolean hasSideEffects(PsiElement element) {
-      final AtomicBoolean rv = new AtomicBoolean(false);
-      element.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitPostfixExpression(final PsiPostfixExpression expression) {
-          rv.set(true);
-        }
-
-        @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
-          final PsiElement psiElement = expression.resolve();
-          if (psiElement instanceof PsiLocalVariable) {
-            if (!myVisibleLocals.contains(((PsiLocalVariable)psiElement).getName())) {
-              rv.set(true);
-            }
-          }
-          else if (psiElement instanceof PsiMethod) {
-            final PsiMethod method = (PsiMethod)psiElement;
-            if (!DebuggerUtils.isSimpleGetter(method)) {
-              rv.set(true);
-            }
-          }
-          if (!rv.get()) {
-            super.visitReferenceExpression(expression);
-          }
-        }
-
-        @Override public void visitPrefixExpression(final PsiPrefixExpression expression) {
-          final IElementType op = expression.getOperationTokenType();
-          if (JavaTokenType.PLUSPLUS.equals(op) || JavaTokenType.MINUSMINUS.equals(op)) {
-            rv.set(true);
-          }
-          else {
-            super.visitPrefixExpression(expression);
-          }
-        }
-
-        @Override public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
-          rv.set(true);
-        }
-
-        @Override public void visitCallExpression(final PsiCallExpression callExpression) {
-          final PsiMethod method = callExpression.resolveMethod();
-          if (method == null || !DebuggerUtils.isSimpleGetter(method)) {
-            rv.set(true);
-          }
-          else {
-            super.visitCallExpression(callExpression);
-          }
-        }
-      });
-      return rv.get();
-    }
-    
   }
 }

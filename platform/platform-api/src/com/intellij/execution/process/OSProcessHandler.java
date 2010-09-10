@@ -21,7 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.Consumer;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.concurrent.*;
 
@@ -33,9 +36,9 @@ public class OSProcessHandler extends ProcessHandler {
   private final ProcessWaitFor myWaitFor;
 
   private static class ExecutorServiceHolder {
-    private static ExecutorService ourThreadExecutorsService = createServiceImpl();
+    private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
 
-    static ThreadPoolExecutor createServiceImpl() {
+    private static ThreadPoolExecutor createServiceImpl() {
       return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
         @SuppressWarnings({"HardCodedStringLiteral"})
         public Thread newThread(Runnable r) {
@@ -57,18 +60,7 @@ public class OSProcessHandler extends ProcessHandler {
       return application.executeOnPooledThread(task);
     }
 
-    if (ExecutorServiceHolder.ourThreadExecutorsService.isShutdown()) { // in tests: the service might be shut down by a previous test
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ExecutorServiceHolder.ourThreadExecutorsService = ExecutorServiceHolder.createServiceImpl();
-    }
     return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
-  }
-
-  protected static void shutdownExecutorService() {
-    final Application application = ApplicationManager.getApplication();
-    if (application == null) {
-      ExecutorServiceHolder.ourThreadExecutorsService.shutdown();
-    }
   }
 
   public OSProcessHandler(final Process process, final String commandLine) {
@@ -148,7 +140,7 @@ public class OSProcessHandler extends ProcessHandler {
                 stdErrReadingFuture.get();
                 stdOutReadingFuture.get();
               }
-              catch (InterruptedException e) {
+              catch (InterruptedException ignored) {
               }
               catch (ExecutionException e) {
                 LOG.error(e);
@@ -173,11 +165,11 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   protected Reader createProcessOutReader() {
-    return new BufferedReader(new InputStreamReader(myProcess.getInputStream(), getCharset()));
+    return new InputStreamReader(myProcess.getInputStream(), getCharset());
   }
 
   protected Reader createProcessErrReader() {
-    return new BufferedReader(new InputStreamReader(myProcess.getErrorStream(), getCharset()));
+    return new InputStreamReader(myProcess.getErrorStream(), getCharset());
   }
 
   protected void destroyProcessImpl() {
@@ -246,25 +238,31 @@ public class OSProcessHandler extends ProcessHandler {
 
     public void run() {
       try {
-        while (readAvailable()) {
-          try {
-            Thread.sleep(50L);
-          }
-          catch (InterruptedException ignore) {
-          }
+        while (true) {
+          final int rc = readAvailable();
+          if (rc == DONE) break;
+          Thread.sleep(rc == READ_SOME ? 1L : 50L);
         }
+      }
+      catch (InterruptedException ignore) {
       }
       catch (Exception e) {
         LOG.error(e);
       }
     }
 
-    private synchronized boolean readAvailable() throws IOException {
+    private static final int DONE = 0;
+    private static final int READ_SOME = 1;
+    private static final int READ_NONE = 2;
+
+    private synchronized int readAvailable() throws IOException {
       char[] buffer = myBuffer;
       StringBuilder token = new StringBuilder();
+      int rc = READ_NONE;
       while (myReader.ready()) {
         int n = myReader.read(buffer);
         if (n <= 0) break;
+        rc = READ_SOME;
 
         for (int i = 0; i < n; i++) {
           char c = buffer[i];
@@ -300,10 +298,10 @@ public class OSProcessHandler extends ProcessHandler {
           // supressed
         }
 
-        return false;
+        return DONE;
       }
 
-      return true;
+      return rc;
     }
 
     protected abstract void textAvailable(final String s);

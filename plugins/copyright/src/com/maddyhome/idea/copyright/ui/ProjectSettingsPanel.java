@@ -123,7 +123,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
               if (optionsEditor != null) {
-                optionsEditor.select(ScopeChooserConfigurable.getInstance(myProject));
+                optionsEditor.select(ScopeChooserConfigurable.class);
               }
             }
           }

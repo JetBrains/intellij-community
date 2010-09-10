@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -98,7 +99,7 @@ public class GroovyExpectedTypesProvider {
 
     public MyCalculator(GrExpression expression) {
       myExpression = (GrExpression)PsiUtil.skipParentheses(expression, true);
-      myResult = new TypeConstraint[]{SubtypeConstraint.create("java.lang.Object", myExpression)};
+      myResult = new TypeConstraint[0];
     }
 
     public void visitReturnStatement(GrReturnStatement returnStatement) {
@@ -135,8 +136,14 @@ public class GroovyExpectedTypesProvider {
         List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
         for (GroovyResolveResult variant : ResolveUtil.getCallVariants(myExpression)) {
           final GrArgumentList argumentList = methodCall.getArgumentList();
+          final GrNamedArgument[] namedArgs = argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
+          final GrExpression[] expressionArgs = argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
           addConstraintsFromMap(constraints,
-                                GrClosureSignatureUtil.mapArgumentsToParameters(variant, argumentList, methodCall, closureArgs, true),
+                                GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true,
+                                                                                namedArgs,
+                                                                                expressionArgs,
+                                                                                closureArgs
+                                ),
                                 closureIndex == closureArgs.length - 1);
         }
         if (!constraints.isEmpty()) {
@@ -198,7 +205,11 @@ public class GroovyExpectedTypesProvider {
       for (GroovyResolveResult variant : ResolveUtil.getCallVariants(list)) {
         final GrExpression[] arguments = list.getExpressionArguments();
         addConstraintsFromMap(constraints,
-                              GrClosureSignatureUtil.mapArgumentsToParameters(variant, list, list, GrClosableBlock.EMPTY_ARRAY, true),
+                              GrClosureSignatureUtil.mapArgumentsToParameters(variant, list, true,
+                                                                              list.getNamedArguments(),
+                                                                              list.getExpressionArguments(),
+                                                                              GrClosableBlock.EMPTY_ARRAY
+                              ),
                               Arrays.asList(arguments).indexOf(myExpression) == arguments.length - 1);
       }
       if (!constraints.isEmpty()) {

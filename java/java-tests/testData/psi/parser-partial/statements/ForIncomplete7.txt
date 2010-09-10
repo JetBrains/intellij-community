@@ -1,23 +1,18 @@
 PsiJavaFile:ForIncomplete7.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
+  PsiForStatement
+    PsiKeyword:for('for')
+    PsiJavaToken:LPARENTH('(')
+    PsiErrorElement:Statement expected
+      <empty list>
+    PsiJavaToken:RPARENTH(')')
     PsiWhiteSpace(' ')
-    PsiForStatement
-      PsiKeyword:for('for')
-      PsiJavaToken:LPARENTH('(')
-      PsiErrorElement:Statement expected
-        <empty list>
-      PsiJavaToken:RPARENTH(')')
-      PsiWhiteSpace(' ')
-      PsiExpressionStatement
-        PsiMethodCallExpression:foo()
-          PsiReferenceExpression:foo
-            PsiReferenceParameterList
-              <empty list>
-            PsiIdentifier:foo('foo')
-          PsiExpressionList
-            PsiJavaToken:LPARENTH('(')
-            PsiJavaToken:RPARENTH(')')
-        PsiJavaToken:SEMICOLON(';')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+    PsiExpressionStatement
+      PsiMethodCallExpression:foo()
+        PsiReferenceExpression:foo
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:foo('foo')
+        PsiExpressionList
+          PsiJavaToken:LPARENTH('(')
+          PsiJavaToken:RPARENTH(')')
+      PsiJavaToken:SEMICOLON(';')

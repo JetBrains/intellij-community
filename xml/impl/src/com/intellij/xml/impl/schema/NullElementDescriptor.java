@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 
 public class NullElementDescriptor implements XmlElementDescriptor {
@@ -67,6 +68,11 @@ public class NullElementDescriptor implements XmlElementDescriptor {
   }
 
   public XmlNSDescriptor getNSDescriptor() {
+    return null;
+  }
+
+  @Override
+  public XmlElementsGroup getTopGroup() {
     return null;
   }
 

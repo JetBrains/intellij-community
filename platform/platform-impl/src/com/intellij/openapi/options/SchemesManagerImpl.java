@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -40,33 +43,33 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.*;
 
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
   private static final Logger LOG = Logger.getInstance("#" + SchemesManagerFactoryImpl.class.getName());
 
-  private static final String EXT = ".xml";
+  @NonNls private static final String EXT = ".xml";
 
   private final Set<String> myDeletedNames = new LinkedHashSet<String>();
   private final Set<String> myFilesToDelete = new HashSet<String>();
 
-  private static final String SHARED_SCHEME = "shared-scheme";
-  private static final String SHARED_SCHEME_ORIGINAL = "shared-scheme-original";
+  @NonNls private static final String SHARED_SCHEME = "shared-scheme";
+  @NonNls private static final String SHARED_SCHEME_ORIGINAL = "shared-scheme-original";
   private static final String NAME = "name";
-  private static final String ORIGINAL_SCHEME_PATH = "original-scheme-path";
+  @NonNls private static final String ORIGINAL_SCHEME_PATH = "original-scheme-path";
   private final String myFileSpec;
   private final SchemeProcessor<E> myProcessor;
   private final RoamingType myRoamingType;
 
 
-  private static final String SCHEME_LOCAL_COPY = "scheme-local-copy";
-  private static final String DELETED_XML = "__deleted.xml";
+  @NonNls private static final String SCHEME_LOCAL_COPY = "scheme-local-copy";
+  @NonNls private static final String DELETED_XML = "__deleted.xml";
   private final StreamProvider[] myProviders;
   private final File myBaseDir;
   private VirtualFile myVFSBaseDir;
@@ -249,7 +252,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return null;
   }
 
-  private boolean isFileUnder(final VirtualFile file, final VirtualFile baseDirFile) {
+  private static boolean isFileUnder(final VirtualFile file, final VirtualFile baseDirFile) {
     return file.getParent().equals(baseDirFile);
   }
 
@@ -333,19 +336,13 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
     }
     if (!Arrays.equals(file.contentsToByteArray(), text)) {
-      OutputStream output = file.getOutputStream(this);
-      try {
-        output.write(text);
-      }
-      finally {
-        output.close();
-      }
+      file.setBinaryContent(text);
     }
 
     return file;
   }
 
-  private String checkFileNameIsFree(final String subpath, final String schemeName) throws IOException {
+  private String checkFileNameIsFree(final String subpath, final String schemeName) {
     for (Scheme scheme : mySchemes) {
       if (scheme instanceof ExternalizableScheme) {
         ExternalInfo externalInfo = ((ExternalizableScheme)scheme).getExternalInfo();
@@ -380,11 +377,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return result;
   }
 
-  private String createUniqueFileName(final Collection<String> strings, final String schemeName) {
+  private static String createUniqueFileName(final Collection<String> strings, final String schemeName) {
     return UniqueNameGenerator.generateUniqueName(schemeName, "", "", strings);
   }
 
-  private void loadScheme(final E scheme, boolean forceAdd, final String name) throws IOException {
+  private void loadScheme(final E scheme, boolean forceAdd, final String name) {
     if (scheme != null && (!myDeletedNames.contains(scheme.getName()) || forceAdd)) {
       T existing = findSchemeByName(scheme.getName());
       if (existing != null) {
@@ -503,7 +500,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
     }
     else if (rootElement.getName().equals(SHARED_SCHEME_ORIGINAL)) {
-      SchemesManagerImpl<T, E>.SharedSchemeData schemeData = unwrap(subDocument);
+      SharedSchemeData schemeData = unwrap(subDocument);
       E scheme = myProcessor.readScheme(schemeData.original);
       if (scheme != null) {
         renameScheme(scheme, schemeData.name);
@@ -517,7 +514,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Nullable
-  private static Document loadGlobalScheme(final String schemePath) throws IOException, JDOMException {
+  private static Document loadGlobalScheme(final String schemePath) throws IOException {
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
     for (StreamProvider provider : providers) {
@@ -543,10 +540,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   @Nullable
   private Document writeSchemeToDocument(final E scheme) throws WriteExternalException {
-    if (!isShared(scheme)) {
-      return myProcessor.writeScheme(scheme);
-    }
-    else {
+    if (isShared(scheme)) {
       String originalPath = scheme.getExternalInfo().getOriginalPath();
       if (originalPath != null) {
         Element root = new Element(SHARED_SCHEME);
@@ -563,6 +557,9 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       else {
         return null;
       }
+    }
+    else {
+      return myProcessor.writeScheme(scheme);
     }
   }
 
@@ -630,7 +627,8 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       result.name = rootElement.getAttributeValue(NAME);
       result.description = rootElement.getAttributeValue(DESCRIPTION);
       result.user = rootElement.getAttributeValue(USER);
-      result.original = new Document((Element)((Element)(rootElement.getChildren().iterator().next())).clone());
+      Element next = (Element)rootElement.getChildren().iterator().next();
+      result.original = new Document((Element)next.clone());
     }
     else {
       result.name = rootElement.getAttributeValue(NAME);
@@ -680,11 +678,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   }
 
-  private Document wrap(final Document original, final String name, final String description) {
+  private static Document wrap(final Document original, final String name, final String description) {
     Element sharedElement = new Element(SHARED_SCHEME_ORIGINAL);
     sharedElement.setAttribute(NAME, name);
     sharedElement.setAttribute(DESCRIPTION, description);
-    sharedElement.addContent(((Element)original.getRootElement().clone()));
+    sharedElement.addContent((Element)original.getRootElement().clone());
     return new Document(sharedElement);
   }
 
@@ -721,67 +719,64 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
 
     if (myVFSBaseDir != null) {
-      final WriteExternalException[] ex = new WriteExternalException[1];
-      ApplicationManager.getApplication().runWriteAction(new Runnable(){
-        public void run() {
-          try {
-            doSave();
-          }
-          catch (WriteExternalException e) {
-            ex[0] = e;
-          }
-        }
-      });
-
-      if (ex[0] != null) throw ex[0];
+      doSave();
     }
   }
 
   private void ensureVFSBaseDir() {
     myBaseDir.mkdirs();
-    myVFSBaseDir = new WriteAction<VirtualFile>() {
-      protected void run(final Result<VirtualFile> result) {
+    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable(){
+      @Override
+      public void run() {
         VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBaseDir);
-        result.setResult(dir);
+        myVFSBaseDir = dir;
         if (dir != null) {
           dir.getChildren();
           ((NewVirtualFile)dir).markDirtyRecursively();
           dir.refresh(false, true);
         }
       }
-    }.execute().getResultObject();
+    });
   }
 
   private boolean myInsideSave = false;
 
   private void doSave() throws WriteExternalException {
-
     myInsideSave = true;
     try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable()  {
         public void run() {
           ((NewVirtualFile)myVFSBaseDir).markDirtyRecursively();
           myVFSBaseDir.refresh(false, true);
         }
       });
 
-      Collection<T> schemes = getAllSchemes();
+      final Collection<T> schemes = getAllSchemes();
       myBaseDir.mkdirs();
 
-      UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
+      final UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
 
       reserveUsingFileNames(schemes, fileNameProvider);
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      final WriteExternalException[] ex = new WriteExternalException[1];
+      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable() {
         public void run() {
           deleteFilesFromDeletedSchemes();
+          try {
+            saveSchemes(schemes, fileNameProvider);
+          }
+          catch (WriteExternalException e) {
+            ex[0] = e;
+          }
         }
       });
+      if (ex[0] != null) throw ex[0];
 
 
-      saveSchemes(schemes, fileNameProvider);
-
-      if (myDeletedNames.size() > 0) {
+      if (myDeletedNames.isEmpty()) {
+        deleteServerFiles(DELETED_XML);
+      }
+      else {
         for (StreamProvider provider : getEnabledProviders()) {
           try {
             StorageUtil.sendContent(provider, getFileFullPath(DELETED_XML), createDeletedDocument(), myRoamingType, true);
@@ -790,10 +785,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
             LOG.debug(e);
           }
         }
-      }
-      else {
-        deleteServerFiles(DELETED_XML);
-
       }
     }
     finally {
@@ -859,7 +850,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
                 }
               });
             }
-
           }
         }
       }
@@ -881,7 +871,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private void saveIfNeeded(final E schemeKey, final String fileName, final Document document, final long newHash, final Long oldHash)
       throws IOException {
-    if (oldHash == null || newHash != oldHash.longValue() || (myVFSBaseDir.findChild(fileName) == null)) {
+    if (oldHash == null || newHash != oldHash.longValue() || myVFSBaseDir.findChild(fileName) == null) {
       if (oldHash != null && newHash != oldHash.longValue()) {
         final byte[] text = StorageUtil.printDocument(document);
 

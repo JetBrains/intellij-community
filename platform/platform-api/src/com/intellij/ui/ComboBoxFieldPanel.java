@@ -67,7 +67,7 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
   }
 
   public String getText() {
-    final Object selectedItem = myComboBox.getEditor().getItem();
+    final Object selectedItem = myComboBox.isEditable()? myComboBox.getEditor().getItem() : myComboBox.getSelectedItem();
     return selectedItem instanceof String ? (String)selectedItem : null;
   }
 

@@ -157,6 +157,8 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract AbstractVcs[] getAllActiveVcss();
 
+  public abstract boolean hasActiveVcss();
+
   public abstract boolean hasAnyMappings();
 
   public abstract void addMessageToConsoleWindow(String message, TextAttributes attributes);

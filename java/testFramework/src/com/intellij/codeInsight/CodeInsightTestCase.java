@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -74,11 +75,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   protected Editor createEditor(VirtualFile file) {
     final FileEditorManager instance = FileEditorManager.getInstance(myProject);
 
-    if (file.getFileType().isBinary()) {
-      return null;
-    }
+    if (file.getFileType().isBinary()) return null;
 
-    return instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
+    Editor editor = instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
+    ((EditorImpl)editor).setCaretActive();
+    return editor;
   }
 
   protected void tearDown() throws Exception {
@@ -195,7 +196,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  protected VirtualFile configureByFiles(final File projectRoot, VirtualFile... vFiles) throws IOException {
+  protected VirtualFile configureByFiles(final File rawProjectRoot, VirtualFile... vFiles) throws IOException {
     myFile = null;
     myEditor = null;
 
@@ -205,14 +206,15 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       rootModel.clear();
     }
     File toDirIO = createTempDirectory();
-    VirtualFile toDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(toDirIO.getCanonicalPath().replace(File.separatorChar, '/'));
+    VirtualFile toDir = getVirtualFile(toDirIO);
 
     // auxiliary files should be copied first
     vFiles = ArrayUtil.reverseArray(vFiles);
     final LinkedHashMap<VirtualFile, EditorInfo> editorInfos;
-    if (projectRoot != null) {
+    if (rawProjectRoot != null) {
+      final File projectRoot = rawProjectRoot.getCanonicalFile();
       FileUtil.copyDir(projectRoot, toDirIO);
-      VirtualFile fromDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot);
+      VirtualFile fromDir = getVirtualFile(projectRoot);
       editorInfos =
         copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(vFiles, String.class, new Function<VirtualFile, String>() {
           public String fun(final VirtualFile s) {
@@ -443,7 +445,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     checkResultByFile(filePath, false);
   }
 
-  protected void checkResultByFile(String filePath, boolean stripTrailingSpaces) throws Exception {
+  protected void checkResultByFile(@NonNls String filePath, boolean stripTrailingSpaces) throws Exception {
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (stripTrailingSpaces) {
       ((DocumentEx)myEditor.getDocument()).stripTrailingSpaces(false);

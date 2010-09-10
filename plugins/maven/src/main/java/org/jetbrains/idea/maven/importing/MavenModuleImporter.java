@@ -108,12 +108,15 @@ public class MavenModuleImporter {
 
   private void configDependencies() {
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {
+      if (!myMavenProject.isSupportedDependency(artifact)) continue;
+
       DependencyScope scope = selectScope(artifact.getScope());
       MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
+
       if (depProject != null) {
         myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), scope);
       }
-      else if (myMavenProject.isSupportedDependency(artifact)) {
+      else {
         myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
       }
     }

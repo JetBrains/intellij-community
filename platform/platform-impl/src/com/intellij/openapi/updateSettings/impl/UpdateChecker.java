@@ -26,6 +26,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.reporter.ConnectionException;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -46,6 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.DateFormatUtil;
@@ -90,7 +92,6 @@ public final class UpdateChecker {
     SUCCESS, FAILED, CANCELED
   }
 
-  private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
 
 
@@ -123,33 +124,16 @@ public final class UpdateChecker {
     final UpdateSettings settings = UpdateSettings.getInstance();
     if (settings == null || getUpdateUrl() == null) return false;
 
-    final String checkPeriod = settings.CHECK_PERIOD;
-    if (checkPeriod.equals(UpdateSettingsConfigurable.ON_EXIT)) {
-     return false;
-    }
-    if (checkPeriod.equals(UpdateSettingsConfigurable.ON_START_UP)) {
-      checkInterval = 0;
-    }
-    if (checkPeriod.equals(UpdateSettingsConfigurable.DAILY)) {
-      checkInterval = DateFormatUtil.DAY;
-    }
-    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.WEEKLY)) {
-      checkInterval = DateFormatUtil.WEEK;
-    }
-    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.MONTHLY)) {
-      checkInterval = DateFormatUtil.MONTH;
-    }
-
     final long timeDelta = System.currentTimeMillis() - settings.LAST_TIME_CHECKED;
-    if (Math.abs(timeDelta) < checkInterval) return false;
+    if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
 
     return settings.CHECK_NEEDED;
   }
 
-  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog) {
+  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog, final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
     final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
-    for (String host : UpdateSettingsConfigurable.getInstance().getPluginHosts()) {
+    for (String host : getPluginHosts(settingsConfigurable)) {
       try {
         checkPluginsHost(host, downloaded);
       }
@@ -168,6 +152,21 @@ public final class UpdateChecker {
       }
     }
     return downloaded.isEmpty() ? null : downloaded;
+  }
+
+  private static List<String> getPluginHosts(@Nullable UpdateSettingsConfigurable settingsConfigurable) {
+    final ArrayList<String> hosts = new ArrayList<String>();
+    if (settingsConfigurable != null) {
+      hosts.addAll(settingsConfigurable.getPluginsHosts());
+    }
+    else {
+      hosts.addAll(UpdateSettings.getInstance().myPluginHosts);
+    }
+    final String pluginHosts = System.getProperty("idea.plugin.hosts");
+    if (pluginHosts != null) {
+      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
+    }
+    return hosts;
   }
 
   public static boolean checkPluginsHost(final String host, final List<PluginDownloader> downloaded) throws Exception {
@@ -346,7 +345,8 @@ public final class UpdateChecker {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
-          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + ADDITIONAL_REQUEST_OPTIONS);
+          String uid = PropertiesComponent.getInstance().getOrInit("installation.uid", UUID.randomUUID().toString());
+          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
           final InputStream inputStream = requestUrl.openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);

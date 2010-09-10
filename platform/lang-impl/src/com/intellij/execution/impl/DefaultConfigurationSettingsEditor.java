@@ -22,6 +22,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.JBDefaultTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -32,7 +33,6 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -69,7 +69,7 @@ public class DefaultConfigurationSettingsEditor implements Configurable {
     }
     myTree.setRootVisible(false);
     TreeUtil.installActions(myTree);
-    myTree.setCellRenderer(new DefaultTreeCellRenderer() {
+    myTree.setCellRenderer(new JBDefaultTreeCellRenderer(myTree) {
       public Component getTreeCellRendererComponent(JTree tree,
                                                     Object value,
                                                     boolean sel,

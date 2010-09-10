@@ -29,5 +29,4 @@ private int testMethod() {
   return i
 }
 
-
 println i

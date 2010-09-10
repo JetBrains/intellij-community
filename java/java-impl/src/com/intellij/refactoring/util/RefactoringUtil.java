@@ -117,7 +117,7 @@ public class RefactoringUtil {
     final String fieldName = newField.getName();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiElement element = occurrence.getUserData(ElementToWorkOn.PARENT);
-    final PsiVariable psiVariable = facade.getResolveHelper().resolveReferencedVariable(fieldName, element != null ? element : occurrence);
+    final PsiVariable psiVariable = facade.getResolveHelper().resolveAccessibleReferencedVariable(fieldName, element != null ? element : occurrence);
     final PsiElementFactory factory = facade.getElementFactory();
     if (psiVariable != null && psiVariable.equals(newField)) {
       return IntroduceVariableBase.replace(occurrence, factory.createExpressionFromText(fieldName, null), manager.getProject());
@@ -143,7 +143,7 @@ public class RefactoringUtil {
       index++;
       final PsiManager manager = place.getManager();
       PsiResolveHelper helper = JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper();
-      PsiVariable refVar = helper.resolveReferencedVariable(name, place);
+      PsiVariable refVar = helper.resolveAccessibleReferencedVariable(name, place);
       if (refVar != null && !manager.areElementsEquivalent(refVar, fieldToReplace)) continue;
       class CancelException extends RuntimeException {
       }

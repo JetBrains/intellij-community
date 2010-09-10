@@ -209,6 +209,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       endOffset = elementAtEnd.getTextRange().getEndOffset();
     }
 
+    if (endOffset <= startOffset) return null;
+
     PsiExpression tempExpr;
     PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
     if (PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false) == null) {

@@ -132,7 +132,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
               }, true);
             }
           }
-        }, VcsBackgroundableActions.COMPARE_WITH, false);
+        }, VcsBackgroundableActions.COMPARE_WITH, false, null);
   }
 
   private static void showTreePopup(final List<TreeItem<VcsFileRevision>> roots, final VirtualFile file, final Project project, final DiffProvider diffProvider) {
@@ -238,6 +238,11 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         return table.getSelectedRow();
       }
 
+      @Override
+      protected int convertIndexToModel(int viewIndex) {
+        return table.convertRowIndexToModel(viewIndex);
+      }
+
       protected Object[] getAllElements() {
         return revisions.toArray();
       }
@@ -249,7 +254,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
       protected void selectElement(Object element, String selectedText) {
         VcsFileRevision revision = (VcsFileRevision) element;
-        TableUtil.selectRows(myComponent, new int[] {revisions.indexOf(revision)});
+        TableUtil.selectRows(myComponent, new int[] {myComponent.convertRowIndexToView(revisions.indexOf(revision))});
         TableUtil.scrollSelectionToVisible(myComponent);
       }
     };

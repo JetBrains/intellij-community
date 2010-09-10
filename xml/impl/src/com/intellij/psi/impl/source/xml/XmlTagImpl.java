@@ -88,6 +88,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   private volatile XmlElementDescriptor myCachedDescriptor;
   private volatile long myDescriptorModCount = -1;
+  private volatile long myExtResourcesModCount = -1;
 
   private volatile boolean myHaveNamespaceDeclarations = false;
   private volatile BidirectionalMap<String, String> myNamespaceMap = null;
@@ -278,7 +279,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
               ns = getRealNs(ns);
 
               if (map == null || !map.containsKey(ns)) {
-                map = initializeSchema(ns, getNSVersion(ns, this), ns, map);
+                map = initializeSchema(ns, getNSVersion(ns, this), getNsLocation(ns), map);
               }
             }
           }
@@ -403,9 +404,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   public XmlElementDescriptor getDescriptor() {
     final long curModCount = getManager().getModificationTracker().getModificationCount();
-    if (myDescriptorModCount != curModCount) {
+    long curExtResourcesModCount = ExternalResourceManagerEx.getInstanceEx().getModificationCount(getProject());
+    if (myDescriptorModCount != curModCount || myExtResourcesModCount != curExtResourcesModCount) {
+      if (myExtResourcesModCount != curExtResourcesModCount) {
+        myNSDescriptorsMap = null;
+      }
       myCachedDescriptor = computeElementDescriptor();
       myDescriptorModCount = curModCount;
+      myExtResourcesModCount = curExtResourcesModCount;
     }
     return myCachedDescriptor;
   }
@@ -817,6 +823,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return map;
   }
 
+  private String getNsLocation(String ns) {
+    if (XmlUtil.XHTML_URI.equals(ns)) {
+      return ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
+    }
+    return ns;
+  }
+
   protected String getRealNs(final String value) {
     return value;
   }
@@ -875,6 +888,23 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   public XmlTag createChildTag(String localName, String namespace, String bodyText, boolean enforceNamespacesDeep) {
     return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep);
+  }
+
+  @Override
+  public XmlTag addSubTag(XmlTag subTag, boolean first) {
+    XmlTagChild[] children = getSubTags();
+    if (children.length == 0) {
+      children = getValue().getChildren();
+    }
+    if (children.length == 0) {
+      return (XmlTag)add(subTag);
+    }
+    else if (first) {
+      return (XmlTag)addBefore(subTag, children[0]);
+    }
+    else {
+      return (XmlTag)addAfter(subTag, ArrayUtil.getLastElement(children));
+    }
   }
 
   @NotNull

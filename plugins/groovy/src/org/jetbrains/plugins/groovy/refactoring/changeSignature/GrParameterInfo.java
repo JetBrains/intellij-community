@@ -116,6 +116,11 @@ public class GrParameterInfo implements JavaParameterInfo {
     return false;
   }
 
+  @Override
+  public void setUseAnySingleVariable(boolean b) {
+    throw new UnsupportedOperationException();
+  }
+
   public boolean isOptional() {
     return getDefaultInitializer().length() > 0;
   }

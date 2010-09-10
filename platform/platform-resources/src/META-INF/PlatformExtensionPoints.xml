@@ -9,11 +9,11 @@
                   interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter"/>
 
   <extensionPoint name="projectConfigurable"
-                  interface="com.intellij.openapi.options.Configurable"
+                  beanClass="com.intellij.openapi.options.ConfigurableEP"
                   area="IDEA_PROJECT"/>
 
   <extensionPoint name="applicationConfigurable"
-                  interface="com.intellij.openapi.options.Configurable"/>
+                  beanClass="com.intellij.openapi.options.ConfigurableEP"/>
 
   <extensionPoint name="selectInTarget"
                   interface="com.intellij.ide.SelectInTarget"
@@ -60,7 +60,7 @@
                   interface="com.intellij.projectImport.ProjectOpenProcessor"/>
 
   <extensionPoint name="codeInsight.linkHandler"
-                  interface="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
+                  beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
 
   <extensionPoint name="directoryProjectConfigurator"
                   interface="com.intellij.platform.DirectoryProjectConfigurator"/>
@@ -84,7 +84,7 @@
   <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean"/>
   <extensionPoint name="contentBasedClassFileProcessor" interface="com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor"/>
 
-  <extensionPoint name="browserSettingsProvider" interface="com.intellij.ide.BrowserSettingsProvider"/>
+  <extensionPoint name="browserSettingsProvider" beanClass="com.intellij.ide.BrowserSettingsProviderEP"/>
 
   <extensionPoint name="bundledColorSchemesProvider" interface="com.intellij.openapi.editor.colors.impl.BundledColorSchemesProvider"/>
   <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider"/>
@@ -98,7 +98,7 @@
   <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>
   <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
 
-  <extensionPoint name="generalOptionsProvider" interface="com.intellij.openapi.options.SearchableConfigurable"/>
+  <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP"/>
   
   <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
 
@@ -107,4 +107,6 @@
   <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vcs.readOnlyHandler.WritingAccessProvider"/>
   <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotifications$Provider"/>
   <extensionPoint name="featureStatBundle" interface="com.intellij.featureStatistics.FeatureStatisticsBundleProvider"/>
+
+  <extensionPoint name="editorCustomization" area="IDEA_PROJECT" interface="com.intellij.ui.EditorCustomization"/>
 </extensionPoints>

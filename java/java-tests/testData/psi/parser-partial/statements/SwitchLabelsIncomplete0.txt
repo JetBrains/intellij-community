@@ -1,8 +1,3 @@
 PsiJavaFile:SwitchLabelsIncomplete0.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:Unexpected token
-      PsiKeyword:case('case')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+  PsiErrorElement:Unexpected token
+    PsiKeyword:case('case')

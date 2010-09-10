@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public class LanguageSelector {
 
   private Language myLanguage;
   private final EventDispatcher<LanguageSelectorListener> myDispatcher = EventDispatcher.create(LanguageSelectorListener.class);
-  private Language[] myLanguages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings(); 
+  private Language[] myLanguages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
 
   /**
    * @return The currently selected language.

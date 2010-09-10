@@ -24,6 +24,8 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -207,9 +209,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void launchAction(@NotNull IntentionAction action);
 
-  void configureByFile(@TestDataFile @NonNls String file);
+  PsiFile configureByFile(@TestDataFile @NonNls String file);
 
-  void configureByFiles(@NonNls String... files);
+  void configureByFiles(@TestDataFile @NonNls String... files);
 
   PsiFile configureByText(FileType fileType, @NonNls String text);
 
@@ -286,9 +288,20 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   PsiManager getPsiManager();
 
+  /**
+   * @return null if the only item was auto-completed
+   */
   @Nullable LookupElement[] completeBasic();
 
+  /**
+   * @return null if the only item was auto-completed
+   */
   @Nullable LookupElement[] complete(CompletionType type);
+
+  /**
+   * @return null if the only item was auto-completed
+   */
+  @Nullable LookupElement[] complete(CompletionType type, int invocationCount);
 
   void checkResult(final String text);
 
@@ -303,9 +316,18 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void type(final char c);
 
+  void type(final String s);
+
   void performEditorAction(String actionId);
 
-  int configureFromTempProjectFile(String filePath);
+  /**
+   * If the action is visible and enabled, perform it
+   * @param action
+   * @return updated action's presentation
+   */
+  Presentation testAction(AnAction action);
+
+  PsiFile configureFromTempProjectFile(String filePath);
 
   void configureFromExistingVirtualFile(VirtualFile f);
 
@@ -313,6 +335,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   List<String> getCompletionVariants(String... filesBefore);
 
+  /**
+   * @return null if the only item was auto-completed
+   */
   @Nullable
   LookupElement[] getLookupElements();
 

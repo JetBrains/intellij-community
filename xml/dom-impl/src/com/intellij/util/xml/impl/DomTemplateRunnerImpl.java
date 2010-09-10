@@ -48,6 +48,7 @@ public class DomTemplateRunnerImpl extends DomTemplateRunner {
   public <T extends DomElement> void runTemplate(T t, String mappingId, Editor editor,
                                                  @NotNull Map<String, String> predefinedVars) {
     final Template template = getTemplate(mappingId);
+    assert template != null : "Template not found: " + mappingId;
     runTemplate(t, editor, template, predefinedVars);
   }
 

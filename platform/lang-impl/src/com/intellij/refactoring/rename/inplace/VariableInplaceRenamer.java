@@ -26,6 +26,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +46,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
@@ -326,15 +326,14 @@ public class VariableInplaceRenamer {
     if (myElementToRename instanceof PsiNameIdentifierOwner) {
       PsiElement nameId = ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier();
       LOG.assertTrue(nameId != null);
-      rangesToHighlight.put(nameId.getTextRange().shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(nameId)), colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
+      TextRange range = InjectedLanguageManager.getInstance(myProject).injectedToHost(nameId, nameId.getTextRange());
+      rangesToHighlight.put(range, colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
     }
 
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
       TextRange range = ref.getRangeInElement().shiftRight(
-        element.getTextRange().getStartOffset() +
-          PsiUtilBase.findInjectedElementOffsetInRealDocument(element)
-      );
+        InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, element.getTextRange().getStartOffset()));
 
       ReadWriteAccessDetector writeAccessDetector = ReadWriteAccessDetector.findDetector(element);
       // TODO: read / write usages

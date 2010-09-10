@@ -44,6 +44,7 @@ import java.util.Set;
  */
 public class JavaCompletionProcessor extends BaseScopeProcessor implements ElementClassHint {
   public static final Key<Condition<String>> NAME_FILTER = Key.create("NAME_FILTER");
+  public static final Key<Boolean> JAVA_COMPLETION = Key.create("JAVA_COMPLETION");
 
   private boolean myStatic = false;
   private final Set<Object> myResultNames = new THashSet<Object>();
@@ -206,6 +207,9 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
     if (hintKey == NAME_FILTER) {
       return (T)myMatcher;
+    }
+    if (hintKey == JAVA_COMPLETION) {
+      return (T)Boolean.TRUE;
     }
 
     return super.getHint(hintKey);

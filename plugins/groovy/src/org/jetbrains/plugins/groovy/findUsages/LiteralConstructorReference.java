@@ -3,8 +3,10 @@ package org.jetbrains.plugins.groovy.findUsages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
@@ -16,8 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
@@ -33,6 +33,16 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   public LiteralConstructorReference(@NotNull GrListOrMap element, @NotNull PsiClassType constructedClassType) {
     super(element, TextRange.from(0, 0), false);
     myExpectedType = constructedClassType;
+  }
+
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return getElement();
+  }
+
+  @Override
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    return getElement();
   }
 
   public PsiClassType getConstructedClassType() {
@@ -51,7 +61,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     return false;
   }
 
-  public static List<ResolveResult> getConstructorCandidates(PsiClassType classType,
+  private static List<ResolveResult> getConstructorCandidates(PsiClassType classType,
                                                              @NotNull GroovyPsiElement context, @Nullable PsiType[] argTypes, boolean exactMatchesOnly) {
     PsiClass psiClass = classType.resolve();
     if (psiClass == null) return Collections.emptyList();
@@ -105,33 +115,41 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     return null;
   }
 
-  @Nullable
-  private PsiType[] argTypes() {
+  @NotNull
+  public GrExpression[] getCallArguments() {
     final GrListOrMap literal = getElement();
-    final PsiType listType = literal.getType();
-    if (listType instanceof GrTupleType) {
-      return ((GrTupleType)listType).getComponentTypes();
+    if (literal.isMap()) {
+      final GrNamedArgument argument = literal.findNamedArgument("super");
+      if (argument != null) {
+        final GrExpression expression = argument.getExpression();
+        if (expression instanceof GrListOrMap && !((GrListOrMap)expression).isMap()) {
+          return ((GrListOrMap)expression).getInitializers();
+        }
+        if (expression != null) {
+          return new GrExpression[]{expression};
+        }
+
+        return GrExpression.EMPTY_ARRAY;
+      }
     }
-    else if (listType instanceof GrMapType) {
-      return PsiType.EMPTY_ARRAY;
-    }
-    return null;
+    return literal.getInitializers();
+  }
+
+  @NotNull
+  private PsiType[] getCallArgumentTypes() {
+    final GrExpression[] arguments = getCallArguments();
+    return ContainerUtil.map2Array(arguments, PsiType.class, new NullableFunction<GrExpression, PsiType>() {
+      @Override
+      public PsiType fun(GrExpression grExpression) {
+        return grExpression.getType();
+      }
+    });
   }
 
   @NotNull
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
-    final GrListOrMap literal = getElement();
-    final GrNamedArgument superConstructor = literal.findNamedArgument("super");
-    if (superConstructor != null) {
-      final PsiReference reference = ObjectUtils.assertNotNull(superConstructor.getLabel()).getReference();
-      if (reference instanceof PsiPolyVariantReference) {
-        return ((PsiPolyVariantReference)reference).multiResolve(incompleteCode);
-      }
-    }
-
-    final boolean exactMatchesOnly = false;
-    final List<ResolveResult> candidates = getConstructorCandidates(myExpectedType, literal, argTypes(), exactMatchesOnly);
+    final List<ResolveResult> candidates = getConstructorCandidates(myExpectedType, getElement(), getCallArgumentTypes(), false);
     return candidates.toArray(new ResolveResult[candidates.size()]);
   }
 

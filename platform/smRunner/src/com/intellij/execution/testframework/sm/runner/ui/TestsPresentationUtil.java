@@ -72,7 +72,8 @@ public class TestsPresentationUtil {
                                               final int testsTotal,
                                               final int testsCount,
                                               final int failuresCount,
-                                              @Nullable final Set<String> allCategories) {
+                                              @Nullable final Set<String> allCategories,
+                                              final boolean isFinished) {
     final StringBuilder sb = new StringBuilder();
     if (endTime == 0) {
       sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running"));
@@ -111,7 +112,8 @@ public class TestsPresentationUtil {
 
     sb.append(' ').append(testsCount).append(' ');
     sb.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.of"));
-    sb.append(' ').append(testsTotal != 0 ? testsTotal : UNKNOWN_TESTS_COUNT);
+    sb.append(' ').append(testsTotal != 0 ? testsTotal
+                                          : !isFinished ? UNKNOWN_TESTS_COUNT : 0);
 
     if (failuresCount > 0) {
       sb.append(DOUBLE_SPACE);

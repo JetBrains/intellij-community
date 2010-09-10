@@ -92,11 +92,12 @@ public class SoftWrapsStorage {
   /**
    * Inserts given soft wrap to {@link #myWraps} collection at the given index.
    *
-   * @param softWrap    soft wrap to store
-   * @return            previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
+   * @param softWrap          soft wrap to store
+   * @param notifyListeners   flag that indicates if registered listeners should be notified about soft wrap registration
+   * @return                  previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
    */
   @Nullable
-  public TextChangeImpl storeOrReplace(TextChangeImpl softWrap) {
+  public TextChangeImpl storeOrReplace(TextChangeImpl softWrap, boolean notifyListeners) {
     int i = getSoftWrapIndex(softWrap.getStart());
     if (i >= 0) {
       return myWraps.set(i, softWrap);
@@ -104,8 +105,10 @@ public class SoftWrapsStorage {
 
     i = -i - 1;
     myWraps.add(i, softWrap);
-    for (SoftWrapChangeListener listener : myListeners) {
-      listener.softWrapAdded(softWrap);
+    if (notifyListeners) {
+      for (SoftWrapChangeListener listener : myListeners) {
+        listener.softWrapAdded(softWrap);
+      }
     }
     return null;
   }
@@ -125,6 +128,36 @@ public class SoftWrapsStorage {
     TextChangeImpl removed = myWraps.remove(index);
     notifyListenersAboutRemoval();
     return removed;
+  }
+
+  /**
+   * Allows to remove all soft wraps registered at the current storage with offsets from <code>[start; end)</code> range if any.
+   *
+   * @param startOffset   start offset to use (inclusive)
+   * @param endOffset     end offset to use (exclusive)
+   */
+  public void removeInRange(int startOffset, int endOffset) {
+    int startIndex = getSoftWrapIndex(startOffset);
+    if (startIndex < 0) {
+      startIndex = -startIndex - 1;
+    }
+
+    if (startIndex >= myWraps.size()) {
+      return;
+    }
+
+    int endIndex = startIndex;
+    for (; endIndex < myWraps.size(); endIndex++) {
+      TextChangeImpl softWrap = myWraps.get(endIndex);
+      if (softWrap.getStart() >= endOffset) {
+        break;
+      }
+    }
+    
+    if (endIndex > startIndex) {
+      myWraps.subList(startIndex, endIndex).clear();
+      notifyListenersAboutRemoval();
+    }
   }
 
   /**

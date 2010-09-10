@@ -16,9 +16,10 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import junit.framework.TestCase;
 
 /*
@@ -27,11 +28,16 @@ import junit.framework.TestCase;
 * Date: 17.12.2008
 */
 public abstract class TestBase extends TestCase {
-    protected CodeInsightTestFixture myFixture;
+
+  protected TestBase() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
+
+  protected CodeInsightTestFixture myFixture;
 
     @Override
     protected void setUp() throws Exception {
-        final JavaTestFixtureFactory factory = JavaTestFixtureFactory.getFixtureFactory();
+        final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
         final IdeaProjectTestFixture fixture = factory.createLightFixtureBuilder().getFixture();
         myFixture = factory.createCodeInsightFixture(fixture);
 

@@ -33,7 +33,7 @@ import javax.swing.*;
 public abstract class LightVariableBase extends LightElement implements PsiVariable {
   protected PsiElement myScope;
   protected PsiIdentifier myNameIdentifier;
-  protected final PsiType myType;
+  protected PsiType myType;
   protected final PsiModifierList myModifierList;
   protected boolean myWritable;
 
@@ -71,7 +71,15 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
 
   @NotNull
   public PsiType getType() {
+    if (myType == null) {
+      myType = computeType();
+    }
     return myType;
+  }
+
+  @NotNull
+  protected PsiType computeType() {
+    return PsiType.VOID;
   }
 
   @NotNull

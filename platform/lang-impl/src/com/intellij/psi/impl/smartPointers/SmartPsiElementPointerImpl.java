@@ -125,8 +125,18 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       }
     }
 
-    return containingFile.getContext() != null ? new InjectedSelfElementInfo(myElement) :
-           myElement instanceof PsiFile ? new FileElementInfo((PsiFile)myElement) : new SelfElementInfo(myElement);
+    if (myElement instanceof PsiFile) {
+      return new FileElementInfo((PsiFile)myElement);
+    }
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+    Document document = documentManager.getDocument(containingFile);
+    if (document == null) return null;   // must be non-text file
+
+    if (containingFile.getContext() != null) {
+      return new InjectedSelfElementInfo(myElement, document);
+    }
+
+    return new SelfElementInfo(myElement, document);
   }
 
   private static boolean areElementKindEqual(PsiElement element1, PsiElement element2) {

@@ -27,14 +27,19 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class MoveHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("move.title");
@@ -85,7 +90,30 @@ public class MoveHandler implements RefactoringActionHandler {
    * called by an Action in AtomicAction
    */
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    doMove(project, elements, dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext), null);
+    final PsiElement targetContainer = dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
+    final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();
+    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+      if (delegate.canMove(dataContext)) {
+        delegate.collectFilesOrDirsFromContext(dataContext, filesOrDirs);
+      }
+    }
+    if (!filesOrDirs.isEmpty()) {
+      for (PsiElement element : elements) {
+        if (element instanceof PsiDirectory) {
+          filesOrDirs.add(element);
+        }
+        else {
+          final PsiFile containingFile = element.getContainingFile();
+          if (containingFile != null) {
+            filesOrDirs.add(containingFile);
+          }
+        }
+      }
+      MoveFilesOrDirectoriesUtil
+        .doMove(project, filesOrDirs.toArray(new PsiElement[filesOrDirs.size()]), new PsiElement[]{targetContainer}, null);
+      return;
+    }
+    doMove(project, elements, targetContainer, null);
   }
 
   /**
@@ -135,6 +163,21 @@ public class MoveHandler implements RefactoringActionHandler {
       }
     }
 
+    return false;
+  }
+
+  public static boolean canMove(DataContext dataContext) {
+     for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+      if (delegate.canMove(dataContext)) return true;
+    }
+
+    return false;
+  }
+
+  public static boolean isMoveRedundant(PsiElement source, PsiElement target) {
+    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+      if (delegate.isMoveRedundant(source, target)) return true;
+    }
     return false;
   }
 }

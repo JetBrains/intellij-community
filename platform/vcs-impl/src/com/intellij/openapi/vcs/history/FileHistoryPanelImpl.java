@@ -66,9 +66,9 @@ import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -80,6 +80,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -145,11 +146,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
       public String valueOf(VcsFileRevision object) {
         return object.getRevisionNumber().asString();
-      }
-
-      @Override
-      public void sort(@NotNull List<VcsFileRevision> vcsFileRevisions) {
-        Collections.sort(vcsFileRevisions, myRevisionsInOrderComparator);
       }
 
       @Override
@@ -503,28 +499,14 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     myDualView.setCellWrapper(new MyCellWrapper(sessionGetter));
 
-    TableViewModel sortableModel = myDualView.getFlatView().getTableViewModel();
+    final TableView flatView = myDualView.getFlatView();
+    TableViewModel sortableModel = flatView.getTableViewModel();
     sortableModel.setSortable(true);
 
-    if (null == null) {
-      sortableModel.sortByColumn(0, SortableColumnModel.SORT_DESCENDING);
+    final RowSorter<? extends TableModel> rowSorter = flatView.getRowSorter();
+    if (rowSorter != null) {
+      rowSorter.setSortKeys(Arrays.asList(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
     }
-    else {
-      sortableModel.sortByColumn(getColumnIndex(null), SortableColumnModel.SORT_DESCENDING);
-    }
-
-  }
-
-  private int getColumnIndex(final ColumnInfo defaultColumnToSortBy) {
-    for (int i = 0; i < COLUMNS.length; i++) {
-      DualViewColumnInfo dualViewColumnInfo = COLUMNS[i];
-      if (dualViewColumnInfo instanceof MyColumnWrapper) {
-        if (((MyColumnWrapper)dualViewColumnInfo).getOriginalColumn() == defaultColumnToSortBy) {
-          return i;
-        }
-      }
-    }
-    return 0;
   }
 
   private static void makeBold(Component component) {

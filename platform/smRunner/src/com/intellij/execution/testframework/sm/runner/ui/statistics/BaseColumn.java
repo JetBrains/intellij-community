@@ -16,34 +16,14 @@
 package com.intellij.execution.testframework.sm.runner.ui.statistics;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.NullableFunction;
-
-import java.util.List;
 
 /**
  * @author Roman Chernyatchik
  */
 public abstract class BaseColumn extends ColumnInfo<SMTestProxy, String> {
-  private final NullableFunction<List<SMTestProxy>, Object> oldSortFun =
-      new NullableFunction<List<SMTestProxy>, Object>() {
-        @Nullable
-        public Object fun(final List<SMTestProxy> proxies) {
-          BaseColumn.super.sort(proxies);
-
-          return null;
-        }
-      };
-
   public BaseColumn(String name) {
     super(name);
   }
 
-  @Override
-  public void sort(@NotNull final List<SMTestProxy> testProxies) {
-    //Invariant: comparator should left Total(initially at row = 0) row as uppermost element!
-    StatisticsTableModel.applySortOperation(testProxies, oldSortFun);
-  }
 }

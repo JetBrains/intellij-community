@@ -136,4 +136,9 @@ public class FormatterTest extends GroovyFormatterTestCase {
     checkFormatting(data.get(0), data.get(1));
   }
 
+  public void testJavadocLink() throws Throwable {
+    // Check that no unnecessary white spaces are introduced for the javadoc link element.
+    // Check IDEA-57573 for more details.
+    doTest();
+  }
 }

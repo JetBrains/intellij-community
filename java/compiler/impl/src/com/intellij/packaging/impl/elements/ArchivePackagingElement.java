@@ -17,17 +17,19 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
+import com.intellij.compiler.ant.Tag;
 import com.intellij.compiler.ant.artifacts.ArchiveAntCopyInstructionCreator;
 import com.intellij.compiler.ant.taskdefs.Jar;
+import com.intellij.compiler.ant.taskdefs.Zip;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
-import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +45,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     super(PackagingElementFactoryImpl.ARCHIVE_ELEMENT_TYPE);
   }
 
-  public ArchivePackagingElement(String archiveFileName) {
+  public ArchivePackagingElement(@NotNull String archiveFileName) {
     super(PackagingElementFactoryImpl.ARCHIVE_ELEMENT_TYPE);
     myArchiveFileName = archiveFileName;
   }
@@ -58,7 +60,13 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
                                                           @NotNull ArtifactType artifactType) {
     final String tempJarProperty = generationContext.createNewTempFileProperty("temp.jar.path." + myArchiveFileName, myArchiveFileName);
     String jarPath = BuildProperties.propertyRef(tempJarProperty);
-    final Jar jar = new Jar(jarPath, "preserve", true);
+    final Tag jar;
+    if (myArchiveFileName.endsWith(".jar")) {
+      jar = new Jar(jarPath, "preserve", true);
+    }
+    else {
+      jar = new Zip(jarPath);
+    }
     for (Generator generator : computeChildrenGenerators(resolvingContext, new ArchiveAntCopyInstructionCreator(""), generationContext, artifactType)) {
       jar.add(generator);
     }

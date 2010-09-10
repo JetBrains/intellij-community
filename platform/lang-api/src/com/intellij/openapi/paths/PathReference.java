@@ -16,11 +16,12 @@
 
 package com.intellij.openapi.paths;
 
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
+import com.intellij.util.NullableConstantFunction;
 import com.intellij.util.NullableFunction;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +31,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class PathReference {
-  public static final NullableFunction<PathReference, Icon> NULL_ICON = new NullableFunction<PathReference, Icon>() {
-    public Icon fun(final PathReference webPath) {
-      return null;
-    }
-  };
+  public static final NullableFunction<PathReference, Icon> NULL_ICON = new NullableConstantFunction<PathReference, Icon>((Icon)null);
 
   private final String myPath;
   private final NullableLazyValue<Icon> myIcon;
@@ -77,17 +74,6 @@ public class PathReference {
       }
     }
     return url;
-  }
-
-  public static final class ConstFunction implements Function<PathReference, Icon> {
-    private final Icon myValue;
-    public ConstFunction(final Icon value) {
-      myValue = value;
-    }
-
-    public Icon fun(final PathReference webPath) {
-      return myValue;
-    }
   }
 
   public static class ResolveFunction implements NullableFunction<PathReference, Icon> {

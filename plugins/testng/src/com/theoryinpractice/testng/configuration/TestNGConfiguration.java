@@ -262,12 +262,8 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new TestNGConfigurationEditor(getProject()));
     RunConfigurationExtension.appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<TestNGConfiguration>());
     return group;
-  }
-
-  public boolean needAdditionalConsole() {
-    return false;
   }
 
   @Override
@@ -337,7 +333,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     listeners.clear();
     Element listenersElement = element.getChild("listeners");
     if (listenersElement != null) {
-      List<Element> children = listenersElement.getChildren("listeners");
+      List<Element> children = listenersElement.getChildren("listener");
       for (Element listenerClassName : children) {
         listeners.add(listenerClassName.getAttributeValue("class"));
       }

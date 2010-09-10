@@ -38,6 +38,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ConstantFunction;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -162,11 +163,9 @@ public class ExpectedHighlightingData {
       document.replaceString(startOffset, endOffset, content);
       endOffset -= endTag.length();
 
-      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset,endOffset), null, Pass.LINE_MARKERS, new Function<PsiElement,String>() {
-        public String fun(PsiElement psiElement) {
-          return descr;
-        }
-      }, null, GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset,endOffset), null, Pass.LINE_MARKERS,
+                                                                 new ConstantFunction<PsiElement,String>(descr), null,
+                                                                 GutterIconRenderer.Alignment.RIGHT);
 
       lineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
       text = document.getText();

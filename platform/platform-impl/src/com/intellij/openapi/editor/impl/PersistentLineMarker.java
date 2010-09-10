@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 public class PersistentLineMarker extends RangeMarkerImpl {
   private int myLine;
   public PersistentLineMarker(DocumentEx document, int offset) {
-    super(document, offset, offset);
+    super(document, document.getLineStartOffset(document.getLineNumber(offset)), document.getLineEndOffset(document.getLineNumber(offset)));
     myLine = document.getLineNumber(offset);
   }
 
@@ -38,14 +38,19 @@ public class PersistentLineMarker extends RangeMarkerImpl {
         invalidate();
       }
       else {
-        myStart = MarkupModelImpl.getFirstNonspaceCharOffset(getDocument(), myLine);
-        myEnd = myStart;
+        DocumentEx document = getDocument();
+        myStart = document.getLineStartOffset(myLine);
+        myEnd = document.getLineEndOffset(myLine);
       }
     }
     else {
       super.changedUpdateImpl(e);
       if (isValid()) {
         myLine = getDocument().getLineNumber(myStart);
+        int endLine = getDocument().getLineNumber(myEnd);
+        if (endLine != myLine) {
+          myEnd = getDocument().getLineEndOffset(myLine);
+        }
       }
     }
   }

@@ -66,7 +66,7 @@ public class GroovyOverrideImplementUtil {
   public static void invokeOverrideImplement(final Editor editor, final PsiFile file, final boolean isImplement) {
     final int offset = editor.getCaretModel().getOffset();
 
-    final GrTypeDefinition aClass = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrTypeDefinition.class, false);
+    GrTypeDefinition aClass = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrTypeDefinition.class, false);
     if (aClass == null) {
       return;
     }
@@ -86,8 +86,11 @@ public class GroovyOverrideImplementUtil {
     if (selectedElements == null || selectedElements.size() == 0) return;
 
     for (PsiMethodMember methodMember : selectedElements) {
+      if (!aClass.isValid()) {
+        aClass = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrTypeDefinition.class, false);
+        assert aClass != null;
+      }
       generateImplementation(editor, file, aClass, methodMember.getElement(), methodMember.getSubstitutor());
-
     }
   }
 

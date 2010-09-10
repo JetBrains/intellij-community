@@ -17,9 +17,14 @@ package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 public interface ProjectEx extends Project {
+  interface ProjectSaved {
+    Topic<ProjectSaved> TOPIC = Topic.create("SaveProjectTopic", ProjectSaved.class, Topic.BroadcastDirection.NONE);
+    void saved(@NotNull final Project project);
+  }
 
   @NotNull
   IProjectStore getStateStore();

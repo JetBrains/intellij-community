@@ -17,6 +17,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
+import static com.intellij.lang.java.parser.JavaParserUtil.done;
+import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
 import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
 
 
@@ -34,29 +37,49 @@ public class FileParser {
     ElementType.MODIFIER_BIT_SET,
     TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 
+  private static final JavaParserUtil.MarkingParserWrapper TOP_LEVEL_DECLARATION_PARSER = new JavaParserUtil.MarkingParserWrapper() {
+    public PsiBuilder.Marker parse(final PsiBuilder builder) {
+      return DeclarationParser.parse(builder, DeclarationParser.Context.FILE);
+    }
+  };
+
   private FileParser() { }
 
   public static void parse(final PsiBuilder builder) {
+    parseFile(builder, IMPORT_LIST_STOPPER_SET, TOP_LEVEL_DECLARATION_PARSER, JavaErrorMessages.message("expected.class.or.interface"));
+  }
+
+  public static void parseFile(final PsiBuilder builder, final TokenSet importListStoppers,
+                               final JavaParserUtil.MarkingParserWrapper declarationParser, final String errorMessage) {
     parsePackageStatement(builder);
 
-    parseImportList(builder);
+    final Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);
 
+    Boolean firstDeclarationOk = null;
+    PsiBuilder.Marker firstDeclaration = null;
     PsiBuilder.Marker invalidElements = null;
     while (!builder.eof()) {
       if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
         if (invalidElements != null) {
-          invalidElements.error(JavaErrorMessages.message("expected.class.or.interface"));
+          invalidElements.error(errorMessage);
           invalidElements = null;
         }
         builder.advanceLexer();
+        if (firstDeclarationOk == null) firstDeclarationOk = false;
         continue;
       }
 
-      final PsiBuilder.Marker declaration = DeclarationParser.parse(builder, DeclarationParser.Context.FILE);
+      final PsiBuilder.Marker declaration = declarationParser.parse(builder);
       if (declaration != null) {
         if (invalidElements != null) {
-          invalidElements.errorBefore(JavaErrorMessages.message("expected.class.or.interface"), declaration);
+          invalidElements.errorBefore(errorMessage, declaration);
           invalidElements = null;
+        }
+        if (firstDeclarationOk == null) {
+          firstDeclarationOk = exprType(declaration) != JavaElementType.MODIFIER_LIST;
+          if (firstDeclarationOk) {
+            firstDeclaration = declaration;
+          }
         }
         continue;
       }
@@ -65,28 +88,34 @@ public class FileParser {
         invalidElements = builder.mark();
       }
       builder.advanceLexer();
+      if (firstDeclarationOk == null) firstDeclarationOk = false;
     }
 
     if (invalidElements != null) {
-      invalidElements.error(JavaErrorMessages.message("expected.class.or.interface"));
+      invalidElements.error(errorMessage);
+    }
+
+    if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {
+      impListInfo.first.setCustomEdgeProcessors(JavaParserUtil.PRECEDING_COMMENT_BINDER, null);  // pass comments behind fake import list
+      firstDeclaration.setCustomEdgeProcessors(JavaParserUtil.SPECIAL_PRECEDING_COMMENT_BINDER, null);
     }
   }
 
   @Nullable
-  private static PsiBuilder.Marker parsePackageStatement(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parsePackageStatement(final PsiBuilder builder) {
     final PsiBuilder.Marker statement = builder.mark();
 
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
       final PsiBuilder.Marker modList = builder.mark();
       DeclarationParser.parseAnnotations(builder);
-      modList.done(JavaElementType.MODIFIER_LIST);
+      done(modList, JavaElementType.MODIFIER_LIST);
       if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
         statement.rollbackTo();
         return null;
       }
     }
 
-    final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, false, false);
+    final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, false, false, false);
     if (ref == null) {
       statement.rollbackTo();
       return null;
@@ -94,18 +123,19 @@ public class FileParser {
 
     semicolon(builder);
 
-    statement.done(JavaElementType.PACKAGE_STATEMENT);
+    done(statement, JavaElementType.PACKAGE_STATEMENT);
     return statement;
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseImportList(final PsiBuilder builder) {
+  public static Pair<PsiBuilder.Marker, Boolean> parseImportList(final PsiBuilder builder, final TokenSet stoppers) {
     final PsiBuilder.Marker list = builder.mark();
 
-    if (builder.getTokenType() == JavaTokenType.IMPORT_KEYWORD) {
+    final boolean isEmpty = builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD;
+    if (!isEmpty) {
       PsiBuilder.Marker invalidElements = null;
       while (!builder.eof()) {
-        if (IMPORT_LIST_STOPPER_SET.contains(builder.getTokenType())) break;
+        if (stoppers.contains(builder.getTokenType())) break;
 
         final PsiBuilder.Marker statement = parseImportStatement(builder);
         if (statement != null) {
@@ -127,8 +157,8 @@ public class FileParser {
       }
     }
 
-    list.done(JavaElementType.IMPORT_LIST);
-    return list;
+    done(list, JavaElementType.IMPORT_LIST);
+    return Pair.create(list, isEmpty);
   }
 
   @Nullable
@@ -146,7 +176,7 @@ public class FileParser {
       semicolon(builder);
     }
 
-    statement.done(type);
+    done(statement, type);
     return statement;
   }
 }

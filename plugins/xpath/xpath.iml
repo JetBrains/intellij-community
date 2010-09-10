@@ -12,20 +12,17 @@
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="dom-openapi" />
-    <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="xslt-rt" />
-    <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="lvcs-impl" />
-    <orderEntry type="module" module-name="jam-support-impl" />
-    <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="library" name="Jaxen" level="project" />
+    <orderEntry type="module" module-name="resources-en" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
   </component>
 </module>
 

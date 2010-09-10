@@ -61,6 +61,9 @@ public abstract class ProjectBuild extends Generator {
         }
       }
     }
+    for (ChunkBuildExtension extension : ChunkBuildExtension.EP_NAME.getExtensions()) {
+      extension.generateProjectTargets(project, genOptions, myAntProject);
+    }
 
     final Target initTarget = new Target(BuildProperties.TARGET_INIT, null,
                                          CompilerBundle.message("generated.ant.build.initialization.section.title"), null);
@@ -69,7 +72,7 @@ public abstract class ProjectBuild extends Generator {
 
     ArtifactsGenerator artifactsGenerator = new ArtifactsGenerator(project, genOptions);
 
-    myAntProject.add(new CleanProject(genOptions, artifactsGenerator), 1);
+    myAntProject.add(new CleanProject(project, genOptions, artifactsGenerator), 1);
 
     myAntProject.add(new Target(BuildProperties.TARGET_BUILD_MODULES, buildModulesTargetNames.toString(),
                                 CompilerBundle.message("generated.ant.build.build.all.modules.target.name"), null), 1);

@@ -41,7 +41,7 @@ public abstract class TemplateManager {
                                      @NotNull final Template template,
                                      boolean inSeparateCommand,
                                      Map<String, String> predefinedVarValues,
-                                     TemplateEditingListener listener);
+                                     @Nullable TemplateEditingListener listener);
 
   public abstract void startTemplate(@NotNull Editor editor,
                                      @NotNull Template template,

@@ -28,6 +28,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -51,6 +52,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -488,9 +491,18 @@ public class PsiUtil {
 
   public static void reformatCode(final PsiElement element) {
     final TextRange textRange = element.getTextRange();
+
+    PsiFile file = element.getContainingFile();
+    FileViewProvider viewProvider = file.getViewProvider();
+
+    if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
+      MultiplePsiFilesPerDocumentFileViewProvider multiProvider = (MultiplePsiFilesPerDocumentFileViewProvider)viewProvider;
+      file = multiProvider.getPsi(multiProvider.getBaseLanguage());
+    }
+
     try {
       CodeStyleManager.getInstance(element.getProject())
-        .reformatText(element.getContainingFile(), textRange.getStartOffset(), textRange.getEndOffset());
+        .reformatText(file, textRange.getStartOffset(), textRange.getEndOffset());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -955,4 +967,40 @@ public class PsiUtil {
     }
   }
 
+  public static List<GrReturnStatement> collectReturns(PsiElement element) {
+    class ArrayListConsumer extends ArrayList<GrReturnStatement> implements Consumer<GrReturnStatement> {
+
+      @Override
+      public void consume(GrReturnStatement grReturnStatement) {
+        add(grReturnStatement);
+      }
+    }
+    ArrayListConsumer res = new ArrayListConsumer();
+    collectReturns(element, res);
+
+    return res;
+  }
+
+  public static void collectReturns(PsiElement element, Consumer<GrReturnStatement> consumer) {
+    if (element instanceof GrReturnStatement) {
+      consumer.consume((GrReturnStatement) element);
+    } else {
+      PsiElement child = element.getFirstChild();
+      while(child != null) {
+        collectReturns(child, consumer);
+        child = child.getNextSibling();
+      }
+    }
+  }
+
+  @Nullable
+  public static GrStatement getLastStatement(@NotNull GrCodeBlock block) {
+    for (PsiElement element = block.getLastChild(); element != null; element = element.getPrevSibling()) {
+      if (element instanceof GrStatement) {
+        return (GrStatement)element;
+      }
+    }
+
+    return null;
+  }
 }

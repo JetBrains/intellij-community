@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,13 +36,12 @@ public class TestUtils {
         if (aClass == null) {
             return false;
         }
-        final PsiManager manager = aClass.getManager();
         final PsiFile file = aClass.getContainingFile();
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null) {
             return true;
         }
-        final Project project = manager.getProject();
+        final Project project = aClass.getProject();
         final ProjectRootManager rootManager =
                 ProjectRootManager.getInstance(project);
         final ProjectFileIndex fileIndex = rootManager.getFileIndex();

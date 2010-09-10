@@ -18,11 +18,10 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.DefaultInsertHandler;
-import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.completion.AllClassesGetter;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -40,6 +39,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -66,6 +66,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
@@ -197,28 +199,26 @@ public class GroovyCompletionUtil {
   }
 
 
-  public static Object[] getCompletionVariants(GroovyResolveResult[] candidates) {
-    Object[] result = new Object[candidates.length];
+  public static List<Object> getCompletionVariants(GroovyResolveResult[] candidates) {
+    List<Object> result = CollectionFactory.arrayList();
     Outer:
-    for (int i = 0; i < result.length; i++) {
-      final PsiElement element = candidates[i].getElement();
-      final PsiElement context = candidates[i].getCurrentFileResolveContext();
+    for (GroovyResolveResult candidate : candidates) {
+      final PsiElement element = candidate.getElement();
+      final PsiElement context = candidate.getCurrentFileResolveContext();
       if (context instanceof GrImportStatement && element != null) {
         final String importedName = ((GrImportStatement)context).getImportedName();
         if (importedName != null) {
           final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
           if (importReference != null) {
-            final GroovyResolveResult[] results = importReference.multiResolve(false);
-            for (GroovyResolveResult r : results) {
+            for (GroovyResolveResult r : importReference.multiResolve(false)) {
               final PsiElement resolved = r.getElement();
-              if (PsiManager.getInstance(context.getProject()).areElementsEquivalent(resolved, element)) {
-                result[i] = generateLookupForImportedElement(candidates[i], importedName);
+              if (context.getManager().areElementsEquivalent(resolved, element)) {
+                result.add(generateLookupForImportedElement(candidate, importedName));
                 continue Outer;
               }
               else {
                 if (resolved instanceof PsiField && element instanceof PsiMethod && isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
-                  result[i] =
-                    generateLookupForImportedElement(candidates[i], getAccessorPrefix((PsiMethod)element) + capitalize(importedName));
+                  result.add(generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName)));
                   continue Outer;
                 }
               }
@@ -228,15 +228,20 @@ public class GroovyCompletionUtil {
         }
       }
       else if (context instanceof GrMethodCallExpression && element instanceof PsiMethod) {
-        final PsiMethod method = generateMethodInCategory(candidates[i]);
-        result[i] = setupLookupBuilder(method, candidates[i].getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element));
+        final PsiMethod method = generateMethodInCategory(candidate);
+        result.add(setupLookupBuilder(method, candidate.getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element)));
         continue;
       }
+      if (element instanceof PsiClass) {
+        result.add(AllClassesGetter.createLookupItem((PsiClass)element));
+        continue;
+      }
+
       if (element instanceof PsiNamedElement) {
-        result[i] = setupLookupBuilder(element, candidates[i].getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element));
+        result.add(setupLookupBuilder(element, candidate.getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element)));
         continue;
       }
-      result[i] = element;
+      result.add(element);
     }
 
     return result;
@@ -341,10 +346,6 @@ public class GroovyCompletionUtil {
     return false;
   }
 
-  public static LookupElement setTailTypeForConstructor(PsiClass clazz, LookupElement lookupElement) {
-    return LookupElementDecorator.withInsertHandler(lookupElement, ParenthesesInsertHandler.getInstance(hasConstructorParameters(clazz)));
-  }
-
   public static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
 
@@ -395,7 +396,7 @@ public class GroovyCompletionUtil {
     String name = aClass.getName();
     document.replaceString(startOffset, endOffset, name);
 
-    final RangeMarker toDelete = DefaultInsertHandler.insertSpace(endOffset, document);
+    final RangeMarker toDelete = JavaCompletionUtil.insertSpace(endOffset, document);
 
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 

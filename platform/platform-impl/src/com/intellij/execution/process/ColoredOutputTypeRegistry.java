@@ -24,7 +24,8 @@ public class ColoredOutputTypeRegistry {
   private final Map<String, Key> myRegisteredKeys = new HashMap<String, Key>();
 
   private final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[] {
-    ConsoleHighlighter.OUT, ConsoleHighlighter.RED, ConsoleHighlighter.GREEN, ConsoleHighlighter.YELLOW, ConsoleHighlighter.BLUE,
+    ConsoleViewContentType.NORMAL_OUTPUT_KEY,
+    ConsoleHighlighter.RED, ConsoleHighlighter.GREEN, ConsoleHighlighter.YELLOW, ConsoleHighlighter.BLUE,
     ConsoleHighlighter.MAGENTA, ConsoleHighlighter.CYAN
   };
 

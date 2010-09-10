@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,6 +55,11 @@ import java.util.Map;
   private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<VirtualFile,Editor>();
   private VirtualFile myActiveFile = null;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
+
+  public TestEditorManagerImpl(Project project) {
+    myProject = project;
+    registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
+  }
 
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor) {
@@ -221,10 +227,6 @@ import java.util.Map;
     return getEditors(file);
   }
 
-  public TestEditorManagerImpl(Project project) {
-    myProject = project;
-  }
-
   @NotNull
   public VirtualFile[] getSiblings(VirtualFile file) {
     throw new UnsupportedOperationException();
@@ -343,9 +345,6 @@ import java.util.Map;
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  public void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, Disposable parentDisposable) {
   }
 
   public JComponent getPreferredFocusedComponent() {

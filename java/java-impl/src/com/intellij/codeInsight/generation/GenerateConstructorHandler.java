@@ -90,7 +90,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           }
         }
       }
-      if (array.size() > 0){
+      if (!array.isEmpty()){
         if (array.size() == 1){
           baseConstructors = new PsiMethod[]{array.get(0)};
         }
@@ -105,7 +105,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           chooser.setTitle(CodeInsightBundle.message("generate.constructor.super.constructor.chooser.title"));
           chooser.show();
           List<PsiMethodMember> elements = chooser.getSelectedElements();
-          if (elements == null || elements.size() == 0) return null;
+          if (elements == null || elements.isEmpty()) return null;
           baseConstructors = new PsiMethod[elements.size()];
           for(int i = 0; i < elements.size(); i++){
             final ClassMember member = elements.get(i);
@@ -139,15 +139,15 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
-    ArrayList<PsiMethod> baseConstructors = new ArrayList<PsiMethod>();
-    ArrayList<PsiElement> fieldsVector = new ArrayList<PsiElement>();
+    List<PsiMethod> baseConstructors = new ArrayList<PsiMethod>();
+    List<PsiField> fieldsVector = new ArrayList<PsiField>();
     for (ClassMember member1 : members) {
       PsiElement member = ((PsiElementClassMember)member1).getElement();
       if (member instanceof PsiMethod) {
         baseConstructors.add((PsiMethod)member);
       }
       else {
-        fieldsVector.add(member);
+        fieldsVector.add((PsiField)member);
       }
     }
     PsiField[] fields = fieldsVector.toArray(new PsiField[fieldsVector.size()]);
@@ -193,8 +193,8 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       }
     }
 
-    @NonNls StringBuffer buffer = new StringBuffer();
-    buffer.append("{\n");
+    @NonNls StringBuilder body = new StringBuilder();
+    body.append("{\n");
 
     if (baseConstructor != null){
       PsiClass superClass = aClass.getSuperClass();
@@ -209,15 +209,15 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           constructor.getParameterList().add(parm);
         }
         if (parms.length > 0){
-          buffer.append("super(");
+          body.append("super(");
           for(int j = 0; j < parms.length; j++) {
             PsiParameter parm = parms[j];
             if (j > 0){
-              buffer.append(",");
+              body.append(",");
             }
-            buffer.append(parm.getName());
+            body.append(parm.getName());
           }
-          buffer.append(");\n");
+          body.append(");\n");
         }
       }
     }
@@ -228,6 +228,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       String fieldName = field.getName();
       String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = javaStyle.propertyNameToVariableName(name, VariableKind.PARAMETER);
+      parmName = javaStyle.suggestUniqueVariableName(parmName, constructor, true);
       PsiParameter parm = factory.createParameter(parmName, field.getType());
 
 
@@ -238,17 +239,17 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
       constructor.getParameterList().add(parm);
       if (fieldName.equals(parmName)) {
-        buffer.append("this.");
+        body.append("this.");
       }
-      buffer.append(fieldName);
-      buffer.append("=");
-      buffer.append(parmName);
-      buffer.append(";\n");
+      body.append(fieldName);
+      body.append("=");
+      body.append(parmName);
+      body.append(";\n");
     }
 
-    buffer.append("}");
-    PsiCodeBlock body = factory.createCodeBlockFromText(buffer.toString(), null);
-    constructor.getBody().replace(body);
+    body.append("}");
+    PsiCodeBlock bodyBlock = factory.createCodeBlockFromText(body.toString(), null);
+    constructor.getBody().replace(bodyBlock);
     constructor = (PsiMethod)codeStyleManager.reformat(constructor);
     return constructor;
   }

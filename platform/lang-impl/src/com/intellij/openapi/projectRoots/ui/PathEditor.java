@@ -127,10 +127,8 @@ public class PathEditor {
     keepSelectionState();
     clearList();
     myEnabled = true;
-    if (myEnabled) {
-      for (VirtualFile file : paths) {
-        addElement(file);
-      }
+    for (VirtualFile file : paths) {
+      addElement(file);
     }
     setModified(false);
     updateButtons();

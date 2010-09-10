@@ -19,8 +19,11 @@ import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.EmptyTextHelper;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,8 +31,12 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 
+/**
+ * @author Anton Makeev
+ * @author Konstantin Bulenkov
+ */
 public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
-  private EmptyTextHelper myEmptyTextHelper;
+  private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   public JBList() {
@@ -47,26 +54,34 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   }
 
   public JBList(Collection items) {
-    super(items.toArray(new Object[items.size()]));
-    init();
+    this(ArrayUtil.toObjectArray(items));
   }
 
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    myEmptyTextHelper.paint(g);
+    myEmptyText.paint(this, g);
   }
 
   private void init() {
-    myEmptyTextHelper = new EmptyTextHelper(this) {
+    setSelectionBackground(UIUtil.getListSelectionBackground());
+    setSelectionForeground(UIUtil.getListSelectionForeground());
+
+    myEmptyText = new StatusText(this) {
       @Override
-      protected boolean isEmpty() {
+      protected boolean isStatusVisible() {
         return JBList.this.isEmpty();
       }
     };
 
-    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+
+    if (shouldInstallItemTooltipExpander()) myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
   }
+
+  protected boolean shouldInstallItemTooltipExpander() {
+    return true;
+  }
+
 
   public boolean isEmpty() {
     return getItemsCount() == 0;
@@ -77,32 +92,64 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     return model == null ? 0 : model.getSize();
   }
 
-  public String getEmptyText() {
-    return myEmptyTextHelper.getEmptyText();
+  @NotNull
+  @Override
+  public String getText() {
+    return myEmptyText.getText();
   }
 
+  @Override
   public void setEmptyText(String emptyText) {
-    myEmptyTextHelper.setEmptyText(emptyText);
+    myEmptyText.setEmptyText(emptyText);
   }
 
+  @Override
   public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.setEmptyText(emptyText, attrs);
+    myEmptyText.setEmptyText(emptyText, attrs);
   }
 
+  @Override
   public void clearEmptyText() {
-    myEmptyTextHelper.clearEmptyText();
+    myEmptyText.clearEmptyText();
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.appendEmptyText(text, attrs);
+    myEmptyText.appendEmptyText(text, attrs);
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
-    myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+    myEmptyText.appendEmptyText(text, attrs, listener);
   }
 
+  @Override
+  public StatusText getEmptyText() {
+    return myEmptyText;
+  }
+
+  @Override
   @NotNull
   public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
+  }
+
+  public <T> void installCellRenderer(final @NotNull NotNullFunction<T, JComponent> fun) {
+    setCellRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        @SuppressWarnings({"unchecked"})
+        final JComponent comp = fun.fun((T)value);  
+        comp.setOpaque(true);
+        if (isSelected) {
+          comp.setBackground(list.getSelectionBackground());
+          comp.setForeground(list.getSelectionForeground());
+        } else {
+          comp.setBackground(list.getBackground());
+          comp.setForeground(list.getForeground());
+        }
+        return comp;
+      }
+    });
   }
 }

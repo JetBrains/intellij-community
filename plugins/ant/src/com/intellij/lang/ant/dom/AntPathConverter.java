@@ -34,6 +34,17 @@ import java.io.File;
  *         Date: Apr 26, 2010
  */
 public class AntPathConverter extends Converter<PsiFileSystemItem> implements CustomReferenceConverter<PsiFileSystemItem>{
+
+  private final boolean myShouldValidateRefs;
+
+  public AntPathConverter() {
+    this(false);
+  }
+
+  protected AntPathConverter(boolean validateRefs) {
+    myShouldValidateRefs = validateRefs;
+  }
+
   @Override
   public PsiFileSystemItem fromString(@Nullable @NonNls String s, ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
@@ -62,8 +73,11 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
   }
 
   protected AntDomProject getEffectiveAntProject(GenericAttributeValue attribValue) {
-    // todo: get context (including) project if configured 
-    return attribValue.getParentOfType(AntDomProject.class, false);
+    AntDomProject project = attribValue.getParentOfType(AntDomProject.class, false);
+    if (project != null) {
+      project = project.getContextAntProject();
+    }
+    return project;
   }
 
   @Nullable
@@ -86,7 +100,7 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
     if (genericDomValue instanceof GenericAttributeValue) {
       final GenericAttributeValue attrib = (GenericAttributeValue)genericDomValue;
       if (attrib.getRawText() != null) {
-        final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attrib);
+        final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attrib, myShouldValidateRefs);
         return refSet.getAllReferences();
       }
     }

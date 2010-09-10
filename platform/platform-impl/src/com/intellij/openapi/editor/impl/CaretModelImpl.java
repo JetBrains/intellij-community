@@ -24,15 +24,15 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
@@ -43,12 +43,11 @@ import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
+public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretModelImpl");
   private final EditorImpl myEditor;
-  private final CopyOnWriteArrayList<CaretListener> myCaretListeners = ContainerUtil.createEmptyCOWList();
+  private final List<CaretListener> myCaretListeners = ContainerUtil.createEmptyCOWList();
   private LogicalPosition myLogicalCaret;
   private VerticalInfo myCaretInfo;
   private VisualPosition myVisibleCaret;
@@ -57,6 +56,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   private int myVisualLineEnd;
   private TextAttributes myTextAttributes;
   private boolean myIsInUpdate;
+  private RangeMarker savedBeforeBulkCaretMarker;
 
   public CaretModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -67,6 +67,29 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myVisualLineStart = 0;
     Document doc = editor.getDocument();
     myVisualLineEnd = doc.getLineCount() > 1 ? doc.getLineStartOffset(1) : doc.getLineCount() == 0 ? 0 : doc.getLineEndOffset(0);
+    DocumentBulkUpdateListener bulkUpdateListener = new DocumentBulkUpdateListener() {
+      @Override
+      public void updateStarted(Document doc) {
+        if (doc != myEditor.getDocument()) return;
+        savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
+      }
+      @Override
+      public void updateFinished(Document doc) {
+        if (doc != myEditor.getDocument()) return;
+        if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()) {
+          moveToOffset(savedBeforeBulkCaretMarker.getStartOffset());
+        }
+        releaseBulkCaretMarker((DocumentEx)doc);
+      }
+    };
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, bulkUpdateListener);
+  }
+
+  private void releaseBulkCaretMarker(DocumentEx doc) {
+    if (savedBeforeBulkCaretMarker != null) {
+      doc.removeRangeMarker((RangeMarkerEx)savedBeforeBulkCaretMarker);
+      savedBeforeBulkCaretMarker = null;
+    }
   }
 
   public void moveToVisualPosition(VisualPosition pos) {
@@ -301,9 +324,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
 
-    setCurrentLogicalCaret(new LogicalPosition(
-      line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
-    ));
+    LogicalPosition logicalPositionToUse;
+    if (pos.visualPositionAware) {
+      logicalPositionToUse = new LogicalPosition(
+        line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
+      );
+    }
+    else {
+      logicalPositionToUse = new LogicalPosition(line, column);
+    }
+    setCurrentLogicalCaret(logicalPositionToUse);
 
     final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
 
@@ -354,7 +384,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     int lineHeight = myEditor.getLineHeight();
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     final EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
-    final EditorComponentImpl content = (EditorComponentImpl)myEditor.getContentComponent();
+    final EditorComponentImpl content = myEditor.getContentComponent();
 
     int updateWidth = myEditor.getScrollPane().getHorizontalScrollBar().getValue() + visibleArea.width;
     if (Math.abs(myCaretInfo.y - oldCaretInfo.y) <= 2 * lineHeight) {
@@ -509,6 +539,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     }
 
     return new VerticalInfo(y, height);
+  }
+
+  @Override
+  public void dispose() {
+    releaseBulkCaretMarker((DocumentEx)myEditor.getDocument());
   }
 
   /**

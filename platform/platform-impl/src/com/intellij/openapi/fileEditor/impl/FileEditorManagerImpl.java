@@ -41,7 +41,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -71,7 +70,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -103,8 +101,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    * Removes invalid myEditor and updates "modified" status.
    */
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
-
-  private final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
 
   public FileEditorManagerImpl(final Project project) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
@@ -464,18 +460,19 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertDispatchThread();
-    return openFileImpl2(getSplitters().getOrCreateCurrentWindow(file), file, focusEditor, null);
+    return openFileImpl2(getSplitters().getOrCreateCurrentWindow(file), file, focusEditor);
   }
 
-  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(final EditorWindow window, final VirtualFile file, final boolean focusEditor,
-                                                                  final HistoryEntry entry) {
-    final Ref<Pair<FileEditor[], FileEditorProvider[]>> resHolder = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
+  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull final EditorWindow window,
+                                                                  @NotNull final VirtualFile file,
+                                                                  final boolean focusEditor) {
+    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        resHolder.set(openFileImpl3(window, file, focusEditor, entry, true));
+        result.set(openFileImpl3(window, file, focusEditor, null, true));
       }
     }, "", null);
-    return resHolder.get();
+    return result.get();
   }
 
   /**
@@ -487,7 +484,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    * @param entry map between FileEditorProvider and FileEditorState. If this parameter
    * @param current
    */
-  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window,
+  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull final EditorWindow window,
                                                                   @NotNull final VirtualFile file,
                                                                   final boolean focusEditor,
                                                                   final HistoryEntry entry,
@@ -768,26 +765,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  public void registerExtraEditorDataProvider(@NotNull final EditorDataProvider provider, Disposable parentDisposable) {
-    myDataProviders.add(provider);
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        public void dispose() {
-          myDataProviders.remove(provider);
-        }
-      });
-    }
-  }
-
-  @Nullable
-  public final Object getData(String dataId, Editor editor, final VirtualFile file) {
-    for (final EditorDataProvider dataProvider : myDataProviders) {
-      final Object o = dataProvider.getData(dataId, editor, file);
-      if (o != null) return o;
-    }
-    return null;
   }
 
   @Nullable

@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -26,9 +27,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
-import com.intellij.usageView.*;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.usages.UsageViewManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -74,60 +74,93 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
            && virtualFile.getFileSystem() != JarFileSystem.getInstance();
   }
 
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+    if (!super.isAvailableOnElementInEditorAndFile(element, editor, file, context)) return false;
+    return getSelectedElementAndTextRange(editor, file) != null;
+  }
+
+  @Nullable
+  public static Pair<XmlElement, TextRange> getSelectedElementAndTextRange(Editor editor, final PsiFile file) {
+    final int startOffset = editor.getSelectionModel().getSelectionStart();
+    final int endOffset = editor.getSelectionModel().getSelectionEnd();
+
+    final PsiElement elementAtStart = file.findElementAt(startOffset);
+    if (elementAtStart == null) return null;
+    final PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
+    if (elementAtEnd == null) return null;
+
+    PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
+    if (elementAt instanceof XmlToken) elementAt = elementAt.getParent();
+
+    if (elementAt instanceof XmlText || elementAt instanceof XmlAttributeValue) {
+      TextRange range;
+
+      if (editor.getSelectionModel().hasSelection()) {
+        range = new TextRange(startOffset, endOffset);
+      }
+      else {
+        range = elementAt.getTextRange(); 
+      }
+
+      return Pair.create((XmlElement)elementAt, range);
+    }
+
+    return null;
+  }
+
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      if (!editor.getSelectionModel().hasSelection()) return;
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-      final int startOffset = editor.getSelectionModel().getSelectionStart();
-      final int endOffset = editor.getSelectionModel().getSelectionEnd();
+      Pair<XmlElement, TextRange> elementAndRange = getSelectedElementAndTextRange(editor, file);
+      if (elementAndRange == null) return;
 
-      XmlElement selectedElement = getSelectedElement(file, startOffset, endOffset);
+      XmlElement selectedElement = elementAndRange.first;
+      final TextRange range = elementAndRange.second;
 
-      if (selectedElement != null) {
-        String stringValue = selectedElement.getText();
-        if (stringValue != null) {
+      String stringValue = selectedElement.getText();
+      if (stringValue == null) return;
 
-          final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
-          final String selectedString = editor.getSelectionModel().getSelectedText();
+      final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
+      final String selectedString = editor.getDocument().getText(range);
 
-          Set<TextRange> ranges = getPropertiesTextRanges(stringValue);
-          int offsetInElement = startOffset - selectedElement.getTextOffset();
+      Set<TextRange> ranges = getPropertiesTextRanges(stringValue);
+      int offsetInElement = range.getStartOffset() - selectedElement.getTextOffset();
 
-          if (model == null ||
-              StringUtil.isEmptyOrSpaces(selectedString) ||
-              isInsideTextRanges(ranges, offsetInElement, offsetInElement + selectedString.length())) {
-            return;
-          }
-
-          IntroducePropertyDialog dialog = new IntroducePropertyDialog(project, selectedElement, model, null, selectedString);
-          dialog.show();
-
-          if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-            final String propertyName = dialog.getEnteredName();
-            final String replaceWith = PREFIX + propertyName + SUFFIX;
-            final MavenDomProjectModel selectedProject = dialog.getSelectedProject();
-
-            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFiles(file, selectedProject)).hasReadonlyFiles()) {
-              return;
-            }
-
-            new WriteCommandAction(project) {
-              @Override
-              protected void run(Result result) throws Throwable {
-                editor.getDocument().replaceString(startOffset, endOffset, replaceWith);
-                PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-                createMavenProperty(selectedProject, propertyName, selectedString);
-
-                PsiDocumentManager.getInstance(project).commitAllDocuments();
-              }
-            }.execute();
-
-            showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
-          }
-        }
+      if (model == null ||
+          StringUtil.isEmptyOrSpaces(selectedString) ||
+          isInsideTextRanges(ranges, offsetInElement, offsetInElement + selectedString.length())) {
+        return;
       }
+
+      editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+
+      IntroducePropertyDialog dialog = new IntroducePropertyDialog(project, selectedElement, model, null, selectedString);
+      dialog.show();
+      if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
+
+      final String propertyName = dialog.getEnteredName();
+      final String replaceWith = PREFIX + propertyName + SUFFIX;
+      final MavenDomProjectModel selectedProject = dialog.getSelectedProject();
+
+      if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFiles(file, selectedProject)).hasReadonlyFiles()) {
+        return;
+      }
+
+      new WriteCommandAction(project) {
+        @Override
+        protected void run(Result result) throws Throwable {
+          editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), replaceWith);
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+          createMavenProperty(selectedProject, propertyName, selectedString);
+
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+        }
+      }.execute();
+
+      showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
     }
 
     private static VirtualFile[] getFiles(PsiFile file, MavenDomProjectModel model) {
@@ -198,23 +231,6 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       findModel.setPromptOnReplace(true);
 
       return findModel;
-    }
-
-    @Nullable
-    public static XmlElement getSelectedElement(final PsiFile file, final int startOffset, final int endOffset) {
-      final PsiElement elementAtStart = file.findElementAt(startOffset);
-      if (elementAtStart == null) return null;
-      final PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
-      if (elementAtEnd == null) return null;
-
-      PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
-      if (elementAt instanceof XmlToken) elementAt = elementAt.getParent();
-
-      if (elementAt instanceof XmlText || elementAt instanceof XmlAttributeValue) {
-        return (XmlElement)elementAt;
-      }
-
-      return null;
     }
 
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {

@@ -16,6 +16,7 @@
 
 package com.intellij.lang;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -30,8 +31,13 @@ import org.jetbrains.annotations.Nullable;
  * @see PsiParser
  * @see ASTNode
  */
-
 public interface PsiBuilder extends UserDataHolder {
+  /**
+   * Returns a project for which PSI builder was created (see {@link PsiBuilderFactory}).
+   * @return project.
+   */
+  Project getProject();
+
   /**
    * Returns the complete text being parsed.
    *
@@ -46,8 +52,9 @@ public interface PsiBuilder extends UserDataHolder {
 
   /**
    * Returns the type of current token from the lexer.
-   * @see #setTokenTypeRemapper(ITokenTypeRemapper).
+   *
    * @return the token type, or null when lexing is over.
+   * @see #setTokenTypeRemapper(ITokenTypeRemapper).
    */
   @Nullable
   IElementType getTokenType();
@@ -55,6 +62,7 @@ public interface PsiBuilder extends UserDataHolder {
   /**
    * Sets optional remapper that can change the type of freshly lexed tokens.
    * Output of getTokenType() is affected by it.
+   *
    * @param remapper the remapper object, or null.
    */
   void setTokenTypeRemapper(ITokenTypeRemapper remapper);
@@ -123,7 +131,7 @@ public interface PsiBuilder extends UserDataHolder {
      * before specified one. All markers added between start of this marker and the marker specified as end one
      * must be either dropped or completed.
      *
-     * @param type the type of the node in the AST tree.
+     * @param type   the type of the node in the AST tree.
      * @param before marker to complete this one before.
      */
     void doneBefore(IElementType type, Marker before);
@@ -132,8 +140,8 @@ public interface PsiBuilder extends UserDataHolder {
      * Like {@linkplain #doneBefore(IElementType, Marker)}, but in addition an error element with given text
      * is inserted right before this marker's end.
      *
-     * @param type the type of the node in the AST tree.
-     * @param before marker to complete this one before.
+     * @param type         the type of the node in the AST tree.
+     * @param before       marker to complete this one before.
      * @param errorMessage for error element.
      */
     void doneBefore(IElementType type, Marker before, String errorMessage);
@@ -150,9 +158,19 @@ public interface PsiBuilder extends UserDataHolder {
      * Like {@linkplain #error(String)}, but the marker is completed before specified one.
      *
      * @param message for error element.
-     * @param before marker to complete this one before.
+     * @param before  marker to complete this one before.
      */
     void errorBefore(String message, Marker before);
+
+    /**
+     * Allows to define custom edge processors instead of default ones. If any of parameters is null
+     * then corresponding processor won't be changed (keeping previously set or default processor).
+     * It is an error to set right processor for not-done marker.
+     *
+     * @param left  new left edge processor.
+     * @param right new right edge processor.
+     */
+    void setCustomEdgeProcessors(WhitespacesAndCommentsProcessor left, WhitespacesAndCommentsProcessor right);
   }
 
   /**
@@ -185,7 +203,10 @@ public interface PsiBuilder extends UserDataHolder {
   ASTNode getTreeBuilt();
 
   /**
-   * Same as {@link #getTreeBuilt()} but returns a light tree, which is build faster, produces less garbage but is incapable of creating a PSI over.
+   * Same as {@link #getTreeBuilt()} but returns a light tree, which is build faster,
+   * produces less garbage but is incapable of creating a PSI over.
+   * <br><b>Note</b>: this method shouldn't be called if {@link #getTreeBuilt()} was called before.
+   *
    * @return the light tree built.
    */
   FlyweightCapableTreeStructure<LighterASTNode> getLightTree();
@@ -201,7 +222,8 @@ public interface PsiBuilder extends UserDataHolder {
   void enforceCommentTokens(TokenSet tokens);
 
   /**
-   * @return latest left done node for context dependent parsing 
+   * @return latest left done node for context dependent parsing.
    */
-  @Nullable LighterASTNode getLatestDoneMarker();
+  @Nullable
+  LighterASTNode getLatestDoneMarker();
 }

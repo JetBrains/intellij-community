@@ -324,10 +324,15 @@ public class RegistryUi implements Disposable {
             myLabel.setText(v.getKey());
             break;
           case 2:
-            if (v.asColor(null) == null) {
-              myLabel.setText(v.asString());
-            } else {
+            if (v.asColor(null) != null) {
               myLabel.setIcon(createColoredIcon(v.asColor(null)));
+            } else if (v.isBoolean()) {
+              final JCheckBox box = new JCheckBox();
+              box.setSelected(v.asBoolean());
+              box.setBackground(table.getBackground());
+              return box;
+            } else {
+              myLabel.setText(v.asString());
             }
         }
 
@@ -361,29 +366,38 @@ public class RegistryUi implements Disposable {
   private class MyEditor extends AbstractCellEditor implements TableCellEditor {
 
     private final JTextField myField = new JTextField();
+    private final JCheckBox myCheckBox = new JCheckBox();
     private RegistryValue myValue;
 
     @Nullable
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       myValue = (RegistryValue) value;
-      if (myValue.asColor(null) == null) {
-        myField.setText(myValue.asString());
-        myField.selectAll();
-        myField.setBorder(null);
-        return myField;
-      } else {
-        final Color color = ColorChooser.chooseColor(table, "Chose color", ((RegistryValue)value).asColor(Color.WHITE));
+      if (myValue.asColor(null) != null) {
+        final Color color = ColorChooser.chooseColor(table, "Choose color", ((RegistryValue)value).asColor(Color.WHITE));
         if (color != null) {
           myValue.setValue(color.getRed() + "," + color.getGreen() + "," + color.getBlue());
         }
         return null;
+      } else if (myValue.isBoolean()) {
+        myCheckBox.setSelected(myValue.asBoolean());
+        myCheckBox.setBackground(table.getBackground());
+        return myCheckBox;
+      } else {
+        myField.setText(myValue.asString());
+        myField.setBorder(null);
+        myField.selectAll();
+        return myField;
       }
     }
 
     @Override
     public boolean stopCellEditing() {
       if (myValue != null) {
-        myValue.setValue(myField.getText().trim());
+        if (myValue.isBoolean()) {
+          myValue.setValue(myCheckBox.isSelected());
+        } else {
+          myValue.setValue(myField.getText().trim());
+        }
       }
       revaliateActions();
       return super.stopCellEditing();

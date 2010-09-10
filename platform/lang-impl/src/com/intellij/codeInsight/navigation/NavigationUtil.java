@@ -82,7 +82,7 @@ public final class NavigationUtil {
     if (title != null) {
       builder.setTitle(title);
     }
-    renderer.installSpeedSearch(builder);
+    renderer.installSpeedSearch(builder, true);
 
     return builder.setItemChoosenCallback(runnable).createPopup();
   }

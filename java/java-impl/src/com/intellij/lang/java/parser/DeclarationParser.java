@@ -63,8 +63,8 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker declaration,
-                                                         final boolean isAnnotation, final Context context) {
+  public static PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker declaration,
+                                                        final boolean isAnnotation, final Context context) {
     final IElementType keywordTokenType = builder.getTokenType();
     assert ElementType.CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
     builder.advanceLexer();
@@ -116,7 +116,7 @@ public class DeclarationParser {
       }
     }
 
-    declaration.done(JavaElementType.CLASS);
+    done(declaration, JavaElementType.CLASS);
     return declaration;
   }
 
@@ -162,10 +162,10 @@ public class DeclarationParser {
       if (builder.getTokenType() == JavaTokenType.LBRACE) {
         final PsiBuilder.Marker constantInit = builder.mark();
         parseClassBodyWithBraces(builder, false, false);
-        constantInit.done(JavaElementType.ENUM_CONSTANT_INITIALIZER);
+        done(constantInit, JavaElementType.ENUM_CONSTANT_INITIALIZER);
       }
 
-      constant.done(JavaElementType.ENUM_CONSTANT);
+      done(constant, JavaElementType.ENUM_CONSTANT);
       return constant;
     }
     else {
@@ -205,7 +205,7 @@ public class DeclarationParser {
       }
 
       // adding a reference, not simple tokens allows "Browse ..." to work well
-      final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, true, false);
+      final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, true, false, false);
       if (ref == null) {
         builder.advanceLexer();
       }
@@ -309,7 +309,7 @@ public class DeclarationParser {
         final PsiBuilder.Marker error = typeParams.precede();
         error.errorBefore(JavaErrorMessages.message("unexpected.token"), codeBlock);
       }
-      declaration.done(JavaElementType.CLASS_INITIALIZER);
+      done(declaration, JavaElementType.CLASS_INITIALIZER);
       return declaration;
     }
     else {
@@ -364,13 +364,18 @@ public class DeclarationParser {
 
   @NotNull
   private static Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder) {
+    return parseModifierList(builder, ElementType.MODIFIER_BIT_SET);
+  }
+
+  @NotNull
+  public static Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder, final TokenSet modifiers) {
     final PsiBuilder.Marker modList = builder.mark();
     boolean isEmpty = true;
 
     while (true) {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == null) break;
-      if (ElementType.MODIFIER_BIT_SET.contains(tokenType)) {
+      if (modifiers.contains(tokenType)) {
         builder.advanceLexer();
         isEmpty = false;
       }
@@ -386,7 +391,7 @@ public class DeclarationParser {
       }
     }
 
-    modList.done(JavaElementType.MODIFIER_LIST);
+    done(modList, JavaElementType.MODIFIER_LIST);
     return Pair.create(modList, isEmpty);
   }
 
@@ -400,7 +405,7 @@ public class DeclarationParser {
       final PsiBuilder.Marker receiver = builder.mark();
       final PsiBuilder.Marker annotations = parseAnnotations(builder);
       if (annotations != null) {
-        receiver.done(JavaElementType.METHOD_RECEIVER);
+        done(receiver, JavaElementType.METHOD_RECEIVER);
       }
       else {
         receiver.drop();
@@ -414,13 +419,7 @@ public class DeclarationParser {
     }
 
     final IElementType tokenType = builder.getTokenType();
-    if (tokenType == JavaTokenType.SEMICOLON) {
-      builder.advanceLexer();
-    }
-    else if (tokenType == JavaTokenType.LBRACE) {
-      StatementParser.parseCodeBlock(builder);
-    }
-    else {
+    if (tokenType != JavaTokenType.SEMICOLON && tokenType != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
       // heuristic: going to next line obviously means method signature is over, starting new method (actually, another one completion hack)
       final CharSequence text = builder.getOriginalText();
@@ -436,12 +435,18 @@ public class DeclarationParser {
       error.error(JavaErrorMessages.message("expected.lbrace.or.semicolon"));
     }
 
-    declaration.done(anno ? JavaElementType.ANNOTATION_METHOD : JavaElementType.METHOD);
+    if (!expect(builder, JavaTokenType.SEMICOLON)) {
+      if (builder.getTokenType() == JavaTokenType.LBRACE) {
+        StatementParser.parseCodeBlock(builder);
+      }
+    }
+
+    done(declaration, anno ? JavaElementType.ANNOTATION_METHOD : JavaElementType.METHOD);
     return declaration;
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseParameterList(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parseParameterList(final PsiBuilder builder) {
     assert builder.getTokenType() == JavaTokenType.LPARENTH : builder.getTokenType();
     final PsiBuilder.Marker paramList = builder.mark();
     builder.advanceLexer();
@@ -513,7 +518,7 @@ public class DeclarationParser {
       }
 
       // adding a reference, not simple tokens allows "Browse .." to work well
-      final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, true, false);
+      final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, true, false, false);
       if (ref == null && builder.getTokenType() != null) {
         builder.advanceLexer();
       }
@@ -523,7 +528,7 @@ public class DeclarationParser {
       invalidElements.error(errorMessage);
     }
 
-    paramList.done(JavaElementType.PARAMETER_LIST);
+    done(paramList, JavaElementType.PARAMETER_LIST);
     return paramList;
   }
 
@@ -533,7 +538,7 @@ public class DeclarationParser {
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
     final PsiBuilder.Marker type = ellipsis ? ReferenceParser.parseTypeWithEllipsis(builder, true, true) :
-                                              ReferenceParser.parseType(builder, true, true);
+                                              ReferenceParser.parseType(builder, true, true, false);
 
     if (type == null && modListInfo.second) {
       param.rollbackTo();
@@ -547,7 +552,7 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       eatBrackets(builder);
-      param.done(JavaElementType.PARAMETER);
+      done(param, JavaElementType.PARAMETER);
       return param;
     }
     else {
@@ -598,7 +603,7 @@ public class DeclarationParser {
       }
 
       if (builder.getTokenType() != JavaTokenType.COMMA) break;
-      variable.done(varType);
+      done(variable, varType);
       builder.advanceLexer();
 
       if (builder.getTokenType() != JavaTokenType.IDENTIFIER) {
@@ -637,7 +642,7 @@ public class DeclarationParser {
     }
 
     if (openMarker) {
-      variable.done(varType);
+      done(variable, varType);
     }
 
     return declaration;
@@ -666,19 +671,19 @@ public class DeclarationParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseAnnotation(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parseAnnotation(final PsiBuilder builder) {
     assert builder.getTokenType() == JavaTokenType.AT : builder.getTokenType();
     final PsiBuilder.Marker anno = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker classRef = ReferenceParser.parseJavaCodeReference(builder, true, false, false);
+    final PsiBuilder.Marker classRef = ReferenceParser.parseJavaCodeReference(builder, true, false, false, false);
     if (classRef == null) {
       error(builder, JavaErrorMessages.message("expected.class.reference"));
     }
 
     parseAnnotationParameterList(builder);
 
-    anno.done(JavaElementType.ANNOTATION);
+    done(anno, JavaElementType.ANNOTATION);
     return anno;
   }
 
@@ -687,12 +692,12 @@ public class DeclarationParser {
     PsiBuilder.Marker list = builder.mark();
 
     if (!expect(builder, JavaTokenType.LPARENTH)) {
-      list.done(JavaElementType.ANNOTATION_PARAMETER_LIST);
+      done(list, JavaElementType.ANNOTATION_PARAMETER_LIST);
       return list;
     }
 
     if (expect(builder, JavaTokenType.RPARENTH)) {
-      list.done(JavaElementType.ANNOTATION_PARAMETER_LIST);
+      done(list, JavaElementType.ANNOTATION_PARAMETER_LIST);
       return list;
     }
 
@@ -734,7 +739,7 @@ public class DeclarationParser {
       }
     }
 
-    list.done(JavaElementType.ANNOTATION_PARAMETER_LIST);
+    done(list, JavaElementType.ANNOTATION_PARAMETER_LIST);
     return list;
   }
 
@@ -744,7 +749,7 @@ public class DeclarationParser {
     if (mayBeSimple) {
       parseAnnotationValue(builder);
       if (builder.getTokenType() != JavaTokenType.EQ) {
-        pair.done(JavaElementType.NAME_VALUE_PAIR);
+        done(pair, JavaElementType.NAME_VALUE_PAIR);
         return false;
       }
 
@@ -758,7 +763,7 @@ public class DeclarationParser {
 
     parseAnnotationValue(builder);
 
-    pair.done(JavaElementType.NAME_VALUE_PAIR);
+    done(pair, JavaElementType.NAME_VALUE_PAIR);
 
     return hasName;
   }
@@ -793,12 +798,13 @@ public class DeclarationParser {
     builder.advanceLexer();
 
     if (expect(builder, JavaTokenType.RBRACE)) {
-      annoArray.done(JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
+      done(annoArray, JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
       return annoArray;
     }
 
     parseAnnotationValue(builder);
 
+    boolean unclosed = false;
     while (true) {
       if (expect(builder, JavaTokenType.RBRACE)) {
         break;
@@ -808,11 +814,15 @@ public class DeclarationParser {
       }
       else {
         error(builder, JavaErrorMessages.message("expected.rbrace"));
+        unclosed = true;
         break;
       }
     }
 
-    annoArray.done(JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
+    done(annoArray, JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
+    if (unclosed) {
+      annoArray.setCustomEdgeProcessors(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+    }
     return annoArray;
   }
 }

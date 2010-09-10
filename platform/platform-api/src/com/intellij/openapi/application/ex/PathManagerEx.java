@@ -25,6 +25,7 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import junit.framework.TestCase;
@@ -118,8 +119,14 @@ public class PathManagerEx {
 
   static {
     TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.ULTIMATE, Collections.singletonList(toSystemDependentName("testData")));
-    TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.COMMUNITY, Collections.singletonList(toSystemDependentName("java/java-tests/testData")));
-    TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, Collections.singletonList(toSystemDependentName("community/java/java-tests/testData")));
+    TEST_DATA_RELATIVE_PATHS.put(
+      TestDataLookupStrategy.COMMUNITY,
+      Collections.singletonList(toSystemDependentName("java/java-tests/testData"))
+    );
+    TEST_DATA_RELATIVE_PATHS.put(
+      TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE,
+      Collections.singletonList(toSystemDependentName("community/java/java-tests/testData"))
+    );
   }
 
   /**
@@ -272,6 +279,9 @@ public class PathManagerEx {
     try {
       return Class.forName(className, true, classLoader);
     }
+    catch (NoClassDefFoundError e) {
+      return null;
+    }
     catch (ClassNotFoundException e) {
       return null;
     }
@@ -289,7 +299,7 @@ public class PathManagerEx {
       return result;
     }
 
-    String targetFile = toSystemDependentName(clazz.getName().replace('.', '/') + ".java");
+    String targetFile = toSystemDependentName(clazz.getName().replace('.', '/'));
     if (COMMUNITY_TEST_FILES_PARSED_FLAG.compareAndSet(false, true)) {
       parseCommunityTestFiles();
     }
@@ -361,7 +371,7 @@ public class PathManagerEx {
 
     private static void process(File file) {
       String path = file.getAbsolutePath();
-      if (!path.endsWith(".java")) {
+      if (!path.endsWith(".java") && !path.endsWith(".groovy")) {
         return;
       }
 
@@ -376,7 +386,7 @@ public class PathManagerEx {
         // Never expect to be here.
         return;
       }
-      COMMUNITY_TEST_FILES.add(path.substring(indexToUse));
+      COMMUNITY_TEST_FILES.add(StringUtil.trimEnd(StringUtil.trimEnd(path.substring(indexToUse), ".java"), ".groovy"));
     }
   }
 }

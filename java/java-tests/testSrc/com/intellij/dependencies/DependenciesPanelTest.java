@@ -55,6 +55,7 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase{
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
       Assert.assertNotNull(psiPackage);
       final PsiClass[] classes = psiPackage.getClasses();
+      sortClassesByName(classes);
       final PsiFile file = classes[0].getContainingFile();
       final AnalysisScope scope = new AnalysisScope(file);
       final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, scope);

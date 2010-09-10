@@ -19,6 +19,7 @@ import com.intellij.junit3.JUnit3IdeaTestRunner;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import junit.textui.TestRunner;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -97,7 +98,7 @@ public class JUnitStarter {
         } else if (arg.startsWith(SOCKET)) {
           final int port = Integer.parseInt(arg.substring(SOCKET.length()));
           try {
-            final Socket socket = new Socket(InetAddress.getLocalHost(), port);  //start collecting tests
+            final Socket socket = new Socket(InetAddress.getByName(null), port);  //start collecting tests
             final DataInputStream os = new DataInputStream(socket.getInputStream());
             try {
               os.readBoolean();//wait for ready flag

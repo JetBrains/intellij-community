@@ -30,6 +30,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.*;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtil;
@@ -39,9 +41,12 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TestAll implements Test {
 
   static {
@@ -107,6 +112,7 @@ public class TestAll implements Test {
                     if (currentThread != null) {
                       currentThread.interrupt();
                       if (!currentThread.isInterrupted()) {
+                        //noinspection deprecation
                         currentThread.stop(new RuntimeException("Current Test Interrupted: OUT OF TIME!"));
                       }
 
@@ -137,7 +143,7 @@ public class TestAll implements Test {
   }
 
   private void addErrorMessage(TestResult testResult, String message) {
-    String processedTestsMessage = myRunTests <= 0 ? "Noone test was run" : myRunTests + " tests processed";
+    String processedTestsMessage = myRunTests <= 0 ? "None of tests was run" : myRunTests + " tests processed";
     try {
       testResult.startTest(this);
       testResult.addError(this, new Throwable(processedTestsMessage + " before: " + message));
@@ -282,8 +288,7 @@ public class TestAll implements Test {
     long realFreeMemory = runtime.freeMemory() + (maxMemory - runtime.totalMemory());
     long meg = 1024 * 1024;
     long needed = neededMemory * meg;
-    boolean possibleOutOfMemoryError = realFreeMemory < needed;
-    return possibleOutOfMemoryError;
+    return realFreeMemory < needed;
   }
 
   private static Test getTest(Class testCaseClass) {
@@ -331,10 +336,27 @@ public class TestAll implements Test {
   private static String [] getClassRoots() {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
+      System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
       return testRoots.split(";");
     }
     final String[] roots = ExternalClasspathClassLoader.getRoots();
-    return roots != null ? roots : System.getProperty("java.class.path").split(File.pathSeparator);
+    if (roots != null) {
+      System.out.println("Collecting tests from roots specified by classpath.file property: " + Arrays.toString(roots));
+      return roots;
+    }
+    else {
+      final ClassLoader loader = TestAll.class.getClassLoader();
+      if (loader instanceof URLClassLoader) {
+        final URL[] urls = ((URLClassLoader)loader).getURLs();
+        final String[] classLoaderRoots = new String[urls.length];
+        for (int i = 0; i < urls.length; i++) {
+          classLoaderRoots[i] = VfsUtil.urlToPath(VfsUtil.convertFromUrl(urls[i]));
+        }
+        System.out.println("Collecting tests from classloader: " + Arrays.toString(classLoaderRoots));
+        return classLoaderRoots;
+      }
+      return System.getProperty("java.class.path").split(File.pathSeparator);
+    }
   }
 
   public TestAll(String packageRoot) throws Throwable {
@@ -349,7 +371,7 @@ public class TestAll implements Test {
 
     for (String classRoot : classRoots) {
       int oldCount = myTestCaseLoader.getClasses().size();
-      ClassFinder classFinder = new ClassFinder(new File(classRoot), packageRoot);
+      ClassFinder classFinder = new ClassFinder(new File(FileUtil.toSystemDependentName(classRoot)), packageRoot);
       myTestCaseLoader.loadTestCases(classFinder.getClasses());
       int newCount = myTestCaseLoader.getClasses().size();
       if (newCount != oldCount) {

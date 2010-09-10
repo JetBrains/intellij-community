@@ -15,18 +15,20 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+
+import javax.swing.*;
 
 /**
  * @author yole
@@ -45,9 +47,9 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   public int AVAILABLE_SORT_COLUMN = 0;
   public int INSTALLED_SORT_COLUMN = 1;
   public int CART_SORT_COLUMN = 0;
-  public int AVAILABLE_SORT_COLUMN_ORDER = SortableColumnModel.SORT_ASCENDING;
-  public int INSTALLED_SORT_COLUMN_ORDER = SortableColumnModel.SORT_ASCENDING;
-  public int CART_SORT_COLUMN_ORDER = SortableColumnModel.SORT_ASCENDING;
+  public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
+  public int INSTALLED_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
+  public int CART_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
 
   @NonNls private static final String INSTALLED = "installed";
   @NonNls private static final String AVAILABLE = "available";
@@ -55,6 +57,10 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
   private final TableColumnsProportionData myAvailableTableProportions = new TableColumnsProportionData();
   private final TableColumnsProportionData myInstalledTableProportions = new TableColumnsProportionData();
+
+  public static PluginManagerUISettings getInstance() {
+    return ServiceManager.getService(PluginManagerUISettings.class);
+  }
 
   public Element getState() {
     Element element = new Element("state");

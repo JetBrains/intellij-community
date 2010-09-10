@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -29,7 +30,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
-import org.jetbrains.plugins.groovy.codeInspection.utils.MultipleCheckboxOptionsPanel;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SideEffectChecker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;

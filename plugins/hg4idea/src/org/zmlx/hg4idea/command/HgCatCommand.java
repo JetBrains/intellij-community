@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
@@ -24,49 +25,41 @@ import java.util.List;
 
 public class HgCatCommand {
 
-  private final Project project;
+  private final Project myProject;
 
   public HgCatCommand(Project project) {
-    this.project = project;
+    myProject = project;
   }
 
+  @Nullable
   public String execute(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, Charset charset) {
-    List<String> arguments = createArguments(vcsRevisionNumber, hgFile.getRelativePath());
+    final List<String> arguments = createArguments(vcsRevisionNumber, hgFile.getRelativePath());
+    final HgCommandService service = HgCommandService.getInstance(myProject);
+    final HgCommandResult result = service.execute(hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset);
 
-    HgCommandService service = HgCommandService.getInstance(project);
-    HgCommandResult result = service.execute(
-      hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset
-    );
-
-    if (result.getExitValue() == 1) {
-      // file not found in given revision 
+    if (result == null) { // in case of error
+      return null;
+    }
+    if (result.getExitValue() == 1) { // file not found in given revision
       return getContentFollowingRenames(hgFile, vcsRevisionNumber, charset, service);
     }
-
     return result.getRawOutput();
   }
 
+  @Nullable
   private String getContentFollowingRenames(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, Charset charset, HgCommandService service) {
-    String currentRevision = getCurrentRevision(hgFile);
-
-    HgTrackFileNamesAccrossRevisionsCommand trackCommand = new HgTrackFileNamesAccrossRevisionsCommand(project);
-    String renamedHgFile = trackCommand.execute(hgFile, currentRevision, vcsRevisionNumber.getRevision(), -1);
-
-    if (renamedHgFile != null) {
-      List<String> arguments = createArguments(vcsRevisionNumber, renamedHgFile);
-
-      HgCommandResult result = service.execute(
-        hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset
-      );
-
-      return result.getRawOutput();
+    final String renamedHgFile = new HgTrackFileNamesAccrossRevisionsCommand(myProject)
+      .execute(hgFile, getCurrentRevision(hgFile), vcsRevisionNumber.getRevision(), -1);
+    if (renamedHgFile == null) {
+      return null;
     }
-
-    return "";
+    final HgCommandResult result = service.execute(hgFile.getRepo(), Collections.<String>emptyList(), "cat",
+                                                   createArguments(vcsRevisionNumber, renamedHgFile), charset);
+    return result != null ? result.getRawOutput() : null;
   }
 
   private String getCurrentRevision(HgFile hgFile) {
-    HgParentsCommand parentsCommand = new HgParentsCommand(project);
+    HgParentsCommand parentsCommand = new HgParentsCommand(myProject);
     List<HgRevisionNumber> parents = parentsCommand.execute(hgFile.getRepo());
 
     String currentRevision = "0";
@@ -89,8 +82,8 @@ public class HgCatCommand {
     return currentRevision;
   }
 
-  private List<String> createArguments(HgRevisionNumber vcsRevisionNumber, String fileName) {
-    List<String> arguments = new LinkedList<String>();
+  private static List<String> createArguments(HgRevisionNumber vcsRevisionNumber, String fileName) {
+    final List<String> arguments = new LinkedList<String>();
     if (vcsRevisionNumber != null) {
       arguments.add("--rev");
       if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
@@ -99,7 +92,6 @@ public class HgCatCommand {
         arguments.add(vcsRevisionNumber.getRevision());
       }
     }
-
     arguments.add(fileName);
     return arguments;
   }

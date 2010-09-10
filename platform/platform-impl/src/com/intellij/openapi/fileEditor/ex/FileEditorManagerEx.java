@@ -15,20 +15,28 @@
  */
 package com.intellij.openapi.fileEditor.ex;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class FileEditorManagerEx extends FileEditorManager {
+  protected final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
+
   public static FileEditorManagerEx getInstanceEx(Project project) {
     return (FileEditorManagerEx)getInstance(project);
   }
@@ -118,4 +126,24 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
   public abstract EditorWindow getPrevWindow(@NotNull final EditorWindow window);
 
   public abstract boolean isInsideChange();
+
+  @Nullable
+  public final Object getData(String dataId, Editor editor, final VirtualFile file) {
+    for (final EditorDataProvider dataProvider : myDataProviders) {
+      final Object o = dataProvider.getData(dataId, editor, file);
+      if (o != null) return o;
+    }
+    return null;
+  }
+
+  public void registerExtraEditorDataProvider(@NotNull final EditorDataProvider provider, Disposable parentDisposable) {
+    myDataProviders.add(provider);
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, new Disposable() {
+        public void dispose() {
+          myDataProviders.remove(provider);
+        }
+      });
+    }
+  }
 }

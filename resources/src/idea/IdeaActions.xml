@@ -124,6 +124,7 @@
 
     <group id="InspectCodeGroup" text="Inspect Code Actions">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
       <add-to-group group-id="AnalyzeMenu" anchor="first"/>
     </group>
@@ -230,6 +231,10 @@
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
     </action>
 
+    <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis" text="Fold Lines Like This">
+      <add-to-group group-id="ConsoleView.PopupMenu" anchor="after" relative-to-action="ConsoleView.Copy"/>
+    </action>
+
 
     <group text="IDEA Internal Actions" internal="true">
       <separator/>
@@ -239,6 +244,7 @@
       <separator/>
       <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
       <separator/>
+      <action id="DumpExtensions" internal="true" text="Dump Extensions" class="com.intellij.internal.DumpExtensionsAction"/>
       <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
       <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
       <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
@@ -254,9 +260,6 @@
               text="Mark File Dirty"/>
       <separator/>
       <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction" text="Generate Hierarchy Visitor"/>
-      <separator/>
-      <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction" text="Start Focus Debugger"/>
-      <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI Inspector"/>
       <separator/>
       <action id="DumpLookupElementWeights" internal="true" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights"/>
       <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction" text="Check VFS sanity"/>
@@ -305,6 +308,7 @@
       <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction"/>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
+      <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.debugger.ui.breakpoints.actions.FocusOnBreakpointAction"/>
 
     </group>
@@ -588,6 +592,7 @@
     <group id="Debugger.ThreadsPanelPopup">
       <!--<reference ref="Debugger.ResumeThread"/>-->
       <!--<reference ref="Debugger.FreezeThread"/>-->
+      <reference ref="Debugger.InterruptThread"/>
       <!--<reference ref="Debugger.ShowFrame"/>-->
       <reference ref="Debugger.PopFrame"/>
       <!--<reference ref="Debugger.EditFrameSource"/>-->

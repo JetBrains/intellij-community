@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -59,7 +60,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract List<? extends AbstractTestProxy> getAllTests();
 
-  public void fireOnNewPrintable(final Printable printable) {
+  public void fireOnNewPrintable(@NotNull final Printable printable) {
     if (myPrinter != null) {
       myPrinter.onNewAvailable(printable);
     }
@@ -78,7 +79,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
    * @param printable Printable info
    */
   @Override
-  public void addLast(final Printable printable) {
+  public void addLast(@NotNull final Printable printable) {
     super.addLast(printable);
     fireOnNewPrintable(printable);
   }

@@ -63,7 +63,7 @@ public class BegButtonUI extends MetalButtonUI {
       b.getVerticalAlignment(), b.getHorizontalAlignment(),
       b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
       viewRect, iconRect, textRect,
-      b.getText() == null ? 0 : defaultTextIconGap
+      b.getText() == null ? 0 : b.getIconTextGap()
     );
 
     clearTextShiftOffset();

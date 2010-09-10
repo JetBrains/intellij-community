@@ -27,6 +27,7 @@ import java.util.List;
  */
 public interface ExtensionsArea  {
   void registerExtensionPoint(@NonNls String extensionPointName, String extensionPointBeanClass);
+  void registerExtensionPoint(@NonNls String extensionPointName, String extensionPointBeanClass, ExtensionPoint.Kind kind);
   void unregisterExtensionPoint(@NonNls String extensionPointName);
 
   boolean hasExtensionPoint(@NonNls String extensionPointName);

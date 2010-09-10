@@ -1,11 +1,11 @@
 <extensionPoints>
-  <extensionPoint name="errorOptionsProvider" interface="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
-  <extensionPoint name="codeFoldingOptionsProvider" interface="com.intellij.application.options.editor.CodeFoldingOptionsProvider"/>
-  <extensionPoint name="autoImportOptionsProvider" interface="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
+  <extensionPoint name="errorOptionsProvider" beanClass="com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP"/>
+  <extensionPoint name="codeFoldingOptionsProvider" beanClass="com.intellij.application.options.editor.CodeFoldingOptionsProviderEP"/>
+  <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP"/>
   <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
   <extensionPoint name="moduleConfigurable"
-                  interface="com.intellij.openapi.options.Configurable"
+                  beanClass="com.intellij.openapi.options.ModuleConfigurableEP"
                   area="IDEA_MODULE"/>
 
   <extensionPoint name="indexPatternProvider"
@@ -59,6 +59,9 @@
 
   <extensionPoint name="daemon.highlightInfoFilter"
                   interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
+
+  <extensionPoint name="daemon.externalAnnotatorsFilter"
+                  interface="com.intellij.lang.ExternalAnnotatorsFilter"/>
 
   <extensionPoint name="severitiesProvider"
                   interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
@@ -250,7 +253,7 @@
   <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT"/>
   <extensionPoint name="scopeTreeExpander" interface="com.intellij.ide.scopeView.ScopeTreeStructureExpander" area="IDEA_PROJECT"/>
 
-  <extensionPoint name="lang.elementManipulator" interface="com.intellij.openapi.fileTypes.ClassExtensionPoint"/>
+  <extensionPoint name="lang.elementManipulator" beanClass="com.intellij.openapi.fileTypes.ClassExtensionPoint"/>
   <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT"/>
   <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper"/>
 
@@ -260,9 +263,9 @@
 
   <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
 
-  <extensionPoint name="statistician" interface="com.intellij.psi.statistics.StatisticsExtensionPoint"/>
-  <extensionPoint name="weigher" interface="com.intellij.psi.WeigherExtensionPoint"/>
-  <extensionPoint name="completion.contributor" interface="com.intellij.codeInsight.completion.CompletionContributorEP"/>
+  <extensionPoint name="statistician" beanClass="com.intellij.psi.statistics.StatisticsExtensionPoint"/>
+  <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint"/>
+  <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP"/>
   <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper"/>
   <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter"/>
   <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider"/>
@@ -275,7 +278,8 @@
 
   <extensionPoint name="lang.implementationTextSelectioner"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
-  <extensionPoint name="psi.includeHandler" interface="com.intellij.psi.PsiIncludeManager$PsiIncludeHandler" area="IDEA_PROJECT"/>
+  <extensionPoint name="lang.lineWrapStrategy"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="gotoDeclarationHandler"
                   interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"/>
@@ -302,12 +306,12 @@
   <extensionPoint name="readWriteAccessDetector" interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector"/>
 
   <extensionPoint name="scopeParserExtension" interface="com.intellij.psi.search.scope.packageSet.PackageSetParserExtension"/>
-  <extensionPoint name="referenceProviderType" interface="com.intellij.util.KeyedLazyInstanceEP"/>
+  <extensionPoint name="referenceProviderType" beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
   <extensionPoint name="colorSettingsPage"
                   interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
 
   <extensionPoint name="codeInsight.parameterInfo" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
-  <extensionPoint name="editorOptionsProvider" interface="com.intellij.application.options.editor.EditorOptionsProvider"/>
+  <extensionPoint name="editorOptionsProvider" beanClass="com.intellij.application.options.editor.EditorOptionsProviderEP"/>
   <extensionPoint name="fileTypeIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider"/>
   <extensionPoint name="referenceImporter" interface="com.intellij.codeInsight.daemon.ReferenceImporter"/>
   <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer"/>
@@ -341,7 +345,7 @@
   <extensionPoint name="codeInsight.lineMarkerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.surroundWithRangeAdjuster" interface="com.intellij.codeInsight.generation.surroundWith.SurroundWithRangeAdjuster"/>
 
-  <extensionPoint name="lang.substitutor" interface="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="createFromTemplateActionReplacer"
                   interface="com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer"/>
@@ -378,12 +382,12 @@
                   interface="com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider"
                   area="IDEA_MODULE"/>
 
-  <extensionPoint name="callHierarchyProvider" interface="com.intellij.lang.LanguageExtensionPoint"/>
-  <extensionPoint name="methodHierarchyProvider" interface="com.intellij.lang.LanguageExtensionPoint"/>
-  <extensionPoint name="typeHierarchyProvider" interface="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="callHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="methodHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="typeHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
-  <extensionPoint name="editorAppearanceConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
-  <extensionPoint name="editorSmartKeysConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
+  <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP"/>
+  <extensionPoint name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP"/>
   <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 
   <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
@@ -429,10 +433,12 @@
 
   <extensionPoint name="filePropertyPusher" interface="com.intellij.openapi.roots.impl.FilePropertyPusher"/>
 
-  <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider"/>
+  <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider"/>
+
+  <extensionPoint name="langScriptingContextsProvider" interface="com.intellij.ide.scriptingContext.LangScriptingContextsProvider"/>
 
   <extensionPoint name="semContributor"
-                  interface="com.intellij.semantic.SemContributor" area="IDEA_PROJECT"/>
+                  beanClass="com.intellij.semantic.SemContributorEP" area="IDEA_PROJECT"/>
 
   <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
 
@@ -441,5 +447,9 @@
   <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
 
   <extensionPoint name="stacktrace.fold" beanClass="com.intellij.execution.console.CustomizableConsoleFoldingBean"/>
+  <extensionPoint name="changeSignatureDetector"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
+  <extensionPoint name="preserveIndentOnPaste" beanClass="com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean"/>
 
 </extensionPoints>

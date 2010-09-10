@@ -198,7 +198,7 @@ public class ActionsTree {
     myRoot.removeAllChildren();
 
     ActionManager actionManager = ActionManager.getInstance();
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
     Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true, filter != null && filter.length() > 0 ?
                                                                                                       ActionsTreeUtil.isActionFiltered(filter, true) :
                                                                                                       (shortcut != null ? ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut) : null));
@@ -223,6 +223,10 @@ public class ActionsTree {
   private class MyModel extends DefaultTreeModel implements TreeTableModel {
     protected MyModel(DefaultMutableTreeNode root) {
       super(root);
+    }
+
+    @Override
+    public void setTree(JTree tree) {
     }
 
     public int getColumnCount() {
@@ -370,6 +374,15 @@ public class ActionsTree {
     final Object userObject = node.getUserObject();
     if (userObject instanceof String) {
       String actionId = (String)userObject;
+
+      final TreeNode parent = node.getParent();
+      if (parent instanceof DefaultMutableTreeNode) {
+        final Object object = ((DefaultMutableTreeNode)parent).getUserObject();
+        if (object instanceof Group) {
+          return ((Group)object).getActionQualifiedPath(actionId);
+        }
+      }
+
       return myMainGroup.getActionQualifiedPath(actionId);
     }
     if (userObject instanceof Group) {
@@ -419,7 +432,7 @@ public class ActionsTree {
         if (myTree.isPathSelected(path)) {
           mySelectionPaths.add(getPath(childNode));
         }
-        if (myTree.isExpanded(path) || childNode.getChildCount() == 0) {
+        if ((myTree.isExpanded(path) || childNode.getChildCount() == 0) && !childNode.isLeaf()) {
           myPathsToExpand.add(getPath(childNode));
           _storePaths(childNode);
         }

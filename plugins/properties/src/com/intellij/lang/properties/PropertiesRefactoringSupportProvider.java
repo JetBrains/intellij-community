@@ -19,10 +19,10 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
 
-public class PropertiesRefactoringSupportProvider extends DefaultRefactoringSupportProvider {
+public class PropertiesRefactoringSupportProvider extends RefactoringSupportProvider {
   public boolean isSafeDeleteAvailable(PsiElement element) {
     return true;
   }

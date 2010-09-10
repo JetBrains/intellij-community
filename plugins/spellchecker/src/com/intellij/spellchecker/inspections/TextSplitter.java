@@ -41,7 +41,7 @@ public class TextSplitter extends BaseSplitter {
   protected void doSplit(@NotNull String text, @NotNull TextRange range, List<CheckArea> results) {
     Matcher matcher;
     final WordSplitter ws = SplitterFactory.getInstance().getWordSplitter();
-    matcher = EXTENDED_WORD_AND_SPECIAL.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
+    matcher = EXTENDED_WORD_AND_SPECIAL.matcher(range.substring(text));
     while (matcher.find()) {
       TextRange found = matcherRange(range, matcher);
 

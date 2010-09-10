@@ -226,7 +226,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     if (helpIds != null) {
       for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext();) {
         Configurable configurable = it.next();
-        if (CodeStyleFacade.getInstance(project).isUnsuitableCodestyleConfigurable(configurable)) {
+        if (CodeStyleFacade.getInstance(project).isUnsuitableCodeStyleConfigurable(configurable)) {
           it.remove();
           continue;
         }

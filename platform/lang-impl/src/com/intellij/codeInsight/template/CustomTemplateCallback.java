@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -67,7 +68,7 @@ public class CustomTemplateCallback {
 
   @NotNull
   public PsiElement getContext() {
-    return getContext(myFile, myOffset > 0 ? myOffset - 1 : myOffset);
+    return getContext(myFile, myOffset);
   }
 
   public void fixInitialState() {
@@ -75,31 +76,38 @@ public class CustomTemplateCallback {
   }
 
   @Nullable
-  public TemplateImpl findApplicableTemplate(@NotNull String key) {
-    List<TemplateImpl> templates = findApplicableTemplates(key);
+  public TemplateImpl findApplicableTemplate(@NotNull String key, TemplateContextType... contextTypes) {
+    List<TemplateImpl> templates = findApplicableTemplates(key, contextTypes);
     return templates.size() > 0 ? templates.get(0) : null;
   }
 
   @NotNull
-  public List<TemplateImpl> findApplicableTemplates(String key) {
+  public List<TemplateImpl> findApplicableTemplates(String key, TemplateContextType... contextTypes) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = filterApplicableCandidates(templates);
+    templates = filterApplicableCandidates(templates, contextTypes);
     return templates;
   }
 
-  private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates) {
+  private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates, TemplateContextType... contextTypes) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
-      if (TemplateManagerImpl.isApplicable(myFile, myOffset, candidate)) {
+      if (TemplateManagerImpl.isApplicable(myFile, myOffset > 0 ? myOffset - 1 : myOffset, candidate)) {
         result.add(candidate);
+      }
+      TemplateContext context = candidate.getTemplateContext();
+      for (TemplateContextType contextType : contextTypes) {
+        if (context.isEnabled(contextType)) {
+          result.add(candidate);
+          break;
+        }
       }
     }
     return result;
   }
 
-  public void startTemplate(Template template, Map<String, String> predefinedValues) {
+  public void startTemplate(Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
     template.setToReformat(!myInInjectedFragment);
-    myTemplateManager.startTemplate(myEditor, template, false, predefinedValues, null);
+    myTemplateManager.startTemplate(myEditor, template, false, predefinedValues, listener);
   }
 
   public boolean startTemplate() {

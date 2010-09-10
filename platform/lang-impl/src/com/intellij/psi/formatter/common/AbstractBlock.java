@@ -29,12 +29,14 @@ import java.util.List;
 
 public abstract class AbstractBlock implements ASTBlock {
   public static final List<Block> EMPTY = Collections.unmodifiableList(new ArrayList<Block>(0));
+
   protected final ASTNode myNode;
-  private List<Block> mySubBlocks;
   protected final Wrap myWrap;
   protected final Alignment myAlignment;
 
-  protected AbstractBlock(final ASTNode node, final Wrap wrap, final Alignment alignment) {
+  private List<Block> mySubBlocks;
+
+  protected AbstractBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment) {
     myNode = node;
     myWrap = wrap;
     myAlignment = alignment;
@@ -57,7 +59,7 @@ public abstract class AbstractBlock implements ASTBlock {
 
   protected abstract List<Block> buildChildren();
 
-  public final Wrap getWrap() {
+  public Wrap getWrap() {
     return myWrap;
   }
 
@@ -65,11 +67,11 @@ public abstract class AbstractBlock implements ASTBlock {
     return null;
   }
 
-  public final Alignment getAlignment() {
+  public Alignment getAlignment() {
     return myAlignment;
   }
 
-  public final ASTNode getNode() {
+  public ASTNode getNode() {
     return myNode;
   }
 

@@ -1,12 +1,11 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
 * @author peter
@@ -22,21 +21,34 @@ public class LiteralConstructorSearcher {
     myIncludeOverloads = includeOverloads;
   }
 
-  public boolean processLiteral(GrListOrMap literal) {
-    if (literal.isMap()) {
-      final GrNamedArgument argument = literal.findNamedArgument("super");
-      if (argument != null) {
-        return processConstructorReference(ObjectUtils.assertNotNull(argument.getLabel()).getReference());
+  public boolean processLiteral(GrListOrMap literal, boolean typedContext) {
+    final PsiReference reference = literal.getReference();
+    if (reference instanceof LiteralConstructorReference) {
+      if (isCorrectReference((LiteralConstructorReference)reference) && !myConsumer.process(reference)) {
+        return false;
+      }
+
+      if (typedContext) {
+        for (GrExpression expression : ((LiteralConstructorReference)reference).getCallArguments()) {
+          if (expression instanceof GrListOrMap && !processLiteral((GrListOrMap)expression, false)) {
+            return false;
+          }
+        }
       }
     }
-
-    return processConstructorReference(literal.getReference());
+    return true;
   }
 
-  private boolean processConstructorReference(@Nullable PsiReference reference) {
-    if (reference != null && (myIncludeOverloads || reference.isReferenceTo(myConstructor))) {
-      return myConsumer.process(reference);
+  private boolean isCorrectReference(LiteralConstructorReference reference) {
+    if (reference.isReferenceTo(myConstructor)) {
+      return true;
     }
-    return true;
+
+    if (!myIncludeOverloads) {
+      return false;
+    }
+
+    final PsiClass psiClass = reference.getConstructedClassType().resolve();
+    return myConstructor.getManager().areElementsEquivalent(myConstructor.getContainingClass(), psiClass);
   }
 }

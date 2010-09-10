@@ -30,21 +30,14 @@ public class DefUseTest extends InspectionTestCase {
   public void testarrayIndexUsages() throws Exception {
     doTest();
   }
-  /* TODO:
+
+  // TODO:
   public void testSCR28019() throws Exception {
     doTest();
   }
-  */
 
-  public void testSCR40364() throws Exception {
-    doTest();
-  }
-
-  public void testArrayLength() throws Exception {
-    doTest();
-  }
-
-  public void testUsedInArrayInitializer() throws Exception {
-    doTest();
-  }
+  public void testSCR40364() throws Exception { doTest(); }
+  public void testArrayLength() throws Exception { doTest(); }
+  public void testUsedInArrayInitializer() throws Exception { doTest(); }
+  public void testHang() throws Exception { doTest(); }
 }

@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -86,7 +87,8 @@ public class XmlTagTreeElement extends AbstractXmlTagTreeElement<XmlTag>{
     return buffer.toString();
   }
 
-  private static String toCanonicalForm(String id) {
+  @Nullable
+  private static String toCanonicalForm(@Nullable String id) {
     if (id != null) {
       id = id.trim();
       if (id.length() == 0) id = null;

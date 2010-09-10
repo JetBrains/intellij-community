@@ -42,11 +42,11 @@ public class StaticGenericInfoBuilder {
   private static final Set ADDER_PARAMETER_TYPES = new THashSet<Class>(Arrays.asList(Class.class, int.class));
   private final Class myClass;
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<XmlName, JavaMethod>();
-  private final MultiValuesMap<XmlName, JavaMethod> myCollectionAdders = new MultiValuesMap<XmlName, JavaMethod>();
-  private final MultiValuesMap<XmlName, JavaMethod> myCollectionClassAdders = new MultiValuesMap<XmlName, JavaMethod>();
-  private final MultiValuesMap<XmlName, JavaMethod> myCollectionIndexAdders = new MultiValuesMap<XmlName, JavaMethod>();
-  private final MultiValuesMap<XmlName, JavaMethod> myCollectionIndexClassAdders = new MultiValuesMap<XmlName, JavaMethod>();
-  private final MultiValuesMap<XmlName, JavaMethod> myCollectionClassIndexAdders = new MultiValuesMap<XmlName, JavaMethod>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionAdders = new MultiValuesMap<XmlName, JavaMethod>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionClassAdders = new MultiValuesMap<XmlName, JavaMethod>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionIndexAdders = new MultiValuesMap<XmlName, JavaMethod>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionIndexClassAdders = new MultiValuesMap<XmlName, JavaMethod>();
+  final MultiValuesMap<XmlName, JavaMethod> collectionClassIndexAdders = new MultiValuesMap<XmlName, JavaMethod>();
   private final Map<XmlName, Type> myCollectionChildrenTypes = new THashMap<XmlName, Type>();
   private final Map<JavaMethodSignature, String[]> myCompositeCollectionGetters = new THashMap<JavaMethodSignature, String[]>();
   private final Map<JavaMethodSignature, Pair<String,String[]>> myCompositeCollectionAdders = new THashMap<JavaMethodSignature, Pair<String,String[]>>();
@@ -146,14 +146,14 @@ public class StaticGenericInfoBuilder {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     switch (parameterTypes.length) {
       case 0:
-        return myCollectionAdders;
+        return collectionAdders;
       case 1:
-        if (Class.class.equals(parameterTypes[0])) return myCollectionClassAdders;
-        if (isInt(parameterTypes[0])) return myCollectionIndexAdders;
+        if (Class.class.equals(parameterTypes[0])) return collectionClassAdders;
+        if (isInt(parameterTypes[0])) return collectionIndexAdders;
         break;
       case 2:
-        if (isIndexClassAdder(parameterTypes[0], parameterTypes[1])) return myCollectionIndexClassAdders;
-        if (isIndexClassAdder(parameterTypes[1], parameterTypes[0])) return myCollectionClassIndexAdders;
+        if (isIndexClassAdder(parameterTypes[0], parameterTypes[1])) return collectionIndexClassAdders;
+        if (isIndexClassAdder(parameterTypes[1], parameterTypes[0])) return collectionClassIndexAdders;
     }
     return null;
   }
@@ -358,12 +358,8 @@ public class StaticGenericInfoBuilder {
 
 
       final CollectionChildDescriptionImpl description = new CollectionChildDescriptionImpl(xmlName, DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType()),
-                                                                                            myCollectionAdders.get(xmlName),
-                                                                                            myCollectionClassAdders.get(xmlName),
-                                                                                            collGetters,
-                                                                                            myCollectionIndexAdders.get(xmlName),
-                                                                                            myCollectionIndexClassAdders.get(xmlName),
-                                                                                            myCollectionClassIndexAdders.get(xmlName));
+                                                                                            collGetters
+      );
       for (final JavaMethod getter : collGetters) {
         getters.put(getter.getSignature(), description);
       }

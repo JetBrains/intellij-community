@@ -17,6 +17,7 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -24,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,9 +61,22 @@ public class MoveFilesOrDirectoriesUtil {
                             final PsiElement[] elements,
                             final PsiElement[] targetElement,
                             final MoveCallback moveCallback) {
-    for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile) && !(element instanceof PsiDirectory)) {
-        throw new IllegalArgumentException("unexpected element type: " + element);
+    doMove(project, elements, targetElement, moveCallback, null);
+  }
+
+  /**
+   * @param elements should contain PsiDirectories or PsiFiles only if adjustElements == null
+   */
+  public static void doMove(final Project project,
+                            final PsiElement[] elements,
+                            final PsiElement[] targetElement,
+                            final MoveCallback moveCallback,
+                            final Function<PsiElement[], PsiElement[]> adjustElements) {
+    if (adjustElements == null) {
+      for (PsiElement element : elements) {
+        if (!(element instanceof PsiFile) && !(element instanceof PsiDirectory)) {
+          throw new IllegalArgumentException("unexpected element type: " + element);
+        }
       }
     }
 
@@ -72,21 +87,21 @@ public class MoveFilesOrDirectoriesUtil {
 
     final MoveFilesOrDirectoriesDialog.Callback doRun = new MoveFilesOrDirectoriesDialog.Callback() {
       public void run(final MoveFilesOrDirectoriesDialog moveDialog) {
-        final PsiDirectory targetDirectory = moveDialog.getTargetDirectory();
+        final PsiDirectory targetDirectory = moveDialog != null ? moveDialog.getTargetDirectory() : initialTargetDirectory;
 
         LOG.assertTrue(targetDirectory != null);
-
+        PsiElement[] newElements = adjustElements != null ? adjustElements.fun(elements) : elements;
         targetElement[0] = targetDirectory;
 
         PsiManager manager = PsiManager.getInstance(project);
         try {
-          for (PsiElement psiElement : elements) {
+          for (PsiElement psiElement : newElements) {
             manager.checkMove(psiElement, targetDirectory);
           }
 
-          new MoveFilesOrDirectoriesProcessor(project, elements, targetDirectory, false, false, moveCallback, new Runnable() {
+          new MoveFilesOrDirectoriesProcessor(project, newElements, targetDirectory, false, false, moveCallback, new Runnable() {
             public void run() {
-              moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+              if (moveDialog != null) moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
             }
           }).run();
         }
@@ -97,9 +112,14 @@ public class MoveFilesOrDirectoriesUtil {
       }
     };
 
-    final MoveFilesOrDirectoriesDialog moveDialog = new MoveFilesOrDirectoriesDialog(project, doRun);
-    moveDialog.setData(elements, initialTargetDirectory, "refactoring.moveFile");
-    moveDialog.show();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      doRun.run(null);
+    }
+    else {
+      final MoveFilesOrDirectoriesDialog moveDialog = new MoveFilesOrDirectoriesDialog(project, doRun);
+      moveDialog.setData(elements, initialTargetDirectory, "refactoring.moveFile");
+      moveDialog.show();
+    }
   }
 
   @Nullable

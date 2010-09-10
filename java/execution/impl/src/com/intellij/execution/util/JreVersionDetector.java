@@ -61,6 +61,6 @@ public class JreVersionDetector {
   }
 
   private static boolean isJre50(final String versionString) {
-    return versionString.contains("5.0") || versionString.contains("1.5") || versionString.contains("1.6");
+    return versionString.contains("5.0") || versionString.contains("1.5") || versionString.contains("1.6") || versionString.contains("1.7");
   }
 }

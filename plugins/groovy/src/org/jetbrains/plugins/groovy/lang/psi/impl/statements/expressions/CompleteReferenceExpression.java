@@ -49,10 +49,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
@@ -196,9 +193,10 @@ public class CompleteReferenceExpression {
       candidates = nonPackages.toArray(new GroovyResolveResult[nonPackages.size()]);
     }
     LookupElement[] propertyLookupElements = addPretendedProperties(candidates);
-    Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
-    variants = ArrayUtil.mergeArrays(variants, propertyLookupElements, Object.class);
-    return ArrayUtil.mergeArrays(variants, sameQualifier, Object.class);
+    List<Object> variants = GroovyCompletionUtil.getCompletionVariants(candidates);
+    variants.addAll(Arrays.asList(propertyLookupElements));
+    variants.addAll(Arrays.asList(sameQualifier));
+    return variants.toArray(new Object[variants.size()]);
   }
 
   private static GroovyResolveResult[] filterStaticsOK(GroovyResolveResult[] candidates) {

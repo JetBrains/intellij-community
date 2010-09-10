@@ -63,6 +63,15 @@ public interface OrderRootsEnumerator {
   OrderRootsEnumerator usingCache();
 
   /**
+   * This method makes sense only when dependencies of a module are processed (i.e. the enumerator instance is obtained by using {@link OrderEnumerator#orderEntries(com.intellij.openapi.module.Module)} or
+   * {@link ModuleRootModel#orderEntries()}). It instructs the enumerator to skip the output of the main module (if {@link com.intellij.openapi.roots.OrderEnumerator#productionOnly()}
+   * option is not specified then only the test output will be skipped)
+   *
+   * @return this instance
+   */
+  OrderRootsEnumerator withoutSelfModuleOutput();
+
+  /**
    * Use <code>provider</code> to obtain roots of an library or jdk order entry instead of {@link OrderEntry#getFiles(OrderRootType)} method. Note that
    * this option won't affect result of {@link #getUrls()} method
    * @param provider function to evaluate roots for an order entry

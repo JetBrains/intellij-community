@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -67,12 +68,16 @@ public class EditTemplateDialog extends DialogWrapper {
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
   private final Map<TemplateOptionalProcessor, Boolean> myOptions;
   private final Map<TemplateContextType, Boolean> myContext;
+  private final boolean myNewTemplate;
 
   public EditTemplateDialog(Component parent, String title, TemplateImpl template, List<TemplateGroup> groups, String defaultShortcut,
-                            Map<TemplateOptionalProcessor, Boolean> options, Map<TemplateContextType, Boolean> context) {
+                            Map<TemplateOptionalProcessor, Boolean> options,
+                            Map<TemplateContextType, Boolean> context,
+                            boolean newTemplate) {
     super(parent, true);
     myOptions = options;
     myContext = context;
+    myNewTemplate = newTemplate;
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
 
@@ -137,13 +142,17 @@ public class EditTemplateDialog extends DialogWrapper {
     myEditVariablesButton.setMaximumSize(myEditVariablesButton.getPreferredSize());
     panel.add(myEditVariablesButton, gbConstraints);
 
-    gbConstraints.weighty = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.gridy++;
-    panel.add(createTemplateOptionsPanel(), gbConstraints);
+    JPanel templateOptionsPanel = createTemplateOptionsPanel();
+    JPanel contextPanel = createContextPanel();
+    if (myNewTemplate) {
+      gbConstraints.weighty = 0;
+      gbConstraints.gridwidth = 1;
+      gbConstraints.gridy++;
+      panel.add(templateOptionsPanel, gbConstraints);
 
-    gbConstraints.gridx = 1;
-    panel.add(createContextPanel(), gbConstraints);
+      gbConstraints.gridx = 1;
+      panel.add(contextPanel, gbConstraints);
+    }
 
     myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       protected void textChanged(javax.swing.event.DocumentEvent e) {
@@ -170,7 +179,11 @@ public class EditTemplateDialog extends DialogWrapper {
     return panel;
   }
 
+  @Nullable
   protected JComponent createNorthPanel() {
+    if (!myNewTemplate) {
+      return null;
+    }
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.insets = new Insets(4,4,4,4);
@@ -538,7 +551,7 @@ public class EditTemplateDialog extends DialogWrapper {
     myVariables = parsedVariables;
   }
 
-  private static void parseVariables(CharSequence text, ArrayList variables) {
+  private static void parseVariables(CharSequence text, ArrayList<Variable> variables) {
     TemplateImplUtil.parseVariables(
       text,
       variables,

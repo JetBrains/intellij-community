@@ -148,6 +148,20 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return node == null ? null : node.getPsi();
   }
 
+
+  @Nullable
+  protected PsiElement findLastChildByType(IElementType type) {
+    PsiElement child = getLastChild();
+    while (child != null) {
+      final ASTNode node = child.getNode();
+      if (node != null && node.getElementType() == type) return child;
+      child = child.getPrevSibling();
+    }
+    return null;
+  }
+
+
+
   @NotNull
   protected PsiElement findNotNullChildByType(IElementType type) {
     return notNullChild(findChildByType(type));

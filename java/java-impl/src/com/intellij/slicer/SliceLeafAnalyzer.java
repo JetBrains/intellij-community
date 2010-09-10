@@ -33,9 +33,9 @@ import com.intellij.psi.WalkingState;
 import com.intellij.psi.impl.source.tree.SourceUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -172,10 +172,10 @@ public class SliceLeafAnalyzer {
   }
 
   public static Map<SliceNode, Collection<PsiElement>> createMap() {
-    final Map<SliceNode, Collection<PsiElement>> map = new FactoryMap<SliceNode, Collection<PsiElement>>() {
+    return new FactoryMap<SliceNode, Collection<PsiElement>>() {
       @Override
       protected Map<SliceNode, Collection<PsiElement>> createMap() {
-        return new THashMap<SliceNode, Collection<PsiElement>>(TObjectHashingStrategy.IDENTITY);
+        return new ConcurrentHashMap<SliceNode, Collection<PsiElement>>(TObjectHashingStrategy.IDENTITY);
       }
 
       @Override
@@ -183,7 +183,6 @@ public class SliceLeafAnalyzer {
         return new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
       }
     };
-    return map;
   }
 
   static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {

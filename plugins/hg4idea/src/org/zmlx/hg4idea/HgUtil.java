@@ -20,17 +20,22 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
- * <strong><font color="#FF0000">TODO JavaDoc.</font></strong>
+ * HgUtil is a collection of static utility methods for Mercurial.
  */
 public abstract class HgUtil {
   
@@ -196,6 +201,9 @@ public abstract class HgUtil {
    */
   @Nullable
   public static VirtualFile getHgRootOrNull(Project project, FilePath filePath) {
+    if (project == null) {
+      return getNearestHgRoot(VcsUtil.getVirtualFile(filePath.getPath()));
+    }
     return getNearestHgRoot(VcsUtil.getVcsRootFor(project, filePath));
   }
 
@@ -224,4 +232,42 @@ public abstract class HgUtil {
     return vf;
   }
 
+  @NotNull
+  public static VirtualFile getHgRootOrThrow(Project project, VirtualFile file) throws VcsException {
+    return getHgRootOrThrow(project, VcsUtil.getFilePath(file.getPath()));
+  }
+
+  /**
+   * Checks is a merge operation is in progress on the given repository.
+   * Actually gets the number of parents of the current revision. If there are 2 parents, then a merge is going on. Otherwise there is
+   * only one parent. 
+   * @param project    project to work on.
+   * @param repository repository which is checked on merge.
+   * @return True if merge operation is in progress, false if there is no merge operation.
+   */
+  public static boolean isMergeInProgress(@NotNull Project project, VirtualFile repository) {
+    return new HgWorkingCopyRevisionsCommand(project).parents(repository).size() > 1;
+  }
+  /**
+   * Groups the given files by their Mercurial repositories and returns the map of relative paths to files for each repository.
+   * @param hgFiles files to be grouped.
+   * @return key is repository, values is the non-empty list of relative paths to files, which belong to this repository. 
+   */
+  @NotNull
+  public static Map<VirtualFile, List<String>> getRelativePathsByRepository(Collection<HgFile> hgFiles) {
+    final Map<VirtualFile, List<String>> map = new HashMap<VirtualFile, List<String>>();
+    if (hgFiles == null) {
+      return map;
+    }
+    for(HgFile file : hgFiles) {
+      final VirtualFile repo = file.getRepo();
+      List<String> files = map.get(repo);
+      if (files == null) {
+        files = new ArrayList<String>();
+        map.put(repo, files);
+      }
+      files.add(file.getRelativePath());
+    }
+    return map;
+  }
 }

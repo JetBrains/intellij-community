@@ -177,28 +177,52 @@ class GitTreeController implements ManageGitTreeView {
 
         final List<GitCommit> newList = loadPiece(startingPoints, afterPoint, commandFilters, requestMaxCnt, lastDate, lastHash);
 
-        for (GitCommit gitCommit : newList) {
-          boolean add = true;
-          for (ChangesFilter.MemoryFilter memoryFilter : memoryFilters) {
-            if (! memoryFilter.applyInMemory(gitCommit)) {
-              add = false;
-              break;
+        for (int i = 0; i < newList.size(); i++) {
+          final GitCommit gitCommit = newList.get(i);
+
+          if (isTakenByMemoryFilters(gitCommit, memoryFilters)) {
+            myCommitList.add(gitCommit);
+            if (myCommitList.size() >= maxCnt) {
+              // we have enough data to show, will not use the tail
+              // but we must check whether "next" should be allowed
+              if (isLastCommit(myLastCommit, lastHash)) {
+                // check whether we wouldn't put more commits
+                myStartFound = true;
+                for (int j = i + 1; j < newList.size(); j++) {
+                  if (isTakenByMemoryFilters(newList.get(j), memoryFilters)) {
+                    myStartFound = false;
+                    return;
+                  }
+                }
+              }
+              return; // count reached
             }
           }
-          if (add) {
-            myCommitList.add(gitCommit);
-            if (myCommitList.size() >= maxCnt) break;
-          }
         }
-        if (myLastCommit == null || myLastCommit.getParentsHashes().isEmpty() || myLastCommit.getHash().equals(lastHash)) {
+        // we are here if we have iterated through newList, so we just can check its last element
+        if (isLastCommit(myLastCommit, lastHash)) {
           myStartFound = true;
-          break;
+          return;
         }
         if (Comparing.equal(lastDate, myLastCommit.getDate())) {
           requestMaxCnt = 2 * maxCnt;
         }
         runningBeforePoint = new Pair<Date, SHAHash>(myLastCommit.getDate(), myLastCommit.getHash());
       }
+    }
+
+    // i.e. first
+    private boolean isLastCommit(final GitCommit commit, final SHAHash lastHash) {
+      return commit == null || commit.getParentsHashes().isEmpty() || commit.getHash().equals(lastHash);
+    }
+
+    private boolean isTakenByMemoryFilters(final GitCommit gitCommit, final List<ChangesFilter.MemoryFilter> memoryFilters) {
+      for (ChangesFilter.MemoryFilter memoryFilter : memoryFilters) {
+        if (! memoryFilter.applyInMemory(gitCommit)) {
+          return false;
+        }
+      }
+      return true;
     }
 
     private List<GitCommit> loadPiece(Collection<String> startingPoints,

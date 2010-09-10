@@ -49,7 +49,7 @@ public class TemplateImplUtil {
     return true;
   }
 
-  public static void parseVariables(CharSequence text, ArrayList variables, Set predefinedVars) {
+  public static void parseVariables(CharSequence text, ArrayList<Variable> variables, Set<String> predefinedVars) {
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
 
@@ -67,8 +67,7 @@ public class TemplateImplUtil {
           isFound = true;
         }
         else{
-          for (Object variable1 : variables) {
-            Variable variable = (Variable)variable1;
+          for (Variable variable : variables) {
             if (variable.getName().equals(name)) {
               isFound = true;
               break;

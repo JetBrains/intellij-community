@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -46,8 +47,8 @@ public class NewMappings {
   private final Map<String, List<VcsDirectoryMapping>> myVcsToPaths;
   private AbstractVcs[] myActiveVcses;
   private VcsDirectoryMapping[] mySortedMappings;
-  private final Map<VcsDirectoryMapping, LocalFileSystem.WatchRequest> myDirectoryMappingWatches;
-  
+  private FileWatchRequestsManager myFileWatchRequestsManager;
+
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
   private final EventDispatcher<VcsListener> myEventDispatcher;
   private final FileStatusManager myFileStatusManager;
@@ -61,7 +62,7 @@ public class NewMappings {
     myFileStatusManager = fileStatusManager;
     myLock = new Object();
     myVcsToPaths = new HashMap<String, List<VcsDirectoryMapping>>();
-    myDirectoryMappingWatches = new HashMap<VcsDirectoryMapping, LocalFileSystem.WatchRequest>();
+    myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this, LocalFileSystem.getInstance());
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
     myActiveVcses = new AbstractVcs[0];
     myEventDispatcher = eventDispatcher;
@@ -80,11 +81,23 @@ public class NewMappings {
     });
   }
 
+  // for tests
+  public void setFileWatchRequestsManager(FileWatchRequestsManager fileWatchRequestsManager) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myFileWatchRequestsManager = fileWatchRequestsManager;
+  }
+
   public AbstractVcs[] getActiveVcses() {
     synchronized (myLock) {
       final AbstractVcs[] result = new AbstractVcs[myActiveVcses.length];
       System.arraycopy(myActiveVcses, 0, result, 0, myActiveVcses.length);
       return result;
+    }
+  }
+
+  public boolean hasActiveVcss() {
+    synchronized (myLock) {
+      return myActiveVcses.length > 0;
     }
   }
 
@@ -111,7 +124,6 @@ public class NewMappings {
       }
 
     }
-    final LocalFileSystem.WatchRequest request = addWatchRequest(newMapping);
 
     final Ref<Boolean> switched = new Ref<Boolean>(Boolean.FALSE);
     keepActiveVcs(new Runnable() {
@@ -122,17 +134,9 @@ public class NewMappings {
           final List<VcsDirectoryMapping> newList = listForVcsFromMap(newMapping.getVcs());
           newList.add(newMapping);
           sortedMappingsByMap();
-
-          if (request != null) {
-            myDirectoryMappingWatches.put(newMapping, request);
-          }
         }
       }
     });
-
-    if (switched.get().booleanValue() && (request != null)) {
-      LocalFileSystem.getInstance().removeWatchedRoot(request);
-    }
 
     mappingsChanged();
   }
@@ -173,6 +177,7 @@ public class NewMappings {
   public void mappingsChanged() {
     myEventDispatcher.getMulticaster().directoryMappingChanged();
     myFileStatusManager.fileStatusesChanged();
+    myFileWatchRequestsManager.ping();
   }
 
   @Modification
@@ -180,17 +185,16 @@ public class NewMappings {
     LOG.debug("setDirectoryMappings, size: " + items.size());
     MySetMappingsPreProcessor setMappingsPreProcessor = new MySetMappingsPreProcessor(items);
     setMappingsPreProcessor.invoke();
-    final List<VcsDirectoryMapping> itemsCopy = setMappingsPreProcessor.getItemsCopy();
-    final Map<VcsDirectoryMapping, LocalFileSystem.WatchRequest> requests = setMappingsPreProcessor.getRequests();
 
-    final Collection<LocalFileSystem.WatchRequest> toRemove = new ArrayList<LocalFileSystem.WatchRequest>();
+    final List<VcsDirectoryMapping> itemsCopy;
+    if (items.isEmpty()) {
+      itemsCopy = Collections.singletonList(new VcsDirectoryMapping("", ""));
+    } else {
+      itemsCopy = items;
+    }
 
     keepActiveVcs(new Runnable() {
       public void run() {
-        // a copy!
-        toRemove.addAll(myDirectoryMappingWatches.values());
-        myDirectoryMappingWatches.clear();
-
         myVcsToPaths.clear();
         for (VcsDirectoryMapping mapping : itemsCopy) {
           listForVcsFromMap(mapping.getVcs()).add(mapping);
@@ -198,11 +202,6 @@ public class NewMappings {
         sortedMappingsByMap();
       }
     });
-
-    // do not remove what added and is active
-    toRemove.removeAll(requests.values());
-    // tracked by request object reference so OK to first add and then remove
-    LocalFileSystem.getInstance().removeWatchedRoots(toRemove);
 
     mappingsChanged();
   }
@@ -293,21 +292,14 @@ public class NewMappings {
     // if vcses were not mapped, there's nothing to clear
     if ((myActiveVcses ==  null) || (myActiveVcses.length == 0)) return;
 
-    final Collection<LocalFileSystem.WatchRequest> toRemove = new ArrayList<LocalFileSystem.WatchRequest>();
     keepActiveVcs(new Runnable() {
       public void run() {
-        // a copy!
-        toRemove.addAll(myDirectoryMappingWatches.values());
-        myDirectoryMappingWatches.clear();
-
         myVcsToPaths.clear();
         myActiveVcses = new AbstractVcs[0];
         mySortedMappings = new VcsDirectoryMapping[0];
       }
     });
-    if (! toRemove.isEmpty()) {
-      LocalFileSystem.getInstance().removeWatchedRoots(toRemove);
-    }
+    myFileWatchRequestsManager.ping();
   }
 
   public List<VcsDirectoryMapping> getDirectoryMappings() {
@@ -324,11 +316,10 @@ public class NewMappings {
   }
 
   public void cleanupMappings() {
-    final List<LocalFileSystem.WatchRequest> watchRequestList;
     synchronized (myLock) {
-      watchRequestList = removeRedundantMappings();
+      removeRedundantMappings();
     }
-    LocalFileSystem.getInstance().removeWatchedRoots(watchRequestList);
+    myFileWatchRequestsManager.ping();
   }
 
   @Nullable
@@ -349,69 +340,22 @@ public class NewMappings {
   @Modification
   public void removeDirectoryMapping(final VcsDirectoryMapping mapping) {
     LOG.debug("remove mapping: " + mapping.getDirectory());
-    final Ref<LocalFileSystem.WatchRequest> request = new Ref<LocalFileSystem.WatchRequest>();
 
     keepActiveVcs(new Runnable() {
       public void run() {
         if (removeVcsFromMap(mapping, mapping.getVcs())) {
           sortedMappingsByMap();
-          request.set(myDirectoryMappingWatches.remove(mapping));
         }
       }
     });
 
-    if (! request.isNull()) {
-      LocalFileSystem.getInstance().removeWatchedRoot(request.get());
-    }
-
     mappingsChanged();
   }
 
-  private class MyMappingsFilter extends AbstractFilterChildren<VcsDirectoryMapping> {
-    private final List<LocalFileSystem.WatchRequest> myRemovedRequests;
-
-    private MyMappingsFilter() {
-      myRemovedRequests = new ArrayList<LocalFileSystem.WatchRequest>();
-    }
-
-    protected void sortAscending(List<VcsDirectoryMapping> vcsDirectoryMappings) {
-      // todo ordering is actually here
-      Collections.sort(vcsDirectoryMappings, MyMappingsComparator.getInstance());
-    }
-
-    @Override
-    protected void onRemove(final VcsDirectoryMapping vcsDirectoryMapping) {
-      final LocalFileSystem.WatchRequest request = myDirectoryMappingWatches.remove(vcsDirectoryMapping);
-      if (request != null) {
-        myRemovedRequests.add(request);
-      }
-    }
-
-    protected boolean isAncestor(VcsDirectoryMapping parent, VcsDirectoryMapping child) {
-      if (! parent.getVcs().equals(child.getVcs())) return false;
-
-      final String parentPath = parent.systemIndependentPath();
-      final String fixedParentPath = (parentPath.endsWith("/")) ? parentPath : (parentPath + "/");
-
-      if (child.systemIndependentPath().length() < fixedParentPath.length()) {
-        return child.systemIndependentPath().equals(parentPath);
-      }
-      return child.systemIndependentPath().startsWith(fixedParentPath);
-    }
-
-    public List<LocalFileSystem.WatchRequest> getRemovedRequests() {
-      return myRemovedRequests;
-    }
-  }
-
   // todo area for optimization
-  private List<LocalFileSystem.WatchRequest> removeRedundantMappings() {
-    final Set<Map.Entry<String, List<VcsDirectoryMapping>>> entries = myVcsToPaths.entrySet();
-
+  private void removeRedundantMappings() {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final AllVcsesI allVcses = AllVcses.getInstance(myProject);
-
-    final List<LocalFileSystem.WatchRequest> removedRequests = new LinkedList<LocalFileSystem.WatchRequest>();
 
     for (Iterator<String> iterator = myVcsToPaths.keySet().iterator(); iterator.hasNext();) {
       final String vcsName = iterator.next();
@@ -456,9 +400,6 @@ public class NewMappings {
 
       // to calculate what had been removed
       mappings.removeAll(filteredMappings);
-      for (VcsDirectoryMapping mapping : mappings) {
-        removedRequests.add(myDirectoryMappingWatches.remove(mapping));
-      }
 
       if (filteredMappings.isEmpty()) {
         iterator.remove();
@@ -469,7 +410,6 @@ public class NewMappings {
     }
 
     sortedMappingsByMap();
-    return removedRequests;
   }
 
   private boolean trySwitchVcs(final String path, final String activeVcsName) {
@@ -523,14 +463,6 @@ public class NewMappings {
       myVcsToPaths.put(activeVcsName, newList);
     }
     return newList;
-  }
-
-  @Nullable
-  private static LocalFileSystem.WatchRequest addWatchRequest(final VcsDirectoryMapping mapping) {
-    if (! mapping.isDefaultMapping()) {
-      return LocalFileSystem.getInstance().addRootToWatch(mapping.getDirectory(), true);
-    }
-    return null;
   }
 
   private static class MyMappingsComparator implements Comparator<VcsDirectoryMapping> {
@@ -628,7 +560,6 @@ public class NewMappings {
   private static class MySetMappingsPreProcessor {
     private final List<VcsDirectoryMapping> myItems;
     private List<VcsDirectoryMapping> myItemsCopy;
-    private Map<VcsDirectoryMapping, LocalFileSystem.WatchRequest> myRequests;
 
     public MySetMappingsPreProcessor(final List<VcsDirectoryMapping> items) {
       myItems = items;
@@ -638,23 +569,10 @@ public class NewMappings {
       return myItemsCopy;
     }
 
-    public Map<VcsDirectoryMapping, LocalFileSystem.WatchRequest> getRequests() {
-      return myRequests;
-    }
-
     public void invoke() {
       if (myItems.isEmpty()) {
         myItemsCopy = Collections.singletonList(new VcsDirectoryMapping("", ""));
-        myRequests = Collections.emptyMap();
       } else {
-        myRequests = new HashMap<VcsDirectoryMapping, LocalFileSystem.WatchRequest>();
-
-        for (VcsDirectoryMapping item : myItems) {
-          final LocalFileSystem.WatchRequest request = addWatchRequest(item);
-          if (request != null) {
-            myRequests.put(item, request);
-          }
-        }
         myItemsCopy = myItems;
       }
     }
@@ -662,4 +580,5 @@ public class NewMappings {
 
   private @interface Modification {
   }
+
 }

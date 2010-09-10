@@ -34,6 +34,11 @@ public abstract class TableViewSpeedSearch extends SpeedSearchBase<TableView> {
   }
 
   @Override
+  protected int convertIndexToModel(int viewIndex) {
+    return myComponent.convertRowIndexToModel(viewIndex);
+  }
+
+  @Override
   protected Object[] getAllElements() {
     return getComponent().getItems().toArray();
   }
@@ -47,7 +52,8 @@ public abstract class TableViewSpeedSearch extends SpeedSearchBase<TableView> {
     for (int i = 0, itemsSize = items.size(); i < itemsSize; i++) {
       final Object o = items.get(i);
       if (o == element) {
-        getComponent().getSelectionModel().setSelectionInterval(i, i);
+        final int viewIndex = myComponent.convertRowIndexToView(i);
+        getComponent().getSelectionModel().setSelectionInterval(viewIndex, viewIndex);
         TableUtil.scrollSelectionToVisible(getComponent());
         break;
       }

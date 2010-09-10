@@ -328,12 +328,7 @@ public class TypeConversionUtil {
       PsiType typeArg1 = substitutor1.substitute(typeParameter);
       PsiType typeArg2 = substitutor2.substitute(typeParameter);
       if (typeArg1 == null || typeArg2 == null) return true;
-      if (typeArg1 instanceof PsiWildcardType || typeArg2 instanceof PsiWildcardType) return true;
-      if (typeArg1 instanceof PsiCapturedWildcardType || typeArg2 instanceof PsiCapturedWildcardType) return true;
-
-      if (typeArg1 instanceof PsiClassType && ((PsiClassType)typeArg1).resolve() instanceof PsiTypeParameter) return true;
-      if (typeArg2 instanceof PsiClassType && ((PsiClassType)typeArg2).resolve() instanceof PsiTypeParameter) return true;
-      if (!typeArg1.equals(typeArg2)) return false;
+      if (TypesDistinctProver.provablyDistinct(typeArg1, typeArg2)) return false;
     }
 
     return true;
@@ -685,7 +680,7 @@ public class TypeConversionUtil {
              IS_ASSIGNABLE_BIT_SET[rightTypeIndex][leftTypeIndex];
     }
     if (!(right instanceof PsiClassType)) {
-      LOG.error(right);
+      return false; // must be TypeCook's PsiTypeVariable
     }
     if (left instanceof PsiPrimitiveType) {
       return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right);

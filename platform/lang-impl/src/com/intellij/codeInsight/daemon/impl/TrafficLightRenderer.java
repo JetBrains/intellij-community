@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer {
@@ -128,46 +130,78 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     return status;
   }
 
-  protected void fillDaemonCodeAnalyzerErrorsStatus(DaemonCodeAnalyzerStatus status, boolean fillErrorsCount) {
+  protected void fillDaemonCodeAnalyzerErrorsStatus(final DaemonCodeAnalyzerStatus status, final boolean fillErrorsCount) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myProject);
-    List<HighlightInfo> highlights = DaemonCodeAnalyzerImpl.getHighlights(myDocument, myProject);
-    if (highlights == null) highlights = Arrays.asList(HighlightInfo.EMPTY_ARRAY);
-    if (fillErrorsCount) {
-      highlights = new ArrayList<HighlightInfo>(highlights);
-      Collections.sort(highlights, new Comparator<HighlightInfo>() {
-        public int compare(HighlightInfo o1, HighlightInfo o2) {
-          return o1.getSeverity().myVal - o2.getSeverity().myVal;
+    if (fillErrorsCount) Arrays.fill(status.errorCount, 0);
+    final int count = severityRegistrar.getSeveritiesCount() - 1;
+    final HighlightSeverity maxSeverity = severityRegistrar.getSeverityByIndex(count);
+    final HighlightSeverity[] maxFoundSeverity = {null};
+
+    DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, null, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
+      public boolean process(HighlightInfo info) {
+        HighlightSeverity infoSeverity = info.getSeverity();
+        if (fillErrorsCount) {
+          final int severityIdx = severityRegistrar.getSeverityIdx(infoSeverity);
+          if (severityIdx != -1) {
+            status.errorCount[severityIdx] ++;
+          }
         }
-      });
-      Arrays.fill(status.errorCount, 0);
-      for (HighlightInfo highlight : highlights) {
-        final HighlightSeverity severity = highlight.getSeverity();
-        final int severityIdx = severityRegistrar.getSeverityIdx(severity);
-        if (severityIdx != -1) {
-          status.errorCount[severityIdx] ++;
+        else {
+          if (infoSeverity == maxSeverity) {
+            status.errorCount[count] = 1;
+            return false;
+          }
+          if (maxFoundSeverity[0] == null || severityRegistrar.compare(maxFoundSeverity[0], infoSeverity) <= 0) {
+            maxFoundSeverity[0] = infoSeverity;
+          }
         }
+        return true;
+      }
+    });
+    if (maxFoundSeverity[0] != null) {
+      final int severityIdx = severityRegistrar.getSeverityIdx(maxFoundSeverity[0]);
+      if (severityIdx != -1) {
+        status.errorCount[severityIdx] = 1;
       }
     }
-    else {
-      HighlightSeverity severity = null;
-      final int count = severityRegistrar.getSeveritiesCount() - 1;
-      HighlightSeverity maxSeverity = severityRegistrar.getSeverityByIndex(count);
-      for (HighlightInfo info : highlights) {
-        if (info.getSeverity() == maxSeverity) {
-          status.errorCount[count] = 1;
-          return;
-        }
-        if (severity == null || severityRegistrar.compare(severity, info.getSeverity()) <= 0) {
-          severity = info.getSeverity();
-        }
-      }
-      if (severity != null) {
-        final int severityIdx = severityRegistrar.getSeverityIdx(severity);
-        if (severityIdx != -1) {
-          status.errorCount[severityIdx] = 1;
-        }
-      }
-    }
+
+    //if (highlights == null) highlights = Arrays.asList(HighlightInfo.EMPTY_ARRAY);
+    //if (fillErrorsCount) {
+    //  highlights = new ArrayList<HighlightInfo>(highlights);
+    //  Collections.sort(highlights, new Comparator<HighlightInfo>() {
+    //    public int compare(HighlightInfo o1, HighlightInfo o2) {
+    //      return o1.getSeverity().myVal - o2.getSeverity().myVal;
+    //    }
+    //  });
+    //  Arrays.fill(status.errorCount, 0);
+    //  for (HighlightInfo highlight : highlights) {
+    //    final HighlightSeverity severity = highlight.getSeverity();
+    //    final int severityIdx = severityRegistrar.getSeverityIdx(severity);
+    //    if (severityIdx != -1) {
+    //      status.errorCount[severityIdx] ++;
+    //    }
+    //  }
+    //}
+    //else {
+    //  HighlightSeverity severity = null;
+    //  final int count = severityRegistrar.getSeveritiesCount() - 1;
+    //  HighlightSeverity maxSeverity = severityRegistrar.getSeverityByIndex(count);
+    //  for (HighlightInfo info : highlights) {
+    //    if (info.getSeverity() == maxSeverity) {
+    //      status.errorCount[count] = 1;
+    //      return;
+    //    }
+    //    if (severity == null || severityRegistrar.compare(severity, info.getSeverity()) <= 0) {
+    //      severity = info.getSeverity();
+    //    }
+    //  }
+    //  if (severity != null) {
+    //    final int severityIdx = severityRegistrar.getSeverityIdx(severity);
+    //    if (severityIdx != -1) {
+    //      status.errorCount[severityIdx] = 1;
+    //    }
+    //  }
+    //}
   }
 
   public final Project getProject() {

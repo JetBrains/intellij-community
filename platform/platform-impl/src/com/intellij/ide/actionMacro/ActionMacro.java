@@ -27,7 +27,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -83,7 +82,13 @@ public class ActionMacro implements JDOMExternalizable {
       Element action = (Element)iterator.next();
       if (ELEMENT_TYPING.equals(action.getName())) {
         Pair<List<Integer>, List<Integer>> codes = parseKeyCodes(action.getAttributeValue(ATTRIBUTE_KEY_CODES));
-        myActions.add(new TypedDescriptor(action.getAttributeValue(ATTRIBUTE_TEXT), codes.getFirst(), codes.getSecond()));
+
+        String text = action.getText();
+        if (text == null || text.length() == 0) {
+          text = action.getAttributeValue(ATTRIBUTE_TEXT);
+        }
+
+        myActions.add(new TypedDescriptor(text, codes.getFirst(), codes.getSecond()));
       }
       else if (ELEMENT_ACTION.equals(action.getName())) {
         myActions.add(new IdActionDescriptor(action.getAttributeValue(ATTRIBUTE_ID)));
@@ -111,7 +116,7 @@ public class ActionMacro implements JDOMExternalizable {
         actionNode = new Element(ELEMENT_TYPING);
         TypedDescriptor typedDescriptor = (TypedDescriptor)action;
         final String t = typedDescriptor.getText();
-        actionNode.setAttribute(ATTRIBUTE_TEXT, JDOMUtil.escapeText(t));
+        actionNode.setText(t);
         actionNode.setAttribute(ATTRIBUTE_KEY_CODES, unparseKeyCodes(new Pair<List<Integer>, List<Integer>>(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
       }
       else if (action instanceof IdActionDescriptor) {

@@ -15,19 +15,23 @@
  */
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.dom.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AntBuildModelImpl implements AntBuildModelBase {
 
@@ -39,15 +43,17 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Nullable
   public String getDefaultTargetName() {
-    final AntProject project = getAntProject();
-    final AntTarget target = (project == null) ? null : project.getDefaultTarget();
-    return (target == null) ? "" : target.getName();
+    final AntDomProject antDomProject = getAntProject();
+    if (antDomProject != null) {
+      return antDomProject.getDefaultTarget().getRawText();
+    }
+    return "";
   }
 
   @Nullable
   public String getName() {
-    final AntProject project = getAntProject();
-    return project != null? project.getName() : null;
+    final AntDomProject project = getAntProject();
+    return project != null? project.getName().getRawText() : null;
   }
 
   public AntBuildTarget[] getTargets() {
@@ -98,9 +104,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     return (buildTarget == null) ? null : buildTarget.findTask(taskName);
   }
 
-  public AntProject getAntProject() {
-    final AntFile antFile = (AntFile)getBuildFile().getAntFile();
-    return antFile != null? antFile.getAntProject() : null;
+  public AntDomProject getAntProject() {
+    return AntSupport.getAntDomProject(getBuildFile().getAntFile());
   }
 
   public boolean hasTargetWithActionId(final String id) {
@@ -131,28 +136,49 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   private static List<AntBuildTargetBase> getTargetListImpl(final AntBuildModelBase model) {
-    final AntProject project = model.getAntProject();
-    final AntTarget[] targets = (project == null) ? AntTarget.EMPTY_ARRAY : project.getTargets();
-    final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>(targets.length);
+    final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>();
+    final AntDomProject project = model.getAntProject();
     final VirtualFile sourceFile = model.getBuildFile().getVirtualFile();
-    final AntTarget defaultTarget = project != null? project.getDefaultTarget() : null;
-    for (final AntTarget target : targets) {
-      list.add(new AntBuildTargetImpl(target, model, sourceFile, false, target.equals(defaultTarget)));
-    }
     if (project != null) {
-      for (final AntTarget target : project.getImportedTargets()) {
-        final PsiFile containingFile = target.getContainingFile();
-        final AntTarget fileDefaultTarget;
-        if (containingFile instanceof AntFile) {
-          final AntProject antProject = ((AntFile)containingFile).getAntProject();
-          fileDefaultTarget =  antProject != null? antProject.getDefaultTarget() : null;
+      new Object() {
+        private boolean myIsImported = false;
+        private final Set<VirtualFile> myProcessed = new HashSet<VirtualFile>();
+        private AntDomTarget myDefaultTarget = null;
+                
+        private void fillTargets(List<AntBuildTargetBase> list, AntBuildModelBase model, AntDomProject project, VirtualFile sourceFile) {
+          if (myProcessed.contains(sourceFile)) {
+            return;
+          }
+          myProcessed.add(sourceFile);
+          if (!myIsImported) {
+            final TargetResolver.Result result = project.getDefaultTarget().getValue();
+            if (result != null) {
+              final Pair<AntDomTarget,String> targetWithName = result.getResolvedTarget(project.getDefaultTarget().getRawText());
+              myDefaultTarget = targetWithName != null? targetWithName.getFirst() : null;
+            }
+          }
+          for (final AntDomTarget target : project.getDeclaredTargets()) {
+            list.add(new AntBuildTargetImpl(target, model, sourceFile, myIsImported, target.equals(myDefaultTarget)));
+          }
+          
+          myIsImported = true;
+          
+          final Iterable<AntDomIncludingDirective> allIncludes = ContainerUtil.concat((Iterable<AntDomImport>)project.getDeclaredImports(), (Iterable<? extends AntDomInclude>)project.getDeclaredIncludes());
+          for (AntDomIncludingDirective incl : allIncludes) {
+            final PsiFileSystemItem includedFile = incl.getFile().getValue();
+            if (includedFile instanceof PsiFile) {
+              final AntDomProject includedProject = AntSupport.getAntDomProject((PsiFile)includedFile);
+              if (includedProject != null) {
+                fillTargets(list, model, includedProject, includedFile.getContainingFile().getOriginalFile().getVirtualFile());
+              }
+            }
+
+          }
+    
         }
-        else {
-          fileDefaultTarget = null;
-        }
-        list.add(new AntBuildTargetImpl(target, model, containingFile != null? containingFile.getVirtualFile() : null, true, target.equals(fileDefaultTarget)));
-      }
+      }.fillTargets(list, model, project, sourceFile);
     }
     return list;
   }
+
 }

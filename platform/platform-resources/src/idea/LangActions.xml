@@ -671,6 +671,8 @@
     </group>
 
     <group id="XDebugger.Watches.Tree.Popup">
+      <reference ref="XDebugger.NewWatch"/>
+      <reference ref="XDebugger.RemoveWatch"/>
       <reference ref="XDebugger.EditWatch"/>
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.SetValue"/>
@@ -734,6 +736,13 @@
       <separator/>
       <reference ref="EditSource"/>
       <reference ref="ViewSource"/>
+    </group>
+
+    <group id="ConsoleView.PopupMenu">
+      <action id="ConsoleView.ClearAll" class="com.intellij.execution.impl.ConsoleViewImpl$ClearAllAction"/>
+      <action id="ConsoleView.Copy" class="com.intellij.execution.impl.ConsoleViewImpl$CopyAction"/>
+      <separator/>
+      <reference ref="CompareClipboardWithSelection"/>
     </group>
 
     <!-- SM Test Runner Actions -->

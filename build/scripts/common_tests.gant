@@ -23,20 +23,15 @@ target('default': 'The default target') {
   depends(compile)
 
   ant.junit(fork: "yes", showoutput: "true") {
-    jvmarg (value: "-ea")
     pass("idea.test.group")
     pass("idea.test.patterns")
     pass("idea.fast.only")
     pass("teamcity.build.tempDir")
     pass("teamcity.tests.recentlyFailedTests.file")
     jvmarg (value: "-Didea.platform.prefix=Idea")
-    jvmarg (value: "-Didea.home.path=$home")
-    jvmarg (value: "-Xbootclasspath/p:${boot.output}")
     jvmarg (value: "-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")
-    jvmarg (value: "-XX:+HeapDumpOnOutOfMemoryError")
-    jvmarg (value: "-Didea.system.path=${p("teamcity.build.tempDir")}/system")
-    jvmarg (value: "-Didea.config.path=${p("teamcity.build.tempDir")}/config")
-    jvmarg (value: "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005")
+
+    commonJvmArgs().each { jvmarg(value: it) }
 
     if (isDefined("jvm_args")) {
       jvm_args.each { jvmarg(value: it) }

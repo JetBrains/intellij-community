@@ -18,7 +18,6 @@ package com.intellij.lifecycle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -150,7 +149,7 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
         return "PeriodicalTaskCloser's invoke and wait [" + runnable.toString() + "]";
       }
     };
-    LaterInvocator.invokeLater(runnable1, modalityState, new Condition<Object>() {
+    ApplicationManager.getApplication().invokeLater(runnable1, modalityState, new Condition<Object>() {
       public boolean value(Object o) {
         synchronized (start) {
           return ! start.get();

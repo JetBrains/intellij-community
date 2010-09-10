@@ -21,7 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  * @author peter
  */
 public abstract class SemContributor {
-  public static final ExtensionPointName<SemContributor> EP_NAME = ExtensionPointName.create("com.intellij.semContributor");
+  public static final ExtensionPointName<SemContributorEP> EP_NAME = ExtensionPointName.create("com.intellij.semContributor");
 
   public abstract void registerSemProviders(SemRegistrar registrar);
 

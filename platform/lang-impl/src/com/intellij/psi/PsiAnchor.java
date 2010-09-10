@@ -59,7 +59,8 @@ public abstract class PsiAnchor {
     if (element instanceof StubBasedPsiElement && element.isPhysical() && (element instanceof PsiCompiledElement || ((PsiFileImpl)file).getContentElementType() instanceof IStubFileElementType)) {
       final StubBasedPsiElement elt = (StubBasedPsiElement)element;
       if (elt.getStub() != null || elt.getElementType().shouldCreateStub(element.getNode())) {
-        return new StubIndexReference(file, calcStubIndex((StubBasedPsiElement)element));
+        int index = calcStubIndex((StubBasedPsiElement)element);
+        if (index != -1) return new StubIndexReference(file, index);
       }
     }
 
@@ -82,7 +83,7 @@ public abstract class PsiAnchor {
     return new TreeRangeReference(file, textRange.getStartOffset(), textRange.getEndOffset(), element.getClass(), lang);
   }
 
-  public static int calcStubIndex(StubBasedPsiElement psi) {
+  private static int calcStubIndex(StubBasedPsiElement psi) {
     if (psi instanceof PsiFile) {
       return 0;
     }
@@ -100,7 +101,7 @@ public abstract class PsiAnchor {
       }
     }
 
-    throw new RuntimeException("Can't find stub index for this psi");
+    return -1; // it is possible via custom stub builder intentionally not producing stubs for stubbed elements
   }
 
 
@@ -222,7 +223,7 @@ public abstract class PsiAnchor {
     }
 
     public PsiFile getFile() {
-      if (myProject.isDisposed()) return null;
+      if (myProject.isDisposed() || !myVirtualFile.isValid()) return null;
       return PsiManager.getInstance(myProject).findFile(myVirtualFile);
     }
 

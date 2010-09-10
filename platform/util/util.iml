@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="platform-resources-en" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="annotations" exported="" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
   <component name="copyright">
     <Base>

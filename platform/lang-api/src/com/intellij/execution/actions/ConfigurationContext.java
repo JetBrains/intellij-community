@@ -107,7 +107,7 @@ public class ConfigurationContext {
   }
 
   @Nullable
-  public RunnerAndConfigurationSettings getConfiguration(final RuntimeConfigurationProducer producer) {
+  public RunnerAndConfigurationSettings updateConfiguration(final RuntimeConfigurationProducer producer) {
     myConfiguration = producer.getConfiguration();
     return myConfiguration;
   }

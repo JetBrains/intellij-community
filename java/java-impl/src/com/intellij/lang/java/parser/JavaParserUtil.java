@@ -17,9 +17,17 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
@@ -27,9 +35,91 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 
 public class JavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
+
+  public interface ParserWrapper {
+    void parse(PsiBuilder builder);
+  }
+
+  public interface MarkingParserWrapper {
+    @Nullable PsiBuilder.Marker parse(PsiBuilder builder);
+  }
+
+  public static final WhitespacesAndCommentsProcessor GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
+    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
+      return tokens.size();
+    }
+  };
+
+  private static class PrecedingWhitespacesAndCommentsProcessor implements WhitespacesAndCommentsProcessor {
+    private final boolean myAfterEmptyImport;
+
+    public PrecedingWhitespacesAndCommentsProcessor(final boolean afterImport) {
+      this.myAfterEmptyImport = afterImport;
+    }
+
+    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter
+      getter) {
+      if (tokens.size() == 0) return 0;
+
+      // 1. bind doc comment
+      for (int idx = tokens.size() - 1; idx >= 0; idx--) {
+        if (tokens.get(idx) == JavaDocElementType.DOC_COMMENT) return idx;
+      }
+
+      // 2. bind plain comments
+      int result = tokens.size();
+      for (int idx = tokens.size() - 1; idx >= 0; idx--) {
+        final IElementType tokenType = tokens.get(idx);
+        if (ElementType.JAVA_WHITESPACE_BIT_SET.contains(tokenType)) {
+          if (StringUtil.getLineBreakCount(getter.get(idx)) > 1) break;
+        }
+        else if (ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(tokenType)) {
+          if (atStreamEdge ||
+              (idx == 0 && myAfterEmptyImport) ||
+              (idx > 0 && ElementType.JAVA_WHITESPACE_BIT_SET.contains(tokens.get(idx - 1)) && StringUtil.containsLineBreak(getter.get(idx - 1)))) {
+            result = idx;
+          }
+        }
+        else break;
+      }
+
+      return result;
+    }
+  }
+
+  private static class TrailingWhitespacesAndCommentsProcessor implements WhitespacesAndCommentsProcessor {
+    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
+      if (tokens.size() == 0) return 0;
+
+      int result = 0;
+      for (int idx = 0; idx < tokens.size(); idx++) {
+        final IElementType tokenType = tokens.get(idx);
+        if (ElementType.JAVA_WHITESPACE_BIT_SET.contains(tokenType)) {
+          if (StringUtil.containsLineBreak(getter.get(idx))) break;
+        }
+        else if (ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(tokenType)) {
+          result = idx + 1;
+        }
+        else break;
+      }
+
+      return result;
+    }
+  }
+
+  private static final TokenSet PRECEDING_COMMENT_SET = ElementType.FULL_MEMBER_BIT_SET;
+  private static final TokenSet TRAILING_COMMENT_SET = TokenSet.orSet(
+    TokenSet.create(JavaElementType.PACKAGE_STATEMENT),
+    ElementType.IMPORT_STATEMENT_BASE_BIT_SET, ElementType.FULL_MEMBER_BIT_SET, ElementType.JAVA_STATEMENT_BIT_SET);
+
+  public static final WhitespacesAndCommentsProcessor PRECEDING_COMMENT_BINDER = new PrecedingWhitespacesAndCommentsProcessor(false);
+  public static final WhitespacesAndCommentsProcessor SPECIAL_PRECEDING_COMMENT_BINDER = new PrecedingWhitespacesAndCommentsProcessor(true);
+  public static final WhitespacesAndCommentsProcessor TRAILING_COMMENT_BINDER = new TrailingWhitespacesAndCommentsProcessor();
 
   private JavaParserUtil() { }
 
@@ -38,8 +128,11 @@ public class JavaParserUtil {
   }
 
   public static boolean areTypeAnnotationsSupported(final PsiBuilder builder) {
-    final LanguageLevel level = getLanguageLevel(builder);
-    return level.isAtLeast(LanguageLevel.JDK_1_7);
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_7);
+  }
+
+  public static boolean areDiamondsSupported(final PsiBuilder builder) {
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_7);
   }
 
   @NotNull
@@ -49,12 +142,59 @@ public class JavaParserUtil {
     return level;
   }
 
+  @NotNull
+  public static PsiBuilder createBuilder(final ASTNode chameleon) {
+    final PsiElement psi = chameleon.getPsi();
+    assert psi != null : chameleon;
+    final Project project = psi.getProject();
+
+    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+    chameleon.putUserData(BlockSupport.TREE_TO_BE_REPARSED, null);
+    final PsiBuilder builder = factory.createBuilder(project, chameleon);
+
+    final LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+    setLanguageLevel(builder, level);
+
+    return builder;
+  }
+
+  @NotNull
+  public static ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper) {
+    final PsiElement psi = chameleon.getPsi();
+    assert psi != null : chameleon;
+    final Project project = psi.getProject();
+
+    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+    chameleon.putUserData(BlockSupport.TREE_TO_BE_REPARSED, null);
+    final PsiBuilder builder = factory.createBuilder(project, chameleon);
+
+    setLanguageLevel(builder, LanguageLevel.HIGHEST);
+
+    final PsiBuilder.Marker root = builder.mark();
+    wrapper.parse(builder);
+    if (!builder.eof()) {
+      final PsiBuilder.Marker extras = builder.mark();
+      while (!builder.eof()) builder.advanceLexer();
+      extras.error(JavaErrorMessages.message("unexpected.tokens"));
+    }
+    root.done(chameleon.getElementType());
+
+    return builder.getTreeBuilt().getFirstChildNode();
+  }
+
+  public static void done(final PsiBuilder.Marker marker, final IElementType type) {
+    marker.done(type);
+    final WhitespacesAndCommentsProcessor left = PRECEDING_COMMENT_SET.contains(type) ? PRECEDING_COMMENT_BINDER : null;
+    final WhitespacesAndCommentsProcessor right = TRAILING_COMMENT_SET.contains(type) ? TRAILING_COMMENT_BINDER : null;
+    marker.setCustomEdgeProcessors(left, right);
+  }
+
   @Nullable
   public static IElementType exprType(@Nullable final PsiBuilder.Marker marker) {
     return marker != null ? ((LighterASTNode)marker).getTokenType() : null;
   }
 
-  // used instead of PsiBuilder.error() as it drops all but first subsequent error messages
+  // used instead of PsiBuilder.error() as it keeps all subsequent error messages
   public static void error(final PsiBuilder builder, final String message) {
     builder.mark().error(message);
   }
@@ -89,30 +229,21 @@ public class JavaParserUtil {
   }
 
   public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {
-    return new PsiBuilderAdapter(builder) {
-      private int braceCount = 1;
-      private int lastOffset = -1;
+    final PsiBuilder.Marker pos = builder.mark();
 
-      @Override
-      public IElementType getTokenType() {
-        final IElementType tokenType = super.getTokenType();
-        if (getCurrentOffset() != lastOffset) {
-          if (tokenType == JavaTokenType.LBRACE) {
-            braceCount++;
-          }
-          else if (tokenType == JavaTokenType.RBRACE) {
-            braceCount--;
-          }
-          lastOffset = getCurrentOffset();
-        }
-        return (braceCount == 0 ? null : tokenType);
-      }
+    int braceCount = 1;
+    while (!builder.eof()) {
+      final IElementType tokenType = builder.getTokenType();
+      if (tokenType == JavaTokenType.LBRACE) braceCount++;
+      else if (tokenType == JavaTokenType.RBRACE) braceCount--;
+      if (braceCount == 0) break;
+      builder.advanceLexer();
+    }
+    final int stopAt = builder.getCurrentOffset();
 
-      @Override
-      public boolean eof() {
-        return braceCount == 0 || super.eof();
-      }
-    };
+    pos.rollbackTo();
+
+    return stoppingBuilder(builder, stopAt);
   }
 
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final int stopAt) {
@@ -124,7 +255,7 @@ public class JavaParserUtil {
 
       @Override
       public boolean eof() {
-        return getCurrentOffset() < stopAt || super.eof();
+        return getCurrentOffset() >= stopAt || super.eof();
       }
     };
   }
@@ -134,6 +265,10 @@ public class JavaParserUtil {
 
     public PsiBuilderAdapter(final PsiBuilder delegate) {
       myDelegate = delegate;
+    }
+
+    public Project getProject() {
+      return myDelegate.getProject();
     }
 
     public CharSequence getOriginalText() {

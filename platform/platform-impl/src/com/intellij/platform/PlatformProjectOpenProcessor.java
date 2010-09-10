@@ -18,6 +18,7 @@ package com.intellij.platform;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -41,6 +42,8 @@ import java.io.File;
  * @author max
  */
 public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
+
   public static PlatformProjectOpenProcessor getInstance() {
     PlatformProjectOpenProcessor projectOpenProcessor = getInstanceIfItExists();
     assert projectOpenProcessor != null;
@@ -104,7 +107,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     if (project == null) return null;
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
     for(DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
-      configurator.configureProject(project, baseDir);
+      try {
+        configurator.configureProject(project, baseDir);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
 
     openFileFromCommandLine(project, virtualFile);

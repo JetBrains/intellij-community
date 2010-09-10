@@ -106,11 +106,12 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       }
     }
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    PsiFile fileFromDoc = documentManager.getPsiFile(editor.getDocument());
+    final Document document = editor.getDocument();
+    PsiFile fileFromDoc = documentManager.getPsiFile(document);
     if (!(fileFromDoc instanceof PsiCompiledElement)) {
       assert fileFromDoc == psiFile : "Files are different: " + psiFile + ";" + fileFromDoc;
       Document documentFromFile = documentManager.getDocument(psiFile);
-      assert documentFromFile == editor.getDocument() : "Documents are different: " + editor.getDocument() + ";" + documentFromFile;
+      assert documentFromFile == document : "Documents are different: " + document + ";" + documentFromFile;
     }
     final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<TextEditorHighlightingPass>();
     final TIntArrayList passesRefusedToCreate = new TIntArrayList();
@@ -147,7 +148,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     final FileStatusMap statusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();
     passesRefusedToCreate.forEach(new TIntProcedure() {
       public boolean execute(int passId) {
-        statusMap.markFileUpToDate(editor.getDocument(), psiFile, passId);
+        statusMap.markFileUpToDate(document, psiFile, passId);
         return true;
       }
     });

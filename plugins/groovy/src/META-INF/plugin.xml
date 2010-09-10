@@ -38,15 +38,19 @@
 
     <extensionPoint name="positionManagerDelegate" interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
     <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
-    <extensionPoint name="scriptType" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP"/>
+    <extensionPoint name="scriptType" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP"/>
 
     <!-- Groovy DSL extension points -->
     <extensionPoint name="psiEnhancerCategory" interface="org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory"/>
     <extensionPoint name="gdslTopLevelProvider" interface="org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider"/>
 
+    <extensionPoint name="groovyFrameworkConfigNotification" interface="org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
+    <groovyFrameworkConfigNotification order="last"
+        implementation="org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotification"/>
+
     <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
@@ -94,13 +98,11 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
 
-    <projectConfigurable implementation="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
-    <projectConfigurable implementation="org.jetbrains.plugins.groovy.gradle.GradleConfigurable"/>
-    <!--<projectConfigurable implementation="org.jetbrains.plugins.groovy.settings.GroovyProjectConfigurable"/>-->
+    <projectConfigurable instance="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
+    <projectConfigurable instance="org.jetbrains.plugins.groovy.gradle.GradleConfigurable"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.GradleSettings" serviceImplementation="org.jetbrains.plugins.groovy.gradle.GradleSettings"/>
-    <!--<projectService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyProjectSettings" serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyProjectSettings"/>-->
 
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
@@ -167,7 +169,6 @@
                                     implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
     <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
-    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyBasicToClassNameDelegator" order="before groovyBasic"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor" id="groovyBasic"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>
     <classNameInsertHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyClassNameInsertHandler"/>
@@ -213,16 +214,13 @@
     <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
     <superMethodsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GDKSuperMethodSearcher"/>
 
-    <!--<gotoDeclarationHandler implementation="org.jetbrains.plugins.groovy.actions.GotoConstructorDeclarationHandler"/>-->
     <targetElementEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator"/>
-
-    <!--<compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>-->
 
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 
     <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
 
-    <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable"/>
+    <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerSettingsFactory"/>
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->

@@ -57,7 +57,13 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
   public PsiElement getDeclaration() {
     final DomElement declaration = myChildrenDescription.getUserData(DomExtension.KEY_DECLARATION);
 
-    if (declaration != null) return declaration.getXmlElement();
+    if (declaration != null) {
+      final DomTarget target = DomTarget.getTarget(declaration);
+      if (target != null) {
+        return PomService.convertToPsi(target);
+      }
+      return declaration.getXmlElement();
+    }
 
     return PomService.convertToPsi(myManager.getProject(), myChildrenDescription);
   }

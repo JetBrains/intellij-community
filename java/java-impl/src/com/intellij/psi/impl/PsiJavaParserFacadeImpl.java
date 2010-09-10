@@ -273,7 +273,9 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     String catchSectionText = buffer.toString();
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
     TreeElement catchSection = getJavaParsingContext(holderElement).getStatementParsing().parseCatchSectionText(catchSectionText);
-    LOG.assertTrue(catchSection != null && catchSection.getElementType() == JavaElementType.CATCH_SECTION, catchSectionText);
+    if (catchSection == null || catchSection.getElementType() != JavaElementType.CATCH_SECTION) {
+      LOG.error(catchSectionText + "\nPSI:" + (catchSection == null ? null : DebugUtil.treeToString(catchSection, false)));
+    }
     holderElement.rawAddChildren(catchSection);
     PsiCatchSection psiCatchSection = (PsiCatchSection)SourceTreeToPsiMap.treeElementToPsi(catchSection);
 

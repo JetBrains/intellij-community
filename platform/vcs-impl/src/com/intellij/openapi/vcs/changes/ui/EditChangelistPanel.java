@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -23,6 +24,7 @@ import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +40,8 @@ import java.awt.event.KeyListener;
  * @author max
  */
 public abstract class EditChangelistPanel {
-  private JTextField myNameTextField;
-  private JTextArea myDescriptionTextArea;
+  private EditorTextField myNameTextField;
+  private EditorTextField myDescriptionTextArea;
   private JPanel myContent;
   private JPanel myAdditionalControlsPanel;
   private JCheckBox myMakeActiveCheckBox;
@@ -98,9 +100,13 @@ public abstract class EditChangelistPanel {
       support.installSearch(myNameTextField, myDescriptionTextArea);
       myConsumer = support.addControls(myAdditionalControlsPanel, initial);
     }
-    myNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    myNameTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      public void beforeDocumentChange(com.intellij.openapi.editor.event.DocumentEvent event) {
+      }
+
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
         nameChangedImpl(project, initial);
       }
     });

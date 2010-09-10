@@ -35,15 +35,15 @@ public class HgSingleUserTestCase extends HgAbstractTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myRepo = createRepository();
+    myRepo = HgTestRepository.create(this);
     myProjectDir = new File(myRepo.getDirFixture().getTempDirPath());
     
     initProject(myProjectDir);
     activateVCS(HgVcs.VCS_NAME);
     myChangeListManager = new HgTestChangeListManager(myProject);
 
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
+    doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
 }

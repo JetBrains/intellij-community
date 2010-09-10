@@ -18,11 +18,13 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,7 @@ import java.io.File;
  * @author max
  */
 public class Change {
-  private final int myHash;
+  private int myHash;
 
   public enum Type {
     MODIFICATION,
@@ -50,6 +52,7 @@ public class Change {
   protected boolean myMoved;
   protected boolean myRenameOrMoveCached = false;
   private boolean myIsReplaced;
+  private Type myType;
 
   public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision) {
     this(beforeRevision, afterRevision, convertStatus(beforeRevision, afterRevision));
@@ -60,7 +63,7 @@ public class Change {
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
-    myHash = calculateHash();
+    myHash = -1;
   }
 
   private static FileStatus convertStatus(ContentRevision beforeRevision, ContentRevision afterRevision) {
@@ -70,19 +73,26 @@ public class Change {
   }
 
   public Type getType() {
-    if (myBeforeRevision == null) {
-      return Type.NEW;
-    }
+    if (myType == null) {
+      if (myBeforeRevision == null) {
+        myType = Type.NEW;
+        return myType;
+      }
 
-    if (myAfterRevision == null) {
-      return Type.DELETED;
-    }
+      if (myAfterRevision == null) {
+        myType = Type.DELETED;
+        return myType;
+      }
 
-    if (!Comparing.equal(myBeforeRevision.getFile(), myAfterRevision.getFile())) {
-      return Type.MOVED;
-    }
+      if ((! Comparing.equal(myBeforeRevision.getFile(), myAfterRevision.getFile())) ||
+          ((! SystemInfo.isFileSystemCaseSensitive) && VcsUtil.caseDiffers(myBeforeRevision.getFile().getPath(), myAfterRevision.getFile().getPath()))) {
+        myType = Type.MOVED;
+        return myType;
+      }
 
-    return Type.MODIFICATION;
+      myType = Type.MODIFICATION;
+    }
+    return myType;
   }
 
   @Nullable
@@ -124,6 +134,9 @@ public class Change {
   }
 
   public int hashCode() {
+    if (myHash == -1) {
+      myHash = calculateHash();
+    }
     return myHash;
   }
 
@@ -133,7 +146,7 @@ public class Change {
 
   private static int revisionHashCode(ContentRevision rev) {
     if (rev == null) return 0;
-    return rev.getFile().hashCode();
+    return rev.getFile().getIOFile().getPath().hashCode();
   }
 
   public boolean affectsFile(File ioFile) {

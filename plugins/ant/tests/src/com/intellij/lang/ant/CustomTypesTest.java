@@ -15,15 +15,18 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.lang.ant.dom.AntDomCustomElement;
+import com.intellij.lang.ant.dom.AntDomElement;
+import com.intellij.lang.ant.dom.AntDomProject;
+import com.intellij.lang.ant.dom.AntDomRecursiveVisitor;
+import com.intellij.lang.ant.typedefs.AntCustomTask;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.testFramework.ParsingTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.PathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,30 +47,45 @@ public class CustomTypesTest extends ParsingTestCase {
     doTest();
   }
 
-  public void testAntCustomTaskWithClasspath() throws Exception {
-    doTest();
-  }
-
-  public void testAntCustomTaskWithComplexClasspath() throws Exception {
-    doTest();
-  }
-
-  @NotNull
-  protected AntTypeDefinition doTest() throws Exception {
+  protected void doTest() throws Exception {
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
     PsiFile file = createFile(name + "." + myFileExt, text);
-    final AntFile antFile = AntSupport.getAntFile(file);
-    antFile.accept(new PsiRecursiveElementVisitor() { });
-    final AntTypeDefinition result = antFile.getBaseTypeDefinition(myCustomTaskClass);
-    assertNotNull(result);
-    return result;
+    final AntDomProject antProject = AntSupport.getAntDomProject(file);
+    final Ref<Boolean> found = new Ref<Boolean>(false); 
+    antProject.accept(new AntDomRecursiveVisitor() {
+
+      public void visitAntDomElement(AntDomElement element) {
+        if (!found.get()) {
+          super.visitAntDomElement(element);
+        }
+      }
+
+      public void visitAntDomCustomElement(AntDomCustomElement element) {
+        final Class clazz = element.getDefinitionClass();
+        if (clazz != null && AntCustomTask.class.getName().equals(clazz.getName())) {
+          found.set(true);
+        }
+        else {
+          super.visitAntDomElement(element);
+        }
+      }
+    });
+    assertTrue(found.get());
   }
 
   protected String loadFile(String name) throws IOException {
     String fullName = getTestDataPath() + File.separatorChar + name;
     String text = new String(FileUtil.loadFileText(new File(fullName))).trim();
     text = StringUtil.convertLineSeparators(text);
+    final String root = PathUtil.getJarPathForClass(this.getClass());
+    final String placeholder = "<_classpath_>";
+    final int index = text.indexOf(placeholder);
+    if (index > 0) {
+      final String before = text.substring(0, index);
+      final String after = text.substring(index + placeholder.length());
+      text = before + FileUtil.toSystemIndependentName(root) + after;
+    }
     return text;
   }
 }

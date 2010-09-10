@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduc
 /**
  * @author ilyas
  */
-public class GroovyRefactoringSupportProvider extends DefaultRefactoringSupportProvider {
+public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider {
 
   public static final GroovyRefactoringSupportProvider INSTANCE = new GroovyRefactoringSupportProvider();
 
@@ -61,7 +61,7 @@ public class GroovyRefactoringSupportProvider extends DefaultRefactoringSupportP
   }
 
   @Override
-  public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
+  public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
     if (!(element instanceof GrVariable)) return false;
     if (element instanceof GrField) return false;
 

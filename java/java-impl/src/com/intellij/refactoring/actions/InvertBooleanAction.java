@@ -17,10 +17,7 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
 
@@ -36,7 +33,7 @@ public class InvertBooleanAction extends BaseRefactoringAction {
     return elements.length == 1 && (elements[0] instanceof PsiMethod || elements[0] instanceof PsiVariable);
   }
 
-  protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
+  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
     if (element instanceof PsiVariable) {
       return PsiType.BOOLEAN.equals(((PsiVariable) element).getType());
     }

@@ -26,11 +26,18 @@ import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class JUnit4TestResultsSender extends RunListener {
   private final OutputObjectRegistry myRegistry;
   private final PacketProcessor myErr;
-  private TestMeter myCurrentTestMeter;
-  private Description myCurrentTest;
+  private Map myCurrentTestMeters = new HashMap();
+  private Set myCurrentTests = new HashSet();
 
   public JUnit4TestResultsSender(OutputObjectRegistry packetFactory, PacketProcessor segmentedErr) {
     myRegistry = packetFactory;
@@ -41,22 +48,18 @@ public class JUnit4TestResultsSender extends RunListener {
     final Description description = failure.getDescription();
     final Throwable throwable = failure.getException();
 
-    if (throwable instanceof AssertionError) {
+    if (throwable instanceof AssertionError || throwable.getCause() instanceof AssertionError) {
       // junit4 makes no distinction between errors and failures
-      doAddFailure(description, (Error)throwable);
+      doAddFailure(description, throwable);
     }
 
     else {
-      if (description.equals(myCurrentTest)) { //exceptions thrown from @BeforeClass
-        stopMeter(description);
-      }
       prepareDefectPacket(description, throwable).send();
     }
   }
 
   public void testAssumptionFailure(Failure failure) {
     final Description description = failure.getDescription();
-    stopMeter(description);
     prepareIgnoredPacket(description, null).addThrowable(failure.getException()).send();
   }
 
@@ -72,21 +75,34 @@ public class JUnit4TestResultsSender extends RunListener {
       //junit < 4.4
     }
     testStarted(description);
-      stopMeter(description);
-      prepareIgnoredPacket(description, val).addLimitedString("").addLimitedString("").send();
+    stopMeter(description);
+    prepareIgnoredPacket(description, val).addLimitedString("").addLimitedString("").send();
   }
 
   private void doAddFailure(final Description test, final Throwable assertion) {
-    if (test.equals(myCurrentTest)) {
-      stopMeter(test);
-    }
     createExceptionNotification(assertion).createPacket(myRegistry, test).send();
   }
 
   private static PacketFactory createExceptionNotification(Throwable assertion) {
     if (assertion instanceof KnownException) return ((KnownException)assertion).getPacketFactory();
-    if (assertion instanceof ComparisonFailure || assertion.getClass().getName().equals("org.junit.ComparisonFailure")) {
+    if (assertion instanceof ComparisonFailure || assertion instanceof org.junit.ComparisonFailure) {
       return ComparisonDetailsExtractor.create(assertion);
+    }
+    final Throwable cause = assertion.getCause();
+    if (cause instanceof ComparisonFailure || cause instanceof org.junit.ComparisonFailure) {
+      try {
+        return ComparisonDetailsExtractor.create(assertion, ComparisonDetailsExtractor.getExpected(cause), ComparisonDetailsExtractor.getActual(cause));
+      }
+      catch (Throwable ignore) {}
+    }
+
+    if (assertion.getMessage() != null) {
+      final Matcher matcher =
+        Pattern.compile("\nExpected: \"(.*)\"\n     got: \"(.*)\"\n", Pattern.DOTALL).matcher(assertion.getMessage());
+      if (matcher.matches()) {
+        return ComparisonDetailsExtractor
+          .create(assertion, matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+      }
     }
     return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
   }
@@ -101,20 +117,24 @@ public class JUnit4TestResultsSender extends RunListener {
   }
 
   public void testFinished(Description description) throws Exception {
+    final Object testMeter = myCurrentTestMeters.get(description);
     stopMeter(description);
     Packet packet = myRegistry.createPacket().setTestState(description, PoolOfTestStates.COMPLETE_INDEX);
-    myCurrentTestMeter.writeTo(packet);
+    ((TestMeter)testMeter).writeTo(packet);
     packet.send();
     myRegistry.forget(description);
   }
 
   private void stopMeter(Description test) {
-    if (!test.equals(myCurrentTest)) {
-      myCurrentTestMeter = new TestMeter();
+    if (!myCurrentTests.remove(test)) {
+      myCurrentTestMeters.put(test, new TestMeter());
       //noinspection HardCodedStringLiteral
-      System.err.println("Wrong test finished. Last started: " + myCurrentTest+" stopped: " + test+"; "+test.getClass());
+      System.err.println("Wrong test finished. Last started: " + myCurrentTests +" stopped: " + test+"; "+test.getClass());
     }
-    myCurrentTestMeter.stop();
+    final Object stopMeter = myCurrentTestMeters.remove(test);
+    if (stopMeter instanceof TestMeter) {
+      ((TestMeter)stopMeter).stop();
+    }
   }
 
   private void switchOutput(Packet switchPacket) {
@@ -124,10 +144,10 @@ public class JUnit4TestResultsSender extends RunListener {
 
 
   public synchronized void testStarted(Description description) throws Exception {
-    myCurrentTest = description;
+    myCurrentTests.add(description);
     myRegistry.createPacket().setTestState(description, PoolOfTestStates.RUNNING_INDEX).send();
     switchOutput(myRegistry.createPacket().switchInputTo(description));
-    myCurrentTestMeter = new TestMeter();
+    myCurrentTestMeters.put(description, new TestMeter());
   }
 
 }

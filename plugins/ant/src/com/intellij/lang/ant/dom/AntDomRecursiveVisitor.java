@@ -18,6 +18,8 @@ package com.intellij.lang.ant.dom;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 
+import java.util.Iterator;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 22, 2010
@@ -27,10 +29,16 @@ public class AntDomRecursiveVisitor implements DomElementVisitor{
   }
 
   public void visitAntDomElement(AntDomElement element) {
-    for (AntDomElement child : element.getAntChildren()) {
+    for (Iterator<AntDomElement> iterator = element.getAntChildrenIterator(); iterator.hasNext();) {
+      AntDomElement child = iterator.next();
       child.accept(this);
     }
   }
+
+  public void visitAntDomCustomElement(AntDomCustomElement custom) {
+    visitAntDomElement(custom);
+  }
+  
 
   public void visitTypeDef(AntDomTypeDef typedef) {
     visitAntDomElement(typedef);
@@ -71,4 +79,13 @@ public class AntDomRecursiveVisitor implements DomElementVisitor{
   public void visitImport(AntDomImport importTag) {
     visitAntDomElement(importTag);
   }
+  
+  public void visitAntDomAntCall(AntDomAntCall antCall) {
+    visitAntDomElement(antCall);
+  }
+  
+  public void visitAntDomAntCallParam(AntDomAntCallParam antCallParam) {
+    visitAntDomElement(antCallParam);
+  }
+  
 }

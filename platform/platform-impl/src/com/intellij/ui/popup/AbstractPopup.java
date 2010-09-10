@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -197,7 +198,7 @@ public class AbstractPopup implements JBPopup {
     myPopupBorder = PopupBorder.Factory.create(true);
     myShadowed = showShadow;
     myPaintShadow = showShadow && !SystemInfo.isMac && !movable && !resizable && Registry.is("ide.popup.dropShadow");
-    myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner());
+    myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner() && resizable);
     myMayBeParent = mayBeParent;
 
     myContent.add(component, BorderLayout.CENTER);
@@ -680,13 +681,6 @@ public class AbstractPopup implements JBPopup {
       listener.beforeShown(new LightweightWindowEvent(this));
     }
 
-    Window w = myPopup.getWindow();
-    if (w != null) {
-      WindowManagerEx.WindowShadowMode mode =
-        myShadowed ? WindowManagerEx.WindowShadowMode.NORMAL : WindowManagerEx.WindowShadowMode.DISABLED;
-      WindowManagerEx.getInstanceEx().setWindowShadow(myWindow, mode);
-    }
-
     myPopup.setRequestFocus(myRequestFocus);
     myPopup.show();
 
@@ -718,12 +712,13 @@ public class AbstractPopup implements JBPopup {
       }
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (isDisposed()) return;
+    getFocusManager().requestFocus(new FocusCommand() {
+      @Override
+      public ActionCallback run() {
+        if (isDisposed()) return new ActionCallback.Done();
 
         if (myRequestFocus) {
-          requestFocus();
+          _requestFocus();
         }
 
         if (myPreferredFocusedComponent != null && myInStack) {
@@ -731,8 +726,19 @@ public class AbstractPopup implements JBPopup {
         }
 
         afterShow();
+
+        final ActionCallback result = new ActionCallback();
+
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            result.setDone();
+          }
+        });
+
+        return result;
       }
-    });
+    }, true);
   }
 
   private void prepareToShow() {
@@ -825,6 +831,10 @@ public class AbstractPopup implements JBPopup {
       wndManager.setWindowMask(window, mask);
     }
 
+    WindowManagerEx.WindowShadowMode mode =
+      myShadowed ? WindowManagerEx.WindowShadowMode.NORMAL : WindowManagerEx.WindowShadowMode.DISABLED;
+    WindowManagerEx.getInstanceEx().setWindowShadow(window, mode);
+
     return window;
   }
 
@@ -846,15 +856,20 @@ public class AbstractPopup implements JBPopup {
   }
 
   protected final void requestFocus() {
+    getFocusManager().requestFocus(new FocusCommand() {
+      @Override
+      public ActionCallback run() {
+        _requestFocus();
+        return new ActionCallback.Done();
+      }
+    }, true);
+  }
+
+  private void _requestFocus() {
     if (!myFocusable) return;
 
     if (myPreferredFocusedComponent != null) {
-      if (myProject != null) {
-        getFocusManager().requestFocus(myPreferredFocusedComponent, true);
-      }
-      else {
-        myPreferredFocusedComponent.requestFocus();
-      }
+      myPreferredFocusedComponent.requestFocus();
     }
   }
 
@@ -1025,10 +1040,6 @@ public class AbstractPopup implements JBPopup {
       else {
         setBorder(border);
       }
-
-      if (drawMacCorner && UIUtil.isUnderAquaLookAndFeel()) {
-        setBackground(new Color(UIUtil.getPanelBackgound().getRGB()));
-      }
     }
 
     public void paint(Graphics g) {
@@ -1154,7 +1165,14 @@ public class AbstractPopup implements JBPopup {
   public static Window setSize(JComponent content, final Dimension size) {
     final Window popupWindow = SwingUtilities.windowForComponent(content);
     final Point location = popupWindow.getLocation();
-    popupWindow.setBounds(location.x, location.y, size.width, size.height);
+    popupWindow.setLocation(location.x, location.y);
+    Insets insets = content.getInsets();
+    if (insets != null) {
+      size.width += insets.left + insets.right;
+      size.height += insets.top + insets.bottom;
+    }
+    content.setPreferredSize(size);
+    popupWindow.pack();
     return popupWindow;
   }
 

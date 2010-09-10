@@ -101,7 +101,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return runConfiguration;
   }
 
-  public @Nullable LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+  @Nullable
+  public LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
     return null;
   }
 
@@ -179,10 +180,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
       predefinedLogFile.writeExternal(fileElement);
       element.addContent(fileElement);
     }
-  }
-
-  public boolean needAdditionalConsole() {
-    return true;
   }
 
 }

@@ -2,13 +2,13 @@
 <suite name="TestNG Suite">
   <test name="TestNG Intentoins Test">
     <classes>
-      <class name="com.theoryinpractice.testng.inspection.ConvertAnnotationInspectionTest"/>
       <class name="com.theoryinpractice.testng.inspection.ConvertJavadocInspectionTest"/>
       <class name="com.theoryinpractice.testng.inspection.ConvertJUnitInspectionTest"/>
       <class name="com.theoryinpractice.testng.inspection.ConvertOldAnnotationInspectionTest"/>
       <class name="com.theoryinpractice.testng.configuration.ConfigurationsTest"/>
       <class name="com.theoryinpractice.testng.inspection.UndeclaredTestsInspectionTest"/>
       <class name="com.theoryinpractice.testng.intention.AddTestNGJarFixTest"/>
+      <class name="com.theoryinpractice.testng.referenceContributor.TestNGDataProviderTest"/>
     </classes>
   </test>
 </suite>

@@ -118,10 +118,6 @@
       <skipForDefaultProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.VisibleGeneralHighlightingPassFactory</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
@@ -208,6 +204,10 @@
 
     <component>
       <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector</implementation-class>
     </component>
   </project-components>
 

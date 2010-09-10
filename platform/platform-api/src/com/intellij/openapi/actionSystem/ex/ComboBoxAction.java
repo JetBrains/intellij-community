@@ -36,6 +36,7 @@ import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
+  private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
 
   protected ComboBoxAction() {
   }
@@ -74,7 +75,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
       setModel(new MyButtonModel());
-      setHorizontalAlignment(SwingConstants.LEFT);
+      setHorizontalAlignment(LEFT);
       setFocusable(false);
       Insets margins = getMargin();
       setMargin(new Insets(margins.top, 2, margins.bottom, 2));
@@ -196,24 +197,56 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
     }
 
+
+    @Override
+    public Insets getInsets() {
+      final Insets insets = super.getInsets();
+      return new Insets(insets.top, insets.left, insets.bottom, insets.right + ARROW_ICON.getIconWidth());
+    }
+
+    @Override
+    public Insets getInsets(Insets insets) {
+      final Insets result = super.getInsets(insets);
+
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        result.top += 2;
+        result.left += 8;
+        result.bottom += 2;
+        result.right += 4 + ARROW_ICON.getIconWidth();
+      }
+      else {
+        result.right += ARROW_ICON.getIconWidth();
+      }
+
+      return result;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      int width = super.getPreferredSize().width;
+
+      final String text = getText();
+      if ((text == null || text.trim().length() == 0) && getIcon() == null) {
+        width = 10 + ARROW_ICON.getIconWidth();
+      }
+
+      return new Dimension(width, UIUtil.isUnderNimbusLookAndFeel() ? 24 : 21);
+    }
+
     public final void paint(Graphics g) {
       super.paint(g);
       Dimension size = getSize();
       String text = getText();
       boolean isEmpty = getIcon() == null && (text == null || text.trim().length() == 0);
-      int x = isEmpty ? (size.width - ARROW_ICON.getIconWidth())/2 : size.width - ARROW_ICON.getIconWidth() - 2;
-      ARROW_ICON.paintIcon(null, g, x, (size.height - ARROW_ICON.getIconHeight()) / 2);
+      final Insets insets = super.getInsets();
+      final Icon icon = isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
+      int x = isEmpty ? (size.width - icon.getIconWidth())/2: size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
+      icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
     }
 
     protected void updateButtonSize() {
-      int width;
-      String text = getText();
-      if ((text == null || text.trim().length() == 0) && getIcon() == null) {
-        width = ARROW_ICON.getIconWidth() + 10;
-      } else {
-        width = getUI().getPreferredSize(this).width + ARROW_ICON.getIconWidth() + 2;
-      }
-      setPreferredSize(new Dimension(width, 21));
+      invalidate();
+      repaint();
     }
   }
 }

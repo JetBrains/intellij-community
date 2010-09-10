@@ -43,10 +43,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.HashMap;
@@ -92,6 +94,7 @@ public class TemplateState implements Disposable {
   private Document myDocument;
   private boolean myFinished;
   @Nullable private PairProcessor<String, String> myProcessor;
+  private boolean mySelectionCalculated = false;
 
   public TemplateState(@NotNull Project project, final Editor editor) {
     myProject = project;
@@ -381,7 +384,20 @@ public class TemplateState implements Disposable {
 
   private void afterChangedUpdate() {
     if (isFinished()) return;
-    LOG.assertTrue(myTemplate != null, myPrevTemplate != null ? myPrevTemplate.getKey() : "prev template is null");
+    String message;
+    if (myPrevTemplate != null) {
+      message = myPrevTemplate.getKey();
+      if (message == null || message.length() == 0) {
+        message = myPrevTemplate.getString();
+        if (message == null) {
+          message = myPrevTemplate.getTemplateText();
+        }
+      }
+    }
+    else {
+      message = "prev template is null";
+    }
+    LOG.assertTrue(myTemplate != null, message);
     if (myDocumentChanged) {
       if (myDocumentChangesTerminateTemplate || mySegments.isInvalid()) {
         final int oldIndex = myCurrentVariableNumber;
@@ -585,6 +601,12 @@ public class TemplateState implements Disposable {
           for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
             if (!calcedSegments.get(i)) {
               String variableName = myTemplate.getSegmentName(i);
+              if (variableName.equals(TemplateImpl.SELECTION)) {
+                if (mySelectionCalculated) {
+                  continue;
+                }
+                mySelectionCalculated = true;
+              }
               String newValue = getVariableValue(variableName).getText();
               int start = mySegments.getSegmentStart(i);
               int end = mySegments.getSegmentEnd(i);
@@ -630,7 +652,7 @@ public class TemplateState implements Disposable {
     String newValue = result.toString();
     if (newValue == null) newValue = "";
 
-    if (element != null) {
+    if (element != null && !(expressionNode instanceof SelectionNode)) {
       newValue = LanguageLiteralEscapers.INSTANCE.forLanguage(element.getLanguage()).getEscapedText(element, newValue);
     }
 
@@ -661,6 +683,10 @@ public class TemplateState implements Disposable {
                                     mySegments.getSegmentStart(segmentNumberWithTheSameStart));
       }
     }
+  }
+
+  public int getCurrentVariableNumber() {
+    return myCurrentVariableNumber;
   }
 
   public void previousTab() {
@@ -757,7 +783,7 @@ public class TemplateState implements Disposable {
   }
 
   public void gotoEnd() {
-    gotoEnd(false);
+    gotoEnd(true);
   }
 
   private void finishTemplateEditing(boolean brokenOff) {
@@ -930,6 +956,14 @@ public class TemplateState implements Disposable {
       for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
         optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
       }
+      // for Python, we need to indent the template even if reformatting is enabled, because otherwise indents would be broken
+      // and reformat wouldn't be able to fix them
+      if (myTemplate.isToIndent()) {
+        if (!myTemplateIndented) {
+          smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+          myTemplateIndented = true;
+        }
+      }
       if (myTemplate.isToReformat()) {
         try {
           int endSegmentNumber = myTemplate.getEndSegmentNumber();
@@ -937,7 +971,7 @@ public class TemplateState implements Disposable {
           RangeMarker rangeMarker = null;
           if (endSegmentNumber >= 0) {
             int endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
-            PsiElement marker = style.insertNewLineIndentMarker(file, endVarOffset);
+            PsiElement marker = CodeStyleManagerImpl.insertNewLineIndentMarker(file, endVarOffset);
             if (marker != null) rangeMarker = myDocument.createRangeMarker(marker.getTextRange());
           }
           int startOffset = rangeMarkerToReformat != null ? rangeMarkerToReformat.getStartOffset() : myTemplateRange.getStartOffset();
@@ -950,16 +984,20 @@ public class TemplateState implements Disposable {
             //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!
             mySegments.replaceSegmentAt(endSegmentNumber, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
             myDocument.deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+            PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+          }
+          if (endSegmentNumber >= 0) {
+            final int offset = mySegments.getSegmentStart(endSegmentNumber);
+            final int lineStart = myDocument.getLineStartOffset(myDocument.getLineNumber(offset));
+            // if $END$ is at line start, put it at correct indentation
+            if (myDocument.getCharsSequence().subSequence(lineStart, offset).toString().trim().length() == 0) {
+              final int adjustedOffset = style.adjustLineIndent(file, offset);
+              mySegments.replaceSegmentAt(endSegmentNumber, adjustedOffset, adjustedOffset);
+            }
           }
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
-        }
-      }
-      else if (myTemplate.isToIndent()) {
-        if (!myTemplateIndented) {
-          smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
-          myTemplateIndented = true;
         }
       }
     }
@@ -970,6 +1008,23 @@ public class TemplateState implements Disposable {
     int endLineNum = myDocument.getLineNumber(endOffset);
     if (endLineNum == startLineNum) {
       return;
+    }
+
+    int selectionIndent = -1;
+    int selectionStartLine = -1;
+    int selectionEndLine = -1;
+    int selectionSegment = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
+    if (selectionSegment >= 0) {
+      int selectionStart = myTemplate.getSegmentOffset(selectionSegment);
+      selectionIndent = 0;
+      String templateText = myTemplate.getTemplateText();
+      while (selectionStart > 0 && templateText.charAt(selectionStart-1) == ' ') {
+        // TODO handle tabs
+        selectionIndent++;
+        selectionStart--;
+      }
+      selectionStartLine = myDocument.getLineNumber(mySegments.getSegmentStart(selectionSegment));
+      selectionEndLine = myDocument.getLineNumber(mySegments.getSegmentEnd(selectionSegment));
     }
 
     int indentLineNum = startLineNum;
@@ -993,12 +1048,17 @@ public class TemplateState implements Disposable {
       }
       buffer.append(ch);
     }
-    if (buffer.length() == 0) {
+    if (buffer.length() == 0 && selectionIndent <= 0) {
       return;
     }
     String stringToInsert = buffer.toString();
     for (int i = startLineNum + 1; i <= endLineNum; i++) {
-      myDocument.insertString(myDocument.getLineStartOffset(i), stringToInsert);
+      if (i > selectionStartLine && i <= selectionEndLine) {
+        myDocument.insertString(myDocument.getLineStartOffset(i), StringUtil.repeatSymbol(' ', selectionIndent));
+      }
+      else {
+        myDocument.insertString(myDocument.getLineStartOffset(i), stringToInsert);
+      }
     }
   }
 
@@ -1047,7 +1107,7 @@ public class TemplateState implements Disposable {
     return myTemplate;
   }
 
-  void reset() {
-    myListeners = new ArrayList<TemplateEditingListener>();
+  public Editor getEditor() {
+    return myEditor;
   }
 }

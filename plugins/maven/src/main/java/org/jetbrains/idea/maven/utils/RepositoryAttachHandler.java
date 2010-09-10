@@ -22,12 +22,12 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableAttachHandler;
@@ -36,19 +36,17 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.facade.MavenFacadeManager;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenRemoteRepository;
-import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
+import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.services.MavenServicesManager;
@@ -63,8 +61,6 @@ import java.util.*;
  * @author Gregory.Shrago
  */
 public class RepositoryAttachHandler implements LibraryTableAttachHandler {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.maven.utils.RepositoryAttachHandler");
-
   public String getLongName() {
     return "Attach Classes from Repository...";
   }
@@ -87,7 +83,12 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       final ActionCallback callback = new ActionCallback();
       final String copyTo = dialog.getDirectoryPath();
       final String coord = dialog.getCoordinateText();
-      resolveLibrary(project, coord, dialog.getRepositories(), false, new Processor<List<MavenArtifact>>() {
+      final boolean attachJavaDoc = dialog.getAttachJavaDoc();
+      final boolean attachSources = dialog.getAttachSources();
+      final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
+      if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
+      if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);
+      resolveLibrary(project, coord, extraTypes, dialog.getRepositories(), false, new Processor<List<MavenArtifact>>() {
         public boolean process(final List<MavenArtifact> artifacts) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
@@ -137,23 +138,6 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     return libraryName.substring("Managed: ".length());
   }
 
-  public ActionCallback refreshLibrary(final Project project, final Library.ModifiableModel library) {
-    final ActionCallback result = new ActionCallback();
-    final String coord = getMavenCoordinate(library.getName());
-    resolveLibrary(project, coord, getDefaultRepositories(), true, new Processor<List<MavenArtifact>>() {
-      public boolean process(final List<MavenArtifact> artifacts) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            replaceLibraryData(project, library, artifacts, null);
-            result.setDone();
-          }
-        });
-        return true;
-      }
-    });
-    return result;
-  }
-
   private static void replaceLibraryData(Project project,
                                          Library.ModifiableModel library,
                                          Collection<MavenArtifact> artifacts,
@@ -166,6 +150,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         }
       }
     }
+    final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (MavenArtifact each : artifacts) {
       try {
         File repoFile = each.getFile();
@@ -177,13 +162,22 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
           }
         }
         String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(toFile.getPath()));
-        library.addRoot(url, OrderRootType.CLASSES);
+        manager.refreshAndFindFileByUrl(url);
+        if (MavenExtraArtifactType.DOCS.getDefaultClassifier().equals(each.getClassifier())) {
+          library.addRoot(url, JavadocOrderRootType.getInstance());
+        }
+        else if (MavenExtraArtifactType.SOURCES.getDefaultClassifier().equals(each.getClassifier())) {
+          library.addRoot(url, OrderRootType.SOURCES);
+        }
+        else {
+          library.addRoot(url, OrderRootType.CLASSES);
+        }
       }
       catch (MalformedURLException e) {
-        LOG.warn(e);
+        MavenLog.LOG.warn(e);
       }
       catch (IOException e) {
-        LOG.warn(e);
+        MavenLog.LOG.warn(e);
       }
     }
   }
@@ -195,45 +189,49 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
 
   public static void searchArtifacts(final Project project, String coord,
                                      final PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean> resultProcessor) {
-    if (coord == null) return;
-    final MavenArtifactInfo template = createTemplate(coord, "jar");
+    if (coord == null || coord.length() == 0) return;
+    final MavenArtifactInfo template;
+    if (coord.indexOf(':') == -1 && Character.isUpperCase(coord.charAt(0))) {
+      template = new MavenArtifactInfo(null, null, null, "jar", null, coord, null);
+    }
+    else {
+      template = new MavenArtifactInfo(getMavenId(coord), "jar", null);
+    }
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<Pair<MavenArtifactInfo, MavenRepositoryInfo>>> result
           = Ref.create(Collections.<Pair<MavenArtifactInfo, MavenRepositoryInfo>>emptyList());
-        final Ref<List<MavenRepositoryInfo>> result2 = Ref.create(Collections.<MavenRepositoryInfo>emptyList());
         final Ref<Boolean> tooManyRef = Ref.create(Boolean.FALSE);
         try {
           MavenFacadeManager facade = MavenFacadeManager.getInstance();
           final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
-          final List<MavenRepositoryInfo> result2List = new ArrayList<MavenRepositoryInfo>();
-          for (String nexusUrl : MavenServicesManager.getServiceUrls()) {
+          for (String serviceUrl : MavenServicesManager.getServiceUrls()) {
             final List<MavenArtifactInfo> artifacts;
             try {
-              artifacts = facade.findArtifacts(template, nexusUrl);
+              artifacts = facade.findArtifacts(template, serviceUrl);
             }
             catch (Exception ex) {
-              LOG.warn("Accessing Nexus at: " + nexusUrl, ex);
+              MavenLog.LOG.warn("Accessing Service at: " + serviceUrl, ex);
               continue;
             }
-            if (artifacts == null) {
-              tooManyRef.set(Boolean.TRUE);
-            }
-            else if (!artifacts.isEmpty()) {
-              final List<MavenRepositoryInfo> repositories = facade.getRepositories(nexusUrl);
+            if (!artifacts.isEmpty()) {
+              final List<MavenRepositoryInfo> repositories = facade.getRepositories(serviceUrl);
               final HashMap<String, MavenRepositoryInfo> map = new HashMap<String, MavenRepositoryInfo>();
               for (MavenRepositoryInfo repository : repositories) {
                 map.put(repository.getId(), repository);
               }
-              result2List.addAll(repositories);
               for (MavenArtifactInfo artifact : artifacts) {
-                resultList.add(Pair.create(artifact, map.get(artifact.getRepositoryId())));
+                if (artifact == null) {
+                  tooManyRef.set(Boolean.TRUE);
+                }
+                else {
+                  resultList.add(Pair.create(artifact, map.get(artifact.getRepositoryId())));
+                }
               }
             }
           }
           result.set(resultList);
-          result2.set(result2List);
         }
         catch (Exception e) {
           handleError(null, e);
@@ -263,7 +261,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
               repositories = manager.getRepositories(nexusUrl);
             }
             catch (Exception ex) {
-              LOG.warn("Accessing Nexus at: " + nexusUrl, ex);
+              MavenLog.LOG.warn("Accessing Service at: " + nexusUrl, ex);
               continue;
             }
             repoList.addAll(repositories);
@@ -284,41 +282,41 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     });
   }
 
-  private static MavenArtifactInfo createTemplate(String coord, String packaging) {
+  private static MavenId getMavenId(final String coord) {
     final String[] parts = coord.split(":");
-    if (parts.length == 1 && parts[0].length() > 0 && Character.isUpperCase(parts[0].charAt(0))) {
-      return new MavenArtifactInfo(null, null, null, packaging, null, parts[0], null);
-    }
-    else {
-      return new MavenArtifactInfo(parts.length > 0 ? parts[0] : null,
-                                   parts.length > 1 ? parts[1] : null,
-                                   parts.length > 2 ? parts[2] : null,
-                                   packaging,
-                                   null);
-    }
+    return new MavenId(parts.length > 0 ? parts[0] : null,
+                                 parts.length > 1 ? parts[1] : null,
+                                 parts.length > 2 ? parts[2] : null);
+
   }
 
   private static void handleError(String message, Exception e) {
-    LOG.error(message, e);
+    MavenLog.LOG.error(message, e);
   }
 
   public static void resolveLibrary(final Project project,
-                                    final String libName,
-                                    final Collection<MavenRepositoryInfo> repositories,
+                                    final String coord,
+                                    List<MavenExtraArtifactType> extraTypes, final Collection<MavenRepositoryInfo> repositories,
                                     boolean modal,
                                     final Processor<List<MavenArtifact>> resultProcessor) {
-    Task task;
+    final List<MavenArtifactInfo> artifacts = new ArrayList<MavenArtifactInfo>(3);
+    final MavenId mavenId = getMavenId(coord);
+    artifacts.add(new MavenArtifactInfo(mavenId, "jar", null));
+    for (MavenExtraArtifactType extraType : extraTypes) {
+      artifacts.add(new MavenArtifactInfo(mavenId, extraType.getDefaultExtension(), extraType.getDefaultClassifier()));
+    }
+    final Task task;
     if (modal) {
       task = new Task.Modal(project, "Maven", false) {
         public void run(@NotNull ProgressIndicator indicator) {
-          doResolveInner(project, createTemplate(libName, "jar"), repositories, resultProcessor, indicator);
+          doResolveInner(project, artifacts, repositories, resultProcessor, indicator);
         }
       };
     }
     else {
       task = new Task.Backgroundable(project, "Maven", false, PerformInBackgroundOption.DEAF) {
         public void run(@NotNull ProgressIndicator indicator) {
-          doResolveInner(project, createTemplate(libName, "jar"), repositories, resultProcessor, indicator);
+          doResolveInner(project, artifacts, repositories, resultProcessor, indicator);
         }
 
         @Override
@@ -332,7 +330,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   }
 
   private static void doResolveInner(Project project,
-                                     MavenArtifactInfo artifact,
+                                     List<MavenArtifactInfo> artifacts,
                                      Collection<MavenRepositoryInfo> repositories,
                                      final Processor<List<MavenArtifact>> resultProcessor,
                                      ProgressIndicator indicator) {
@@ -342,7 +340,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     try {
       embedder.customizeForResolve(new SoutMavenConsole(), new MavenProgressIndicator(indicator));
-      List<MavenArtifact> resolved = embedder.resolveTransitively(Collections.singletonList(artifact),
+      List<MavenArtifact> resolved = embedder.resolveTransitively(artifacts,
                                                                   convertRepositories(repositories));
       result.set(ContainerUtil.findAll(resolved, new Condition<MavenArtifact>() {
         public boolean value(MavenArtifact mavenArtifact) {
@@ -369,99 +367,5 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));
     }
     return result;
-  }
-
-  public static List<MavenRepositoryInfo> getDefaultRepositories() {
-    List<MavenRepositoryInfo> result = new SmartList<MavenRepositoryInfo>();
-    final MavenRepositoriesProvider provider = MavenRepositoriesProvider.getInstance();
-    for (String id : provider.getRepositoryIds()) {
-      final String url = provider.getRepositoryUrl(id);
-      if (url != null) {
-       result.add(new MavenRepositoryInfo(id, provider.getRepositoryName(id), url));
-      }
-    }
-    return result;
-  }
-
-  //public static void registerLibraryWatcher(final Project project) {
-  //  final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-  //  final Runnable syncRunnable = new Runnable() {
-  //    boolean myInRefresh;
-  //
-  //    public void run() {
-  //      if (myInRefresh) return;
-  //      alarm.cancelAllRequests();
-  //      alarm.addRequest(new Runnable() {
-  //        public void run() {
-  //          final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
-  //          final Set<String> coordSet = new HashSet<String>();
-  //          for (final Library library : libraryTable.getLibraries()) {
-  //            if (!INSTANCE.isMyLibrary(project, library)) continue;
-  //            coordSet.add(getMavenCoordinate(library));
-  //          }
-  //          resolveLibrary(project, coordSet, false, new Processor<Map<String, List<ArtifactType>>>() {
-  //            public boolean process(final Map<String, List<ArtifactType>> resolveResult) {
-  //              try {
-  //                myInRefresh = true;
-  //                final Map<String, Library> libMap = new HashMap<String, Library>();
-  //                for (final Library library : libraryTable.getLibraries()) {
-  //                  if (!INSTANCE.isMyLibrary(project, library)) continue;
-  //                  libMap.put(getMavenCoordinate(library), library);
-  //                }
-  //
-  //                final Map<Library, Collection<ArtifactType>> map = new HashMap<Library, Collection<ArtifactType>>();
-  //                for (String coord : resolveResult.keySet()) {
-  //                  final Library library = libMap.get(coord);
-  //                  if (library == null) continue;
-  //                  map.put(library, resolveResult.get(coord));
-  //                }
-  //                INSTANCE.refreshLibraries(project, map);
-  //              }
-  //              finally {
-  //                myInRefresh = false;
-  //              }
-  //              return true;
-  //            }
-  //          });
-  //        }
-  //      }, 2000);
-  //    }
-  //  };
-  //  final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
-  //  libraryTable.addListener(new LibraryTable.Listener() {
-  //    public void afterLibraryAdded(Library newLibrary) {
-  //    }
-  //
-  //    public void afterLibraryRenamed(Library library) {
-  //      syncRunnable.run();
-  //    }
-  //
-  //    public void beforeLibraryRemoved(Library library) {
-  //    }
-  //
-  //    public void afterLibraryRemoved(Library library) {
-  //      syncRunnable.run();
-  //    }
-  //  }, project);
-  //  for (Library library : libraryTable.getLibraries()) {
-  //    library.getRootProvider().addRootSetChangedListener(new RootProvider.RootSetChangedListener() {
-  //      public void rootSetChanged(RootProvider wrapper) {
-  //        syncRunnable.run();
-  //      }
-  //    }, library);
-  //  }
-  //  syncRunnable.run();
-  //}
-
-  private void refreshLibraries(final Project project, final Map<Library, Collection<MavenArtifact>> map) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (Library library : map.keySet()) {
-          final Library.ModifiableModel modifiableModel = library.getModifiableModel();
-          replaceLibraryData(project, modifiableModel, map.get(library), null);
-          modifiableModel.commit();
-        }
-      }
-    });
   }
 }

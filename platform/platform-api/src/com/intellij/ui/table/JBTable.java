@@ -18,9 +18,10 @@ package com.intellij.ui.table;
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.*;
+import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.EmptyTextHelper;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,17 +37,11 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.EventObject;
 
-/**
- * The purpose of this class is to fix two Sun's bugs. There are #4503845 and #4330950.
- * When Sun fixes these bugs then the class should be immediately removed.
- * Also it adds "select row on first right click" functionality.
- *
- * @author Vladimir Kondratyev
- */
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
-  private EmptyTextHelper myEmptyTextHelper;
+  private StatusText myEmptyText;
   private ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 
   private MyCellEditorRemover myEditorRemover;
@@ -58,9 +53,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   public JBTable(final TableModel model) {
     super(model);
-    myEmptyTextHelper = new EmptyTextHelper(this) {
+    myEmptyText = new StatusText(this) {
       @Override
-      protected boolean isEmpty() {
+      protected boolean isStatusVisible() {
         return JBTable.this.isEmpty();
       }
     };
@@ -76,12 +71,20 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           cellEditor.stopCellEditing();
         }
       }
-      public void columnSelectionChanged(ListSelectionEvent e) {}
-      public void columnAdded(TableColumnModelEvent e) {}
-      public void columnMoved(TableColumnModelEvent e) {}
-      public void columnRemoved(TableColumnModelEvent e) {}
+
+      public void columnSelectionChanged(ListSelectionEvent e) {
+      }
+
+      public void columnAdded(TableColumnModelEvent e) {
+      }
+
+      public void columnMoved(TableColumnModelEvent e) {
+      }
+
+      public void columnRemoved(TableColumnModelEvent e) {
+      }
     });
-    getTableHeader().setDefaultRenderer(new MyTableHeaderRenderer());
+
     //noinspection UnusedDeclaration
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
   }
@@ -91,12 +94,41 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   @Override
+  public void setModel(final TableModel model) {
+    super.setModel(model);
+
+    if (model instanceof SortableColumnModel) {
+      final SortableColumnModel sortableModel = (SortableColumnModel)model;
+      if (sortableModel.isSortable()) {
+        final TableRowSorter<TableModel> rowSorter = createRowSorter(model);
+        rowSorter.setSortsOnUpdates(isSortOnUpdates());
+        setRowSorter(rowSorter);
+        final RowSorter.SortKey sortKey = sortableModel.getDefaultSortKey();
+        if (sortKey != null && sortKey.getColumn() >= 0 && sortKey.getColumn() < model.getColumnCount()) {
+          if (sortableModel.getColumnInfos()[sortKey.getColumn()].isSortable()) {
+            rowSorter.setSortKeys(Arrays.asList(sortKey));
+          }
+        }
+      } else {
+        final RowSorter<? extends TableModel> rowSorter = getRowSorter();
+        if (rowSorter instanceof DefaultColumnInfoBasedRowSorter) {
+          setRowSorter(null);
+        }
+      }
+    }
+  }
+
+  protected boolean isSortOnUpdates() {
+    return true;
+  }
+
+  @Override
   protected void paintComponent(Graphics g) {
     if (myEnableAntialiasing) {
       UISettings.setupAntialiasing(g);
     }
     super.paintComponent(g);
-    myEmptyTextHelper.paint(g);
+    myEmptyText.paint(this, g);
   }
 
   public void setEnableAntialiasing(boolean flag) {
@@ -108,6 +140,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       {
         ((JCheckBox)getComponent()).setHorizontalAlignment(JCheckBox.CENTER);
       }
+
       @Override
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         Component component = super.getTableCellEditorComponent(table, value, isSelected, row, column);
@@ -120,61 +153,53 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void resetDefaultFocusTraversalKeys() {
     KeyboardFocusManager m = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     for (Integer each : Arrays.asList(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
-                                  KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
-                                  KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS,
-                                  KeyboardFocusManager.DOWN_CYCLE_TRAVERSAL_KEYS)) {
+                                      KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+                                      KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS,
+                                      KeyboardFocusManager.DOWN_CYCLE_TRAVERSAL_KEYS)) {
       setFocusTraversalKeys(each, m.getDefaultFocusTraversalKeys(each));
     }
   }
 
-  public String getEmptyText() {
-    return myEmptyTextHelper.getEmptyText();
+  @NotNull
+  @Override
+  public String getText() {
+    return myEmptyText.getText();
   }
 
+  @Override
   public void setEmptyText(String emptyText) {
-    myEmptyTextHelper.setEmptyText(emptyText);
+    myEmptyText.setEmptyText(emptyText);
   }
 
+  @Override
   public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.setEmptyText(emptyText, attrs);
+    myEmptyText.setEmptyText(emptyText, attrs);
   }
 
+  @Override
   public void clearEmptyText() {
-    myEmptyTextHelper.clearEmptyText();
+    myEmptyText.clearEmptyText();
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs) {
-    myEmptyTextHelper.appendEmptyText(text, attrs);
+    myEmptyText.appendEmptyText(text, attrs);
   }
 
+  @Override
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
-    myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+    myEmptyText.appendEmptyText(text, attrs, listener);
   }
 
+  @Override
+  public StatusText getEmptyText() {
+    return myEmptyText;
+  }
+
+  @Override
   @NotNull
   public ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
-  }
-
-  private static class MyTableHeaderRenderer extends DefaultTableCellRenderer {
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      if (table != null) {
-        JTableHeader header = table.getTableHeader();
-        if (header != null) {
-          setForeground(header.getForeground());
-          setBackground(header.getBackground());
-          setFont(header.getFont());
-        }
-        if (!table.isEnabled()) {
-          setForeground(UIUtil.getTextInactiveTextColor());
-        }
-      }
-      setText(value == null ? "" : value.toString());
-      setBorder(UIUtil.getTableHeaderCellBorder());
-      setHorizontalAlignment(JLabel.CENTER);
-
-      return this;
-    }
   }
 
   public void removeNotify() {
@@ -260,13 +285,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  public void fixColumnWidthToHeader(final int columnIdx) {
-    final TableColumn column = getColumnModel().getColumn(columnIdx);
-    final int width = getTableHeader().getFontMetrics(getTableHeader().getFont()).stringWidth(getColumnName(columnIdx)) + 2;
-    column.setMinWidth(width);
-    column.setMaxWidth(width);
-  }
-
   private final class MyMouseListener extends MouseAdapter {
     public void mousePressed(final MouseEvent e) {
       if (SwingUtilities.isRightMouseButton(e)) {
@@ -280,4 +298,105 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     }
   }
+
+  @SuppressWarnings({"MethodMayBeStatic", "unchecked"})
+  protected TableRowSorter<TableModel> createRowSorter(final TableModel model) {
+    return new DefaultColumnInfoBasedRowSorter(model);
+  }
+
+  protected static class DefaultColumnInfoBasedRowSorter extends TableRowSorter<TableModel> {
+    public DefaultColumnInfoBasedRowSorter(final TableModel model) {
+      super(model);
+      setModelWrapper(new TableRowSorterModelWrapper(model));
+      setMaxSortKeys(1);
+    }
+
+    @Override
+    public Comparator<?> getComparator(final int column) {
+      final TableModel model = getModel();
+      if (model instanceof SortableColumnModel) {
+        final ColumnInfo[] columnInfos = ((SortableColumnModel)model).getColumnInfos();
+        if (column >= 0 && column < columnInfos.length) {
+          final Comparator comparator = columnInfos[column].getComparator();
+          if (comparator != null) return comparator;
+        }
+      }
+
+      return super.getComparator(column);
+    }
+
+    protected boolean useToString(int column) {
+      return false;
+    }
+
+    @Override
+    public boolean isSortable(final int column) {
+      final TableModel model = getModel();
+      if (model instanceof SortableColumnModel) {
+        final ColumnInfo[] columnInfos = ((SortableColumnModel)model).getColumnInfos();
+        if (column >= 0 && column < columnInfos.length) {
+          return columnInfos[column].isSortable() && columnInfos[column].getComparator() != null;
+        }
+      }
+
+      return false;
+    }
+
+    private class TableRowSorterModelWrapper extends ModelWrapper<TableModel, Integer> {
+      private TableModel myModel;
+
+      private TableRowSorterModelWrapper(@NotNull final TableModel model) {
+        myModel = model;
+      }
+
+      public TableModel getModel() {
+        return myModel;
+      }
+
+      public int getColumnCount() {
+        return (myModel == null) ? 0 : myModel.getColumnCount();
+      }
+
+      public int getRowCount() {
+        return (myModel == null) ? 0 : myModel.getRowCount();
+      }
+
+      public Object getValueAt(int row, int column) {
+        if (myModel instanceof SortableColumnModel) {
+          return ((SortableColumnModel)myModel).getRowValue(row);
+        }
+
+        return myModel.getValueAt(row, column);
+      }
+
+      public String getStringValueAt(int row, int column) {
+        TableStringConverter converter = getStringConverter();
+        if (converter != null) {
+          // Use the converter
+          String value = converter.toString(
+            myModel, row, column);
+          if (value != null) {
+            return value;
+          }
+          return "";
+        }
+
+        // No converter, use getValueAt followed by toString
+        Object o = getValueAt(row, column);
+        if (o == null) {
+          return "";
+        }
+        String string = o.toString();
+        if (string == null) {
+          return "";
+        }
+        return string;
+      }
+
+      public Integer getIdentifier(int index) {
+        return index;
+      }
+    }
+  }
+
 }

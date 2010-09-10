@@ -28,11 +28,18 @@ import java.util.Map;
 public class LayeredLexer extends DelegateLexer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
   private static final int IN_LAYER_STATE = 1024; // TODO: Other value?
+  private static final int IN_LAYER_LEXER_FINISHED_STATE = 2048;
 
   private int myState;
 
   private final Map<IElementType, Lexer> myStartTokenToLayerLexer = new HashMap<IElementType, Lexer>();
   private Lexer myCurrentLayerLexer;
+  // In some cases IDEA-57933 layered lexer is not able to parse all the token, that triggered this lexer,
+  // for this purposes we store left part of token in the following fields
+  private IElementType myCurrentBaseTokenType;
+  private int myLayerLeftPart = -1;
+  private int myBaseTokenEnd = -1;
+
   private final HashSet<Lexer> mySelfStoppingLexers = new HashSet<Lexer>(1);
   private final HashMap<Lexer, IElementType[]> myStopTokens = new HashMap<Lexer,IElementType[]>(1);
 
@@ -41,26 +48,28 @@ public class LayeredLexer extends DelegateLexer {
     super(baseLexer);
   }
 
-  public void registerSelfStoppingLayer(Lexer Lexer, IElementType[] startTokens, IElementType[] stopTokens) {
-    registerLayer(Lexer, startTokens);
-    mySelfStoppingLexers.add(Lexer);
-    myStopTokens.put(Lexer, stopTokens);
+  public void registerSelfStoppingLayer(Lexer lexer, IElementType[] startTokens, IElementType[] stopTokens) {
+    registerLayer(lexer, startTokens);
+    mySelfStoppingLexers.add(lexer);
+    myStopTokens.put(lexer, stopTokens);
   }
 
-  public void registerLayer(Lexer Lexer, IElementType... startTokens) {
+  public void registerLayer(Lexer lexer, IElementType... startTokens) {
     for (IElementType startToken : startTokens) {
       LOG.assertTrue(!myStartTokenToLayerLexer.containsKey(startToken));
-      myStartTokenToLayerLexer.put(startToken, Lexer);
+      myStartTokenToLayerLexer.put(startToken, lexer);
     }
   }
 
   private void activateLayerIfNecessary() {
-    Lexer base = getDelegate();
-    myCurrentLayerLexer = myStartTokenToLayerLexer.get(base.getTokenType());
+    final IElementType baseTokenType = super.getTokenType();
+    myCurrentLayerLexer = myStartTokenToLayerLexer.get(baseTokenType);
     if (myCurrentLayerLexer != null) {
-      myCurrentLayerLexer.start(base.getBufferSequence(), base.getTokenStart(), base.getTokenEnd());
+      myCurrentBaseTokenType = baseTokenType;
+      myBaseTokenEnd = super.getTokenEnd();
+      myCurrentLayerLexer.start(super.getBufferSequence(), super.getTokenStart(), super.getTokenEnd());
       if (mySelfStoppingLexers.contains(myCurrentLayerLexer)) {
-        base.advance();
+        super.advance();
       }
     }
   }
@@ -79,20 +88,35 @@ public class LayeredLexer extends DelegateLexer {
   }
 
   public IElementType getTokenType() {
+    if (myState == IN_LAYER_LEXER_FINISHED_STATE) {
+      return myCurrentBaseTokenType;
+    }
     return isLayerActive() ? myCurrentLayerLexer.getTokenType() : super.getTokenType();
   }
 
   public int getTokenStart() {
+    if (myState == IN_LAYER_LEXER_FINISHED_STATE) {
+      return myLayerLeftPart;
+    }
     return isLayerActive() ? myCurrentLayerLexer.getTokenStart() : super.getTokenStart();
   }
 
   public int getTokenEnd() {
+    if (myState == IN_LAYER_LEXER_FINISHED_STATE) {
+      return myBaseTokenEnd;
+    }
     return isLayerActive() ? myCurrentLayerLexer.getTokenEnd() : super.getTokenEnd();
   }
 
   public void advance() {
+    if (myState == IN_LAYER_LEXER_FINISHED_STATE){
+      myState = super.getState();
+      return;
+    }
+
     if (isLayerActive()) {
-      IElementType layerTokenType = myCurrentLayerLexer.getTokenType();
+      final Lexer activeLayerLexer = myCurrentLayerLexer;
+      IElementType layerTokenType = activeLayerLexer.getTokenType();
       if (!isStopToken(myCurrentLayerLexer, layerTokenType)) {
         myCurrentLayerLexer.advance();
         layerTokenType = myCurrentLayerLexer.getTokenType();
@@ -107,7 +131,17 @@ public class LayeredLexer extends DelegateLexer {
           activateLayerIfNecessary();
         } else {
           myCurrentLayerLexer = null;
-          //myBaseLexer.start(myBuffer, tokenEnd, getBufferEnd());
+
+          // In case when we have non-covered gap we should return left part as next token
+          if (tokenEnd != myBaseTokenEnd) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("We've got not covered gap from layered lexer: " + activeLayerLexer +
+                        "\n on token: " + getBufferSequence().subSequence(myLayerLeftPart, myBaseTokenEnd));
+            }
+            myState = IN_LAYER_LEXER_FINISHED_STATE;
+            myLayerLeftPart = tokenEnd;
+            return;
+          }
         }
       }
     } else {

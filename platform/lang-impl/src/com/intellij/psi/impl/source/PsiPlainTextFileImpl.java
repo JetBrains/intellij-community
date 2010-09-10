@@ -17,6 +17,8 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,7 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
 
   public PsiPlainTextFileImpl(FileViewProvider viewProvider) {
     super(PlainTextTokenTypes.PLAIN_TEXT_FILE, PlainTextTokenTypes.PLAIN_TEXT_FILE, viewProvider);
-    myFileType = viewProvider.getVirtualFile().getFileType();
+    myFileType = viewProvider.getBaseLanguage() != PlainTextLanguage.INSTANCE ? StdFileTypes.PLAIN_TEXT : viewProvider.getVirtualFile().getFileType();
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){

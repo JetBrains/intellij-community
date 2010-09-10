@@ -218,11 +218,11 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
   }
 
-  public void sendInput(final String input) {
+  public void processLine(final String line) {
     final Charset charset = myProcessHandler.getCharset();
     final OutputStream outputStream = myProcessHandler.getProcessInput();
     try {
-      byte[] bytes = input.getBytes(charset.name());
+      byte[] bytes = (line + "\n").getBytes(charset.name());
       outputStream.write(bytes);
       outputStream.flush();
     }
@@ -238,18 +238,16 @@ public abstract class AbstractConsoleRunnerWithHistory {
   protected void runExecuteActionInner() {
     // Process input and add to history
     final Document document = getLanguageConsole().getCurrentEditor().getDocument();
-    final String documentText = document.getText();
+    final String text = document.getText();
     final TextRange range = new TextRange(0, document.getTextLength());
     getLanguageConsole().getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
     getLanguageConsole().addCurrentToHistory(range, false);
     getLanguageConsole().setInputText("");
-    final String line = documentText;
-    if (!StringUtil.isEmptyOrSpaces(line)){
-      myHistory.addToHistory(line);
+    if (!StringUtil.isEmptyOrSpaces(text)){
+      myHistory.addToHistory(text);
     }
     // Send to interpreter / server
-    final String text2send = line.length() == 0 ? "\n\n" : line + "\n";
-    sendInput(text2send);
+    processLine(text);
   }
 
   protected static String getProviderCommandLine(final CommandLineArgumentsProvider provider) {

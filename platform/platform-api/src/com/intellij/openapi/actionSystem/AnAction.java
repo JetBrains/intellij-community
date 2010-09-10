@@ -73,7 +73,6 @@ public abstract class AnAction {
   private boolean myWorksInInjected;
 
 
-  private boolean myTransparentUpdate = false;
   /**
    * Creates a new action with its text, description and icon set to <code>null</code>.
    */
@@ -293,14 +292,14 @@ public abstract class AnAction {
   }
 
   public boolean isTransparentUpdate() {
-    return myTransparentUpdate;
-  }
-
-  public void setTransparentUpdate(boolean transparentUpdate) {
-    myTransparentUpdate = transparentUpdate;
+    return this instanceof TransparentUpdate;
   }
 
   public boolean isDumbAware() {
     return this instanceof DumbAware;
+  }
+
+  public interface TransparentUpdate {
+
   }
 }

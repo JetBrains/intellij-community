@@ -15,9 +15,6 @@ package org.zmlx.hg4idea.provider.update;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.merge.MergeData;
-import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +32,7 @@ import java.util.Map;
 
 public final class HgConflictResolver {
 
-  @NotNull private final Project project;
+  @NotNull private final Project myProject;
   private final UpdatedFiles updatedFiles;
 
   public HgConflictResolver(@NotNull Project project) {
@@ -43,12 +40,12 @@ public final class HgConflictResolver {
   }
 
   public HgConflictResolver(Project project, UpdatedFiles updatedFiles) {
-    this.project = project;
+    this.myProject = project;
     this.updatedFiles = updatedFiles;
   }
 
   public void resolve(final VirtualFile repo) {
-    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(project).list(repo);
+    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(myProject).list(repo);
     final List<VirtualFile> conflicts = new ArrayList<VirtualFile>();
     for (Map.Entry<HgFile, HgResolveStatusEnum> entry : resolves.entrySet()) {
       File file = entry.getKey().getFile();
@@ -76,33 +73,8 @@ public final class HgConflictResolver {
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      AbstractVcsHelper.getInstance(project).showMergeDialog(conflicts, buildMergeProvider(repo));
+      AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, HgVcs.getInstance(myProject).getMergeProvider());
     }
   }
-
-  private MergeProvider buildMergeProvider(final VirtualFile repo) {
-    return new MergeProvider() {
-      @NotNull
-      public MergeData loadRevisions(VirtualFile file) throws VcsException {
-
-        HgResolveCommand.MergeData resolveData = new HgResolveCommand(project).getResolveData(repo, file);
-
-        MergeData mergeData = new MergeData();
-        mergeData.ORIGINAL = resolveData.getBase();
-        mergeData.CURRENT = resolveData.getLocal();
-        mergeData.LAST = resolveData.getOther();
-        return mergeData;
-      }
-
-      public void conflictResolvedForFile(VirtualFile file) {
-        new HgResolveCommand(project).markResolved(repo, file);
-      }
-
-      public boolean isBinary(VirtualFile file) {
-        return false;
-      }
-    };
-  }
-
 
 }

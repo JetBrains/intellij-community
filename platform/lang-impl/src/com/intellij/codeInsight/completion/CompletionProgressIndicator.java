@@ -90,6 +90,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myFreezeSemaphore = freezeSemaphore;
 
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "", new CompletionLookupArranger(parameters));
+    if (editor.isOneLineMode()) {
+      myLookup.setForceShowAsPopup(true);
+      myLookup.setCancelOnClickOutside(true);
+      myLookup.setCancelOnOtherWindowOpen(true);
+      myLookup.setResizable(false);
+      myLookup.setForceLightweightPopup(false);
+    }
 
     myLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {
@@ -339,6 +346,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void cleanup() {
+    assert ApplicationManager.getApplication().isDispatchThread();
     myHint = null;
     myOldDocumentText = null;
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);

@@ -66,10 +66,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class TestObject implements JavaCommandLine {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestObject");
@@ -311,15 +308,17 @@ public abstract class TestObject implements JavaCommandLine {
       public void onTextAvailable(final ProcessEvent event, final Key outputType) {
         final String text = event.getText();
         final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
-        final TestProxy currentTest = packetsReceiver.getCurrentTest();
+        final Set<TestProxy> currentTests = packetsReceiver.getCurrentTests();
         final Printable printable = new Printable() {
           public void printOn(final Printer printer) {
             printer.print(text, consoleViewType);
           }
         };
 
-        if (currentTest != null) {
-          currentTest.addLast(printable);
+        if (!currentTests.isEmpty()) {
+          for (TestProxy currentTest : currentTests) {
+            currentTest.addLast(printable);
+          }
         }
         else {
           unboundOutputRoot.addLast(printable);

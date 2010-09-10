@@ -1,9 +1,4 @@
 PsiJavaFile:ReturnNoResult.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace(' ')
-    PsiReturnStatement
-      PsiKeyword:return('return')
-      PsiJavaToken:SEMICOLON(';')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')
+  PsiReturnStatement
+    PsiKeyword:return('return')
+    PsiJavaToken:SEMICOLON(';')

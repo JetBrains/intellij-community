@@ -94,7 +94,7 @@ public abstract class BaseRefactoringProcessor {
    *
    * @param elements - refreshed elements that are returned by UsageViewDescriptor.getElements()
    */
-  protected abstract void refreshElements(PsiElement[] elements);
+  protected void refreshElements(PsiElement[] elements) {}
 
   /**
    * Is called inside atomic action.

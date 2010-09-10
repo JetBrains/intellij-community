@@ -24,7 +24,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -34,14 +34,21 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.List;
 
 /**
+ * To provide an additional settings editor register implementation of {@link com.intellij.openapi.options.UnnamedConfigurable} in the plugin.xml:
+ * <p/>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;editorAppearanceConfigurable instance="class-name"/&gt;<br>
+ * &lt;/extensions&gt;
+ * <p>
+ * A new instance of the specified class will be created each time then the Settings dialog is opened
+ *
  * @author yole
  */
 public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements EditorOptionsProvider {
-  public static final ExtensionPointName<UnnamedConfigurable> EP_NAME = ExtensionPointName.create("com.intellij.editorAppearanceConfigurable");
+  private static final ExtensionPointName<EditorAppearanceConfigurableEP> EP_NAME = ExtensionPointName.create("com.intellij.editorAppearanceConfigurable");
   private JPanel myRootPanel;
   private JCheckBox myCbBlinkCaret;
   private JCheckBox myCbBlockCursor;
@@ -183,7 +190,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   }
 
   protected List<UnnamedConfigurable> createConfigurables() {
-    return Arrays.asList(Extensions.getExtensions(EP_NAME));
+    return AbstractConfigurableEP.createConfigurables(EP_NAME);
   }
 
   public String getId() {

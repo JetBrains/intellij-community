@@ -13,33 +13,35 @@
   <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
 
   <!-- the IDEA build number which works with plugin -->
+    <!--
   <idea-version since-build="2000" />
-
+         -->
   <!-- Plugin's application components -->
   <application-components>
     <component>
       <!-- Component's implementation class -->
-      <implementation-class>com.intellij.openapi.samples.ActionsPlugin</implementation-class>
+      <implementation-class>myActions.ActionsPlugin</implementation-class>
 
       <!-- Component's interface class -->
-      <interface-class>com.intellij.openapi.samples.ActionsPlugin</interface-class>
+      <interface-class>myActions.ActionsPlugin</interface-class>
     </component>
   </application-components>
 
   <!-- Component's actions -->
   <actions>
     <!-- We use "PluginName.ComponentName.ActionName" notation for "id" to avoid conflicts -->
-    <action id="ActionsSample.ActionsPlugin.GarbageCollection" class="com.intellij.openapi.samples.GarbageCollectionAction" text="Collect _garbage" description="Run garbage collector">
+    <action id="ActionsSample.ActionsPlugin.GarbageCollection" class="myActions.GarbageCollectionAction" text="Collect _garbage" description="Run garbage collector">
       <keyboard-shortcut first-keystroke="control alt G" second-keystroke="C" keymap="$default"/>
       <mouse-shortcut keystroke="ctrl alt button2" keymap="$default"/>
     </action>
 
-    <action id="Actions.ActionsPlugin.HelloWorld1" class="com.intellij.openapi.samples.HelloWorldAction" text="Hello World1" description=""/>
+    <action id="Actions.ActionsPlugin.HelloWorld1" class="myActions.HelloWorldAction" text="Hello World" icon ="/icons/plus.png" description=""/>
 
-    <group id="Actions.ActionsPlugin.SampleGroup" text="S_ample" description="Sample group">
-      <reference id="ActionsSample.ActionsPlugin.GarbageCollection"/>
+    <group id="Actions.ActionsPlugin.SampleGroup" text="Sample _Menu" description="Sample group">
+      <reference ref="ActionsSample.ActionsPlugin.GarbageCollection"/>
       <separator/>
-      <action id="Actions.ActionsPlugin.HelloWorld" class="com.intellij.openapi.samples.HelloWorldAction" text="Hello World" description=""/>
+       <reference ref="Actions.ActionsPlugin.HelloWorld1"/>
+
       <!--adds this group to the main menu-->
       <add-to-group group-id="MainMenu" anchor="last"/>
       <!--adds this group to the main toolbar before the Help action-->
@@ -48,7 +50,7 @@
 
     <!--the group below contains only the "Hello World" action defined above -->
     <group>
-      <reference id="Actions.ActionsPlugin.HelloWorld1"/>
+      <reference ref="Actions.ActionsPlugin.HelloWorld1"/>
       <!--the group is added to the editor popup menu-->
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CutCopyPasteGroup"/>
     </group>

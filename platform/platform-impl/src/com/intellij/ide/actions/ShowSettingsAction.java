@@ -37,7 +37,7 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
     }
 
     ConfigurableGroup[] group = new ConfigurableGroup[]{
-      new ProjectConfigurablesGroup(project, false),
+      new ProjectConfigurablesGroup(project),
       new IdeConfigurablesGroup()
     };
 

@@ -15,14 +15,15 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.application.options.codeStyle.OptionTreeWithPreviewPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.openapi.application.ApplicationBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,9 +34,9 @@ import java.awt.event.ActionListener;
  * @author max
  */
 public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
-  private final JCheckBox myEnableCheckBox;
+  private JCheckBox myEnableCheckBox;
 
-  private final JPanel myPanel = new JPanel(new BorderLayout());
+  private final JPanel myJavaDocPanel = new JPanel(new BorderLayout());
   private static final String OTHER_GROUP = ApplicationBundle.message("group.javadoc.other");
   private static final String INVALID_TAGS_GROUP = ApplicationBundle.message("group.javadoc.invalid.tags");
   private static final String BLANK_LINES_GROUP = ApplicationBundle.message("group.javadoc.blank.lines");
@@ -43,6 +44,13 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
 
   public JavaDocFormattingPanel(CodeStyleSettings settings) {
     super(settings);
+    init();
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+
     myEnableCheckBox = new JCheckBox(ApplicationBundle.message("checkbox.enable.javadoc.formatting"));
     myEnableCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -50,17 +58,17 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
       }
     });
 
-    myPanel.add(BorderLayout.CENTER, getInternalPanel());
-    myPanel.add(myEnableCheckBox, BorderLayout.NORTH);
+    myJavaDocPanel.add(BorderLayout.CENTER, myPanel);
+    myJavaDocPanel.add(myEnableCheckBox, BorderLayout.NORTH);
   }
 
   @Override
   protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
-    return LanguageCodeStyleSettingsProvider.SettingsType.LANG_SPECIFIC;
+    return LanguageCodeStyleSettingsProvider.SettingsType.LANGUAGE_SPECIFIC;
   }
 
   public JComponent getPanel() {
-    return myPanel;
+    return myJavaDocPanel;
   }
 
   private void update() {
@@ -86,7 +94,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("WRAP_COMMENTS", ApplicationBundle.message("checkbox.wrap.at.right.margin"), OTHER_GROUP);
     initBooleanField("JD_P_AT_EMPTY_LINES", ApplicationBundle.message("checkbox.generate.p.on.empty.lines"), OTHER_GROUP);
     initBooleanField("JD_KEEP_EMPTY_LINES", ApplicationBundle.message("checkbox.keep.empty.lines"), OTHER_GROUP);
-    initBooleanField("JD_DO_NOT_WRAP_ONE_LINE_COMMENTS", ApplicationBundle.message("checkbox.do.not.wrap.one.line.comments"), OTHER_GROUP );
+    initBooleanField("JD_DO_NOT_WRAP_ONE_LINE_COMMENTS", ApplicationBundle.message("checkbox.do.not.wrap.one.line.comments"), OTHER_GROUP);
   }
 
   protected int getRightMargin() {
@@ -111,21 +119,21 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
            "   * @invalidTag" +
            "   */\n" +
            "  public abstract String sampleMethod(int i, int longParameterName, int missingDescription) throws XXXException, YException, ZException;\n" +
-           "\n"+
+           "\n" +
            "  /** One-line comment */\n" +
            "  public abstract String sampleMethod2();\n";
   }
 
 
-private static void setEnabled(JComponent c, boolean enabled) {
-  c.setEnabled(enabled);
-  Component[] children = c.getComponents();
-  for (Component child : children) {
-    if (child instanceof JComponent) {
-      setEnabled((JComponent)child, enabled);
+  private static void setEnabled(JComponent c, boolean enabled) {
+    c.setEnabled(enabled);
+    Component[] children = c.getComponents();
+    for (Component child : children) {
+      if (child instanceof JComponent) {
+        setEnabled((JComponent)child, enabled);
+      }
     }
   }
-}
 
   public void apply(CodeStyleSettings settings) {
     super.apply(settings);
@@ -142,13 +150,9 @@ private static void setEnabled(JComponent c, boolean enabled) {
     return super.isModified(settings) || myEnableCheckBox.isSelected() != settings.ENABLE_JAVADOC_FORMATTING;
   }
 
+  @NotNull
   protected final FileType getFileType() {
     return StdFileTypes.JAVA;
-  }
-
-  @Override
-  protected void onLanguageChange(Language language) {
-    // Ignore, JavaDoc does not support languages other than Java
   }
 
   public void setPanelLanguage(Language language) {
