@@ -18,6 +18,7 @@ package com.intellij.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,4 +34,6 @@ public abstract class ExecutorRegistry implements ApplicationComponent {
   public abstract Executor[] getRegisteredExecutors();
 
   public abstract Executor getExecutorById(final String executorId);
+
+  public abstract boolean isStarting(Project project, String executorId, String runnerId);
 }

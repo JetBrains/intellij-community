@@ -22,6 +22,8 @@ import com.intellij.psi.PsiElement;
  * See {@link InspectionManager#createProblemDescriptor(com.intellij.psi.PsiElement, String, LocalQuickFix, ProblemHighlightType,boolean) } for method descriptions.
  */
 public interface ProblemDescriptor extends CommonProblemDescriptor{
+  ProblemDescriptor[] EMPTY_ARRAY = new ProblemDescriptor[0];
+
   PsiElement getPsiElement();
   PsiElement getStartElement();
   PsiElement getEndElement();

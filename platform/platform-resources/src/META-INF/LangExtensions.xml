@@ -41,7 +41,7 @@
                       serviceImplementation="com.intellij.execution.filters.TextConsoleBuilderFactoryImpl"/>
 
   <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
-                      serviceImplementation="com.intellij.lang.PsiBuilderFactoryImpl"/>
+                      serviceImplementation="com.intellij.lang.impl.PsiBuilderFactoryImpl"/>
 
   <applicationService serviceInterface="com.intellij.navigation.ChooseByNameRegistry"
                       serviceImplementation="com.intellij.navigation.ChooseByNameRegistry"/>
@@ -574,4 +574,7 @@
   <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
 
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
+  <highlightVisitor implementation="com.intellij.refactoring.changeSignature.ChangeSignatureGestureVisitor"/>
+  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.EditorEscapeHandler" id="hide-cs-gesture" order="after hide-hints"/>
+  <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
 </extensions>

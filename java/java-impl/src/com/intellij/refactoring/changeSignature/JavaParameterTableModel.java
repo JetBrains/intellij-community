@@ -15,61 +15,175 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
+import com.intellij.refactoring.ui.StringTableCellEditor;
+import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaParameterTableModel extends ParameterTableModelBase<ParameterInfoImpl> {
-  private static final Logger LOG = Logger.getInstance(JavaParameterTableModel.class.getName());
+import javax.swing.*;
+import javax.swing.table.TableCellEditor;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
+public class JavaParameterTableModel extends ParameterTableModelBase<ParameterInfoImpl> {
   private final Project myProject;
 
-  public JavaParameterTableModel(PsiElement typeContext,
+  public JavaParameterTableModel(final PsiElement typeContext,
                                  PsiElement defaultValueContext,
-                                 ChangeSignatureDialogBase dialog) {
-    super(typeContext, defaultValueContext, dialog, ParameterInfoImpl.class);
+                                 final ChangeSignatureDialogBase dialog) {
+    this(typeContext, defaultValueContext,
+         new JavaTypeColumn(typeContext.getProject()),
+         new JavaNameColumn(typeContext.getProject()),
+         new DefaultValueColumn<ParameterInfoImpl>(typeContext.getProject(), StdFileTypes.JAVA) {
+           @Override
+           public TableCellEditor doCreateEditor(ParameterTableModelItemBase<ParameterInfoImpl> item) {
+             return new EditorWithExpectedType(typeContext);
+           }
+         }, new AnyVarColumn<ParameterInfoImpl>() {
+        @Override
+        public boolean isCellEditable(ParameterTableModelItemBase<ParameterInfoImpl> item) {
+          return !dialog.isGenerateDelegate() && super.isCellEditable(item);
+        }
+      });
+  }
+
+  protected JavaParameterTableModel(PsiElement typeContext, PsiElement defaultValueContext, ColumnInfo... columns) {
+    super(typeContext, defaultValueContext, columns);
     myProject = typeContext.getProject();
   }
 
   @Override
-  protected ParameterInfoImpl createParameterInfo() {
-    return new ParameterInfoImpl(-1);
-  }
+  protected ParameterTableModelItemBase<ParameterInfoImpl> createRowItem(@Nullable ParameterInfoImpl parameterInfo) {
+    if (parameterInfo == null) {
+      parameterInfo = new ParameterInfoImpl(-1);
+    }
+    PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    final PsiTypeCodeFragment paramTypeCodeFragment =
+      f.createTypeCodeFragment(parameterInfo.getTypeText(), myTypeContext, false, true, true);
+    PsiExpressionCodeFragment defaultValueCodeFragment =
+      f.createExpressionCodeFragment(parameterInfo.getDefaultValue(), myDefaultValueContext, null, true);
+    defaultValueCodeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
-  @Override
-  protected boolean isEllipsisType(int row) {
-    return getTypeByRow(row) instanceof PsiEllipsisType;
-  }
-
-  @Override
-  protected PsiCodeFragment createDefaultValueCodeFragment(String expressionText) {
-    PsiExpressionCodeFragment codeFragment = JavaPsiFacade.getInstance(myProject).getElementFactory()
-      .createExpressionCodeFragment(expressionText, myDefaultValueContext, null, true);
-    codeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    return codeFragment;
-  }
-
-  @Override
-  protected PsiCodeFragment createParameterTypeCodeFragment(String typeText) {
-    return JavaPsiFacade.getInstance(myProject).getElementFactory().createTypeCodeFragment(typeText, myTypeContext, false, true, true);
+    return new ParameterTableModelItemBase<ParameterInfoImpl>(parameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
+      @Override
+      public boolean isEllipsisType() {
+        try {
+          return paramTypeCodeFragment.getType() instanceof PsiEllipsisType;
+        }
+        catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+          return false;
+        }
+        catch (PsiTypeCodeFragment.NoTypeException e) {
+          return false;
+        }
+      }
+    };
   }
 
   @Nullable
-  public PsiType getTypeByRow(int row) {
-    Object typeValueAt = getValueAt(row, 0);
-    LOG.assertTrue(typeValueAt instanceof PsiTypeCodeFragment);
-    PsiType type;
+  private static PsiType getRowType(JTable table, int row) {
     try {
-      type = ((PsiTypeCodeFragment)typeValueAt).getType();
+      return ((PsiTypeCodeFragment)((JavaParameterTableModel)table.getModel()).getItems().get(row).typeCodeFragment).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e1) {
-      type = null;
+    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+      return null;
     }
-    catch (PsiTypeCodeFragment.NoTypeException e1) {
-      type = null;
+    catch (PsiTypeCodeFragment.NoTypeException e) {
+      return null;
     }
-    return type;
   }
 
+  private static class VariableCompletionTableCellEditor extends StringTableCellEditor {
+    public VariableCompletionTableCellEditor(Project project) {
+      super(project);
+    }
+
+    public Component getTableCellEditorComponent(final JTable table,
+                                                 Object value,
+                                                 boolean isSelected,
+                                                 final int row,
+                                                 int column) {
+      final EditorTextField textField =
+        (EditorTextField)super.getTableCellEditorComponent(table, value, isSelected, row, column);
+      textField.registerKeyboardAction(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          PsiType type = getRowType(table, row);
+          if (type != null) {
+            completeVariable(textField, type);
+          }
+        }
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      return textField;
+    }
+
+    private static void completeVariable(EditorTextField editorTextField, PsiType type) {
+      Editor editor = editorTextField.getEditor();
+      String prefix = editorTextField.getText();
+      if (prefix == null) prefix = "";
+      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      JavaCompletionUtil.completeVariableNameForRefactoring(editorTextField.getProject(), set, prefix, type, VariableKind.PARAMETER);
+
+      LookupElement[] lookupItems = set.toArray(new LookupElement[set.size()]);
+      editor.getCaretModel().moveToOffset(prefix.length());
+      editor.getSelectionModel().removeSelection();
+      LookupManager.getInstance(editorTextField.getProject()).showLookup(editor, lookupItems, prefix);
+    }
+  }
+
+  private static class EditorWithExpectedType extends JavaCodeFragmentTableCellEditor {
+    public EditorWithExpectedType(PsiElement typeContext) {
+      super(typeContext.getProject());
+    }
+
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+      final Component editor = super.getTableCellEditorComponent(table, value, isSelected, row, column);
+      final PsiType type = getRowType(table, row);
+      if (type != null) {
+        ((PsiExpressionCodeFragment)myCodeFragment).setExpectedType(type);
+      }
+      return editor;
+    }
+  }
+
+  public static class JavaTypeColumn extends TypeColumn<ParameterInfoImpl> {
+    private final Project myProject;
+
+    public JavaTypeColumn(Project project) {
+      super(project, StdFileTypes.JAVA);
+      myProject = project;
+    }
+
+    @Override
+    public TableCellEditor doCreateEditor(ParameterTableModelItemBase<ParameterInfoImpl> o) {
+      return new JavaCodeFragmentTableCellEditor(myProject);
+    }
+  }
+
+  public static class JavaNameColumn extends NameColumn<ParameterInfoImpl> {
+    private final Project myProject;
+
+    public JavaNameColumn(Project project) {
+      super(project);
+      myProject = project;
+    }
+
+    @Override
+    public TableCellEditor doCreateEditor(ParameterTableModelItemBase<ParameterInfoImpl> o) {
+      return new VariableCompletionTableCellEditor(myProject);
+    }
+  }
 }

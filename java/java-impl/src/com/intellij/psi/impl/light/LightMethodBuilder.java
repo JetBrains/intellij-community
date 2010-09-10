@@ -43,8 +43,8 @@ import java.util.List;
 public class LightMethodBuilder extends LightElement implements PsiMethod {
   private final String myName;
   private Computable<PsiType> myReturnType;
-  private final LightModifierList myModifierList;
-  private LightParameterListBuilder myParameterList;
+  private final PsiModifierList myModifierList;
+  private PsiParameterList myParameterList;
   private Icon myBaseIcon;
   private PsiClass myContainingClass;
   private boolean myConstructor;
@@ -61,10 +61,18 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
   
   public LightMethodBuilder(PsiManager manager, Language language, String name) {
+    this(manager, language, name, new LightParameterListBuilder(manager, language), new LightModifierList(manager, language));
+  }
+
+  public LightMethodBuilder(PsiManager manager,
+                            Language language,
+                            String name,
+                            PsiParameterList parameterList,
+                            PsiModifierList modifierList) {
     super(manager, language);
     myName = name;
-    myModifierList = new LightModifierList(manager, language);
-    myParameterList = new LightParameterListBuilder(manager, language);
+    myParameterList = parameterList;
+    myModifierList = modifierList;
   }
 
   @Override
@@ -126,12 +134,12 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   public LightMethodBuilder addModifier(String modifier) {
-    myModifierList.addModifier(modifier);
+    ((LightModifierList)myModifierList).addModifier(modifier);
     return this;
   }
 
   public LightMethodBuilder setModifiers(String... modifiers) {
-    myModifierList.clearModifiers();
+    ((LightModifierList)myModifierList).clearModifiers();
     addModifiers(modifiers);
     return this;
   }
@@ -145,13 +153,8 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return this;
   }
 
-  public LightMethodBuilder setReturnType(final PsiType returnType) {
-    return setReturnType(new Computable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        return returnType;
-      }
-    });
+  public LightMethodBuilder setReturnType(PsiType returnType) {
+    return setReturnType(new Computable.PredefinedValueComputable<PsiType>(returnType));
   }
 
   public PsiTypeElement getReturnTypeElement() {
@@ -164,7 +167,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   public LightMethodBuilder addParameter(PsiParameter parameter) {
-    myParameterList.addParameter(parameter);
+    ((LightParameterListBuilder)myParameterList).addParameter(parameter);
     return this;
   }
 

@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +34,7 @@ public class GrLightField extends GrLightVariable implements PsiField {
                       PsiManager manager,
                       @NonNls String name,
                       @NonNls @NotNull String type,
-                      PsiElement element) {
+                      @NotNull PsiElement element) {
     super(modifierList, manager, name, type, element);
     myContainingClass = containingClass;
   }
@@ -42,7 +44,7 @@ public class GrLightField extends GrLightVariable implements PsiField {
                       PsiManager manager,
                       @NonNls String name,
                       @NotNull PsiType type,
-                      PsiElement element) {
+                      @NotNull PsiElement element) {
     super(modifierList, manager, name, type, element);
     myContainingClass = containingClass;
   }
@@ -55,6 +57,12 @@ public class GrLightField extends GrLightVariable implements PsiField {
   @Override
   public boolean isDeprecated() {
     return false;
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
   }
 
   @Override

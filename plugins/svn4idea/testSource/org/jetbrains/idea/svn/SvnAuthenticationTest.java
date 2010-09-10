@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestCase;
@@ -95,19 +96,28 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
-          listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.save));
+          if (SystemInfo.isWindows) {
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.save));
+          } else {
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
+          }
 
           commonScheme(url, false, null);
           Assert.assertEquals(3, listener.getCnt());
           //long start = System.currentTimeMillis();
           //waitListenerStep(start, listener, 3);
 
+          listener.reset();
           SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
+          if (! SystemInfo.isWindows) {
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
+          }
           commonScheme(url, false, null);
           //start = System.currentTimeMillis();
           //waitListenerStep(start, listener, 4);
-          Assert.assertEquals(4, listener.getCnt());
+          Assert.assertEquals((SystemInfo.isWindows ? 1 : 3), listener.getCnt());
         }
         catch (SVNException e) {
           exception[0] = e;
@@ -118,11 +128,75 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     Assert.assertTrue(result[0]);
     myTestInteraction.assertNothing();
+    Assert.assertEquals((SystemInfo.isWindows ? 1 : 3), listener.getCnt());
+    listener.assertForAwt();
+    savedOnceListener.assertForAwt();
+
+    savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
+
+    if (exception[0] != null) {
+      throw exception[0];
+    }
+  }
+
+  public void testSavedAndReadUnix() throws Exception {
+    if (SystemInfo.isWindows) return;
+
+    final TestListener listener = new TestListener(mySynchObject);
+    myAuthenticationManager.addListener(listener);
+    final SavedOnceListener savedOnceListener = new SavedOnceListener();
+    myAuthenticationManager.addListener(savedOnceListener);
+
+    final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+
+    final SVNException[] exception = new SVNException[1];
+    final Boolean[] result = new Boolean[1];
+
+    final File servers = new File(myConfiguration.getConfigurationDirectory(), "servers");
+    final File oldServers = new File(myConfiguration.getConfigurationDirectory(), "config_old");
+    FileUtil.copy(servers, oldServers);
+    try {
+      FileUtil.appendToFile(servers, "\nstore-plaintext-passwords=yes\n");
+
+      synchronousBackground(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.save));
+
+            commonScheme(url, false, null);
+            Assert.assertEquals(3, listener.getCnt());
+            //long start = System.currentTimeMillis();
+            //waitListenerStep(start, listener, 3);
+
+            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+            listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
+            commonScheme(url, false, null);
+            //start = System.currentTimeMillis();
+            //waitListenerStep(start, listener, 4);
+            Assert.assertEquals(4, listener.getCnt());
+          }
+          catch (SVNException e) {
+            exception[0] = e;
+          }
+          result[0] = true;
+        }
+      });
+    } finally {
+      FileUtil.delete(servers);
+      FileUtil.rename(oldServers, servers);
+    }
+
+    Assert.assertTrue(result[0]);
+    myTestInteraction.assertNothing();
     Assert.assertEquals(4, listener.getCnt());
     listener.assertForAwt();
     savedOnceListener.assertForAwt();
+
     savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
-    
+
     if (exception[0] != null) {
       throw exception[0];
     }
@@ -938,6 +1012,12 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       synchronized (mySynchObject) {
         mySynchObject.notifyAll();
       }
+    }
+
+    public void reset() {
+      myExpectedSequence.clear();
+      myCnt = 0;
+      mySuccess = true;
     }
 
     @Override

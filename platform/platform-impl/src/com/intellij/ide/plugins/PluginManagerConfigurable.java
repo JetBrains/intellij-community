@@ -139,7 +139,11 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   }
 
   public void apply() throws ConfigurationException {
-    myPluginManagerMain.apply();
+    final String applyMessage = myPluginManagerMain.apply();
+    if (applyMessage != null) {
+      throw new ConfigurationException(applyMessage);
+    }
+
     if (myPluginManagerMain.isRequireShutdown()) {
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       if (app.isRestartCapable()) {

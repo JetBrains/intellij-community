@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassKind;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
   }
 
   public String toString(final PsiClass t, final ConvertContext context) {
-    return t == null ? null:t.getQualifiedName();
+    return t == null ? null : t.getQualifiedName();
   }
 
   @NotNull
@@ -56,10 +57,11 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
 
   protected JavaClassReferenceProvider createClassReferenceProvider(GenericDomValue<PsiClass> genericDomValue, ConvertContext context,
                                                                     ExtendClass extendClass) {
-    final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(getScope(genericDomValue), context.getPsiManager().getProject());
+    final JavaClassReferenceProvider provider =
+      new JavaClassReferenceProvider(getScope(genericDomValue), context.getPsiManager().getProject());
     if (extendClass != null) {
       if (StringUtil.isNotEmpty(extendClass.value())) {
-        provider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[] {extendClass.value()});
+        provider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[]{extendClass.value()});
       }
       if (extendClass.instantiatable()) {
         provider.setOption(JavaClassReferenceProvider.INSTANTIATABLE, Boolean.TRUE);
@@ -98,4 +100,33 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     return module == null ? null : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
   }
 
+  public static class AnnotationType extends PsiClassConverter {
+
+    @Override
+    protected JavaClassReferenceProvider createClassReferenceProvider(GenericDomValue<PsiClass> genericDomValue,
+                                                                      ConvertContext context,
+                                                                      ExtendClass extendClass) {
+      final JavaClassReferenceProvider provider = super.createClassReferenceProvider(genericDomValue, context,
+                                                                                     extendClass);
+
+      provider.setOption(JavaClassReferenceProvider.CLASS_KIND, ClassKind.ANNOTATION);
+      //provider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[] {"org.springframework.samples.petclinic.jsr330.Foo"});
+      //
+      return provider;
+    }
+  }
+
+  public static class EnumType extends PsiClassConverter {
+
+    @Override
+    protected JavaClassReferenceProvider createClassReferenceProvider(GenericDomValue<PsiClass> genericDomValue,
+                                                                      ConvertContext context,
+                                                                      ExtendClass extendClass) {
+      final JavaClassReferenceProvider provider = super.createClassReferenceProvider(genericDomValue, context,
+                                                                                     extendClass);
+      provider.setOption(JavaClassReferenceProvider.CLASS_KIND, ClassKind.ENUM);
+
+      return provider;
+    }
+  }
 }

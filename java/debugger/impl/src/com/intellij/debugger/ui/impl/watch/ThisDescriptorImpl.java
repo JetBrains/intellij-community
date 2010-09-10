@@ -37,7 +37,7 @@ public class ThisDescriptorImpl extends ValueDescriptorImpl{
   }
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    return evaluationContext.getThisObject();
+    return evaluationContext != null? evaluationContext.getThisObject() : null;
   }
 
   public String getName() {

@@ -466,6 +466,15 @@ public class Test {
       W<? extends A> y = ( W<? extends A>) x;
       W<?> y1 = (W<?>)x;
     }
+
+    void testTypeParams() {
+      class MyClass<K, V> {
+        MyClass<K, V> convert(MyClass<? super K, ? super V> arg) {
+          MyClass<K, V> result = (MyClass<K, V>)arg;
+          return result;
+        }
+      }
+    }
 }
 
 class W<T> {}

@@ -34,7 +34,7 @@ public abstract class ExecutionManager {
 
   public abstract RunContentManager getContentManager();
 
-  public abstract void compileAndRun(Runnable startRunnable, RunProfile configuration, RunProfileState state);
+  public abstract void compileAndRun(Runnable startRunnable, RunProfile configuration, RunProfileState state, Runnable onCancelRunnable);
 
   public abstract ProcessHandler[] getRunningProcesses();
 

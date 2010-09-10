@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
@@ -28,16 +27,15 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
+import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ArrayUtil;
@@ -192,7 +190,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }, consoleContent);
     }
     session.getDebugProcess().registerAdditionalContent(myUi);
-
+    RunContentBuilder.addAdditionalConsoleEditorActions(myUi, myConsole, consoleContent);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myRunContentDescriptor;

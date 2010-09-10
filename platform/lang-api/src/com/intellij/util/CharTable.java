@@ -21,10 +21,9 @@ import com.intellij.openapi.util.Key;
  * @author ik
  */
 public interface CharTable {
-  int PAGE_SIZE = 256;
   Key<CharTable> CHAR_TABLE_KEY = new Key<CharTable>("Char table");
 
-  CharSequence intern(final CharSequence text);
+  CharSequence intern(CharSequence text);
 
   CharSequence intern(CharSequence baseText, int startOffset, int endOffset);
 }

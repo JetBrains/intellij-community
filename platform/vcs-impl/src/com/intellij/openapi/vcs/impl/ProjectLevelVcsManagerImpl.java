@@ -340,6 +340,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myMappings.getActiveVcses();
   }
 
+  public boolean hasActiveVcss() {
+    return myMappings.hasActiveVcss();
+  }
+
   public boolean hasAnyMappings() {
     return ! myMappings.isEmpty();
   }

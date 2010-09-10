@@ -27,6 +27,8 @@ import javax.swing.*;
  * for them. Gutter icons are drawn to the left of the folding area and can be used, for example,
  * to mark implemented or overridden methods.
  *
+ * Daemon code analyzer checks newly arrived gutter icon renderer against the old one and if they are equal, does not redraw the icon.
+ * So it is highly advisable to override hashCode()/equals() methods to avoid icon flickering when old gutter renderer gets replaced with the new.
  * @author max
  * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
  */

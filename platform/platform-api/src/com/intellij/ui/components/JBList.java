@@ -74,8 +74,14 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
       }
     };
 
-    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+
+    if (shouldInstallItemTooltipExpander()) myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
   }
+
+  protected boolean shouldInstallItemTooltipExpander() {
+    return true;
+  }
+
 
   public boolean isEmpty() {
     return getItemsCount() == 0;

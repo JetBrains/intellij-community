@@ -256,25 +256,15 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void save() {
-    BufferedWriter writer = null;
     try {
-      final OutputStream os = pathToFile().getOutputStream(this);
-      writer = new BufferedWriter(new OutputStreamWriter(os));
+      VirtualFile file = pathToFile();
       final String toWrite = myDocument.getText();
-      writer.write(toWrite != null ? toWrite : "");
+      String text = toWrite != null ? toWrite : "";
+      VfsUtil.saveText(file, text);
       myChanged = false;
     }
     catch (IOException e) {
       Messages.showErrorDialog(e.getMessage(), "Cannot save script");
-    } finally {
-      if (writer != null) {
-        try {
-          writer.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
     }
   }
 

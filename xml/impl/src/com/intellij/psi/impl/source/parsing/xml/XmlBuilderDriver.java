@@ -19,9 +19,7 @@
  */
 package com.intellij.psi.impl.source.parsing.xml;
 
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.Comparing;
@@ -29,7 +27,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
@@ -59,7 +56,7 @@ public class XmlBuilderDriver {
   }
 
   public void build(XmlBuilder builder) {
-    PsiBuilderImpl b = createBuilderAndParse();
+    PsiBuilder b = createBuilderAndParse();
 
     FlyweightCapableTreeStructure<LighterASTNode> structure = b.getLightTree();
 
@@ -84,7 +81,7 @@ public class XmlBuilderDriver {
     structure.disposeChildren(children, count);
   }
 
-  private void processPrologNode(PsiBuilderImpl psiBuilder,
+  private void processPrologNode(PsiBuilder psiBuilder,
                                  XmlBuilder builder,
                                  FlyweightCapableTreeStructure<LighterASTNode> structure,
                                  LighterASTNode prolog) {
@@ -136,24 +133,23 @@ public class XmlBuilderDriver {
     return myText.subSequence(token.getStartOffset(), token.getEndOffset());
   }
 
-  protected PsiBuilderImpl createBuilderAndParse() {
+  protected PsiBuilder createBuilderAndParse() {
     final ParserDefinition xmlParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE);
     assert xmlParserDefinition != null;
 
-    PsiBuilderImpl b = new PsiBuilderImpl(xmlParserDefinition.createLexer(null), xmlParserDefinition.getWhitespaceTokens(), TokenSet.EMPTY,
-                                          myText);
+    PsiBuilder b = PsiBuilderFactory.getInstance().createBuilder(xmlParserDefinition.createLexer(null), XMLLanguage.INSTANCE, myText);
     new XmlParsing(b).parseDocument();
     return b;
   }
 
-  private void processErrorNode(PsiBuilderImpl psiBuilder, LighterASTNode node, XmlBuilder builder) {
+  private void processErrorNode(PsiBuilder psiBuilder, LighterASTNode node, XmlBuilder builder) {
     assert node.getTokenType() == TokenType.ERROR_ELEMENT;
-    String message = psiBuilder.getErrorMessage(node);
+    String message = PsiBuilderImpl.getErrorMessage(node);
     assert message != null;
     builder.error(message, node.getStartOffset(), node.getEndOffset());
   }
 
-  private void processTagNode(PsiBuilderImpl psiBuilder,
+  private void processTagNode(PsiBuilder psiBuilder,
                               FlyweightCapableTreeStructure<LighterASTNode> structure,
                               LighterASTNode node,
                               XmlBuilder builder) {

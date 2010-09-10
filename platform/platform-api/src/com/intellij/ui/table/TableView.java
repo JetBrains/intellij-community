@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -45,14 +44,6 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   public void setModel(final TableModel dataModel) {
     assert dataModel instanceof SortableColumnModel : "SortableColumnModel required";
     super.setModel(dataModel);
-    dataModel.addTableModelListener(new TableModelListener() {
-      public void tableChanged(final TableModelEvent e) {
-        JTableHeader header = getTableHeader();
-        if (header != null) {
-          header.repaint();
-        }
-      }
-    });
   }
 
   public void setModel(final ListTableModel<Item> model) {
@@ -66,7 +57,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public TableCellRenderer getCellRenderer(int row, int column) {
     final ColumnInfo<Item, ?> columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
-    TableCellRenderer renderer = columnInfo.getRenderer(getListTableModel().getItems().get(row));
+    TableCellRenderer renderer = columnInfo.getRenderer(getListTableModel().getItems().get(convertRowIndexToModel(row)));
     if (renderer == null) {
       return super.getCellRenderer(row, column);
     }
@@ -126,9 +117,12 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     int[] selectedRows = getSelectedRows();
     if (selectedRows == null) return result;
     final List<Item> items = getItems();
-    for (int selectedRow : selectedRows) {
-      if (selectedRow >= 0 && selectedRow < items.size()) {
-        result.add(items.get(selectedRow));
+    if (! items.isEmpty()) {
+      for (int selectedRow : selectedRows) {
+        final int modelIndex = convertRowIndexToModel(selectedRow);
+        if (modelIndex >= 0 && modelIndex < items.size()) {
+          result.add(items.get(modelIndex));
+        }
       }
     }
     return result;
@@ -138,7 +132,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   public Item getSelectedObject() {
     final int row = getSelectedRow();
     final List<Item> list = getItems();
-    return row >= 0 && row < list.size() ? list.get(row) : null;    
+    return row >= 0 && row < list.size() ? list.get(convertRowIndexToModel(row)) : null;
   }
 
   @Nullable
@@ -148,7 +142,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     final List<Item> items = getItems();
     final List<Item> result = new ArrayList<Item>();
     for (int selectedRow : selectedRows) {
-      result.add(items.get(selectedRow));
+      result.add(items.get(convertRowIndexToModel(selectedRow)));
     }
     return result;
   }
@@ -157,14 +151,14 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     List items = getItems();
     if (!items.contains(item)) return;
     int index = items.indexOf(item);
-    getSelectionModel().addSelectionInterval(index, index);
+    getSelectionModel().addSelectionInterval(convertRowIndexToView(index), convertRowIndexToView(index));
     // fix cell selection case
     getColumnModel().getSelectionModel().addSelectionInterval(0, getColumnCount()-1);
   }
 
   public TableCellEditor getCellEditor(int row, int column) {
     final ColumnInfo<Item, ?> columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
-    final TableCellEditor editor = columnInfo.getEditor(getListTableModel().getItems().get(row));
+    final TableCellEditor editor = columnInfo.getEditor(getListTableModel().getItems().get(convertRowIndexToModel(row)));
     return editor == null ? super.getCellEditor(row, column) : editor;
   }
 

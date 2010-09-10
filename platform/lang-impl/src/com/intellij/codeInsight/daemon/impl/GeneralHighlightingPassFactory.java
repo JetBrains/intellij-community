@@ -49,8 +49,8 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
-    if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument(), GeneralHighlightingPass.IN_PROGRESS_ICON,
-                                                                             GeneralHighlightingPass.PRESENTABLE_NAME);
+    if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument()
+    );
     TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
     return new GeneralHighlightingPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange);
   }

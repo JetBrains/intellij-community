@@ -146,6 +146,16 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     fireTableRowsDeleted(idx, idx);
   }
 
+  public void exchangeRows(int idx1, int idx2) {
+    Collections.swap(myItems, idx1, idx2);
+    if (idx1 < idx2) {
+      fireTableRowsUpdated(idx1, idx2);
+    }
+    else {
+      fireTableRowsUpdated(idx2, idx1);
+    }
+  }
+
   public void addRow(Item item) {
     myItems.add(item);
     fireTableRowsInserted(myItems.size() - 1, myItems.size() - 1);

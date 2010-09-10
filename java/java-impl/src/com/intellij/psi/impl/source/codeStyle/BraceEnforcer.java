@@ -32,10 +32,10 @@ import org.jetbrains.annotations.NotNull;
 public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.BraceEnforcer");
 
-  private final AbstractPostFormatProcessor myPostProcessor;
+  private final PostFormatProcessorHelper myPostProcessor;
 
   public BraceEnforcer(CodeStyleSettings settings) {
-    myPostProcessor = new AbstractPostFormatProcessor(settings);
+    myPostProcessor = new PostFormatProcessorHelper(settings);
   }
 
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -96,7 +96,7 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
   private void processStatement(PsiStatement statement, PsiStatement blockCandidate, int options) {
     if (blockCandidate instanceof PsiBlockStatement || blockCandidate == null) return;
     if (options == CodeStyleSettings.FORCE_BRACES_ALWAYS ||
-        options == CodeStyleSettings.FORCE_BRACES_IF_MULTILINE && AbstractPostFormatProcessor.isMultiline(statement)) {
+        options == CodeStyleSettings.FORCE_BRACES_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(statement)) {
       replaceWithBlock(statement, blockCandidate);
     }
   }
@@ -146,11 +146,11 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
   }
 
   protected boolean checkElementContainsRange(final PsiElement element) {
-    return myPostProcessor.checkElementContainsRange(element);
+    return myPostProcessor.isElementPartlyInRange(element);
   }
 
   protected boolean checkRangeContainsElement(final PsiElement element) {
-    return myPostProcessor.checkRangeContainsElement(element);
+    return myPostProcessor.isElementFullyInRange(element);
   }
 
   public PsiElement process(PsiElement formatted) {

@@ -85,4 +85,24 @@ class OverridingDefineRenderer extends GutterIconRenderer {
       }, PsiElement.EMPTY_ARRAY), title).show(new RelativePoint((MouseEvent)e.getInputEvent()));
     }
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    OverridingDefineRenderer that = (OverridingDefineRenderer)o;
+
+    if (myMessage != null ? !myMessage.equals(that.myMessage) : that.myMessage != null) return false;
+    if (mySet != null ? !mySet.equals(that.mySet) : that.mySet != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = mySet != null ? mySet.hashCode() : 0;
+    result = 31 * result + (myMessage != null ? myMessage.hashCode() : 0);
+    return result;
+  }
 }

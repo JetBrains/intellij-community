@@ -16,76 +16,101 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.JavaSmartCompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class ClassLiteralGetter {
+public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionParameters> {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.filters.getters.ClassLiteralGetter");
 
-  private ClassLiteralGetter() {
+  public ClassLiteralGetter() {
+    super(false);
   }
 
-  public static LookupElement[] getClassLiterals(PsiElement context, CompletionContext completionContext, final PrefixMatcher matcher, ContextGetter myBaseGetter) {
+  @Override
+  protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
+                                ProcessingContext context,
+                                @NotNull CompletionResultSet result) {
+
+    final PrefixMatcher matcher = result.getPrefixMatcher();
     final Condition<String> shortNameCondition = new Condition<String>() {
       public boolean value(String s) {
         return matcher.prefixMatches(s);
       }
     };
 
-    final List<LookupElement> result = new ArrayList<LookupElement>();
-    for (final Object element : myBaseGetter.get(context, completionContext)) {
-      if (element instanceof PsiClassType) {
-        PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)element).resolveGenerics();
-        PsiClass psiClass = resolveResult.getElement();
-        if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-          final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-          if (typeParameters.length == 1) {
-            PsiType substitution = resolveResult.getSubstitutor().substitute(typeParameters[0]);
-            boolean addInheritors = false;
-            if (substitution instanceof PsiWildcardType) {
-              final PsiWildcardType wildcardType = (PsiWildcardType)substitution;
-              substitution = wildcardType.getBound();
-              addInheritors = wildcardType.isExtends();
-            }
+    PsiType classParameter = ApplicationManager.getApplication().runReadAction(new Computable<PsiType>() {
+      @Nullable
+      public PsiType compute() {
+        return PsiUtil.substituteTypeParameter(parameters.getExpectedType(), CommonClassNames.JAVA_LANG_CLASS, 0, false);
+      }
+    });
 
-            final PsiClass aClass = PsiUtil.resolveClassInType(substitution);
-            if (aClass == null) continue;
+    boolean addInheritors = false;
+    if (classParameter instanceof PsiWildcardType) {
+      final PsiWildcardType wildcardType = (PsiWildcardType)classParameter;
+      classParameter = wildcardType.getBound();
+      addInheritors = wildcardType.isExtends() && classParameter instanceof PsiClassType;
+    }
+    if (classParameter == null) {
+      return;
+    }
 
-            createLookupElement(substitution, result, context);
-            if (addInheritors && substitution != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(substitution.getCanonicalText())) {
-              for (final PsiType type : CodeInsightUtil.addSubtypes(substitution, context, true, shortNameCondition)) {
-                createLookupElement(type, result, context);
-              }
-            }
+    addClassLiteralLookupElement(classParameter, result, parameters.getPosition());
+    if (addInheritors) {
+      addInheritorClassLiterals(parameters.getPosition(), shortNameCondition, classParameter, result);
+    }
 
+  }
+
+  private static void addInheritorClassLiterals(PsiElement context,
+                                                Condition<String> shortNameCondition,
+                                                final PsiType classParameter,
+                                                CompletionResultSet result) {
+    final String canonicalText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return classParameter.getCanonicalText();
+      }
+    });
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(canonicalText) && StringUtil.isEmpty(result.getPrefixMatcher().getPrefix())) {
+      return;
+    }
+
+    for (final PsiType type : CodeInsightUtil.addSubtypes(classParameter, context, true, shortNameCondition)) {
+      addClassLiteralLookupElement(type, result, context);
+    }
+  }
+
+  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final CompletionResultSet resultSet, final PsiElement context) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        if (type instanceof PsiClassType &&
+            type.isValid() &&
+            PsiUtil.resolveClassInType(type) != null &&
+            !((PsiClassType)type).hasParameters() &&
+            !(((PsiClassType)type).resolve() instanceof PsiTypeParameter)) {
+          try {
+            resultSet.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new ClassLiteralLookupElement((PsiClassType)type, context)));
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
           }
         }
       }
-    }
+    });
 
-    return result.toArray(new LookupElement[result.size()]);
-  }
-
-  private static void createLookupElement(@Nullable final PsiType type, final List<LookupElement> list, PsiElement context) {
-    if (type instanceof PsiClassType && !((PsiClassType)type).hasParameters() && !(((PsiClassType) type).resolve() instanceof PsiTypeParameter)) {
-      try {
-        list.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new ClassLiteralLookupElement((PsiClassType)type, context)));
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
   }
 }

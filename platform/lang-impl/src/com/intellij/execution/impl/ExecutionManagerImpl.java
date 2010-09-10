@@ -38,7 +38,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,9 +96,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return handlers.toArray(new ProcessHandler[handlers.size()]);
   }
 
-  public void compileAndRun(final Runnable startRunnable,
-                            final RunProfile configuration,
-                            final RunProfileState state) {
+  public void compileAndRun(final Runnable startRunnable, final RunProfile configuration, final RunProfileState state, @Nullable final Runnable onCancelRunnable) {
     if (configuration instanceof RunConfiguration) {
       final RunConfiguration runConfiguration = (RunConfiguration)configuration;
       final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
@@ -119,6 +119,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
               .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
             for (BeforeRunTaskProvider<BeforeRunTask> provider : activeProviders.keySet()) {
               if(!provider.executeTask(dataContext, runConfiguration, activeProviders.get(provider))) {
+                if (onCancelRunnable != null) {
+                  SwingUtilities.invokeLater(onCancelRunnable);
+                }
                 return;
               }
             }
@@ -141,13 +144,15 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     final RunContentDescriptor reuseContent = ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, env.getContentToReuse());
     final RunProfile profile = env.getRunProfile();
 
+    project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.getId(), env);
+
     Runnable startRunnable = new Runnable() {
       public void run() {
         boolean started = false;
         try {
           if (project.isDisposed()) return;
 
-          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(profile);
+          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(executor.getId(), env);
 
           final RunContentDescriptor descriptor = starter.execute(project, executor, state, reuseContent, env);
 
@@ -156,7 +161,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
             final ProcessHandler processHandler = descriptor.getProcessHandler();
             if (processHandler != null) {
               processHandler.startNotify();
-              project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(profile, processHandler);
+              project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), env, processHandler);
               started = true;
               processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
             }
@@ -165,8 +170,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         catch (ExecutionException e) {
           ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, e);
         }
-        if (!started) {
-          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(profile);
+        finally {
+          if (!started) {
+            project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);
+          }
         }
       }
     };
@@ -175,7 +182,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       startRunnable.run();
     }
     else {
-      compileAndRun(startRunnable, profile, state);
+      compileAndRun(startRunnable, profile, state, new Runnable() {
+        public void run() {
+          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);
+        }
+      });
     }
   }
 

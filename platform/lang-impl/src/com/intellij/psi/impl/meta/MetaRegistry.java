@@ -71,23 +71,23 @@ public class MetaRegistry extends MetaDataRegistrar {
       protected CachedValue<PsiMetaData> compute(final PsiElement element, Object p) {
         return CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiMetaData>() {
           public Result<PsiMetaData> compute() {
-            try {
-              ensureContributorsLoaded();
-              for (final MyBinding binding : ourBindings) {
-                if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
-                  final PsiMetaData data = binding.myDataClass.newInstance();
-                  data.init(element);
-                  return new Result<PsiMetaData>(data, data.getDependences());
+            ensureContributorsLoaded();
+            for (final MyBinding binding : ourBindings) {
+              if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
+                final PsiMetaData data;
+                try {
+                  data = binding.myDataClass.newInstance();
                 }
+                catch (InstantiationException e) {
+                  throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
+                }
+                catch (IllegalAccessException e) {
+                  throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
+                }
+                data.init(element);
+                return new Result<PsiMetaData>(data, data.getDependences());
               }
             }
-            catch (IllegalAccessException iae) {
-              throw new RuntimeException(iae);
-            }
-            catch (InstantiationException ie) {
-              throw new RuntimeException(ie);
-            }
-
             return new Result<PsiMetaData>(null, element);
           }
         }, false);

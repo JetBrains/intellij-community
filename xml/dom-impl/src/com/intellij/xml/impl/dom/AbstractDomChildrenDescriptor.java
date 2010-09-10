@@ -13,6 +13,7 @@ import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
@@ -63,22 +64,6 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
             return name.getXmlName().getLocalName();
           }
 
-          /**
-           * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
-           */
-          @Override
-          public Integer getMinOccurs() {
-            return null;
-          }
-
-          /**
-           * @return maximal occurrence constraint value (e.g. 1 or {@link Integer.MAX_VALUE}), on null if not applied
-           */
-          @Override
-          public Integer getMaxOccurs() {
-            return null;
-          }
-
           @Override
           @Nullable
           public PsiElement getDeclaration() {
@@ -96,12 +81,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
   }
 
   @Override
-  public Integer getMinOccurs() {
-    return null;
-  }
-
-  @Override
-  public Integer getMaxOccurs() {
+  public XmlElementsGroup getTopGroup() {
     return null;
   }
 
@@ -129,22 +109,6 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
         @Override
         public String getDefaultName() {
           return finalDomElement.getXmlElementName();
-        }
-
-        /**
-         * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
-         */
-        @Override
-        public Integer getMinOccurs() {
-          return null;
-        }
-
-        /**
-         * @return maximal occurrence constraint value (e.g. 1 or {@link Integer.MAX_VALUE}), on null if not applied
-         */
-        @Override
-        public Integer getMaxOccurs() {
-          return null;
         }
 
         @Override

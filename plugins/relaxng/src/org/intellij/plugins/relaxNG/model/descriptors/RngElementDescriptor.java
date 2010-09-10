@@ -30,6 +30,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.RngSchemaValidator;
@@ -183,12 +184,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   @Override
-  public Integer getMinOccurs() {
-    return null;
-  }
-
-  @Override
-  public Integer getMaxOccurs() {
+  public XmlElementsGroup getTopGroup() {
     return null;
   }
 

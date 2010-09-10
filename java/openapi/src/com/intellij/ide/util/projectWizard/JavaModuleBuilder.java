@@ -20,7 +20,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
@@ -55,6 +54,9 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   public final String getContentEntryPath() {
     if (myContentEntryPath == null) {
       final String directory = getModuleFileDirectory();
+      if (directory == null) {
+        return null;
+      }
       new File(directory).mkdirs();
       return directory;
     }

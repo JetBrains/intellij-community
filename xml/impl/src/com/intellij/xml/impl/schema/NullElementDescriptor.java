@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 
 public class NullElementDescriptor implements XmlElementDescriptor {
@@ -71,13 +72,8 @@ public class NullElementDescriptor implements XmlElementDescriptor {
   }
 
   @Override
-  public Integer getMinOccurs() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public Integer getMaxOccurs() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  public XmlElementsGroup getTopGroup() {
+    return null;
   }
 
   public int getContentType() {

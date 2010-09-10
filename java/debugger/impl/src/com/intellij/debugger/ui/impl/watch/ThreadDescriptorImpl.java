@@ -70,7 +70,6 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
       if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
         return DebuggerBundle.message("label.thread.node.in.group", myName, thread.uniqueID(), threadStatusText, grname);
       }
-
       return DebuggerBundle.message("label.thread.node", myName, thread.uniqueID(), threadStatusText);
     }
     catch (ObjectCollectedException e) {
@@ -96,20 +95,20 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
 
   public void setContext(EvaluationContextImpl context) {
     final ThreadReferenceProxyImpl thread = getThreadReference();
-    final SuspendManager suspendManager = context.getDebugProcess().getSuspendManager();
-    final SuspendContextImpl suspendContext = context.getSuspendContext();
+    final SuspendManager suspendManager = context != null? context.getDebugProcess().getSuspendManager() : null;
+    final SuspendContextImpl suspendContext = context != null? context.getSuspendContext() : null;
 
     try {
-      myIsSuspended = suspendManager.isSuspended(thread);
+      myIsSuspended = suspendManager != null? suspendManager.isSuspended(thread) : thread.isSuspended();
     }
     catch (ObjectCollectedException e) {
       myIsSuspended = false;
     }
     myIsExpandable   = calcExpandable(myIsSuspended);
     mySuspendContext = SuspendManagerUtil.getSuspendContextForThread(suspendContext, thread);
-    myIsAtBreakpoint = SuspendManagerUtil.findContextByThread(suspendManager, thread) != null;
-    myIsCurrent      = suspendContext.getThread() == thread;
-    myIsFrozen       = suspendManager.isFrozen(thread);
+    myIsAtBreakpoint = suspendManager != null? SuspendManagerUtil.findContextByThread(suspendManager, thread) != null : thread.getThreadReference().isAtBreakpoint();
+    myIsCurrent      = suspendContext != null? suspendContext.getThread() == thread : false;
+    myIsFrozen       = suspendManager != null? suspendManager.isFrozen(thread) : myIsSuspended;
   }
 
   private boolean calcExpandable(final boolean isSuspended) {

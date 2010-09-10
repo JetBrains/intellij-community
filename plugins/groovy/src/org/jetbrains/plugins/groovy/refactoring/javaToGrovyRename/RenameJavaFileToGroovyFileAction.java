@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -77,6 +77,7 @@ public class RenameJavaFileToGroovyFileAction extends AnAction implements DumbAw
     if (enabled) {
       assert file != null;
       presentation.setText(file.getLanguage() == StdLanguages.JAVA ? "Rename To Groovy" : "Rename To Java");
+      presentation.setDescription(file.getLanguage() == StdLanguages.JAVA ? "Rename Java File to Groovy" : "Rename Groovy File to Java");
     }
   }
 

@@ -149,6 +149,7 @@ public class XmlUtil {
   @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
   public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
+  public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
 
 
   private XmlUtil() {
@@ -950,13 +951,13 @@ public class XmlUtil {
       final Language language = file.getLanguage();
       if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
         return new String[][]{new String[]{"", XHTML_URI}};
+        }
       }
-    }
 
     return null;
   }
 
-  private static final String HTML5_SCHEMA_LOCATION;
+  public static final String HTML5_SCHEMA_LOCATION;
   
   static {
     URL schemaLocationURL = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
@@ -972,19 +973,21 @@ public class XmlUtil {
     }
     return null;
   }
-  
+
   @Nullable
-  public static String getDtdUri(XmlDoctype doctype) {    
+  public static String getDtdUri(XmlDoctype doctype) {
     if (doctype != null) {
       String docType = doctype.getDtdUri();
-      if (docType == null && 
-          PsiTreeUtil.getParentOfType(doctype, XmlDocument.class) instanceof HtmlDocumentImpl) {
-        
+      if (docType == null) {
         final String publicId = doctype.getPublicId();
-        if (publicId != null && publicId.indexOf("-//W3C//DTD HTML") != -1) {
+        if (PsiTreeUtil.getParentOfType(doctype, XmlDocument.class) instanceof HtmlDocumentImpl &&
+            publicId != null &&
+            publicId.indexOf("-//W3C//DTD HTML") != -1) {
           return HTML4_LOOSE_URI;
         }
-        if (publicId == null) docType = HTML5_SCHEMA_LOCATION;
+        else if (HtmlUtil.isHtml5Doctype(doctype)) {
+          docType = HTML5_SCHEMA_LOCATION;
+        }
       }
       return docType;
     }

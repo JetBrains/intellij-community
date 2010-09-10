@@ -61,7 +61,7 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
 
   private static boolean externalAnnotatorsDefined(PsiFile file) {
     for (Language language : file.getViewProvider().getLanguages()) {
-      final List<ExternalAnnotator> externalAnnotators = ExternalLanguageAnnotators.INSTANCE.allForLanguage(language);
+      final List<ExternalAnnotator> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, file);
       if (!externalAnnotators.isEmpty()) {
         return true;
       }

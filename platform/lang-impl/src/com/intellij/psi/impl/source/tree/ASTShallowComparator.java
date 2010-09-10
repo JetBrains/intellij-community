@@ -56,7 +56,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     return n1.getElementType() == n2.getElementType();
   }
 
-  public boolean hashcodesEqual(final ASTNode n1, final ASTNode n2) {
+  public boolean hashCodesEqual(final ASTNode n1, final ASTNode n2) {
     if (n1 instanceof LeafElement && n2 instanceof LeafElement) {
       return textMatches(n1, n2) == ThreeState.YES;
     }

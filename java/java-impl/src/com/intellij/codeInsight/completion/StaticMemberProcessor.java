@@ -10,9 +10,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.util.containers.CollectionFactory.hashSet;
@@ -64,7 +68,24 @@ public abstract class StaticMemberProcessor {
         for (final PsiMethod method : methods) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              processMember(method, consumer);
+              if (isStaticallyImportable(method)) {
+                final PsiClass containingClass = method.getContainingClass();
+                assert containingClass != null;
+
+                final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
+                if (!myHintShown &&
+                    !shouldImport &&
+                    FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, myProject) &&
+                    CompletionService.getCompletionService().getAdvertisementText() == null) {
+                  final String shortcut = CompletionContributor.getActionShortcut("EditorRight");
+                  if (shortcut != null) {
+                    CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
+                  }
+                  myHintShown = true;
+                }
+
+                consumer.consume(createLookupElement(method, containingClass, shouldImport));
+              }
             }
           });
 
@@ -73,63 +94,40 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  public void processMembersOfRegisteredClasses(@Nullable final PrefixMatcher matcher, final Consumer<LookupElement> consumer) {
+  public List<PsiMember> processMembersOfRegisteredClasses(@Nullable final PrefixMatcher matcher, PairConsumer<PsiMember, PsiClass> consumer) {
+    final ArrayList<PsiMember> result = CollectionFactory.arrayList();
     for (final PsiClass psiClass : myStaticImportedClasses) {
-      final PsiMethod[] classMethods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
-        public PsiMethod[] compute() {
-          return psiClass.getAllMethods();
-        }
-      });
-      for (final PsiMethod method : classMethods) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            if (matcher == null || matcher.prefixMatches(method.getName())) {
-              processMember(method, consumer);
-            }
+      for (final PsiMethod method : psiClass.getAllMethods()) {
+        if (matcher == null || matcher.prefixMatches(method.getName())) {
+          if (isStaticallyImportable(method)) {
+            consumer.consume(method, psiClass);
           }
-        });
+        }
       }
-      final PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
-        public PsiField[] compute() {
-          return psiClass.getAllFields();
-        }
-      });
-      for (final PsiField field : fields) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            if (matcher == null || matcher.prefixMatches(field.getName())) {
-              processMember(field, consumer);
-            }
+      for (final PsiField field : psiClass.getAllFields()) {
+        if (matcher == null || matcher.prefixMatches(field.getName())) {
+          if (isStaticallyImportable(field)) {
+            consumer.consume(field, psiClass);
           }
-        });
+        }
       }
     }
+    return result;
   }
 
 
-  private void processMember(final PsiMember member, final Consumer<LookupElement> consumer) {
+  private boolean isStaticallyImportable(final PsiMember member) {
     if (member.hasModifierProperty(PsiModifier.STATIC) && myResolveHelper.isAccessible(member, myPosition, null)) {
       final PsiClass containingClass = member.getContainingClass();
       if (containingClass != null) {
         if (!JavaCompletionUtil.isInExcludedPackage(containingClass) &&
             (!(member instanceof PsiMethod) || !StaticImportMethodFix.isExcluded((PsiMethod)member))) {
-          final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-          if (!myHintShown &&
-              !shouldImport &&
-              FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, myProject) &&
-              CompletionService.getCompletionService().getAdvertisementText() == null) {
-            final String shortcut = CompletionContributor.getActionShortcut("EditorRight");
-            if (shortcut != null) {
-              CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
-            }
-            myHintShown = true;
-          }
-
-          consumer.consume(createLookupElement(member, containingClass, shouldImport));
+          return true;
         }
 
       }
     }
+    return false;
   }
 
   @NotNull

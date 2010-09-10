@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -26,11 +27,13 @@ import java.util.EventListener;
  */
 public interface ExecutionListener extends EventListener {
 
-  void processStarting(@NotNull RunProfile runProfile);
+  void processStartScheduled(String executorId, ExecutionEnvironment env);
+  
+  void processStarting(String executorId, @NotNull ExecutionEnvironment env);
 
-  void processNotStarted(@NotNull RunProfile runProfile);
+  void processNotStarted(String executorId, @NotNull ExecutionEnvironment env);
 
-  void processStarted(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler);
+  void processStarted(String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler);
 
   void processTerminating(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler);
 

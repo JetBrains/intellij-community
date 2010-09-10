@@ -20,10 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.semantic.SemContributor;
 import com.intellij.semantic.SemRegistrar;
 import com.intellij.semantic.SemService;
@@ -61,7 +58,7 @@ public class DomSemContributor extends SemContributor {
       }
     });
 
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag().withParent(psiElement(XmlDocument.class).withParent(xmlFile())), new NullableFunction<XmlTag, DomInvocationHandler>() {
+    registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag().withParent(psiElement(XmlElementType.XML_DOCUMENT).withParent(xmlFile())), new NullableFunction<XmlTag, DomInvocationHandler>() {
       public DomInvocationHandler fun(XmlTag xmlTag) {
         final FileDescriptionCachedValueProvider provider =
           mySemService.getSemElement(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlTag.getContainingFile());

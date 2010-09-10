@@ -80,10 +80,6 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
           }
         });
       }
-
-      public void errorOccured(@NotNull final String errorMessage) {
-        errorOccurred(errorMessage);
-      }
     });
     super.doOKAction();
   }

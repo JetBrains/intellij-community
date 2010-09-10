@@ -45,6 +45,8 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
 
     final SearchScope onlyGroovy = PsiUtil.restrictScopeToGroovyFiles(parameters.getEffectiveSearchScope());
 
+    final SearchRequestCollector collector = parameters.getOptimizer();
+    final SearchSession session = collector.getSearchSession();
     if (target instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)target;
       if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
@@ -52,25 +54,27 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
         if (field != null) {
           final String propertyName = field.getName();
           if (propertyName != null) {
-            final MyProcessor processor = new MyProcessor(method, GroovyPropertyUtils.getAccessorPrefix(method));
-            parameters.getOptimizer().searchWord(propertyName, onlyGroovy, UsageSearchContext.IN_CODE, true, processor);
+            final MyProcessor processor = new MyProcessor(method, GroovyPropertyUtils.getAccessorPrefix(method), session);
+            collector.searchWord(propertyName, onlyGroovy, UsageSearchContext.IN_CODE, true, processor);
           }
         }
       }
     }
 
-    parameters.getOptimizer().searchWord(name, onlyGroovy, UsageSearchContext.IN_CODE, true, new MyProcessor(target, null));
+    collector.searchWord(name, onlyGroovy, UsageSearchContext.IN_CODE, true, new MyProcessor(target, null, session));
 
   }
 
   private static class MyProcessor extends RequestResultProcessor {
     private final PsiElement myTarget;
     private final String prefix;
+    private final SearchSession mySession;
 
-    MyProcessor(PsiElement target, @Nullable String prefix) {
+    MyProcessor(PsiElement target, @Nullable String prefix, SearchSession session) {
       super(target, prefix);
       myTarget = target;
       this.prefix = prefix;
+      mySession = session;
     }
 
     @Override
@@ -86,7 +90,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
         return true;
       }
 
-      final SearchRequestCollector collector = new SearchRequestCollector();
+      final SearchRequestCollector collector = new SearchRequestCollector(mySession);
       final SearchScope fileScope = new LocalSearchScope(element.getContainingFile());
       collector.searchWord(alias, fileScope, UsageSearchContext.IN_CODE, true, myTarget);
       if (prefix != null) {

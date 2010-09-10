@@ -41,6 +41,7 @@ public abstract class DeploymentUtil {
                                 @Nullable Set<String> writtenPaths,
                                 @Nullable FileFilter fileFilter) throws IOException;
 
+  @Deprecated
   public abstract boolean addItemsRecursively(@NotNull BuildRecipe items, @NotNull File root, String outputRelativePath);
 
   public static String trimForwardSlashes(@NotNull String path) {
@@ -82,11 +83,15 @@ public abstract class DeploymentUtil {
     return basePath + tail;
   }
 
+  @Deprecated
   public abstract BuildRecipe createBuildRecipe();
 
   @Nullable
   public abstract String getConfigFileErrorMessage(ConfigFile configFile);
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.util.io.FileUtil#getRelativePath}
+   */
   @Nullable
   public static String getRelativePath(@NotNull String basePath, @NotNull final String filePath) {
     if (basePath.equals(filePath)) return "";

@@ -20,6 +20,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 
+/**
+ * Specifies XML token types.
+ */
 public interface XmlTokenType {
   IElementType XML_START_TAG_START = new IXmlLeafElementType("XML_START_TAG_START");
   IElementType XML_END_TAG_START = new IXmlLeafElementType("XML_END_TAG_START");

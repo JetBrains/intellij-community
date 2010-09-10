@@ -123,12 +123,16 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
         if (tipText.length() > 0) {
           tipBuilder.append("<br><br>").append("Value=");
 
-          final StringTokenizer tokenizer = new StringTokenizer(tipText, "\n");
+          final StringTokenizer tokenizer = new StringTokenizer(tipText, "\n", true);
 
           while (tokenizer.hasMoreElements()) {
             final String each = tokenizer.nextElement();
-            tipBuilder.append(JDOMUtil.legalizeText(each));
-            tipBuilder.append("<br>");
+            if ("\n".equals(each)) {
+              tipBuilder.append("<br>");
+            }
+            else {
+              tipBuilder.append(JDOMUtil.legalizeText(each));
+            }
           }
         }
 

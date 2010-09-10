@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.actionSystem.Presentation;
 
 import java.util.ArrayList;
 
@@ -55,7 +55,7 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
       return;
     }
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (plVcsManager.getAllActiveVcss().length == 0) {
+    if (! plVcsManager.hasActiveVcss()) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
       return;

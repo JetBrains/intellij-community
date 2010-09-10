@@ -15,9 +15,43 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *  @author dsl
  */
 public interface Computable <T> {
+
   T compute();
+
+  class PredefinedValueComputable<T> implements Computable<T> {
+
+    private final T myValue;
+
+    public PredefinedValueComputable(T value) {
+      this.myValue = value;
+    }
+
+    @Override
+    public T compute() {
+      return myValue;
+    }
+  }
+
+  abstract class NotNullCachedComputable<T> implements Computable<T> {
+    private T myValue;
+
+    @NotNull
+    protected abstract T internalCompute();
+
+    @NotNull
+    @Override
+    public final T compute() {
+      if (myValue == null) {
+        myValue = internalCompute();
+      }
+      return myValue;
+    }
+  }
+
 }

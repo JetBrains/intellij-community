@@ -17,6 +17,7 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 
 public class IFileElementType extends ILazyParseableElementType {
@@ -29,15 +30,12 @@ public class IFileElementType extends ILazyParseableElementType {
   }
 
   public ASTNode parseContents(ASTNode chameleon) {
-    final Project project = chameleon.getPsi().getProject();
+    final PsiElement psi = chameleon.getPsi();
+    assert psi != null : "Bad chameleon: " + chameleon;
+    final Project project = psi.getProject();
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
 
-    final PsiBuilder builder = factory.createBuilder(
-      project,
-      chameleon,
-      null, getLanguage(),
-      chameleon.getChars()
-    );
+    final PsiBuilder builder = factory.createBuilder(project, chameleon);
 
     final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(project);
     return parser.parse(this, builder).getFirstChildNode();

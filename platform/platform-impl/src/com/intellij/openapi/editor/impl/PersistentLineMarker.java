@@ -47,6 +47,10 @@ public class PersistentLineMarker extends RangeMarkerImpl {
       super.changedUpdateImpl(e);
       if (isValid()) {
         myLine = getDocument().getLineNumber(myStart);
+        int endLine = getDocument().getLineNumber(myEnd);
+        if (endLine != myLine) {
+          myEnd = getDocument().getLineEndOffset(myLine);
+        }
       }
     }
   }

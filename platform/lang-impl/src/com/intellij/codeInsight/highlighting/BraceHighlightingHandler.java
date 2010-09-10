@@ -44,6 +44,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -288,10 +289,14 @@ public class BraceHighlightingHandler {
   }
 
   private void highlightBraces(final int lBraceOffset, int rBraceOffset, boolean matched, boolean scopeHighlighting) {
+    if (!matched && myFileType == StdFileTypes.PLAIN_TEXT) {
+      return;
+    }
+
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes attributes =
-        matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
-        : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
+      matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
+              : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
 
     if (rBraceOffset >= 0 && !scopeHighlighting) {
       highlightBrace(rBraceOffset, matched);

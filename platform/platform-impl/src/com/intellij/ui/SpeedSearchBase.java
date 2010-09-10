@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,8 +43,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Arrays;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -87,17 +88,31 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
     return speedSearch != null && speedSearch.mySearchPopup != null && speedSearch.mySearchPopup.isVisible();
   }
 
+  /**
+   * Returns visual (view) selection index.
+   */
   protected abstract int getSelectedIndex();
 
   protected abstract Object[] getAllElements();
 
   protected abstract String getElementText(Object element);
 
+  /**
+   * Should convert given view index to model index
+   */
+  protected int convertIndexToModel(final int viewIndex) {
+    return viewIndex;
+  }
+
+  /**
+   * @param element Element to select. Don't forget to convert model index to view index if needed (i.e. table.convertRowIndexToView(modelIndex), etc).
+   * @param selectedText search text
+   */
   protected abstract void selectElement(Object element, String selectedText);
 
   protected ListIterator<Object> getElementIterator(int startingIndex) {
     final Object[] allElements = getAllElements();
-    return Arrays.asList(allElements).listIterator(startingIndex < 0? allElements.length : startingIndex);
+    return new ViewIterator(this, startingIndex < 0 ? allElements.length : startingIndex);
   }
 
   public void addChangeListener(PropertyChangeListener listener) {
@@ -534,6 +549,72 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   private class MyToolWindowManagerListener extends ToolWindowManagerAdapter {
     public void stateChanged() {
       manageSearchPopup(null);
+    }
+  }
+
+  protected class ViewIterator implements ListIterator {
+    private SpeedSearchBase mySpeedSearch;
+    private int myCurrentIndex;
+    private Object[] myElements;
+
+    public ViewIterator(@NotNull final SpeedSearchBase speedSearch, final int startIndex) {
+      mySpeedSearch = speedSearch;
+      myCurrentIndex = startIndex;
+      myElements = speedSearch.getAllElements();
+
+      if (startIndex < 0 || startIndex > myElements.length) {
+        throw new IndexOutOfBoundsException("Index: " + startIndex);
+      }
+    }
+
+    @Override
+    public boolean hasPrevious() {
+      return myCurrentIndex != 0;
+    }
+
+    @Override
+    public Object previous() {
+      final int i = myCurrentIndex - 1;
+      if (i < 0) throw new NoSuchElementException();
+      final Object previous = myElements[mySpeedSearch.convertIndexToModel(i)];
+      myCurrentIndex = i;
+      return previous;
+    }
+
+    @Override
+    public int nextIndex() {
+      return myCurrentIndex;
+    }
+
+    @Override
+    public int previousIndex() {
+      return myCurrentIndex - 1;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myCurrentIndex != myElements.length;
+    }
+
+    @Override
+    public Object next() {
+      if (myCurrentIndex + 1 > myElements.length) throw new NoSuchElementException();
+      return myElements[mySpeedSearch.convertIndexToModel(myCurrentIndex++)];
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Not implemented in: " + getClass().getCanonicalName());
+    }
+
+    @Override
+    public void set(Object o) {
+      throw new UnsupportedOperationException("Not implemented in: " + getClass().getCanonicalName());
+    }
+
+    @Override
+    public void add(Object o) {
+      throw new UnsupportedOperationException("Not implemented in: " + getClass().getCanonicalName());
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,78 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "SerialVersionUIDWithWrongSignature";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serialversionuid.private.static.final.long.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "serialversionuid.private.static.final.long.problem.descriptor");
     }
 
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        if (((Boolean)infos[0]).booleanValue()) {
+            return null;
+        }
+        return new SerialVersionUIDNotStaticFinalFix();
+    }
+
+    private static class SerialVersionUIDNotStaticFinalFix
+            extends InspectionGadgetsFix {
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "serialversionuid.private.static.final.long.quickfix");
+        }
+
+        @Override
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiField)) {
+                return;
+            }
+            final PsiField field = (PsiField) parent;
+            final PsiModifierList modifierList = field.getModifierList();
+            if (modifierList == null) {
+                return;
+            }
+            modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+            modifierList.setModifierProperty(PsiModifier.STATIC, true);
+            modifierList.setModifierProperty(PsiModifier.FINAL, true);
+        }
+    }
+
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SerialVersionUIDNotStaticFinalVisitor();
     }
@@ -57,36 +99,24 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
-            PsiField badSerialVersionUIDField = null;
-            final PsiField[] fields = aClass.getFields();
-            for(final PsiField field : fields){
-                if(isSerialVersionUID(field)){
-                    if(!field.hasModifierProperty(PsiModifier.STATIC) ||
-                            !field.hasModifierProperty(PsiModifier.PRIVATE) ||
-                            !field.hasModifierProperty(PsiModifier.FINAL)){
-                        badSerialVersionUIDField = field;
-                        break;
-                    } else{
-                        final PsiType type = field.getType();
-                        if(!PsiType.LONG.equals(type)){
-                            badSerialVersionUIDField = field;
-                            break;
-                        }
-                    }
-                }
+            final PsiField field =
+                    aClass.findFieldByName(
+                            HardcodedMethodConstants.SERIAL_VERSION_UID, false);
+            if (field == null) {
+                return;
             }
-            if(badSerialVersionUIDField == null) {
+            final PsiType type = field.getType();
+            final boolean wrongType = !PsiType.LONG.equals(type);
+            if (field.hasModifierProperty(PsiModifier.STATIC) &&
+                    field.hasModifierProperty(PsiModifier.PRIVATE) &&
+                    field.hasModifierProperty(PsiModifier.FINAL) &&
+                    !wrongType) {
                 return;
             }
             if(!SerializationUtils.isSerializable(aClass)){
                 return;
             }
-            registerFieldError(badSerialVersionUIDField);
-        }
-
-        private static boolean isSerialVersionUID(PsiField field) {
-            final String fieldName = field.getName();
-            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName);
+            registerFieldError(field, Boolean.valueOf(wrongType));
         }
     }
 }

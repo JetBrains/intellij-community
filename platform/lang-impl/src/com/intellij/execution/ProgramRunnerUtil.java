@@ -54,6 +54,9 @@ public class ProgramRunnerUtil {
     if (runner == null) {
       LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration);
     }
+    if (runner == null || ExecutorRegistry.getInstance().isStarting(project, executor.getId(), runner.getRunnerId())){
+      return;
+    }
 
     if (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
       final boolean result = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());

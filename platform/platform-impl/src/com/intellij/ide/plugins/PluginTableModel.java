@@ -95,6 +95,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
 
   public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
     columns[columnIndex].setValue(getObjectAt(rowIndex), aValue);
+    fireTableCellUpdated(rowIndex, columnIndex);
   }
 
   public ArrayList<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {

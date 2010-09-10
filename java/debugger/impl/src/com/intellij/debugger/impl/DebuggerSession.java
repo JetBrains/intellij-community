@@ -26,6 +26,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
@@ -296,11 +297,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void refresh(final boolean refreshViewsOnly) {
-    if (getState() == DebuggerSession.STATE_PAUSED) {
-      DebuggerContextImpl context = myContextManager.getContext();
-      DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(this, context.getSuspendContext(), context.getThreadProxy(), context.getFrameProxy());
-      myContextManager.setState(newContext, STATE_PAUSED, refreshViewsOnly? EVENT_REFRESH_VIEWS_ONLY : EVENT_REFRESH, null);
-    }
+    final int state = getState();
+    DebuggerContextImpl context = myContextManager.getContext();
+    DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(this, context.getSuspendContext(), context.getThreadProxy(), context.getFrameProxy());
+    myContextManager.setState(newContext, state, refreshViewsOnly? EVENT_REFRESH_VIEWS_ONLY : EVENT_REFRESH, null);
   }
 
   public void dispose() {
@@ -564,6 +564,26 @@ public class DebuggerSession implements AbstractDebuggerSession {
         }
       });
       mySteppingThroughThreads.clear();
+    }
+
+    public void threadStarted(DebugProcess proc, ThreadReference thread) {
+      ((VirtualMachineProxyImpl)proc.getVirtualMachineProxy()).threadStarted(thread);
+      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+        public void run() {
+          final DebuggerStateManager contextManager = getContextManager();
+          contextManager.fireStateChanged(contextManager.getContext(), EVENT_REFRESH_VIEWS_ONLY);
+        }
+      });
+    }
+
+    public void threadStopped(DebugProcess proc, ThreadReference thread) {
+      ((VirtualMachineProxyImpl)proc.getVirtualMachineProxy()).threadStopped(thread);
+      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+        public void run() {
+          final DebuggerStateManager contextManager = getContextManager();
+          contextManager.fireStateChanged(contextManager.getContext(), EVENT_REFRESH_VIEWS_ONLY);
+        }
+      });
     }
   }
 

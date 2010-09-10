@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<idea-plugin version="2">
+
+  <extensions defaultExtensionNs="org.intellij.intelliLang">
+    <languageSupport implementation="com.intellij.plugins.intelliLang.inject.JSLanguageInjectionSupport"
+                     config="/resources/jsInjections.xml"/>
+  </extensions>
+
+</idea-plugin>

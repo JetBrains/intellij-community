@@ -349,10 +349,11 @@ public class GrClosureSignatureUtil {
 
   @Nullable
   public static Map<GrExpression, Pair<PsiParameter, PsiType>> mapArgumentsToParameters(@NotNull GroovyResolveResult resolveResult,
-                                                                                        @Nullable GrArgumentList list,
                                                                                         @NotNull GroovyPsiElement context,
-                                                                                        @NotNull GrClosableBlock[] closureArguments,
-                                                                                        final boolean partial) {
+                                                                                        final boolean partial,
+                                                                                        @NotNull final GrNamedArgument[] namedArgs,
+                                                                                        @NotNull final GrExpression[] expressionArgs,
+                                                                                        @NotNull GrClosableBlock[] closureArguments) {
     final GrClosureSignature signature;
     final PsiParameter[] parameters;
     final PsiElement element = resolveResult.getElement();
@@ -367,7 +368,7 @@ public class GrClosureSignatureUtil {
       return null;
     }
 
-    final ArgInfo<PsiElement>[] argInfos = mapParametersToArguments(signature, list, context, closureArguments, partial);
+    final ArgInfo<PsiElement>[] argInfos = mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial);
     if (argInfos == null) {
       return null;
     }
@@ -405,27 +406,35 @@ public class GrClosureSignatureUtil {
                                                                @Nullable GrArgumentList list,
                                                                @NotNull GroovyPsiElement context,
                                                                @NotNull GrClosableBlock[] closureArguments, final boolean partial) {
+    final GrNamedArgument[] namedArgs = list == null ? GrNamedArgument.EMPTY_ARRAY : list.getNamedArguments();
+    final GrExpression[] expressionArgs = list == null ? GrExpression.EMPTY_ARRAY : list.getExpressionArguments();
+    return mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial);
+  }
+
+  @Nullable
+  public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
+                                                               @NotNull GrNamedArgument[] namedArgs,
+                                                               @NotNull GrExpression[] expressionArgs,
+                                                               @NotNull GroovyPsiElement context,
+                                                               @NotNull GrClosableBlock[] closureArguments, final boolean partial) {
     List<InnerArg> innerArgs = new ArrayList<InnerArg>();
 
-    boolean hasNamedArgs = false;
-    if (list != null) {
-      final GrNamedArgument[] namedArgs = list.getNamedArguments();
-      hasNamedArgs = namedArgs.length > 0;
-      GrClosureParameter[] params = signature.getParameters();
+    boolean hasNamedArgs = namedArgs != null && namedArgs.length > 0;
+    GrClosureParameter[] params = signature.getParameters();
 
-
-      if (hasNamedArgs) {
-        if (params.length == 0) return null;
-        PsiType type = params[0].getType();
-        if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-          innerArgs.add(new InnerArg(PsiUtil.createMapType(list.getResolveScope()), namedArgs));
-        }
-        else {
-          return null;
-        }
+    if (hasNamedArgs) {
+      if (params.length == 0) return null;
+      PsiType type = params[0].getType();
+      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+        innerArgs.add(new InnerArg(PsiUtil.createMapType(context.getResolveScope()), namedArgs));
       }
+      else {
+        return null;
+      }
+    }
 
-      for (GrExpression expression : list.getExpressionArguments()) {
+    if (expressionArgs != null) {
+      for (GrExpression expression : expressionArgs) {
         innerArgs.add(new InnerArg(expression.getType(), expression));
       }
     }
@@ -442,7 +451,7 @@ public class GrClosureSignatureUtil {
         }
       }, context, partial);
     if (innerMap == null) return null;
-    
+
     ArgInfo<PsiElement>[] map = new ArgInfo[innerMap.length];
     int i = 0;
     if (hasNamedArgs) {

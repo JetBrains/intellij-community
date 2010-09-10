@@ -399,6 +399,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvent(new VFilePropertyChangeEvent(requestor, file, VirtualFile.PROP_NAME, file.getName(), newName, false));
   }
 
+  private static final boolean noCaching = Boolean.getBoolean("idea.no.content.caching" );
+
   @NotNull
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
     InputStream contentStream = null;
@@ -411,7 +413,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final NewVirtualFileSystem delegate = getDelegate(file);
       final byte[] content = delegate.contentsToByteArray(file);
 
-      if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
+      if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD && !noCaching) {
         synchronized (INPUT_LOCK) {
           DataOutputStream sink = writeContent(file);
           try {

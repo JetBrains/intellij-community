@@ -135,22 +135,12 @@ public abstract class GrLiteralClassType extends PsiClassType {
     return type == null ? CommonClassNames.JAVA_LANG_OBJECT : type.getInternalCanonicalText();
   }
 
-  @Nullable
-  private static PsiType getLeastUpperBound(@Nullable PsiType result, @Nullable PsiType other, PsiManager manager) {
-    if (other == null) return result;
-    if (result == null) result = other;
-    if (result.isAssignableFrom(other)) return result;
-    if (other.isAssignableFrom(result)) result = other;
-
-    return TypesUtil.getLeastUpperBound(result, other, manager);
-  }
-
   @NotNull
   protected PsiType getLeastUpperBound(PsiType[] psiTypes) {
     PsiType result = null;
     final PsiManager manager = getPsiManager();
     for (final PsiType other : psiTypes) {
-      result = getLeastUpperBound(result, other, manager);
+      result = TypesUtil.getLeastUpperBoundNullable(result, other, manager);
     }
     return result == null ? PsiType.getJavaLangObject(manager, getResolveScope()) : result;
   }

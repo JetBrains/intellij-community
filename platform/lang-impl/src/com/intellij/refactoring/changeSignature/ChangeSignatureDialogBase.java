@@ -17,7 +17,6 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -33,13 +32,12 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.DelegationPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.table.JBTable;
+import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -50,23 +48,24 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
 public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M extends PsiElement, D extends MethodDescriptor<P>>
   extends RefactoringDialog {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureDialogBase");
+
+  protected static final String EXIT_SILENTLY = "";
+
   protected final D myMethod;
   private final boolean myAllowDelegation;
-  private EditorTextField myNameField;
+  protected EditorTextField myNameField;
   protected EditorTextField myReturnTypeField;
-  protected JTable myParametersTable;
+  protected TableView<ParameterTableModelItemBase<P>> myParametersTable;
   protected final ParameterTableModelBase<P> myParametersTableModel;
   private JTextArea mySignatureArea;
   private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -91,12 +90,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   protected abstract PsiCodeFragment createReturnTypeCodeFragment();
 
   protected abstract CallerChooserBase<M> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<M>> callback);
-
-  protected abstract TableCellEditor createTypeCellEditor();
-
-  protected abstract TableCellEditor createNameCallEditor();
-
-  protected abstract TableCellEditor createDefaultValueCellEditor();
 
   protected abstract String validateAndCommitData();
 
@@ -144,8 +137,12 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
   }
 
-  public P[] getParameters() {
-    return myParametersTableModel.getParameters();
+  public List<P> getParameters() {
+    List<P> result = new ArrayList<P>(myParametersTableModel.getRowCount());
+    for (ParameterTableModelItemBase<P> item : myParametersTableModel.getItems()) {
+      result.add(item.parameter);
+    }
+    return result;
   }
 
   public boolean isGenerateDelegate() {
@@ -199,11 +196,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
       JLabel typePrompt = new JLabel();
       panel.add(typePrompt);
-      final String returnTypeText = myMethod.getReturnTypeText();
-      if (returnTypeText == null) {
-        LOG.error(myMethod.getClass().getName());
-        return panel;
-      }
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
       myReturnTypeField = new EditorTextField(document, myProject, getFileType());
@@ -230,7 +222,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     return new DelegationPanel() {
       protected void stateModified() {
         myParametersTableModel.fireTableDataChanged();
-        configureParameterTableEditors();
+        myParametersTable.repaint();
       }
     };
   }
@@ -288,7 +280,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   private JPanel createParametersPanel() {
-    myParametersTable = new JBTable(myParametersTableModel) {
+    myParametersTable = new TableView<ParameterTableModelItemBase<P>>(myParametersTableModel) {
       @Override
       public void editingStopped(ChangeEvent e) {
         super.editingStopped(e);
@@ -296,23 +288,11 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       }
     };
     myParametersTable.setCellSelectionEnabled(true);
-    //myParametersTable.setFocusCycleRoot(true);
-    final int minWidth = new JCheckBox().getPreferredSize().width;
-    if (myParametersTable.getColumnCount() > 3) {
-      final TableColumn anyVarColumn = myParametersTable.getColumnModel().getColumn(3);
-      final int headerWidth =
-        myParametersTable.getFontMetrics(myParametersTable.getFont()).stringWidth(RefactoringBundle.message("column.name.any.var")) + 8;
-      anyVarColumn.setMaxWidth(Math.max(minWidth, headerWidth));
-    }
-    configureParameterTableEditors();
-    return createTablePanelImpl(myParametersTable, myParametersTableModel, RefactoringBundle.message("parameters.border.title"), true);
-  }
 
-  protected JPanel createTablePanelImpl(JTable table, RowEditableTableModel tableModel, String borderTitle, boolean addMnemonics) {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("parameters.border.title")));
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myParametersTable);
 
     JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(scrollPane, BorderLayout.CENTER);
@@ -320,16 +300,16 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     tablePanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     panel.add(tablePanel, BorderLayout.CENTER);
 
-    table.setPreferredScrollableViewportSize(new Dimension(450, table.getRowHeight() * 8));
-    table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    table.getSelectionModel().setSelectionInterval(0, 0);
-    table.setSurrendersFocusOnKeystroke(true);
+    myParametersTable.setPreferredScrollableViewportSize(new Dimension(450, myParametersTable.getRowHeight() * 8));
+    myParametersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
+    myParametersTable.setSurrendersFocusOnKeystroke(true);
 
-    JPanel buttonsPanel = EditableRowTable.createButtonsTable(table, tableModel, addMnemonics);
+    JPanel buttonsPanel = EditableRowTable.createButtonsTable(myParametersTable, myParametersTableModel, true);
 
     panel.add(buttonsPanel, BorderLayout.EAST);
 
-    tableModel.addTableModelListener(
+    myParametersTableModel.addTableModelListener(
       new TableModelListener() {
         public void tableChanged(TableModelEvent e) {
           updateSignature();
@@ -338,49 +318,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     );
 
     return panel;
-  }
-
-  private void configureParameterTableEditors() {
-    myParametersTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject, getFileType()));
-    myParametersTable.getColumnModel().getColumn(1).setCellRenderer(new MyCellRenderer());
-    if (myParametersTable.getColumnCount() > 2) {
-      myParametersTable.getColumnModel().getColumn(2).setCellRenderer(new CodeFragmentTableCellRenderer(myProject, getFileType()) {
-
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
-          Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          if (!myParametersTableModel.isCellEditable(row, myParametersTable.convertColumnIndexToModel(column))) {
-            component.setBackground(myParametersTable.getBackground().darker());
-          }
-          return component;
-        }
-      });
-    }
-    if (myParametersTable.getColumnCount() > 3) {
-      myParametersTable.getColumnModel().getColumn(3).setCellRenderer(new BooleanTableCellRenderer() {
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
-          super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          if (!myParametersTableModel.isCellEditable(row, myParametersTable.convertColumnIndexToModel(column))) {
-            setBackground(myParametersTable.getBackground().darker());
-          }
-          return this;
-        }
-      });
-    }
-    myParametersTable.getColumnModel().getColumn(0).setCellEditor(createTypeCellEditor());
-    myParametersTable.getColumnModel().getColumn(1).setCellEditor(createNameCallEditor());
-    if (myParametersTable.getColumnCount() > 2) {
-      myParametersTable.getColumnModel().getColumn(2).setCellEditor(createDefaultValueCellEditor());
-    }
   }
 
   private JComponent createSignaturePanel() {
@@ -433,10 +370,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   private boolean mayPropagateParameters() {
-    final P[] infos = myParametersTableModel.getParameters();
-    if (infos.length <= myMethod.getParametersCount()) return false;
+    final List<P> infos = getParameters();
+    if (infos.size() <= myMethod.getParametersCount()) return false;
     for (int i = 0; i < myMethod.getParametersCount(); i++) {
-      if (infos[i].getOldIndex() != i) return false;
+      if (infos.get(i).getOldIndex() != i) return false;
     }
     return true;
   }
@@ -447,14 +384,13 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     TableUtil.stopEditing(myParametersTable);
     String message = validateAndCommitData();
     if (message != null) {
-      CommonRefactoringUtil
-        .showErrorMessage(RefactoringBundle.message("error.incorrect.data"), message, "refactoring.changeSignature", myProject);
+      if (message != EXIT_SILENTLY) {
+        CommonRefactoringUtil
+          .showErrorMessage(RefactoringBundle.message("changeSignature.refactoring.name"), message, "refactoring.changeSignature",
+                            myProject);
+      }
       return;
     }
-    if (!checkMethodConflicts()) {
-      return;
-    }
-
     if (myMethodsToPropagateParameters != null && !mayPropagateParameters()) {
       Messages.showWarningDialog(myProject, RefactoringBundle.message("changeSignature.parameters.wont.propagate"),
                                  ChangeSignatureHandler.REFACTORING_NAME);
@@ -464,35 +400,8 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     invokeRefactoring(createRefactoringProcessor());
   }
 
-  private boolean checkMethodConflicts() {
-    P[] parameters = getParameters();
-
-    for (P info : parameters) {
-      if (!isResolvableType(info, myMethod)) {
-        final int ret = Messages.showOkCancelDialog(myProject,
-                                                    RefactoringBundle.message("changeSignature.cannot.resolve.type", info.getTypeText()),
-                                                    ChangeSignatureHandler.REFACTORING_NAME, Messages.getErrorIcon());
-        if (ret != 0) return false;
-      }
-
-    }
-    return true;
-  }
-
   @Override
   protected String getHelpId() {
     return "refactoring.changeSignature";
-  }
-
-  private class MyCellRenderer extends ColoredTableCellRenderer {
-
-    public void customizeCellRenderer(JTable table, Object value,
-                                      boolean isSelected, boolean hasFocus, int row, int column) {
-      if (value == null) return;
-      if (!myParametersTableModel.isCellEditable(row, myParametersTable.convertColumnIndexToModel(column))) {
-        setBackground(getBackground().darker());
-      }
-      append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
-    }
   }
 }
