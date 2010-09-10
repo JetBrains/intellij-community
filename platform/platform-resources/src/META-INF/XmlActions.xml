@@ -73,7 +73,9 @@
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
-    <action id="GenerateXmlTag" class="com.intellij.xml.actions.GenerateXmlTagAction">
+    <action id="GenerateXmlTag" class="com.intellij.xml.actions.GenerateXmlTagAction"
+            text="XML Tag"
+            description="Generate a new XML tag according to schema information">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
