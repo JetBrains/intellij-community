@@ -1154,7 +1154,7 @@ public class XmlUtil {
    * @param xmlTag
    * @param localName
    * @param namespace
-   * @param bodyText pass null to create collapsed tag, empty string means
+   * @param bodyText pass null to create collapsed tag, empty string means creating expanded one
    * @param enforceNamespacesDeep
    * @return
    */
