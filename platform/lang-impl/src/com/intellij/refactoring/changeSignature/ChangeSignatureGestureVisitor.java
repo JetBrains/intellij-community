@@ -51,7 +51,7 @@ public class ChangeSignatureGestureVisitor implements HighlightVisitor {
     if (detector.isChangeSignatureAvailable(element)) {
       final TextRange range = LanguageChangeSignatureDetectors.getHighlightingRange(element);
       LOG.assertTrue(range != null);
-      final HighlightInfo info = new HighlightInfo(new TextAttributes(null, null, Color.RED, EffectType.BOXED, Font.PLAIN),
+      final HighlightInfo info = new HighlightInfo(new TextAttributes(null, null, Color.RED, null, Font.PLAIN),
                                                    HighlightInfoType.INFORMATION, range.getStartOffset(), range.getEndOffset(),
                                                    SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED, SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED,
                                                    HighlightSeverity.INFORMATION, false, true, false);
