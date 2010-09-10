@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="jps-javaee">
+    <output-path>$PROJECT_DIR$/out/artifacts/jps_javaee</output-path>
+    <root id="archive" name="jps_javaee.jar">
+      <element id="module-output" name="javaee" />
+    </root>
+  </artifact>
+</component>

@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="jps-jpa">
+    <output-path>$PROJECT_DIR$/out/artifacts/jps_jpa</output-path>
+    <root id="archive" name="jpa.jar">
+      <element id="module-output" name="jpa" />
+    </root>
+  </artifact>
+</component>

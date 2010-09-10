@@ -5,8 +5,6 @@
       <element id="module-output" name="jps" />
       <element id="module-output" name="antlayout" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/javac2-all.jar" path-in-jar="/" />
-      <element id="module-output" name="javaee" />
-      <element id="module-output" name="jpa" />
     </root>
   </artifact>
 </component>
