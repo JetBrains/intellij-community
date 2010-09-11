@@ -951,7 +951,9 @@ public class PsiUtil {
     return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
   }
 
-  public static PsiElement skipParentheses(PsiElement element, boolean up) {
+  @Nullable
+  public static PsiElement skipParentheses(@Nullable PsiElement element, boolean up) {
+    if (element == null) return null;
     if (up) {
       PsiElement parent;
       while ((parent=element.getParent()) instanceof GrParenthesizedExpression) {
