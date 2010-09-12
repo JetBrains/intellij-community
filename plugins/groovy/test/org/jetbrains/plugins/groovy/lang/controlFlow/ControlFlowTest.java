@@ -1,15 +1,15 @@
 package org.jetbrains.plugins.groovy.lang.controlFlow;
 
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.openapi.editor.SelectionModel;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
@@ -46,6 +46,7 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testWhile2() throws Throwable { doTest(); }
   public void testWhileNonConstant() throws Throwable { doTest(); }
   public void testIfInstanceofElse() throws Throwable { doTest(); }
+  public void testReturnMapFromClosure() {doTest();}
 
   private static String dumpControlFlow(Instruction[] instructions) {
     StringBuilder builder = new StringBuilder();
@@ -57,7 +58,7 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   }
 
 
-  public void doTest() throws Throwable {
+  public void doTest() {
     final List<String> input = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, input.get(0));
