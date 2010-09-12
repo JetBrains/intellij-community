@@ -17,6 +17,7 @@ package com.siyeh.ipp.forloop;
 
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ExpressionUtils;
 import com.siyeh.ipp.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
@@ -168,14 +169,18 @@ public class ReverseForLoopDirectionIntention extends Intention {
             }
         } else {
             if (expression instanceof PsiBinaryExpression) {
+                // see if we can remove a -1 instead of adding a +1
                 final PsiBinaryExpression binaryExpression =
                         (PsiBinaryExpression) expression;
-                final IElementType tokenType =
-                        binaryExpression.getOperationTokenType();
-                if (tokenType == JavaTokenType.MINUS && positive)  {
-                    return binaryExpression.getLOperand().getText();
-                } else if (tokenType == JavaTokenType.PLUS && !positive) {
-                    return binaryExpression.getLOperand().getText();
+                final PsiExpression rhs = binaryExpression.getROperand();
+                if (ExpressionUtils.isOne(rhs)) {
+                    final IElementType tokenType =
+                            binaryExpression.getOperationTokenType();
+                    if (tokenType == JavaTokenType.MINUS && positive)  {
+                        return binaryExpression.getLOperand().getText();
+                    } else if (tokenType == JavaTokenType.PLUS && !positive) {
+                        return binaryExpression.getLOperand().getText();
+                    }
                 }
             }
             final String expressionText;
