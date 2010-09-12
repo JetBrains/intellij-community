@@ -17,11 +17,13 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -46,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -62,7 +66,7 @@ public class ConvertMapToClassIntention extends Intention {
   private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMapToClassIntention");
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, final Project project, Editor editor) throws IncorrectOperationException {
     final GrListOrMap map = (GrListOrMap)element;
     final GrNamedArgument[] namedArguments = map.getNamedArguments();
     LOG.assertTrue(map.getInitializers().length == 0);
@@ -85,9 +89,8 @@ public class ConvertMapToClassIntention extends Intention {
     replaceMapWithClass(project, map, replaced);
   }
 
-  public static void replaceMapWithClass(Project project, GrListOrMap map, PsiClass generatedClass) {
+  public static void replaceMapWithClass(Project project, final GrListOrMap map, PsiClass generatedClass) {
     PsiUtil.shortenReferences((GroovyPsiElement)generatedClass);
-    CreateClassActionBase.putCursor(project, generatedClass.getContainingFile(), generatedClass);
 
     final String text = map.getText();
     int begin = 0;
@@ -100,6 +103,8 @@ public class ConvertMapToClassIntention extends Intention {
     checkForVariableDeclaration(replacedNewExpression);
     checkForReturnFromMethod(replacedNewExpression);
     PsiUtil.shortenReferences(replacedNewExpression);
+
+    CreateClassActionBase.putCursor(project, generatedClass.getContainingFile(), generatedClass);
   }
 
   private static void checkForReturnFromMethod(GrExpression replacedNewExpression) {
@@ -107,14 +112,22 @@ public class ConvertMapToClassIntention extends Intention {
     final GrMethod method = PsiTreeUtil.getParentOfType(replacedNewExpression, GrMethod.class, true, GrClosableBlock.class);
     if (method == null) return;
 
-    final List<GrStatement> returns = ControlFlowUtils.collectReturns(method.getBlock());
-    if (returns.size() > 1 || !returns.contains(parent)) return;
+    if (!(parent instanceof GrReturnStatement)) { //check for return expression
+      final List<GrStatement> returns = ControlFlowUtils.collectReturns(method.getBlock());
+      final PsiElement expr = PsiUtil.skipParentheses(replacedNewExpression, true);
+      if (!(returns.contains(expr))) return;
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode() && Messages.showYesNoDialog(replacedNewExpression.getProject(),
+                                                                                          GroovyIntentionsBundle.message(
+                                                                                            "do.you.want.to.change.method.return.type",
+                                                                                            method.getName()),
+                                                                                          GroovyIntentionsBundle
+                                                                                            .message("convert.map.to.class.intention.name"),
+                                                                                          Messages.getQuestionIcon()) != 0) {
+      return;
+    }
 
-    if (method.getReturnTypeElementGroovy() == null) return;
-    final PsiType returnType = method.getReturnType();
     final PsiType type = replacedNewExpression.getType();
-    if (TypesUtil.isAssignable(returnType, type, replacedNewExpression.getManager(), replacedNewExpression.getResolveScope())) return;
-
     method.setReturnType(type);
   }
 
@@ -125,7 +138,16 @@ public class ConvertMapToClassIntention extends Intention {
         !(parent instanceof GrParameter) &&
         ((GrVariable)parent).getDeclaredType() != null &&
         replacedNewExpression.getType() != null) {
-      ((GrVariable)parent).setType(replacedNewExpression.getType());
+      if (ApplicationManager.getApplication().isUnitTestMode() || Messages.showYesNoDialog(replacedNewExpression.getProject(),
+                                                                                            GroovyIntentionsBundle.message(
+                                                                                              "do.you.want.to.change.variable.type",
+                                                                                              ((GrVariable)parent).getName()),
+                                                                                            GroovyIntentionsBundle.message(
+                                                                                              "convert.map.to.class.intention.name"),
+                                                                                            Messages.getQuestionIcon()) ==
+                                                                   0) {
+        ((GrVariable)parent).setType(replacedNewExpression.getType());
+      }
     }
   }
 

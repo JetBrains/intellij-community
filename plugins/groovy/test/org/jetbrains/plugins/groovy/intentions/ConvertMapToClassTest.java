@@ -51,7 +51,7 @@ public class ConvertMapToClassTest extends GrIntentionTestCase {
     doTest();
   }
 
-  public void testNotChangeReturnType() {
+  public void _testNotChangeReturnType() {
     doTest();
   }
 
