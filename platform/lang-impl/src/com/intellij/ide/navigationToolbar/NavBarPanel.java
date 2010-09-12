@@ -76,7 +76,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -851,7 +850,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       final Component cmp = relativePoint.getComponent();
       if (cmp instanceof JComponent && cmp.isShowing()) {
         myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
-                    owner instanceof JComponent ? (JComponent)owner : null);
+                    owner instanceof JComponent ? (JComponent)owner : null, new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
       }
     }
     else {

@@ -224,7 +224,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       }
       myHint = new HeavyweightHint(myTipComponent, false);
     }
-    myHint.show(myComponent, location.x, location.y, myComponent);
+    myHint.show(myComponent, location.x, location.y, myComponent, new HintHint(myComponent, location));
   }
 
   private void repaintHint(Point location) {

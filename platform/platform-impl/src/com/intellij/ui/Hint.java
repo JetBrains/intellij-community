@@ -26,9 +26,9 @@ public interface Hint {
    * @param x                  x coordinate of hint in parent coordinate system
    * @param y                  y coordinate of hint in parent coordinate system
    * @param focusBackComponent component which should get focus when the hint will
-   *                           be hidden. If <code>null</code> then the hint doesn't manage focus after closing.
+   * @param hintInfo
    */
-  void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent);
+  void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent, @NotNull HintHint hintInfo);
 
   /**
    * @return whether the hint is showing or not

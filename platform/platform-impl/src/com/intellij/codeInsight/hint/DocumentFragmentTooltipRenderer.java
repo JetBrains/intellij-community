@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 
 import javax.swing.*;
@@ -34,7 +35,7 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     myDocumentFragment = documentFragment;
   }
 
-  public LightweightHint show(final Editor editor, Point p, boolean alignToRight, TooltipGroup group) {
+  public LightweightHint show(final Editor editor, Point p, boolean alignToRight, TooltipGroup group, HintHint intInfo) {
     LightweightHint hint;
 
     final JComponent editorComponent = editor.getComponent();
