@@ -52,7 +52,7 @@ public class CutLineEndAction extends EditorAction {
       int lineEndOffset = doc.getLineEndOffset(lineNumber);
 
       if (caretOffset >= lineEndOffset) {
-        DeleteLineAtCaretAction.deleteLineAtCaret(editor);
+        DeleteLineAction.deleteLineAtCaret(editor);
         return;
       }
 
@@ -60,7 +60,7 @@ public class CutLineEndAction extends EditorAction {
 
       final int lineStartOffset = doc.getLineStartOffset(lineNumber);
       if (StringUtil.isEmptyOrSpaces(doc.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString())) {
-        DeleteLineAtCaretAction.deleteLineAtCaret(editor);
+        DeleteLineAction.deleteLineAtCaret(editor);
       }
       else {
         doc.deleteString(caretOffset, lineEndOffset);

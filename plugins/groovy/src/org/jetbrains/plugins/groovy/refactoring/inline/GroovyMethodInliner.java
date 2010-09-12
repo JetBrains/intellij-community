@@ -37,6 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -177,26 +178,26 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       String resultName = InlineMethodConflictSolver.suggestNewName("result", newMethod, call);
 
       // Add variable for method result
-      Collection<GrReturnStatement> returnStatements = GroovyRefactoringUtil.findReturnStatements(newMethod);
-      boolean hasTailExpr = GroovyRefactoringUtil.hasTailReturnExpression(method);
+      Collection<GrStatement> returnStatements = ControlFlowUtils.collectReturns(newMethod.getBlock());
       final int returnCount = returnStatements.size();
       PsiType methodType = method.getInferredReturnType();
       GrOpenBlock body = newMethod.getBlock();
       assert body != null;
-      GrStatement[] statements = body.getStatements();
       GrExpression replaced = null;
-      if (replaceCall && (!isTailMethodCall || hasTailExpr)) {
-        GrExpression resultExpr;
+      if (replaceCall && !isTailMethodCall) {
+        GrExpression resultExpr = null;
         if (PsiType.VOID.equals(methodType)) {
           resultExpr = factory.createExpressionFromText("null");
         }else if (returnCount == 1) {
-          resultExpr = factory.createExpressionFromText(returnStatements.iterator().next().getReturnValue().getText());
+          final GrExpression returnExpression = ControlFlowUtils.extractReturnExpression(returnStatements.iterator().next());
+          if (returnExpression != null) {
+            resultExpr = factory.createExpressionFromText(returnExpression.getText());
+          }
         }else if (returnCount > 1) {
           resultExpr = factory.createExpressionFromText(resultName);
-        } else if (hasTailExpr) {
-          GrExpression expr = (GrExpression) statements[statements.length - 1];
-          resultExpr = factory.createExpressionFromText(expr.getText());
-        } else {
+        }
+
+        if (resultExpr == null) {
           resultExpr = factory.createExpressionFromText("null");
         }
         replaced = call.replaceWithExpression(resultExpr, false);
@@ -230,8 +231,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         PsiUtil.shortenReferences(statement);
 
         // Replace all return statements with assignments to 'result' variable
-        for (GrReturnStatement returnStatement : returnStatements) {
-          GrExpression value = returnStatement.getReturnValue();
+        for (GrStatement returnStatement : returnStatements) {
+          GrExpression value = ControlFlowUtils.extractReturnExpression(returnStatement);
           if (value != null) {
             GrExpression assignment = factory.createExpressionFromText(resultName + " = " + value.getText());
             returnStatement.replaceWithStatement(assignment);
@@ -241,19 +242,17 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         }
       }
       if (!isTailMethodCall && (PsiType.VOID.equals(methodType) || returnCount == 1)) {
-        for (GrReturnStatement returnStatement : returnStatements) {
+        for (GrStatement returnStatement : returnStatements) {
           returnStatement.removeStatement();
         }
       }
 
       // Add all method statements
-      statements = body.getStatements();
+      GrStatement[] statements = body.getStatements();
       for (GrStatement statement : statements) {
-        if (!(statements.length > 0 && statement == statements[statements.length - 1] && hasTailExpr)) {
-          ((GrStatementOwner) owner).addStatementBefore(statement, anchor);
-        }
+        ((GrStatementOwner) owner).addStatementBefore(statement, anchor);
       }
-      if (replaceCall && (!isTailMethodCall || hasTailExpr)) {
+      if (replaceCall && !isTailMethodCall) {
         assert replaced != null;
 
         TextRange range = replaced.getTextRange();
@@ -358,8 +357,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     GrMethod newMethod = factory.createMethodFromText(method.getText());
-    Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(method);
     if (qualifier != null) {
+      Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(method);
       GroovyInlineMethodUtil.addQualifiersToInnerReferences(newMethod, infos, qualifier);
     }
 

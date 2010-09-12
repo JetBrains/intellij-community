@@ -126,7 +126,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private boolean myFadedOut;
   private int myCalloutshift;
 
-  private boolean isInsideBalloon(MouseEvent me) {
+  public boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
     if (SwingUtilities.isDescendingFrom(me.getComponent(), myComp) || me.getComponent() == myComp) return true;
 

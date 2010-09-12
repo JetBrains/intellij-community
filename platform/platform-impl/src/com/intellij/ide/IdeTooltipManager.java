@@ -17,16 +17,17 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -39,8 +40,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private RegistryValue myIsEnabled;
 
   private Component myCurrentComponent;
-  private Balloon myCurrentTip;
+  private BalloonImpl myCurrentTipUi;
   private MouseEvent myCurrentEvent;
+  private boolean myCurrentTipIsCentered;
 
   private JBPopupFactory myPopupFactory;
   private JLabel myTipLabel;
@@ -53,6 +55,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private int myX;
   private int myY;
   private RegistryValue myMode;
+
+  private IdeTooltip myCurrentTooltip;
 
   @NotNull
   @Override
@@ -90,29 +94,36 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     MouseEvent me = (MouseEvent)event;
     Component c = me.getComponent();
     if (me.getID() == MouseEvent.MOUSE_ENTERED) {
+      boolean canShow = true;
       if (me.getComponent() != myCurrentComponent) {
-        hideCurrent();
+        canShow = hideCurrent(me);
       }
-      maybeShowFor(c, me);
-
+      if (canShow) {
+        maybeShowFor(c, me);
+      }
     } else if (me.getID() == MouseEvent.MOUSE_EXITED) {
       if (me.getComponent() == myCurrentComponent) {
-        hideCurrent();
+        hideCurrent(me);
       }
     } else if (me.getID() == MouseEvent.MOUSE_MOVED) {
       if (me.getComponent() == myCurrentComponent) {
-        if (myCurrentTip != null && myCurrentTip.wasFadedIn()) {
-          hideCurrent();
+        if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
+          if (hideCurrent(me)) {
+            maybeShowFor(c, me);
+          }
         } else {
-          myX = me.getX();
-          myY = me.getY();
+          if (!myCurrentTipIsCentered) {
+            myX = me.getX();
+            myY = me.getY();
+            maybeShowFor(c, me);
+          }
         }
       } else if (myCurrentComponent == null) {
         maybeShowFor(c, me);
       }
     } else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
       if (me.getComponent() == myCurrentComponent) {
-        hideCurrent();
+        hideCurrent(me);
       }
     }
   }
@@ -123,17 +134,14 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     JComponent comp = (JComponent)c;
 
     String tooltipText = comp.getToolTipText(me);
-    boolean toCenter = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP));
-
     if (tooltipText == null || tooltipText.trim().length() == 0) return;
 
-
-    queueShow(comp, me, toCenter);
+    queueShow(comp, me, Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP)));
   }
 
   private void queueShow(final JComponent c, MouseEvent me, final boolean toCenter) {
     myShowAlarm.cancelAllRequests();
-    hideCurrent();
+    hideCurrent(null);
 
     myCurrentComponent = c;
     myCurrentEvent = me;
@@ -156,6 +164,109 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     myTipLabel.setText(text);
 
+    show(new IdeTooltip(c, new Point(myX, myY), myTipLabel).setToCenter(toCenter), null);
+  }
+
+  public IdeTooltip showTipNow(IdeTooltip tooltip) {
+    myShowAlarm.cancelAllRequests();
+    myHideAlarm.cancelAllRequests();
+
+    show(tooltip, new Runnable() {
+      @Override
+      public void run() {
+        myShowAlarm.cancelAllRequests();
+        myHideAlarm.cancelAllRequests();
+
+        hideCurrent(null);
+      }
+    });
+
+    return tooltip;
+  }
+
+  private void show(IdeTooltip tooltip, Runnable beforeShow) {
+    boolean toCenterX;
+    boolean toCenterY;
+
+    boolean toCenter = tooltip.isToCenter();
+    if (!toCenter) {
+      Dimension size = tooltip.getComponent().getSize();
+      toCenterX = size.width < 64;
+      toCenterY = size.height < 64;
+      toCenter = toCenterX || toCenterY;
+    } else {
+      toCenterX = true;
+      toCenterY = true;
+    }
+
+    Point effectivePoint = tooltip.getPoint();
+    if (toCenter) {
+      Rectangle bounds = tooltip.getComponent().getBounds();
+      effectivePoint.x = toCenterX ? bounds.width / 2 : effectivePoint.x;
+      effectivePoint.y = toCenterY ? (bounds.height / 2) : effectivePoint.y;
+    }
+
+
+    if (myCurrentComponent == tooltip.getComponent() && effectivePoint.equals(new Point(myX, myY))) {
+      return;
+    }
+
+    Color bg = getTextBackground(true);
+    Color fg = getTextForeground(true);
+    Color border = getBorderColor(true);
+
+    BalloonBuilder builder = myPopupFactory.createBalloonBuilder(tooltip.getTipComponent())
+      .setPreferredPosition(tooltip.getPreferredPosition())
+      .setFillColor(bg)
+      .setBorderColor(border)
+      .setAnimationCycle(150)
+      .setShowCallout(true)
+      .setCalloutShift(4);
+    tooltip.getTipComponent().setForeground(fg);
+    tooltip.getTipComponent().setBorder(new EmptyBorder(1, 3, 2, 3));
+    tooltip.getTipComponent().setFont(getTextFont(true));
+
+
+    if (beforeShow != null) {
+      beforeShow.run();
+    }
+
+    myCurrentTipUi = (BalloonImpl)builder.createBalloon();
+    myCurrentComponent = tooltip.getComponent();
+    myX = effectivePoint.x;
+    myY = effectivePoint.y;
+    myCurrentTipIsCentered = toCenter;
+    myCurrentTooltip = tooltip;
+
+    myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
+  }
+
+
+  public Color getTextForeground(boolean awtTooltip) {
+    return useGraphite(awtTooltip) ? Color.white : UIManager.getColor("ToolTip.foreground");
+  }
+
+  public Color getTextBackground(boolean awtTooltip) {
+    return useGraphite(awtTooltip) ? new Color(100, 100, 100, 230) : UIManager.getColor("ToolTip.background");
+  }
+
+  public Color getBorderColor(boolean awtTooltip) {
+    return useGraphite(awtTooltip) ? getTextBackground(awtTooltip).darker() : Color.darkGray;
+  }
+
+  public boolean isOwnBorderAllowed(boolean awtTooltip) {
+    return !useGraphite(awtTooltip);
+  }
+
+  public boolean isOpaqueAllowed(boolean awtTooltip) {
+    return !useGraphite(awtTooltip);
+  }
+
+  public Font getTextFont(boolean awtTooltip) {
+    return UIManager.getFont("ToolTip.font");
+  }
+
+  private boolean isUseSystemLook() {
     boolean useSystem;
 
     if ("default".equalsIgnoreCase(myMode.asString())) {
@@ -167,49 +278,17 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     } else {
       useSystem = false;
     }
-
-    Color bg = useSystem ? UIManager.getColor("ToolTip.background") : new Color(100, 100, 100, 230);
-    Color fg = useSystem ? UIManager.getColor("ToolTip.foreground") : Color.white;
-    Color border = useSystem ? Color.darkGray : bg.darker();
-
-    BalloonBuilder builder = myPopupFactory.createBalloonBuilder(myTipLabel)
-      .setPreferredPosition(Balloon.Position.above)
-      .setFillColor(bg)
-      .setBorderColor(border)
-      .setAnimationCycle(150)
-      .setShowCallout(true)
-      .setCalloutShift(4);
-    myTipLabel.setForeground(fg);
-    myTipLabel.setBorder(new EmptyBorder(1, 3, 2, 3));
-    myTipLabel.setFont(UIManager.getFont("ToolTip.font"));
-    myCurrentTip = builder.createBalloon();
-
-    boolean toCenterX;
-    boolean toCenterY;
-
-    if (!toCenter) {
-      Dimension size = c.getSize();
-      toCenterX = size.width < 64;
-      toCenterY = size.height < 64;
-      toCenter = toCenterX || toCenterY;
-    } else {
-      toCenterX = true;
-      toCenterY = true;
-    }
-
-    Point point = new Point(myX, myY);
-    if (toCenter) {
-      Rectangle bounds = c.getBounds();
-      point.x = toCenterX ? bounds.width / 2 : point.x;
-      point.y = toCenterY ? (bounds.height / 2) : point.y;
-    }
-
-    myCurrentTip.show(new RelativePoint(c, point), Balloon.Position.above);
+    return useSystem;
   }
 
-  private void hideCurrent() {
-    if (myCurrentTip != null) {
-      myCurrentTip.hide();
+  private boolean hideCurrent(@Nullable MouseEvent me) {
+    if (me != null && myCurrentTooltip != null && myCurrentTipUi != null) {
+      if (!myCurrentTooltip.canAutohideOn(me, myCurrentTipUi.isInsideBalloon(me))) return false;
+    }
+
+    if (myCurrentTipUi != null) {
+      myCurrentTipUi.hide();
+      myCurrentTooltip.onHidden();
       myShowDelay = false;
       myHideAlarm.addRequest(new Runnable() {
         @Override
@@ -218,11 +297,14 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         }
       }, 1000);
     }
-    myCurrentTip = null;
+    myCurrentTipUi = null;
     myCurrentComponent = null;
     myCurrentEvent = null;
+    myCurrentTipIsCentered = false;
     myX = -1;
     myY = -1;
+
+    return true;
   }
 
   private void processEnabled() {
@@ -235,5 +317,19 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   @Override
   public void disposeComponent() {
+  }
+
+  public static IdeTooltipManager getInstance() {
+    return ApplicationManager.getApplication().getComponent(IdeTooltipManager.class);
+  }
+
+  private boolean useGraphite(boolean awtHint) {
+    return !isUseSystemLook() && awtHint;
+  }
+
+  public void hide(IdeTooltip tooltip) {
+    if (myCurrentTooltip == tooltip) {
+      hideCurrent(null);
+    }
   }
 }

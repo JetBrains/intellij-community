@@ -19,26 +19,39 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.dom.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiCachedValueImpl;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class AntBuildModelImpl implements AntBuildModelBase {
 
   private final AntBuildFile myFile;
+  private final CachedValue<List<AntBuildTargetBase>> myTargets;
 
   public AntBuildModelImpl(final AntBuildFile buildFile) {
     myFile = buildFile;
+    final Project project = myFile.getProject();
+    
+    myTargets = new PsiCachedValueImpl<List<AntBuildTargetBase>>(PsiManager.getInstance(project), new CachedValueProvider<List<AntBuildTargetBase>>() {
+      public Result<List<AntBuildTargetBase>> compute() {
+        final Pair<List<AntBuildTargetBase>, Collection<PsiFile>> result = getTargetListImpl(AntBuildModelImpl.this);
+        final Collection<PsiFile> deps = result.getSecond();
+        return Result.create(result.getFirst(), deps.toArray(new PsiFile[deps.size()]));
+      }
+    });    
   }
 
   @Nullable
@@ -119,14 +132,14 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   private List<AntBuildTargetBase> getTargetsList() {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<AntBuildTargetBase>>() {
       public List<AntBuildTargetBase> compute() {
-        return getTargetListImpl(AntBuildModelImpl.this);
+        return myTargets.getValue();
       }
     });
   }
 
   @Nullable
   private static AntBuildTargetBase findTargetImpl(final String name, final AntBuildModelImpl model) {
-    final List<AntBuildTargetBase> buildTargetBases = getTargetListImpl(model);
+    final List<AntBuildTargetBase> buildTargetBases = model.myTargets.getValue();
     for (AntBuildTargetBase targetBase : buildTargetBases) {
       if (Comparing.strEqual(targetBase.getName(), name)) {
         return targetBase;
@@ -135,11 +148,19 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     return null;
   }
 
-  private static List<AntBuildTargetBase> getTargetListImpl(final AntBuildModelBase model) {
+  // todo: return list of dependent psi files as well
+  private static Pair<List<AntBuildTargetBase>, Collection<PsiFile>> getTargetListImpl(final AntBuildModelBase model) {
     final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>();
+    final Set<PsiFile> dependencies = new HashSet<PsiFile>();
+    
     final AntDomProject project = model.getAntProject();
-    final VirtualFile sourceFile = model.getBuildFile().getVirtualFile();
     if (project != null) {
+      final AntBuildFile buildFile = model.getBuildFile();
+      final XmlFile xmlFile = buildFile.getAntFile();
+      if (xmlFile != null) {
+        dependencies.add(xmlFile);
+      }
+      final VirtualFile sourceFile = buildFile.getVirtualFile();
       new Object() {
         private boolean myIsImported = false;
         private final Set<VirtualFile> myProcessed = new HashSet<VirtualFile>();
@@ -169,7 +190,9 @@ public class AntBuildModelImpl implements AntBuildModelBase {
             if (includedFile instanceof PsiFile) {
               final AntDomProject includedProject = AntSupport.getAntDomProject((PsiFile)includedFile);
               if (includedProject != null) {
-                fillTargets(list, model, includedProject, includedFile.getContainingFile().getOriginalFile().getVirtualFile());
+                final PsiFile included = includedFile.getContainingFile().getOriginalFile();
+                dependencies.add(included);
+                fillTargets(list, model, includedProject, included.getVirtualFile());
               }
             }
 
@@ -178,7 +201,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
         }
       }.fillTargets(list, model, project, sourceFile);
     }
-    return list;
+    return new Pair<List<AntBuildTargetBase>, Collection<PsiFile>>(list, dependencies);
   }
 
 }

@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -41,6 +40,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
@@ -403,7 +403,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       super(component);
     }
 
-    public void show(@NotNull final JComponent parentComponent, final int x, final int y, final JComponent focusBackComponent) {
+    public void show(@NotNull final JComponent parentComponent,
+                     final int x,
+                     final int y,
+                     final JComponent focusBackComponent,
+                     @NotNull HintHint hintInfo) {
       myVisible = true;
       if (myShouldDelay) {
         myAlarm.cancelAllRequests();
@@ -420,7 +424,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     private void showImpl(JComponent parentComponent, int x, int y, JComponent focusBackComponent) {
       if (!parentComponent.isShowing()) return;
-      super.show(parentComponent, x, y, focusBackComponent);
+      super.show(parentComponent, x, y, focusBackComponent, new HintHint(parentComponent, new Point(x, y)));
     }
 
     public void hide() {
