@@ -27,10 +27,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -39,14 +41,19 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
@@ -90,6 +97,28 @@ public class ConvertMapToClassIntention extends Intention {
     final GrExpression newExpression = GroovyPsiElementFactory.getInstance(project)
       .createExpressionFromText("new " + generatedClass.getQualifiedName() + "(" + text.substring(begin, end) + ")");
     final GrExpression replacedNewExpression = ((GrExpression)map.replace(newExpression));
+    checkForVariableDeclaration(replacedNewExpression);
+    checkForReturnFromMethod(replacedNewExpression);
+    PsiUtil.shortenReferences(replacedNewExpression);
+  }
+
+  private static void checkForReturnFromMethod(GrExpression replacedNewExpression) {
+    final PsiElement parent = PsiUtil.skipParentheses(replacedNewExpression.getParent(), true);
+    final GrMethod method = PsiTreeUtil.getParentOfType(replacedNewExpression, GrMethod.class, true, GrClosableBlock.class);
+    if (method == null) return;
+
+    final List<GrStatement> returns = ControlFlowUtils.collectReturns(method.getBlock());
+    if (returns.size() > 1 || !returns.contains(parent)) return;
+
+    if (method.getReturnTypeElementGroovy() == null) return;
+    final PsiType returnType = method.getReturnType();
+    final PsiType type = replacedNewExpression.getType();
+    if (TypesUtil.isAssignable(returnType, type, replacedNewExpression.getManager(), replacedNewExpression.getResolveScope())) return;
+
+    method.setReturnType(type);
+  }
+
+  private static void checkForVariableDeclaration(GrExpression replacedNewExpression) {
     final PsiElement parent = PsiUtil.skipParentheses(replacedNewExpression.getParent(), true);
     if (parent instanceof GrVariable &&
         !(parent instanceof GrField) &&
@@ -98,7 +127,6 @@ public class ConvertMapToClassIntention extends Intention {
         replacedNewExpression.getType() != null) {
       ((GrVariable)parent).setType(replacedNewExpression.getType());
     }
-    PsiUtil.shortenReferences(replacedNewExpression);
   }
 
   public static GrTypeDefinition createClass(Project project, GrNamedArgument[] namedArguments, String packageName, String className) {

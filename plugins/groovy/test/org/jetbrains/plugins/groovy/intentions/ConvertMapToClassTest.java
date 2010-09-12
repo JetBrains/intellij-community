@@ -47,6 +47,14 @@ public class ConvertMapToClassTest extends GrIntentionTestCase {
     doTest(false);
   }
 
+  public void testChangeReturnType() {
+    doTest();
+  }
+
+  public void testNotChangeReturnType() {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
