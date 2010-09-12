@@ -22,11 +22,11 @@
  */
 package com.intellij.util.dom.generator;
 
-import java.util.*;
 import java.io.File;
-import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
@@ -79,7 +79,8 @@ public class JetBrainsEmitter implements Emitter {
           }
         }
         if (!model.getNSDPrefix("", nsd.superClass, false).equals(model.getNSDPrefix(td))) {
-          externalClasses.add(model.getNSDPrefix("", nsd.superClass, false) + nsd.superClass.substring(nsd.superClass.lastIndexOf(".") + 1));
+          externalClasses
+            .add(model.getNSDPrefix("", nsd.superClass, false) + nsd.superClass.substring(nsd.superClass.lastIndexOf(".") + 1));
         }
         if (td.supers != null) {
           for (TypeDesc tds : td.supers) {
@@ -104,24 +105,7 @@ public class JetBrainsEmitter implements Emitter {
             externalClasses.add("java.util.List");
           }
           externalClasses.add("org.jetbrains.annotations.NotNull");
-          if (fd.required) {
-            externalClasses.add("com.intellij.util.xml.Required");
-          }
-          if (fd.duplicateIndex >= 0 || fd.clType == FieldDesc.BOOL) {
-            externalClasses.add("com.intellij.util.xml.SubTag");
-          }
-          if (fd.clType == FieldDesc.ATTR) {
-            externalClasses.add("com.intellij.util.xml.GenericAttributeValue");
-          } else if (Math.abs(fd.clType) != FieldDesc.SIMPLE) {
-            if (Math.abs(fd.clType) == FieldDesc.OBJ) {
-              final TypeDesc ftd = jtMap.get(fd.contentQualifiedName);
-              if (ftd != null && ftd.type == TypeDesc.TypeEnum.ENUM) {
-                externalClasses.add("com.intellij.util.xml.GenericDomValue");
-              }
-            } else {
-              externalClasses.add("com.intellij.util.xml.GenericDomValue");
-            }
-          }
+          externalClasses.add("com.intellij.util.xml.*");
         }
       }
 
@@ -181,12 +165,14 @@ public class JetBrainsEmitter implements Emitter {
           if (first) {
             first = false;
             out.println("");
-          } else {
+          }
+          else {
             out.println(",");
           }
           if (text) {
             out.print("\t" + id.name + " (\"" + val + "\")");
-          } else {
+          }
+          else {
             out.print("\t" + id.name);
           }
         }
@@ -205,7 +191,8 @@ public class JetBrainsEmitter implements Emitter {
         out.println(JDOC_OPEN);
         if (td.type == TypeDesc.TypeEnum.GROUP_INTERFACE) {
           out.println(JDOC_CONT + td.xsNamespace + ":" + td.xsName + " model group interface.");
-        } else {
+        }
+        else {
           out.println(JDOC_CONT + td.xsNamespace + ":" + td.xsName + " interface.");
         }
         printDocumentation(out, td.documentation, JDOC_CONT);
@@ -224,8 +211,12 @@ public class JetBrainsEmitter implements Emitter {
         if (td.supers != null && td.supers.length > 0) {
           if (!comma) out.print(" extends ");
           for (TypeDesc aSuper : td.supers) {
-            if (comma) out.print(", ");
-            else comma = true;
+            if (comma) {
+              out.print(", ");
+            }
+            else {
+              comma = true;
+            }
             out.print(aSuper.name);
           }
         }
@@ -241,60 +232,6 @@ public class JetBrainsEmitter implements Emitter {
           return o1.realIndex - o2.realIndex;
         }
       });
-      /*
-// fields
-out.println("");
-out.println("\t// fields");
-for (int i = 0; i < fields.length; i++) {
-  out.print("\t// ");
-  out.print(fields[i].tagName);
-  out.print(", required:" + fields[i].required);
-  out.print(", cltype:" + fields[i].clType);
-  out.println("");
-  String[] doc = parseAnnotationString(fields[i].documentation);
-  for (int dc=0; dc<doc.length; dc++) {
-    out.println("\t// "+doc[dc]);
-  }
-
-  if (fields[i].comment != null) {
-    out.print("\t// ");
-    out.print(fields[i].comment);
-    out.println("");
-  }
-  out.print("\tprivate ");
-  out.print(fields[i].type);
-  out.print(" ");
-  out.print(fields[i].name);
-  out.print(" = ");
-  out.print(fields[i].def);
-  out.print(";");
-  out.println("");
-  out.println("");
-      }
-      */
-
-      // constructors
-
-      // set/get methods
-      // static gets
-      /*
-      out.println("\t// standard getters");
-out.println("\t" + JDOC_OPEN);
-out.println("\t" + JDOC_CONT + "Returns \"" + defTagName + "\"");
-out.println("\t" + JDOC_CLOSE);
-out.println("\tpublic String get_tag_name() { return _tag_name; }");
-out.println("\t" + JDOC_OPEN);
-out.println("\t" + JDOC_CONT + "Returns child node tag names");
-out.println("\t" + JDOC_CLOSE);
-out.println("\tpublic String[] get_tag_names() { return (String[])_tag_names.clone(); }");
-out.println("\t" + JDOC_OPEN);
-out.println("\t" + JDOC_CONT + "Returns child node field names");
-out.println("\t" + JDOC_CLOSE);
-out.println("\tpublic String[] get_field_names() { return (String[])_field_names.clone(); }");
-out.println("");
-out.println("\t// getters/setters methods");
-      */
-
       out.println("");
       for (FieldDesc field : fields) {
         String tagName = field.tagName;
@@ -309,7 +246,9 @@ out.println("\t// getters/setters methods");
         if (name.equals("class")) { // getClass method prohibited
           name = "clazz";
         }
-        boolean nameChanged = field.tagName != null && !name.equals(isList ? Util.pluralize(Util.toJavaFieldName(field.tagName)) : Util.toJavaFieldName(field.tagName));
+        boolean nameChanged = field.tagName != null &&
+                              !name
+                                .equals(isList ? Util.pluralize(Util.toJavaFieldName(field.tagName)) : Util.toJavaFieldName(field.tagName));
 
         // annotations
         // types replacement
@@ -319,28 +258,41 @@ out.println("\t// getters/setters methods");
           if (field.simpleTypesString.indexOf(":fully-qualified-classType;") != -1) { // localType, remoteType, etc.
             newType = "PsiClass";
             //converterString = (JB_OFF ? "//" : "")+"\t@Convert (PsiClassReferenceConverter.class)";
-          } else if (field.simpleTypesString.indexOf(":ejb-linkType;") != -1) {
-          } else if (field.simpleTypesString.indexOf(":ejb-ref-nameType;") != -1) { // jndi-nameType
-          } else if (field.simpleTypesString.indexOf(":pathType;") != -1) {
-          } else if (field.simpleTypesString.indexOf(":java-identifierType;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":ejb-linkType;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":ejb-ref-nameType;") != -1) { // jndi-nameType
+          }
+          else if (field.simpleTypesString.indexOf(":pathType;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":java-identifierType;") != -1) {
             //out.println((JB_OFF ? "//" : "") +"\t@Convert (JavaIdentifierConverter.class)");
-          } else if (field.simpleTypesString.indexOf(":QName;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":QName;") != -1) {
             // ???
-          } else if (field.simpleTypesString.indexOf(":integer;") != -1) { // BigDecimal
+          }
+          else if (field.simpleTypesString.indexOf(":integer;") != -1) { // BigDecimal
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Integer" : "int";
-          } else if (field.simpleTypesString.indexOf(":int;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":int;") != -1) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Integer" : "int";
-          } else if (field.simpleTypesString.indexOf(":byte;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":byte;") != -1) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Byte" : "byte";
-          } else if (field.simpleTypesString.indexOf(":short;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":short;") != -1) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Short" : "short";
-          } else if (field.simpleTypesString.indexOf(":long;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":long;") != -1) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Long" : "long";
-          } else if (field.simpleTypesString.indexOf(":float;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":float;") != -1) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Float" : "float";
-          } else if (field.simpleTypesString.indexOf(":double;") != -1) {
+          }
+          else if (field.simpleTypesString.indexOf(":double;") != -1) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Double" : "double";
-          } else if (field.simpleTypesString.indexOf(":boolean;") != -1) { // true-falseType
+          }
+          else if (field.simpleTypesString.indexOf(":boolean;") != -1) { // true-falseType
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Boolean" : "boolean";
           }
           for (int idx = 0; idx != -1;) {
@@ -373,7 +325,8 @@ out.println("\t// getters/setters methods");
         }
         if (newType != null && isList) {
           elementType = newType;
-        } else if (newType != null) {
+        }
+        else if (newType != null) {
           type = newType;
         }
         if (isList) {
@@ -383,20 +336,31 @@ out.println("\t// getters/setters methods");
         StringBuffer sbAnnotations = new StringBuffer();
         if (field.clType == FieldDesc.SIMPLE) {
           //  sbAnnotations.append((JB_OFF ? "//" : "") +"\t@TagValue");
-        } else if (isAttr && nameChanged) {
-          sbAnnotations.append((JB_OFF ? "//" : "") + "\t@com.intellij.util.xml.Attribute (\"").append(tagName).append("\")");
-        } else if (isList) {
+        }
+        else if (isAttr && nameChanged) {
+          sbAnnotations.append((JB_OFF ? "//" : "") + "\t@Attribute (\"").append(tagName).append("\")");
+        }
+        else if (isList) {
           // sbAnnotations.append((JB_OFF ? "//" : "") +"\t@SubTagList (\"" + tagName + "\")");
           if (nameChanged) {
-            sbAnnotations.append((JB_OFF ? "//" : "") + "\t@com.intellij.util.xml.SubTag (\"").append(tagName).append("\")");
+            sbAnnotations.append((JB_OFF ? "//" : "") + "\t@SubTag (\"").append(tagName).append("\")");
           }
-        } else {
+          else {
+            if (isBadTagName(tagName)) {
+              sbAnnotations.append((JB_OFF ? "//" : "") + "\t@SubTagList (\"").append(tagName).append("\")");
+            }
+          }
+        }
+        else {
           if (field.duplicateIndex >= 0) {
-            sbAnnotations.append((JB_OFF ? "//" : "") + "\t@SubTag (value = \"").append(tagName).append("\", index = ").append(field.duplicateIndex - 1).append(")");
-          } else if (field.clType == FieldDesc.BOOL) {
+            sbAnnotations.append((JB_OFF ? "//" : "") + "\t@SubTag (value = \"").append(tagName).append("\", index = ")
+              .append(field.duplicateIndex - 1).append(")");
+          }
+          else if (field.clType == FieldDesc.BOOL) {
             sbAnnotations.append((JB_OFF ? "//" : "") + "\t@SubTag (value = \"").append(tagName).append("\", indicator = true)");
-          } else if (!name.equals(field.name)) {
-            sbAnnotations.append((JB_OFF ? "//" : "") + "\t@com.intellij.util.xml.SubTag (\"").append(tagName).append("\")");
+          }
+          else if (!name.equals(field.name)) {
+            sbAnnotations.append((JB_OFF ? "//" : "") + "\t@SubTag (\"").append(tagName).append("\")");
           }
         }
         if (converterString != null) {
@@ -407,7 +371,8 @@ out.println("\t// getters/setters methods");
           final String text;
           if (isList) {
             text = "the list of " + javaDocTagName;
-          } else {
+          }
+          else {
             text = "the value of the " + javaDocTagName;
           }
           out.println("\t" + JDOC_CONT + "Returns " + text + ".");
@@ -437,7 +402,8 @@ out.println("\t// getters/setters methods");
               out.println("\t" + JDOC_OPEN);
               if (field.clType < 0) {
                 out.println("\t" + JDOC_CONT + "Sets the list of " + javaDocTagName + ".");
-              } else {
+              }
+              else {
                 out.println("\t" + JDOC_CONT + "Sets the value of the " + javaDocTagName + ".");
               }
               out.println("\t" + JDOC_CONT + "@param " + paramName + " the new value to set");
@@ -457,7 +423,8 @@ out.println("\t// getters/setters methods");
             out.print(paramName);
             out.println(");");
           }
-        } else {
+        }
+        else {
           if (NOT_COMPARE_MODE && td.type != TypeDesc.TypeEnum.GROUP_INTERFACE) {
             out.println("\t" + JDOC_OPEN);
             out.println("\t" + JDOC_CONT + "Adds new child to the list of " + javaDocTagName + ".");
@@ -470,53 +437,35 @@ out.println("\t// getters/setters methods");
           out.print(elementType + " add");
           out.print(Util.capitalize(field.elementName));
           out.println("();");
-/*
-                    if (!td.isGroupInterface) {
-                        out.println("\t" + JDOC_OPEN);
-                        out.println("\t" + JDOC_CONT + "Adds new child to the list of " + javaDocTagName + ".");
-                        out.println("\t" + JDOC_CONT + "@param " + paramName + " the new child to add");
-                        out.println("\t" + JDOC_CLOSE);
-                        if (sbAnnotations.length() > 0) out.println(sbAnnotations);
-                    }
-                    out.print("\tpublic void add");
-                    out.print(capitalize(fields[i].elementName));
-                    out.print("(");
-                    out.print(fields[i].elementType);
-                    out.print(" ");
-                    out.print(paramName);
-                    out.println(");");
-
-                    if (!td.isGroupInterface) {
-                        out.println("\t" + JDOC_OPEN);
-                        out.println("\t" + JDOC_CONT + "Removes the child from the list of " + javaDocTagName + ".");
-                        out.println("\t" + JDOC_CONT + "@param " + paramName + " the new child to remove");
-                        out.println("\t" + JDOC_CLOSE);
-                        if (sbAnnotations.length() > 0) out.println(sbAnnotations);
-                    }
-                    out.print("\tpublic ");
-                    out.print("void remove");
-                    out.print(capitalize(fields[i].elementName));
-                    out.print("(");
-                    out.print(fields[i].elementType);
-                    out.print(" ");
-                    out.print(paramName);
-                    out.println(");");
-*/
         }
 
         out.println("");
         out.println("");
       }
       out.println("}");
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       ex.printStackTrace();
-    } finally {
+    }
+    finally {
       try {
         out.close();
-      } catch (Exception ex) {
+      }
+      catch (Exception ex) {
       }
       fileManager.releaseOutputFile(outFile);
     }
+  }
+
+  private static boolean isBadTagName(String tagName) {
+    if (Character.isUpperCase(tagName.charAt(0))) return false;
+    final char[] chars = tagName.toCharArray();
+    for (int i = 1; i < chars.length; i++) {
+      if (Character.isUpperCase(chars[i])) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void generateSuper(FileManager fileManager, NamespaceDesc nsd, ModelDesc model, File outDir) {
@@ -547,14 +496,17 @@ out.println("\t// getters/setters methods");
 
 
       out.println("}");
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       ex.printStackTrace();
-    } finally {
+    }
+    finally {
       try {
         if (out != null) {
           out.close();
         }
-      } catch (Exception ex) {
+      }
+      catch (Exception ex) {
       }
       fileManager.releaseOutputFile(outFile);
     }
@@ -562,7 +514,7 @@ out.println("\t// getters/setters methods");
 
   private void generateHelper(FileManager fileManager, NamespaceDesc nsd, ModelDesc model, File outDir) {
     final Map<String, TypeDesc> jtMap = model.jtMap;
-    final Map<String, NamespaceDesc > nsdMap = model.nsdMap;
+    final Map<String, NamespaceDesc> nsdMap = model.nsdMap;
     if (nsd.helperClass == null || nsd.helperClass.length() == 0) return;
     ArrayList<TypeDesc> jtList = new ArrayList<TypeDesc>();
     for (TypeDesc td : jtMap.values()) {
@@ -598,64 +550,6 @@ out.println("\t// getters/setters methods");
       out.print("public class " + typeName + " ");
       out.println("{");
       out.println("");
-
-// child index method
-//            class Holder implements Comparable {
-//                String str;
-//                int index;
-//
-//                public Holder(String str, int index) {
-//                    this.str = str;
-//                    this.index = index;
-//                }
-//
-//                public int compareTo(Object o) {
-//                    return str.compareTo(o==null?null:((Holder)o).str);
-//                }
-//            };
-//            ArrayList holders = new ArrayList();
-//            for (Iterator it = jtList.iterator(); it.hasNext();) {
-//                TypeDesc td = (TypeDesc) it.next();
-//                NamespaceDesc tdnsd = (NamespaceDesc) nsdMap.get(td.xsNamespace);
-//                String qname = toJavaQualifiedTypeName(tdnsd, td.name);
-//                ArrayList fields = new ArrayList(td.fdMap.values());
-//                Collections.sort(fields, new Comparator() {
-//                    public int compare(Object o1, Object o2) {
-//                        return ((FieldDesc) o1).realIndex - ((FieldDesc) o2).realIndex;
-//                    }
-//                });
-//                for (Iterator it2 = fields.iterator(); it2.hasNext();) {
-//                    FieldDesc fd = (FieldDesc) it2.next();
-//                    Holder h = new Holder(qname+":"+fd.tagName, fd.realIndex);
-//                    holders.add(h);
-//                }
-//            }
-//            Collections.sort(holders);
-//            out.println("\tprivate static String[] parentChildTags = new String[] {");
-//            int idx = 0;
-//            for (Iterator it = holders.iterator(); it.hasNext(); idx++) {
-//                Holder holder = (Holder) it.next();
-//                if (idx % 4 == 0) out.print("\n\t\t");
-//                out.print("\""+holder.str+"\"");
-//                if (idx < holders.size()-1) out.print(",");
-//            }
-//            out.println("\n\t};");
-//            out.println("\tprivate static int[] parentChildIndices = new int[] {");
-//            idx = 0;
-//            for (Iterator it = holders.iterator(); it.hasNext(); idx++) {
-//                Holder holder = (Holder) it.next();
-//                if (idx % 24 == 0) out.print("\n\t\t");
-//                out.print(holder.index);
-//                if (idx < holders.size()-1) out.print(",");
-//            }
-//            out.println("\n\t};");
-//            out.println();
-//            out.println("\tpublic static int getChildIndex(String parentTag, String childTag) {");
-//            out.println("\t\tint idx = java.util.Arrays.binarySearch(parentChildTags, parentTag+\":\"+childTag);");
-//            out.println("\t\treturn idx < 0? -1: parentChildIndices[idx];");
-//            out.println("\t}");
-
-
       out.println("\tprivate interface GetName { String getName(Object o); }");
       out.println("\tprivate static java.util.HashMap<Class, GetName> nameMap = new java.util.HashMap();");
       out.println("\tstatic {");
@@ -674,23 +568,27 @@ out.println("\t// getters/setters methods");
             if (fd.name.equals("name") && guessPriority < 10) {
               guessPriority = 10;
               guessedField = fd;
-            } else if (fd.name.endsWith("Name")) {
+            }
+            else if (fd.name.endsWith("Name")) {
               if ((fd.name.endsWith(Util.decapitalize(td.name + "Name")) || fd.realIndex < 2) && guessPriority < 10) {
                 guessPriority = 10;
                 guessedField = fd;
-              } else if (fd.name.endsWith(Util.decapitalize("DisplayName")) && guessPriority < 5) {
+              }
+              else if (fd.name.endsWith(Util.decapitalize("DisplayName")) && guessPriority < 5) {
                 guessPriority = 5;
                 guessedField = fd;
-              } else if (guessPriority < 3) {
+              }
+              else if (guessPriority < 3) {
                 guessPriority = 3;
                 guessedField = fd;
               }
-            } else if (fd.name.equals("value") && guessPriority < 1) {
+            }
+            else if (fd.name.equals("value") && guessPriority < 1) {
               guessPriority = 1;
               guessedField = fd;
             }
-          } else
-          if ((fd.clType == -FieldDesc.OBJ || fd.clType == -FieldDesc.STR) && fd.name.endsWith("displayNames") && guessPriority < 5) {
+          }
+          else if ((fd.clType == -FieldDesc.OBJ || fd.clType == -FieldDesc.STR) && fd.name.endsWith("displayNames") && guessPriority < 5) {
             guessPriority = 5;
             guessedField = fd;
           }
@@ -705,13 +603,15 @@ out.println("\t// getters/setters methods");
           String getter = "my.get" + Util.capitalize(guessedField.name) + "()";
           if (guessedField.clType > 0) {
             out.println("\t\t\t\tString s = o==null? null:" + getter +
-                    (guessedField.clType == FieldDesc.STR || guessedField.clType == FieldDesc.ATTR ? ".getValue();" : ";"));
+                        (guessedField.clType == FieldDesc.STR || guessedField.clType == FieldDesc.ATTR ? ".getValue();" : ";"));
             out.println("\t\t\t\treturn s==null?" + tdNameString + ":s;");
-          } else {
+          }
+          else {
             out.println("\t\t\t\treturn (o!=null && " + getter + "!=null && " + getter + ".size()>0)?");
             out.println("\t\t\t\t\tgetPresentationName(" + getter + ".get(0), null):" + tdNameString + ";");
           }
-        } else {
+        }
+        else {
           out.println("\t\t\t\treturn " + tdNameString + ";");
         }
         out.println("\t\t\t}");
@@ -724,12 +624,15 @@ out.println("\t// getters/setters methods");
       out.println("\t\treturn g != null?g.getName(o):def;");
       out.println("\t}");
       out.println("}");
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       ex.printStackTrace();
-    } finally {
+    }
+    finally {
       try {
         out.close();
-      } catch (Exception ex) {
+      }
+      catch (Exception ex) {
       }
       fileManager.releaseOutputFile(outFile);
     }
@@ -771,6 +674,6 @@ out.println("\t// getters/setters methods");
 
 
   public void setAuthor(String author) {
-    AUTHOR = "@author: " + author;
+    AUTHOR = "@author " + author;
   }
 }

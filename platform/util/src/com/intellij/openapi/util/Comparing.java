@@ -59,10 +59,10 @@ public class Comparing {
     if (s1 == null || s2 == null) return false;
 
     // Algorithm from String.regionMatches()
-    int to = 0;
-    int po = 0;
 
     if (s1.length() != s2.length()) return false;
+    int to = 0;
+    int po = 0;
     int len = s1.length();
 
     while (len-- > 0) {

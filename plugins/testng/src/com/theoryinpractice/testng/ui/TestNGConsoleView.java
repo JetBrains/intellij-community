@@ -26,34 +26,19 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestTreeView;
-import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import com.theoryinpractice.testng.model.TestProxy;
 import com.theoryinpractice.testng.model.TreeRootNode;
-import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class TestNGConsoleView extends BaseTestsOutputConsoleView {
-  @NonNls private static final Pattern COMPARISION_PATTERN =
-    Pattern.compile("([^\\<\\>]*)expected[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*");
-  @NonNls private static final Pattern EXPECTED_BUT_WAS_PATTERN =
-    Pattern.compile("(.*)expected:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
-  @NonNls private static final Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN =
-    Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
   private TestNGResults testNGResults;
   private TestProxy currentTest;
 
@@ -114,10 +99,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
         if (stackTrace != null && stackTrace.length() > 10) {
           exceptionMark = currentTest.getCurrentSize();
           //trim useless crud from stacktrace
-          List<Printable> printables = getPrintables(result);
-          for (Printable printable : printables) {
-            currentTest.addLast(printable);
-          }
+          currentTest.appendStacktrace(result);
         }
         final TestProxy failedToStart = testNGResults.getFailedToStart();
         if (failedToStart != null) {
@@ -135,68 +117,6 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     }
   }
 
-  private static String trimStackTrace(String stackTrace) {
-    String[] lines = stackTrace.split("\n");
-    StringBuilder builder = new StringBuilder();
-
-    if (lines.length > 0) {
-      int i = lines.length - 1;
-      while (i >= 0) {
-        //first 4 chars are '\t at '
-        int startIndex = lines[i].indexOf('a') + 3;
-        if (lines[i].length() > 4 &&
-            (lines[i].startsWith("org.testng.", startIndex) ||
-             lines[i].startsWith("org.junit.", startIndex) ||
-             lines[i].startsWith("sun.reflect.DelegatingMethodAccessorImpl", startIndex) ||
-             lines[i].startsWith("sun.reflect.NativeMethodAccessorImpl", startIndex) ||
-             lines[i].startsWith("java.lang.reflect.Method", startIndex) ||
-             lines[i].startsWith("com.intellij.rt.execution.application.AppMain", startIndex))) {
-
-        }
-        else {
-          // we're done with internals, so we know the rest are ok
-          break;
-        }
-        i--;
-      }
-      for (int j = 0; j <= i; j++) {
-        builder.append(lines[j]);
-        builder.append('\n');
-      }
-    }
-    return builder.toString();
-  }
-
-  static List<Printable> getPrintables(final TestResultMessage result) {
-    String s = trimStackTrace(result.getStackTrace());
-    List<Printable> printables = new ArrayList<Printable>();
-    //figure out if we have a diff we need to hyperlink
-    Matcher matcher = COMPARISION_PATTERN.matcher(s);
-    if (!matcher.matches()) {
-      matcher = EXPECTED_BUT_WAS_PATTERN.matcher(s);
-    }
-    if (!matcher.matches()) {
-      matcher = EXPECTED_NOT_SAME_BUT_WAS_PATTERN.matcher(s);
-    }
-    if (matcher.matches()) {
-      printables.add(new Chunk(matcher.group(1), ConsoleViewContentType.ERROR_OUTPUT));
-      //we have an assert with expected/actual, so we parse it out and create a diff hyperlink
-      DiffHyperlink link = new DiffHyperlink(matcher.group(2), matcher.group(3), null) {
-        protected String getTitle() {
-          //TODO should do some more farting about to find the equality assertion that failed and show that as title
-          return result.getTestClass() + '#' + result.getMethod() + "() failed";
-        }
-      };
-      //same as junit diff view
-      printables.add(link);
-      printables.add(new Chunk(trimStackTrace(s.substring(matcher.end(3) + 1)), ConsoleViewContentType.ERROR_OUTPUT));
-    }
-    else {
-      printables.add(new Chunk(s, ConsoleViewContentType.ERROR_OUTPUT));
-    }
-    return printables;
-  }
-
   public void attachToProcess(ProcessHandler processHandler) {
   }
 
@@ -208,21 +128,4 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     currentTest = null;
   }
 
-  public static class Chunk implements Printable {
-    public String text;
-    public ConsoleViewContentType contentType;
-
-    public void printOn(Printer printer) {
-      printer.print(text, contentType);
-    }
-
-    public Chunk(String text, ConsoleViewContentType contentType) {
-      this.text = text;
-      this.contentType = contentType;
-    }
-
-    public String toString() {
-      return text;
-    }
-  }
 }

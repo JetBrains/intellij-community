@@ -238,6 +238,10 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       return new HashMap<VirtualFile, T>(myCurrentMapping);
     }
 
+    @Override
+    public void setTree(JTree tree) {
+    }
+
     public int getColumnCount() {
       return 2;
     }

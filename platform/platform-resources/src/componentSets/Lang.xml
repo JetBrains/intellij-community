@@ -205,6 +205,10 @@
     <component>
       <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector</implementation-class>
+    </component>
   </project-components>
 
   <module-components>

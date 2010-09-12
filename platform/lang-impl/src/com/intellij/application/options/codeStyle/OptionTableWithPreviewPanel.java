@@ -17,8 +17,6 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -28,10 +26,12 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,14 +44,392 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author max
  */
 public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyleAbstractPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
+  private TreeTable myTreeTable;
+  private final JPanel myPanel = new JPanel();
+
+  private final List<Option> myOptions = new ArrayList<Option>();
+  private final List<Option> myCustomOptions = new ArrayList<Option>();
+  private final Set<String> myAllowedOptions = new THashSet<String>();
+  private final Map<String, String> myRenamedFields = new THashMap<String, String>();
+  private boolean myShowAllStandardOptions;
+  private boolean isFirstUpdate = true;
+
+
+  public OptionTableWithPreviewPanel(CodeStyleSettings settings) {
+    super(settings);
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+
+    myPanel.setLayout(new GridBagLayout());
+    initTables();
+
+    myTreeTable = createOptionsTree(getSettings());
+    myPanel.add(ScrollPaneFactory.createScrollPane(myTreeTable),
+                new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                       new Insets(7, 7, 3, 4), 0, 0));
+
+    final JPanel previewPanel = createPreviewPanel();
+    myPanel.add(previewPanel,
+                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                       new Insets(0, 0, 0, 4), 0, 0));
+
+    installPreviewPanel(previewPanel);
+    addPanelToWatch(myPanel);
+
+    isFirstUpdate = false;
+  }
+
+  @Override
+  protected void onLanguageChange(Language language) {
+    if (myTreeTable.isEditing()) {
+      myTreeTable.getCellEditor().stopCellEditing();
+    }
+    resetImpl(getSettings());
+    myTreeTable.repaint();
+  }
+
+  @Override
+  public void showAllStandardOptions() {
+    myShowAllStandardOptions = true;
+    for (Option each : myOptions) {
+      each.setEnabled(true);
+    }
+  }
+
+  @Override
+  public void showStandardOptions(String... optionNames) {
+    Collections.addAll(myAllowedOptions, optionNames);
+    for (Option each : myOptions) {
+      each.setEnabled(false);
+      for (String optionName : optionNames) {
+        if (each.field.getName().equals(optionName)) {
+          each.setEnabled(true);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                               String fieldName,
+                               String title,
+                               String groupName,
+                               Object... options) {
+    if (isFirstUpdate) {
+      Option option;
+      if (options.length == 2) {
+        option = new SelectionOption(settingsClass, fieldName, title, groupName, (String[])options[0], (int[])options[1]);
+      }
+      else {
+        option = new BooleanOption(settingsClass, fieldName, title, groupName);
+      }
+      myCustomOptions.add(option);
+      option.setEnabled(true);
+    }
+    else {
+      for (Option each : myCustomOptions) {
+        each.setEnabled(false);
+        if (each.clazz == settingsClass && each.field.getName().equals(fieldName)) {
+          each.setEnabled(true);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void renameStandardOption(String fieldName, String newTitle) {
+    if (isFirstUpdate) {
+      myRenamedFields.put(fieldName, newTitle);
+    }
+  }
+
+  protected TreeTable createOptionsTree(CodeStyleSettings settings) {
+    DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
+    Map<String, DefaultMutableTreeNode> groupsMap = new THashMap<String, DefaultMutableTreeNode>();
+
+    for (Option each : ContainerUtil.concat(myOptions, myCustomOptions)) {
+      if (!(myCustomOptions.contains(each) || myAllowedOptions.contains(each.field.getName()) || myShowAllStandardOptions)) continue;
+
+      String group = each.groupName;
+      MyTreeNode newNode = new MyTreeNode(each, getRenamedTitle(each.field.getName(), each.title), settings);
+
+      DefaultMutableTreeNode groupNode = groupsMap.get(group);
+      if (groupNode != null) {
+        groupNode.add(newNode);
+      }
+      else {
+        String groupName;
+
+        if (group == null) {
+          groupName = each.title;
+          groupNode = newNode;
+        }
+        else {
+          groupName = group;
+          groupNode = new DefaultMutableTreeNode(getRenamedTitle(group, group));
+          groupNode.add(newNode);
+        }
+        groupsMap.put(groupName, groupNode);
+        rootNode.add(groupNode);
+      }
+    }
+
+    ListTreeTableModel model = new ListTreeTableModel(rootNode, COLUMNS);
+    TreeTable treeTable = new TreeTable(model) {
+      public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
+        TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
+        UIUtil.setLineStyleAngled(tableRenderer);
+        tableRenderer.setRootVisible(false);
+        tableRenderer.setShowsRootHandles(true);
+
+        return tableRenderer;
+      }
+
+      public TableCellRenderer getCellRenderer(int row, int column) {
+        TreePath treePath = getTree().getPathForRow(row);
+        if (treePath == null) return super.getCellRenderer(row, column);
+
+        Object node = treePath.getLastPathComponent();
+
+        TableCellRenderer renderer = COLUMNS[column].getRenderer(node);
+        return renderer == null ? super.getCellRenderer(row, column) : renderer;
+      }
+
+      public TableCellEditor getCellEditor(int row, int column) {
+        TreePath treePath = getTree().getPathForRow(row);
+        if (treePath == null) return super.getCellEditor(row, column);
+
+        Object node = treePath.getLastPathComponent();
+        TableCellEditor editor = COLUMNS[column].getEditor(node);
+        return editor == null ? super.getCellEditor(row, column) : editor;
+      }
+    };
+
+    treeTable.setRootVisible(false);
+
+    final JTree tree = treeTable.getTree();
+    tree.setCellRenderer(myTitleRenderer);
+    tree.setShowsRootHandles(true);
+    //myTreeTable.setRowHeight(new JComboBox(new String[]{"Sample Text"}).getPreferredSize().height);
+    treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    treeTable.setTableHeader(null);
+
+    expandTree(tree);
+
+    int maxWidth = tree.getPreferredScrollableViewportSize().width + 10;
+    final TableColumn titleColumn = treeTable.getColumnModel().getColumn(0);
+    titleColumn.setPreferredWidth(maxWidth);
+    titleColumn.setMinWidth(maxWidth);
+    titleColumn.setMaxWidth(maxWidth);
+    titleColumn.setResizable(false);
+
+    final TableColumn levelColumn = treeTable.getColumnModel().getColumn(1);
+    //TODO[max]: better preffered size...
+    JLabel value = new JLabel(ApplicationBundle.message("option.table.sizing.text"));
+    final Dimension valueSize = value.getPreferredSize();
+    levelColumn.setPreferredWidth(valueSize.width);
+    levelColumn.setMaxWidth(valueSize.width);
+    levelColumn.setMinWidth(valueSize.width);
+    levelColumn.setResizable(false);
+
+    treeTable.setPreferredScrollableViewportSize(new Dimension(maxWidth + valueSize.width + 10, 20));
+
+    return treeTable;
+  }
+
+  private String getRenamedTitle(String fieldOrGroupName, String defaultName) {
+    String result = myRenamedFields.get(fieldOrGroupName);
+    return result == null ? defaultName : result;
+  }
+
+  private void expandTree(final JTree tree) {
+    int oldRowCount = 0;
+    do {
+      int rowCount = tree.getRowCount();
+      if (rowCount == oldRowCount) break;
+      oldRowCount = rowCount;
+      for (int i = 0; i < rowCount; i++) {
+        tree.expandRow(i);
+      }
+    }
+    while (true);
+  }
+
+  protected abstract void initTables();
+
+  private void resetNode(TreeNode node, CodeStyleSettings settings) {
+    if (node instanceof MyTreeNode) {
+      ((MyTreeNode)node).reset(settings);
+    }
+    for (int j = 0; j < node.getChildCount(); j++) {
+      TreeNode child = node.getChildAt(j);
+      resetNode(child, settings);
+    }
+  }
+
+  private void applyNode(TreeNode node, final CodeStyleSettings settings) {
+    if (node instanceof MyTreeNode) {
+      ((MyTreeNode)node).apply(settings);
+    }
+    for (int j = 0; j < node.getChildCount(); j++) {
+      TreeNode child = node.getChildAt(j);
+      applyNode(child, settings);
+    }
+  }
+
+  private boolean isModified(TreeNode node, final CodeStyleSettings settings) {
+    if (node instanceof MyTreeNode) {
+      if (((MyTreeNode)node).isModified(settings)) return true;
+    }
+    for (int j = 0; j < node.getChildCount(); j++) {
+      TreeNode child = node.getChildAt(j);
+      if (isModified(child, settings)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  protected void addOption(@NotNull String fieldName, @NotNull String title) {
+    addOption(fieldName, title, null);
+  }
+
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @NotNull String[] options, @NotNull int[] values) {
+    addOption(fieldName, title, null, options, values);
+  }
+
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
+    myOptions.add(new BooleanOption(null, fieldName, title, groupName));
+  }
+
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
+                           @NotNull String[] options, @NotNull int[] values) {
+    myOptions.add(new SelectionOption(null, fieldName, title, groupName, options, values));
+  }
+
+  protected void prepareForReformat(final PsiFile psiFile) {
+    //
+  }
+
+  private static abstract class Option {
+    @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
+    @NotNull final Field field;
+    @NotNull final String title;
+    @Nullable final String groupName;
+    private boolean myEnabled = false;
+
+    public Option(Class<? extends CustomCodeStyleSettings> clazz,
+                  @NotNull String fieldName,
+                  @NotNull String title,
+                  @Nullable String groupName) {
+      this.clazz = clazz;
+      this.title = title;
+      this.groupName = groupName;
+
+      try {
+        Class styleSettingsClass = clazz == null ? CodeStyleSettings.class : clazz;
+        this.field = styleSettingsClass.getField(fieldName);
+      }
+      catch (NoSuchFieldException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public void setEnabled(boolean enabled) {
+      myEnabled = enabled;
+    }
+
+    public boolean isEnabled() {
+      return myEnabled;
+    }
+
+    public abstract Object getValue(CodeStyleSettings settings);
+
+    public abstract void setValue(Object value, CodeStyleSettings settings);
+
+    protected Object getSettings(CodeStyleSettings settings) {
+      return clazz == null ? settings : settings.getCustomSettings(clazz);
+    }
+  }
+
+  private static class BooleanOption extends Option {
+    private BooleanOption(Class<? extends CustomCodeStyleSettings> clazz,
+                          @NotNull String fieldName,
+                          @NotNull String title,
+                          @Nullable String groupName) {
+      super(clazz, fieldName, title, groupName);
+
+    }
+
+    public Object getValue(CodeStyleSettings settings) {
+      try {
+        return field.getBoolean(getSettings(settings)) ? Boolean.TRUE : Boolean.FALSE;
+      }
+      catch (IllegalAccessException ignore) {
+        return null;
+      }
+    }
+
+    public void setValue(Object value, CodeStyleSettings settings) {
+      try {
+        field.setBoolean(getSettings(settings), ((Boolean)value).booleanValue());
+      }
+      catch (IllegalAccessException e) {
+      }
+    }
+  }
+
+  private static class SelectionOption extends Option {
+    @NotNull final String[] options;
+    @NotNull final int[] values;
+
+    public SelectionOption(Class<? extends CustomCodeStyleSettings> clazz,
+                           @NotNull String fieldName,
+                           @NotNull String title,
+                           @Nullable String groupName,
+                           @NotNull String[] options,
+                           @NotNull int[] values) {
+      super(clazz, fieldName, title, groupName);
+      this.options = options;
+      this.values = values;
+    }
+
+    @Override
+    public Object getValue(CodeStyleSettings settings) {
+      try {
+        int value = field.getInt(getSettings(settings));
+        for (int i = 0; i < values.length; i++) {
+          if (values[i] == value) return options[i];
+        }
+      }
+      catch (IllegalAccessException ignore) {
+      }
+      return null;
+    }
+
+    public void setValue(Object value, CodeStyleSettings settings) {
+      try {
+        for (int i = 0; i < values.length; i++) {
+          if (options[i].equals(value)) {
+            field.setInt(getSettings(settings), values[i]);
+            return;
+          }
+        }
+      }
+      catch (IllegalAccessException e) {
+      }
+    }
+  }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public final ColumnInfo TITLE = new ColumnInfo("TITLE") {
@@ -134,392 +512,18 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
   };
 
-  private TreeTable myTreeTable;
-  private final HashMap myKeyToFieldMap = new HashMap();
-  private final ArrayList<OptionKey> myKeys = new ArrayList<OptionKey>();
-
-  private final JPanel myPanel = new JPanel();
-
-  public OptionTableWithPreviewPanel(CodeStyleSettings settings) {
-    super(settings);
-  }
-
-  @Override
-  protected void init() {
-    super.init();
-
-    myPanel.setLayout(new GridBagLayout());
-    initTables();
-
-    myTreeTable = createOptionsTree(getSettings());
-    myPanel.add(ScrollPaneFactory.createScrollPane(myTreeTable),
-                new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                       new Insets(7, 7, 3, 4), 0, 0));
-
-    final JPanel previewPanel = createPreviewPanel();
-    myPanel.add(previewPanel,
-                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 4), 0, 0));
-
-    installPreviewPanel(previewPanel);
-    addPanelToWatch(myPanel);
-
-  }
-
-  @Override
-  protected void onLanguageChange(Language language) {
-    if (myTreeTable.isEditing()) {
-      myTreeTable.getCellEditor().stopCellEditing();
-    }
-    resetImpl(getSettings());
-    myTreeTable.repaint();
-  }
-
-  @Override
-  public void showAllStandardOptions() {
-    for (OptionKey each : myKeys) {
-      each.setEnabled(true);
-    }
-  }
-
-  @Override
-  public void showStandardOptions(String... optionNames) {
-    for (OptionKey each : myKeys) {
-      each.setEnabled(false);
-      Field field = (Field)myKeyToFieldMap.get(each);
-      for (String optionName : optionNames) {
-        if (field.getName().equals(optionName)) {
-          each.setEnabled(true);
-        }
-      }
-    }
-  }
-
-  @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                               String fieldName,
-                               String title,
-                               String groupName) {
-    //TODO: IMPLEMENT
-  }
-
-  @Override
-  public void renameStandardOption(String fieldName, String newTitle) {
-    //TODO: IMPLEMENT
-  }
-
-  protected TreeTable createOptionsTree(CodeStyleSettings settings) {
-    DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
-
-    String currentGroupName = "";
-    DefaultMutableTreeNode currentGroupNode = null;
-
-    for (OptionKey each : myKeys) {
-      String group = each.groupName;
-
-      MyTreeNode newNode = new MyTreeNode(each, each.title, settings);
-      if (currentGroupNode == null || !Comparing.equal(group, currentGroupName)) {
-        if (group == null) {
-          currentGroupName = each.title;
-          currentGroupNode = newNode;
-        }
-        else {
-          currentGroupName = group;
-          currentGroupNode = new DefaultMutableTreeNode(group);
-          currentGroupNode.add(newNode);
-        }
-        rootNode.add(currentGroupNode);
-      }
-      else {
-        currentGroupNode.add(newNode);
-      }
-    }
-
-    ListTreeTableModel model = new ListTreeTableModel(rootNode, COLUMNS);
-    TreeTable treeTable = new TreeTable(model) {
-      public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
-        TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
-        UIUtil.setLineStyleAngled(tableRenderer);
-        tableRenderer.setRootVisible(false);
-        tableRenderer.setShowsRootHandles(true);
-
-        return tableRenderer;
-      }
-
-      public TableCellRenderer getCellRenderer(int row, int column) {
-        TreePath treePath = getTree().getPathForRow(row);
-        if (treePath == null) return super.getCellRenderer(row, column);
-
-        Object node = treePath.getLastPathComponent();
-
-        TableCellRenderer renderer = COLUMNS[column].getRenderer(node);
-        return renderer == null ? super.getCellRenderer(row, column) : renderer;
-      }
-
-      public TableCellEditor getCellEditor(int row, int column) {
-        TreePath treePath = getTree().getPathForRow(row);
-        if (treePath == null) return super.getCellEditor(row, column);
-
-        Object node = treePath.getLastPathComponent();
-        TableCellEditor editor = COLUMNS[column].getEditor(node);
-        return editor == null ? super.getCellEditor(row, column) : editor;
-      }
-    };
-
-    treeTable.setRootVisible(false);
-
-    final JTree tree = treeTable.getTree();
-    tree.setCellRenderer(myTitleRenderer);
-    tree.setShowsRootHandles(true);
-    //myTreeTable.setRowHeight(new JComboBox(new String[]{"Sample Text"}).getPreferredSize().height);
-    treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    treeTable.setTableHeader(null);
-
-    expandTree(tree);
-
-    int maxWidth = tree.getPreferredScrollableViewportSize().width + 10;
-    final TableColumn titleColumn = treeTable.getColumnModel().getColumn(0);
-    titleColumn.setPreferredWidth(maxWidth);
-    titleColumn.setMinWidth(maxWidth);
-    titleColumn.setMaxWidth(maxWidth);
-    titleColumn.setResizable(false);
-
-    final TableColumn levelColumn = treeTable.getColumnModel().getColumn(1);
-    //TODO[max]: better preffered size...
-    JLabel value = new JLabel(ApplicationBundle.message("option.table.sizing.text"));
-    final Dimension valueSize = value.getPreferredSize();
-    levelColumn.setPreferredWidth(valueSize.width);
-    levelColumn.setMaxWidth(valueSize.width);
-    levelColumn.setMinWidth(valueSize.width);
-    levelColumn.setResizable(false);
-
-    treeTable.setPreferredScrollableViewportSize(new Dimension(maxWidth + valueSize.width + 10, 20));
-
-    return treeTable;
-  }
-
-  private void expandTree(final JTree tree) {
-    int oldRowCount = 0;
-    do {
-      int rowCount = tree.getRowCount();
-      if (rowCount == oldRowCount) break;
-      oldRowCount = rowCount;
-      for (int i = 0; i < rowCount; i++) {
-        tree.expandRow(i);
-      }
-    }
-    while (true);
-  }
-
-  protected abstract void initTables();
-
-  private void resetNode(TreeNode node, CodeStyleSettings settings) {
-    if (node instanceof MyTreeNode) {
-      ((MyTreeNode)node).reset(settings);
-    }
-    for (int j = 0; j < node.getChildCount(); j++) {
-      TreeNode child = node.getChildAt(j);
-      resetNode(child, settings);
-    }
-  }
-
-  private void applyNode(TreeNode node, final CodeStyleSettings settings) {
-    if (node instanceof MyTreeNode) {
-      ((MyTreeNode)node).apply(settings);
-    }
-    for (int j = 0; j < node.getChildCount(); j++) {
-      TreeNode child = node.getChildAt(j);
-      applyNode(child, settings);
-    }
-  }
-
-  private boolean isModified(TreeNode node, final CodeStyleSettings settings) {
-    if (node instanceof MyTreeNode) {
-      if (((MyTreeNode)node).isModified(settings)) return true;
-    }
-    for (int j = 0; j < node.getChildCount(); j++) {
-      TreeNode child = node.getChildAt(j);
-      if (isModified(child, settings)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  protected void addOption(@NotNull String fieldName, @NotNull String title) {
-    addOption(fieldName, title, null);
-  }
-
-  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
-    try {
-      Class styleSettingsClass = CodeStyleSettings.class;
-      Field field = styleSettingsClass.getField(fieldName);
-      BooleanOptionKey key = new BooleanOptionKey(title, groupName);
-      myKeyToFieldMap.put(key, field);
-      myKeys.add(key);
-    }
-    catch (NoSuchFieldException e) {
-    }
-    catch (SecurityException e) {
-    }
-  }
-
-  protected void addOption(@NotNull String fieldName, @NotNull String title, @NotNull String[] options, @NotNull int[] values) {
-    addOption(fieldName, title, null, options, values);
-  }
-
-  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
-                          @NotNull String[] options, @NotNull int[] values) {
-    try {
-      Class styleSettingsClass = CodeStyleSettings.class;
-      Field field = styleSettingsClass.getField(fieldName);
-      SelectionOptionKey key = new SelectionOptionKey(title, groupName, options, values);
-      myKeyToFieldMap.put(key, field);
-      myKeys.add(key);
-    }
-    catch (NoSuchFieldException e) {
-    }
-    catch (SecurityException e) {
-    }
-  }
-
-  protected void prepareForReformat(final PsiFile psiFile) {
-    //
-  }
-
-  private static abstract class OptionKey {
-    @NotNull final String title;
-    @Nullable final String groupName;
-    private boolean myEnabled = false;
-
-    public OptionKey(@NotNull String title, @Nullable String groupName) {
-      this.title = title;
-      this.groupName = groupName;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      OptionKey that = (OptionKey)o;
-
-      if (groupName != null ? !groupName.equals(that.groupName) : that.groupName != null) return false;
-      if (!title.equals(that.title)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = title.hashCode();
-      result = 31 * result + (groupName != null ? groupName.hashCode() : 0);
-      return result;
-    }
-
-    public void setEnabled(boolean enabled) {
-      myEnabled = enabled;
-    }
-
-    public boolean isEnabled() {
-      return myEnabled;
-    }
-  }
-
-  private static class BooleanOptionKey extends OptionKey {
-    private BooleanOptionKey(@NotNull String title, @Nullable String groupName) {
-      super(title, groupName);
-    }
-  }
-
-  private static class SelectionOptionKey extends OptionKey {
-    @NotNull final String[] options;
-    @NotNull final int[] values;
-
-    public SelectionOptionKey(@NotNull String title, @Nullable String groupName, @NotNull String[] options, @NotNull int[] values) {
-      super(title, groupName);
-      this.options = options;
-      this.values = values;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (!super.equals(o)) return false;
-
-      SelectionOptionKey that = (SelectionOptionKey)o;
-      if (!Arrays.equals(options, that.options)) return false;
-      if (!Arrays.equals(values, that.values)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + Arrays.hashCode(options);
-      result = 31 * result + Arrays.hashCode(values);
-      return result;
-    }
-  }
-
-  private Object getSettingsValue(Object key, final CodeStyleSettings settings) {
-    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
-    try {
-      if (key instanceof BooleanOptionKey) {
-        Field field = (Field)myKeyToFieldMap.get(key);
-        return field.getBoolean(commonSettings) ? Boolean.TRUE : Boolean.FALSE;
-      }
-      else if (key instanceof SelectionOptionKey) {
-        Field field = (Field)myKeyToFieldMap.get(key);
-        SelectionOptionKey intKey = (SelectionOptionKey)key;
-        int[] values = intKey.values;
-        int value = field.getInt(commonSettings);
-        for (int i = 0; i < values.length; i++) {
-          if (values[i] == value) return intKey.options[i];
-        }
-      }
-    }
-    catch (IllegalAccessException e) {
-    }
-
-    return null;
-  }
-
-  public void setSettingsValue(Object key, Object value, final CodeStyleSettings settings) {
-    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
-    try {
-      if (key instanceof BooleanOptionKey) {
-        Field field = (Field)myKeyToFieldMap.get(key);
-        field.setBoolean(commonSettings, ((Boolean)value).booleanValue());
-      }
-      else if (key instanceof SelectionOptionKey) {
-        Field field = (Field)myKeyToFieldMap.get(key);
-        SelectionOptionKey intKey = (SelectionOptionKey)key;
-        int[] values = intKey.values;
-        for (int i = 0; i < values.length; i++) {
-          if (intKey.options[i].equals(value)) {
-            field.setInt(commonSettings, values[i]);
-            return;
-          }
-        }
-      }
-    }
-    catch (IllegalAccessException e) {
-    }
-  }
-
   private class MyTreeNode extends DefaultMutableTreeNode {
-    private final OptionKey myKey;
+    private final Option myKey;
     private final String myText;
     private Object myValue;
 
-    public MyTreeNode(OptionKey key, String text, CodeStyleSettings settings) {
+    public MyTreeNode(Option key, String text, CodeStyleSettings settings) {
       myKey = key;
       myText = text;
-      myValue = getSettingsValue(key, settings);
+      myValue = key.getValue(settings);
     }
 
-    public OptionKey getKey() {
+    public Option getKey() {
       return myKey;
     }
 
@@ -536,15 +540,15 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
 
     public void reset(CodeStyleSettings settings) {
-      setValue(getSettingsValue(myKey, settings));
+      setValue(myKey.getValue(settings));
     }
 
     public boolean isModified(final CodeStyleSettings settings) {
-      return !myValue.equals(getSettingsValue(myKey, settings));
+      return !myValue.equals(myKey.getValue(settings));
     }
 
     public void apply(final CodeStyleSettings settings) {
-      setSettingsValue(myKey, myValue, settings);
+      myKey.setValue(myValue, settings);
     }
 
     public boolean isEnabled() {
@@ -566,7 +570,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       boolean isEnabled = true;
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)((TreeTable)table).getTree().
         getPathForRow(row).getLastPathComponent();
-      if (node instanceof MyTreeNode)  {
+      if (node instanceof MyTreeNode) {
         isEnabled = ((MyTreeNode)node).isEnabled();
       }
 
@@ -635,7 +639,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       myCurrentNode = null;
       if (defaultNode instanceof MyTreeNode) {
         MyTreeNode node = (MyTreeNode)defaultNode;
-        if (node.getKey() instanceof BooleanOptionKey) {
+        if (node.getKey() instanceof BooleanOption) {
           myCurrentEditor = myCheckBox;
           myCheckBox.setSelected(node.getValue() == Boolean.TRUE);
           myCheckBox.setEnabled(node.isEnabled());
@@ -643,7 +647,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         else {
           myCurrentEditor = myComboBox;
           myComboBox.removeAllItems();
-          SelectionOptionKey key = (SelectionOptionKey)node.getKey();
+          SelectionOption key = (SelectionOption)node.getKey();
           String[] values = key.options;
           for (int i = 0; i < values.length; i++) {
             myComboBox.addItem(values[i]);

@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,15 +25,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ExecutionAdapter implements ExecutionListener {
   @Override
-  public void processStarting(@NotNull RunProfile runProfile) {
+  public void processStartScheduled(String executorId, ExecutionEnvironment env) {
   }
 
   @Override
-  public void processNotStarted(@NotNull RunProfile runProfile) {
+  public void processStarting(String executorId, @NotNull ExecutionEnvironment env) {
   }
 
   @Override
-  public void processStarted(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler) {
+  public void processNotStarted(String executorId, @NotNull ExecutionEnvironment env) {
+  }
+
+  @Override
+  public void processStarted(String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
   }
 
   @Override

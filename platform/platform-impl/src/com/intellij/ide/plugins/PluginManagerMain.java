@@ -30,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Function;
@@ -104,11 +103,11 @@ public class PluginManagerMain implements Disposable {
 
   private final MyPluginsFilter myFilter = new MyPluginsFilter();
 
-  public PluginManagerMain(final SortableProvider installedProvider, final SortableProvider availableProvider) {
+  public PluginManagerMain() {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
     myChangeNotesTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
-    installedPluginsModel = new InstalledPluginsTableModel(installedProvider);
+    installedPluginsModel = new InstalledPluginsTableModel();
     installedPluginTable = new PluginTable(installedPluginsModel);
 
     installedPluginTable.setColumnWidth(2, 45);
@@ -132,7 +131,7 @@ public class PluginManagerMain implements Disposable {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
 
-    availablePluginsModel = new AvailablePluginsTableModel(availableProvider);
+    availablePluginsModel = new AvailablePluginsTableModel();
     availablePluginsTable = new PluginTable(availablePluginsModel);
     //  Downloads
     availablePluginsTable.setColumnWidth(1, 70);
@@ -490,8 +489,9 @@ public class PluginManagerMain implements Disposable {
     return false;
   }
 
-  public void apply() {
-    if (!canApply()) return;
+  public String apply() {
+    final String applyMessage = canApply();
+    if (applyMessage != null) return applyMessage;
     setRequireShutdown(true);
     for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
       final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
@@ -512,47 +512,26 @@ public class PluginManagerMain implements Disposable {
     catch (IOException e) {
       LOG.error(e);
     }
+
+    return null;
   }
 
-  private boolean canApply() {
-    final StringBuilder buf = new StringBuilder();
-    for (Map.Entry<PluginId, Boolean> entry : installedPluginsModel.getEnabledMap().entrySet()) {
-      final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)PluginManager.getPlugin(entry.getKey());
-      if (entry.getValue().booleanValue()) {
-        final Set<PluginId> absent = new HashSet<PluginId>();
-        PluginManager.checkDependants(pluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
-          @Nullable
-          public IdeaPluginDescriptor fun(final PluginId pluginId) {
-            return PluginManager.getPlugin(pluginId);
-          }
-        }, new Condition<PluginId>() {
-          public boolean value(final PluginId pluginId) {
-            if (!installedPluginsModel.isEnabled(pluginId)) {
-              absent.add(pluginId);
-              return false;
-            }
-            return true;
-          }
-        });
-        if (!absent.isEmpty()) {
-          buf.append(IdeBundle.message("disabled.plugins.warning.message", pluginDescriptor.getName(),
-                                       StringUtil.join(absent, new Function<PluginId, String>() {
-                                         public String fun(final PluginId pluginId) {
-                                           final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
-                                           return "\"" + (ideaPluginDescriptor != null ? ideaPluginDescriptor.getName() : pluginId.getIdString()) + "\"";
-                                         }
-                                       }, ", "), absent.size()));
-        }
-      }
+  @Nullable
+  private String canApply() {
+    final Map<PluginId, Set<PluginId>> dependentToRequiredListMap = installedPluginsModel.getDependentToRequiredListMap();
+    if (!dependentToRequiredListMap.isEmpty()) {
+      final StringBuffer sb = new StringBuffer("<html><body style=\"padding: 5px;\">Unable to apply changes: plugin").append(dependentToRequiredListMap.size() == 1 ? " " : "s ");
+      sb.append(StringUtil.join(dependentToRequiredListMap.keySet(), new Function<PluginId, String>() {
+                                       public String fun(final PluginId pluginId) {
+                                         final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
+                                         return "\"" + (ideaPluginDescriptor != null ? ideaPluginDescriptor.getName() : pluginId.getIdString()) + "\"";
+                                       }
+                                     }, ", "));
+      sb.append(" won't be able to load.</body></html>");
+      return sb.toString();
     }
-    if (buf.length() > 0) {
-      @NonNls final String message = "<html><body><ul>" + buf.toString() + "</ul>" +
-                                     "Changes won't be applied." +
-                                     "</body></html>";
-      Messages.showErrorDialog(main, message);
-      return false;
-    }
-    return true;
+
+    return null;
   }
 
   private static class MyHyperlinkListener implements HyperlinkListener {
@@ -576,6 +555,11 @@ public class PluginManagerMain implements Disposable {
   private static class MySpeedSearchBar extends SpeedSearchBase<PluginTable> {
     public MySpeedSearchBar(PluginTable cmp) {
       super(cmp);
+    }
+
+    @Override
+    protected int convertIndexToModel(int viewIndex) {
+      return getComponent().convertRowIndexToModel(viewIndex);
     }
 
     public int getSelectedIndex() {

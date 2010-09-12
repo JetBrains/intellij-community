@@ -54,6 +54,7 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.gant.GantLibraryManager" order="last"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryManager" order="last"/>
@@ -220,7 +221,7 @@
 
     <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
 
-    <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable"/>
+    <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerSettingsFactory"/>
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->

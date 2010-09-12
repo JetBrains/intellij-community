@@ -643,10 +643,11 @@ public final class GridLayoutManager extends AbstractLayout {
       }
 
       int size = min ? getMin2(info, i) : Math.max(info.getMinimumWidth(i), info.getPreferredWidth(i));
-      final int gap = countGap(info, info.getCell(i), info.getSpan(i));
+      int cell = info.getCell(i);
+      final int gap = countGap(info, cell, info.getSpan(i));
       size = Math.max(size - gap, 0);
 
-      widths[info.getCell(i)] = Math.max(widths[info.getCell(i)], size);
+      widths[cell] = Math.max(widths[cell], size);
     }
 
     // components inheriting layout from us

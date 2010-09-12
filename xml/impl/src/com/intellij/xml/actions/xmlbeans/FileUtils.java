@@ -16,7 +16,7 @@
 package com.intellij.xml.actions.xmlbeans;
 
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
@@ -64,13 +64,7 @@ public class FileUtils {
 
 
   public static void saveText(VirtualFile virtualFile, String text) throws IOException {
-    OutputStream outputStream = virtualFile.getOutputStream(virtualFile);
-    try {
-      FileUtil.copy(new ByteArrayInputStream(text.getBytes(virtualFile.getCharset().name())), outputStream);
-    }
-    finally {
-      outputStream.close();
-    }
+    VfsUtil.saveText(virtualFile, text);
   }
 
   public static boolean copyFile(File in, File out) {

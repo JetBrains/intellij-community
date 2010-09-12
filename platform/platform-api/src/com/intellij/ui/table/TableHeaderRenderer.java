@@ -15,14 +15,12 @@
  */
 package com.intellij.ui.table;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -30,6 +28,7 @@ import java.awt.*;
 /**
  * author: lesya
  */
+@Deprecated
 public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
   private final SortableColumnModel myModel;
   protected final JLabel myLabel = new JLabel("", JLabel.CENTER);
@@ -72,16 +71,16 @@ public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
     }
     final ColumnInfo columnInfo = myModel.getColumnInfos()[logicalIndex];
     String labelString = columnInfo.getName();
-    if (myModel.isSortable() && columnInfo.isSortable() && myModel.getSortedColumnIndex() == logicalIndex) {
-      //noinspection HardCodedStringLiteral
-      labelString = "<html><b>" + labelString + "</b></html>";
-      if (myModel.getSortingType() == SortableColumnModel.SORT_ASCENDING) {
-        icon = IconLoader.getIcon("/actions/sortAsc.png");
-      }
-      if (myModel.getSortingType() == SortableColumnModel.SORT_DESCENDING) {
-        icon = IconLoader.getIcon("/actions/sortDesc.png");
-      }
-    }
+    //if (myModel.isSortable() && columnInfo.isSortable() && myModel.getSortedColumnIndex() == logicalIndex) {
+    //  //noinspection HardCodedStringLiteral
+    //  labelString = "<html><b>" + labelString + "</b></html>";
+    //  if (myModel.getSortingType() == SortableColumnModel.SORT_ASCENDING) {
+    //    icon = IconLoader.getIcon("/actions/sortAsc.png");
+    //  }
+    //  if (myModel.getSortingType() == SortableColumnModel.SORT_DESCENDING) {
+    //    icon = IconLoader.getIcon("/actions/sortDesc.png");
+    //  }
+    //}
     final Icon columnIcon = columnInfo.getIcon();
     myLabel.setIcon(columnIcon);
     myLabel.setIconTextGap(10);

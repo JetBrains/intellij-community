@@ -19,22 +19,35 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Hani Suleiman Date: Jul 28, 2005 Time: 10:52:51 PM
  */
 public class TestProxy extends AbstractTestProxy {
+  @NonNls public static final Pattern COMPARISION_PATTERN =
+    Pattern.compile("([^\\<\\>]*)expected[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*");
+  @NonNls public static final Pattern EXPECTED_BUT_WAS_PATTERN =
+    Pattern.compile("(.*)expected:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
+  @NonNls public static final Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN =
+    Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
   private final List<TestProxy> results = new ArrayList<TestProxy>();
   private TestResultMessage resultMessage;
   private String name;
@@ -225,5 +238,96 @@ public class TestProxy extends AbstractTestProxy {
 
   public void setTearDownFailure(boolean tearDownFailure) {
     myTearDownFailure = tearDownFailure;
+  }
+
+  public void appendStacktrace(TestResultMessage result) {
+    final String stackTrace = result.getStackTrace();
+    if (stackTrace != null) {
+      final List<Printable> printables = getPrintables(result);
+      for (Printable printable : printables) {
+        addLast(printable);
+      }
+    }
+  }
+
+  private static String trimStackTrace(String stackTrace) {
+    String[] lines = stackTrace.split("\n");
+    StringBuilder builder = new StringBuilder();
+
+    if (lines.length > 0) {
+      int i = lines.length - 1;
+      while (i >= 0) {
+        //first 4 chars are '\t at '
+        int startIndex = lines[i].indexOf('a') + 3;
+        if (lines[i].length() > 4 &&
+            (lines[i].startsWith("org.testng.", startIndex) ||
+             lines[i].startsWith("org.junit.", startIndex) ||
+             lines[i].startsWith("sun.reflect.DelegatingMethodAccessorImpl", startIndex) ||
+             lines[i].startsWith("sun.reflect.NativeMethodAccessorImpl", startIndex) ||
+             lines[i].startsWith("java.lang.reflect.Method", startIndex) ||
+             lines[i].startsWith("com.intellij.rt.execution.application.AppMain", startIndex))) {
+
+        }
+        else {
+          // we're done with internals, so we know the rest are ok
+          break;
+        }
+        i--;
+      }
+      for (int j = 0; j <= i; j++) {
+        builder.append(lines[j]);
+        builder.append('\n');
+      }
+    }
+    return builder.toString();
+  }
+
+  private static List<Printable> getPrintables(final TestResultMessage result) {
+    String s = trimStackTrace(result.getStackTrace());
+    List<Printable> printables = new ArrayList<Printable>();
+    //figure out if we have a diff we need to hyperlink
+    Matcher matcher = COMPARISION_PATTERN.matcher(s);
+    if (!matcher.matches()) {
+      matcher = EXPECTED_BUT_WAS_PATTERN.matcher(s);
+    }
+    if (!matcher.matches()) {
+      matcher = EXPECTED_NOT_SAME_BUT_WAS_PATTERN.matcher(s);
+    }
+    if (matcher.matches()) {
+      printables.add(new Chunk(matcher.group(1), ConsoleViewContentType.ERROR_OUTPUT));
+      //we have an assert with expected/actual, so we parse it out and create a diff hyperlink
+      DiffHyperlink link = new DiffHyperlink(matcher.group(2), matcher.group(3), null) {
+        protected String getTitle() {
+          //TODO should do some more farting about to find the equality assertion that failed and show that as title
+          return result.getTestClass() + '#' + result.getMethod() + "() failed";
+        }
+      };
+      //same as junit diff view
+      printables.add(link);
+      printables.add(new Chunk(trimStackTrace(s.substring(matcher.end(3) + 1)), ConsoleViewContentType.ERROR_OUTPUT));
+    }
+    else {
+      printables.add(new Chunk(s, ConsoleViewContentType.ERROR_OUTPUT));
+    }
+    return printables;
+  }
+
+
+  public static class Chunk implements Printable {
+    public String text;
+    public ConsoleViewContentType contentType;
+
+    public void printOn(Printer printer) {
+      printer.print(text, contentType);
+    }
+
+    public Chunk(String text, ConsoleViewContentType contentType) {
+      this.text = text;
+      this.contentType = contentType;
+    }
+
+    public String toString() {
+      return text;
+    }
   }
 }

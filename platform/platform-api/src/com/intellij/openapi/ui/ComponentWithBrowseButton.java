@@ -226,7 +226,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       while (path == null && directoryName.length() > 0) {
         int pos = directoryName.lastIndexOf('/');
         if (pos <= 0) break;
-        directoryName = directoryName.substring(0, pos-1);
+        directoryName = directoryName.substring(0, pos);
         path = LocalFileSystem.getInstance().findFileByPath(directoryName);
       }
       return path;

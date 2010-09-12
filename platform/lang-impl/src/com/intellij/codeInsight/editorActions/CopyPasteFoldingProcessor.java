@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,12 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
     return null;
   }
 
-  public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final FoldingTransferableData value) {
+  public void processTransferableData(final Project project,
+                                      final Editor editor,
+                                      final RangeMarker bounds,
+                                      int caretColumn,
+                                      Ref<Boolean> indented,
+                                      final FoldingTransferableData value) {
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor, true);
 

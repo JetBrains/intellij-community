@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -22,7 +23,6 @@ import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.ThreadGroupDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.ObjectCollectedException;
 
 public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements ThreadGroupDescriptor{
@@ -64,7 +64,7 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
   }
 
   public void setContext(EvaluationContextImpl context) {
-    ThreadReferenceProxyImpl threadProxy = context.getSuspendContext().getThread();
+    ThreadReferenceProxyImpl threadProxy = context != null? context.getSuspendContext().getThread() : null;
     myIsCurrent = threadProxy != null && isDescendantGroup(threadProxy.threadGroupProxy());
     myIsExpandable = calcExpandable();
   }

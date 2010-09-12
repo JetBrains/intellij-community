@@ -27,7 +27,6 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nls;
 
 import java.awt.*;
-import java.util.ArrayList;
 
 public class FontEditorPreview implements PreviewPanel{
   private final EditorEx myEditor;
@@ -60,7 +59,6 @@ public class FontEditorPreview implements PreviewPanel{
       protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount) {
         DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
         status.errorAnalyzingFinished = true;
-        status.passStati = new ArrayList<DaemonCodeAnalyzerStatus.PassStatus>();
         status.errorCount = new int[]{1, 2};
         return status;
       }

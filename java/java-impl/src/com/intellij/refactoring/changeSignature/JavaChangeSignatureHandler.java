@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -77,8 +78,8 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
 
     final PsiClass containingClass = method.getContainingClass();
     final PsiReferenceExpression refExpr = editor != null ? TargetElementUtil.findReferenceExpression(editor) : null;
-    final ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, containingClass != null && !containingClass.isInterface(),
-                                                                   refExpr);
+    final DialogWrapper dialog =
+      new JavaChangeSignatureDialog(project, method, containingClass != null && !containingClass.isInterface(), refExpr);
     dialog.show();
   }
 

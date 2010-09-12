@@ -192,7 +192,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
                                String title,
-                               String groupName) {
+                               String groupName, Object... options) {
     if (myIsFirstUpdate) {
       myCustomOptions.putValue(groupName, (Trinity)Trinity.create(settingsClass, fieldName, title));
     }

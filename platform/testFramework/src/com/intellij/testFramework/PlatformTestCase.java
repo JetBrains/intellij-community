@@ -31,7 +31,9 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -570,6 +572,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     }
     else {
+      Editor editor = (Editor)getData(PlatformDataKeys.EDITOR.getName());
+      if (editor != null) {
+        FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
+        return manager.getData(dataId, editor, manager.getSelectedFiles()[0]);
+      }
       return null;
     }
   }

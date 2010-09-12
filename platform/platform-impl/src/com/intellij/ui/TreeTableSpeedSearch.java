@@ -47,7 +47,7 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
 
   protected void selectElement(Object element, String selectedText) {
     final TreePath treePath = (TreePath)element;
-    TableUtil.selectRows(myComponent, new int[] {myComponent.getTree().getRowForPath(treePath)});
+    TableUtil.selectRows(myComponent, new int[] {myComponent.convertRowIndexToView(myComponent.getTree().getRowForPath(treePath))});
     TableUtil.scrollSelectionToVisible(myComponent);
   }
 

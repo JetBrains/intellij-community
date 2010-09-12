@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
@@ -33,10 +34,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author nik
@@ -45,6 +44,7 @@ public class XFramesView extends XDebugViewBase {
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
   private final JComboBox myThreadComboBox;
+  private final Set<XExecutionStack> myExecutionStacks = Sets.newHashSet();
   private XExecutionStack mySelectedStack;
   private boolean myListenersEnabled;
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();
@@ -108,12 +108,16 @@ public class XFramesView extends XDebugViewBase {
     if (suspendContext == null) {
       myThreadComboBox.removeAllItems();
       myFramesList.clear();
+      myExecutionStacks.clear();
       return;
     }
 
     XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();
     for (XExecutionStack executionStack : executionStacks) {
-      myThreadComboBox.addItem(executionStack);
+      if (!myExecutionStacks.contains(executionStack)) {
+        myThreadComboBox.addItem(executionStack);
+        myExecutionStacks.add(executionStack);
+      }
     }
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     myThreadComboBox.setSelectedItem(activeExecutionStack);

@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 
 import java.util.HashMap;
 
@@ -34,6 +35,11 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   private volatile HashMap<String,XmlAttributeDescriptor> attributeDescriptorsMap;
 
   protected BaseXmlElementDescriptorImpl() {}
+
+  @Override
+  public XmlElementsGroup getTopGroup() {
+    return null;
+  }
 
   // Read-only action
   protected abstract XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context);

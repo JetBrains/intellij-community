@@ -206,7 +206,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
 
         if (type instanceof ComplexTypeDescriptor) {
           final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
-          attributeShouldBeQualified = typeDescriptor.canContainAttribute(name, targetNs) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain;
+          attributeShouldBeQualified = typeDescriptor.canContainAttribute(targetNs) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain;
         }
 
         if (!attributeShouldBeQualified && contextNs.length() == 0 && targetNs.length() > 0) {
@@ -232,5 +232,10 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
 
   public void setName(String name) throws IncorrectOperationException {
     NamedObjectDescriptor.setName(myTag, name);
+  }
+
+  @Override
+  public String toString() {
+    return getName();
   }
 }

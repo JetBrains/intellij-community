@@ -42,11 +42,5 @@ public abstract class XValueModifier {
     void valueModified();
 
     void errorOccurred(@NotNull String errorMessage);
-
-    /**
-     * @deprecated use {@link XModificationCallback#errorOccurred(String)}
-     */
-    @Deprecated
-    void errorOccured(@NotNull String errorMessage);
   }
 }

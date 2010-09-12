@@ -45,7 +45,7 @@ import java.util.Map;
 public abstract class RenamePsiElementProcessor {
   private static final ExtensionPointName<RenamePsiElementProcessor> EP_NAME = ExtensionPointName.create("com.intellij.renamePsiElementProcessor");
 
-  public abstract boolean canProcessElement(PsiElement element);
+  public abstract boolean canProcessElement(@Nullable PsiElement element);
 
   public void renameElement(final PsiElement element, String newName, UsageInfo[] usages,
                      RefactoringElementListener listener) throws IncorrectOperationException {

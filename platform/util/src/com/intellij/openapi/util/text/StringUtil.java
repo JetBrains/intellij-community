@@ -57,6 +57,14 @@ public class StringUtil {
     };
   }
 
+  public static Function<String, String> TRIMMER = new Function<String, String>() {
+    @SuppressWarnings({"ConstantConditions"})
+    @Override
+    public String fun(String s) {
+      return s == null ? null : s.trim();
+    }
+  };
+
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
   }
@@ -843,6 +851,12 @@ public class StringUtil {
   @NotNull
   public static String notNullize(final String s, @NotNull String defaultValue) {
     return s == null ? defaultValue : s;
+  }
+
+  @Nullable
+  public static String nullize(final @Nullable String s) {
+    if (isEmpty(s)) return null;
+    return s;
   }
 
   public static boolean isEmptyOrSpaces(final String s) {

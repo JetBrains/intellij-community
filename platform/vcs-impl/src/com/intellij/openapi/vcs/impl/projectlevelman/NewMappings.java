@@ -95,6 +95,12 @@ public class NewMappings {
     }
   }
 
+  public boolean hasActiveVcss() {
+    synchronized (myLock) {
+      return myActiveVcses.length > 0;
+    }
+  }
+
   public void activateActiveVcses() {
     synchronized (myLock) {
       if (myActivated) return;

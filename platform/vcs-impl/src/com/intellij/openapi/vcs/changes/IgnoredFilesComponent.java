@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -33,7 +33,7 @@ public class IgnoredFilesComponent {
 
   public IgnoredFilesComponent(final Project project) {
     myProject = project;
-    myFilesToIgnore = new HashSet<IgnoredFileBean>();
+    myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>();
 
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       public void before(List<? extends VFileEvent> events) {}

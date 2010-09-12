@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
+@Deprecated
 public interface BuildRecipe {
   void addInstruction(BuildInstruction instruction);
 

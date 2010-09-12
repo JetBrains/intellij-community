@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -51,6 +52,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.ScrollBarUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -112,6 +114,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myEditorSourceHeight = myEditor.getPreferredHeight();
   }
 
+  public void repaintTrafficLightIcon() {
+    MyErrorPanel errorPanel = getErrorPanel();
+    if (errorPanel != null) {
+      errorPanel.myErrorStripeButton.repaint();
+      errorPanel.repaintTrafficTooltip();
+    }
+  }
+
   private static class PositionedStripe {
     private final Color color;
     private final int yStart;
@@ -128,7 +138,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  public boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
+  private boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
     Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
 
     getNearestHighlighters(this, e, width, highlighters);
@@ -201,10 +211,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       myEditor.getVerticalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
     }
   }
+  private MyErrorPanel getErrorPanel() {
+    ScrollBarUI ui = myEditor.getVerticalScrollBar().getUI();
+    return ui instanceof MyErrorPanel ? (MyErrorPanel)ui : null;
+  }
 
   public void setErrorPanelPopupHandler(@NotNull PopupHandler handler) {
-    if (myEditor.getVerticalScrollBar().getUI() instanceof MyErrorPanel) {
-      ((MyErrorPanel)myEditor.getVerticalScrollBar().getUI()).setPopupHandler(handler);
+    MyErrorPanel errorPanel = getErrorPanel();
+    if (errorPanel != null) {
+      errorPanel.setPopupHandler(handler);
     }
   }
 
@@ -555,11 +570,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
 
       if (e.getY() < buttonHeight && myErrorStripeRenderer != null) {
-        String tooltipMessage = myErrorStripeRenderer.getTooltipMessage();
-        if (tooltipMessage != null) {
-          showTooltip(e, myTooltipRendererProvider.calcTooltipRenderer(tooltipMessage), new HintHint(e).setAwtTooltip(true).setPreferredPosition(
-            Balloon.Position.atLeft));
-        }
+        showTrafficLightTooltip(e);
         return;
       }
 
@@ -572,6 +583,27 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       if (scrollbar.getCursor().equals(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))) {
         scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      }
+    }
+
+    private TrafficTooltipRenderer myTrafficTooltipRenderer;
+    private void showTrafficLightTooltip(MouseEvent e) {
+      //final String tooltipMessage = myErrorStripeRenderer.getTooltipMessage();
+      //if (tooltipMessage == null) return;
+      if (myTrafficTooltipRenderer == null) {
+        myTrafficTooltipRenderer = myTooltipRendererProvider.createTrafficTooltipRenderer(new Runnable() {
+          @Override
+          public void run() {
+            myTrafficTooltipRenderer = null;
+          }
+        });
+      }
+      showTooltip(e, myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft));
+    }
+
+    private void repaintTrafficTooltip() {
+      if (myTrafficTooltipRenderer != null) {
+        myTrafficTooltipRenderer.repaintTooltipWindow();
       }
     }
 
@@ -682,6 +714,27 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
       return new LineTooltipRenderer(text, width);
+    }
+
+    @Override
+    public TrafficTooltipRenderer createTrafficTooltipRenderer(final Runnable onHide) {
+      return new TrafficTooltipRenderer() {
+        @Override
+        public void repaintTooltipWindow() {
+        }
+
+        @Override
+        public LightweightHint show(Editor editor, Point p, boolean alignToRight, TooltipGroup group, HintHint hintHint) {
+          JLabel label = new JLabel("WTF");
+          return new LightweightHint(label){
+            @Override
+            public void hide() {
+              super.hide();
+              onHide.run();
+            }
+          };
+        }
+      };
     }
   }
 

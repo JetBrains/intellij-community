@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +22,7 @@ public abstract class FlyIdeaTestCase extends TestCase {
     final Application old = ApplicationManagerEx.getApplication();
     MockApplication app = new MockApplication() {
       @Override
-      public Future<?> executeOnPooledThread(Runnable action) {
+      public Future<?> executeOnPooledThread(@NotNull Runnable action) {
         return old != null ? old.executeOnPooledThread(action) : super.executeOnPooledThread(action);
       }
     };

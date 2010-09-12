@@ -40,8 +40,8 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   private final SmartList<Annotation> myAnnotations = new SmartList<Annotation>();
 
   @NotNull
-  public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message) {
-    return createProblem(domElement, HighlightSeverity.ERROR, message);
+  public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message, LocalQuickFix... fixes) {
+    return createProblem(domElement, HighlightSeverity.ERROR, message, fixes);
   }
 
   @NotNull

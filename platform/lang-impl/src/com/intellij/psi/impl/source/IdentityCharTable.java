@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 16, 2006
- * Time: 9:15:21 PM
- */
 package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
 
+/*
+ * User: max
+ * Date: Sep 16, 2006
+ */
 public class IdentityCharTable implements CharTable {
-  public IdentityCharTable() {
-  }
+  private IdentityCharTable() { }
 
   public static final IdentityCharTable INSTANCE = new IdentityCharTable();
+
   public CharSequence intern(final CharSequence text) {
     return text;
   }

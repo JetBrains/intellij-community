@@ -36,9 +36,9 @@ public class OSProcessHandler extends ProcessHandler {
   private final ProcessWaitFor myWaitFor;
 
   private static class ExecutorServiceHolder {
-    private static ExecutorService ourThreadExecutorsService = createServiceImpl();
+    private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
 
-    static ThreadPoolExecutor createServiceImpl() {
+    private static ThreadPoolExecutor createServiceImpl() {
       return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
         @SuppressWarnings({"HardCodedStringLiteral"})
         public Thread newThread(Runnable r) {
@@ -60,18 +60,7 @@ public class OSProcessHandler extends ProcessHandler {
       return application.executeOnPooledThread(task);
     }
 
-    if (ExecutorServiceHolder.ourThreadExecutorsService.isShutdown()) { // in tests: the service might be shut down by a previous test
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ExecutorServiceHolder.ourThreadExecutorsService = ExecutorServiceHolder.createServiceImpl();
-    }
     return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
-  }
-
-  protected static void shutdownExecutorService() {
-    final Application application = ApplicationManager.getApplication();
-    if (application == null) {
-      ExecutorServiceHolder.ourThreadExecutorsService.shutdown();
-    }
   }
 
   public OSProcessHandler(final Process process, final String commandLine) {
@@ -151,7 +140,7 @@ public class OSProcessHandler extends ProcessHandler {
                 stdErrReadingFuture.get();
                 stdOutReadingFuture.get();
               }
-              catch (InterruptedException e) {
+              catch (InterruptedException ignored) {
               }
               catch (ExecutionException e) {
                 LOG.error(e);
@@ -252,12 +241,10 @@ public class OSProcessHandler extends ProcessHandler {
         while (true) {
           final int rc = readAvailable();
           if (rc == DONE) break;
-          try {
-            Thread.sleep(rc == READ_SOME ? 1L : 50L);
-          }
-          catch (InterruptedException ignore) {
-          }
+          Thread.sleep(rc == READ_SOME ? 1L : 50L);
         }
+      }
+      catch (InterruptedException ignore) {
       }
       catch (Exception e) {
         LOG.error(e);

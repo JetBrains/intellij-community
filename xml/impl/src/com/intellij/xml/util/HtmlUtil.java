@@ -20,7 +20,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
-import com.intellij.html.index.Html5CustomAttributesIndex;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -41,9 +41,7 @@ import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
@@ -57,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -199,43 +196,17 @@ public class HtmlUtil {
 
   public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
-    boolean html5Context = isHtml5Context(context);
-    if (entitiesString == null && !html5Context) return XmlAttributeDescriptor.EMPTY;
+    if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
 
-    final List<String> customAttrNames;
-    if (entitiesString != null) {
-      StringTokenizer tokenizer = new StringTokenizer(entitiesString, ",");
-      customAttrNames = new ArrayList<String>(tokenizer.countTokens());
+    StringTokenizer tokenizer = new StringTokenizer(entitiesString,",");
+    XmlAttributeDescriptor[] descriptors = new XmlAttributeDescriptor[tokenizer.countTokens()];
+    int index = 0;
 
-      while (tokenizer.hasMoreElements()) {
-        final String customName = tokenizer.nextToken();
-        if (customName.length() > 0) {
-          customAttrNames.add(customName);
-        }
-      }
-    }
-    else {
-      customAttrNames = new ArrayList<String>();
-    }
+    while(tokenizer.hasMoreElements()) {
+      final String customName = tokenizer.nextToken();
+      if (customName.length() == 0) continue;
 
-    if (context != null && html5Context) {
-      final String currentAttrName = context instanceof XmlAttribute ? ((XmlAttribute)context).getName() : "";
-      FileBasedIndex.getInstance().processAllKeys(Html5CustomAttributesIndex.ID, new Processor<String>() {
-        @Override
-        public boolean process(String s) {
-          if (!currentAttrName.startsWith(s)) {
-            customAttrNames.add(s);
-          }
-          return true;
-        }
-      }, context.getProject());
-    }
-
-    XmlAttributeDescriptor[] descriptors = new XmlAttributeDescriptor[customAttrNames.size()];
-
-    for (int i = 0, n = customAttrNames.size(); i < n; i++) {
-      final String customName = customAttrNames.get(i);
-      descriptors[i] = new XmlAttributeDescriptorImpl() {
+      descriptors[index++] = new XmlAttributeDescriptorImpl() {
         public String getName(PsiElement context) {
           return customName;
         }
@@ -341,15 +312,22 @@ public class HtmlUtil {
   }
 
   public static boolean isHtml5Document(XmlDocument doc) {
-    if (!(doc instanceof HtmlDocumentImpl)) {
+    if (doc == null) {
       return false;
     }
     XmlProlog prolog = doc.getProlog();
-    if (prolog == null) {
+    XmlDoctype doctype = prolog != null ? prolog.getDoctype() : null;
+    if (!isHtmlTagContainingFile(doc)) {
       return false;
     }
-    XmlDoctype doctype = prolog.getDoctype();
-    return doctype != null && doctype.getDtdUri() == null && doctype.getPublicId() == null;
+    if (doctype == null) {
+      return XmlUtil.HTML5_SCHEMA_LOCATION.equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(doc.getProject()));
+    }
+    return isHtml5Doctype(doctype);
+  }
+
+  public static boolean isHtml5Doctype(XmlDoctype doctype) {
+    return doctype.getDtdUri() == null && doctype.getPublicId() == null && doctype.getMarkupDecl() == null;
   }
 
   public static boolean isHtml5Context(XmlElement context) {
@@ -465,18 +443,20 @@ public class HtmlUtil {
       if (tag instanceof HtmlTag) {
         return true;
       }
-      else {
-        final FileViewProvider provider = containingFile.getViewProvider();
-        Language language;
-        if (provider instanceof TemplateLanguageFileViewProvider) {
-          language = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
-        }
-        else {
-          language = provider.getBaseLanguage();
-        }
-
-        return language == XHTMLLanguage.INSTANCE;
+      final XmlDocument document = PsiTreeUtil.getParentOfType(element, XmlDocument.class, false);
+      if (document instanceof HtmlDocumentImpl) {
+        return true;
       }
+      final FileViewProvider provider = containingFile.getViewProvider();
+      Language language;
+      if (provider instanceof TemplateLanguageFileViewProvider) {
+        language = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
+      }
+      else {
+        language = provider.getBaseLanguage();
+      }
+
+      return language == XHTMLLanguage.INSTANCE;
     }
     return false;
   }

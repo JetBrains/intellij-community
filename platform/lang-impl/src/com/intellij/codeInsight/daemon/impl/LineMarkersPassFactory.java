@@ -47,8 +47,8 @@ public class LineMarkersPassFactory extends AbstractProjectComponent implements 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcessForSyntaxPass(editor);
-    if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument(), GeneralHighlightingPass.IN_PROGRESS_ICON,
-                                                                             GeneralHighlightingPass.PRESENTABLE_NAME);
+    if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument()
+    );
     return new LineMarkersPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true);
   }
 

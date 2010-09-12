@@ -41,20 +41,19 @@ import java.util.Map;
 public class AvailablePluginsTableModel extends PluginTableModel {
   private final Map<PluginId, String> myUpdateVersions = new HashMap<PluginId, String>();
 
-  public AvailablePluginsTableModel(SortableProvider sortableProvider) {
-    super(sortableProvider, 
-          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_NAME, sortableProvider),
-          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS, sortableProvider),
-          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE, sortableProvider) {
+  public AvailablePluginsTableModel() {
+    super(new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_NAME),
+          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS),
+          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE) {
             @Override
             protected int getHorizontalAlignment() {
               return SwingConstants.TRAILING;
             }
           },
-          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_CATEGORY, sortableProvider));
+          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_CATEGORY));
 
+    setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
     view = new ArrayList<IdeaPluginDescriptor>();
-    sortByColumn(getNameColumn());
   }
 
   public void addData(List<IdeaPluginDescriptor> list) {
@@ -67,7 +66,8 @@ public class AvailablePluginsTableModel extends PluginTableModel {
       view.add(descr);
       myUpdateVersions.put(descr.getPluginId(), descr.getVersion());
     }
-    safeSort();
+
+    fireTableDataChanged();
   }
 
   private static void updateStatus(final IdeaPluginDescriptor descr) {
@@ -103,7 +103,8 @@ public class AvailablePluginsTableModel extends PluginTableModel {
         myUpdateVersions.put(descr.getPluginId(), descr.getVersion());
       }
     }
-    safeSort();
+
+    fireTableDataChanged();
   }
 
   @Override

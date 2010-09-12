@@ -23,10 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlElementDescriptorAwareAboutChildren;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -156,6 +153,12 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return nsDescriptor;
   }
 
+  @Override
+  public XmlElementsGroup getTopGroup() {
+    TypeDescriptor type = getType();
+    return type instanceof ComplexTypeDescriptor ? ((ComplexTypeDescriptor)type).getTopGroup() : null;
+  }
+
   @Nullable
   public TypeDescriptor getType() {
     return getType(null);
@@ -268,7 +271,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   private XmlAttributeDescriptor[] updateAttributeDescriptorsFromAny(final XmlTag context, final ComplexTypeDescriptor typeDescriptor,
                                                                      XmlAttributeDescriptor[] attributeDescriptors,
                                                                      final String ns) {
-    if (typeDescriptor.canContainAttribute("any",ns) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
+    if (typeDescriptor.canContainAttribute(ns) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
       final XmlNSDescriptor descriptor = context.getNSDescriptor(ns, true);
 
       if (descriptor instanceof XmlNSDescriptorImpl) {
@@ -334,7 +337,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     TypeDescriptor type = getType(context);
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
-      final ComplexTypeDescriptor.CanContainAttributeType containAttributeType = descriptor.canContainAttribute(attributeName, namespace);
+      final ComplexTypeDescriptor.CanContainAttributeType containAttributeType = descriptor.canContainAttribute(namespace);
 
       if (containAttributeType != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
         return new AnyXmlAttributeDescriptor(attributeName, containAttributeType);

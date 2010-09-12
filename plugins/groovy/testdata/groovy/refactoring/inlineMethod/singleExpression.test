@@ -1,0 +1,27 @@
+class Child {
+  void foo() {}
+
+  void doSmth() {
+    foo()
+  }
+}
+
+class User {
+  void meth() {
+    <begin>new Child().doSmth<end>()
+  }
+}
+-----
+class Child {
+  void foo() {}
+
+  void doSmth() {
+    foo()
+  }
+}
+
+class User {
+  void meth() {
+    new Child().foo()
+  }
+}

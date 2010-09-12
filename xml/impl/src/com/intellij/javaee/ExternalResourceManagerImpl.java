@@ -70,6 +70,8 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
   };
 
+  private String myDefaultHtmlDoctype = XmlUtil.XHTML_URI;
+
   protected Map<String, Map<String, String>> computeStdResources() {
     ResourceRegistrarImpl registrar = new ResourceRegistrarImpl();
     for (StandardResourceProvider provider : Extensions.getExtensions(StandardResourceProvider.EP_NAME)) {
@@ -86,6 +88,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls private static final String URL_ATTR = "url";
   @NonNls private static final String LOCATION_ATTR = "location";
   @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
+  @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
   private static final String DEFAULT_VERSION = null;
   @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
 
@@ -323,6 +326,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     return myModificationCount;
   }
 
+  @Override
+  public long getModificationCount(@NotNull Project project) {
+    return getProjectResources(project).getModificationCount();
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     final ExpandMacroToPathMap macroExpands = new ExpandMacroToPathMap();
     myPathMacros.addMacroExpands(macroExpands);
@@ -337,6 +345,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     for (final Object o : element.getChildren(IGNORED_RESOURCE_ELEMENT)) {
       Element e = (Element)o;
       addIgnoredSilently(e.getAttributeValue(URL_ATTR));
+    }
+
+    Element child = element.getChild(HTML_DEFAULT_DOCTYPE_ELEMENT);
+    if (child != null && child.getText() != null) {
+      myDefaultHtmlDoctype = child.getText();
     }
   }
 
@@ -358,6 +371,12 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
       final Element e = new Element(IGNORED_RESOURCE_ELEMENT);
 
       e.setAttribute(URL_ATTR, ignoredResource);
+      element.addContent(e);
+    }
+
+    if (myDefaultHtmlDoctype != null) {
+      final Element e = new Element(HTML_DEFAULT_DOCTYPE_ELEMENT);
+      e.setText(myDefaultHtmlDoctype);
       element.addContent(e);
     }
 
@@ -394,5 +413,23 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   private static ExternalResourceManagerImpl getProjectResources(Project project) {
     return INSTANCE_CACHE.getValue(project);
   }
+
+  @Override
+  @NotNull
+  public String getDefaultHtmlDoctype(@NotNull Project project) {
+    return getProjectResources(project).myDefaultHtmlDoctype;
+  }
+
+  @Override
+  public void setDefaultHtmlDoctype(@NotNull String defaultHtmlDoctype, @NotNull Project project) {
+    getProjectResources(project).setDefaultHtmlDoctype(defaultHtmlDoctype);
+  }
+
+  private void setDefaultHtmlDoctype(String defaultHtmlDoctype) {
+    myModificationCount++;
+    myDefaultHtmlDoctype = defaultHtmlDoctype;
+    fireExternalResourceChanged();
+  }
+
 
 }

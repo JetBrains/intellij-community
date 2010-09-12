@@ -51,15 +51,11 @@ public class ILazyParseableElementType extends IElementType {
    */
   public ASTNode parseContents(ASTNode chameleon) {
     final PsiElement parentElement = chameleon.getTreeParent().getPsi();
+    assert parentElement != null : "Bad chameleon: " + chameleon;
     final Project project = parentElement.getProject();
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
 
-    final PsiBuilder builder = factory.createBuilder(
-      project,
-      chameleon,
-      null, getLanguage(),
-      chameleon.getText()
-    );
+    final PsiBuilder builder = factory.createBuilder(project, chameleon);
 
     final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(project);
     return parser.parse(this, builder).getFirstChildNode();

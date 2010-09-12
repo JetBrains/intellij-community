@@ -22,7 +22,6 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.BaseTableView;
-import com.intellij.ui.table.TableHeaderRenderer;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ListProperty;
 import com.intellij.util.config.StorageProperty;
@@ -372,15 +371,6 @@ public abstract class UIPropertyBinding {
       }
       table.setSurrendersFocusOnKeystroke(true);
       // support for sorting
-      header.setDefaultRenderer(new TableHeaderRenderer(myModel));
-      header.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(final MouseEvent e) {
-          if (myModel.isSortable()) {
-            final int column = table.convertColumnIndexToModel(header.columnAtPoint(e.getPoint()));
-            myModel.sortByColumn(column);
-          }
-        }
-      });
       myModel.addTableModelListener(new TableModelListener() {
         public void tableChanged(final TableModelEvent e) {
           final JTableHeader header = getComponent().getTableHeader();
@@ -405,9 +395,6 @@ public abstract class UIPropertyBinding {
             sortByColumn = idx;
             break;
           }
-        }
-        if (sortByColumn != -1) {
-          myModel.sortByColumn(sortByColumn, myModel.getSortingType());
         }
       }
       TableUtil.ensureSelectionExists(getComponent());

@@ -151,7 +151,7 @@ public class TextOccurrencesUtil {
 
   public static boolean isSearchTextOccurencesEnabled(@NotNull PsiElement element) {
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
-    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
+    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, true);
     return FindUsagesUtil.isSearchForTextOccurencesAvailable(element, false, handler);
   }
 

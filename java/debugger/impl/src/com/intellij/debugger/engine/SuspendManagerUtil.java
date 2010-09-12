@@ -113,6 +113,9 @@ public class SuspendManagerUtil {
   }
 
   public static SuspendContextImpl getSuspendContextForThread(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl thread) {
+    if (suspendContext == null) {
+      return null;
+    }
     SuspendContextImpl context = findContextByThread(suspendContext.getDebugProcess().getSuspendManager(), thread);
     return context != null && !context.myInProgress ? context :  suspendContext;
   }

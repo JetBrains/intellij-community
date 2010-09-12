@@ -32,8 +32,8 @@ public class StatisticsTable extends ListTableModel {
   private TestProxy myTest;
   private JUnitRunningModel myModel;
 
-  public StatisticsTable(final ColumnInfo[] collumnNames) {
-    super(collumnNames);
+  public StatisticsTable(final ColumnInfo[] columnNames) {
+    super(columnNames);
   }
 
   public void setModel(final JUnitRunningModel model) {
@@ -62,16 +62,6 @@ public class StatisticsTable extends ListTableModel {
     setItems(new ArrayList());
   }
 
-  public int getRowCount() {
-    return super.getRowCount() + 1;
-  }
-
-  public Object getValueAt(final int rowIndex, final int columnIndex) {
-    if (rowIndex == 0)
-      return testProperty(columnIndex);
-    return super.getValueAt(rowIndex - 1, columnIndex);
-  }
-
   public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
     LOG.error("value: " + aValue + " row: " + rowIndex + " column: " + columnIndex);
   }
@@ -80,6 +70,7 @@ public class StatisticsTable extends ListTableModel {
     return false;
   }
 
+  // TODO: move out of the table
   private Object testProperty(final int columnIndex) {
     if (columnIndex == 0)
       return ExecutionBundle.message("junit.runing.info.total.label");
@@ -89,15 +80,13 @@ public class StatisticsTable extends ListTableModel {
   public TestProxy getTestAt(final int rowIndex) {
     if (rowIndex < 0 || rowIndex > getItems().size())
       return null;
-    return (rowIndex == 0) ? myTest : (TestProxy)getItems().get(rowIndex - 1);
+    return (TestProxy)getItems().get(rowIndex);
   }
 
   public int getIndexOf(final Object test) {
-    if (test == myTest)
-      return 0;
     for (int i = 0; i < getItems().size(); i++) {
       final Object child = getItems().get(i);
-      if (child == test) return i + 1;
+      if (child == test) return i;
     }
     return -1;
   }

@@ -260,6 +260,11 @@ public final class KeyChooserDialog extends DialogWrapper{
       super(component);
     }
 
+    @Override
+    protected int convertIndexToModel(int viewIndex) {
+      return getComponent().convertRowIndexToModel(viewIndex);
+    }
+
     public int getSelectedIndex() {
       return myComponent.getSelectedRow();
     }
@@ -283,7 +288,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     public void selectElement(final Object element, final String selectedText) {
       final int index = myElements.get(element);
-      selectElementAt(index);
+      selectElementAt(getComponent().convertRowIndexToView(index));
     }
   }
 

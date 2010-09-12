@@ -549,6 +549,12 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   }
 
+  /** Use {@link com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider} instead */
+  @Deprecated()
+  public void readHiddenTemplateFile(Document document) throws InvalidDataException {
+    readTemplateFile(document, null, false, false, getClass().getClassLoader());
+  }
+
   private TemplateImpl readTemplateFromElement(final boolean isDefault,
                                                final String groupName,
                                                final Element element,
@@ -592,10 +598,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
 
     return template;
-  }
-
-  public void readHiddenTemplateFile(Document document) throws InvalidDataException {
-    readTemplateFile(document, null, false, false, getClass().getClassLoader());
   }
 
   private static void saveTemplate(TemplateImpl template, Element templateSetElement) {

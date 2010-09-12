@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +24,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 class ChangeListManagerSerialization {
@@ -107,22 +111,24 @@ class ChangeListManagerSerialization {
   public void writeExternal(Element element) throws WriteExternalException {
     final List<LocalChangeList> changeListList = myWorker.getListsCopy();
     for (LocalChangeList list : changeListList) {
-        Element listNode = new Element(NODE_LIST);
-        element.addContent(listNode);
-        if (list.isDefault()) {
-          listNode.setAttribute(ATT_DEFAULT, ATT_VALUE_TRUE);
-        }
-        if (list.isReadOnly()) {
-          listNode.setAttribute(ATT_READONLY, ATT_VALUE_TRUE);
-        }
-
-        listNode.setAttribute(ATT_ID, list.getId());
-        listNode.setAttribute(ATT_NAME, list.getName());
-        listNode.setAttribute(ATT_COMMENT, list.getComment());
-        for (Change change : list.getChanges()) {
-          writeChange(listNode, change);
-        }
+      Element listNode = new Element(NODE_LIST);
+      element.addContent(listNode);
+      if (list.isDefault()) {
+        listNode.setAttribute(ATT_DEFAULT, ATT_VALUE_TRUE);
       }
+      if (list.isReadOnly()) {
+        listNode.setAttribute(ATT_READONLY, ATT_VALUE_TRUE);
+      }
+
+      listNode.setAttribute(ATT_ID, list.getId());
+      listNode.setAttribute(ATT_NAME, list.getName());
+      listNode.setAttribute(ATT_COMMENT, list.getComment());
+      List<Change> changes = new ArrayList<Change>(list.getChanges());
+      Collections.sort(changes, new ChangeComparator());
+      for (Change change : changes) {
+        writeChange(listNode, change);
+      }
+    }
     final IgnoredFileBean[] filesToIgnore = myIgnoredIdeaLevel.getFilesToIgnore();
     for(IgnoredFileBean bean: filesToIgnore) {
         Element fileNode = new Element(NODE_IGNORED);
@@ -138,6 +144,12 @@ class ChangeListManagerSerialization {
       }
   }
 
+  private static class ChangeComparator implements Comparator<Change> {
+    @Override
+    public int compare(Change o1, Change o2) {
+      return Comparing.compare(o1.toString(), o2.toString());
+    }
+  }
   private static void writeChange(final Element listNode, final Change change) {
     Element changeNode = new Element(NODE_CHANGE);
     listNode.addContent(changeNode);

@@ -13,6 +13,7 @@ import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
@@ -77,6 +78,11 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     }
 
     return xmlElementDescriptors.toArray(new XmlElementDescriptor[xmlElementDescriptors.size()]);
+  }
+
+  @Override
+  public XmlElementsGroup getTopGroup() {
+    return null;
   }
 
   @Nullable

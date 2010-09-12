@@ -92,7 +92,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private JLabel myTargetClassNameLabel;
   private JCheckBox myCbNonNls;
   private JPanel myVisibilityPanel;
-  private final VisibilityPanel myVPanel;
+  private final JavaVisibilityPanel myVPanel;
   private final JCheckBox myIntroduceEnumConstantCb = new JCheckBox(RefactoringBundle.message("introduce.constant.enum.cb"), true);
 
   IntroduceConstantDialog(Project project,
@@ -117,7 +117,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     setTitle(IntroduceConstantHandler.REFACTORING_NAME);
     myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-    myVPanel = new VisibilityPanel(false, true);
+    myVPanel = new JavaVisibilityPanel(false, true);
     myVisibilityPanel.add(myVPanel, BorderLayout.CENTER);
     init();
 

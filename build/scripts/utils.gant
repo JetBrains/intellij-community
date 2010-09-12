@@ -96,3 +96,15 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
   def relativePath = artifactPath.substring(home.length())
   project.info("##teamcity[publishArtifacts '$relativePath']")
 })
+
+binding.setVariable("commonJvmArgs", {
+  return [
+   "-ea",
+   "-Didea.home.path=$home",
+   "-Xbootclasspath/p:${boot.output}",
+   "-XX:+HeapDumpOnOutOfMemoryError",
+   "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
+   "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
+   "-Xdebug",
+   "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5555"]
+})

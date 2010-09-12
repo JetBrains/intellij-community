@@ -29,6 +29,9 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
@@ -104,7 +107,7 @@ public class FrameDebuggerTree extends DebuggerTree {
   }
 
 
-  protected BuildNodeCommand getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
+  protected DebuggerCommandImpl getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
     if (node.getDescriptor() instanceof StackFrameDescriptorImpl) {
       return new BuildFrameTreeVariablesCommand(node);
     }
@@ -117,16 +120,18 @@ public class FrameDebuggerTree extends DebuggerTree {
     }
     
     protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
-      final SourcePosition sourcePosition = getDebuggerContext().getSourcePosition();
+      final DebuggerContextImpl debuggerContext = getDebuggerContext();
+      final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
       if (sourcePosition == null) {
         return;
       }
       try {
         final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(stackDescriptor);
+        final EvaluationContextImpl evalContext = debuggerContext.createEvaluationContext();
         final Pair<Set<String>, Set<TextWithImports>> usedVars =
           ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
             public Pair<Set<String>, Set<TextWithImports>> compute() {
-              return findReferencedVars(visibleVariables.keySet(), sourcePosition);
+              return findReferencedVars(visibleVariables.keySet(), sourcePosition, evalContext);
             }
           });
         // add locals
@@ -213,7 +218,9 @@ public class FrameDebuggerTree extends DebuggerTree {
     return true;
   }
 
-  private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final Set<String> visibleVars, final SourcePosition position) {
+  private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final Set<String> visibleVars,
+                                                                            final SourcePosition position,
+                                                                            EvaluationContextImpl evalContext) {
     final int line = position.getLine();
     if (line < 0) {
       return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
@@ -269,7 +276,7 @@ public class FrameDebuggerTree extends DebuggerTree {
         else {
           final Set<String> vars = new HashSet<String>();
           final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
-          final PsiElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars);
+          final PsiElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars, position, evalContext);
           element.accept(variablesCollector);
 
           return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
@@ -439,12 +446,20 @@ public class FrameDebuggerTree extends DebuggerTree {
     private final TextRange myLineRange;
     private final Set<TextWithImports> myExpressions;
     private final Set<String> myVars;
+    private final SourcePosition myPosition;
+    private final EvaluationContextImpl myEvalContext;
 
-    public VariablesCollector(final Set<String> visibleLocals, final TextRange lineRange, final Set<TextWithImports> expressions, final Set<String> vars) {
+    public VariablesCollector(final Set<String> visibleLocals,
+                              final TextRange lineRange,
+                              final Set<TextWithImports> expressions,
+                              final Set<String> vars,
+                              SourcePosition position, EvaluationContextImpl evalContext) {
       myVisibleLocals = visibleLocals;
       myLineRange = lineRange;
       myExpressions = expressions;
       myVars = vars;
+      myPosition = position;
+      myEvalContext = evalContext;
     }
 
     @Override 
@@ -491,7 +506,15 @@ public class FrameDebuggerTree extends DebuggerTree {
               boolean isConstant = (var instanceof PsiEnumConstant) || 
                                    (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL));
               if (!isConstant) {
-                myExpressions.add(new TextWithImportsImpl(reference));
+                final TextWithImportsImpl textWithImports = new TextWithImportsImpl(reference);
+                try {
+                  final ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(textWithImports, reference, myPosition);
+                  evaluator.evaluate(myEvalContext);
+                  //collect only expressions that do not produce any exceptions on evaluation
+                  myExpressions.add(textWithImports);
+                }
+                catch (EvaluateException ignored) {
+                }
               }
             }
           }

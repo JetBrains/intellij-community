@@ -325,5 +325,7 @@
 
     <renameInputValidator implementation="com.intellij.lang.xml.XmlElementRenameValidator"/>
     <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>
+
+    <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
   </extensions>
 </idea-plugin>

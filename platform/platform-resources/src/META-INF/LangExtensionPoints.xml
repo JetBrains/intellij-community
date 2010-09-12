@@ -60,6 +60,9 @@
   <extensionPoint name="daemon.highlightInfoFilter"
                   interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
 
+  <extensionPoint name="daemon.externalAnnotatorsFilter"
+                  interface="com.intellij.lang.ExternalAnnotatorsFilter"/>
+
   <extensionPoint name="severitiesProvider"
                   interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
 
@@ -432,6 +435,8 @@
 
   <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider"/>
 
+  <extensionPoint name="langScriptingContextsProvider" interface="com.intellij.ide.scriptingContext.LangScriptingContextsProvider"/>
+
   <extensionPoint name="semContributor"
                   beanClass="com.intellij.semantic.SemContributorEP" area="IDEA_PROJECT"/>
 
@@ -442,5 +447,9 @@
   <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
 
   <extensionPoint name="stacktrace.fold" beanClass="com.intellij.execution.console.CustomizableConsoleFoldingBean"/>
+  <extensionPoint name="changeSignatureDetector"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
+  <extensionPoint name="preserveIndentOnPaste" beanClass="com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean"/>
 
 </extensionPoints>

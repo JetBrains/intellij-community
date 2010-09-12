@@ -19,6 +19,7 @@ import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
@@ -56,44 +57,41 @@ public final class TrailingSpacesStripper {
     final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (settings == null) return;
 
-    final boolean doStrip = !settings.getStripTrailingSpaces().equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    String stripTrailingSpaces = settings.getStripTrailingSpaces();
+    final boolean doStrip = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
     final boolean ensureEOL = settings.isEnsureNewLineAtEOF();
-    if (!doStrip && !ensureEOL) return;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+    if (doStrip) {
+      final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+      DocumentEx ex = (DocumentEx)document;
+      boolean success = ex.stripTrailingSpaces(inChangedLinesOnly);
+      if (!success) {
+        myDocumentsToStripLater.add(ex);
+      }
+    }
+
+    final int lines = document.getLineCount();
+    if (ensureEOL && lines > 0) {
+      final int start = document.getLineStartOffset(lines - 1);
+      final int end = document.getLineEndOffset(lines - 1);
+      if (start != end) {
+        final CharSequence content = document.getCharsSequence();
+        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, null) {
           public void run() {
-            if (doStrip) {
-              final boolean inChangedLinesOnly =
-                !settings.getStripTrailingSpaces().equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-              DocumentEx ex = (DocumentEx)document;
-              boolean success = ex.stripTrailingSpaces(inChangedLinesOnly);
-              if (!success) {
-                myDocumentsToStripLater.add(ex);
-              }
-            }
-
-            if (ensureEOL) {
-              final int lines = document.getLineCount();
-              if (lines > 0) {
-                int start = document.getLineStartOffset(lines - 1);
-                int end = document.getLineEndOffset(lines - 1);
-                if (start != end) {
-                  CharSequence content = document.getCharsSequence();
-                  if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end))) {
-                    document.deleteString(start, end);
-                  }
-                  else {
-                    document.insertString(end, "\n");
-                  }
+            CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+              public void run() {
+                if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end))) {
+                  document.deleteString(start, end);
+                }
+                else {
+                  document.insertString(end, "\n");
                 }
               }
-            }
+            });
           }
         });
       }
-    });
+    }
   }
 
   @TestOnly

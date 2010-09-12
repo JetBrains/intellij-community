@@ -124,6 +124,7 @@
 
     <group id="InspectCodeGroup" text="Inspect Code Actions">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
       <add-to-group group-id="AnalyzeMenu" anchor="first"/>
     </group>
@@ -307,6 +308,7 @@
       <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction"/>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
+      <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.debugger.ui.breakpoints.actions.FocusOnBreakpointAction"/>
 
     </group>
@@ -590,6 +592,7 @@
     <group id="Debugger.ThreadsPanelPopup">
       <!--<reference ref="Debugger.ResumeThread"/>-->
       <!--<reference ref="Debugger.FreezeThread"/>-->
+      <reference ref="Debugger.InterruptThread"/>
       <!--<reference ref="Debugger.ShowFrame"/>-->
       <reference ref="Debugger.PopFrame"/>
       <!--<reference ref="Debugger.EditFrameSource"/>-->

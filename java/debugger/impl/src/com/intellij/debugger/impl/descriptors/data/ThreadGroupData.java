@@ -34,7 +34,7 @@ public class ThreadGroupData extends DescriptorData<ThreadGroupDescriptorImpl>{
   public boolean equals(Object object) {
     if(!(object instanceof ThreadGroupData)) return false;
 
-    return ((ThreadGroupData)object).myThreadGroup == myThreadGroup;
+    return myThreadGroup.equals(((ThreadGroupData)object).myThreadGroup);
   }
 
   public int hashCode() {

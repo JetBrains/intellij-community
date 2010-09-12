@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -62,7 +63,7 @@ import static java.awt.event.KeyEvent.*;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "SSBasedInspection"})
 public class Switcher extends AnAction implements DumbAware {
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
@@ -71,26 +72,29 @@ public class Switcher extends AnAction implements DumbAware {
   private static final Color ON_MOUSE_OVER_BG_COLOR = new Color(231, 242, 249);
   private static int CTRL_KEY;
   private static int ALT_KEY;
-  static {
-    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-      @Override
-      public void eventDispatched(AWTEvent event) {
-        if (event.getID() == KEY_RELEASED
-            && event instanceof KeyEvent
-            && ((KeyEvent)event).getKeyCode() == CTRL_KEY) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              synchronized (Switcher.class) {
-                if (SWITCHER != null) {
-                  SWITCHER.navigate();
-                }
-              }
-            }
-          });
+
+  public static final Runnable CHECKER = new Runnable() {
+    @Override
+    public void run() {
+      synchronized (Switcher.class) {
+        if (SWITCHER != null) {
+          SWITCHER.navigate();
         }
       }
-    }, KEY_EVENT_MASK);
+    }
+  };
+
+  static {
+    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
+      @Override
+      public boolean dispatch(AWTEvent event) {
+        if (event.getID() == KEY_RELEASED && event instanceof KeyEvent
+            && ((KeyEvent)event).getKeyCode() == CTRL_KEY) {
+          SwingUtilities.invokeLater(CHECKER);
+        }
+        return false;
+      }
+    }, null);
   }
 
   @NonNls private static final String SWITCHER_TITLE = "Switcher";

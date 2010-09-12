@@ -30,7 +30,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
@@ -78,7 +78,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class DaemonListeners implements Disposable {
+class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
 
   private final ApplicationListener myApplicationListener = new MyApplicationListener();
@@ -109,9 +109,11 @@ public class DaemonListeners implements Disposable {
     eventMulticaster.addDocumentListener(new DocumentAdapter() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       public void beforeDocumentChange(final DocumentEvent e) {
+        if (isUnderIgnoredAction(null)) return;
         Document document = e.getDocument();
         VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-        if (!worthBothering(document, virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile))) {
+        Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
+        if (!worthBothering(document, project)) {
           return; //no need to stop daemon if something happened in the console
         }
         stopDaemon(true);
@@ -250,6 +252,12 @@ public class DaemonListeners implements Disposable {
     LaterInvocator.addModalityStateListener(myModalityStateListener);
   }
 
+  static boolean isUnderIgnoredAction(Object action) {
+    if (action instanceof DocumentRunnable.IgnoreDocumentRunnable) return true;
+    DocumentRunnable currentWriteAction = ApplicationManager.getApplication().getCurrentWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
+    return currentWriteAction instanceof DocumentRunnable.IgnoreDocumentRunnable;
+  }
+
   private boolean worthBothering(final Document document, Project project) {
     if (document == null) return true;
     if (project != null && project != myProject) return false;
@@ -287,7 +295,7 @@ public class DaemonListeners implements Disposable {
 
   private boolean canUndo(VirtualFile virtualFile) {
     for (FileEditor editor : FileEditorManager.getInstance(myProject).getEditors(virtualFile)) {
-      if (UndoManagerImpl.getInstance(myProject).isUndoAvailable(editor)) return true;
+      if (UndoManager.getInstance(myProject).isUndoAvailable(editor)) return true;
     }
     return false;
   }
@@ -310,31 +318,28 @@ public class DaemonListeners implements Disposable {
 
   private class MyApplicationListener extends ApplicationAdapter {
     public void beforeWriteActionStart(Object action) {
-      if (!myDaemonCodeAnalyzer.isRunning()) return;
+      if (!myDaemonCodeAnalyzer.isRunning()) return; // we'll restart in writeActionFinished()
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by write action:" + action);
       }
       if (containsDocumentWorthBothering(action)) {
-        stopDaemon(false);
+        stopDaemon(true);
+      }
+    }
+
+    public void writeActionFinished(Object action) {
+      if (containsDocumentWorthBothering(action)) {
+        stopDaemon(true);
       }
     }
 
     private boolean containsDocumentWorthBothering(Object action) {
-      if (action instanceof DocumentRunnable) {
-        if (action instanceof DocumentRunnable.IgnoreDocumentRunnable) return false;
-        Document document = ((DocumentRunnable)action).getDocument();
-        if (!worthBothering(document, ((DocumentRunnable)action).getProject())) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    public void writeActionFinished(Object action) {
-      if (myDaemonCodeAnalyzer.isRunning()) return;
-      if (containsDocumentWorthBothering(action)) {
-        stopDaemon(true);
-      }
+      if (isUnderIgnoredAction(action)) return false;
+      DocumentRunnable currentWriteAction = action instanceof DocumentRunnable ? (DocumentRunnable)action
+                                                                               : ApplicationManager.getApplication().getCurrentWriteAction(DocumentRunnable.class);
+      if (currentWriteAction == null) return true;
+      Document document = currentWriteAction.getDocument();
+      return worthBothering(document, currentWriteAction.getProject());
     }
   }
 
@@ -344,9 +349,8 @@ public class DaemonListeners implements Disposable {
 
     public void commandStarted(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (!worthBothering(affectedDocument, event.getProject())) {
-        return;
-      }
+      if (isUnderIgnoredAction(null)) return;
+      if (!worthBothering(affectedDocument, event.getProject())) return;
 
       cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
       if (!myDaemonCodeAnalyzer.isRunning()) return;
@@ -372,9 +376,8 @@ public class DaemonListeners implements Disposable {
 
     public void commandFinished(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (!worthBothering(affectedDocument, event.getProject())) {
-        return;
-      }
+      if (isUnderIgnoredAction(null)) return;
+      if (!worthBothering(affectedDocument, event.getProject())) return;
 
       if (myEscPressed) {
         myEscPressed = false;

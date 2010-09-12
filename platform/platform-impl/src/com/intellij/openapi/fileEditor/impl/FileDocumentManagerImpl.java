@@ -28,6 +28,7 @@ import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -65,7 +66,10 @@ import java.io.Writer;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
@@ -217,13 +221,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public void saveDocument(@NotNull final Document document) {
     if (!myUnsavedDocuments.contains(document)) return;
 
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        public void run() {
-          _saveDocument(document);
-        }
+    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, null) {
+      public void run() {
+        _saveDocument(document);
       }
-    );
+    });
   }
 
   private void _saveDocument(@NotNull final Document document) {
@@ -467,11 +469,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       LOG.error(e);
     }
 
-    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+    final Project project = ProjectLocator.getInstance().guessProjectForFile(file);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(
-          new ExternalChangeAction() {
+          new ExternalChangeAction.ExternalDocumentChange(document, project) {
             public void run() {
               boolean wasWritable = document.isWritable();
               DocumentEx documentEx = (DocumentEx)document;

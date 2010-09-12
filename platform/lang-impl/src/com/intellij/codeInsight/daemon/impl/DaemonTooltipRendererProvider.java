@@ -27,6 +27,7 @@ import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
+import com.intellij.openapi.editor.impl.TrafficTooltipRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -106,6 +107,11 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
   public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
     return new MyRenderer(text, width);
+  }
+
+  @Override
+  public TrafficTooltipRenderer createTrafficTooltipRenderer(Runnable onHide) {
+    return new TrafficTooltipRendererImpl(onHide);
   }
 
   private static class MyRenderer extends LineTooltipRenderer {

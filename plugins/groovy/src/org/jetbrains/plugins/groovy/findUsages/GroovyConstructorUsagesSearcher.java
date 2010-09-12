@@ -20,6 +20,7 @@ import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -63,7 +64,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
@@ -83,6 +83,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     processConstructorUsages(p.getMethod(), p.getScope(), consumer, p.getOptimizer(), true, !p.isStrictSignatureSearch());
   }
 
+  public static final Key<Set<PsiClass>> LITERALLY_CONSTRUCTED_CLASSES = Key.create("LITERALLY_CONSTRUCTED_CLASSES");
   static void processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector, final boolean searchGppCalls, final boolean includeOverloads) {
     if (!constructor.isConstructor()) return;
 
@@ -91,6 +92,11 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     final PsiClass clazz = constructor.getContainingClass();
     if (clazz == null) return;
 
+    Set<PsiClass> processed = collector.getSearchSession().getUserData(LITERALLY_CONSTRUCTED_CLASSES);
+    if (processed == null) {
+      collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed = new ConcurrentHashSet<PsiClass>());
+    }
+    if (!processed.add(clazz)) return;
 
     if (clazz.isEnum() && clazz instanceof GroovyPsiElement) {
       for (PsiField field : clazz.getFields()) {
@@ -231,12 +237,8 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
               checkedTypedContext = true;
             }
 
-            for (PsiType psiType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(argument)) {
-              if (psiType instanceof PsiClassType &&
-                  targetClass.getManager().areElementsEquivalent(targetClass, ((PsiClassType)psiType).resolve()) &&
-                  !literalProcessor.processLiteral((GrListOrMap)argument)) {
-                return false;
-              }
+            if (!literalProcessor.processLiteral((GrListOrMap)argument, true)) {
+              return false;
             }
           }
         }
@@ -353,7 +355,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
                                                    final LiteralConstructorSearcher literalProcessor) {
 
     if (expression instanceof GrListOrMap) {
-      return literalProcessor.processLiteral((GrListOrMap)expression);
+      return literalProcessor.processLiteral((GrListOrMap)expression, GppTypeConverter.hasTypedContext(expression));
     }
     return true;
   }

@@ -353,7 +353,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Nullable
-  public PsiElement insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
+  public static PsiElement insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
     final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
     PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);

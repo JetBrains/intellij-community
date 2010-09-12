@@ -16,13 +16,11 @@
 
 package org.jetbrains.plugins.groovy.compiler;
 
-import com.intellij.compiler.CompilerSettingsFactory;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -39,14 +37,13 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class GroovyCompilerConfigurable implements SearchableConfigurable, CompilerSettingsFactory {
+public class GroovyCompilerConfigurable implements SearchableConfigurable {
   private JTextField myHeapSize;
   private JPanel myMainPanel;
   private JPanel myExcludesPanel;
   private JCheckBox myUseGroovycStubs;
   private final ExcludedEntriesConfigurable myExcludes;
   private final GroovyCompilerConfiguration myConfig;
-
 
   public GroovyCompilerConfigurable(Project project) {
     myConfig = GroovyCompilerConfiguration.getInstance(project);
@@ -120,9 +117,5 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Compi
 
   public void disposeUIResources() {
     myExcludes.disposeUIResources();
-  }
-
-  public Configurable create(Project project) {
-    return this;
   }
 }

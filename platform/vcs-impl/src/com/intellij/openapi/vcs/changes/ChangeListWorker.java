@@ -49,7 +49,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public ChangeListWorker(final Project project, final PlusMinus<Pair<String, AbstractVcs>> deltaListener) {
     myProject = project;
-    myMap = new HashMap<String, LocalChangeList>();
+    myMap = new LinkedHashMap<String, LocalChangeList>();
     myIdx = new ChangeListsIndexes();
     myLocallyDeleted = new DeletedFilesHolder();
     mySwitchedHolder = new SwitchedFileHolder(project, FileHolder.HolderType.SWITCHED);
@@ -60,7 +60,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private ChangeListWorker(final ChangeListWorker worker) {
     myProject = worker.myProject;
-    myMap = new HashMap<String, LocalChangeList>();
+    myMap = new LinkedHashMap<String, LocalChangeList>();
     myIdx = new ChangeListsIndexes(worker.myIdx);
     myLocallyDeleted = worker.myLocallyDeleted.copy();
     mySwitchedHolder = (SwitchedFileHolder) worker.mySwitchedHolder.copy();

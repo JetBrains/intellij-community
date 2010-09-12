@@ -108,4 +108,7 @@ public interface EditorSettings {
 
   boolean isAllowSingleLogicalLineFolding();
   void setAllowSingleLogicalLineFolding(boolean allow);
+
+  boolean isForceScrollToEnd();
+  void setForceScrollToEnd(boolean value);
 }

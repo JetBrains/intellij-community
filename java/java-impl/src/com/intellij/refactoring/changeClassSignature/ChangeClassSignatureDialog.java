@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.CodeFragmentTableCellEditor;
+import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
@@ -99,7 +99,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     nameColumn.setCellRenderer(new MyCellRenderer());
     nameColumn.setCellEditor(new StringTableCellEditor(project));
     valueColumn.setCellRenderer(new MyCodeFragmentTableCellRenderer());
-    valueColumn.setCellEditor(new CodeFragmentTableCellEditor(project));
+    valueColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
 
     myTable.setPreferredScrollableViewportSize(new Dimension(210, myTable.getRowHeight() * 4));
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

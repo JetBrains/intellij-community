@@ -48,8 +48,8 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
@@ -156,7 +156,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
             return ++usagesFound[0] < myMinUsagesNumberToShowDialog;
           }
         };
-        
+
         handler.processElementUsages(method, processor, options);
       }
     };
@@ -187,10 +187,11 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     else {
       List<ParameterInfoImpl> parameterInfos = new ArrayList<ParameterInfoImpl>(Arrays.asList(myNewParametersInfo));
       final PsiReferenceExpression refExpr = TargetElementUtil.findReferenceExpression(editor);
-      ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false, refExpr);
+      JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, false, refExpr);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
-      myNewParametersInfo = dialog.getParameters();
+      List<ParameterInfoImpl> parameters = dialog.getParameters();
+      myNewParametersInfo = parameters.toArray(new ParameterInfoImpl[parameters.size()]);
     }
   }
 

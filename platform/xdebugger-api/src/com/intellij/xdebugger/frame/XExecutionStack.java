@@ -81,6 +81,5 @@ public abstract class XExecutionStack {
      * @param errorMessage message describing the error
      */
     void errorOccured(String errorMessage);
-
   }
 }

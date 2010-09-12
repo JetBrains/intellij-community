@@ -116,7 +116,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
         return null;
       }
 
-      if (tag == rootTag && tag.getNamespace().equals(XmlUtil.XML_SCHEMA_URI)) {
+      if (tag == rootTag && (tag.getNamespace().equals(XmlUtil.XML_SCHEMA_URI) || tag.getNamespace().equals(XmlUtil.WSDL_SCHEMA_URI))) {
         for(XmlTag t:tag.getSubTags()) {
           final String name = t.getLocalName();
           if ("import".equals(name)) {

@@ -224,6 +224,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
         );
         if (methods.length > 0 && !AnnotationUtil.isAnnotated(methods[0], Arrays.asList(TestNGUtil.CONFIG_ANNOTATIONS_FQN))) {
           testCase = testStarted(result);
+          testCase.appendStacktrace(result);
         }
       }
     }
@@ -241,13 +242,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     else {
       //do not remember testresultmessage: test hierarchy is not set
       testCase = new TestProxy(result.toDisplayString());
-      final String stackTrace = result.getStackTrace();
-      if (stackTrace != null) {
-        final List<Printable> printables = TestNGConsoleView.getPrintables(result);
-        for (Printable printable : printables) {
-          testCase.addLast(printable);
-        }
-      }
+      testCase.appendStacktrace(result);
       failedToStart = testCase;
     }
 

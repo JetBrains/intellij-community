@@ -70,7 +70,7 @@
       <action id="EditorPreviousWordWithSelection" class="com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction"/>
       <action id="EditorDeleteToWordStart" class="com.intellij.openapi.editor.actions.DeleteToWordStartAction"/>
       <action id="EditorDeleteToWordEnd" class="com.intellij.openapi.editor.actions.DeleteToWordEndAction"/>
-      <action id="EditorDeleteLine" class="com.intellij.openapi.editor.actions.DeleteLineAtCaretAction"/>
+      <action id="EditorDeleteLine" class="com.intellij.openapi.editor.actions.DeleteLineAction"/>
       <action id="EditorDuplicate" class="com.intellij.openapi.editor.actions.DuplicateAction"/>
       <action id="EditorToggleInsertState" class="com.intellij.openapi.editor.actions.ToggleInsertStateAction"/>
       <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction"/>

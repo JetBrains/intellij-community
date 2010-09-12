@@ -93,7 +93,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final String myName;
 
   private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
-  private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
+  private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>(); // accessed from EDT only, no need to sync
 
   private volatile Runnable myExceptionalThreadWithReadAccessRunnable;
 
@@ -111,8 +111,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     TimeUnit.SECONDS,
     new SynchronousQueue<Runnable>(),
     new ThreadFactory() {
+      int i;
       public Thread newThread(Runnable r) {
-        final Thread thread = new Thread(r, "ApplicationImpl pooled thread") {
+        final Thread thread = new Thread(r, "ApplicationImpl pooled thread "+i++) {
           public void interrupt() {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Interrupted worker, will remove from pool");
@@ -324,7 +325,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return PluginsFacade.INSTANCE.getPlugins();
   }
 
-  public Future<?> executeOnPooledThread(final Runnable action) {
+  public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
     return ourThreadExecutorsService.submit(new Runnable() {
       public void run() {
         try {
@@ -355,19 +356,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
 
-  public void invokeLater(final Runnable runnable) {
+  public void invokeLater(@NotNull final Runnable runnable) {
     myInvokator.invokeLater(runnable);
   }
 
-  public void invokeLater(final Runnable runnable, @NotNull final Condition expired) {
+  public void invokeLater(@NotNull final Runnable runnable, @NotNull final Condition expired) {
     myInvokator.invokeLater(runnable, expired);
   }
 
-  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state) {
+  public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state) {
     myInvokator.invokeLater(runnable, state);
   }
 
-  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
+  public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
     myInvokator.invokeLater(runnable, state, expired);
   }
 
@@ -564,7 +565,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return result;
   }
 
-  public void invokeAndWait(Runnable runnable, @NotNull ModalityState modalityState) {
+  public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     if (isDispatchThread()) {
       LOG.error("invokeAndWait must not be called from event queue thread");
       runnable.run();
@@ -588,7 +589,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return entities.length > 0 ? new ModalityStateEx(entities) : getNoneModalityState();
   }
 
-  public ModalityState getModalityStateForComponent(Component c) {
+  public ModalityState getModalityStateForComponent(@NotNull Component c) {
     Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
@@ -682,7 +683,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return true;
   }
 
-  public void runReadAction(final Runnable action) {
+  public void runReadAction(@NotNull final Runnable action) {
     /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
      * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
     boolean mustAcquire = !isReadAccessAllowed();
@@ -724,7 +725,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return old;
   }
 
-  public <T> T runReadAction(final Computable<T> computation) {
+  public <T> T runReadAction(@NotNull final Computable<T> computation) {
     final Ref<T> ref = Ref.create(null);
     runReadAction(new Runnable() {
       public void run() {
@@ -734,7 +735,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return ref.get();
   }
 
-  public void runWriteAction(final Runnable action) {
+  public void runWriteAction(@NotNull final Runnable action) {
     assertCanRunWriteAction();
 
     ActivityTracker.getInstance().inc();
@@ -749,9 +750,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     try {
-      synchronized (myWriteActionsStack) {
-        myWriteActionsStack.push(action);
-      }
+      myWriteActionsStack.push(action);
 
       fireWriteActionStarted(action);
 
@@ -761,9 +760,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       try {
         fireWriteActionFinished(action);
         
-        synchronized (myWriteActionsStack) {
-          myWriteActionsStack.pop();
-        }
+        myWriteActionsStack.pop();
       }
       finally {
         myActionsLock.writeLock().release();
@@ -771,7 +768,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  public <T> T runWriteAction(final Computable<T> computation) {
+  public <T> T runWriteAction(@NotNull final Computable<T> computation) {
     final Ref<T> ref = Ref.create(null);
     runWriteAction(new Runnable() {
       public void run() {
@@ -781,18 +778,18 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return ref.get();
   }
 
-  public Object getCurrentWriteAction(Class actionClass) {
-    synchronized (myWriteActionsStack) {
-      for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
-        Runnable action = myWriteActionsStack.get(i);
-        if (actionClass == null || ReflectionCache.isAssignable(actionClass, action.getClass())) return action;
-      }
+  public <T>  T getCurrentWriteAction(@Nullable Class<T> actionClass) {
+    assertCanRunWriteAction();
+
+    for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
+      Runnable action = myWriteActionsStack.get(i);
+      if (actionClass == null || ReflectionCache.isAssignable(actionClass, action.getClass())) return (T)action;
     }
     return null;
   }
 
   public void assertReadAccessAllowed() {
-    if (myTestModeFlag || myHeadlessMode) return;
+    if (myHeadlessMode) return;
     if (!isReadAccessAllowed()) {
       LOG.error(
         "Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
@@ -990,15 +987,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     LOG.assertTrue(myInEditorPaintCounter >= 0);
   }
 
-  public void addApplicationListener(ApplicationListener l) {
+  public void addApplicationListener(@NotNull ApplicationListener l) {
     myDispatcher.addListener(l);
   }
 
-  public void addApplicationListener(ApplicationListener l, Disposable parent) {
+  public void addApplicationListener(@NotNull ApplicationListener l, @NotNull Disposable parent) {
     myDispatcher.addListener(l, parent);
   }
 
-  public void removeApplicationListener(ApplicationListener l) {
+  public void removeApplicationListener(@NotNull ApplicationListener l) {
     myDispatcher.removeListener(l);
   }
 

@@ -35,5 +35,4 @@ public interface JavaParameterInfo extends ParameterInfo {
 
   boolean isVarargType();
 
-  boolean isUseAnySingleVariable();
 }

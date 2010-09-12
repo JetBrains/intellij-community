@@ -387,7 +387,9 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public void expand(String key, @NotNull CustomTemplateCallback callback) {
-    expand(key, callback, null);
+    ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext());
+    assert defaultGenerator != null;
+    expand(key, callback, null, defaultGenerator);
   }
 
   @Nullable
@@ -444,10 +446,8 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
 
   private static void expand(String key,
                              @NotNull CustomTemplateCallback callback,
-                             String surroundedText) {
-    ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext());
-    assert defaultGenerator != null;
-
+                             String surroundedText,
+                             @NotNull ZenCodingGenerator defaultGenerator) {
     ZenCodingNode node = parse(key, callback, defaultGenerator);
     assert node != null;
     if (surroundedText == null) {
@@ -558,6 +558,8 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   protected static void doWrap(final String selection,
                                final String abbreviation,
                                final CustomTemplateCallback callback) {
+    final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext());
+    assert defaultGenerator != null;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(callback.getProject(), new Runnable() {
@@ -565,7 +567,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
             EditorModificationUtil.deleteSelectedText(callback.getEditor());
             PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
             callback.fixInitialState();
-            expand(abbreviation, callback, selection);
+            expand(abbreviation, callback, selection, defaultGenerator);
           }
         }, CodeInsightBundle.message("insert.code.template.command"), null);
       }
@@ -593,7 +595,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext());
-    assert generator != null;
+    if (generator == null) return null;
     return generator.computeTemplateKey(callback);
   }
 

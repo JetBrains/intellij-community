@@ -340,6 +340,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myMappings.getActiveVcses();
   }
 
+  public boolean hasActiveVcss() {
+    return myMappings.hasActiveVcss();
+  }
+
   public boolean hasAnyMappings() {
     return ! myMappings.isEmpty();
   }
@@ -730,5 +734,16 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   private boolean isFileInBaseDir(final VirtualFile file) {
     VirtualFile parent = file.getParent();
     return !file.isDirectory() && parent != null && parent.equals(myProject.getBaseDir());
+  }
+
+  // inner roots disclosed
+  public static List<VirtualFile> getRootsUnder(final List<VirtualFile> roots, final VirtualFile underWhat) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>(roots.size());
+    for (VirtualFile root : roots) {
+      if (VfsUtil.isAncestor(underWhat, root, false)) {
+        result.add(root);
+      }
+    }
+    return result;
   }
 }

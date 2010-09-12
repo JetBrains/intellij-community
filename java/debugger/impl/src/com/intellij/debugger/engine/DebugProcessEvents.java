@@ -44,6 +44,9 @@ import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.EventRequestManager;
+import com.sun.jdi.request.ThreadDeathRequest;
+import com.sun.jdi.request.ThreadStartRequest;
 
 /**
  * @author lex
@@ -132,20 +135,43 @@ public class DebugProcessEvents extends DebugProcessImpl {
         while (!isStopped()) {
           try {
             final EventSet eventSet = eventQueue.remove();
-            if (myReturnValueWatcher != null && myReturnValueWatcher.isEnabled()) {
-              int processed = 0;
-              for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
-                final Event event = eventIterator.nextEvent();
+            
+            final boolean methodWatcherActive = myReturnValueWatcher != null && myReturnValueWatcher.isEnabled();
+            int processed = 0;
+            for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
+              final Event event = eventIterator.nextEvent();
+              
+              if (methodWatcherActive) {
                 if (event instanceof MethodExitEvent) {
                   if (myReturnValueWatcher.processMethodExitEvent((MethodExitEvent)event)) {
                     processed++;
                   }
+                  continue;
                 }
               }
-              if (processed == eventSet.size()) {
-                eventSet.resume();
-                continue;
+              if (event instanceof ThreadStartEvent) {
+                processed++;
+                final ThreadReference thread = ((ThreadStartEvent)event).thread();
+                getManagerThread().schedule(new DebuggerCommandImpl() {
+                  protected void action() throws Exception {
+                    myDebugProcessDispatcher.getMulticaster().threadStarted(DebugProcessEvents.this, thread);
+                  }
+                });
               }
+              else if (event instanceof ThreadDeathEvent) {
+                processed++;
+                final ThreadReference thread = ((ThreadDeathEvent)event).thread();
+                getManagerThread().schedule(new DebuggerCommandImpl() {
+                  protected void action() throws Exception {
+                    myDebugProcessDispatcher.getMulticaster().threadStopped(DebugProcessEvents.this, thread);
+                  }
+                });
+              }
+            }
+            
+            if (processed == eventSet.size()) {
+              eventSet.resume();
+              continue;
             }
 
             getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
@@ -262,9 +288,18 @@ public class DebugProcessEvents extends DebugProcessImpl {
     LOG.assertTrue(!isAttached());
     if(myState.compareAndSet(STATE_INITIAL, STATE_ATTACHED)) {
       final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
+      final EventRequestManager requestManager = machineProxy.eventRequestManager();
+      
       if (machineProxy.canGetMethodReturnValues()) {
-        myReturnValueWatcher = new MethodReturnValueWatcher(machineProxy.eventRequestManager());
+        myReturnValueWatcher = new MethodReturnValueWatcher(requestManager);
       }
+
+      final ThreadStartRequest threadStartRequest = requestManager.createThreadStartRequest();
+      threadStartRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+      threadStartRequest.enable();
+      final ThreadDeathRequest threadDeathRequest = requestManager.createThreadDeathRequest();
+      threadDeathRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+      threadDeathRequest.enable();
 
       DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().setInitialBreakpointsState();
       myDebugProcessDispatcher.getMulticaster().processAttached(this);

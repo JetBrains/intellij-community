@@ -44,8 +44,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
@@ -69,7 +68,7 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
   private final InputObjectRegistry myObjectRegistry;
 
-  private TestProxy myCurrentTest;
+  private final Set<TestProxy> myCurrentTests = new HashSet<TestProxy>();
   private boolean myIsTerminated = false;
   private JUnitRunningModel myModel;
   private final JUnitConsoleProperties myConsoleProperties;
@@ -81,8 +80,10 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     Disposer.register(consoleView, this);
   }
 
-  public TestProxy getCurrentTest() {
-    return myCurrentTest;
+  public Set<TestProxy> getCurrentTests() {
+    synchronized (myCurrentTests) {
+      return new HashSet<TestProxy>(myCurrentTests);
+    }
   }
 
   public void processPacket(final String packet) {
@@ -125,18 +126,21 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
   }
 
   public void notifyTestStart(ObjectReader reader) {
-    myCurrentTest = reader.readObject();
+    final TestProxy testProxy = reader.readObject();
+    synchronized (myCurrentTests) {
+      myCurrentTests.add(testProxy);
+    }
     final JUnitRunningModel model = getModel();
-    if (model != null && myCurrentTest.getParent() == null && model.getRoot() != myCurrentTest) {
-      getDynamicParent(model).addChild(myCurrentTest);
+    if (model != null && testProxy.getParent() == null && model.getRoot() != testProxy) {
+      getDynamicParent(model, testProxy).addChild(testProxy);
     }
   }
 
-  private TestProxy getDynamicParent(JUnitRunningModel model) {
+  private TestProxy getDynamicParent(JUnitRunningModel model, final TestProxy currentTest) {
     if (myKnownDynamicParents == null) {
       myKnownDynamicParents = new HashMap<String, TestProxy>();
     }
-    final String parentClass = myCurrentTest.getInfo().getComment();
+    final String parentClass = currentTest.getInfo().getComment();
     TestProxy dynamicParent = myKnownDynamicParents.get(parentClass);
     if (dynamicParent == null) {
       if (Comparing
@@ -159,8 +163,11 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     return dynamicParent;
   }
 
-  public static void notifyTestResult(ObjectReader reader) {
+  public void notifyTestResult(ObjectReader reader) {
     final TestProxy testProxy = reader.readObject();
+    synchronized (myCurrentTests) {
+      myCurrentTests.remove(testProxy);
+    }
     final int state = reader.readInt();
     final StateChanger stateChanger = STATE_CLASSES.get(new Integer(state));
     stateChanger.changeStateOf(testProxy, reader);
@@ -168,6 +175,9 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
   public void notifyFinish(ObjectReader reader) {
     myIsTerminated = true;
+    synchronized (myCurrentTests) {
+      myCurrentTests.clear();
+    }
     final JUnitRunningModel model = getModel();
     if (model != null) {
       model.getNotifier().fireRunnerStateChanged(new CompletionEvent(true, reader.readInt()));

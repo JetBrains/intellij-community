@@ -28,22 +28,21 @@ import gnu.trove.THashSet;
 public class CharTableImpl implements CharTable {
   private static final int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
   private static final CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
-  private static final MyTHashSet staticEntries = new MyStaticTHashSet();
+  private static final MyTHashSet STATIC_ENTRIES = new MyStaticTHashSet();
+
   private final MyTHashSet entries = new MyTHashSet();
 
   public CharSequence intern(final CharSequence text) {
     if (text.length() > INTERN_THRESHOLD) return createSequence(text);
 
-    int idx = staticEntries.index(text);
+    int idx = STATIC_ENTRIES.index(text);
     if (idx >= 0) {
-      //noinspection NonPrivateFieldAccessedInSynchronizedContext
-      return staticEntries.get(idx);
+      return STATIC_ENTRIES.get(idx);
     }
 
-    synchronized(this) {
+    synchronized(entries) {
       idx = entries.index(text);
       if (idx >= 0) {
-        //noinspection NonPrivateFieldAccessedInSynchronizedContext
         return entries.get(idx);
       }
 
@@ -56,7 +55,7 @@ public class CharTableImpl implements CharTable {
     }
   }
 
-  public CharSequence intern(CharSequence baseText, int startOffset, int endOffset) {
+  public CharSequence intern(final CharSequence baseText, final int startOffset, final int endOffset) {
     if (endOffset - startOffset == baseText.length()) return baseText.toString();
     return intern(baseText.subSequence(startOffset, endOffset));
   }
@@ -68,8 +67,8 @@ public class CharTableImpl implements CharTable {
   }
 
   public static void staticIntern(final String text) {
-    synchronized(staticEntries) {
-      staticEntries.add(text);
+    synchronized(STATIC_ENTRIES) {
+      STATIC_ENTRIES.add(text);
     }
   }
   
