@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -57,7 +56,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
     else if (element instanceof PyClass) {
       PyClass cls = (PyClass)element;
-      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, true)).toString();
+      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString();
     }
     return null;
   }
@@ -113,18 +112,18 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
    * Creates a HTML description of function definition.
    * @param cls the class
    * @param name_wrapper wrapper to render the name with
-   * @param link_own_name if true, add link to class's own name
-   * @return cat for easy chaining
+   * @param allow_html
+   *@param link_own_name if true, add link to class's own name  @return cat for easy chaining
    */
   private static ChainIterable<String> describeClass(
     PyClass cls,
     FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper,
-    boolean link_own_name
+    boolean allow_html, boolean link_own_name
   ) {
     ChainIterable<String> cat = new ChainIterable<String>();
     final String name = cls.getName();
     cat.add("class ");
-    if (link_own_name) cat.addWith(LinkMyClass, $(name));
+    if (allow_html && link_own_name) cat.addWith(LinkMyClass, $(name));
     else cat.addWith(name_wrapper, $(name));
     final PyExpression[] ancestors = cls.getSuperClassExpressions();
     if (ancestors.length > 0) {
@@ -134,7 +133,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         if (is_not_first) cat.add(", ");
         else is_not_first = true;
         final String parent_name = parent.getName();
-        cat.addWith(new LinkWrapper(LINK_TYPE_PARENT + parent_name), $(parent_name));
+        if (allow_html) cat.addWith(new LinkWrapper(LINK_TYPE_PARENT + parent_name), $(parent_name));
+        else cat.add(parent_name);
       }
       cat.add(")");
     }
@@ -242,7 +242,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
                   Maybe<PyFunction> accessor = property.getByDirection(dir);
                   prolog_cat
                     .add("property ").addWith(TagBold, $().addWith(TagCode, $(element_name)))
-                    .add(" of ").add(describeClass(cls, TagCode, true))
+                    .add(" of ").add(describeClass(cls, TagCode, true, true))
                   ;
                   if (accessor.isDefined() && property.getDoc() != null) {
                     doc_cat.add(": ").add(property.getDoc()).add(BR);
@@ -286,14 +286,14 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       if (followed instanceof PyClass) {
         cls = (PyClass)followed;
         doc_cat.add(describeDecorators(cls, TagItalic, BR, LCombUp));
-        doc_cat.add(describeClass(cls, TagBold, false));
+        doc_cat.add(describeClass(cls, TagBold, true, false));
       }
       else if (followed instanceof PyFunction) {
         PyFunction fun = (PyFunction)followed;
         if (! is_property) {
           cls = fun.getContainingClass();
           if (cls != null) {
-            doc_cat.addWith(TagSmall, describeClass(cls, TagCode, true)).add(BR).add(BR);
+            doc_cat.addWith(TagSmall, describeClass(cls, TagCode, true, true)).add(BR).add(BR);
           }
         }
         else cls = null;
