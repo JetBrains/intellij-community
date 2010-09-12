@@ -19,7 +19,9 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.AwtVisitor;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -100,5 +102,30 @@ public class HintHint {
 
   private IdeTooltipManager getTooltipManager() {
     return IdeTooltipManager.getInstance();
+  }
+
+  public void initStyle(Component c, boolean includeChildren) {
+    if (includeChildren) {
+      new AwtVisitor(c) {
+        @Override
+        public boolean visit(Component component) {
+          doInit(component);
+          return false;
+        }
+      };
+    } else {
+      doInit(c);
+    }
+  }
+
+  private void doInit(Component c) {
+    c.setForeground(getTextForeground());
+    c.setBackground(getTextBackground());
+    c.setFont(getTextFont());
+    if (c instanceof JComponent) {
+      JComponent jc = (JComponent)c;
+      jc.setOpaque(isOpaqueAllowed());
+      jc.setBorder(isOwnBorderAllowed() ? BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)) : null);
+    }
   }
 }

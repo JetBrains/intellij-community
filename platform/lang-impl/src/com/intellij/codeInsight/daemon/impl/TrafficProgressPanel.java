@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.HintHint;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -45,13 +46,10 @@ public class TrafficProgressPanel extends JPanel {
   private final TrafficLightRenderer myTrafficLightRenderer;
   private final JPanel passStatuses = new JPanel();
 
-  public TrafficProgressPanel(TrafficLightRenderer trafficLightRenderer, Editor editor) {
+  public TrafficProgressPanel(TrafficLightRenderer trafficLightRenderer, Editor editor, HintHint hintHint) {
     super(new VerticalFlowLayout());
     myTrafficLightRenderer = trafficLightRenderer;
 
-    LineTooltipRenderer.setColors(this);
-    LineTooltipRenderer.setBorder(this);
-    LineTooltipRenderer.setColors(passStatuses);
 
     add(statusLabel);
     TrafficLightRenderer.DaemonCodeAnalyzerStatus fakeStatusLargeEnough = new TrafficLightRenderer.DaemonCodeAnalyzerStatus();
@@ -80,6 +78,8 @@ public class TrafficProgressPanel extends JPanel {
 
     add(statistics);
     updatePanel(fakeStatusLargeEnough);
+
+    hintHint.initStyle(this, true);
   }
 
   private void rebuildPassesPanel(TrafficLightRenderer.DaemonCodeAnalyzerStatus status) {
