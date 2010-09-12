@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -160,10 +161,17 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     public PsiType fun(GrMethod method) {
       PsiType nominal = method.getReturnType();
       if (nominal != null && nominal.equals(PsiType.VOID)) return nominal;
+
+      if (GppTypeConverter.hasTypedContext(method)) {
+        if (nominal != null) return nominal;
+
+        return PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
+      }
+
       PsiType inferred = getInferredType(method);
       if (nominal == null) {
         if (inferred == null) {
-          return PsiType.getJavaLangObject(PsiManager.getInstance(method.getProject()), method.getResolveScope());
+          return PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
         }
         return inferred;
       }
