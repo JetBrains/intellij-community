@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.impl.TrafficTooltipRenderer;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 
 import java.awt.*;
@@ -46,7 +47,7 @@ public class TrafficTooltipRendererImpl implements TrafficTooltipRenderer {
   }
 
   @Override
-  public LightweightHint show(Editor editor, Point p, boolean alignToRight, TooltipGroup group) {
+  public LightweightHint show(Editor editor, Point p, boolean alignToRight, TooltipGroup group, HintHint hintHint) {
     myTrafficLightRenderer = (TrafficLightRenderer)((EditorMarkupModelImpl)editor.getMarkupModel()).getErrorStripeRenderer();
     myPanel = new TrafficProgressPanel(myTrafficLightRenderer, editor);
     LineTooltipRenderer.correctLocation(editor, myPanel, p, alignToRight, false, -1);
