@@ -26,7 +26,6 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
@@ -41,18 +40,21 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.unscramble.ThreadState;
+import com.intellij.util.Alarm;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
@@ -88,6 +90,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public static final int EVENT_START_WAIT_ATTACH = 9;
   public static final int EVENT_DISPOSE = 10;
   public static final int EVENT_REFRESH_VIEWS_ONLY = 11;
+  public static final int EVENT_THREADS_REFRESH = 12;
 
   private volatile boolean myIsEvaluating;
   private volatile int myIgnoreFiltersFrameCountThreshold = 0;
@@ -101,6 +104,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
   private final Set<ThreadReferenceProxyImpl> mySteppingThroughThreads = new HashSet<ThreadReferenceProxyImpl>();
+  protected final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public boolean isSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
     return mySteppingThroughThreads.contains(threadProxy);
@@ -307,6 +311,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     ApplicationManager.getApplication().assertIsDispatchThread();
     getProcess().dispose();
     getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_DISPOSED, EVENT_DISPOSE, null);
+    Disposer.dispose(myUpdateAlarm);
   }
 
   // ManagerCommands
@@ -567,23 +572,21 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
 
     public void threadStarted(DebugProcess proc, ThreadReference thread) {
-      ((VirtualMachineProxyImpl)proc.getVirtualMachineProxy()).threadStarted(thread);
-      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-        public void run() {
-          final DebuggerStateManager contextManager = getContextManager();
-          contextManager.fireStateChanged(contextManager.getContext(), EVENT_REFRESH_VIEWS_ONLY);
-        }
-      });
+      notifyThreadsRefresh();
     }
 
     public void threadStopped(DebugProcess proc, ThreadReference thread) {
-      ((VirtualMachineProxyImpl)proc.getVirtualMachineProxy()).threadStopped(thread);
-      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+      notifyThreadsRefresh();
+    }
+    
+    private void notifyThreadsRefresh() {
+      myUpdateAlarm.cancelAllRequests();
+      myUpdateAlarm.addRequest(new Runnable() {
         public void run() {
           final DebuggerStateManager contextManager = getContextManager();
-          contextManager.fireStateChanged(contextManager.getContext(), EVENT_REFRESH_VIEWS_ONLY);
+          contextManager.fireStateChanged(contextManager.getContext(), EVENT_THREADS_REFRESH);
         }
-      });
+      }, 100, ModalityState.NON_MODAL);
     }
   }
 

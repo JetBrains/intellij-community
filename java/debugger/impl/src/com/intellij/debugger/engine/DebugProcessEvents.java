@@ -154,6 +154,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 final ThreadReference thread = ((ThreadStartEvent)event).thread();
                 getManagerThread().schedule(new DebuggerCommandImpl() {
                   protected void action() throws Exception {
+                    getVirtualMachineProxy().threadStarted(thread);
                     myDebugProcessDispatcher.getMulticaster().threadStarted(DebugProcessEvents.this, thread);
                   }
                 });
@@ -163,6 +164,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 final ThreadReference thread = ((ThreadDeathEvent)event).thread();
                 getManagerThread().schedule(new DebuggerCommandImpl() {
                   protected void action() throws Exception {
+                    getVirtualMachineProxy().threadStopped(thread);
                     myDebugProcessDispatcher.getMulticaster().threadStopped(DebugProcessEvents.this, thread);
                   }
                 });

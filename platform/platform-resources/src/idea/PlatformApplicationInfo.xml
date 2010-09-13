@@ -2,7 +2,7 @@
   <!-- <version name="IntelliJ IDEA" major="6" minor="0.2 Beta"/> -->
   <version codename="Diana" major="8" minor="0M1" eap="true"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <logo url="/idea_logo.png"/>
+  <logo url="/idea_logo.png" textcolor="FFFFFF"/>
   <about url="/idea_about.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>

@@ -105,7 +105,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private ActionToolbarImpl.MyTimerListener myTimerListener;
 
   public ActionToolbarImpl(final String place,
-                           final ActionGroup actionGroup,
+                           @NotNull final ActionGroup actionGroup,
                            final boolean horizontal,
                            DataManager dataManager,
                            ActionManagerEx actionManager,
@@ -114,7 +114,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   public ActionToolbarImpl(final String place,
-                           final ActionGroup actionGroup,
+                           @NotNull final ActionGroup actionGroup,
                            final boolean horizontal,
                            DataManager dataManager,
                            ActionManagerEx actionManager,
