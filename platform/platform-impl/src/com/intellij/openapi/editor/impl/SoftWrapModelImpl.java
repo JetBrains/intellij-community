@@ -242,9 +242,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
     myActive++;
     try {
       return myDataMapper.offsetToLogicalPosition(offset);
-    } catch (Throwable e) {
-      //TODO den remove
-      return myDataMapper.offsetToLogicalPosition(offset);
     } finally {
       myActive--;
     }

@@ -134,10 +134,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       region.beforeRecalculation();
       doRecalculateSoftWraps(region.endRange);
     }
-    //TODO den remove
-    catch (Throwable e) {
-      int j = 12;
-    }
     finally {
       notifyListenersOnRangeRecalculation(region, false);
     }

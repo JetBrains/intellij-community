@@ -34,9 +34,6 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
 
   private static final TIntObjectHashMap<FoldingData> DUMMY = new TIntObjectHashMap<FoldingData>();
 
-  //TODO den remove
-  private static long counter;
-
   public int visualLine;
 
   public int startLogicalLine;
@@ -75,11 +72,6 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     myEditor = editor;
     myRepresentationHelper = representationHelper;
     myCache = cache;
-    //TODO den remove
-    counter++;
-    if (counter > 200000) {
-      int i = 1;
-    }
   }
 
   public void setLineStartPosition(@NotNull ProcessingContext context, int i) {

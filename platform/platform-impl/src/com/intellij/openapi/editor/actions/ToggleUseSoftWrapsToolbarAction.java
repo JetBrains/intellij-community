@@ -30,13 +30,4 @@ public class ToggleUseSoftWrapsToolbarAction extends AbstractToggleUseSoftWrapsA
     super();
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS));
   }
-
-  //TODO den remove
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    Editor editor = getEditor(e);
-    if (editor != null) {
-      editor.getSettings().setUseSoftWraps(state);
-    }
-  }
 }
