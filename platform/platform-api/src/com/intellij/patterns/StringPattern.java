@@ -122,6 +122,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
         sb.append("<whitespace>");
       }
       else
+      //This is really stupid and inconvinient builder - it breaks any normal pattern with uppercase
       if(Character.isUpperCase(c)) {
         sb.append('[').append(Character.toUpperCase(c)).append(Character.toLowerCase(c)).append(']');
       }
