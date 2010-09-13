@@ -39,6 +39,10 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   public abstract String getCodeSample(@NotNull SettingsType settingsType);
 
+  public int getRightMargin(@NotNull SettingsType settingsType) {
+    return settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS ? 30 : -1;
+  }
+
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
   }
 
@@ -72,6 +76,15 @@ public abstract class LanguageCodeStyleSettingsProvider {
       }
     }
     return null;
+  }
+
+  public static int getRightMargin(Language lang, @NotNull SettingsType settingsType) {
+    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+      if (provider.getLanguage().equals(lang)) {
+        return provider.getRightMargin(settingsType);
+      }
+    }
+    return -1;
   }
 
   @Nullable
