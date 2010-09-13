@@ -3919,7 +3919,12 @@ public class AbstractTreeUi {
       });
     }
     catch (ProcessCanceledException e) {
-      runDone(onDone);
+      try {
+        runDone(onDone);
+      }
+      catch (ProcessCanceledException ignored) {
+        //todo[kirillk] added by Nik to fix IDEA-58475. I'm not sure that it is correct solution
+      }
     }
   }
 
