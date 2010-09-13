@@ -165,41 +165,6 @@ public class PyPsiUtils {
     return i != -1 ? whitespace.length() - i - 1 : 0;
   }
 
-  /**
-   * Creates copy of element without redundant whitespaces within element
-   * @param element
-   * @return
-   */
-  @NotNull
-  public static PsiElement removeIndentation(final PsiElement element) {
-    final int indentLength = getElementIndentation(element);
-    if (indentLength == 0 && element instanceof PyElement) {
-      return element;
-    }
-    final String indentString = StringUtil.repeatSymbol(' ', indentLength);
-    final String text = element.getText();
-    final StringBuilder builder = new StringBuilder();
-    for (String line : StringUtil.split(text, "\n")) {
-      if (builder.length() != 0){
-        builder.append("\n");
-      }
-      if (!StringUtil.isEmptyOrSpaces(line)){
-        if (line.startsWith(indentString)){
-          builder.append(line.substring(indentLength));
-        } else {
-          builder.append(line);
-        }
-      }
-    }
-    builder.append("\n");
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
-    final PsiElement result = elementGenerator.createFromText(LanguageLevel.getDefault(), PsiElement.class, builder.toString());
-    if (result == null) {
-      throw new RuntimeException("Failed to create element from text " + builder.toString());
-    }
-    return result;
-  }
-
   public static void removeRedundantPass(final PyStatementList statementList) {
     final PyStatement[] statements = statementList.getStatements();
     if (statements.length > 1) {

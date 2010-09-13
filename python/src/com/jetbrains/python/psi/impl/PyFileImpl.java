@@ -468,21 +468,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return reference != null ? reference.get() : null;
   }
 
-  @Override
-  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
-    return super.add(PyPsiUtils.removeIndentation(element));
-  }
-
-  @Override
-  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    return super.addBefore(PyPsiUtils.removeIndentation(element), anchor);
-  }
-
-  @Override
-  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    return super.addAfter(PyPsiUtils.removeIndentation(element), anchor);
-  }
-
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {
     @Override
     protected List<String> initialValue() {
