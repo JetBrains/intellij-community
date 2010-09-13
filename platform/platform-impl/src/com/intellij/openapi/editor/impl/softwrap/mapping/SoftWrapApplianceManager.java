@@ -518,6 +518,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+    /*
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
     Document document = myEditor.getDocument();
@@ -528,6 +529,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     int endOffset = document.getLineEndOffset(endLine);
 
     myDirtyRegions.add(new DirtyRegion(startOffset, endOffset));
+    */
   }
 
   @Override
