@@ -591,7 +591,7 @@ public class PyUtil {
    */
   @Nullable
   public static PsiElement getConcealingParent(PsiElement elt) {
-    if (elt == null) {
+    if (elt == null || elt instanceof PsiFile) {
       return null;
     }
     PsiElement parent = PsiTreeUtil.getStubOrPsiParent(elt);
@@ -605,7 +605,7 @@ public class PyUtil {
         // decorators PSI is inside decorated things but their namespace is outside
         jump_over = true;
       }
-      else if (parent instanceof PsiFile) {
+      else if (parent instanceof PsiFileSystemItem) {
         break;
       }
       parent = PsiTreeUtil.getStubOrPsiParent(parent);
