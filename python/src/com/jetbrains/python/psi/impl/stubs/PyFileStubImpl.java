@@ -14,20 +14,29 @@ import java.util.List;
  */
 public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStub {
   private final List<String> myDunderAll;
+  private final boolean myAbsoluteImportEnabled;
 
   public PyFileStubImpl(final PyFile file) {
     super(file);
-    myDunderAll = ((PyFileImpl) file).calculateDunderAll();
+    final PyFileImpl fileImpl = (PyFileImpl)file;
+    myDunderAll = fileImpl.calculateDunderAll();
+    myAbsoluteImportEnabled = fileImpl.calculateAbsoluteImportEnabled();
   }
 
-  public PyFileStubImpl(List<String> dunderAll) {
+  public PyFileStubImpl(List<String> dunderAll, final boolean absoluteImportEnabled) {
     super(null);
     myDunderAll = dunderAll;
+    myAbsoluteImportEnabled = absoluteImportEnabled;
   }
 
   @Override
   public List<String> getDunderAll() {
     return myDunderAll;
+  }
+
+  @Override
+  public boolean isAbsoluteImportEnabled() {
+    return myAbsoluteImportEnabled;
   }
 
   @Override

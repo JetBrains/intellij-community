@@ -10,4 +10,5 @@ import java.util.List;
  */
 public interface PyFileStub extends PsiFileStub<PyFile> {
   List<String> getDunderAll();
+  boolean isAbsoluteImportEnabled();
 }

@@ -45,18 +45,7 @@ public class ResolveImportUtil {
         if (pyFile.getLanguageLevel().isPy3K()) {
           return true;
         }
-        final List<PyFromImportStatement> fromImports = pyFile.getFromImports();
-        for (PyFromImportStatement fromImport : fromImports) {
-          if (fromImport.isFromFuture()) {
-            final PyImportElement[] pyImportElements = fromImport.getImportElements();
-            for (PyImportElement element : pyImportElements) {
-              final PyQualifiedName qName = element.getImportedQName();
-              if (qName != null && qName.matches("absolute_import")) {
-                return true;
-              }
-            }
-          }
-        }
+        return pyFile.isAbsoluteImportEnabled();
       }
     }
     // if the relevant import is below the foothold, it is either legal or we've detected the offending statement already

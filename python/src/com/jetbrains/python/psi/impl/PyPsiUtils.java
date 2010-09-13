@@ -292,7 +292,7 @@ public class PyPsiUtils {
         }
 
         private void checkAddElement(PsiElement node) {
-          if (itemClass.isInstance(node)) {
+          if (node.getNode().getElementType() == elementType) {
             //noinspection unchecked
             result.add((T)node);
           }
