@@ -150,8 +150,8 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
             PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
     }
 
-    protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount) {
-      final DaemonCodeAnalyzerStatus status = super.getDaemonCodeAnalyzerStatus(fillErrorsCount);
+    protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
+      final DaemonCodeAnalyzerStatus status = super.getDaemonCodeAnalyzerStatus(fillErrorsCount, severityRegistrar);
       if (status != null && isInspectionCompleted()) {
         status.errorAnalyzingFinished = true;
       }

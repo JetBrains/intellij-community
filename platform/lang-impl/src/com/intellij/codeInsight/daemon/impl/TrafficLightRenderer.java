@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
@@ -33,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer {
@@ -58,12 +57,14 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   @NonNls private static final String HTML_FOOTER = "</body></html>";
   @NonNls private static final String BR = "<br>";
   @NonNls private static final String NO_PASS_FOR_MESSAGE_KEY_SUFFIX = ".for";
+  private final SeverityRegistrar mySeverityRegistrar;
 
   public TrafficLightRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document, PsiFile file) {
     myProject = project;
     myDaemonCodeAnalyzer = highlighter;
     myDocument = document;
     myFile = file;
+    mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
   }
 
   public static class DaemonCodeAnalyzerStatus {
@@ -80,12 +81,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
       for (ProgressableTextEditorHighlightingPass passStatus : passStati) {
         s += String.format("(%s %2.0f%% %b)", passStatus.getPresentableName(), passStatus.getProgress() *100, passStatus.isFinished());
       }
+      s += "; error count: "+errorCount.length + ": "+new TIntArrayList(errorCount);
       return s;
     }
   }
 
   @Nullable
-  protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount) {
+  protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
     if (myFile == null || myProject.isDisposed() || !myDaemonCodeAnalyzer.isHighlightingAvailable(myFile)) return null;
 
     List<String> noInspectionRoots = new ArrayList<String>();
@@ -103,7 +105,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     status.noInspectionRoots = noInspectionRoots.isEmpty() ? null : ArrayUtil.toStringArray(noInspectionRoots);
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : ArrayUtil.toStringArray(noHighlightingRoots);
 
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myProject);
     status.errorCount = new int[severityRegistrar.getSeveritiesCount()];
     status.rootsNumber = roots.length;
     fillDaemonCodeAnalyzerErrorsStatus(status, fillErrorsCount, severityRegistrar);
@@ -123,7 +124,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   protected void fillDaemonCodeAnalyzerErrorsStatus(final DaemonCodeAnalyzerStatus status,
                                                     final boolean fillErrorsCount,
                                                     final SeverityRegistrar severityRegistrar) {
-    if (fillErrorsCount) Arrays.fill(status.errorCount, 0);
     final int count = severityRegistrar.getSeveritiesCount() - 1;
     final HighlightSeverity maxPossibleSeverity = severityRegistrar.getSeverityByIndex(count);
     final HighlightSeverity[] maxFoundSeverity = {null};
@@ -138,12 +138,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
           }
         }
         else {
-          if (infoSeverity == maxPossibleSeverity) {
-            status.errorCount[count] = 1;
-            return false;
-          }
-          if (maxFoundSeverity[0] == null || severityRegistrar.compare(maxFoundSeverity[0], infoSeverity) <= 0) {
+          if (maxFoundSeverity[0] == null || severityRegistrar.compare(maxFoundSeverity[0], infoSeverity) < 0) {
             maxFoundSeverity[0] = infoSeverity;
+          }
+          if (infoSeverity == maxPossibleSeverity) {
+            return false;
           }
         }
         return true;
@@ -162,7 +161,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   }
 
   public String getTooltipMessage() {
-    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(true);
+    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(true, mySeverityRegistrar);
 
     if (status == null) return null;
     @NonNls String text = HTML_HEADER;
@@ -193,7 +192,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     int currentSeverityErrors = 0;
     for (int i = status.errorCount.length - 1; i >= 0; i--) {
       if (status.errorCount[i] > 0) {
-        final HighlightSeverity severity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
+        final HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
         text += BR;
         String name = status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
         text += status.errorAnalyzingFinished
@@ -255,7 +254,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   }
 
   private Icon getIcon() {
-    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(false);
+    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(false, mySeverityRegistrar);
 
     if (status == null) {
       return NO_ICON;
@@ -264,18 +263,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
       return NO_ANALYSIS_ICON;
     }
 
-    boolean atLeastOnePassFinished = status.errorAnalyzingFinished;
-    for (ProgressableTextEditorHighlightingPass passStatus : status.passStati) {
-      atLeastOnePassFinished |= passStatus.isFinished();
-    }
-    Icon icon = HighlightDisplayLevel.DO_NOT_SHOW.getIcon();
-    if (atLeastOnePassFinished) {
-      SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myProject);
-      for (int i = status.errorCount.length - 1; i >= 0; i--) {
-        if (status.errorCount[i] != 0) {
-          icon = severityRegistrar.getRendererIconByIndex(i);
-          break;
-        }
+    Icon icon = NO_ANALYSIS_ICON;//HighlightDisplayLevel.DO_NOT_SHOW.getIcon();
+    for (int i = status.errorCount.length - 1; i >= 0; i--) {
+      if (status.errorCount[i] != 0) {
+        icon = mySeverityRegistrar.getRendererIconByIndex(i);
+        break;
       }
     }
 
