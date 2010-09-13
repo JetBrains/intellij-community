@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Holds registered soft wraps and provides monitoring and management facilities for them.
@@ -32,9 +34,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class SoftWrapsStorage {
 
-  private final List<TextChangeImpl>        myWraps     = new ArrayList<TextChangeImpl>();
-  private final List<TextChangeImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
-  private final Set<SoftWrapChangeListener> myListeners = new CopyOnWriteArraySet<SoftWrapChangeListener>();
+  private final List<SoftWrapImpl>        myWraps     = new ArrayList<SoftWrapImpl>();
+  private final List<SoftWrapImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
+  private final List<SoftWrapChangeListener> myListeners = new ArrayList<SoftWrapChangeListener>();
 
   /**
    * @return    <code>true</code> if there is at least one soft wrap registered at the current storage; <code>false</code> otherwise
@@ -44,7 +46,7 @@ public class SoftWrapsStorage {
   }
 
   @Nullable
-  public TextChangeImpl getSoftWrap(int offset) {
+  public SoftWrap getSoftWrap(int offset) {
     int i = getSoftWrapIndex(offset);
     return i >= 0 ? myWraps.get(i) : null;
   }
@@ -53,7 +55,7 @@ public class SoftWrapsStorage {
    * @return    view for registered soft wraps sorted by offset in ascending order if any; empty collection otherwise
    */
   @NotNull
-  public List<TextChangeImpl> getSoftWraps() {
+  public List<SoftWrapImpl> getSoftWraps() {
     return myWrapsView;
   }
 
@@ -74,7 +76,7 @@ public class SoftWrapsStorage {
     // is a bottleneck. The most probable reason is a big number of interface calls.
     while (start <= end) {
       int i = (start + end) >>> 1;
-      TextChangeImpl softWrap = myWraps.get(i);
+      SoftWrap softWrap = myWraps.get(i);
       int softWrapOffset = softWrap.getStart();
       if (softWrapOffset > offset) {
         end = i - 1;
@@ -96,8 +98,9 @@ public class SoftWrapsStorage {
    * @param notifyListeners   flag that indicates if registered listeners should be notified about soft wrap registration
    * @return                  previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
    */
+  @SuppressWarnings({"ForLoopReplaceableByForEach"})
   @Nullable
-  public TextChangeImpl storeOrReplace(TextChangeImpl softWrap, boolean notifyListeners) {
+  public SoftWrap storeOrReplace(SoftWrapImpl softWrap, boolean notifyListeners) {
     int i = getSoftWrapIndex(softWrap.getStart());
     if (i >= 0) {
       return myWraps.set(i, softWrap);
@@ -106,8 +109,9 @@ public class SoftWrapsStorage {
     i = -i - 1;
     myWraps.add(i, softWrap);
     if (notifyListeners) {
-      for (SoftWrapChangeListener listener : myListeners) {
-        listener.softWrapAdded(softWrap);
+      // Use explicit loop as profiling shows that iterator-based processing is quite slow.
+      for (int j = 0; j < myListeners.size(); j++) {
+        myListeners.get(j).softWrapAdded(softWrap);
       }
     }
     return null;
@@ -121,11 +125,11 @@ public class SoftWrapsStorage {
    * @return        removed soft wrap if the one was found for the given index; <code>null</code> otherwise
    */
   @Nullable
-  public TextChangeImpl removeByIndex(int index) {
+  public SoftWrap removeByIndex(int index) {
     if (index < 0 || index >= myWraps.size()) {
       return null;
     }
-    TextChangeImpl removed = myWraps.remove(index);
+    SoftWrap removed = myWraps.remove(index);
     notifyListenersAboutRemoval();
     return removed;
   }
@@ -148,12 +152,12 @@ public class SoftWrapsStorage {
 
     int endIndex = startIndex;
     for (; endIndex < myWraps.size(); endIndex++) {
-      TextChangeImpl softWrap = myWraps.get(endIndex);
+      SoftWrap softWrap = myWraps.get(endIndex);
       if (softWrap.getStart() >= endOffset) {
         break;
       }
     }
-    
+
     if (endIndex > startIndex) {
       myWraps.subList(startIndex, endIndex).clear();
       notifyListenersAboutRemoval();

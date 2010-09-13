@@ -55,7 +55,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
     document.addDocumentListener(new PrioritizedDocumentListener() {
       public int getPriority() {
-        return 0; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
+        return EditorDocumentPriorities.RANGE_MARKER; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
       }
 
       public void beforeDocumentChange(DocumentEvent event) {}

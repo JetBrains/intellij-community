@@ -18,6 +18,7 @@ package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -129,5 +130,15 @@ public class FoldingModelWindow implements FoldingModelEx{
     FoldingRegionWindow window = new FoldingRegionWindow(myDocumentWindow, myEditorWindow, (FoldRegionImpl)hostRegion);
     hostRegion.putUserData(FOLD_REGION_WINDOW, window);
     return window;
+  }
+
+  @Override
+  public boolean addListener(@NotNull FoldingListener listener) {
+    return myDelegate.addListener(listener);
+  }
+
+  @Override
+  public boolean removeListener(@NotNull FoldingListener listener) {
+    return myDelegate.removeListener(listener);
   }
 }

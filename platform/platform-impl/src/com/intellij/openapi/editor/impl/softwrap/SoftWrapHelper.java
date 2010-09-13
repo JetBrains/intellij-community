@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SoftWrapModel;
-import com.intellij.openapi.editor.TextChange;
+import com.intellij.openapi.editor.*;
 
 /**
  * Holds utility methods for soft wraps-related processing.
@@ -52,7 +49,7 @@ public class SoftWrapHelper {
     CaretModel caretModel = editor.getCaretModel();
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     int offset = caretModel.getOffset();
-    TextChange softWrap = softWrapModel.getSoftWrap(offset);
+    SoftWrap softWrap = softWrapModel.getSoftWrap(offset);
     if (softWrap == null) {
       return false;
     }

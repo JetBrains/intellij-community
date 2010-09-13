@@ -123,7 +123,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     revalidateMarkup();
     repaint();
   }
-  
+
   public void paint(Graphics g) {
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
@@ -652,8 +652,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private VisualPosition offsetToLineStartPosition(int offset) {
     offset = Math.min(myEditor.getDocument().getTextLength() - 1, offset);
-    int line = myEditor.getDocument().getLineNumber(offset);
-    return myEditor.logicalToVisualPosition(new LogicalPosition(line, 0));
+    return new VisualPosition(myEditor.offsetToVisualPosition(offset).line, 0);
   }
 
   private void paintFoldingTree(Graphics2D g) {

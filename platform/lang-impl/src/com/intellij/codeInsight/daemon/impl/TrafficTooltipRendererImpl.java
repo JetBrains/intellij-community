@@ -42,7 +42,9 @@ public class TrafficTooltipRendererImpl implements TrafficTooltipRenderer {
   @Override
   public void repaintTooltipWindow() {
     if (myPanel != null) {
-      myPanel.updatePanel(myTrafficLightRenderer.getDaemonCodeAnalyzerStatus(true));
+      myPanel.updatePanel(myTrafficLightRenderer.getDaemonCodeAnalyzerStatus(true,
+                                                                             SeverityRegistrar.getInstance(
+                                                                               myTrafficLightRenderer.getProject())));
     }
   }
 

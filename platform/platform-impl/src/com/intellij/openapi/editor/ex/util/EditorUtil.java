@@ -62,9 +62,9 @@ public class EditorUtil {
     }
 
     int visualLinesToSkip = line - resVisStart.line;
-    List<? extends TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(resultLogLine);
+    List<? extends SoftWrap> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(resultLogLine);
     for (int i = 0; i < softWraps.size(); i++) {
-      TextChange softWrap = softWraps.get(i);
+      SoftWrap softWrap = softWraps.get(i);
       CharSequence text = document.getCharsSequence();
       if (visualLinesToSkip <= 0) {
         VisualPosition visual = editor.offsetToVisualPosition(softWrap.getStart() - 1);
@@ -86,7 +86,7 @@ public class EditorUtil {
           return resVisEnd.column;
         }
         // We need to find visual column for line feed of the next soft wrap.
-        TextChange nextSoftWrap = softWraps.get(i + 1);
+        SoftWrap nextSoftWrap = softWraps.get(i + 1);
         VisualPosition visual = editor.offsetToVisualPosition(nextSoftWrap.getStart() - 1);
         int result = visual.column;
         int x = editor.visualPositionToXY(visual).x;
@@ -181,22 +181,24 @@ public class EditorUtil {
   public static int calcOffset(Editor editor, CharSequence text, int start, int end, int columnNumber, int tabSize) {
     final int maxScanIndex = Math.min(start + columnNumber + 1, end);
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
-    List<? extends TextChange> softWraps = softWrapModel.getSoftWrapsForRange(start, maxScanIndex);
+    List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForRange(start, maxScanIndex);
     int startToUse = start;
     int x = 0;
     AtomicInteger currentColumn = new AtomicInteger();
-    for (TextChange softWrap : softWraps) {
+    for (SoftWrap softWrap : softWraps) {
       // There is a possible case that target column points inside soft wrap-introduced virtual space.
       if (currentColumn.get() >= columnNumber) {
         return startToUse;
       }
-      int result = calcSoftWrapUnawareOffset(editor, text, startToUse, softWrap.getEnd(), columnNumber, tabSize, x, currentColumn);
+      int result = calcSoftWrapUnawareOffset(
+        editor, text, startToUse, softWrap.getEnd(), columnNumber, tabSize, x, currentColumn
+      );
       if (result >= 0) {
         return result;
       }
 
       startToUse = softWrap.getStart();
-      x = softWrapModel.getSoftWrapIndentWidthInPixels(softWrap);
+      x = softWrap.getIndentInPixels();
     }
 
     // There is a possible case that target column points inside soft wrap-introduced virtual space.
@@ -339,7 +341,7 @@ public class EditorUtil {
   public static int calcColumnNumber(Editor editor, CharSequence text, int start, int offset, int tabSize) {
     boolean useOptimization = true;
     if (editor != null) {
-      TextChange softWrap = editor.getSoftWrapModel().getSoftWrap(start);
+      SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(start);
       useOptimization = softWrap == null;
     }
     boolean hasNonTabs = false;
@@ -426,7 +428,7 @@ public class EditorUtil {
     for (int i = end - 1; i >= start; i--) {
       switch (text.charAt(i)) {
         case '\n': startToUse = i + 1; break loop;
-        case '\t': lastTabSymbolIndex = i;
+        case '\t': if (lastTabSymbolIndex < 0) lastTabSymbolIndex = i;
       }
     }
 
@@ -442,6 +444,10 @@ public class EditorUtil {
 
     // Calculate number of columns up to the latest tabulation symbol.
     for (int i = startToUse; i <= lastTabSymbolIndex; i++) {
+      SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(i);
+      if (softWrap != null) {
+        x = softWrap.getIndentInPixels();
+      }
       char c = text.charAt(i);
       prevX = x;
       switch (c) {

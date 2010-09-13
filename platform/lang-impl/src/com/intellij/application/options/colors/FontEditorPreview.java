@@ -16,6 +16,7 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.*;
@@ -56,7 +57,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   static void installTrafficLights(EditorEx editor) {
     ErrorStripeRenderer renderer = new TrafficLightRenderer(null,null,null,null){
-      protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount) {
+      protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
         DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
         status.errorAnalyzingFinished = true;
         status.errorCount = new int[]{1, 2};

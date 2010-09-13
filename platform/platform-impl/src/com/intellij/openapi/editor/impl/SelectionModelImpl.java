@@ -120,7 +120,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public int getPriority() {
-    return 4;
+    return EditorDocumentPriorities.SELECTION_MODEL;
   }
 
   public SelectionModelImpl(EditorImpl editor) {

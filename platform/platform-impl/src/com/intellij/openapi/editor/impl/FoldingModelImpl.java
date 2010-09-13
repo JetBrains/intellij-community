@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -42,9 +43,14 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
+
+  private final Set<FoldingListener> myListeners = new CopyOnWriteArraySet<FoldingListener>();
+
   private boolean myIsFoldingEnabled;
   private final EditorImpl myEditor;
   private final FoldRegionsTree myFoldTree;
@@ -156,6 +162,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       final FoldingGroup group = region.getGroup();
       if (group != null) {
         myGroups.putValue(group, region);
+        for (FoldingListener listener : myListeners) {
+          listener.onFoldRegionStateChange(region);
+        }
       }
       return true;
     }
@@ -264,6 +273,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myFoldRegionsProcessed = true;
     ((FoldRegionImpl) region).setExpandedInternal(true);
+    notifyListenersOnFoldRegionStateChange(region);
   }
 
   public void collapseFoldRegion(FoldRegion region) {
@@ -295,9 +305,20 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myFoldRegionsProcessed = true;
     ((FoldRegionImpl) region).setExpandedInternal(false);
+    notifyListenersOnFoldRegionStateChange(region);
   }
 
   private void notifyBatchFoldingProcessingDone() {
+    try {
+      doNotifyBatchFoldingProcessingDone();
+    } finally {
+      for (FoldingListener listener : myListeners) {
+        listener.onFoldProcessingEnd();
+      }
+    }
+  }
+
+  private void doNotifyBatchFoldingProcessingDone() {
     myFoldTree.rebuild();
 
     myEditor.updateCaretCursor();
@@ -314,27 +335,33 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     int column = -1;
     int line = -1;
+    int offsetToUse = -1;
 
     FoldRegion collapsed = myFoldTree.fetchOutermost(caretOffset);
     if (myCaretPositionSaved) {
       int savedOffset = myEditor.logicalPositionToOffset(new LogicalPosition(mySavedCaretY, mySavedCaretX));
       FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
-      column = mySavedCaretX;
-      line = collapsedAtSaved != null ? collapsedAtSaved.getDocument().getLineNumber(collapsedAtSaved.getStartOffset()) : mySavedCaretY;
+      if (collapsedAtSaved == null) {
+        column = mySavedCaretX;
+        line = mySavedCaretY;
+      }
+      else {
+        offsetToUse = collapsedAtSaved.getStartOffset();
+      }
     }
 
     if (collapsed != null && column == -1) {
       line = collapsed.getDocument().getLineNumber(collapsed.getStartOffset());
-      column = myEditor.getCaretModel().getVisualPosition().column;
+      column = myEditor.offsetToLogicalPosition(collapsed.getStartOffset()).column;
     }
 
     boolean oldCaretPositionSaved = myCaretPositionSaved;
 
-    if (column != -1) {
-      LogicalPosition log = new LogicalPosition(line, 0);
-      VisualPosition vis = myEditor.logicalToVisualPosition(log);
-      VisualPosition pos = new VisualPosition(vis.line, column);
-      myEditor.getCaretModel().moveToVisualPosition(pos);
+    if (offsetToUse >= 0) {
+      myEditor.getCaretModel().moveToOffset(offsetToUse);
+    }
+    else if (column != -1) {
+      myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
     }
     else {
       myEditor.getCaretModel().moveToLogicalPosition(caretPosition);
@@ -410,7 +437,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public int getPriority() {
-    return 1;
+    return EditorDocumentPriorities.FOLD_MODEL;
   }
 
   public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group) {
@@ -418,5 +445,21 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     region.registerInDocument();
     LOG.assertTrue(region.isValid());
     return region;
+  }
+
+  @Override
+  public boolean addListener(@NotNull FoldingListener listener) {
+    return myListeners.add(listener);
+  }
+
+  @Override
+  public boolean removeListener(@NotNull FoldingListener listener) {
+    return myListeners.remove(listener);
+  }
+
+  private void notifyListenersOnFoldRegionStateChange(@NotNull FoldRegion foldRegion) {
+    for (FoldingListener listener : myListeners) {
+      listener.onFoldRegionStateChange(foldRegion);
+    }
   }
 }

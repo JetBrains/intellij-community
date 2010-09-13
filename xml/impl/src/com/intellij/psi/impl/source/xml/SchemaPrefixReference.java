@@ -110,7 +110,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
 
   @Override
   public boolean isSoft() {
-    return !isWsdl();
+    return true;
   }
 
   private boolean isWsdl() {
