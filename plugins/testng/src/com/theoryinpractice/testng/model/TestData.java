@@ -166,7 +166,7 @@ public class TestData implements Cloneable
     data.TEST_LISTENERS.addAll(TEST_LISTENERS);
 
     data.USE_DEFAULT_REPORTERS = USE_DEFAULT_REPORTERS;
-
+    data.ENVS = new LinkedHashMap<String, String>(ENVS);
     data.setScope(getScope());
     return data;
   }

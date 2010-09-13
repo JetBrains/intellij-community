@@ -371,6 +371,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         Data data = (Data)super.clone();
         data.TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
         data.setScope(getScope());
+        data.myEnvs = new LinkedHashMap<String, String>(myEnvs);
         return data;
       }
       catch (CloneNotSupportedException e) {
