@@ -405,8 +405,8 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     int offsetsDiff = (myAfterChangeState.endOffset - myAfterChangeState.startOffset)
                       - (myBeforeChangeState.endOffset - myBeforeChangeState.startOffset);
 
-    int cacheIndex = myAfterChangeState.endCacheEntryIndex + 1;
-    for (int i = cacheIndex; i < myCache.size(); i++) {
+    int cacheIndex = myAfterChangeState.endCacheEntryIndex;
+    for (int i = cacheIndex + 1; i < myCache.size(); i++) {
       CacheEntry cacheEntry = myCache.get(i);
       cacheEntry.visualLine += visualLinesDiff;
       cacheEntry.startLogicalLine += logicalLinesDiff;
