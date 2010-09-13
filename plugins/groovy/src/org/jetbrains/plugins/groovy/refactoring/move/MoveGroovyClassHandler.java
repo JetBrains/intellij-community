@@ -25,14 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * @author Maxim.Medvedev
  */
 public class MoveGroovyClassHandler implements MoveClassHandler {
   public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
-    return MoveGroovyClassUtil.moveGroovyClass((GrTypeDefinition)aClass, moveDestination);
+    return MoveGroovyClassUtil.moveGroovyClass(aClass, moveDestination);
   }
 
   @Nullable

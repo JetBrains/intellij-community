@@ -40,7 +40,7 @@ public class MoveGroovyClassUtil {
   }
 
   @Nullable
-  public static PsiClass moveGroovyClass(@NotNull GrTypeDefinition aClass, @NotNull PsiDirectory moveDestination) {
+  public static PsiClass moveGroovyClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) {
     if (!aClass.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE)) return null;
     PsiFile file = aClass.getContainingFile();
     final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
