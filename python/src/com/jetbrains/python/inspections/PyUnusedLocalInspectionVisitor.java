@@ -244,7 +244,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                                             : (PyNamedParameter) element.getParent();
           name = namedParameter.getName();
           // In case when function is declared inside the class first parameter is either self or class and shouldn't be processed
-          if (((PyParameterList)namedParameter.getParent()).getParameters()[0] == namedParameter &&
+          final PsiElement parent = namedParameter.getParent();
+          if (parent instanceof PyParameterList && ((PyParameterList)parent).getParameters()[0] == namedParameter &&
               PsiTreeUtil.getParentOfType(element, PyClass.class) != null){
             continue;
           }
