@@ -216,6 +216,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
           final String currentCommandName = processor.getCurrentCommandName();
           if (!Comparing.strEqual(EditorBundle.message("typing.in.editor.command.name"), currentCommandName) &&
               !Comparing.strEqual(EditorBundle.message("paste.command.name"), currentCommandName) &&
+              !Comparing.strEqual(LanguageChangeSignatureDetector.MOVE_PARAMETER, currentCommandName) &&
               !Comparing.equal(EditorActionUtil.DELETE_COMMAND_GROUP, processor.getCurrentCommandGroupId())) {
             return;
           }
