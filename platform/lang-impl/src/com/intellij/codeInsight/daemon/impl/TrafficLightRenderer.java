@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
@@ -263,7 +264,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
       return NO_ANALYSIS_ICON;
     }
 
-    Icon icon = NO_ANALYSIS_ICON;//HighlightDisplayLevel.DO_NOT_SHOW.getIcon();
+    Icon icon = HighlightDisplayLevel.DO_NOT_SHOW.getIcon();
     for (int i = status.errorCount.length - 1; i >= 0; i--) {
       if (status.errorCount[i] != 0) {
         icon = mySeverityRegistrar.getRendererIconByIndex(i);
@@ -272,7 +273,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     }
 
     if (status.errorAnalyzingFinished) return icon;
-      //icon = HighlightDisplayLevel.createIconByMask(Color.blue);
     double progress = getOverallProgress(status);
     TruncatingIcon trunc = new TruncatingIcon(icon, (int)(icon.getIconWidth() * progress), (int)(icon.getIconHeight() * progress));
     return LayeredIcon.create(trunc, STARING_EYE_ICON);
