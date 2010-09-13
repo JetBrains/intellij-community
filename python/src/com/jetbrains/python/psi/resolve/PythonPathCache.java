@@ -43,6 +43,7 @@ public class PythonPathCache implements Disposable {
 
   private final Map<PyQualifiedName, List<PsiElement>> myCache = new HashMap<PyQualifiedName, List<PsiElement>>();
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public PythonPathCache(Module module) {
     module.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
@@ -83,6 +84,7 @@ public class PythonPathCache implements Disposable {
       public void jdkNameChanged(Sdk jdk, String previousName) {
       }
     });
+    Disposer.register(project, this);
   }
 
   public synchronized List<PsiElement> get(PyQualifiedName qualifiedName) {
