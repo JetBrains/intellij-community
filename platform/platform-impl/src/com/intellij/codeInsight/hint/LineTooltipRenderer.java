@@ -35,6 +35,9 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.*;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -285,19 +288,45 @@ public class LineTooltipRenderer implements TooltipRenderer {
   protected void stripDescription() {
   }
 
-  static JEditorPane initPane(@NonNls String text, HintHint hintHint, JLayeredPane layeredPane) {
+  static JEditorPane initPane(@NonNls String text, final HintHint hintHint, JLayeredPane layeredPane) {
     final Ref<Dimension> prefSize = new Ref<Dimension>(null);
     text = "<html><head>" +
            UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground()) +
            "</head><body>" +
            getHtmlBody(text) +
            "</body></html>";
-    final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text) {
+
+    final JEditorPane pane = new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
         return prefSize.get() != null ? prefSize.get() : super.getPreferredSize();
       }
     };
+
+    final HTMLEditorKit.HTMLFactory factory = new HTMLEditorKit.HTMLFactory() {
+      @Override
+      public View create(Element elem) {
+        AttributeSet attrs = elem.getAttributes();
+        Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
+        Object o = (elementName != null) ? null : attrs.getAttribute(StyleConstants.NameAttribute);
+        if (o instanceof HTML.Tag) {
+          HTML.Tag kind = (HTML.Tag)o;
+          if (kind == HTML.Tag.HR) {
+            return new CustomHrView(elem, hintHint.getTextForeground());
+          }
+        }
+        return super.create(elem);
+      }
+    };
+
+    HTMLEditorKit kit = new HTMLEditorKit() {
+      @Override
+      public ViewFactory getViewFactory() {
+        return factory;
+      }
+    };
+    pane.setEditorKit(kit);
+    pane.setText(text);
 
     pane.setCaretPosition(0);
     pane.setEditable(false);
@@ -330,6 +359,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     return pane;
   }
 
+
   public static void setColors(JComponent pane) {
     pane.setForeground(Color.black);
     pane.setBackground(HintUtil.INFORMATION_COLOR);
@@ -355,19 +385,26 @@ public class LineTooltipRenderer implements TooltipRenderer {
   }
 
   protected static String getHtmlBody(@NonNls String text) {
+    String result = text;
     if (!text.startsWith("<html>")) {
-      return text.replaceAll("\n", "<br>");
+      result = text.replaceAll("\n", "<br>");
     }
-    final int bodyIdx = text.indexOf("<body>");
-    final int closedBodyIdx = text.indexOf("</body>");
-    if (bodyIdx != -1 && closedBodyIdx != -1) {
-      return text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
+    else {
+      final int bodyIdx = text.indexOf("<body>");
+      final int closedBodyIdx = text.indexOf("</body>");
+      if (bodyIdx != -1 && closedBodyIdx != -1) {
+        result = text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
+      }
+      else {
+        text = StringUtil.trimStart(text, "<html>").trim();
+        text = StringUtil.trimEnd(text, "</html>").trim();
+        text = StringUtil.trimStart(text, "<body>").trim();
+        text = StringUtil.trimEnd(text, "</body>").trim();
+        result = text;
+      }
     }
-    text = StringUtil.trimStart(text, "<html>").trim();
-    text = StringUtil.trimEnd(text, "</html>").trim();
-    text = StringUtil.trimStart(text, "<body>").trim();
-    text = StringUtil.trimEnd(text, "</body>").trim();
-    return text;
+
+    return result;
   }
 
   public boolean equals(Object o) {
