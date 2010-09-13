@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -48,7 +47,7 @@ public class PyCallExpressionHelper {
       if ((PyNames.CLASSMETHOD.equals(refname) || PyNames.STATICMETHOD.equals(refname))) {
         PsiElement redefining_func = refex.getReference().resolve();
         if (redefining_func != null) {
-          PsiNamedElement true_func = PyBuiltinCache.getInstance(us).getByName(refname, PsiNamedElement.class);
+          PsiElement true_func = PyBuiltinCache.getInstance(us).getByName(refname);
           if (true_func instanceof PyClass) true_func = ((PyClass)true_func).findInitOrNew(true);
           if (true_func == redefining_func) {
             // yes, really a case of "foo = classmethod(foo)"
@@ -82,7 +81,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       // dereference
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      resolveResult = ref.followAssignmentsChain();
+      resolveResult = ref.followAssignmentsChain(TypeEvalContext.fast());
       resolved = resolveResult.getElement();
     }
     else {
@@ -101,7 +100,7 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us) {
+  public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us, TypeEvalContext context) {
     PyFunction.Flag wrappedFlag = null;
     boolean isConstructorCall = false;
 
@@ -111,7 +110,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       // dereference
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      resolveResult = ref.followAssignmentsChain();
+      resolveResult = ref.followAssignmentsChain(context);
       resolved = resolveResult.getElement();
     }
     else {
@@ -139,9 +138,9 @@ public class PyCallExpressionHelper {
       EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
       PyExpression lastQualifier = resolveResult != null ? resolveResult.getLastQualifier() : null;
       final PyExpression callReference = us.getCallee();
-      boolean is_by_instance = isByInstance(callReference);
+      boolean is_by_instance = isByInstance(callReference, context);
       if (lastQualifier != null) {
-        PyType qualifier_type = lastQualifier.getType(TypeEvalContext.fast()); // NOTE: ...or slow()?
+        PyType qualifier_type = context.getType(lastQualifier);
         is_by_instance |=
           (qualifier_type != null && qualifier_type instanceof PyClassType && !((PyClassType)qualifier_type).isDefinition());
       }
@@ -165,7 +164,7 @@ public class PyCallExpressionHelper {
    * @return a non-negative number of parameters that are implicit to this call.
    */
   public static int getImplicitArgumentCount(final PyExpression callReference, PyFunction functionBeingCalled) {
-    return getImplicitArgumentCount(callReference, functionBeingCalled, null, null, isByInstance(callReference));
+    return getImplicitArgumentCount(callReference, functionBeingCalled, null, null, isByInstance(callReference, TypeEvalContext.fast()));
   }
 
   /**
@@ -221,31 +220,30 @@ public class PyCallExpressionHelper {
       if (decos.length == 1) {
         PyDecorator deco = decos[0];
         String deconame = deco.getName();
-        if (deco.isBuiltin()) {
-          if (PyNames.STATICMETHOD.equals(deconame)) {
-            if (flags != null) {
-              flags.add(PyFunction.Flag.STATICMETHOD);
-            }
-            if (isByInstance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
+        // rare case, remove check for better performance: if (deco.isBuiltin()) {
+        if (PyNames.STATICMETHOD.equals(deconame)) {
+          if (flags != null) {
+            flags.add(PyFunction.Flag.STATICMETHOD);
           }
-          else if (PyNames.CLASSMETHOD.equals(deconame)) {
-            if (flags != null) {
-              flags.add(PyFunction.Flag.CLASSMETHOD);
-            }
-            if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
-          }
-          // else could be custom decorator processing
+          if (isByInstance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
         }
+        else if (PyNames.CLASSMETHOD.equals(deconame)) {
+          if (flags != null) {
+            flags.add(PyFunction.Flag.CLASSMETHOD);
+          }
+          if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
+        }
+        //}
       }
     }
     return implicit_offset;
   }
 
-  protected static boolean isByInstance(final PyExpression callee) {
+  protected static boolean isByInstance(final PyExpression callee, TypeEvalContext context) {
     if (callee instanceof PyReferenceExpression) {
       PyExpression qualifier = ((PyReferenceExpression)callee).getQualifier();
       if (qualifier != null) {
-        PyType type = qualifier.getType(TypeEvalContext.fast());
+        PyType type = context.getType(qualifier);
         if ((type instanceof PyClassType) && (!((PyClassType)type).isDefinition())) {
           // we're calling an instance method of qualifier
           return true;

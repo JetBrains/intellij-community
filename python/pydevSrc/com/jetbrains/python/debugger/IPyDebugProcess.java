@@ -15,4 +15,6 @@ public interface IPyDebugProcess {
   void changeVariable(PyDebugValue variable, String expression) throws PyDebuggerException;
 
   boolean isVariable(String name);
+
+  void threadResumed(PyThreadInfo thread);
 }

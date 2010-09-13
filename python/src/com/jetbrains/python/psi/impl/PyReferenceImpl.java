@@ -191,7 +191,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       // ...as a part of current module
       PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
       if (otype != null) {
-        final List<? extends PsiElement> members = otype.resolveMember(myElement.getName(), AccessDirection.READ);
+        final List<? extends PsiElement> members = otype.resolveMember(myElement.getName(), AccessDirection.READ, myContext);
         if (members != null) {
           int rate = RatedResolveResult.RATE_NORMAL;
           for (PsiElement member : members) {
@@ -567,13 +567,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  public HighlightSeverity getUnresolvedHighlightSeverity() {
+  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
     if (isBuiltInConstant()) return null;
     final PyExpression qualifier = myElement.getQualifier();
     if (qualifier == null) {
       return HighlightSeverity.ERROR;
     }
-    if (qualifier.getType(TypeEvalContext.fast()) != null) {
+    if (context.getType(qualifier) != null) {
       return HighlightSeverity.WARNING;
     }
     return null;

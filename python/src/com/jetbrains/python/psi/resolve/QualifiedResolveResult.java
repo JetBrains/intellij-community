@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Knows about the last qualifier that occurred in assignment resolution chain.
- * See {@link com.jetbrains.python.psi.PyReferenceExpression#followAssignmentsChain() followAssignmentsChain()}
+ * See {@link com.jetbrains.python.psi.PyReferenceExpression#followAssignmentsChain(com.jetbrains.python.psi.types.TypeEvalContext) followAssignmentsChain()}
  * <br/>
  * User: dcheryasov
  * Date: May 6, 2010 6:55:30 PM

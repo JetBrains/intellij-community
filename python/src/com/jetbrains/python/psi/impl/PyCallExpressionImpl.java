@@ -51,8 +51,8 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     PyCallExpressionHelper.addArgument(this, expression);
   }
 
-  public PyMarkedCallee resolveCallee() {
-    return PyCallExpressionHelper.resolveCallee(this);
+  public PyMarkedCallee resolveCallee(TypeEvalContext context) {
+    return PyCallExpressionHelper.resolveCallee(this, context);
   }
 
   public boolean isCalleeText(@NotNull String... nameCandidates) {
@@ -116,7 +116,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         return null;
       }
       else {
-        final PyType type = callee.getType(context);
+        final PyType type = context.getType(callee);
         if (type instanceof PyClassType) {
           PyClassType classType = (PyClassType) type;
           if (classType.isDefinition()) {
@@ -176,7 +176,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   private static PyType getSuperCallType(TypeEvalContext context, PyClass first_class, PyExpression second_arg) {
     // check 2nd argument, too; it should be an instance
     if (second_arg != null) {
-      PyType second_type = second_arg.getType(context);
+      PyType second_type = context.getType(second_arg);
       if (second_type instanceof PyClassType) {
         // imitate isinstance(second_arg, possible_class)
         PyClass second_class = ((PyClassType)second_type).getPyClass();

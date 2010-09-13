@@ -273,7 +273,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.RETURN_KEYWORD);
     final PsiBuilder.Marker returnStatement = builder.mark();
     builder.advanceLexer();
-    if (!PyTokenTypes.END_OF_STATEMENT.contains(builder.getTokenType())) {
+    if (builder.getTokenType() != null && !PyTokenTypes.END_OF_STATEMENT.contains(builder.getTokenType())) {
       getExpressionParser().parseExpression();
     }
     checkEndOfStatement(inSuite);

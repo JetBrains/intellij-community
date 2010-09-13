@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,10 +34,12 @@ public interface PyCallExpression extends PyExpression {
    * Resolves callee down to particular function (standalone, method, or constructor).
    * Return's function part contains a function, never null.
    * Return's flag part marks the particulars of the call, esp. the implicit first arg situation.
-   * Return is null if callee cannot be resolved. 
+   * Return is null if callee cannot be resolved.
+   *
+   * @param context the context for evaluating types
    */
   @Nullable
-  PyMarkedCallee resolveCallee();
+  PyMarkedCallee resolveCallee(TypeEvalContext context);
 
   /**
    * Checks if the unqualified name of the callee matches any of the specified names

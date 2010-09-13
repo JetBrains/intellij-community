@@ -123,15 +123,19 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         // imported via __all__
         return null;
       }
+      if (!context.maySwitchToAST(this)) {
+        return null;
+      }
       if (getParent() instanceof PyAssignmentStatement) {
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)getParent();
         final PyExpression assignedValue = assignmentStatement.getAssignedValue();
         if (assignedValue != null) {
           if (assignedValue instanceof PyReferenceExpression) {
             final PyReferenceExpression refex = (PyReferenceExpression)assignedValue;
-            PyType maybe_type = PyUtil.getSpecialAttributeType(refex);
+            PyType maybe_type = PyUtil.getSpecialAttributeType(refex, context);
             if (maybe_type != null) return maybe_type;
-            final ResolveResult[] resolveResult = refex.getReference(PyResolveContext.noImplicits()).multiResolve(false);
+            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+            final ResolveResult[] resolveResult = refex.getReference(resolveContext).multiResolve(false);
             if (resolveResult.length == 1) {
               PsiElement target = resolveResult[0].getElement();
               if (target == this || target == null) {

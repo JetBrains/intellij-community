@@ -5,17 +5,16 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
-import com.jetbrains.python.run.PyCommonOptionsForm;
-import com.jetbrains.python.run.PythonRunConfigurationFormUtil;
-import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestType;
+import com.jetbrains.python.run.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestType;
 
 /**
  * @author Leonid Shalupov
@@ -38,12 +37,12 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   private JTextField myTestClassTextField;
 
   private final Project myProject;
-  private final PyCommonOptionsForm myCommonOptionsForm;
+  private final AbstractPyCommonOptionsForm myCommonOptionsForm;
 
   public PythonUnitTestRunConfigurationForm(final Project project, final PythonUnitTestRunConfiguration configuration) {
     myProject = project;
 
-    myCommonOptionsForm = new PyCommonOptionsForm(configuration);
+    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration);
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
     
     initComponents();

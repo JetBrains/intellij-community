@@ -197,7 +197,7 @@ target('default': "Build artifacts") {
             version: "1.0",
             system_selector: "PyCharm10",
             jdk_req: "1.6*",
-            vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
+            vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea" + (isEap ? " -agentlib:yjpagent=disablej2ee,sessionname=pycharm" : ""),
             paths.distMac)
 
   buildExe()

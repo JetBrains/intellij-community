@@ -12,14 +12,13 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonProduct;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +38,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
 
   public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
     super(name, module, factory);
+    module.init();
   }
 
   public List<Module> getValidModules() {
@@ -56,21 +56,29 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 
-    if (!myUseModuleSdk) {
-      if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
-        final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
-        if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
-          throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_sdk"));
-        }
-      }
-      else if (!PythonSdkType.getInstance().isValidSdkHome(getSdkHome())) {
-        throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_valid_sdk"));
+    if (PythonProduct.isPyCharm()) {
+      final String path = getInterpreterPath();
+      if (path == null) {
+        throw new RuntimeConfigurationError("Please select a valid Python interpreter");
       }
     }
     else {
-      Sdk sdk = PythonSdkType.findPythonSdk(getModule());
-      if (sdk == null) {
-        throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_module_sdk"));
+      if (!myUseModuleSdk) {
+        if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
+          final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
+          if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
+            throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
+          }
+        }
+        else if (!PythonSdkType.getInstance().isValidSdkHome(getSdkHome())) {
+          throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
+        }
+      }
+      else {
+        Sdk sdk = PythonSdkType.findPythonSdk(getModule());
+        if (sdk == null) {
+          throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_module_sdk"));
+        }
       }
     }
   }

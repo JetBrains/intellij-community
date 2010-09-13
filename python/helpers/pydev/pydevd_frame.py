@@ -15,7 +15,7 @@ class PyDBFrame:
     
     def __init__(self, *args):
         #args = mainDebugger, filename, base, info, t, frame
-        #yeap, much faster than putting in self and the getting it from self later on
+        #yeap, much faster than putting in self and then getting it from self later on
         self._args = args[:-1]
     
     def setSuspend(self, *args, **kwargs):

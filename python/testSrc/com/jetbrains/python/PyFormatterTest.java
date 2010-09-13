@@ -54,6 +54,10 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
     doTest();    
   }
 
+  public void testListAssignment() {  // PY-1522
+    doTest();
+  }
+
   public void testStarExpression() {  // PY-1523
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
     try {

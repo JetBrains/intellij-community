@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +30,10 @@ public interface PyArgumentList extends PyElement {
   /**
    * Tries to map the argument list to callee's idea of parameters.
    * @return a result object with mappings and diagnostic flags.
+   * @param context
    */
   @NotNull
-  AnalysisResult analyzeCall();
+  AnalysisResult analyzeCall(TypeEvalContext context);
 
   /**
    * Flags to mark analysis results for an argument.

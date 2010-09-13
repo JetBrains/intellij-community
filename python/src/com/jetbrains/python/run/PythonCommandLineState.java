@@ -101,11 +101,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected ColoredProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
-    return createProcessHandler(commandLine.createProcess(), commandLine);
-  }
-
-  protected ColoredProcessHandler createProcessHandler(Process process, GeneralCommandLine commandLine) throws ExecutionException {
-    return new ColoredProcessHandler(process, commandLine.getCommandLineString());
+    return PythonProcessHandler.createProcessHandler(commandLine);
   }
 
   public GeneralCommandLine generateCommandLine() throws ExecutionException {
@@ -143,8 +139,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
       envs = new HashMap<String, String>(envs);
 
     addPredefinedEnvironmentVariables(envs);
+    addCommonEnvironmentVariables(envs);
+
+
     commandLine.setEnvParams(envs);
     commandLine.setPassParentEnvs(myConfig.isPassParentEnvs());
+  }
+
+  protected  void addCommonEnvironmentVariables(Map<String, String> envs) {
+    PythonEnvUtil.setPythonUnbuffered(envs);
   }
 
   protected void addPredefinedEnvironmentVariables(Map<String, String> envs) {
@@ -152,7 +155,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (flavor != null) {
       flavor.addPredefinedEnvironmentVariables(envs);
     }
-    PythonEnvUtil.setPythonUnbuffered(envs);
   }
 
   protected void setRunnerPath(GeneralCommandLine commandLine) throws ExecutionException {

@@ -288,14 +288,14 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
   }
 
-  private static boolean isRangeIteration(PyForStatement forStatement) {
+  private boolean isRangeIteration(PyForStatement forStatement) {
     final PyExpression source = forStatement.getForPart().getSource();
     if (!(source instanceof PyCallExpression)) {
       return false;
     }
     PyCallExpression expr = (PyCallExpression) source;
     if (expr.isCalleeText("range", "xrange")) {
-      final PyCallExpression.PyMarkedCallee callee = expr.resolveCallee();
+      final PyCallExpression.PyMarkedCallee callee = expr.resolveCallee(myTypeEvalContext);
       if (callee != null && !callee.isImplicitlyResolved() && PyBuiltinCache.getInstance(forStatement).hasInBuiltins(callee.getCallable())) {
         return true;
       }

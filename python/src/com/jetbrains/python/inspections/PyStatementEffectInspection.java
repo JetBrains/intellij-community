@@ -1,13 +1,13 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
@@ -26,14 +26,14 @@ public class PyStatementEffectInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
@@ -65,16 +65,16 @@ public class PyStatementEffectInspection extends PyInspection {
         String method = operator == null ? null : operator.getSpecialMethodName();
         if (method != null) {
           // maybe the op is overridden and may produce side effects, like cout << "hello"
-          PyType type = binary.getLeftExpression().getType(TypeEvalContext.fast());
-          if (type != null && ! type.isBuiltin() && type.resolveMember(method, AccessDirection.READ) != null) {
+          PyType type = myTypeEvalContext.getType(binary.getLeftExpression());
+          if (type != null && ! type.isBuiltin() && type.resolveMember(method, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
             return;
           }
           final PyExpression rhs = binary.getRightExpression();
           if (rhs != null) {
-            type = rhs.getType(TypeEvalContext.fast());
+            type = myTypeEvalContext.getType(rhs);
             if (type != null) {
               String rmethod = "__r" + method.substring(2); // __add__ -> __radd__
-              if (! type.isBuiltin() && type.resolveMember(rmethod, AccessDirection.READ) != null) {
+              if (! type.isBuiltin() && type.resolveMember(rmethod, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
                 return;
               }
             }

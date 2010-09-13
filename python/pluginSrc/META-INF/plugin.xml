@@ -4,9 +4,9 @@
 
   <id>Pythonid</id>
   <name>Python</name>
-  <idea-version since-build="96.974" until-build="97.0"/>
+  <idea-version since-build="96.1121" until-build="97.0"/>
   <description>Smart editing for Python scripts</description>
-  <version>2.6.1</version>
+  <version>2.6.2</version>
   <depends>com.intellij.modules.ultimate</depends>
   <depends>org.jetbrains.plugins.yaml</depends>
   <vendor url="http://www.jetbrains.com/idea/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
@@ -20,6 +20,8 @@
     <frameworkSupport implementation="com.jetbrains.django.facet.DjangoFacetSupportProvider"/>
     <frameworkSupport implementation="com.jetbrains.appengine.facet.AppEngineFacetSupportProvider"/>
     <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
+                        serviceImplementation="com.jetbrains.python.run.PyPluginCommonOptionsFormFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

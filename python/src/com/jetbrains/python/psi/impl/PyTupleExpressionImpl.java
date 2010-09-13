@@ -38,7 +38,7 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
     final PyExpression[] elements = getElements();
     final PyType[] types = new PyType[elements.length];
     for (int i = 0; i < types.length; i++) {
-      types [i] = elements [i].getType(context);
+      types [i] = context.getType(elements [i]);
     }
     return new PyTupleType(this, types);
   }

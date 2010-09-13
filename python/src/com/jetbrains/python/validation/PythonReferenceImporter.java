@@ -15,8 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.ImportFromExistingFix;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -104,10 +102,9 @@ public class PythonReferenceImporter implements ReferenceImporter {
     ProgressManager.checkCanceled(); // before expensive index searches
     // NOTE: current indices have limitations, only finding direct definitions of classes and functions.
     Project project = node.getProject();
-    GlobalSearchScope scope = ProjectScope.getAllScope(project);
     List<PsiElement> symbols = new ArrayList<PsiElement>();
-    symbols.addAll(PyClassNameIndex.find(ref_text, project, scope));
-    symbols.addAll(PyFunctionNameIndex.find(ref_text, project));
+    symbols.addAll(PyClassNameIndex.find(ref_text, project, true));
+    symbols.addAll(PyFunctionNameIndex.find(ref_text, project, PyClassNameIndex.projectWithLibrariesScope(project)));
     // NOTE: possible CPU hog
     if (symbols.size() > 0) {
       for (PsiElement symbol : symbols) {

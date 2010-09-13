@@ -32,7 +32,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     if (op.equals("-")) {
       final PyExpression operand = getOperand();
       if (operand != null) {
-        final PyType type = operand.getType(context);
+        final PyType type = context.getType(operand);
         if (PyClassType.is("int", type)) {
           return type;
         }

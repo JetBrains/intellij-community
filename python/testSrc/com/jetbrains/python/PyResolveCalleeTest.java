@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import java.util.EnumSet;
 
@@ -18,7 +19,7 @@ public class PyResolveCalleeTest extends PyLightFixtureTestCase {
   private PyCallExpression.PyMarkedCallee resolveCallee() throws Exception {
     PsiReference ref = myFixture.getReferenceAtCaretPosition("/resolve/callee/" + getTestName(false) + ".py");
     PyCallExpression call = PsiTreeUtil.getParentOfType(ref.getElement(), PyCallExpression.class);
-    return call.resolveCallee();
+    return call.resolveCallee(TypeEvalContext.fast());
   }
 
   public void testInstanceCall() throws Exception {

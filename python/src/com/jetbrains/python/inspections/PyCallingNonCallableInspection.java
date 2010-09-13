@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -8,12 +9,11 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,13 +30,13 @@ public class PyCallingNonCallableInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
@@ -44,14 +44,15 @@ public class PyCallingNonCallableInspection extends PyInspection {
       super.visitPyCallExpression(node);
       PyExpression callee = node.getCallee();
       if (callee != null) {
-        PyType calleeType = callee.getType(TypeEvalContext.fast());
+        PyType calleeType = myTypeEvalContext.getType(callee);
         if (calleeType != null && calleeType instanceof PyClassType) {
           PyClassType classType = (PyClassType) calleeType;
           if (isMethodType(node, classType)) {
             return;
           }
           if (!classType.isDefinition()) {
-            final List<? extends PsiElement> calls = classType.resolveMember("__call__", AccessDirection.READ);
+            final List<? extends PsiElement> calls = classType.resolveMember("__call__", AccessDirection.READ,
+                                                                             PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext));
             if (calls == null || calls.size() == 0) {
               PyClass pyClass = classType.getPyClass();
               if (pyClass != null) {

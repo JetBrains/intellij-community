@@ -4,13 +4,16 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 
-// todo: support for multiple stacks (threads)
+
 public class PySuspendContext extends XSuspendContext {
 
   private final XExecutionStack myActiveStack;
+  private PyDebugProcess myDebugProcess;
 
   public PySuspendContext(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo) {
+    myDebugProcess = debugProcess;
     myActiveStack = new PyExecutionStack(debugProcess, threadInfo);
   }
 
@@ -21,8 +24,6 @@ public class PySuspendContext extends XSuspendContext {
 
   @Override
   public XExecutionStack[] getExecutionStacks() {
-    return super.getExecutionStacks();
-    /*
     final Collection<PyThreadInfo> threads = myDebugProcess.getThreads();
     if (threads.size() < 1) {
       return XExecutionStack.EMPTY_ARRAY;
@@ -35,7 +36,6 @@ public class PySuspendContext extends XSuspendContext {
       }
       return stacks;
     }
-    */
   }
 
 }

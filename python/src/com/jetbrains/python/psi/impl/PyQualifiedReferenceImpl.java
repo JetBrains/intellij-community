@@ -39,7 +39,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     assert qualifier != null;
 
     // regular attributes
-    PyType qualifierType = qualifier.getType(myContext.getTypeEvalContext());
+    PyType qualifierType = myContext.getTypeEvalContext().getType(qualifier);
     // is it a class-private name qualified by a different class?
     if (PyUtil.isClassPrivateName(referencedName) && qualifierType instanceof PyClassType) {
       final List<? extends PsiElement> match = SyntaxMatchers.DEEP_IN_METHOD.search(qualifier);
@@ -51,7 +51,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
       // resolve within the type proper
       AccessDirection ctx = AccessDirection.of(myElement);
-      final List<? extends PsiElement> member_of_qualifier = qualifierType.resolveMember(referencedName, ctx);
+      final List<? extends PsiElement> member_of_qualifier = qualifierType.resolveMember(referencedName, ctx, myContext);
       if (member_of_qualifier == null) {
         return ret; // qualifier is positive that such name cannot exist in it
       }
@@ -83,8 +83,8 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     return ret;
   }
 
-  private static void addResolveMember(ResultList ret, String referencedName, PyType qualifierType, AccessDirection context) {
-    final List<? extends PsiElement> members = qualifierType.resolveMember(referencedName, context);
+  private void addResolveMember(ResultList ret, String referencedName, PyType qualifierType, AccessDirection context) {
+    final List<? extends PsiElement> members = qualifierType.resolveMember(referencedName, context, myContext);
     if (members != null) {
       int rate = RatedResolveResult.RATE_NORMAL;
       for (PsiElement member : members) {

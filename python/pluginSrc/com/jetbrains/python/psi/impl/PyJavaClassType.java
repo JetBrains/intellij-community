@@ -5,6 +5,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ public class PyJavaClassType implements PyType {
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction) {
+  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
     final PsiMethod[] methods = myClass.findMethodsByName(name, true);
     if (methods.length > 0) {
       return Arrays.asList(methods); // TODO[yole]: correct resolve

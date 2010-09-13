@@ -17,7 +17,6 @@ import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class PyStackFrame extends XStackFrame {
@@ -105,6 +104,10 @@ public class PyStackFrame extends XStackFrame {
 
   public String getFrameId() {
     return myFrameInfo.getId();
+  }
+
+  public String getThreadFrameId() {
+    return myFrameInfo.getThreadId() + ":" + myFrameInfo.getId();
   }
 
 }

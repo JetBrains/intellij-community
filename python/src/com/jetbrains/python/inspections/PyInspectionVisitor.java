@@ -1,22 +1,39 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: dcheryasov
- * Date: Nov 14, 2008
- * A copy of Ruby's visitor helper.
+ * @author dcheryasov
  */
-public class PyInspectionVisitor extends PyElementVisitor {
+public abstract class PyInspectionVisitor extends PyElementVisitor {
   @Nullable private final ProblemsHolder myHolder;
+  protected final TypeEvalContext myTypeEvalContext;
+
+  public static final Key<TypeEvalContext> INSPECTION_TYPE_EVAL_CONTEXT = Key.create("PyInspectionTypeEvalContext");
 
   public PyInspectionVisitor(@Nullable final ProblemsHolder holder) {
     myHolder = holder;
+    myTypeEvalContext = TypeEvalContext.fastStubOnly();
+  }
+
+  public PyInspectionVisitor(@Nullable ProblemsHolder problemsHolder,
+                             @NotNull LocalInspectionToolSession session) {
+    myHolder = problemsHolder;
+    TypeEvalContext context;
+    synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
+      context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
+      if (context == null) {
+        context = TypeEvalContext.fastStubOnly();
+        session.putUserData(INSPECTION_TYPE_EVAL_CONTEXT, context);
+      }
+    }
+    myTypeEvalContext = context;
   }
 
   @Nullable protected ProblemsHolder getHolder() {

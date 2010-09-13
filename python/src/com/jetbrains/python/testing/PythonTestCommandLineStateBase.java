@@ -75,12 +75,6 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return cmd;
   }
 
-  @Override
-  protected void addPredefinedEnvironmentVariables(Map<String, String> envs) {
-    super.addPredefinedEnvironmentVariables(envs);
-    PythonEnvUtil.setPythonUnbuffered(envs);
-  }
-
   protected Collection<String> buildPythonPath() {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
     pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());

@@ -42,6 +42,10 @@ each command has a format:
     114      CMD_GET_FRAME            JAVA                                    request for frame contents
     115      CMD_EXEC_EXPRESSION      JAVA
     116      CMD_WRITE_TO_CONSOLE     PYDB
+    117      CMD_CHANGE_VARIABLE
+    118      CMD_RUN_TO_LINE
+    119      CMD_RELOAD_CODE
+    120      CMD_GET_COMPLETIONS      JAVA
     
 500 series diagnostics/ok
     901      VERSION                  either      Version string (1.0)        Currently just used at startup
@@ -57,6 +61,7 @@ from pydevd_constants import * #@UnusedWildImport
 
 import time
 import threading
+import sys
 try:
     import Queue as PydevQueue
 except ImportError:
@@ -95,6 +100,7 @@ CMD_WRITE_TO_CONSOLE = 116
 CMD_CHANGE_VARIABLE = 117
 CMD_RUN_TO_LINE = 118
 CMD_RELOAD_CODE = 119
+CMD_GET_COMPLETIONS = 120
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901 
@@ -119,6 +125,7 @@ ID_TO_MEANING = {
     '117':'CMD_CHANGE_VARIABLE',
     '118':'CMD_RUN_TO_LINE',
     '119':'CMD_RELOAD_CODE',
+    '120':'CMD_GET_COMPLETIONS',
     '501':'CMD_VERSION',
     '502':'CMD_RETURN',
     '901':'CMD_ERROR',
@@ -229,7 +236,7 @@ class ReaderThread(PyDBDaemonThread):
                 try:
                     r = self.sock.recv(1024)
                 except:
-                    GlobalDebuggerHolder.globalDbg.finishDebuggingSession = True
+                    GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
                     break #Finished communication.
                 if IS_PY3K:
                     r = r.decode('utf-8')
@@ -239,7 +246,7 @@ class ReaderThread(PyDBDaemonThread):
                     sys.stdout.write('received >>%s<<\n' % (buffer,))
                     
                 if len(buffer) == 0:
-                    GlobalDebuggerHolder.globalDbg.finishDebuggingSession = True
+                    GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
                     break
                 while buffer.find('\n') != -1:
                     command, buffer = buffer.split('\n', 1)
@@ -248,7 +255,7 @@ class ReaderThread(PyDBDaemonThread):
                     GlobalDebuggerHolder.globalDbg.processNetCommand(int(args[0]), int(args[1]), args[2])
         except:
             traceback.print_exc()
-            GlobalDebuggerHolder.globalDbg.finishDebuggingSession = True
+            GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
 
 
 #----------------------------------------------------------------------------------- SOCKET UTILITIES - WRITER
@@ -302,7 +309,7 @@ class WriterThread(PyDBDaemonThread):
                     break #interpreter shutdown
                 time.sleep(self.timeout)                
         except Exception:
-            GlobalDebuggerHolder.globalDbg.finishDebuggingSession = True
+            GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
             if DEBUG_TRACE_LEVEL >= 0:
                 traceback.print_exc()
     
@@ -335,8 +342,8 @@ def StartClient(host, port):
         PydevdLog(1, "Connected.")
         return s
     except:
-        sys.stderr.write("server timed out after 10 seconds, could not connect to %s: %s\n" % (host, port))
-        sys.stderr.write("Exiting. Bye!\n")
+        sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
+        traceback.print_exc()
         sys.exit(1)
 
 
@@ -414,9 +421,9 @@ class NetCommandFactory:
         except:
             return self.makeErrorMessage(seq, GetExceptionTracebackStr())
 
-    def makeVariableChangedMessage(self, seq):
+    def makeVariableChangedMessage(self, seq, payload):
         # notify debugger that value was changed successfully
-        return NetCommand(CMD_RETURN, seq, None)
+        return NetCommand(CMD_RETURN, seq, payload)
 
     def makeIoMessage(self, v, ctx, dbg=None):
         '''
@@ -525,6 +532,12 @@ class NetCommandFactory:
         except Exception:
             return self.makeErrorMessage(seq, GetExceptionTracebackStr())
 
+    def makeGetCompletionsMessage(self, seq, payload):
+        try:
+            return NetCommand(CMD_GET_COMPLETIONS, seq, payload)
+        except Exception:
+            return self.makeErrorMessage(seq, GetExceptionTracebackStr())
+
 INTERNAL_TERMINATE_THREAD = 1
 INTERNAL_SUSPEND_THREAD = 2
 
@@ -610,8 +623,11 @@ class InternalChangeVariable(InternalThreadCommand):
     def doIt(self, dbg):
         """ Converts request into python variable """
         try:
-            pydevd_vars.changeAttrExpression(self.thread_id, self.frame_id, self.attr, self.expression)
-            cmd = dbg.cmdFactory.makeVariableChangedMessage(self.sequence)
+            result = pydevd_vars.changeAttrExpression(self.thread_id, self.frame_id, self.attr, self.expression)
+            xml = "<xml>"
+            xml += pydevd_vars.varToXML(result, "")
+            xml += "</xml>"
+            cmd = dbg.cmdFactory.makeVariableChangedMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)
         except Exception:
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error changing variable attr:%s expression:%s traceback:%s" % (self.attr, self.expression, GetExceptionTracebackStr()))
@@ -673,6 +689,69 @@ class InternalEvaluateExpression(InternalThreadCommand):
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeEvaluateExpressionMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)
+        except:
+            exc = GetExceptionTracebackStr()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating expression " + exc)
+            dbg.writer.addCommand(cmd)
+           
+#=======================================================================================================================
+# InternalGetCompletions
+#=======================================================================================================================
+class InternalGetCompletions(InternalThreadCommand):
+    """ Gets the completions in a given scope """
+
+    def __init__(self, seq, thread_id, frame_id, act_tok):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.act_tok = act_tok
+    
+    
+    def doIt(self, dbg):
+        """ Converts request into completions """
+        try:
+            remove_path = None
+            try:
+                import _completer
+            except:
+                path = os.environ['PYDEV_COMPLETER_PYTHONPATH']
+                sys.path.append(path)
+                remove_path = path
+                import _completer
+            
+            try:
+                
+                frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            
+                #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
+                #(Names not resolved in generator expression in method)
+                #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
+                updated_globals = dict()
+                updated_globals.update(frame.f_globals)
+                updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
+            
+                completer = _completer.Completer(updated_globals, None)
+                #list(tuple(name, descr, parameters, type))
+                completions = completer.complete(self.act_tok)
+                
+                
+                def makeValid(s):
+                    return pydevd_vars.makeValidXmlValue(pydevd_vars.quote(s, '/>_= \t'))
+                
+                msg = "<xml>"
+                
+                for comp in completions:
+                    msg += '<comp p0="%s" p1="%s" p2="%s" p3="%s"/>' % (makeValid(comp[0]), makeValid(comp[1]), makeValid(comp[2]), makeValid(comp[3]),)
+                msg += "</xml>"
+                
+                cmd = dbg.cmdFactory.makeGetCompletionsMessage(self.sequence, msg)
+                dbg.writer.addCommand(cmd)
+                
+            finally:
+                if remove_path is not None:
+                    sys.path.remove(remove_path)
+                    
         except:
             exc = GetExceptionTracebackStr()
             sys.stderr.write('%s\n' % (exc,))

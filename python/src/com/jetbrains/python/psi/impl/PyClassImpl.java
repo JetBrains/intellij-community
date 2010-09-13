@@ -131,7 +131,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     for(PyExpression expr: superExpressions) {
       if (expr instanceof PyReferenceExpression) {
         PyReferenceExpression ref = (PyReferenceExpression) expr;
-        final PsiElement result = ref.getReference(PyResolveContext.noImplicits()).resolve();
+        final PsiElement result = ref.getReference(PyResolveContext.noProperties()).resolve();
         if (result != null) {
           superClasses.add(result);
         }
@@ -280,9 +280,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyClass[] getSuperClasses() {
-    List<PyClass> stubSuperClasses = resolveSuperClassesFromStub();
-    if (stubSuperClasses != null) {
-      return stubSuperClasses.toArray(new PyClass[stubSuperClasses.size()]);
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      final List<PyClass> pyClasses = resolveSuperClassesFromStub();
+      return pyClasses == null ? EMPTY_ARRAY : pyClasses.toArray(new PyClass[pyClasses.size()]);
     }
 
     PsiElement[] superClassElements = getSuperClassElements();

@@ -122,8 +122,14 @@ def getType(o):
     return (type_object, type_name, pydevd_resolver.defaultResolver)
 
 
-def makeValidXmlValue(s):
-    return s.replace('<', '&lt;').replace('>', '&gt;')
+try:
+    from xml.sax.saxutils import escape
+    def makeValidXmlValue(s):
+        return escape(s, {'"':'&quot;'})
+except:
+    #Simple replacement if it's not there.
+    def makeValidXmlValue(s):
+        return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 
 def varToXML(v, name):
@@ -153,7 +159,7 @@ def varToXML(v, name):
         except:
             value = 'Unable to get repr for %s' % v.__class__
 
-    xml = '<var name="%s" type="%s"' % (name, typeName)
+    xml = '<var name="%s" type="%s"' % (makeValidXmlValue(name),makeValidXmlValue(typeName))
 
     if value:
         #cannot be too big... communication may not handle it.
@@ -234,17 +240,43 @@ def dumpFrames(thread_id):
     for frame in iterFrames(curFrame):
         sys.stdout.write('%s\n' % id(frame))
 
+
+#===============================================================================
+# AdditionalFramesContainer
+#===============================================================================
+class AdditionalFramesContainer:
+    lock = threading.Lock()
+    additional_frames = {} #dict of dicts
+    
+
+def addAdditionalFrameById(thread_id, frames_by_id):
+    AdditionalFramesContainer.additional_frames[thread_id] = frames_by_id
+        
+        
+def removeAdditionalFrameById(thread_id):
+    del AdditionalFramesContainer.additional_frames[thread_id]
+        
+    
+        
+
 def findFrame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
     if thread_id != GetThreadId(threading.currentThread()) :
         raise VariableError("findFrame: must execute on same thread")
+    
+    lookingFor = int(frame_id)
+    
+    if AdditionalFramesContainer.additional_frames:
+        if DictContains(AdditionalFramesContainer.additional_frames, thread_id):
+            frame = AdditionalFramesContainer.additional_frames[thread_id].get(lookingFor)
+            if frame is not None:
+                return frame
 
     curFrame = GetFrame()
     if frame_id == "*":
         return curFrame # any frame is specified with "*"
 
     frameFound = None
-    lookingFor = int(frame_id)
 
     for frame in iterFrames(curFrame):
         if lookingFor == id(frame):
@@ -254,11 +286,11 @@ def findFrame(thread_id, frame_id):
 
         del frame
 
-    #for some reason unknown to me, python was holding a reference to the frame
-    #if we didn't explicitly add those deletes (even after ending this context)
-    #so, those dels are here for a reason (but still doesn't seem to fix everything)
+    #Important: python can hold a reference to the frame from the current context 
+    #if an exception is raised, so, if we don't explicitly add those deletes
+    #we might have those variables living much more than we'd want to.
 
-    #Reason: sys.exc_info holding reference to frame that raises exception (so, other places
+    #I.e.: sys.exc_info holding reference to frame that raises exception (so, other places
     #need to call sys.exc_clear()) 
     del curFrame
 
@@ -320,19 +352,45 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
-    result = None
     try:
+
         if doExec:
-            exec(expression, updated_globals, frame.f_locals)
+            try:
+                #try to make it an eval (if it is an eval we can print it, otherwise we'll exec it and 
+                #it will have whatever the user actually did)
+                compiled = compile(expression, '<string>', 'eval')
+            except:
+                exec(expression, updated_globals, frame.f_locals)
+            else:
+                result = eval(compiled, updated_globals, frame.f_locals)
+                if result is not None: #Only print if it's not None (as python does)
+                    sys.stdout.write('%s\n' % (result,))
+            return
+
         else:
-            result = eval(expression, updated_globals, frame.f_locals)
+            result = None
+            try:
+                result = eval(expression, updated_globals, frame.f_locals)
+            except Exception:
+                s = StringIO()
+                traceback.print_exc(file=s)
+                result = s.getvalue()
 
-    except:
-        s = StringIO()
-        traceback.print_exc(file=s)
-        result = s.getvalue()
+                try:
+                    try:
+                        etype, value, tb = sys.exc_info()
+                        result = value
+                    finally:
+                        etype = value = tb = None
+                except:
+                    pass
+                
+            return result
+    finally:
+        #Should not be kept alive if an exception happens and this frame is kept in the stack.
+        del updated_globals
+        del frame
 
-    return result
 
 def changeAttrExpression(thread_id, frame_id, attr, expression):
     '''Changes some attribute in a given frame.
@@ -360,13 +418,16 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
             attr = attr[8:]
             if attr in frame.f_globals:
                 frame.f_globals[attr] = eval(expression, frame.f_globals, frame.f_locals)
+                return frame.f_globals[attr]
         else:
             #default way (only works for changing it in the topmost frame)
+            result = eval(expression, frame.f_globals, frame.f_locals)
             exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
+            return result;
 
 
-    finally:
-        del frame
+    except Exception:
+        traceback.print_exc()
 
 
 

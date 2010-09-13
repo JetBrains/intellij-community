@@ -10,4 +10,11 @@ public abstract class AbstractThreadCommand extends AbstractCommand {
     myThreadId = threadId;
   }
 
+  public static boolean isThreadCommand(int command) {
+    return command == CREATE_THREAD ||
+           command == KILL_THREAD ||
+           command == RESUME_THREAD ||
+           command == SUSPEND_THREAD;
+  }
+
 }

@@ -17,11 +17,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.actions.AddImportHelper;
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 
@@ -66,6 +63,7 @@ public class PyExtractSuperclassHelper {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
+            final Set<PyClass> rememberedSet = PyClassRefactoringUtil.rememberClassReferences(methods, extractedClasses);
             final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
             final String text = PyClassRefactoringUtil.prepareClassText(clazz, elements, true, true, superBaseName) + "\n";
             final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
@@ -76,7 +74,7 @@ public class PyExtractSuperclassHelper {
               PyPsiUtils.removeElements(elements);
             }
             PyClassRefactoringUtil.insertPassIfNeeded(clazz);
-            placeNewClass(project, newClass, clazz, targetFile, extractedClasses);
+            placeNewClass(project, newClass, clazz, targetFile, rememberedSet);
           }
         });
       }
@@ -84,7 +82,7 @@ public class PyExtractSuperclassHelper {
     return newClassRef.get();
   }
 
-  private static void placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile, Set<PyClass> extractedClasses) {
+  private static void placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile, Set<PyClass> rememberedSet) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtil.pathToUrl(targetFile));
     // file is the same as the source
     if (file == clazz.getContainingFile().getVirtualFile()) {
@@ -127,22 +125,8 @@ public class PyExtractSuperclassHelper {
 
     LOG.assertTrue(psiFile != null);
     newClass = (PyClass)psiFile.add(newClass);
-    insertImport(clazz, newClass);
-    for (PyClass member : extractedClasses) {
-      insertImport(newClass, member);
-    }
-  }
-
-  private static void insertImport(PyClass clazz, PyClass newClass) {
-    final VirtualFile vFile = newClass.getContainingFile().getVirtualFile();
-    assert vFile != null;
-    final PsiFile file = clazz.getContainingFile();
-    if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
-      final String name = newClass.getQualifiedName();
-      AddImportHelper.addImportStatement(file, name, null);
-    } else {
-      AddImportHelper.addImportFrom(file, ResolveImportUtil.findShortestImportableName(clazz, vFile), newClass.getName());
-    }
+    PyClassRefactoringUtil.insertImport(clazz, newClass);
+    PyClassRefactoringUtil.restoreImports(newClass, rememberedSet);
   }
 
   private static String constructFilename(PyClass newClass) {

@@ -22,7 +22,6 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
-    return new Visitor(holder, session.getFile());
+    return new Visitor(holder, session);
   }
 
   public static class Visitor extends PyInspectionVisitor {
@@ -60,19 +59,20 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     private PyParameterList myOneParamList;
     private PyParameterList myTwoParamList; // arglist with two args, 'self' and 'value'
 
-    public Visitor(final ProblemsHolder holder, PsiFile psifile) {
-      super(holder);
+    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
+      super(holder, session);
+      PsiFile psiFile = session.getFile();
       // save us continuous checks for level, module, stc
       LanguageLevel level = null;
-      if (psifile != null) {
-        VirtualFile vfile = psifile.getVirtualFile();
+      if (psiFile != null) {
+        VirtualFile vfile = psiFile.getVirtualFile();
         if (vfile != null) level = LanguageLevel.forFile(vfile);
       }
       if (level == null) level = LanguageLevel.getDefault();
       myLevel = level;
       // string classes
       final List<PyClass> string_classes = new ArrayList<PyClass>(2);
-      final PyBuiltinCache builtins = PyBuiltinCache.getInstance(psifile);
+      final PyBuiltinCache builtins = PyBuiltinCache.getInstance(psiFile);
       PyClass cls = builtins.getClass("str");
       if (cls != null) string_classes.add(cls);
       cls = builtins.getClass("unicode");
@@ -108,7 +108,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
             assert call != null : "Property has a null call assigned to it";
             final PyArgumentList arglist = call.getArgumentList();
             assert arglist != null : "Property call has null arglist";
-            PyArgumentList.AnalysisResult analysis = arglist.analyzeCall();
+            PyArgumentList.AnalysisResult analysis = arglist.analyzeCall(myTypeEvalContext);
             // we assume fget, fset, fdel, doc names
             for (Map.Entry<PyExpression, PyNamedParameter> entry: analysis.getPlainMappedParams().entrySet()) {
               final String param_name = entry.getValue().getName();
@@ -133,7 +133,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
               else if ("fset".equals(param_name)) checkSetter(callable, argument);
               else if ("fdel".equals(param_name)) checkDeleter(callable, argument);
               else if ("doc".equals(param_name)) {
-                PyType type = argument.getType(TypeEvalContext.fast());
+                PyType type = myTypeEvalContext.getType(argument);
                 if (! (type instanceof PyClassType && myStringClasses.contains(((PyClassType)type).getPyClass()))) {
                   registerProblem(argument, PyBundle.message("INSP.doc.param.should.be.str"));
                 }

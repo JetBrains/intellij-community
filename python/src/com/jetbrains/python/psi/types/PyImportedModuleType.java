@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ public class PyImportedModuleType implements PyType {
   }
 
   @NotNull
-  public List<? extends PsiElement> resolveMember(String name, AccessDirection direction) {
+  public List<? extends PsiElement> resolveMember(String name, AccessDirection direction, PyResolveContext resolveContext) {
     final PsiElement element = myImportedModule.getElementNamed(name);
     if (element != null) {
       return new SmartList<PsiElement>(element);

@@ -188,5 +188,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.completeBasic();
     myFixture.checkResultByFile("completion/fromImportBinary.after.py");
   }
-  
+
+  public void testNonExistingProperty() {  // PY-1748
+    doTest();
+  }
 }

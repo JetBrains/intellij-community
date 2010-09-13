@@ -21,13 +21,18 @@ public class PyPullUpHelper {
 
   public static PyElement pullUp(final PyClass clazz, final Collection<PyMemberInfo> selectedMemberInfos, final PyClass superClass) {
     final Set<String> superClasses = new HashSet<String>();
+    final Set<PyClass> extractedClasses = new HashSet<PyClass>();
     final List<PyFunction> methods = new ArrayList<PyFunction>();
     for (PyMemberInfo member : selectedMemberInfos) {
       final PyElement element = member.getMember();
       if (element instanceof PyFunction) methods.add((PyFunction)element);
-      else if (element instanceof PyClass) superClasses.add(element.getName());
+      else if (element instanceof PyClass) {
+        superClasses.add(element.getName());
+        extractedClasses.add((PyClass)element);
+      }
       else LOG.error("unmatched member class " + element.getClass());
     }
+    final Set<PyClass> rememberedSet = PyClassRefactoringUtil.rememberClassReferences(methods, extractedClasses);
     CommandProcessor.getInstance().executeCommand(clazz.getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -39,6 +44,8 @@ public class PyPullUpHelper {
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, superClass);
 
             PyClassRefactoringUtil.insertPassIfNeeded(clazz);
+
+            PyClassRefactoringUtil.restoreImports(superClass, clazz, rememberedSet);
           }
         });
       }

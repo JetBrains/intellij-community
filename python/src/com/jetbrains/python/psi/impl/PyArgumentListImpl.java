@@ -9,10 +9,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
 
 public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList {
   public PyArgumentListImpl(ASTNode astNode) {
@@ -229,7 +230,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   @NotNull
-  public AnalysisResult analyzeCall() {
+  public AnalysisResult analyzeCall(TypeEvalContext context) {
     final PyCallExpressionHelper.AnalysisResultImpl ret = new PyCallExpressionHelper.AnalysisResultImpl(this);
     PyExpression[] arguments = getArguments();
     // declaration-based checks
@@ -238,7 +239,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     // following the spec: http://docs.python.org/ref/calls.html
     PyCallExpression call = getCallExpression();
     if (call != null) {
-      PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee();
+      PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee(context);
       if (resolved_callee != null) {
         ret.mapArguments(arguments, resolved_callee);
       }
