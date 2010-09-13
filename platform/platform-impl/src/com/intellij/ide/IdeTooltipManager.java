@@ -246,6 +246,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return useGraphite(awtTooltip) ? Color.white : UIManager.getColor("ToolTip.foreground");
   }
 
+  public Color getLinkForeground(boolean awtTooltip) {
+    return useGraphite(awtTooltip) ? new Color(209, 209, 255) : Color.blue;
+  }
+
   public Color getTextBackground(boolean awtTooltip) {
     return useGraphite(awtTooltip) ? new Color(100, 100, 100, 230) : UIManager.getColor("ToolTip.background");
   }
@@ -332,4 +336,5 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       hideCurrent(null);
     }
   }
+
 }

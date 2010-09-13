@@ -1006,12 +1006,15 @@ public class UIUtil {
 
   @NonNls
   public static String getCssFontDeclaration(final Font font) {
-    return getCssFontDeclaration(font, null);
+    return getCssFontDeclaration(font, null, null);
   }
 
   @NonNls
-  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor) {
-    return "<style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + " } </style>";
+  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor) {
+    String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
+    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "") : "") + "}";
+    return "<style> " + body + " " + link + "</style>";
   }
 
   public static boolean isWinLafOnVista() {
