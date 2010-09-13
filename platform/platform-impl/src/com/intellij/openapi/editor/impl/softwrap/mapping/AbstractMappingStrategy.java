@@ -130,7 +130,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   }
 
   @Nullable
-  protected abstract T buildIfExceeds(ProcessingContext context, FoldRegion foldRegion);
+  protected abstract T buildIfExceeds(@NotNull ProcessingContext context, @NotNull FoldRegion foldRegion);
 
   @Override
   public T processTabulation(ProcessingContext context, TabData tabData) {
