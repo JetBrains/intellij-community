@@ -4804,7 +4804,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public int getPriority() {
-      return 5;
+      return EditorDocumentPriorities.EDITOR_DOCUMENT_ADAPTER;
     }
   }
 

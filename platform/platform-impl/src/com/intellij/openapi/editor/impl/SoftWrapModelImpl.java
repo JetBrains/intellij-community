@@ -45,7 +45,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
+public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener {
 
   /** Upper boundary of time interval to check editor settings. */
   private static final long EDITOR_SETTINGS_CHECK_PERIOD_MILLIS = 10000;
@@ -412,6 +412,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
   @Override
   public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
     return myStorage.addSoftWrapChangeListener(listener);
+  }
+
+  @Override
+  public int getPriority() {
+    return EditorDocumentPriorities.SOFT_WRAP_MODEL;
   }
 
   @Override

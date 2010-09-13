@@ -380,6 +380,34 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       entry.locked = false;
     }
     applyStateChange();
+
+
+    //Document document = myEditor.getDocument();
+    //CharSequence text = document.getCharsSequence();
+    //System.out.println("--------------------------------------------------");
+    //System.out.println("|");
+    //System.out.println("|");
+    //System.out.println(text);
+    //System.out.println("-  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -");
+    //System.out.println("text length: " + text.length() + ", soft wraps: " + myStorage.getSoftWraps());
+    //for (int i = 0; i < myCache.size(); i++) {
+    //  CacheEntry entry = myCache.get(i);
+    //  System.out.printf("line %d. %d-%d: '%s'%n", i, entry.startOffset, entry.endOffset,
+    //                    text.subSequence(entry.startOffset,Math.min(entry.endOffset, text.length())));
+    //}
+    //
+    //for (CacheEntry cacheEntry : myCache) {
+    //  if (cacheEntry.startOffset > 0) {
+    //    if (text.charAt(cacheEntry.startOffset - 1) != '\n' && myStorage.getSoftWrap(cacheEntry.startOffset) == null) {
+    //      assert false;
+    //    }
+    //  }
+    //  if (cacheEntry.endOffset < document.getTextLength()) {
+    //    if (text.charAt(cacheEntry.endOffset) != '\n' && myStorage.getSoftWrap(cacheEntry.endOffset) == null) {
+    //      assert false;
+    //    }
+    //  }
+    //}
   }
 
   /**
@@ -405,9 +433,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     int offsetsDiff = (myAfterChangeState.endOffset - myAfterChangeState.startOffset)
                       - (myBeforeChangeState.endOffset - myBeforeChangeState.startOffset);
 
-    int cacheIndex = myAfterChangeState.endCacheEntryIndex;
-    for (int i = cacheIndex + 1; i < myCache.size(); i++) {
-      CacheEntry cacheEntry = myCache.get(i);
+    if (myNotAffectedByUpdateTailCacheEntries.isEmpty()) {
+      return;
+    }
+
+    for (CacheEntry cacheEntry : myNotAffectedByUpdateTailCacheEntries) {
       cacheEntry.visualLine += visualLinesDiff;
       cacheEntry.startLogicalLine += logicalLinesDiff;
       cacheEntry.endLogicalLine += logicalLinesDiff;
@@ -418,11 +448,12 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       cacheEntry.endFoldedLines += foldedLinesDiff;
     }
 
-    if (offsetsDiff == 0) {
+    int offset = myNotAffectedByUpdateTailCacheEntries.get(0).startOffset + 1/* in order to exclude soft wrap from previous line if any*/;
+    if (offsetsDiff == 0 || offset >= myEditor.getDocument().getTextLength()) {
       return;
     }
 
-    int softWrapIndex = myStorage.getSoftWrapIndex(myCache.get(cacheIndex).startOffset);
+    int softWrapIndex = myStorage.getSoftWrapIndex(offset);
     if (softWrapIndex < 0) {
       softWrapIndex = -softWrapIndex - 1;
     }

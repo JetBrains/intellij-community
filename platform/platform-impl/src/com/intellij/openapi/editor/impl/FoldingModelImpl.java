@@ -437,7 +437,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public int getPriority() {
-    return 1;
+    return EditorDocumentPriorities.FOLD_MODEL;
   }
 
   public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group) {

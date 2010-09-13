@@ -512,7 +512,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   public int getPriority() {
-    return 3;
+    return EditorDocumentPriorities.CARET_MODEL;
   }
 
   private void setCurrentLogicalCaret(LogicalPosition position) {
