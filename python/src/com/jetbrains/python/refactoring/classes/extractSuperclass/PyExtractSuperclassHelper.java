@@ -16,6 +16,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.NameSuggestorUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 
@@ -101,9 +102,12 @@ public class PyExtractSuperclassHelper {
         filename = constructFilename(newClass);
       }
       try {
+        final boolean shouldCreateInit = VirtualFileManager.getInstance().findFileByUrl(VfsUtil.pathToUrl(path)) == null;
         final VirtualFile dir = VfsUtil.createDirectoryIfMissing(path);
         psiDir = dir != null ? PsiManager.getInstance(project).findDirectory(dir) : null;
         psiFile = psiDir != null ? psiDir.createFile(filename) : null;
+        //noinspection ConstantConditions
+        createInitIfNeeded(psiDir, shouldCreateInit, NameSuggestorUtil.toUnderscoreCase(newClass.getName()));
       } catch (IOException e) {
         LOG.error(e);
       }
@@ -126,8 +130,17 @@ public class PyExtractSuperclassHelper {
     return newClass;
   }
 
+  private static void createInitIfNeeded(PsiDirectory psiDir, boolean shouldCreateInit, String filename) {
+    if (psiDir != null && shouldCreateInit) {
+      final PsiFile psiFile = psiDir.createFile(PyNames.INIT_DOT_PY);
+      final PyElementGenerator gen = PyElementGenerator.getInstance(psiDir.getProject());
+      final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + filename + "\"]");
+      psiFile.add(statement);
+    }
+  }
+
   private static String constructFilename(PyClass newClass) {
     //noinspection ConstantConditions
-    return newClass.getName().toLowerCase() + "." + PythonFileType.INSTANCE.getDefaultExtension();
+    return NameSuggestorUtil.toUnderscoreCase(newClass.getName()) + "." + PythonFileType.INSTANCE.getDefaultExtension();
   }
 }
