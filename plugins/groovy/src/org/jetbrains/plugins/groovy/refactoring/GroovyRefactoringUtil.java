@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
@@ -383,31 +382,6 @@ public abstract class GroovyRefactoringUtil {
     if (!(statement instanceof GrConstructorInvocation)) return false;
     GrConstructorInvocation expr = (GrConstructorInvocation) statement;
     return (testForSuper && expr.isSuperCall()) || (testForThis && expr.isThisCall());
-  }
-
-  public static Collection<GrReturnStatement> findReturnStatements(PsiElement element) {
-    ArrayList<GrReturnStatement> vector = new ArrayList<GrReturnStatement>();
-    if (element instanceof GrMethod) {
-      GrOpenBlock block = ((GrMethod) element).getBlock();
-      if (block != null) {
-        addReturnStatements(vector, block);
-      }
-    } else {
-      addReturnStatements(vector, element);
-    }
-    return vector;
-  }
-
-  private static void addReturnStatements(ArrayList<GrReturnStatement> vector, PsiElement element) {
-    if (element instanceof GrReturnStatement) {
-      vector.add((GrReturnStatement) element);
-    } else if (!(element instanceof PsiClass ||
-        element instanceof GrClosableBlock)) {
-      PsiElement[] children = element.getChildren();
-      for (PsiElement child : children) {
-        addReturnStatements(vector, child);
-      }
-    }
   }
 
   public static boolean hasWrongBreakStatements(PsiElement element) {

@@ -139,11 +139,15 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     assertNotNull(resolved);
   }
 
-  private void doTest() throws Exception {
+  public void testClassVsPropertyGetter() {
+    doTest();
+  }
+
+  private void doTest() {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }
 
-  private void doTest(String fileName) throws Exception {
+  private void doTest(String fileName) {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiClass);

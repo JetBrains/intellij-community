@@ -39,8 +39,10 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Processor;
@@ -144,7 +146,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (highlighters.isEmpty()) return false;
     TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
     if (bigRenderer != null) {
-      showTooltip(e, bigRenderer);
+      showTooltip(e, bigRenderer, new HintHint(e).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft));
       return true;
     }
     return false;
@@ -596,7 +598,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           }
         });
       }
-      showTooltip(e, myTrafficTooltipRenderer);
+      showTooltip(e, myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft));
     }
 
     private void repaintTrafficTooltip() {
@@ -635,11 +637,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject) {
+  private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject, HintHint hintHint) {
     TooltipController tooltipController = TooltipController.getInstance();
     tooltipController.showTooltipByMouseMove(myEditor, e, tooltipObject,
                                              myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
-                                             ERROR_STRIPE_TOOLTIP_GROUP);
+                                             ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
   }
 
   private ErrorStripeListener[] getCachedErrorMarkerListeners() {
@@ -722,7 +724,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         @Override
-        public LightweightHint show(Editor editor, Point p, boolean alignToRight, TooltipGroup group) {
+        public LightweightHint show(Editor editor, Point p, boolean alignToRight, TooltipGroup group, HintHint hintHint) {
           JLabel label = new JLabel("WTF");
           return new LightweightHint(label){
             @Override

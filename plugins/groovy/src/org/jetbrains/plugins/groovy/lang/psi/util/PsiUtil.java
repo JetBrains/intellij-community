@@ -28,7 +28,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -52,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
@@ -951,7 +949,9 @@ public class PsiUtil {
     return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
   }
 
-  public static PsiElement skipParentheses(PsiElement element, boolean up) {
+  @Nullable
+  public static PsiElement skipParentheses(@Nullable PsiElement element, boolean up) {
+    if (element == null) return null;
     if (up) {
       PsiElement parent;
       while ((parent=element.getParent()) instanceof GrParenthesizedExpression) {
@@ -967,40 +967,11 @@ public class PsiUtil {
     }
   }
 
-  public static List<GrReturnStatement> collectReturns(PsiElement element) {
-    class ArrayListConsumer extends ArrayList<GrReturnStatement> implements Consumer<GrReturnStatement> {
-
-      @Override
-      public void consume(GrReturnStatement grReturnStatement) {
-        add(grReturnStatement);
-      }
-    }
-    ArrayListConsumer res = new ArrayListConsumer();
-    collectReturns(element, res);
-
-    return res;
+  public static GrReturnStatement[] collectReturns(GrClosableBlock closure) {
+    return new GrReturnStatement[0];  // TODO Mr. Medvedev
   }
 
-  public static void collectReturns(PsiElement element, Consumer<GrReturnStatement> consumer) {
-    if (element instanceof GrReturnStatement) {
-      consumer.consume((GrReturnStatement) element);
-    } else {
-      PsiElement child = element.getFirstChild();
-      while(child != null) {
-        collectReturns(child, consumer);
-        child = child.getNextSibling();
-      }
-    }
-  }
-
-  @Nullable
-  public static GrStatement getLastStatement(@NotNull GrCodeBlock block) {
-    for (PsiElement element = block.getLastChild(); element != null; element = element.getPrevSibling()) {
-      if (element instanceof GrStatement) {
-        return (GrStatement)element;
-      }
-    }
-
-    return null;
+  public static GrStatement getLastStatement(GrClosableBlock closure) {
+    return null; // TODO Mr. Medvedev
   }
 }

@@ -88,12 +88,33 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
                                                       parameterInfo.getTypeWrapper().getType(element, element.getManager()),
                                                       oldParameterIndex == -1 ? "intellijidearulezzz" : "");
           }
+          if (info.isReturnTypeChanged()) {
+            final String visibility = info.getNewVisibility();
+            if (Comparing.strEqual(visibility, PsiModifier.PRIVATE) &&
+                !info.isArrayToVarargs() &&
+                !info.isExceptionSetOrOrderChanged() &&
+                !info.isExceptionSetChanged() &&
+                !info.isNameChanged() &&
+                !info.isParameterSetOrOrderChanged() &&
+                !info.isParameterNamesChanged() &&
+                !info.isParameterTypesChanged()) {
+              return null;
+            }
+          }
           final MyJavaChangeInfo javaChangeInfo =
             new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, info.getNewExceptions(), info.getOldName()) {
               @Override
               protected void fillOldParams(PsiMethod method) {
                 oldParameterNames = info.getOldParameterNames();
                 oldParameterTypes = info.getOldParameterTypes();
+                if (!method.isConstructor()) {
+                  try {
+                    isReturnTypeChanged = info.isReturnTypeChanged || !info.getNewReturnType().equals(newReturnType);
+                  }
+                  catch (IncorrectOperationException e) {
+                    isReturnTypeChanged = true;
+                  }
+                }
               }
             };
           javaChangeInfo.setSuperMethod(info.getSuperMethod());
@@ -139,6 +160,12 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     if (changeInfo instanceof MyJavaChangeInfo) {
       final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
       final PsiMethod method = info.getSuperMethod();
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        temporallyRevertChanges(method, oldText);
+        createChangeSignatureProcessor(info, method).run();
+        return true;
+      }
       final JavaChangeSignatureDialog dialog =
         new JavaChangeSignatureDialog(method.getProject(), new JavaMethodDescriptor(info.getMethod()) {
           @Override
@@ -147,16 +174,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
           }
         }, true, method) {
           protected BaseRefactoringProcessor createRefactoringProcessor() {
-            return new ChangeSignatureProcessor(myProject, new MyJavaChangeInfo(info.getNewVisibility(), info.getSuperMethod(),
-                                                                                info.getNewReturnType(),
-                                                                                (ParameterInfoImpl[])info.getNewParameters(),
-                                                                                info.getNewExceptions(), info.getOldName()) {
-              @Override
-              protected void fillOldParams(PsiMethod method) {
-                oldParameterNames = info.getOldParameterNames();
-                oldParameterTypes = info.getOldParameterTypes();
-              }
-            });
+            return createChangeSignatureProcessor(info, method);
           }
 
           @Override
@@ -164,18 +182,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
             CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
               @Override
               public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    final PsiFile file = method.getContainingFile();
-                    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
-                    final Document document = documentManager.getDocument(file);
-                    if (document != null) {
-                      document.setText(oldText);
-                      documentManager.commitDocument(document);
-                    }
-                  }
-                });
+                temporallyRevertChanges(method, oldText);
                 doRefactor(processor);
               }
             }, RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(info.getMethod())), null);
@@ -190,6 +197,36 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     }
     return false;
 
+  }
+
+  private static void temporallyRevertChanges(final PsiMethod method, final String oldText) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        final PsiFile file = method.getContainingFile();
+        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(method.getProject());
+        final Document document = documentManager.getDocument(file);
+        if (document != null) {
+          document.setText(oldText);
+          documentManager.commitDocument(document);
+        }
+      }
+    });
+  }
+
+  private static ChangeSignatureProcessor createChangeSignatureProcessor(final MyJavaChangeInfo info,
+                                                                         final PsiMethod method) {
+    return new ChangeSignatureProcessor(method.getProject(), new MyJavaChangeInfo(info.getNewVisibility(), info.getSuperMethod(),
+                                                                           info.getNewReturnType(),
+                                                                           (ParameterInfoImpl[])info.getNewParameters(),
+                                                                           info.getNewExceptions(), info.getOldName()) {
+      @Override
+      protected void fillOldParams(PsiMethod method) {
+        super.fillOldParams(method);
+        oldParameterNames = info.getOldParameterNames();
+        oldParameterTypes = info.getOldParameterTypes();
+      }
+    });
   }
 
   @Override

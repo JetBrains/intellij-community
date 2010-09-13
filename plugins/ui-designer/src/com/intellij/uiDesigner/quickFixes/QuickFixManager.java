@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -162,7 +163,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     final LightBulbComponentImpl lightBulbComponent = new LightBulbComponentImpl(this, myIcon);
     myHint = new LightweightHint(lightBulbComponent);
     myLastHintBounds = bounds;
-    myHint.show(myComponent, bounds.x - myIcon.getIconWidth() - 4, bounds.y, myComponent);
+    myHint.show(myComponent, bounds.x - myIcon.getIconWidth() - 4, bounds.y, myComponent, new HintHint(myComponent, bounds.getLocation()));
   }
 
   private void updateIntentionHintPosition(final JViewport viewPort) {

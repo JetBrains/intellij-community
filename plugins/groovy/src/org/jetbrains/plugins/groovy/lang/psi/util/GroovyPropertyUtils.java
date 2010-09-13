@@ -269,10 +269,18 @@ public class GroovyPropertyUtils {
    * @return getter names
    */
   public static String[] suggestGettersName(@NotNull String name) {
+    if (!isPropertyName(name)) return ArrayUtil.EMPTY_STRING_ARRAY;
     return new String[]{getGetterNameBoolean(name), getGetterNameNonBoolean(name)};
   }
 
+  public static boolean isPropertyName(String name) {
+    if (name.length() == 0) return false;
+    if (Character.isUpperCase(name.charAt(0)) && (name.length() == 1 || !Character.isUpperCase(name.charAt(1)))) return false;
+    return true;
+  }
+
   public static String[] suggestSettersName(@NotNull String name) {
+    if (!isPropertyName(name)) return ArrayUtil.EMPTY_STRING_ARRAY;
     return new String[]{getSetterName(name)};
   }
 

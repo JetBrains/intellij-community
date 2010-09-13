@@ -33,7 +33,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings({"OverlyComplexClass"})
 public class ControlFlowUtils {
@@ -436,6 +440,45 @@ public class ControlFlowUtils {
       }
     }
     return false;
+  }
+
+  public static List<GrStatement> collectReturns(PsiElement element) {
+    return collectReturns(element, element instanceof GrCodeBlock);
+  }
+  public static List<GrStatement> collectReturns(PsiElement element, final boolean allExitPoints) {
+    final Instruction[] flow;
+    if (element instanceof GrCodeBlock) {
+      flow = ((GrCodeBlock)element).getControlFlow();
+    }
+    else {
+      flow = new ControlFlowBuilder(element.getProject()).buildControlFlow(
+        (GroovyPsiElement)element, null, null);
+    }
+    boolean[] visited = new boolean[flow.length];
+    final List<GrStatement> res = new ArrayList<GrStatement>();
+    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, new ExitPointVisitor() {
+      @Override
+      public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+        final PsiElement element = instruction.getElement();
+        if (allExitPoints) {
+          if (element instanceof GrStatement) {
+            res.add((GrStatement)element);
+          }
+        }
+        else if (element instanceof GrReturnStatement) {
+          res.add(((GrReturnStatement)element));
+        }
+        return true;
+      }
+    });
+    return res;
+  }
+
+  @Nullable
+  public static GrExpression extractReturnExpression(GrStatement returnStatement) {
+    if (returnStatement instanceof GrReturnStatement) return ((GrReturnStatement)returnStatement).getReturnValue();
+    if (returnStatement instanceof GrExpression) return (GrExpression)returnStatement;
+    return null;
   }
 
   private static class ReturnFinder extends GroovyRecursiveElementVisitor {

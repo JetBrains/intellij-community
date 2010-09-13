@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.forloop;
 
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ExpressionUtils;
 import com.siyeh.ipp.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
@@ -112,17 +113,23 @@ public class ReverseForLoopDirectionIntention extends Intention {
             conditionText.append(negatedSign);
             if (sign == JavaTokenType.GE) {
                 conditionText.append(incrementExpression(initializer, true));
+            } else if (sign == JavaTokenType.LE) {
+                conditionText.append(incrementExpression(initializer, false));
             } else {
                 conditionText.append(initializer.getText());
             }
             if (sign == JavaTokenType.LT) {
                 newInitializerText.append(incrementExpression(rhs, false));
+            } else if (sign == JavaTokenType.GT) {
+                newInitializerText.append(incrementExpression(rhs, true));
             } else {
                 newInitializerText.append(rhs.getText());
             }
         } else if (VariableAccessUtils.evaluatesToVariable(rhs, variable)) {
             if (sign == JavaTokenType.LE) {
                 conditionText.append(incrementExpression(initializer, true));
+            } else if (sign == JavaTokenType.GE) {
+                conditionText.append(incrementExpression(initializer, false));
             } else {
                 conditionText.append(initializer.getText());
             }
@@ -130,6 +137,8 @@ public class ReverseForLoopDirectionIntention extends Intention {
             conditionText.append(variableName);
             if (sign == JavaTokenType.GT) {
                 newInitializerText.append(incrementExpression(lhs, false));
+            } else if (sign == JavaTokenType.LT) {
+                newInitializerText.append(incrementExpression(lhs, true));
             } else {
                 newInitializerText.append(lhs.getText());
             }
@@ -154,11 +163,26 @@ public class ReverseForLoopDirectionIntention extends Intention {
                 return null;
             }
             if (positive) {
-                return String.valueOf(value.longValue() + 1);
+                return String.valueOf(value.longValue() + 1L);
             } else {
-                return String.valueOf(value.longValue() - 1);
+                return String.valueOf(value.longValue() - 1L);
             }
         } else {
+            if (expression instanceof PsiBinaryExpression) {
+                // see if we can remove a -1 instead of adding a +1
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) expression;
+                final PsiExpression rhs = binaryExpression.getROperand();
+                if (ExpressionUtils.isOne(rhs)) {
+                    final IElementType tokenType =
+                            binaryExpression.getOperationTokenType();
+                    if (tokenType == JavaTokenType.MINUS && positive)  {
+                        return binaryExpression.getLOperand().getText();
+                    } else if (tokenType == JavaTokenType.PLUS && !positive) {
+                        return binaryExpression.getLOperand().getText();
+                    }
+                }
+            }
             final String expressionText;
             if (ParenthesesUtils.getPrecedence(expression) >
                     ParenthesesUtils.ADDITIVE_PRECEDENCE) {

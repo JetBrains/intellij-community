@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +44,7 @@ public class HeavyweightHint implements Hint {
   /**
    * Shows the hint as the window
    */
-  public void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent) {
+  public void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent, @NotNull HintHint hintInfo) {
     myParentComponent = parentComponent;
     LOG.assertTrue(parentComponent.isShowing());
 
