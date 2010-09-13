@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.execution.ExecutionException;
 import com.jetbrains.python.fixtures.PyCommandLineTestCase;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -15,7 +14,7 @@ import java.util.List;
 public class PythonRunConfigurationTest extends PyCommandLineTestCase {
   private static final String PY_SCRIPT = "foo.py";
 
-  public void testUnitTestCommandLine() throws ExecutionException {
+  public void testUnitTestCommandLine() {
     PythonUnitTestRunConfiguration configuration = createConfiguration(PythonUnitTestConfigurationType.getInstance(),
                                                                        PythonUnitTestRunConfiguration.class);
     configuration.setScriptName(PY_SCRIPT);
@@ -24,16 +23,12 @@ public class PythonRunConfigurationTest extends PyCommandLineTestCase {
     assertTrue(params.get(1).equals(PY_SCRIPT));
   }
 
-  public void testDebugCommandLine() throws ExecutionException {
+  public void testDebugCommandLine() {
     PythonRunConfiguration configuration = createConfiguration(PythonConfigurationType.getInstance(),
                                                                PythonRunConfiguration.class);
     configuration.setScriptName(PY_SCRIPT);
     final List<String> params = buildDebugCommandLine(configuration);
-    assertEquals(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"), params.get(0));
-    assertEquals("--client", params.get(1));
-    assertEquals("--port", params.get(3));
-    assertEquals("" + PORT, params.get(4));
-    assertEquals("--file", params.get(5));
-    assertEquals(PY_SCRIPT, params.get(6));
+    final int index = verifyPyDevDParameters(params);
+    assertEquals(PY_SCRIPT, params.get(index));
   }
 }
