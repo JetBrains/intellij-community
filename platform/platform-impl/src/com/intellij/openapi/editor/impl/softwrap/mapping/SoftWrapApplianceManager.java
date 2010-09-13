@@ -436,7 +436,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
     // Drop information about processed lines then.
     myDirtyRegions.clear();
-    myDirtyRegions.add(new DirtyRegion(0, myEditor.getDocument().getTextLength()));
+    myDirtyRegions.add(new DirtyRegion(0, myEditor.getDocument().getTextLength() - 1));
     myStorage.removeAll();
     myVisibleAreaWidth = currentVisibleAreaWidth;
   }

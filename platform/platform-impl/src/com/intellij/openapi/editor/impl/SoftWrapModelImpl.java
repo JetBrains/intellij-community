@@ -47,6 +47,9 @@ import java.util.List;
  */
 public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
+  /** Upper boundary of time interval to check editor settings. */
+  private static final long EDITOR_SETTINGS_CHECK_PERIOD_MILLIS = 10000;
+
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
 
   private final CachingSoftWrapDataMapper myDataMapper;
@@ -56,7 +59,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
 
   private final EditorEx myEditor;
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
-  private       int      myActive;
+  private int myActive;
+  /** Holds timestamp of the last editor settings check. */
+  private long myLastSettingsCheckTimeMillis;
+  private boolean myLastUseSoftWraps;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
     this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
@@ -92,7 +98,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, DocumentListener {
   }
 
   public boolean isSoftWrappingEnabled() {
-    return myEditor.getSettings().isUseSoftWraps() && !myEditor.isOneLineMode();
+    if (myEditor.isOneLineMode()) {
+      return false;
+    }
+
+    // Profiling shows that editor settings lookup have impact at overall performance if called often.
+    // Hence, we cache value used last time.
+    if (System.currentTimeMillis() - myLastSettingsCheckTimeMillis <= EDITOR_SETTINGS_CHECK_PERIOD_MILLIS) {
+      return myLastUseSoftWraps;
+    }
+    myLastSettingsCheckTimeMillis = System.currentTimeMillis();
+    return myLastUseSoftWraps = myEditor.getSettings().isUseSoftWraps();
   }
 
   @Nullable

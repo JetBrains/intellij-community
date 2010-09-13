@@ -107,7 +107,7 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   }
 
   @Override
-  protected VisualPosition buildIfExceeds(ProcessingContext context, FoldRegion foldRegion) {
+  protected VisualPosition buildIfExceeds(@NotNull ProcessingContext context, @NotNull FoldRegion foldRegion) {
     int foldEndLine = myEditor.getDocument().getLineNumber(foldRegion.getEndOffset());
     if (myTargetLogical.line > foldEndLine) {
       return null;

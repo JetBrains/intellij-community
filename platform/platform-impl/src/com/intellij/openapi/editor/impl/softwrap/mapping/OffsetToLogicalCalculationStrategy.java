@@ -83,7 +83,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   }
 
   @Override
-  protected LogicalPosition buildIfExceeds(ProcessingContext context, FoldRegion foldRegion) {
+  protected LogicalPosition buildIfExceeds(@NotNull ProcessingContext context, @NotNull FoldRegion foldRegion) {
     if (myTargetOffset >= foldRegion.getEndOffset()) {
       return null;
     }

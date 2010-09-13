@@ -112,7 +112,7 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   }
 
   @Override
-  protected LogicalPosition buildIfExceeds(ProcessingContext context, FoldRegion foldRegion) {
+  protected LogicalPosition buildIfExceeds(@NotNull ProcessingContext context, @NotNull FoldRegion foldRegion) {
     // We assume that fold region placeholder contains only 'simple' symbols, i.e. symbols that occupy single visual column.
     String placeholder = foldRegion.getPlaceholderText();
 
