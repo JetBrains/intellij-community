@@ -52,11 +52,7 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
     doTest("multiMove", new String[]{"a/Script.groovy", "a/Script2.groovy"}, "b");
   }
 
-  public void testScriptWithClasses() {
-    doTest("scriptWithClasses", new String[]{"a/Foo.groovy"}, "b");
-  }
-
-  private void performAction(String[] fileNames, String newDirName, String dir) {
+  private void performAction(String[] fileNames, String newDirName, String dir) throws Exception {
     final PsiFile[] files = new PsiFile[fileNames.length];
     for (int i = 0; i < files.length; i++) {
       String fileName = fileNames[i];
@@ -85,7 +81,7 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
-  private void doTest(String testName, String[] fileNames, String newDirName) {
+  private void doTest(String testName, String[] fileNames, String newDirName) throws Exception {
     final VirtualFile actualRoot = myFixture.copyDirectoryToProject(testName + "/before", "");
 
     performAction(fileNames, newDirName, VfsUtil.getRelativePath(actualRoot, myFixture.getTempDirFixture().getFile(""), '/'));

@@ -326,7 +326,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     Boolean isScript = myScript;
     if (isScript == null) {
       final GrTopStatement[] topStatements = findChildrenByClass(GrTopStatement.class);
-      isScript = Boolean.FALSE;
+      isScript = topStatements.length == 0;
       for (GrTopStatement st : topStatements) {
         if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition)) {
           isScript = Boolean.TRUE;
