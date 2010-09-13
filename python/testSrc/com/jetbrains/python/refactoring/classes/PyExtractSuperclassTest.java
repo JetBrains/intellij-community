@@ -13,14 +13,18 @@ import java.util.List;
  */
 public class PyExtractSuperclassTest extends PyClassRefactoringTest {
   public void testSimple() throws Exception {
-    doHelperTest("Foo", "Suppa", null, ".foo");
+    doHelperTest("Foo", "Suppa", null, true, ".foo");
   }
 
   public void testWithSuper() throws Exception {
-    doHelperTest("Foo", "Suppa", null, ".foo");
+    doHelperTest("Foo", "Suppa", null, true, ".foo");
   }
 
-  private void doHelperTest(final String className, final String superclassName, final String expectedError, final String... membersName) throws Exception {
+  public void testWithImport() throws Exception {
+    doHelperTest("A", "Suppa", null, false, ".foo");
+  }
+
+  private void doHelperTest(final String className, final String superclassName, final String expectedError, final boolean sameFile, final String... membersName) throws Exception {
     try {
     String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
     myFixture.configureByFile(baseName + ".before.py");
@@ -36,7 +40,9 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
       @Override
       protected void run() throws Throwable {
         //noinspection ConstantConditions
-        PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, myFixture.getFile().getVirtualFile().getUrl());
+        final String url = sameFile ? myFixture.getFile().getVirtualFile().getUrl() :
+                                      myFixture.getFile().getVirtualFile().getParent().getUrl();
+        PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, url);
       }
     }.execute();
     myFixture.checkResultByFile(baseName + ".after.py");

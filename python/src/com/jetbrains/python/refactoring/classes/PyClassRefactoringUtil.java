@@ -3,12 +3,10 @@ package com.jetbrains.python.refactoring.classes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.util.containers.*;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.AddImportHelper;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -19,7 +17,6 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.HashSet;
 
 /**
  * @author Dennis.Ushakov
@@ -106,6 +103,7 @@ public class PyClassRefactoringUtil {
 
   public static void moveMethods(List<PyFunction> methods, PyClass superClass) {
     if (methods.size() == 0) return;
+    rememberNamedReferences(methods);
     final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
     addMethods(superClass, elements, true);
     removeMethodsWithComments(elements);
@@ -130,98 +128,95 @@ public class PyClassRefactoringUtil {
 
   public static void addMethods(final PyClass superClass, final PyElement[] elements, final boolean up) {
     if (elements.length == 0) return;
-    final Project project = superClass.getProject();
-    final String text = prepareClassText(superClass, elements, up, false, null);
-
-    if (text == null) return;
-
-    final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
     final PyStatementList statements = superClass.getStatementList();
-    final PyStatementList newStatements = newClass.getStatementList();
-    if (statements.getStatements().length != 0) {
-      for (PyElement newStatement : newStatements.getStatements()) {
-        if (newStatement instanceof PyExpressionStatement && newStatement.getFirstChild() instanceof PyStringLiteralExpression) continue;
-        final PsiElement anchor = statements.add(newStatement);
-        final Set<PsiElement> comments = PyUtil.getComments(newStatement);
-        for (PsiElement comment : comments) {
-          statements.addBefore(comment, anchor);
+    for (PyElement newStatement : elements) {
+      if (up && newStatement instanceof PyFunction) {
+        final String name = newStatement.getName();
+        if (name != null && superClass.findMethodByName(name, false) != null) {
+          continue;
         }
       }
-    } else {
-      statements.replace(newStatements);
+      if (newStatement instanceof PyExpressionStatement && newStatement.getFirstChild() instanceof PyStringLiteralExpression) continue;
+      final PsiElement anchor = statements.add(newStatement);
+      restoreReferences((PyElement)anchor);
+      final Set<PsiElement> comments = PyUtil.getComments(newStatement);
+      for (PsiElement comment : comments) {
+        statements.addBefore(comment, anchor);
+      }
+    }
+    PyPsiUtils.removeRedundantPass(statements);
+  }
+
+  private static void restoreReferences(PyElement newStatement) {
+    newStatement.acceptChildren(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(PyReferenceExpression node) {
+        super.visitPyReferenceExpression(node);
+        restoreReference(node);
+      }
+    });
+  }
+
+  private static void restoreReference(final PyReferenceExpression node) {
+    PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
+    if (target instanceof PsiDirectory) {
+      target = (PsiNamedElement)PyUtil.turnDirIntoInit(target);
+    }
+    if (target == null) return;
+    if (PyBuiltinCache.getInstance(target).hasInBuiltins(target)) return;
+    if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
+    AddImportHelper.addImport(target, node.getContainingFile(), node);
+    node.putCopyableUserData(ENCODED_IMPORT, null);
+  }
+
+  public static void insertImport(PyClass target, Collection<PyClass> newClasses) {
+    for (PyClass newClass : newClasses) {
+      insertImport(target, newClass);
     }
   }
 
-  @Nullable
-  public static String prepareClassText(PyClass superClass, PyElement[] elements, boolean up, boolean ignoreNoChanges, final String preparedClassName) {
-    PsiElement sibling = superClass.getPrevSibling();
-    final String white = sibling != null ? "\n" + sibling.getText() + "    ": "\n    ";
-    final StringBuilder builder = new StringBuilder("class ");
-    if (preparedClassName != null) {
-      builder.append(preparedClassName).append(":");
-    } else {
-      builder.append("Foo").append(":");
-    }
-    boolean hasChanges = false;
-    for (PyElement element : elements) {
-      final String name = element.getName();
-      if (name != null && (up || superClass.findMethodByName(name, false) == null)) {
-        final Set<PsiElement> comments = PyUtil.getComments(element);
-        for (PsiElement comment : comments) {
-          builder.append(white).append(comment.getText());
-        }
-        builder.append(white).append(element.getText()).append("\n");
-        hasChanges = true;
-      }
-    }
-    if (ignoreNoChanges && !hasChanges) {
-      builder.append(white).append("pass");
-    }
-    return ignoreNoChanges || hasChanges ? builder.toString() : null;
-  }
-
-  public static void insertImport(PyClass target, PyClass newClass) {
+  private static void insertImport(PyClass target, PyClass newClass) {
     if (PyBuiltinCache.getInstance(newClass).hasInBuiltins(newClass)) return;
     final PsiFile newFile = newClass.getContainingFile();
     final VirtualFile vFile = newFile.getVirtualFile();
     assert vFile != null;
     final PsiFile file = target.getContainingFile();
     if (newFile == file) return;
-    if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
-      final String name = newClass.getQualifiedName();
-      AddImportHelper.addImportStatement(file, name, null);
+    final String importableName = ResolveImportUtil.findShortestImportableName(target, vFile);
+    if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT || newClass instanceof PyFile) {
+      if (newClass instanceof PyFile) {
+        AddImportHelper.addImportStatement(file, importableName, null);
+      } else {
+        final String name = newClass.getName();
+        AddImportHelper.addImportStatement(file, importableName + "." + name, null);
+      }
     } else {
-      AddImportHelper.addImportFrom(file, ResolveImportUtil.findShortestImportableName(target, vFile), newClass.getName());
+      AddImportHelper.addImportFrom(file, importableName, newClass.getName());
     }
   }
 
-  public static Set<PyClass> rememberClassReferences(final List<PyFunction> methods, final Collection<PyClass> extraClasses) {
-    final HashSet<PyClass> result = new HashSet<PyClass>(extraClasses);
+  private static void rememberNamedReferences(final List<PyFunction> methods) {
     for (PyFunction method : methods) {
       method.acceptChildren(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyReferenceExpression(PyReferenceExpression node) {
           super.visitPyReferenceExpression(node);
-          final PsiPolyVariantReference ref = node.getReference();
-          final PsiElement target = ref.resolve();
-          if (target instanceof PyClass) {
-            result.add((PyClass)target);
-          }
+          rememberReference(node);
         }
       });
     }
-    return result;
   }
 
-  public static void restoreImports(final PyClass target, final Set<PyClass> rememberedSet) {
-    for (PyClass clazz : rememberedSet) {
-      insertImport(target, clazz);
-    }
-  }
 
-  public static void restoreImports(final PyClass target, final PyClass origin, final Set<PyClass> rememberedSet) {
-    if (target.getContainingFile() != origin.getContainingFile()) {
-      restoreImports(target, rememberedSet);
+  private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
+  private static void rememberReference(PyReferenceExpression node) {
+    // we will remember reference in deepest node
+    if (node.getQualifier() instanceof PyReferenceExpression) return;
+
+    final PsiPolyVariantReference ref = node.getReference();
+    final PsiElement target = ref.resolve();
+    if (target instanceof PsiNamedElement) {
+      node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
     }
   }
 }

@@ -32,7 +32,7 @@ public class PyPullUpHelper {
       }
       else LOG.error("unmatched member class " + element.getClass());
     }
-    final Set<PyClass> rememberedSet = PyClassRefactoringUtil.rememberClassReferences(methods, extractedClasses);
+    
     CommandProcessor.getInstance().executeCommand(clazz.getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -42,10 +42,8 @@ public class PyPullUpHelper {
 
             // move superclasses declarations
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, superClass);
-
+            PyClassRefactoringUtil.insertImport(superClass, extractedClasses);
             PyClassRefactoringUtil.insertPassIfNeeded(clazz);
-
-            PyClassRefactoringUtil.restoreImports(superClass, clazz, rememberedSet);
           }
         });
       }

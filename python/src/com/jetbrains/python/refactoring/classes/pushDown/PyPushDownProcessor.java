@@ -77,7 +77,6 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
       }
       else LOG.error("unmatched member class " + element.getClass());
     }
-    final Set<PyClass> rememberedSet = PyClassRefactoringUtil.rememberClassReferences(methods, extractedClasses);
     final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
 
     final List<PyExpression> superClassesElements = PyClassRefactoringUtil.removeAndGetSuperClasses(myClass, superClasses);
@@ -86,7 +85,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
       final PyClass targetClass = (PyClass)usage.getElement();
       PyClassRefactoringUtil.addMethods(targetClass, elements, false);
       PyClassRefactoringUtil.addSuperclasses(myClass.getProject(), targetClass, superClassesElements, superClasses);
-      PyClassRefactoringUtil.restoreImports(targetClass, myClass, rememberedSet);
+      PyClassRefactoringUtil.insertImport(targetClass, extractedClasses);
     }
 
     if (methods.size() != 0) {
