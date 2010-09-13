@@ -286,6 +286,14 @@ public class ResolveImportUtil {
     final Module module = ModuleUtil.findModuleForPsiElement(foothold);
     if (module != null) {
       cache = PythonPathCache.getInstance(module);
+    }
+    else {
+      final Sdk sdk = PyBuiltinCache.findSdkForFile(footholdFile);
+      if (sdk != null) {
+        cache = PythonPathCache.getInstance(foothold.getProject(), sdk);
+      }
+    }
+    if (cache != null) {
       final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
       if (cachedResults != null) {
         return cachedResults;
