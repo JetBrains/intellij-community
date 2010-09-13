@@ -49,10 +49,10 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       PyClass cls = func.getContainingClass();
       if (cls != null) {
         String cls_name = cls.getName();
-        cat.append("class ").append(cls_name).append("\n ");
+        cat.append("class ").append(cls_name).append("\n");
         // It would be nice to have class import info here, but we don't know the ctrl+hovered reference and context
       }
-      return describeDecorators(func, LSame2, ", ", LSame1).add(describeFunction(func, LSame2, LSame1)).toString();
+      return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1)).toString();
     }
     else if (element instanceof PyClass) {
       PyClass cls = (PyClass)element;
