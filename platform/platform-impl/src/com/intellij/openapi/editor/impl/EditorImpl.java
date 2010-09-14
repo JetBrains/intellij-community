@@ -306,6 +306,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(myEditorDocumentAdapter);
     myDocument.addDocumentListener(mySoftWrapModel);
 
+    myFoldingModel.addListener(mySoftWrapModel);
+
     myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new CaretListener() {
       private LightweightHint myCurrentHint = null;
@@ -534,6 +536,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.removeDocumentListener(myCaretModel);
     myDocument.removeDocumentListener(mySelectionModel);
     myDocument.removeDocumentListener(mySoftWrapModel);
+
+    myFoldingModel.removeListener(mySoftWrapModel);
+
     mySoftWrapModel.release();
 
     MarkupModelEx markupModel = (MarkupModelEx)myDocument.getMarkupModel(myProject, false);

@@ -371,8 +371,9 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     if (!myBeforeChangeState.valid) {
       return;
     }
-    int endIndex = myCache.size() - 2; // -1 because of zero-based indexing; one more -1 in assumption that re-parsing always adds
-                                       // number of target cache entries plus one (because of line feed at the end).
+    int endIndex = Math.max(0, myCache.size() - 2); // -1 because of zero-based indexing; one more -1 in assumption that
+                                                    // re-parsing always adds number of target cache entries plus one
+                                                    // (because of line feed at the end).
     myAfterChangeState.updateByCacheIndices(myBeforeChangeState.startCacheEntryIndex, endIndex);
     myCache.subList(myAfterChangeState.endCacheEntryIndex + 1, myCache.size()).clear();
     myCache.addAll(myNotAffectedByUpdateTailCacheEntries);

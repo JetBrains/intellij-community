@@ -207,7 +207,14 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
 
     if (newColumnNumber < 0) newColumnNumber = 0;
-    if (newLineNumber < 0) newLineNumber = 0;
+
+    // There is a possible case that caret is located at the first line and use presses 'Shift+Up'. We want to select all text
+    // from the document start to the current caret position then. So, we have a dedicated flag for tracking that.
+    boolean selectToDocumentStart = false;
+    if (newLineNumber < 0) {
+      selectToDocumentStart = true;
+      newLineNumber = 0;
+    }
 
     VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
     int lastColumnNumber = newColumnNumber;
@@ -259,7 +266,14 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         selectionModel.setBlockSelection(blockSelectionStart, getLogicalPosition());
       }
       else {
-        selectionModel.setSelection(selectionStart, getOffset());
+        int endOffsetToUse = getOffset();
+        if (selectToDocumentStart) {
+          endOffsetToUse = 0;
+        }
+        else if (pos.line >= myEditor.getVisibleLineCount()) {
+          endOffsetToUse = myEditor.getDocument().getTextLength();
+        }
+        selectionModel.setSelection(selectionStart, endOffsetToUse);
       }
     }
     else {

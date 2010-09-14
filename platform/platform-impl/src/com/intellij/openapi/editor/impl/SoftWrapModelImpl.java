@@ -18,10 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
-import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
-import com.intellij.openapi.editor.ex.SoftWrapModelEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
@@ -45,12 +42,13 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener {
+public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener {
 
   /** Upper boundary of time interval to check editor settings. */
   private static final long EDITOR_SETTINGS_CHECK_PERIOD_MILLIS = 10000;
 
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
+  private final List<FoldingListener> myFoldListeners = new ArrayList<FoldingListener>();
 
   private final CachingSoftWrapDataMapper myDataMapper;
   private final SoftWrapsStorage              myStorage;
@@ -90,11 +88,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myApplianceManager = applianceManager;
     myDataMapper = dataMapper;
 
-    //myDocumentListeners.add(myDocumentChangeManager);
     myDocumentListeners.add(myApplianceManager);
-    Collections.sort(myDocumentListeners, PrioritizedDocumentListener.COMPARATOR);
-
-    myEditor.getFoldingModel().addListener(myApplianceManager);
+    myFoldListeners.add(myApplianceManager);
   }
 
   public boolean isSoftWrappingEnabled() {
@@ -440,10 +435,29 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   }
 
   @Override
+  public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+    if (!isSoftWrappingEnabled()) {
+      return;
+    }
+    for (FoldingListener listener : myFoldListeners) {
+      listener.onFoldRegionStateChange(region);
+    }
+  }
+
+  @Override
+  public void onFoldProcessingEnd() {
+    if (!isSoftWrappingEnabled()) {
+      return;
+    }
+    for (FoldingListener listener : myFoldListeners) {
+      listener.onFoldProcessingEnd();
+    }
+  }
+
+  @Override
   public void release() {
     myDataMapper.release();
     myApplianceManager.release();
     myStorage.removeAll();
-    myEditor.getFoldingModel().removeListener(myApplianceManager);
   }
 }
