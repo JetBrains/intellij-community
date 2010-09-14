@@ -39,8 +39,8 @@ public class XmlElementsGroupImpl extends XmlElementsGroupBase {
 
   private final List<XmlElementsGroup> mySubGroups = new ArrayList<XmlElementsGroup>();
 
-  public XmlElementsGroupImpl(XmlTag tag) {
-    super(tag);
+  public XmlElementsGroupImpl(XmlTag tag, XmlElementsGroup parent) {
+    super(tag, parent);
   }
 
   @Override

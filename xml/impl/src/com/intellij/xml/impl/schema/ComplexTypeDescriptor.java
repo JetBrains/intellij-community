@@ -382,4 +382,17 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   public boolean hasAnyInContentModel() {
     return myHasAnyInContentModel;
   }
+
+  public int getContentType() {
+    final XmlElementDescriptor[] elements = getElements(null);
+
+    if (elements.length > 0) return XmlElementDescriptor.CONTENT_TYPE_CHILDREN;
+    for (XmlTag tag : myTag.getSubTags()) {
+      if ("simpleContent".equals(tag.getLocalName())) {
+        return XmlElementDescriptor.CONTENT_TYPE_MIXED;
+      }
+    }
+    return XmlElementDescriptor.CONTENT_TYPE_EMPTY;
+
+  }
 }

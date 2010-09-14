@@ -15,6 +15,8 @@
  */
 package com.intellij.xml;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 /**
@@ -42,6 +44,10 @@ public interface XmlElementsGroup {
   int getMaxOccurs();
 
   Type getGroupType();
+
+  @Nullable
+  XmlElementsGroup getParentGroup();
+
   List<XmlElementsGroup> getSubGroups();
   XmlElementDescriptor getLeafDescriptor();
 }
