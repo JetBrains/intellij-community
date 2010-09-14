@@ -533,8 +533,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   }
 
   @Override
-  public void setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
-    if (!(changeInfo instanceof JavaChangeInfo)) return;
+  public boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
+    if (!(changeInfo instanceof JavaChangeInfo)) return true;
     for (UsageInfo usageInfo : refUsages.get()) {
       if (usageInfo instanceof  MethodCallUsageInfo) {
         MethodCallUsageInfo methodCallUsageInfo = (MethodCallUsageInfo)usageInfo;
@@ -558,6 +558,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                     } else {
                       ((ParameterInfoImpl)parameter).setDefaultValue(chooser.getDefaultValue());
                     }
+                  } else {
+                    return false;
                   }
                 }
               }
@@ -566,6 +568,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
     }
+    return true;
   }
 
   private static boolean needDefaultValue(ChangeInfo changeInfo, PsiMethod method) {

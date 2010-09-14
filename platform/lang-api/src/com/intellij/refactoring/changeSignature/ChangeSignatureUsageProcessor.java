@@ -39,5 +39,5 @@ public interface ChangeSignatureUsageProcessor {
 
   boolean shouldPreviewUsages(ChangeInfo changeInfo, UsageInfo[] usages);
 
-  void setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project);
+  boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project);
 }
