@@ -392,10 +392,21 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     //System.out.println("text length: " + text.length() + ", soft wraps: " + myStorage.getSoftWraps());
     //for (int i = 0; i < myCache.size(); i++) {
     //  CacheEntry entry = myCache.get(i);
-    //  System.out.printf("line %d. %d-%d: '%s'%n", i, entry.startOffset, entry.endOffset,
-    //                    text.subSequence(entry.startOffset,Math.min(entry.endOffset, text.length())));
+    //  // TODO den unwrap
+    //  try {
+    //    System.out.printf("line %d. %d-%d: '%s'%n", i, entry.startOffset, entry.endOffset,
+    //                      text.subSequence(entry.startOffset,Math.min(entry.endOffset, text.length())));
+    //  }
+    //  catch (Throwable e) {
+    //    e.printStackTrace();
+    //  }
     //}
-    //
+    //if (!myCache.isEmpty() && myCache.get(myCache.size() - 1).endOffset < text.length() - 1) {
+    //  System.out.printf("Incomplete re-parsing detected! Document length is %d but last processed offset is %s%n", text.length(),
+    //                    myCache.get(myCache.size() - 1).endOffset);
+    //}
+
+
     //for (CacheEntry cacheEntry : myCache) {
     //  if (cacheEntry.startOffset > 0) {
     //    if (text.charAt(cacheEntry.startOffset - 1) != '\n' && myStorage.getSoftWrap(cacheEntry.startOffset) == null) {

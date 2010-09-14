@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -352,7 +353,16 @@ public class PsiTreeUtil {
 
   @Nullable
   public static PsiElement getStubOrPsiParent(@Nullable PsiElement element) {
-    return getStubOrPsiParentOfType(element, PsiElement.class);
+    if (element instanceof StubBasedPsiElement) {
+      StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
+      if (stub != null) {
+        //noinspection unchecked
+        final StubElement parentStub = stub.getParentStub();
+        return parentStub != null ? parentStub.getPsi() : null;
+      }
+
+    }
+    return element != null ? element.getParent() : null;
   }
 
   @Nullable

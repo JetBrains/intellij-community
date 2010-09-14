@@ -29,6 +29,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;

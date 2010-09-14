@@ -128,7 +128,9 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   }
 
   private void recalculateSoftWraps(DirtyRegion region) {
-    notifyListenersOnRangeRecalculation(region, true);
+    if (region.notifyAboutRecalculationStart) {
+      notifyListenersOnRangeRecalculation(region, true);
+    }
     myStorage.removeInRange(region.startRange.getStartOffset(), region.startRange.getEndOffset());
     try {
       region.beforeRecalculation();
@@ -516,6 +518,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+    /*
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
     Document document = myEditor.getDocument();
@@ -526,6 +529,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     int endOffset = document.getLineEndOffset(endLine);
 
     myDirtyRegions.add(new DirtyRegion(startOffset, endOffset));
+    */
   }
 
   @Override
@@ -535,7 +539,9 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
-    myDirtyRegions.add(new DirtyRegion(event));
+    DirtyRegion region = new DirtyRegion(event);
+    myDirtyRegions.add(region);
+    notifyListenersOnRangeRecalculation(region, true);
   }
 
   @Override
@@ -548,11 +554,13 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
     public TextRange startRange;
     public TextRange endRange;
+    public boolean notifyAboutRecalculationStart;
     private boolean myRecalculateEnd;
 
     DirtyRegion(int startOffset, int endOffset) {
       startRange = new TextRange(startOffset, endOffset);
       endRange = new TextRange(startOffset, endOffset);
+      notifyAboutRecalculationStart = true;
     }
 
     DirtyRegion(DocumentEvent event) {
@@ -596,7 +604,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
           case ' ': indentInColumns += 1; indentInPixels += spaceWidth; break;
           case '\t':
             int x = EditorUtil.nextTabStop(indentInPixels, editor);
-            indentInColumns = calculateWidthInColumns(x - indentInPixels, spaceWidth);
+            indentInColumns += calculateWidthInColumns(x - indentInPixels, spaceWidth);
             indentInPixels = x;
             break;
           default: myNonWhiteSpaceSymbolOffset = i; return;
