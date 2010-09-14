@@ -34,8 +34,5 @@ public interface MethodDescriptor<P extends ParameterInfo> {
 
   PsiElement getMethod();
 
-  @Nullable
-  String getReturnTypeText();
-
   boolean canChangeVisibility();
 }

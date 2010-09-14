@@ -973,19 +973,21 @@ public class XmlUtil {
     }
     return null;
   }
-  
+
   @Nullable
-  public static String getDtdUri(XmlDoctype doctype) {    
+  public static String getDtdUri(XmlDoctype doctype) {
     if (doctype != null) {
       String docType = doctype.getDtdUri();
-      if (docType == null && 
-          PsiTreeUtil.getParentOfType(doctype, XmlDocument.class) instanceof HtmlDocumentImpl) {
-        
+      if (docType == null) {
         final String publicId = doctype.getPublicId();
-        if (publicId != null && publicId.indexOf("-//W3C//DTD HTML") != -1) {
+        if (PsiTreeUtil.getParentOfType(doctype, XmlDocument.class) instanceof HtmlDocumentImpl &&
+            publicId != null &&
+            publicId.indexOf("-//W3C//DTD HTML") != -1) {
           return HTML4_LOOSE_URI;
         }
-        if (publicId == null) docType = HTML5_SCHEMA_LOCATION;
+        else if (HtmlUtil.isHtml5Doctype(doctype)) {
+          docType = HTML5_SCHEMA_LOCATION;
+        }
       }
       return docType;
     }

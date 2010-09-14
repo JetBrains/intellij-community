@@ -45,7 +45,7 @@ import java.util.List;
 
 public class EditorActionUtil {
   protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
-  protected static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
+  public static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
 
   private EditorActionUtil() {
   }
@@ -336,9 +336,10 @@ public class EditorActionUtil {
     }
 
     int lineFeedsToSkip = visualLineNumber - visLineStart.line;
-    List<? extends TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logLine);
-    for (TextChange softWrap : softWraps) {
-      int softWrapLineFeedsNumber = StringUtil.countNewLines(softWrap.getText());
+    List<? extends SoftWrap> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logLine);
+    for (SoftWrap softWrap : softWraps) {
+      CharSequence softWrapText = softWrap.getText();
+      int softWrapLineFeedsNumber = StringUtil.countNewLines(softWrapText);
 
       if (softWrapLineFeedsNumber < lineFeedsToSkip) {
         lineFeedsToSkip -= softWrapLineFeedsNumber;
@@ -347,7 +348,6 @@ public class EditorActionUtil {
 
       // Point to the first non-white space symbol at the target soft wrap visual line or to the first non-white space symbol
       // of document line that follows it if possible.
-      CharSequence softWrapText = softWrap.getText();
       int softWrapTextLength = softWrapText.length();
       boolean skip = true;
       for (int j = 0; j < softWrapTextLength; j++) {
@@ -443,7 +443,7 @@ public class EditorActionUtil {
       int offset = editor.logicalPositionToOffset(logical);
       if (offset < editor.getDocument().getTextLength()) {
 
-        TextChange softWrap = softWrapModel.getSoftWrap(offset);
+        SoftWrap softWrap = softWrapModel.getSoftWrap(offset);
         if (softWrap == null) {
           // Same offset may correspond to positions on different visual lines in case of soft wraps presence
           // (all soft-wrap introduced virtual text is mapped to the same offset as the first document symbol after soft wrap).

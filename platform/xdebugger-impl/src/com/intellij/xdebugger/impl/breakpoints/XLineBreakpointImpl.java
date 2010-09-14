@@ -396,6 +396,15 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
         }
       };
     }
+
+    private XLineBreakpointImpl getXLineBreakpoint() {
+      return XLineBreakpointImpl.this;
+    }
+    @Override
+    public boolean equals(Object obj) {
+      return obj.getClass() == getClass()
+        && getXLineBreakpoint() == ((BreakpointGutterIconRenderer)obj).getXLineBreakpoint();
+    }
   }
 
   private class MyRemoveBreakpointAction extends AnAction {

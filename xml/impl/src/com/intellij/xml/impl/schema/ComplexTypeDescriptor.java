@@ -17,6 +17,7 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.xml.XmlAttribute;
@@ -24,6 +25,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
@@ -72,6 +74,22 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
   };
 
+  private final NullableLazyValue<XmlElementsGroup> myTopGroup = new NullableLazyValue<XmlElementsGroup>() {
+    @Override
+    protected XmlElementsGroup compute() {
+      final Stack<XmlElementsGroup> groups = new Stack<XmlElementsGroup>();
+      new XmlSchemaTagsProcessor(myDocumentDescriptor, "attribute") {
+
+        @Override
+        protected void tagStarted(XmlTag tag, XmlTag context, String tagName) {
+
+        }
+      }.startProcessing(myTag);
+
+      return groups.isEmpty() ? null : groups.get(0);
+    }
+  };
+
   private volatile XmlElementDescriptor[] myElementDescriptors = null;
   private volatile XmlAttributeDescriptor[] myAttributeDescriptors = null;
   @NonNls
@@ -96,6 +114,11 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   public XmlTag getDeclaration(){
     return myTag;
+  }
+
+  @Nullable
+  public XmlElementsGroup getTopGroup() {
+    return myTopGroup.getValue();
   }
 
   public XmlElementDescriptor[] getElements(XmlElement context) {

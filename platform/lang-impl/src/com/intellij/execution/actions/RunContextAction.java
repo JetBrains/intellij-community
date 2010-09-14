@@ -37,7 +37,9 @@ public class RunContextAction extends BaseRunConfigurationAction {
     final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
     if (configuration == null) {
       configuration = context.getConfiguration();
-      if (configuration == null) return;
+      if (configuration == null) {
+        return;
+      }
       runManager.setTemporaryConfiguration(configuration);
     }
     runManager.setActiveConfiguration(configuration);
@@ -63,7 +65,22 @@ public class RunContextAction extends BaseRunConfigurationAction {
       configuration = context.getConfiguration();
     }
 
-    final boolean b = configuration != null && getRunner(configuration.getConfiguration()) != null;
+    boolean b = true;
+    if (configuration == null) {
+      b = false;
+    }
+    else {
+      final ProgramRunner runner = getRunner(configuration.getConfiguration());
+      if (runner == null) {
+        b = false;
+      }
+      else {
+        if (ExecutorRegistry.getInstance().isStarting(context.getProject(), myExecutor.getId(), runner.getRunnerId())) {
+          b = false;
+        }
+      }
+    }
+    
     presentation.setEnabled(b);
     presentation.setVisible(b);
   }

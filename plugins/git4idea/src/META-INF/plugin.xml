@@ -40,9 +40,7 @@
       <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add Snapshot" icon="/actions/include.png">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
-      <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File" icon="/actions/rollback.png">
-        <keyboard-shortcut first-keystroke="control alt R" keymap="$default"/>
-      </action>
+      <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File" icon="/actions/rollback.png"/>
       <!--<action id="Resolve" class="org.jetbrains.idea.perforce.actions.ResolveAction"/>-->
       <!--<action id="ResolveAll" class="org.jetbrains.idea.perforce.actions.ResolveAllAction"/>-->
       <!-- <action id="TimeLapseView" class="org.jetbrains.idea.perforce.actions.TimeLapseViewAction"/> -->

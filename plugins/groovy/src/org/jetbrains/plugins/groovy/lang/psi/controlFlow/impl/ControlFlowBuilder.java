@@ -175,6 +175,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
       child = child.getNextSibling();
     }
+
+    final GrStatement[] statements = closure.getStatements();
+    if (statements.length > 0) {
+      handlePossibleReturn(statements[statements.length - 1]);
+    }
   }
 
   private void addNode(InstructionImpl instruction) {

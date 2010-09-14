@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
+import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.OrderPanelListener;
@@ -46,7 +47,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   public static final String NAME = ProjectBundle.message("modules.classpath.title");
   public static final Icon ICON = IconLoader.getIcon("/modules/classpath.png");
 
-  private ClasspathPanel myPanel;
+  private ClasspathPanelImpl myPanel;
 
   private ClasspathFormatPanel myClasspathFormatPanel;
 
@@ -60,7 +61,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   public boolean isModified() {
-    return super.isModified() || ( myClasspathFormatPanel != null && myClasspathFormatPanel.isModified());
+    return super.isModified() || (myClasspathFormatPanel != null && myClasspathFormatPanel.isModified());
   }
 
   public String getHelpTopic() {
@@ -96,7 +97,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   public JComponent createComponentImpl() {
-    myPanel = new ClasspathPanel(getState());
+    myPanel = new ClasspathPanelImpl(getState());
 
     myPanel.addListener(new OrderPanelListener() {
       public void entryMoved() {

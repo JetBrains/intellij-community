@@ -33,6 +33,7 @@ public class DirectoryChooserUtil {
   private DirectoryChooserUtil() {
   }
 
+  @Nullable
   public static PsiDirectory getOrChooseDirectory(IdeView view) {
     PsiDirectory[] dirs = view.getDirectories();
     if (dirs.length == 0) return null;
@@ -45,6 +46,7 @@ public class DirectoryChooserUtil {
     }
   }
 
+  @Nullable
   public static PsiDirectory selectDirectory(Project project,
                                              PsiDirectory[] packageDirectories,
                                              PsiDirectory defaultDirectory,

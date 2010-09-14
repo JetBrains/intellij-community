@@ -223,10 +223,6 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
   protected abstract void initTables();
 
-  protected int getRightMargin() {
-    return -1;
-  }
-
   protected void resetImpl(final CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();

@@ -35,6 +35,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListenerUtil;
@@ -225,19 +226,29 @@ public class HintManagerImpl extends HintManager implements Disposable {
   public void showEditorHint(LightweightHint hint, Editor editor, short constraint, int flags, int timeout, boolean reviveOnEditorChange) {
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
     Point p = getHintPosition(hint, editor, pos, constraint);
-    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange);
+    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, new HintHint(editor, p));
   }
 
   /**
    * @param p point in layered pane coordinate system.
    * @param reviveOnEditorChange
+   * @param hintInfo
    */
   public void showEditorHint(@NotNull final LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
                              int flags,
+                             int timeout, boolean reviveOnEditorChange) {
+
+    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, new HintHint(editor, p));
+  }
+
+  public void showEditorHint(@NotNull final LightweightHint hint,
+                             @NotNull Editor editor,
+                             @NotNull Point p,
+                             int flags,
                              int timeout,
-                             boolean reviveOnEditorChange) {
+                             boolean reviveOnEditorChange, HintHint hintInfo) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     myHideAlarm.cancelAllRequests();
 
@@ -255,7 +266,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     Component component = hint.getComponent();
 
-    doShowInGivenLocation(hint, editor, p);
+    doShowInGivenLocation(hint, editor, p, hintInfo);
 
     ListenerUtil.addMouseListener(
       component,
@@ -340,7 +351,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
   }
 
-  private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, final Point p) {
+  private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, final Point p, HintHint hintInfo) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
     Dimension size = hint.getComponent().getPreferredSize();
@@ -351,12 +362,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
       hint.updateBounds(p.x, p.y);
     }
     else {
-      hint.show(layeredPane, p.x, p.y, editor.getContentComponent());
+      hint.show(layeredPane, p.x, p.y, editor.getContentComponent(), hintInfo);
     }
   }
 
   public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p) {
-    doShowInGivenLocation(hint, editor, p);
+    doShowInGivenLocation(hint, editor, p, new HintHint(editor, p));
   }
 
   public void hideAllHints() {

@@ -37,7 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -61,11 +64,13 @@ public class MoveGroovyScriptProcessor extends MoveClassesOrPackagesProcessor {
     for (PsiElement element : elements) {
       final GroovyFile groovyFile = (GroovyFile)element;
 
-      final PsiClass scriptClass = groovyFile.getClasses()[0];
-      String newName = getTargetPackage().getQualifiedName() + scriptClass.getName();
+      final PsiClass[] classes = groovyFile.getClasses();
+      for (PsiClass aClass : classes) {
+        String newName = getTargetPackage().getQualifiedName() + aClass.getName();
 
-      final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(scriptClass, isSearchInComments(), isSearchInNonJavaFiles(), newName);
-      allUsages.addAll(new ArrayList<UsageInfo>(Arrays.asList(usages)));
+        final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(aClass, isSearchInComments(), isSearchInNonJavaFiles(), newName);
+        allUsages.addAll(new ArrayList<UsageInfo>(Arrays.asList(usages)));
+      }
     }
     myMoveDestination
       .analyzeModuleConflicts(elements, conflicts, allUsages.toArray(new UsageInfo[allUsages.size()]));
@@ -92,14 +97,15 @@ public class MoveGroovyScriptProcessor extends MoveClassesOrPackagesProcessor {
         GroovyFile file = (GroovyFile)element;
         final RefactoringElementListener elementListener = getTransaction().getElementListener(file);
 
-        PsiClass oldScriptClass = file.getClasses()[0];
-
+        final PsiClass[] oldClasses = file.getClasses();
         GroovyChangeContextUtil.encodeContextInfo(file);
         PsiManager.getInstance(myProject).moveFile(file, myMoveDestination.getTargetDirectory(file));
         file.setPackageName(getTargetPackage().getQualifiedName());
 
-        PsiClass newScriptClass = file.getClasses()[0];
-        oldToNewElementsMapping.put(oldScriptClass, newScriptClass);
+        PsiClass[] newClasses = file.getClasses();
+        for (int i = 0; i < oldClasses.length; i++) {
+          oldToNewElementsMapping.put(oldClasses[i], newClasses[i]);
+        }
 
         elementListener.elementMoved(file);
       }

@@ -86,7 +86,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
       }
     }
     onLanguageChange(language);
-    updatePreviewEditor();
+    updatePreview();
   }
 
   public Language getSelectedLanguage() {
@@ -104,6 +104,12 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     String sample = LanguageCodeStyleSettingsProvider.getCodeSample(myLanguage, getSettingsType());
     if (sample == null) return "";
     return sample;
+  }
+
+  @Override
+  protected int getRightMargin() {
+    if (myLanguage == null) return -1;
+    return LanguageCodeStyleSettingsProvider.getRightMargin(myLanguage, getSettingsType());
   }
 
   @NotNull
@@ -188,7 +194,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
         setPanelLanguage(langs[0]);
       }
       else {
-        updatePreviewEditor();
+        updatePreview();
       }
       tabbedPane.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -213,7 +219,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     else {
       // If settings are language-specific
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-      updatePreviewEditor();
+      updatePreview();
     }
   }
 

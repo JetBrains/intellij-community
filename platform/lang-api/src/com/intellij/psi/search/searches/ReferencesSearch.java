@@ -44,7 +44,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       myScope = scope;
       myIgnoreAccessScope = ignoreAccessScope;
       isSharedOptimizer = optimizer != null;
-      myOptimizer = optimizer == null ? new SearchRequestCollector() : optimizer;
+      myOptimizer = optimizer == null ? new SearchRequestCollector(new SearchSession()) : optimizer;
     }
 
     public SearchParameters(@NotNull final PsiElement elementToSearch, final SearchScope scope, final boolean ignoreAccessScope) {
@@ -119,7 +119,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   }
   public static void searchOptimized(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope,
                                      @NotNull SearchRequestCollector collector, final boolean inReadAction, PairProcessor<PsiReference, SearchRequestCollector> processor) {
-    final SearchRequestCollector nested = new SearchRequestCollector();
+    final SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
     collector.searchQuery(new QuerySearchRequest(search(new SearchParameters(element, searchScope, ignoreAccessScope, nested)), nested,
                                                  inReadAction, processor));
   }

@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.Disposable;
@@ -98,6 +99,11 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
         }
         myFileTools.put(file, !result.isEmpty());
         return result;
+      }
+
+      @Override
+      protected String getPresentableName() {
+        return DaemonBundle.message("pass.whole.inspections");
       }
 
       void inspectInjectedPsi(PsiElement[] elements, List<LocalInspectionTool> tools) {

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -114,6 +115,10 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
     }
     return false;
+  }
+
+  @Override
+  public void setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
   }
 
   private static boolean generateDelegate(GrChangeInfoImpl grInfo) {

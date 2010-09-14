@@ -1,0 +1,12 @@
+def foo = {
+  def g = <selection>"sd"</selection>
+  [a:4, b:g]
+}
+-----
+0(1) element: null
+1(2) WRITE owner
+2(3) WRITE g
+3(4) READ g
+4(5) element: Generalized list MAYBE_RETURN
+5() element: null
+

@@ -17,7 +17,6 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.openapi.Disposable;
@@ -86,7 +85,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
       myRebuildAlarm.addRequest(new Runnable() {
         public void run() {
           try {
-            rebuild(event == DebuggerSession.EVENT_REFRESH || event == DebuggerSession.EVENT_REFRESH_VIEWS_ONLY);
+            rebuild(event);
           }
           catch (VMDisconnectedException e) {
             // ignored
@@ -99,7 +98,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
     }
   }
 
-  protected abstract void rebuild(boolean updateOnly);
+  protected abstract void rebuild(int event);
 
   protected final void registerDisposable(Disposable disposable) {
     myDisposables.add(disposable);

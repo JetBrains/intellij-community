@@ -144,6 +144,8 @@
 
     <group id="RefactoringMenu1">
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
+      <action id="MoveToTheLeft" class="com.intellij.refactoring.changeSignature.MoveParameterLeftAction"/>
+      <action id="MoveToTheRight" class="com.intellij.refactoring.changeSignature.MoveParameterRightAction"/>
       <action id="ChangeTypeSignature"
               class="com.intellij.refactoring.typeMigration.actions.ChangeTypeSignatureAction"
               text="T_ype Migration..."

@@ -62,6 +62,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   protected int getSelectedIndex() {
     final int row = myComponent.getSelectedRow();
     final int col = myComponent.getSelectedColumn();
+    // TODO: WTF?! getComponent().getSelectedRow() should be enough for everyone.
     return row > -1 && col > -1? row * myComponent.getModel().getColumnCount() + col : -1;
   }
 

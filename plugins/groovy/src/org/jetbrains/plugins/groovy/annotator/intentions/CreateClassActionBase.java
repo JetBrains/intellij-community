@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 /**
  * @author ilyas
  */
-abstract class CreateClassActionBase implements IntentionAction {
+public abstract class CreateClassActionBase implements IntentionAction {
   protected final GrReferenceElement myRefElement;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase");
 
@@ -63,7 +63,7 @@ abstract class CreateClassActionBase implements IntentionAction {
     return true;
   }
 
-  static PsiClass createClassByType(final PsiDirectory directory,
+  public static PsiClass createClassByType(final PsiDirectory directory,
                                     final String name,
                                     final PsiManager manager,
                                     final PsiElement contextElement) {
@@ -109,7 +109,7 @@ abstract class CreateClassActionBase implements IntentionAction {
         });
   }
 
-  static Editor putCursor(Project project, @NotNull PsiFile targetFile, PsiElement element) {
+  public static Editor putCursor(Project project, @NotNull PsiFile targetFile, PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 

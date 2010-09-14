@@ -144,4 +144,9 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     OpenFileDescriptor d = (OpenFileDescriptor)navigatable;
     d.navigateIn(getEditor());
   }
+
+  @Override
+  public String toString() {
+    return "Editor: "+getComponent().getFile();
+  }
 }

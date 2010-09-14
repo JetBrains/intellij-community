@@ -3,6 +3,7 @@
   <name>IDEA CORE</name>
 
   <xi:include href="/componentSets/PlatformComponents.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/idea/PlatformActionManager.xml" xpointer="xpointer(/component/*)"/>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>

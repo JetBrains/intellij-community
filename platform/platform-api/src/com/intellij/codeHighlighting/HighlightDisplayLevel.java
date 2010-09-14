@@ -20,14 +20,12 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
 public class HighlightDisplayLevel {
-  private static final Icon EMPTY = new EmptyIcon(12, 12);
   private static final Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<HighlightSeverity, HighlightDisplayLevel>();
 
   public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING = new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
@@ -41,8 +39,12 @@ public class HighlightDisplayLevel {
   private final HighlightSeverity mySeverity;
 
   public static HighlightDisplayLevel find(String name) {
-    for (HighlightSeverity severity : ourMap.keySet()) {
-      if (Comparing.strEqual(severity.toString(), name)) return ourMap.get(severity);
+    for (Map.Entry<HighlightSeverity, HighlightDisplayLevel> entry : ourMap.entrySet()) {
+      HighlightSeverity severity = entry.getKey();
+      HighlightDisplayLevel displayLevel = entry.getValue();
+      if (Comparing.strEqual(severity.toString(), name)) {
+        return displayLevel;
+      }
     }
     return null;
   }
@@ -84,6 +86,7 @@ public class HighlightDisplayLevel {
     private static final Image ourErrorMaskImage = ImageLoader.loadFromResource("/general/errorMask.png");
   }
 
+  private static final int EMPTY_ICON_DIM = 12;
   public static Icon createIconByMask(final Color renderColor) {
     return new Icon() {
       public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -93,12 +96,12 @@ public class HighlightDisplayLevel {
 
 
       public int getIconWidth() {
-        return EMPTY.getIconWidth();
+        return EMPTY_ICON_DIM;
       }
 
 
       public int getIconHeight() {
-        return EMPTY.getIconHeight();
+        return EMPTY_ICON_DIM;
       }
     };
   }

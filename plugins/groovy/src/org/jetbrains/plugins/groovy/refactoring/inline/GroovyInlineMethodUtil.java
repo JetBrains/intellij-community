@@ -35,6 +35,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -166,7 +167,7 @@ public class GroovyInlineMethodUtil {
     if (stmt instanceof GrReturnStatement) {
       GrMethod method = PsiTreeUtil.getParentOfType(stmt, GrMethod.class);
       if (method != null) {
-        Collection<GrReturnStatement> returnStatements = GroovyRefactoringUtil.findReturnStatements(method);
+        Collection<GrStatement> returnStatements = ControlFlowUtils.collectReturns(method.getBlock());
         return returnStatements.contains(stmt) && !hasBadReturns(method);
       }
     }
@@ -204,14 +205,14 @@ public class GroovyInlineMethodUtil {
   }
 
   private static boolean hasBadReturns(GrMethod method) {
-    Collection<GrReturnStatement> returnStatements = GroovyRefactoringUtil.findReturnStatements(method);
+    Collection<GrStatement> returnStatements = ControlFlowUtils.collectReturns(method.getBlock());
     GrOpenBlock block = method.getBlock();
     if (block == null || returnStatements.size() == 0) return false;
     boolean checked = checkTailOpenBlock(block, returnStatements);
     return !(checked && returnStatements.isEmpty());
   }
 
-  public static boolean checkTailIfStatement(GrIfStatement ifStatement, Collection<GrReturnStatement> returnStatements) {
+  public static boolean checkTailIfStatement(GrIfStatement ifStatement, Collection<GrStatement> returnStatements) {
     GrStatement thenBranch = ifStatement.getThenBranch();
     GrStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch == null) return false;
@@ -231,12 +232,12 @@ public class GroovyInlineMethodUtil {
     return tb && eb;
   }
 
-  private static boolean checkTailOpenBlock(GrOpenBlock block, Collection<GrReturnStatement> returnStatements) {
+  private static boolean checkTailOpenBlock(GrOpenBlock block, Collection<GrStatement> returnStatements) {
     if (block == null) return false;
     GrStatement[] statements = block.getStatements();
     if (statements.length == 0) return false;
     GrStatement last = statements[statements.length - 1];
-    if (last instanceof GrReturnStatement && returnStatements.contains(last)) {
+    if (returnStatements.contains(last)) {
       returnStatements.remove(last);
       return true;
     }
@@ -358,9 +359,7 @@ public class GroovyInlineMethodUtil {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(qualifier.getProject());
     for (GrReferenceExpression expr : exprs) {
       GrExpression qual = factory.createExpressionFromText(qualifier.getText());
-      if (qual instanceof GrReferenceExpression) {
-        expr.setQualifierExpression(((GrReferenceExpression) qual));
-      }
+      expr.setQualifierExpression(qual);
     }
   }
 

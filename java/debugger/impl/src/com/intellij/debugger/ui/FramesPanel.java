@@ -29,6 +29,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextUtil;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -161,11 +162,13 @@ public class FramesPanel extends UpdatableDebuggerView {
   }
 
   /*invoked in swing thread*/
-  protected void rebuild(final boolean updateOnly) {
+  protected void rebuild(int event) {
     final DebuggerContextImpl context = getContext();
     final boolean paused = context.getDebuggerSession().isPaused();
-    
-    if (!paused || !updateOnly) {
+    final boolean isRefresh = event == DebuggerSession.EVENT_REFRESH ||
+                              event == DebuggerSession.EVENT_REFRESH_VIEWS_ONLY ||
+                              event == DebuggerSession.EVENT_THREADS_REFRESH;
+    if (!paused || !isRefresh) {
       myThreadsCombo.removeAllItems();
       synchronized (myFramesList) {
         myFramesList.clear();
@@ -175,7 +178,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     if (paused) {
       final DebugProcessImpl process = context.getDebugProcess();
       if (process != null) {
-        process.getManagerThread().schedule(new RefreshFramePanelCommand(updateOnly && myThreadsCombo.getItemCount() != 0));
+        process.getManagerThread().schedule(new RefreshFramePanelCommand(isRefresh && myThreadsCombo.getItemCount() != 0));
       }
     }
   }

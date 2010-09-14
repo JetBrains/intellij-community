@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,5 +41,15 @@ class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeS
 
   public static boolean isSuitableForLanguage(Language lang) {
     return INSTANCE.forLanguage(lang) != null;
+  }
+
+  @Nullable
+  public static TextRange getHighlightingRange(@NotNull PsiElement element) {
+    return INSTANCE.forLanguage(element.getLanguage()).getHighlightingRange(element);
+  }
+
+  public static boolean wasBanned(@NotNull PsiElement element, ChangeInfo bannedInfo) {
+    return INSTANCE.forLanguage(element.getLanguage()).wasBanned(element, bannedInfo);
+
   }
 }

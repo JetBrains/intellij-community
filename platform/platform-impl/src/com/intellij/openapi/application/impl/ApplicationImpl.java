@@ -93,7 +93,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final String myName;
 
   private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
-  private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
+  private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>(); // accessed from EDT only, no need to sync
 
   private volatile Runnable myExceptionalThreadWithReadAccessRunnable;
 
@@ -111,8 +111,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     TimeUnit.SECONDS,
     new SynchronousQueue<Runnable>(),
     new ThreadFactory() {
+      int i;
       public Thread newThread(Runnable r) {
-        final Thread thread = new Thread(r, "ApplicationImpl pooled thread") {
+        final Thread thread = new Thread(r, "ApplicationImpl pooled thread "+i++) {
           public void interrupt() {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Interrupted worker, will remove from pool");
@@ -749,9 +750,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     try {
-      synchronized (myWriteActionsStack) {
-        myWriteActionsStack.push(action);
-      }
+      myWriteActionsStack.push(action);
 
       fireWriteActionStarted(action);
 
@@ -761,9 +760,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       try {
         fireWriteActionFinished(action);
         
-        synchronized (myWriteActionsStack) {
-          myWriteActionsStack.pop();
-        }
+        myWriteActionsStack.pop();
       }
       finally {
         myActionsLock.writeLock().release();
@@ -782,11 +779,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public <T>  T getCurrentWriteAction(@Nullable Class<T> actionClass) {
-    synchronized (myWriteActionsStack) {
-      for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
-        Runnable action = myWriteActionsStack.get(i);
-        if (actionClass == null || ReflectionCache.isAssignable(actionClass, action.getClass())) return (T)action;
-      }
+    assertCanRunWriteAction();
+
+    for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
+      Runnable action = myWriteActionsStack.get(i);
+      if (actionClass == null || ReflectionCache.isAssignable(actionClass, action.getClass())) return (T)action;
     }
     return null;
   }

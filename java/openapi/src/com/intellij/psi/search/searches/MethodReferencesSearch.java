@@ -41,7 +41,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
       myScope = scope;
       myStrictSignatureSearch = strictSignatureSearch;
       isSharedOptimizer = optimizer != null;
-      myOptimizer = optimizer != null ? optimizer : new SearchRequestCollector();
+      myOptimizer = optimizer != null ? optimizer : new SearchRequestCollector(new SearchSession());
     }
 
     public SearchParameters(final PsiMethod aClass, SearchScope scope, final boolean strict) {
@@ -81,7 +81,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     });
   }
 public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch, SearchRequestCollector collector, final boolean inReadAction, PairProcessor<PsiReference, SearchRequestCollector> processor) {
-    final SearchRequestCollector nested = new SearchRequestCollector();
+    final SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
     collector.searchQuery(new QuerySearchRequest(search(new SearchParameters(method, scope, strictSignatureSearch, nested)), nested,
                                                  inReadAction, processor));
   }

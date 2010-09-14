@@ -39,11 +39,11 @@ public class TableUtil {
     return removeSelectedItems(table, null);
   }
 
-  public static void selectRows(JTable table, int[] rows) {
+  public static void selectRows(final JTable table, final int[] viewRows) {
     ListSelectionModel selectionModel = table.getSelectionModel();
     selectionModel.clearSelection();
     int count = table.getRowCount();
-    for (int row : rows) {
+    for (int row : viewRows) {
       if (row >= 0 && row < count) {
         selectionModel.addSelectionInterval(row, row);
       }

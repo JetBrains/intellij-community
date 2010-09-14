@@ -220,6 +220,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myEmbeddedIntoDialogWrapper;
   private CachedFontContent myLastCache;
   private boolean mySpacesHaveSameWidth;
+
+  /**
+   * There is a possible case that specific font is used for particular text drawing operation (e.g. for 'before' and 'after'
+   * soft wraps drawings). Hence, even if {@link #mySpacesHaveSameWidth} is <code>true</code>, space size for that specific
+   * font may be different. So, we define additional flag that should indicate that {@link #myLastCache} should be reset.
+   */
+  private boolean myForceRefreshFont;
   private boolean mySoftWrapsChanged;
 
   private Point myLastBackgroundPosition = null;
@@ -299,6 +306,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(myEditorDocumentAdapter);
     myDocument.addDocumentListener(mySoftWrapModel);
 
+    myFoldingModel.addListener(mySoftWrapModel);
+
     myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new CaretListener() {
       private LightweightHint myCurrentHint = null;
@@ -336,7 +345,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
       @Override
-      public void softWrapAdded(@NotNull TextChange softWrap) {
+      public void softWrapAdded(@NotNull SoftWrap softWrap) {
         mySoftWrapsChanged = true;
         int softWrapLine = myDocument.getLineNumber(softWrap.getStart());
         mySizeContainer.update(softWrapLine, softWrapLine, softWrapLine);
@@ -527,6 +536,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.removeDocumentListener(myCaretModel);
     myDocument.removeDocumentListener(mySelectionModel);
     myDocument.removeDocumentListener(mySoftWrapModel);
+
+    myFoldingModel.removeListener(mySoftWrapModel);
+
+    mySoftWrapModel.release();
 
     MarkupModelEx markupModel = (MarkupModelEx)myDocument.getMarkupModel(myProject, false);
     if (markupModel instanceof MarkupModelImpl) {
@@ -879,7 +892,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         offset = region.getEndOffset();
       }
       else {
-        TextChange softWrap = mySoftWrapModel.getSoftWrap(offset);
+        SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
         if (softWrap != null) {
           // There is a possible case that soft wrap contains more than one line feed inside and we need to start counting not
           // from its first line.
@@ -1092,19 +1105,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (logical.softWrapLinesOnCurrentLogicalLine > 0) {
       int linesToSkip = logical.softWrapLinesOnCurrentLogicalLine;
-      List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForLine(logLine);
-      for (TextChange softWrap : softWraps) {
+      List<? extends SoftWrap> softWraps = getSoftWrapModel().getSoftWrapsForLine(logLine);
+      for (SoftWrap softWrap : softWraps) {
         if (myFoldingModel.isOffsetCollapsed(softWrap.getStart()) && myFoldingModel.isOffsetCollapsed(softWrap.getStart() - 1)) {
           continue;
         }
-        int lineFeeds = StringUtil.countNewLines(softWrap.getText());
-        linesToSkip -= lineFeeds;
+        linesToSkip--; // Assuming here that every soft wrap has exactly one line feed
         if (linesToSkip > 0) {
           continue;
         }
         lineStartOffset = softWrap.getStart();
-        int widthInColumns = getSoftWrapModel().getSoftWrapIndentWidthInColumns(softWrap);
-        int widthInPixels = getSoftWrapModel().getSoftWrapIndentWidthInPixels(softWrap);
+        int widthInColumns = softWrap.getIndentInColumns();
+        int widthInPixels = softWrap.getIndentInPixels();
         if (widthInColumns <= column) {
           column -= widthInColumns;
           reserved = widthInPixels;
@@ -1163,7 +1175,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         fontType = state.getMergedAttributes().getFontType();
       }
       // We need to consider 'before soft wrap drawing'.
-      TextChange softWrap = getSoftWrapModel().getSoftWrap(offset);
+      SoftWrap softWrap = getSoftWrapModel().getSoftWrap(offset);
       if (softWrap != null && offset > startOffset) {
         column++;
         x += getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
@@ -1646,14 +1658,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     int start = logicalPositionToOffset(logicalPosition);
+    getSoftWrapModel().registerSoftWrapsIfNecessary(clip, start);
 
     // There is a possible case that we need to draw background from the start of soft wrap-introduced visual line. Given position
     // has valid 'y' coordinate then at it shouldn't be affected by soft wrap that corresponds to the visual line start offset.
     // Hence, we store information about soft wrap to be skipped for further processing and adjust 'x' coordinate value if necessary.
     TIntHashSet softWrapsToSkip = new TIntHashSet();
-    TextChange softWrap = getSoftWrapModel().getSoftWrap(start);
+    SoftWrap softWrap = getSoftWrapModel().getSoftWrap(start);
     if (softWrap != null) {
-      position.x = getSoftWrapModel().getSoftWrapIndentWidthInPixels(softWrap);
+      position.x = softWrap.getIndentInPixels();
       softWrapsToSkip.add(softWrap.getStart());
     }
 
@@ -1679,11 +1692,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int lastLineIndex = Math.max(0, myDocument.getLineCount() - 1);
 
-    outer:
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
       int lEnd = lIterator.getEnd();
-      getSoftWrapModel().registerSoftWrapIfNecessary(text, start, hEnd, position.x, fontType);
 
       if (hEnd >= lEnd) {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
@@ -1743,7 +1754,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     flushBackground(g, clip);
 
     if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
-      getSoftWrapModel().registerSoftWrapIfNecessary(text, start, myDocument.getTextLength(), position.x, fontType);
       paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground, caretRowPainted);
     }
 
@@ -1813,8 +1823,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                           AtomicBoolean caretRowPainted)
   {
     int startToUse = start;
-    List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, end);
-    for (TextChange softWrap : softWraps) {
+    List<? extends SoftWrap> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, end);
+    for (SoftWrap softWrap : softWraps) {
       int softWrapStart = softWrap.getStart();
       if (processSoftWrap.contains(softWrapStart)) {
         continue;
@@ -1832,7 +1842,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return position.x;
   }
 
-  private void drawSoftWrap(Graphics g, TextChange softWrap, Point position, int fontType, Color defaultBackground, Rectangle clip,
+  private void drawSoftWrap(Graphics g, SoftWrap softWrap, Point position, int fontType, Color defaultBackground, Rectangle clip,
                             AtomicBoolean caretRowPainted) {
     // The main idea is to to do the following:
     //     *) update given drawing position coordinates in accordance with the current soft wrap;
@@ -2013,7 +2023,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
         if (collapsedFolderAt != null) {
-          TextChange softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
+          SoftWrap softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
           if (softWrap != null && logicalPosition.get() != null) {
             position.x = drawStringWithSoftWraps(
               g, chars, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, clip, effectColor, effectType,
@@ -2220,6 +2230,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       Color fontColor,
                                       AtomicReference<LogicalPosition> startDrawingLogicalPosition)
   {
+
     int startToUse = start;
 
     // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
@@ -2228,11 +2239,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (startDrawingLogicalPosition.get() != null) {
       softWrapLinesToSkip = startDrawingLogicalPosition.get().softWrapLinesOnCurrentLogicalLine;
     }
-    TextChange lastSkippedSoftWrap = null;
+    SoftWrap lastSkippedSoftWrap = null;
     if (softWrapLinesToSkip > 0) {
-      List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForLine(startDrawingLogicalPosition.get().line);
-      for (TextChange softWrap : softWraps) {
-        softWrapLinesToSkip -= StringUtil.countNewLines(softWrap.getText());
+      List<? extends SoftWrap> softWraps = getSoftWrapModel().getSoftWrapsForLine(startDrawingLogicalPosition.get().line);
+      for (SoftWrap softWrap : softWraps) {
+        softWrapLinesToSkip--; // Assuming that soft wrap has a single line feed all the time
         if (softWrapLinesToSkip <= 0) {
           lastSkippedSoftWrap = softWrap;
           startToUse = softWrap.getStart();
@@ -2249,7 +2260,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     startDrawingLogicalPosition.set(null);
 
     outer:
-    for (TextChange softWrap : getSoftWrapModel().getSoftWrapsForRange(startToUse, end)) {
+    for (SoftWrap softWrap : getSoftWrapModel().getSoftWrapsForRange(startToUse, end)) {
       char[] softWrapChars = softWrap.getChars();
 
       if (softWrap.equals(lastSkippedSoftWrap)) {
@@ -2257,11 +2268,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // to draw soft wrap indent if any and 'after soft wrap' sign.
         int i = CharArrayUtil.lastIndexOf(softWrapChars, '\n', 0, softWrapChars.length);
         if (i < softWrapChars.length - 1) {
+          position.x = 0; // Soft wrap starts new visual line
           position.x = drawString(
             g, softWrapChars, i + 1, softWrapChars.length, position, clip, effectColor, effectType, fontType, fontColor
           );
         }
         position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
+        myForceRefreshFont = true;
         continue;
       }
 
@@ -2290,6 +2303,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           );
         }
         mySoftWrapModel.paint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
+        myForceRefreshFont = true;
 
         // Reset 'x' coordinate because of new line start.
         position.x = 0;
@@ -2310,6 +2324,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         );
       }
       position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
+      myForceRefreshFont = true;
     }
     return position.x = drawString(g, text, startToUse, end, position, clip, effectColor, effectType, fontType, fontColor);
   }
@@ -2476,10 +2491,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void drawCharsCached(Graphics g, char[] data, int start, int end, int x, int y, int fontType, Color color) {
-    if (mySpacesHaveSameWidth && myLastCache != null && spacesOnly(data, start, end)) {
+    if (!myForceRefreshFont && mySpacesHaveSameWidth && myLastCache != null && spacesOnly(data, start, end)) {
       myLastCache.addContent(g, data, start, end, x, y, null);
     }
     else {
+      myForceRefreshFont = false;
       FontInfo fnt = EditorUtil.fontForChar(data[start], fontType, this);
       drawCharsCached(g, data, start, end, x, y, fnt, color);
     }
@@ -4614,6 +4630,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       getGlobal().setLineSpacing(lineSpacing);
     }
 
+    @Nullable
     public Object clone() {
       return null;
     }
@@ -4792,7 +4809,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public int getPriority() {
-      return 5;
+      return EditorDocumentPriorities.EDITOR_DOCUMENT_ADAPTER;
     }
   }
 
@@ -4830,6 +4847,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       myOldEndLine = offsetToLogicalPosition(e.getOffset() + e.getOldLength()).line;
     }
+
+    // Commented as nobody uses this method.
+    //private int getVisualPositionLine(int offset) {
+    //  // Do round up of offset to the nearest line start (valid since we need only line)
+    //  // This is needed for preventing access to lexer editor highlighter regions [that are reset] during bulk mode operation
+    //
+    //  int line = calcLogicalLineNumber(offset);
+    //  return logicalToVisualLine(line);
+    //}
 
     public synchronized void update(int startLine, int newEndLine, int oldEndLine) {
       final int lineWidthSize = myLineWidths.size();
@@ -4886,7 +4912,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final int fontSize = myScheme.getEditorFontSize();
         final String fontName = myScheme.getEditorFontName();
 
-        List<? extends TextChange> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
+        List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
         int softWrapsIndex = -1;
 
         for (int line = 0; line < lineCount; line++) {
@@ -4919,14 +4945,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
 
             while (softWrapsIndex < softWraps.size() && line < lineCount) {
-              TextChange softWrap = softWraps.get(softWrapsIndex);
+              SoftWrap softWrap = softWraps.get(softWrapsIndex);
               if (softWrap.getStart() > offset) {
                 break;
               }
               softWrapsIndex++;
               if (softWrap.getStart() == offset) {
                 maxPreviousSoftWrappedWidth = Math.max(maxPreviousSoftWrappedWidth, x);
-                x = getSoftWrapModel().getSoftWrapIndentWidthInPixels(softWrap);
+                x = softWrap.getIndentInPixels();
               }
             }
             if (line + 1 >= lineCount) {
@@ -5004,7 +5030,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private int getContentHeight() {
-      return myLineWidths.size() * getLineHeight();
+      return getVisibleLineCount() * getLineHeight();
     }
   }
 
@@ -5025,7 +5051,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         fontType = state.getMergedAttributes().getFontType();
       }
 
-      TextChange softWrap = getSoftWrapModel().getSoftWrap(i);
+      SoftWrap softWrap = getSoftWrapModel().getSoftWrap(i);
       if (softWrap != null) {
         column++; // For 'after soft wrap' drawing.
         x = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);

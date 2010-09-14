@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -44,17 +45,17 @@ public class TooltipController {
     hideCurrentTooltip();
   }
 
-  public void cancelTooltip(TooltipGroup groupId) {
+  public void cancelTooltip(@NotNull TooltipGroup groupId) {
     if (groupId.equals(myCurrentTooltipGroup)) {
       cancelTooltips();
     }
   }
 
   public void showTooltipByMouseMove(@NotNull final Editor editor,
-                                     @NotNull MouseEvent e,
+                                     @NotNull final MouseEvent e,
                                      final TooltipRenderer tooltipObject,
                                      final boolean alignToRight,
-                                     @NotNull final TooltipGroup group) {
+                                     @NotNull final TooltipGroup group, final HintHint hintHint) {
     myTooltipAlarm.cancelAllRequests();
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
@@ -79,7 +80,7 @@ public class TooltipController {
             Project project = editor.getProject();
             if (project != null && !project.isOpen()) return;
             if (editor.getContentComponent().isShowing()) {
-              showTooltip(editor, p, tooltipObject, alignToRight, group);
+              showTooltip(editor, p, tooltipObject, alignToRight, group, hintHint);
             }
           }
         },
@@ -107,6 +108,10 @@ public class TooltipController {
   }
 
   public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group) {
+    showTooltip(editor, p, tooltipRenderer, alignToRight, group, new HintHint(editor, p));
+  }
+
+  public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group, HintHint hintInfo) {
     myTooltipAlarm.cancelAllRequests();
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
@@ -118,7 +123,7 @@ public class TooltipController {
     p = new Point(p);
     hideCurrentTooltip();
 
-    LightweightHint hint = tooltipRenderer.show(editor, p, alignToRight, group);
+    LightweightHint hint = tooltipRenderer.show(editor, p, alignToRight, group, hintInfo);
 
     myCurrentTooltipGroup = group;
     myCurrentTooltip = hint;
@@ -127,6 +132,7 @@ public class TooltipController {
 
   public boolean shouldSurvive(final MouseEvent e) {
     if (myCurrentTooltip != null) {
+      if (myCurrentTooltip.canControlAutoHide()) return true;
       final Point pointOnComponent = new RelativePoint(e).getPointOn(myCurrentTooltip.getComponent()).getPoint();
       final Rectangle bounds = myCurrentTooltip.getBounds();
       if (bounds.x - 10 < pointOnComponent.x && bounds.width + bounds.x + 10 > pointOnComponent.x) {//do not hide hovered tooltip
@@ -137,4 +143,4 @@ public class TooltipController {
     }
     return false;
   }
-}
+      }

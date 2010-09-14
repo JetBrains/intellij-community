@@ -85,7 +85,7 @@ public interface SoftWrapModel {
    * @return            soft wrap registered for the given offset within the current model if any; <code>null</code> otherwise
    */
   @Nullable
-  TextChange getSoftWrap(int offset);
+  SoftWrap getSoftWrap(int offset);
 
   /**
    * Allows to ask current model about all soft wraps registered for the given document offsets range.
@@ -95,7 +95,7 @@ public interface SoftWrapModel {
    * @return        all soft wraps registered for the target document offsets range
    */
   @NotNull
-  List<? extends TextChange> getSoftWrapsForRange(int start, int end);
+  List<? extends SoftWrap> getSoftWrapsForRange(int start, int end);
 
   /**
    * Allows to ask current model about all soft wraps registered for the given document line.
@@ -104,7 +104,7 @@ public interface SoftWrapModel {
    * @return                all soft wraps registered for the given document line
    */
   @NotNull
-  List<? extends TextChange> getSoftWrapsForLine(int documentLine);
+  List<? extends SoftWrap> getSoftWrapsForLine(int documentLine);
 
   /**
    * Allows to answer if given soft wrap is shown.
@@ -114,7 +114,7 @@ public interface SoftWrapModel {
    * @param softWrap    soft wrap to check
    * @return            <code>true</code> if given soft wrap is visible; <code>false</code> otherwise
    */
-  boolean isVisible(TextChange softWrap);
+  boolean isVisible(SoftWrap softWrap);
 
   /**
    * Notifies current model that target document is about to be changed at current caret location.
@@ -143,25 +143,7 @@ public interface SoftWrapModel {
   boolean isInsideOrBeforeSoftWrap(@NotNull VisualPosition visual);
 
   /**
-   * Asks current model to calculate indent width of the given soft wrap in pixels.
-   * <p/>
-   * <code>'Soft wrap indent width'</code> here means visual width of soft wrap-introduced editor space on a line
-   * that contains document text just after soft wrap. Basically, resulting value is a resulting width sum of soft
-   * wrap symbols that follow last soft wrap line feed plus <code>'after soft wrap'</code> drawing width.
-   *
-   * @param softWrap    soft wrap which indent width should be calculated
-   * @return            indent width in pixels for the given soft wrap
+   * Callback method to ask soft wrap model to release all resources.
    */
-  int getSoftWrapIndentWidthInPixels(@NotNull TextChange softWrap);
-
-  /**
-   * Asks current model to calculate indent width of the given soft wrap in {@link VisualPosition#column columns}.
-   * <p/>
-   * <code>'Soft wrap indent width'</code> here means number of soft wrap symbols that follow last soft wrap line
-   * feed plus one symbol for <code>'after soft wrap'</code> drawing.
-   *
-   * @param softWrap    soft wrap which indent width should be calculated
-   * @return            indent width in columns for the given soft wrap
-   */
-  int getSoftWrapIndentWidthInColumns(@NotNull TextChange softWrap);
+  void release();
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -1005,7 +1006,15 @@ public class UIUtil {
 
   @NonNls
   public static String getCssFontDeclaration(final Font font) {
-    return "<style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style>";
+    return getCssFontDeclaration(font, null, null);
+  }
+
+  @NonNls
+  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor) {
+    String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
+    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "") : "") + "}";
+    return "<style> " + body + " " + link + "</style>";
   }
 
   public static boolean isWinLafOnVista() {
@@ -1270,6 +1279,36 @@ public class UIUtil {
 
   public static String addPadding(final String html, int hPadding) {
     return String.format("<p style=\"margin: 0 %dpx 0 %dpx;\">%s</p>", hPadding, hPadding, html);
+  }
+
+  public static String convertSpace2Nbsp(String html) {
+    StringBuffer result = new StringBuffer();
+    int currentPos = 0;
+    int braces = 0;
+    while (currentPos < html.length()) {
+      String each = html.substring(currentPos, currentPos + 1);
+      if ("<".equals(each)) {
+        braces++;
+      } else if (">".equals(each)) {
+        braces--;
+      }
+
+      if (" ".equals(each) && braces == 0) {
+        result.append("&nbsp;");
+      } else {
+        result.append(each);
+      }
+      currentPos++;
+    }
+
+    String text = result.toString();
+    int htmlTag = text.toLowerCase().lastIndexOf("</html>");
+
+    if (htmlTag >= 0) {
+      text = text.substring(0, htmlTag) + "<br><br>" + text.substring(htmlTag);
+    }
+
+    return result.toString();
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {

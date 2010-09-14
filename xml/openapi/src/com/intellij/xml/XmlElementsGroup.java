@@ -15,7 +15,7 @@
  */
 package com.intellij.xml;
 
-import org.jetbrains.annotations.Nullable;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -25,22 +25,23 @@ public interface XmlElementsGroup {
   enum Type {
     SEQUENCE,
     CHOICE,
+    ALL,
+    GROUP,
+
     LEAF
   }
 
   /**
-   * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
+   * @return minimal occurrence constraint value (e.g. 0 or 1)
    */
-  @Nullable
-  Integer getMinOccurs();
+  int getMinOccurs();
 
   /**
-   * @return maximal occurrence constraint value (e.g. 1 or {@link Integer#MAX_VALUE}), on null if not applied
+   * @return maximal occurrence constraint value (e.g. 1 or {@link Integer#MAX_VALUE})
    */
-  @Nullable
-  Integer getMaxOccurs();
+  int getMaxOccurs();
 
   Type getGroupType();
-  XmlElementsGroup[]  getSubGroups();
+  List<XmlElementsGroup> getSubGroups();
   XmlElementDescriptor getLeafDescriptor();
 }

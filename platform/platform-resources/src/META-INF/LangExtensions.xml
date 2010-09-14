@@ -574,6 +574,7 @@
   <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
 
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
-  <highlightVisitor implementation="com.intellij.refactoring.changeSignature.ChangeSignatureGestureVisistor"/>
+  <highlightVisitor implementation="com.intellij.refactoring.changeSignature.ChangeSignatureGestureVisitor"/>
+  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.EditorEscapeHandler" id="hide-cs-gesture" order="after hide-hints"/>
   <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
 </extensions>

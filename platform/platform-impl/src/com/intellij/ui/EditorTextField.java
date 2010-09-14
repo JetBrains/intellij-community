@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
@@ -38,6 +39,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -397,9 +399,12 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
     editor.setOneLineMode(true);
     editor.getCaretModel().moveToOffset(myDocument.getTextLength());
+
     if (!shouldHaveBorder()) {
       editor.setBorder(null);
     }
+
+    updateBorder(editor);
 
     if (myIsViewer) {
       editor.getSelectionModel().removeSelection();
@@ -414,6 +419,26 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     editor.getContentComponent().setFocusCycleRoot(false);
 
     return editor;
+  }
+
+  protected void updateBorder(@NotNull final EditorEx editor) {
+    if (UIUtil.isUnderAquaLookAndFeel() && editor.isOneLineMode()) {
+      final Container parent = getParent();
+      if (parent instanceof JTable || parent instanceof CellRendererPane) return;
+
+      editor.setBorder(new MacUIUtil.EditorTextFieldBorder(this));
+      editor.addFocusListener(new FocusChangeListener() {
+        @Override
+        public void focusGained(Editor editor) {
+          repaint();
+        }
+
+        @Override
+        public void focusLost(Editor editor) {
+          repaint();
+        }
+      });
+    }
   }
 
   private void setupEditorFont(final EditorEx editor) {
@@ -486,7 +511,6 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     }
     return true;
   }
-
 
   public void requestFocus() {
     if (myEditor != null) {

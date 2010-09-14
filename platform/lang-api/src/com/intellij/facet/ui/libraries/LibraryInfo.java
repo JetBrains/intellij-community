@@ -28,19 +28,19 @@ public class LibraryInfo {
   public static final LibraryInfo[] EMPTY_ARRAY = new LibraryInfo[0];
 
   private @Nullable final LibraryDownloadInfo myDownloadInfo;
-  private @NonNls final String myPresentableName;
+  private @NonNls final String myName;
   private @NonNls final String[] myRequiredClasses;
   private boolean mySelected = true;
 
-  public LibraryInfo(final @NonNls String presentableName, final @Nullable @NonNls String version,
-                         final @Nullable @NonNls String downloadingUrl,
+  public LibraryInfo(final @NonNls String name,
+                     final @Nullable @NonNls String downloadingUrl,
                      final @Nullable String presentableUrl, final @NonNls String... requiredClasses) {
-    myPresentableName = presentableName;
+    myName = name;
     myRequiredClasses = requiredClasses;
     if (downloadingUrl != null) {
-      int dot = presentableName.lastIndexOf('.');
-      String prefix = presentableName.substring(0, dot);
-      String suffix = presentableName.substring(dot);
+      int dot = name.lastIndexOf('.');
+      String prefix = name.substring(0, dot);
+      String suffix = name.substring(dot);
       myDownloadInfo = new LibraryDownloadInfo(downloadingUrl, presentableUrl, prefix, suffix);
     }
     else {
@@ -48,15 +48,15 @@ public class LibraryInfo {
     }
   }
 
-  public LibraryInfo(final @NonNls String presentableName, final @Nullable LibraryDownloadInfo downloadInfo, String... requiredClasses) {
-    myPresentableName = presentableName;
+  public LibraryInfo(final @NonNls String name, final @Nullable LibraryDownloadInfo downloadInfo, String... requiredClasses) {
+    myName = name;
     myRequiredClasses = requiredClasses;
     myDownloadInfo = downloadInfo;
   }
 
   @NonNls
-  public String getPresentableName() {
-    return myPresentableName;
+  public String getName() {
+    return myName;
   }
 
   @NonNls
@@ -76,7 +76,7 @@ public class LibraryInfo {
     final LibraryInfo that = (LibraryInfo)o;
 
     if (myDownloadInfo != null ? !myDownloadInfo.equals(that.myDownloadInfo) : that.myDownloadInfo != null) return false;
-    if (!myPresentableName.equals(that.myPresentableName)) return false;
+    if (!myName.equals(that.myName)) return false;
     if (!Arrays.equals(myRequiredClasses, that.myRequiredClasses)) return false;
 
     return true;
@@ -85,14 +85,14 @@ public class LibraryInfo {
   public int hashCode() {
     int result;
     result = (myDownloadInfo != null ? myDownloadInfo.hashCode() : 0);
-    result = 31 * result + myPresentableName.hashCode();
+    result = 31 * result + myName.hashCode();
     result = 31 * result + Arrays.hashCode(myRequiredClasses);
     return result;
   }
 
   @Override
   public String toString() {
-    return getPresentableName();
+    return getName();
   }
 
   public boolean isSelected() {

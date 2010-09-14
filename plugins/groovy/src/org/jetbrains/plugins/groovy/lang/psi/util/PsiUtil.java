@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -948,7 +949,9 @@ public class PsiUtil {
     return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
   }
 
-  public static PsiElement skipParentheses(PsiElement element, boolean up) {
+  @Nullable
+  public static PsiElement skipParentheses(@Nullable PsiElement element, boolean up) {
+    if (element == null) return null;
     if (up) {
       PsiElement parent;
       while ((parent=element.getParent()) instanceof GrParenthesizedExpression) {
@@ -964,4 +967,11 @@ public class PsiUtil {
     }
   }
 
+  public static GrReturnStatement[] collectReturns(GrClosableBlock closure) {
+    return new GrReturnStatement[0];  // TODO Mr. Medvedev
+  }
+
+  public static GrStatement getLastStatement(GrClosableBlock closure) {
+    return null; // TODO Mr. Medvedev
+  }
 }

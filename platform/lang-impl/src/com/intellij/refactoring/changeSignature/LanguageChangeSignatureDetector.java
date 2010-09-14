@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: Sep 6, 2010
  */
 public interface LanguageChangeSignatureDetector {
-
+  String MOVE_PARAMETER = "Parameter Move";
 
   @Nullable
   ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,
@@ -37,4 +38,10 @@ public interface LanguageChangeSignatureDetector {
 
   @Nullable
   TextRange getHighlightingRange(PsiElement element);
+
+  boolean wasBanned(PsiElement element, @NotNull ChangeInfo bannedInfo);
+
+  boolean isMoveParameterAvailable(PsiElement parameter, boolean left);
+
+  void moveParameter(PsiElement parameter, Editor editor, boolean left);
 }

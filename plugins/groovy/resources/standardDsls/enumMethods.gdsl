@@ -20,4 +20,7 @@ package standardDsls
 
 contributor (ctype:'java.lang.Enum') {
   method name:'values', type:'java.util.Collection', isStatic:true
+  method name: 'valueOf', type: psiType.canonicalText, params: [name: 'java.lang.String'], isStatic:true
+  method name: 'next', type: psiType.canonicalText
+  method name: 'previous', type: psiType.canonicalText
 }

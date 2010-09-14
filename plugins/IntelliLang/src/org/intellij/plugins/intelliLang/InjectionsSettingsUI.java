@@ -371,7 +371,7 @@ public class InjectionsSettingsUI implements Configurable {
   private List<BaseInjection> getSelectedInjections() {
     final ArrayList<BaseInjection> toRemove = new ArrayList<BaseInjection>();
     for (int row : myInjectionsTable.getSelectedRows()) {
-      toRemove.add(myInjectionsTable.getItems().get(row));
+      toRemove.add(myInjectionsTable.getItems().get(myInjectionsTable.convertRowIndexToModel(row)));
     }
     return toRemove;
   }
@@ -379,7 +379,7 @@ public class InjectionsSettingsUI implements Configurable {
   @Nullable
   private BaseInjection getSelectedInjection() {
     final int row = myInjectionsTable.getSelectedRow();
-    return row < 0? null : myInjectionsTable.getItems().get(row);
+    return row < 0? null : myInjectionsTable.getItems().get(myInjectionsTable.convertRowIndexToModel(row));
   }
 
   private void performAdd(final AnActionEvent e) {

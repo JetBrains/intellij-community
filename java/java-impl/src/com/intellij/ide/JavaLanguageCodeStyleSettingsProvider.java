@@ -15,10 +15,10 @@
  */
 package com.intellij.ide;
 
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,6 +38,12 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) return WRAPPING_CODE_SAMPLE;
 
     return GENERAL_CODE_SAMPLE;
+  }
+
+  @Override
+  public int getRightMargin(@NotNull SettingsType settingsType) {
+    if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) return 37;
+    return super.getRightMargin(settingsType);
   }
 
   @Override

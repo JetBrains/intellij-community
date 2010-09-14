@@ -399,7 +399,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (fileCopy == null) {
       PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
       if (wasInjected) {
-        LOG.error("No injected fragmnent found at offset " + hostStartOffset + " in the patched file copy, found: " + elementAfterCommit);
+        LOG.error("No injected fragment found at offset " + hostStartOffset + " in the patched file copy, found: " + elementAfterCommit);
       }
       fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
     }

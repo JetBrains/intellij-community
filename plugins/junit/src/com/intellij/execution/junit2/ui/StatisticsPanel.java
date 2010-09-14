@@ -87,7 +87,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
     myTimeLabel.clear();
     myTimeLabel.append("Total time: " + Formatters.statisticsFor(proxy).getTime(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     final int idx = myChildInfo.getIndexOf(myCurrentTest);
-    TableUtil.selectRows(myTable, new int[]{idx});
+    TableUtil.selectRows(myTable, new int[]{myTable.convertRowIndexToView(idx)});
     TableUtil.scrollSelectionToVisible(myTable);
   }
 

@@ -17,6 +17,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -27,6 +28,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.PsiClass;
 import com.sun.jdi.*;
 
 import java.util.List;
@@ -96,12 +98,24 @@ public class JumpToObjectAction extends DebuggerAction{
         type = ((ArrayType)type).componentType();
       }
       if(type instanceof ClassType) {
-        final List<Location> locations = ((ClassType)type).allLineLocations();
+        final ClassType clsType = (ClassType)type;
+        final List<Location> locations = clsType.allLineLocations();
         if(locations.size() > 0) {
           final Location location = locations.get(0);
           return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
             public SourcePosition compute() {
-              return debugProcess.getPositionManager().getSourcePosition(location);
+              SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
+              // adjust position for non-anonymous classes
+              if (clsType.name().indexOf("$") < 0) {
+                final PsiClass classAt = JVMNameUtil.getClassAt(position);
+                if (classAt != null) {
+                  final SourcePosition classPosition = SourcePosition.createFromElement(classAt);
+                  if (classPosition != null) {
+                    position = classPosition;
+                  }
+                }
+              }
+              return position;
             }
           });
         }

@@ -17,6 +17,15 @@ public class SearchRequestCollector {
   private final List<PsiSearchRequest> myWordRequests = CollectionFactory.arrayList();
   private final List<QuerySearchRequest> myQueryRequests = CollectionFactory.arrayList();
   private final List<Processor<Processor<PsiReference>>> myCustomSearchActions = CollectionFactory.arrayList();
+  private final SearchSession mySession;
+
+  public SearchRequestCollector(SearchSession session) {
+    mySession = session;
+  }
+
+  public SearchSession getSearchSession() {
+    return mySession;
+  }
 
   public void searchWord(@NotNull String word, @NotNull SearchScope searchScope, boolean caseSensitive, @NotNull PsiElement searchTarget) {
     final short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_COMMENTS;
@@ -39,6 +48,7 @@ public class SearchRequestCollector {
 
   public void searchQuery(QuerySearchRequest request) {
     assert request.collector != this;
+    assert request.collector.getSearchSession() == mySession;
     synchronized (lock) {
       myQueryRequests.add(request);
     }

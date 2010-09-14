@@ -162,7 +162,6 @@ def layoutFull(String home, String targetDirectory) {
             module("IntelliLang")
             module("IntelliLang-java")
             module("IntelliLang-xml")
-            module("IntelliLang-js")
             module("IntelliLang-javaee")
           }
         }

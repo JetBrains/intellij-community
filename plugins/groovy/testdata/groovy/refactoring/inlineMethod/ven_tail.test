@@ -14,7 +14,7 @@ class DC {
     def r() {
       String s1 = ""
       String interned = s1.intern()
-      return interned.bytes
+      interned.bytes
     }
 
     private byte[] getBytes(String s1) {

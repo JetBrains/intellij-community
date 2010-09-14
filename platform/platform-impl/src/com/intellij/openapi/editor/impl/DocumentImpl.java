@@ -163,7 +163,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     for (int line = 0; line < myLineSet.getLineCount(); line++) {
       if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
       int start = -1;
-      int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
+      final int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
       int lineStart = myLineSet.getLineStart(line);
       CharSequence text = myText.getCharArray();
       for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
@@ -180,7 +180,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         markAsNeedsStrippingLater = true;
       }
       else {
-        deleteString(start, lineEnd);
+        final int finalStart = start;
+        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, editor == null ? null : editor.getProject()) {
+          public void run() {
+            CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+              public void run() {
+                deleteString(finalStart, lineEnd);
+              }
+            });
+          }
+        });
       }
     }
 

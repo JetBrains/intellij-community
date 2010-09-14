@@ -87,6 +87,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return this;
+    if (scope instanceof IntersectionScope) {
+      return scope.intersectWith(this);
+    }
     return new IntersectionScope(this, scope, null);
   }
 
@@ -272,6 +275,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       myDisplayName = displayName;
     }
 
+    @NotNull
+    @Override
+    public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
+      if (myScope1.equals(scope) || myScope2.equals(scope)) {
+        return this;
+      }
+      return new IntersectionScope(this, scope, null);
+    }
+
     public String getDisplayName() {
       if (myDisplayName == null) {
         return PsiBundle.message("psi.search.scope.intersection", myScope1.getDisplayName(), myScope2.getDisplayName());
@@ -328,10 +340,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + myScope1.hashCode();
-      result = 31 * result + myScope2.hashCode();
-      return result;
+      return 31 * myScope1.hashCode() + myScope2.hashCode();
     }
   }
   private static class UnionScope extends GlobalSearchScope {
@@ -403,10 +412,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + myScope1.hashCode();
-      result = 31 * result + myScope2.hashCode();
-      return result;
+      return 31 * myScope1.hashCode() + myScope2.hashCode();
     }
   }
 
@@ -543,6 +549,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final Collection<VirtualFile> myFiles;
 
     public FilesScope(final Project project, final Collection<VirtualFile> files) {
+      super(project);
       myFiles = files;
     }
 
@@ -564,6 +571,19 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean isSearchInLibraries() {
       return false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof FilesScope)) return false;
+
+      return myFiles.equals(((FilesScope)o).myFiles);
+    }
+
+    @Override
+    public int hashCode() {
+      return myFiles.hashCode();
     }
   }
 

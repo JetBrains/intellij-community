@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 
 /**
@@ -43,7 +44,7 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
     XmlTag rootTag = document.getRootTag();
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
 
-    if (nsDescriptor instanceof Validator) {
+    if (nsDescriptor instanceof Validator && !HtmlUtil.isHtml5Document(document)) {
       ((Validator<XmlDocument>)nsDescriptor).validate(document, this);
     }
   }
