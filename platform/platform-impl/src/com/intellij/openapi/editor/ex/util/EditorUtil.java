@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class EditorUtil {
   private EditorUtil() { }
@@ -184,15 +183,13 @@ public class EditorUtil {
     List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForRange(start, maxScanIndex);
     int startToUse = start;
     int x = 0;
-    AtomicInteger currentColumn = new AtomicInteger();
+    int[] currentColumn = {0};
     for (SoftWrap softWrap : softWraps) {
       // There is a possible case that target column points inside soft wrap-introduced virtual space.
-      if (currentColumn.get() >= columnNumber) {
+      if (currentColumn[0] >= columnNumber) {
         return startToUse;
       }
-      int result = calcSoftWrapUnawareOffset(
-        editor, text, startToUse, softWrap.getEnd(), columnNumber, tabSize, x, currentColumn
-      );
+      int result = calcSoftWrapUnawareOffset(editor, text, startToUse, softWrap.getEnd(), columnNumber, tabSize, x, currentColumn);
       if (result >= 0) {
         return result;
       }
@@ -202,7 +199,7 @@ public class EditorUtil {
     }
 
     // There is a possible case that target column points inside soft wrap-introduced virtual space.
-    if (currentColumn.get() >= columnNumber) {
+    if (currentColumn[0] >= columnNumber) {
       return startToUse;
     }
 
@@ -231,7 +228,7 @@ public class EditorUtil {
    *                        column if any; <code>-1</code> otherwise
    */
   private static int calcSoftWrapUnawareOffset(Editor editor, CharSequence text, int start, int end, int columnNumber, int tabSize, int x,
-                                               AtomicInteger currentColumn)
+                                               int[] currentColumn)
   {
     // The main problem in a calculation is that target text may contain tabulation symbols and every such symbol may take different
     // number of logical columns to represent. E.g. it takes two columns if tab size is four and current column is two; three columns
@@ -256,12 +253,12 @@ public class EditorUtil {
     // columns are occupied by tabulation symbols.
     if (editor == null || useOptimization) {
       if (!hasTabs) {
-        int result = start + columnNumber - currentColumn.get();
+        int result = start + columnNumber - currentColumn[0];
         if (result < end) {
           return result;
         }
         else {
-          currentColumn.addAndGet(end - start);
+          currentColumn[0] += end - start;
           return -1;
         }
       }
@@ -271,14 +268,14 @@ public class EditorUtil {
       int shift = 0;
       int offset = start;
       int prevX = x;
-      for (; offset < end && offset + shift + currentColumn.get() < start + columnNumber; offset++) {
+      for (; offset < end && offset + shift + currentColumn[0] < start + columnNumber; offset++) {
         if (text.charAt(offset) == '\t') {
           int nextX = nextTabStop(prevX, editor, tabSize);
           shift += columnsNumber(nextX - prevX, getSpaceWidth(Font.PLAIN, editor)) - 1;
           prevX = nextX;
         }
       }
-      int diff = start + columnNumber - offset - shift - currentColumn.get();
+      int diff = start + columnNumber - offset - shift - currentColumn[0];
       if (diff < 0) {
         return offset - 1;
       }
@@ -286,7 +283,7 @@ public class EditorUtil {
         return offset;
       }
       else {
-        currentColumn.addAndGet(offset - start + shift);
+        currentColumn[0] += offset - start + shift;
         return -1;
       }
     }
@@ -297,7 +294,7 @@ public class EditorUtil {
     int offset = start;
     IterationState state = new IterationState(editorImpl, offset, false);
     int fontType = state.getMergedAttributes().getFontType();
-    int column = currentColumn.get();
+    int column = currentColumn[0];
     int spaceSize = getSpaceWidth(fontType, editorImpl);
     for (; column < columnNumber && offset < end; offset++) {
       if (offset >= state.getEndOffset()) {
@@ -323,7 +320,7 @@ public class EditorUtil {
     if (column > columnNumber && offset > 0 && text.charAt(offset - 1) == '\t') {
       return offset - 1;
     }
-    currentColumn.set(column);
+    currentColumn[0] = column;
     return -1;
   }
 
@@ -344,8 +341,8 @@ public class EditorUtil {
       SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(start);
       useOptimization = softWrap == null;
     }
-    boolean hasNonTabs = false;
     if (useOptimization) {
+      boolean hasNonTabs = false;
       for (int i = start; i < offset; i++) {
         if (text.charAt(i) == '\t') {
           if (hasNonTabs) {
