@@ -553,4 +553,11 @@ public class ArrayUtil {
   public static <T> T getLastElement(T[] array) {
     return array.length > 0 ? array[array.length -1] : null;
   }
+
+  public static <T> T[] join(T[] array1, T[] array2) {
+    final T[] newArray = (T[])Array.newInstance(array1.getClass().getComponentType(), array1.length + array2.length);
+    System.arraycopy(array1, 0, newArray, 0, array1.length);
+    System.arraycopy(array2, 0, newArray, array1.length, array2.length);
+    return newArray;
+  }
 }

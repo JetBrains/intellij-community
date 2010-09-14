@@ -132,6 +132,14 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
             result[0] = t;
             return false;
           }
+          for (XmlTag anImport : t.findSubTags("import", t.getNamespace())) {
+            if (canonicalText.equals(anImport.getAttributeValue("namespace"))) {
+              final XmlAttribute location = anImport.getAttribute("schemaLocation");
+              if (location != null) {
+                result[0] = FileReferenceUtil.findFile(location.getValueElement());
+              }
+            }
+          }
           return true;
         }
       });
@@ -233,12 +241,11 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
       final XmlTag subTag = rootTag.findFirstSubTag(types);
 
       if (subTag != null) {
-        XmlTag[] tags = subTag.findSubTags("xsd:schema");
-        if (tags.length == 0) {
-          tags = subTag.findSubTags("schema");
-        }
-        for(XmlTag t:tags) {
-          if (!processor.process(t)) return;
+        for (int i = 0; i < XmlUtil.SCHEMA_URIS.length; i++) {
+          final XmlTag[] tags = subTag.findSubTags("schema", XmlUtil.SCHEMA_URIS[i]);
+          for (XmlTag t : tags) {
+            if (!processor.process(t)) return;
+          }
         }
       }
     }
