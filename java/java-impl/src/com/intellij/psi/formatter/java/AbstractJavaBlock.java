@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,9 +64,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
   private static final AlignmentInColumnsConfig ALIGNMENT_IN_COLUMNS_CONFIG = new AlignmentInColumnsConfig(
-    JavaTokenType.IDENTIFIER, ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET, JavaTokenType.EQ,
-    JavaElementType.FIELD
-  );
+    TokenSet.create(JavaTokenType.IDENTIFIER), ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET,
+    TokenSet.create(JavaTokenType.EQ), TokenSet.create(JavaElementType.FIELD));
 
   /**
    * Enumerates types of variable declaration sub-elements that should be aligned in columns.
