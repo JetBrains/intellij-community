@@ -108,7 +108,9 @@ public class ConvertClosureToMethodIntention extends Intention {
       }
     }
     final PsiClass containingClass = field.getContainingClass();
-    final PsiType type = field.getTypeGroovy();
+    final GrExpression initializer = field.getInitializerGroovy();
+    LOG.assertTrue(initializer != null);
+    final PsiType type = initializer.getType();
     LOG.assertTrue(type instanceof GrClosureType);
     final GrClosureSignature signature = ((GrClosureType)type).getSignature();
     final List<MethodSignature> signatures = GrClosureSignatureUtil.generateAllMethodSignaturesByClosureSignature(fieldName, signature);
