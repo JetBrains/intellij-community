@@ -31,7 +31,7 @@ public class FramesList extends DebuggerFramesList {
   private volatile Method mySelectedMethod = null;
 
   public FramesList(Project project) {
-    super(null);
+    super(project);
     doInit();
   }
 

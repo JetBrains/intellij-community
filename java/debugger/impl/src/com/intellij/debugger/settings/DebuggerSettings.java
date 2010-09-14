@@ -67,6 +67,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
+  public volatile boolean SHOW_LIBRARY_STACKFRAMES = true;
 
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
