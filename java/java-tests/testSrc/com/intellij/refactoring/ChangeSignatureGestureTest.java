@@ -91,6 +91,10 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
     doTypingNoBorderTest("private");
   }
 
+  public void testAddParameterFinal() {
+    doTypingTest("final int param");
+  }
+
   private void doTypingNoBorderTest(final String param) {
     doTest(new Runnable() {
       @Override
