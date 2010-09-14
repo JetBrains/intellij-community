@@ -188,7 +188,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     public void reportException(VcsException exception) {
-      VcsBalloonProblemNotifier.showMe(myVcs.getProject(), VcsBundle.message("message.title.could.not.load.file.history") + ": " +
+      VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(), VcsBundle.message("message.title.could.not.load.file.history") + ": " +
                                                                    exception.getMessage(), MessageType.ERROR);
     }
 

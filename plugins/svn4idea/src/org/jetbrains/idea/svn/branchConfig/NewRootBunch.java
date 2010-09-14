@@ -166,7 +166,7 @@ public class NewRootBunch implements SvnBranchConfigManager {
       catch (SVNException e) {
         // already logged inside
         if (InfoReliability.setByUser.equals(myInfoReliability)) {
-          VcsBalloonProblemNotifier.showMe(myProject, "Branches load error: " + e.getMessage(), MessageType.ERROR);
+          VcsBalloonProblemNotifier.showOverChangesView(myProject, "Branches load error: " + e.getMessage(), MessageType.ERROR);
         }
       } finally {
         // callback must be called by contract

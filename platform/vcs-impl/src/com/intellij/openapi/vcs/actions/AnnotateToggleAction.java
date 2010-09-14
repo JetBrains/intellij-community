@@ -537,7 +537,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
               targetPath[0] = pair.getSecond() == null ? new FilePathImpl(myFile) : pair.getSecond();
               final CommittedChangeList cl = pair.getFirst();
               if (cl == null) {
-                VcsBalloonProblemNotifier.showMe(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
+                VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
                 return;
               }
               changes.addAll(cl.getChanges());
@@ -551,7 +551,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
           @Override
           public void onSuccess() {
             if (exc[0] != null) {
-              VcsBalloonProblemNotifier.showMe(myVcs.getProject(), "Can not show diff: " + exc[0].getMessage(), MessageType.ERROR);
+              VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not show diff: " + exc[0].getMessage(), MessageType.ERROR);
             } else if (! changes.isEmpty()) {
               int idx = findSelfInList(changes, targetPath[0]);
               final ShowDiffUIContext context = new ShowDiffUIContext(true);

@@ -66,7 +66,7 @@ public abstract class CvsLoginWorkerImpl<T extends CvsConnectionSettings> implem
 
   public void goOffline() {
     mySettings.setOffline(true);
-    VcsBalloonProblemNotifier.showMe(myProject, CvsBundle.message("set.offline.notification.text"), MessageType.WARNING);
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, CvsBundle.message("set.offline.notification.text"), MessageType.WARNING);
   }
 
   private ThreeState reportException(final AuthenticationException e) {
@@ -95,6 +95,6 @@ public abstract class CvsLoginWorkerImpl<T extends CvsConnectionSettings> implem
   }
 
   public static void showConnectionErrorMessage(final Project project, final String message) {
-    VcsBalloonProblemNotifier.showMe(project, message, MessageType.ERROR);
+    VcsBalloonProblemNotifier.showOverChangesView(project, message, MessageType.ERROR);
   }
 }

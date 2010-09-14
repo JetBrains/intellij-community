@@ -60,7 +60,7 @@ public class ToggleOfflineAction extends ToggleAction {
       settings = entriesManager.getCvsConnectionSettingsFor(firstDirInChain);
     }
     if ((settings != null) && settings.isValid() && (state != settings.isOffline())) {
-      VcsBalloonProblemNotifier.showMe(cvsContext.getProject(),
+      VcsBalloonProblemNotifier.showOverChangesView(cvsContext.getProject(),
                                                state ? CvsBundle.message("set.offline.notification.text") :
                                                        CvsBundle.message("set.online.notification.text"),
                                                state ? MessageType.WARNING : MessageType.INFO);

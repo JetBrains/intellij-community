@@ -116,7 +116,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     }
     if (! missing.isEmpty()) {
       // 7-8
-      VcsBalloonProblemNotifier.showMe(project, "Show Diff: Cannot find base for: " + StringUtil.join(missing, ",\n"), MessageType.WARNING);
+      VcsBalloonProblemNotifier.showOverChangesView(project, "Show Diff: Cannot find base for: " + StringUtil.join(missing, ",\n"), MessageType.WARNING);
     }
 
     ShowDiffAction.showDiffImpl(project, diffRequestPresentables, toSelectIdx, new ShowDiffUIContext(false));

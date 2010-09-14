@@ -385,7 +385,7 @@ public class NewMappings {
       } else {
         final AbstractVcs vcs = allVcses.getByName(vcsName);
         if (vcs == null) {
-          VcsBalloonProblemNotifier.showMe(myProject, "VCS plugin not found for mapping to : '" + vcsName + "'", MessageType.ERROR);
+          VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS plugin not found for mapping to : '" + vcsName + "'", MessageType.ERROR);
           continue;
         }
         filteredFiles = vcs.filterUniqueRoots(objects, fileConvertor);

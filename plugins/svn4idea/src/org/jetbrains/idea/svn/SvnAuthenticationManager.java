@@ -583,17 +583,17 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
     @Override
     public void warnOnAuthStorageDisabled(SVNURL url) {
-      VcsBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
     }
 
     @Override
     public void warnOnPasswordStorageDisabled(SVNURL url) {
-      VcsBalloonProblemNotifier.showMe(myProject, "Cannot store password: forbidden by \"store-passwords=no\"", MessageType.ERROR);
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Cannot store password: forbidden by \"store-passwords=no\"", MessageType.ERROR);
     }
 
     @Override
     public void warnOnSSLPassphraseStorageDisabled(SVNURL url) {
-      VcsBalloonProblemNotifier.showMe(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp=no\"", MessageType.ERROR);
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp=no\"", MessageType.ERROR);
     }
 
     @Override

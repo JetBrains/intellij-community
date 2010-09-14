@@ -373,7 +373,7 @@ class GitTreeController implements ManageGitTreeView {
       hash = GitChangeUtils.commitExistsByComment(myProject, myRoot, reference);
     }
     if (hash == null) {
-      VcsBalloonProblemNotifier.showMe(myProject, "Nothing found for: \"" + reference + "\"", MessageType.WARNING);
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Nothing found for: \"" + reference + "\"", MessageType.WARNING);
     } else {
       final SHAHash finalHash = hash;
       myAlarm.addRequest(new Runnable() {

@@ -238,7 +238,7 @@ public class QuickMerge {
     context.next(new TaskDescriptor(message, Where.AWT) {
       @Override
       public void run(ContinuationContext context) {
-        VcsBalloonProblemNotifier.showMe(myProject, message, isError ? MessageType.ERROR : MessageType.WARNING);
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, message, isError ? MessageType.ERROR : MessageType.WARNING);
       }
     });
   }

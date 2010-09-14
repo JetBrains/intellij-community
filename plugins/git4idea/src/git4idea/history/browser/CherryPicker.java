@@ -96,9 +96,9 @@ public class CherryPicker {
   private void showResults() {
     if (myExceptions.isEmpty()) {
       VcsBalloonProblemNotifier
-        .showMe(myVcs.getProject(), "Successful cherry-pick into working tree, please commit changes", MessageType.INFO);
+        .showOverChangesView(myVcs.getProject(), "Successful cherry-pick into working tree, please commit changes", MessageType.INFO);
     } else {
-      VcsBalloonProblemNotifier.showMe(myVcs.getProject(), "Errors in cherry-pick", MessageType.ERROR);
+      VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Errors in cherry-pick", MessageType.ERROR);
     }
     if ((! myExceptions.isEmpty()) || (! myWarnings.isEmpty())) {
       myExceptions.addAll(myWarnings);
