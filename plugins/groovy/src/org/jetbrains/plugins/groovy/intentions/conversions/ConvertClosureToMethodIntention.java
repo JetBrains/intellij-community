@@ -19,8 +19,15 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -32,6 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.Collection;
 
 /**
  * @author Maxim.Medvedev
@@ -46,8 +55,40 @@ public class ConvertClosureToMethodIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     element = element.getParent();
-    StringBuilder builder = new StringBuilder(element.getTextLength());
+
     final GrField field = (GrField)element;
+
+    final Collection<PsiReference> usages = ReferencesSearch.search(field).findAll();
+
+    final Collection<PsiElement> fieldUsages = new HashSet<PsiElement>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    for (PsiReference usage : usages) {
+      final PsiElement psiElement = usage.getElement();
+      if (PsiUtil.isMethodUsage(psiElement)) continue;
+      if (GroovyFileType.GROOVY_LANGUAGE.equals(psiElement.getLanguage())) {
+        fieldUsages.add(psiElement);
+      }
+      else {
+        conflicts.putValue(psiElement, GroovyInspectionBundle.message("closure.is.used.as.variable.in.not.groovy"));
+      }
+    }
+    if (conflicts.size() > 0) {
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
+        public void run() {
+          execute(field, fieldUsages);
+        }
+      });
+      conflictsDialog.show();
+    }
+    else {
+      execute(field, fieldUsages);
+    }
+  }
+
+  private static void execute(GrField field, Collection<PsiElement> fieldUsages) {
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(field.getProject());
+
+    StringBuilder builder = new StringBuilder(field.getTextLength());
     final GrClosableBlock block = (GrClosableBlock)field.getInitializerGroovy();
 
     final GrModifierList modifierList = field.getModifierList();
@@ -74,8 +115,11 @@ public class ConvertClosureToMethodIntention extends Intention {
       psiElement.delete();
     }
     builder.append(block.getText());
-    final GrMethod method = GroovyPsiElementFactory.getInstance(element.getProject()).createMethodFromText(builder.toString());
+    final GrMethod method = GroovyPsiElementFactory.getInstance(field.getProject()).createMethodFromText(builder.toString());
     field.getParent().replace(method);
+    for (PsiElement usage : fieldUsages) {
+      usage.replace(factory.createReferenceExpressionFromText("&" + usage.getText()));
+    }
   }
 
   private static class MyPredicate implements PsiElementPredicate {
