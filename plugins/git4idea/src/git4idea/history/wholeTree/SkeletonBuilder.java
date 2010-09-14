@@ -78,7 +78,8 @@ public class SkeletonBuilder implements AsynchConsumer<CommitHashPlusParents> {
           mySkeleton.addStartToEvent(commit.myIdx, rowCount);
         }
 
-        if (mySeizedWires.get(correspCommit.getWireNumber()) == commit.myIdx) {
+        final Integer seized = mySeizedWires.get(correspCommit.getWireNumber());
+        if (seized != null && seized == commit.myIdx) {
           if (wireNumber == -1) {
             // there is no other commits on the wire after parent -> use it
             wireNumber = correspCommit.getWireNumber();

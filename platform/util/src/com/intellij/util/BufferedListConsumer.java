@@ -53,11 +53,15 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
     myTs = ts;
   }
 
-  public void flush() {
+  public void flushPart() {
     if (! myBuffer.isEmpty()) {
       myConsumer.consume(new ArrayList<T>(myBuffer));
       myBuffer.clear();
     }
+  }
+
+  public void flush() {
+    flushPart();
     if (myFlushListener != null) {
       myFlushListener.run();
     }

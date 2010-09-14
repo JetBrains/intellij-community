@@ -49,4 +49,5 @@ public interface LowLevelAccess {
   void cherryPick(SHAHash hash) throws VcsException;
   void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
                                     final Consumer<CommitHashPlusParents> consumer) throws VcsException;
+  List<GitCommit> getCommitDetails(final Collection<String> commitIds) throws VcsException;
 }

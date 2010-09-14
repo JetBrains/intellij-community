@@ -341,6 +341,29 @@ public class GitHistoryUtils {
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
+    return parseCommitsLoadOutput(allBranchesSet, root, output);
+  }
+
+  public static List<GitCommit> commitsDetails(Project project,
+                                                 FilePath path, Set<String> allBranchesSet,
+                                                 final Collection<String> commitsIds) throws VcsException {
+    // adjust path using change manager
+    path = getLastCommitName(project, path);
+    final VirtualFile root = GitUtil.getGitRoot(path);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
+    h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
+    h.addParameters("--name-only",
+                    "--pretty=format:%x03%h%x00%H%x00%ct%x00%an%x00%ae%x00%cn%x00%ce%x00[%p]%x00[%d]%x00%s%n%n%b%x00", "--encoding=UTF-8");
+    h.addParameters(new ArrayList<String>(commitsIds));
+
+    h.endOptions();
+    h.addRelativePaths(path);
+    String output = h.run();
+    return parseCommitsLoadOutput(allBranchesSet, root, output);
+  }
+
+  private static List<GitCommit> parseCommitsLoadOutput(Set<String> allBranchesSet, VirtualFile root, String output) throws VcsException {
     final List<GitCommit> rc = new ArrayList<GitCommit>();
     StringTokenizer tk = new StringTokenizer(output, "\u0003", false);
     final String prefix = root.getPath() + "/";

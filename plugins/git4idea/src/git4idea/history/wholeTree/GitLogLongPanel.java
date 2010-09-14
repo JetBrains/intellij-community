@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CompoundNumber;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
@@ -38,10 +40,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,6 +62,7 @@ public class GitLogLongPanel {
   private JTextField myFilterField;
   private String myPreviousFilter;
   private JLabel myLoading;
+  private MyChangeListener myListener;
 
   // todo for the case when hierarchy is also drawn?
   public GitLogLongPanel(final Project project, final Collection<VirtualFile> roots) {
@@ -109,10 +109,14 @@ public class GitLogLongPanel {
     };
     loaderImpl.setUIRefresh(myUIRefresh);
 
-    initPanel();
+    initPanel(loaderImpl);
   }
 
-  private void initPanel() {
+  public void stop() {
+    myListener.stop();
+  }
+
+  private void initPanel(final LoaderImpl loaderImpl) {
     final JPanel container = new JPanel(new BorderLayout());
     final JPanel menu = new JPanel();
     final BoxLayout layout = new BoxLayout(menu, BoxLayout.X_AXIS);
@@ -128,7 +132,8 @@ public class GitLogLongPanel {
     final JBTable table = new JBTable(myTableModel);
     table.setModel(myTableModel);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    scrollPane.getViewport().addChangeListener(new MyChangeListener());
+    myListener = new MyChangeListener(loaderImpl, table);
+    scrollPane.getViewport().addChangeListener(myListener);
 
     container.add(menu, BorderLayout.NORTH);
     container.add(scrollPane, BorderLayout.CENTER);
@@ -251,6 +256,18 @@ public class GitLogLongPanel {
     }
 
     @Override
+    public void doCancelAction() {
+      myGitLogLongPanel.stop();
+      super.doCancelAction();
+    }
+
+    @Override
+    protected void doOKAction() {
+      myGitLogLongPanel.stop();
+      super.doOKAction();
+    }
+
+    @Override
     public JComponent getPreferredFocusedComponent() {
       myGitLogLongPanel.setModalityState(ModalityState.current());
       return super.getPreferredFocusedComponent();
@@ -263,9 +280,36 @@ public class GitLogLongPanel {
   }
 
   private static class MyChangeListener implements ChangeListener {
+    private final Speedometer mySpeedometer;
+    private Timer myTimer;
+    private long myRefreshMark;
+
+    private MyChangeListener(final LoaderImpl loaderImpl, final JBTable table) {
+      mySpeedometer = new Speedometer();
+      myRefreshMark = 0;
+      myTimer = new Timer(100, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          //final boolean shouldPing = (System.currentTimeMillis() - myRefreshMark) > 700;
+          final boolean shouldPing = false;
+          if (((mySpeedometer.getSpeed() < 0.1) && mySpeedometer.hasData()) || shouldPing) {
+            myRefreshMark = System.currentTimeMillis();
+            mySpeedometer.clear();
+            final Pair<Integer,Integer> visibleRows = TableScrollingUtil.getVisibleRows(table);
+            loaderImpl.loadCommitDetails(visibleRows.first == 0 ? visibleRows.first : (visibleRows.first - 1), visibleRows.second);
+          }
+        }
+      });
+      myTimer.start();
+    }
+
+    public void stop() {
+      myTimer.stop();
+    }
+
     @Override
     public void stateChanged(ChangeEvent e) {
-      System.out.println(e.toString());
+      mySpeedometer.event();
     }
   }
 }

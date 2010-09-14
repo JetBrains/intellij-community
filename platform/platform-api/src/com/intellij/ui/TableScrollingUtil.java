@@ -19,11 +19,12 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 /**
@@ -68,6 +69,11 @@ public class TableScrollingUtil {
   private static int getVisibleRowCount(JTable list) {
     Rectangle visibleRect = list.getVisibleRect();
     return getTrailingRow(list, visibleRect) - getLeadingRow(list, visibleRect) + 1;
+  }
+
+  public static Pair<Integer, Integer> getVisibleRows(JTable list) {
+    Rectangle visibleRect = list.getVisibleRect();
+    return new Pair<Integer, Integer>(getLeadingRow(list, visibleRect) + 1, getTrailingRow(list, visibleRect));
   }
 
   private static int getLeadingRow(JTable table,Rectangle visibleRect) {
