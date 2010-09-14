@@ -12,10 +12,8 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,10 +48,10 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
     }
 
     final List<Location> locations = new ArrayList<Location>();
-    for (PyClass cls : getClassesByName(project, className)) {
+    for (PyClass cls : PyClassNameIndex.find(className, project, false)) {
       ProgressManager.checkCanceled();
 
-      final PyFunction method = locateMethodInHierarchy(cls, methodName);
+      final PyFunction method = cls.findMethodByName(methodName, true);
       if (method == null) {
         continue;
       }
@@ -67,26 +65,5 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
     }
 
     return locations;
-  }
-
-  @Nullable
-  private static PyFunction locateMethodInHierarchy(final PyClass cls, final String methodName) {
-    PyFunction func = cls.findMethodByName(methodName, false);
-    if (func != null) {
-      return func;
-    }
-
-    for (PyClass ancestors : cls.iterateAncestors()) {
-      func = ancestors.findMethodByName(methodName, false);
-      if (func != null) {
-        return func;
-      }
-    }
-
-    return null;
-  }
-
-  private static Collection<PyClass> getClassesByName(final Project project, final String name) {
-    return PyClassNameIndex.find(name, project, false); 
   }
 }
