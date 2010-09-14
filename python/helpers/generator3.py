@@ -251,7 +251,7 @@ def sanitizeValue(p_value):
             return repr(repr(p_value)) # function -> "<function ...>", etc
 
 def extractAlphaPrefix(p_string, default="some"):
-    "Returns 'foo' for things like 'foo1' or 'foo2'; it prefix cannot be found, the default is returned"
+    "Returns 'foo' for things like 'foo1' or 'foo2'; if prefix cannot be found, the default is returned"
     match = NUM_IDENT_PATTERN.match(p_string)
     name = match and match.groups()[match.lastindex - 1] or None
     return name or default
@@ -543,7 +543,7 @@ class ModuleRedeclarator(object):
     PREDEFINED_BUILTIN_SIGS = {
         ("object", "__init__"): "(self)",
         ("object", "__new__"): "(cls, *more)", # only for the sake of parameter names readability
-        ("type", "__init__"): "(self, name, bases=None, dict=None)", # overrides a fake
+        ("object", "__subclasshook__"): "(cls, subclass)", # trusting PY-1818 on sig
         ("int", "__init__"): "(self, x, base=10)", # overrides a fake
         ("list", "__init__"): "(self, seq=())",
         ("tuple", "__init__"): "(self, seq=())", # overrides a fake
@@ -569,6 +569,7 @@ class ModuleRedeclarator(object):
         PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, key=None)"
         PREDEFINED_BUILTIN_SIGS[(None, "open")] = "(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True)"
         PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, value, encoding=None, errors='strict')" # overrides a fake
+        PREDEFINED_BUILTIN_SIGS[("bytes", "__init__")] = "(self, value, encoding=None, errors='strict')" # overrides a fake
 
     if version == (2, 5):
         PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there
@@ -782,13 +783,14 @@ class ModuleRedeclarator(object):
     else:
         import builtins as b2
 
-        FAKE_BUILTIN_INITS = FAKE_BUILTIN_INITS + (getattr(b2, "str"),)
+        FAKE_BUILTIN_INITS = FAKE_BUILTIN_INITS + (getattr(b2, "str"), getattr(b2, "bytes"))
         del b2
 
     # Some builtin methods are decorated, but this is hard to detect.
     # {("class_name", "method_name"): "decorator"}
     KNOWN_DECORATORS = {
         ("dict", "fromkeys"): "staticmethod",
+        ("object", "__subclasshook__"): "classmethod",
     }
 
     def isSkippedInModule(self, p_module, p_value):
@@ -1104,8 +1106,8 @@ class ModuleRedeclarator(object):
         elif p_class and p_name in p_class.__dict__:
             # detect native methods declared with METH_CLASS flag
             descriptor = p_class.__dict__[p_name]
-            if p_name != "__new__" and type(descriptor).__name__.startswith('classmethod'
-                                                                        ):  # 'classmethod_descriptor' in Python 2.x and 3.x, 'classmethod' in Jython
+            if p_name != "__new__" and type(descriptor).__name__.startswith('classmethod' ):
+                # 'classmethod_descriptor' in Python 2.x and 3.x, 'classmethod' in Jython
                 deco = "classmethod"
             elif type(p_func).__name__.startswith('staticmethod'):
                 deco = "staticmethod"
