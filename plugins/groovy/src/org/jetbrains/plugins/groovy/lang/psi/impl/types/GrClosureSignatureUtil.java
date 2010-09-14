@@ -125,7 +125,7 @@ public class GrClosureSignatureUtil {
 
     if (args.length == 1) {
       final GrClosureParameter[] parameters = signature.getParameters();
-      if (parameters.length == 1 && parameters[0].getType() instanceof PsiArrayType) return false; 
+      if (parameters.length == 1 && parameters[0].getType() instanceof PsiArrayType) return false;
       PsiType arg = args[0];
       if (arg instanceof GrTupleType) {
         args = ((GrTupleType)arg).getComponentTypes();
@@ -303,7 +303,7 @@ public class GrClosureSignatureUtil {
 
   public static class ArgInfo<ArgType> {
     public static final ArgInfo[] EMPTY_ARRAY = new ArgInfo[0];
-    
+
     public List<ArgType> args;
     public final boolean isMultiArg;
 
@@ -322,8 +322,11 @@ public class GrClosureSignatureUtil {
       this.isMultiArg = isMultiArg;
     }
 
-    public static <ArgType> ArgInfo<ArgType>[] empty_array() {return EMPTY_ARRAY;}
+    public static <ArgType> ArgInfo<ArgType>[] empty_array() {
+      return EMPTY_ARRAY;
+    }
   }
+
   /**
    * Returns array of lists which contain psiElements mapped to parameters
    *
@@ -338,14 +341,14 @@ public class GrClosureSignatureUtil {
   }
 
   private static class InnerArg {
-      List<PsiElement> list;
-      PsiType type;
+    List<PsiElement> list;
+    PsiType type;
 
-      InnerArg(PsiType type, PsiElement... elements) {
-        this.list = new ArrayList<PsiElement>(Arrays.asList(elements));
-        this.type = type;
-      }
+    InnerArg(PsiType type, PsiElement... elements) {
+      this.list = new ArrayList<PsiElement>(Arrays.asList(elements));
+      this.type = type;
     }
+  }
 
   @Nullable
   public static Map<GrExpression, Pair<PsiParameter, PsiType>> mapArgumentsToParameters(@NotNull GroovyResolveResult resolveResult,
@@ -361,14 +364,17 @@ public class GrClosureSignatureUtil {
     if (element instanceof PsiMethod) {
       signature = createSignature((PsiMethod)element, substitutor);
       parameters = ((PsiMethod)element).getParameterList().getParameters();
-    } else if (element instanceof GrClosableBlock) {
+    }
+    else if (element instanceof GrClosableBlock) {
       signature = createSignature((GrClosableBlock)element);
       parameters = ((GrClosableBlock)element).getAllParameters();
-    } else {
+    }
+    else {
       return null;
     }
 
-    final ArgInfo<PsiElement>[] argInfos = mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial);
+    final ArgInfo<PsiElement>[] argInfos =
+      mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial);
     if (argInfos == null) {
       return null;
     }
@@ -475,30 +481,9 @@ public class GrClosureSignatureUtil {
   public static List<MethodSignature> generateAllSignaturesForMethod(GrMethod method, PsiSubstitutor substitutor) {
     GrClosureSignature signature = createSignature(method, substitutor);
     String name = method.getName();
-    GrClosureParameter[] params = signature.getParameters();
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-    ArrayList<PsiType> newParams = new ArrayList<PsiType>(params.length);
-    ArrayList<GrClosureParameter> opts = new ArrayList<GrClosureParameter>(params.length);
-    ArrayList<Integer> optInds = new ArrayList<Integer>(params.length);
-
-    for (int i = 0; i < params.length; i++) {
-      if (params[i].isOptional()) {
-        opts.add(params[i]);
-        optInds.add(i);
-      }
-      else {
-        newParams.add(params[i].getType());
-      }
-    }
-
-    List<MethodSignature> result = new ArrayList<MethodSignature>(opts.size() + 1);
-    result.add(generateSignature(name, newParams, typeParameters, substitutor));
-    for (int i = 0; i < opts.size(); i++) {
-      newParams.add(optInds.get(i), opts.get(i).getType());
-      result.add(generateSignature(name, newParams, typeParameters, substitutor));
-    }
-    return result;
+    return generateAllMethodSignaturesByClosureSignature(name, signature, typeParameters, substitutor);
   }
 
   public static MultiMap<MethodSignature, PsiMethod> findMethodSignatures(PsiMethod[] methods) {
@@ -528,5 +513,39 @@ public class GrClosureSignatureUtil {
                                                    PsiTypeParameter[] typeParameters,
                                                    PsiSubstitutor substitutor) {
     return MethodSignatureUtil.createMethodSignature(name, paramTypes.toArray(new PsiType[paramTypes.size()]), typeParameters, substitutor);
+  }
+
+  public static List<MethodSignature> generateAllMethodSignaturesByClosureSignature(@NotNull String name,
+                                                                                     @NotNull GrClosureSignature signature,
+                                                                                     @NotNull PsiTypeParameter[] typeParameters,
+                                                                                     @NotNull PsiSubstitutor substitutor) {
+    GrClosureParameter[] params = signature.getParameters();
+
+    ArrayList<PsiType> newParams = new ArrayList<PsiType>(params.length);
+    ArrayList<GrClosureParameter> opts = new ArrayList<GrClosureParameter>(params.length);
+    ArrayList<Integer> optInds = new ArrayList<Integer>(params.length);
+
+    for (int i = 0; i < params.length; i++) {
+      if (params[i].isOptional()) {
+        opts.add(params[i]);
+        optInds.add(i);
+      }
+      else {
+        newParams.add(params[i].getType());
+      }
+    }
+
+    List<MethodSignature> result = new ArrayList<MethodSignature>(opts.size() + 1);
+    result.add(generateSignature(name, newParams, typeParameters, substitutor));
+    for (int i = 0; i < opts.size(); i++) {
+      newParams.add(optInds.get(i), opts.get(i).getType());
+      result.add(generateSignature(name, newParams, typeParameters, substitutor));
+    }
+    return result;
+  }
+
+  public static List<MethodSignature> generateAllMethodSignaturesByClosureSignature(@NotNull String name,
+                                                                                     @NotNull GrClosureSignature signature) {
+    return generateAllMethodSignaturesByClosureSignature(name, signature, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
   }
 }
