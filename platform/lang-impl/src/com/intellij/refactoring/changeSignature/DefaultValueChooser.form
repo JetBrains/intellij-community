@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.refactoring.changeSignature.DefaultValueChooser">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="8" y="296" width="898" height="428"/>
+      <xy x="258" y="615" width="592" height="231"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -72,7 +72,9 @@
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag top="0" left="20" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
         </constraints>
-        <properties/>
+        <properties>
+          <minimumSize width="10" height="24"/>
+        </properties>
       </component>
     </children>
   </grid>
