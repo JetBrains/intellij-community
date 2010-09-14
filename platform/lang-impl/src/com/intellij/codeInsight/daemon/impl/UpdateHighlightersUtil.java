@@ -59,6 +59,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UpdateHighlightersUtil {
   private static final Comparator<HighlightInfo> BY_START_OFFSET_NODUPS = new Comparator<HighlightInfo>() {
@@ -381,12 +382,13 @@ public class UpdateHighlightersUtil {
 
         if (ranges2markersCache != null) ranges2markersCache.put(new TextRange(infoStartOffset, finalInfoEndOffset), info.highlighter);
         if (info.quickFixActionRanges != null) {
-          info.quickFixActionMarkers = ContainerUtil.createEmptyCOWList();
+          List<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>> list = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(info.quickFixActionRanges.size());
           for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
             TextRange textRange = pair.second;
             RangeMarker marker = getOrCreate(document, ranges2markersCache, textRange);
-            info.quickFixActionMarkers.add(Pair.create(pair.first, marker));
+            list.add(Pair.create(pair.first, marker));
           }
+          info.quickFixActionMarkers = new CopyOnWriteArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(list);
         }
         info.fixMarker = getOrCreate(document, ranges2markersCache, new TextRange(info.fixStartOffset, info.fixEndOffset));
       }
