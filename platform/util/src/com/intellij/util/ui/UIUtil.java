@@ -1013,7 +1013,7 @@ public class UIUtil {
   public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor) {
     String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
     String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
-    String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "") : "") + "}";
+    String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}") : "");
     return "<style> " + body + " " + link + "</style>";
   }
 
