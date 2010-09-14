@@ -45,7 +45,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @Nullable
   public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
     //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
-    final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, myModule, false);
+    final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, myModule, null, false);
     if (result != null) return new SmartList<PsiElement>(result);
     return Collections.emptyList();
   }

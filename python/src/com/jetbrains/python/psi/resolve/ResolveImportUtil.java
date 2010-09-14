@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -119,14 +120,14 @@ public class ResolveImportUtil {
       final int relative_level = from_import_statement.getRelativeLevel();
 
       if (relative_level > 0 && moduleQName == null) { // "from ... import foo"
-        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), qName.getComponents().get(0), file, false);
+        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), qName.getComponents().get(0), file, null, false);
         return element != null ? Collections.singletonList(element) : Collections.<PsiElement>emptyList();
       }
 
       if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
         final List<PsiElement> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
         for (PsiElement candidate : candidates) {
-          PsiElement result = resolveChild(candidate, qName.getComponents().get(0), file, false);
+          PsiElement result = resolveChild(candidate, qName.getComponents().get(0), file, null, false);
           if (result != null) return Collections.singletonList(result);
         }
       }
@@ -244,7 +245,7 @@ public class ResolveImportUtil {
       if (name == null) {
         return null;
       }
-      seeker = resolveChild(seeker, name, sourceFile, true);
+      seeker = resolveChild(seeker, name, sourceFile, null, true);
     }
     return seeker;
   }
@@ -335,11 +336,11 @@ public class ResolveImportUtil {
           if (name == null) {
             return null;
           }
-          last_resolved = resolveChild(last_resolved, name, containing_file, true);
+          last_resolved = resolveChild(last_resolved, name, containing_file, null, true);
           if (last_resolved == null) return null; // anything in the chain unresolved means that the whole chain fails
         }
         if (referencedName != null) {
-          return resolveChild(last_resolved, referencedName, containing_file, false);
+          return resolveChild(last_resolved, referencedName, containing_file, null, false);
         }
         else {
           return last_resolved;
@@ -348,7 +349,7 @@ public class ResolveImportUtil {
 
       // non-qualified name
       if (referencedName != null) {
-        return resolveChild(importRef.getReference().resolve(), referencedName, containing_file, false);
+        return resolveChild(importRef.getReference().resolve(), referencedName, containing_file, null, false);
         // the importRef.resolve() does not recurse infinitely because we're asked to resolve referencedName, not importRef itself
       }
       // unqualified import can be found:
@@ -455,7 +456,7 @@ public class ResolveImportUtil {
     if (pfile != null) {
       PsiDirectory pdir = pfile.getContainingDirectory();
       if (pdir != null) {
-        PsiElement child_elt = resolveChild(pdir, refName, pfile, true);
+        PsiElement child_elt = resolveChild(pdir, refName, pfile, null, true);
         if (child_elt != null) return child_elt;
       }
     }
@@ -505,7 +506,7 @@ public class ResolveImportUtil {
         module = null;
         break;
       }
-      module = resolveChild(module, component, foothold_file, false); // only files, we want a module
+      module = resolveChild(module, component, foothold_file, root, false); // only files, we want a module
     }
     return module;
   }
@@ -518,6 +519,7 @@ public class ResolveImportUtil {
    * @param parent         element under which to look for referenced name; if null, null is returned.
    * @param referencedName which name to look for.
    * @param containingFile where we're in.
+   * @param root           the root from which we started descending the directory tree (if any)
    * @param fileOnly       if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @return the element the referencedName resolves to, or null.
    * @todo: Honor module's __all__ value.
@@ -525,7 +527,7 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
-                                        final PsiFile containingFile, boolean fileOnly) {
+                                        final PsiFile containingFile, @Nullable VirtualFile root, boolean fileOnly) {
     PsiDirectory dir = null;
     PsiElement ret = null;
     if (parent instanceof PyFile) {
@@ -533,7 +535,7 @@ public class ResolveImportUtil {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, fileOnly);
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly);
         if (result != null) {
           return result;
         }
@@ -547,13 +549,13 @@ public class ResolveImportUtil {
     else if (parent instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer container = (PsiDirectoryContainer)parent;
       for (PsiDirectory childDir : container.getDirectories()) {
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, fileOnly);
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, root, fileOnly);
         //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
         if (result != null) return result;
       }
     }
     if (dir != null) {
-      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, fileOnly);
+      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly);
       //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
       return result;
     }
@@ -562,13 +564,13 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiElement resolveInDirectory(final String referencedName, final PsiFile containingFile,
-                                               final PsiDirectory dir, boolean isFileOnly) {
+                                               final PsiDirectory dir, @Nullable VirtualFile root, boolean isFileOnly) {
     if (referencedName == null) return null;
     final PsiElement module = findModuleInDir(dir, referencedName);
     if (module != null) return module;
 
     if (isInSdk(dir)) {
-      PsiDirectory skeletonDir = findSkeletonDir(dir);
+      PsiDirectory skeletonDir = findSkeletonDir(dir, root);
       if (skeletonDir != null) {
         final PsiFile skeletonFile = findModuleInDir(skeletonDir, referencedName);
         if (skeletonFile != null) {
@@ -614,11 +616,20 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiDirectory findSkeletonDir(PsiDirectory dir) {
-    final String qName = findShortestImportableName(dir, dir.getVirtualFile());
-    VirtualFile root = findSkeletonsRoot(dir);
-    if (root != null && qName != null) {
-      VirtualFile skeletonsVFile = qName.length() == 0 ? root : root.findFileByRelativePath(qName.replace(".", "/"));
+  private static PsiDirectory findSkeletonDir(PsiDirectory dir, @Nullable VirtualFile root) {
+    String relativeName;
+    if (root != null) {
+      relativeName = VfsUtil.getRelativePath(dir.getVirtualFile(), root, '/');
+    }
+    else {
+      relativeName = findShortestImportableName(dir, dir.getVirtualFile());
+      if (relativeName != null) {
+        relativeName = relativeName.replace('.', '/');
+      }
+    }
+    VirtualFile skeletonsRoot = findSkeletonsRoot(dir);
+    if (skeletonsRoot != null && relativeName != null) {
+      VirtualFile skeletonsVFile = relativeName.length() == 0 ? skeletonsRoot : skeletonsRoot.findFileByRelativePath(relativeName.replace(".", "/"));
       if (skeletonsVFile != null) {
         return dir.getManager().findDirectory(skeletonsVFile);
       }
