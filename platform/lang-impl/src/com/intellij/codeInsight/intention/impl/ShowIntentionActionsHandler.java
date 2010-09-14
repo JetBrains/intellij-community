@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -49,6 +50,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
 
     //intentions check isWritable before modification: if (!file.isWritable()) return;
     if (file instanceof PsiCodeFragment) return;
