@@ -558,58 +558,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
-  //private static void stripWarningsCoveredByErrors(final Project project, IntervalTree<HighlightInfo> highlights, MarkupModel markup) {
-  //  final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-  //
-  //  final Set<HighlightInfo> currentErrors = new THashSet<HighlightInfo>();
-  //  final Set<HighlightInfo> covered = new THashSet<HighlightInfo>();
-  //
-  //
-  //  final PriorityQueue<HighlightInfo> ends = new PriorityQueue<HighlightInfo>(1, new Comparator<HighlightInfo>() {
-  //    public int compare(HighlightInfo o1, HighlightInfo o2) {
-  //      return o1.getActualEndOffset() - o2.getActualEndOffset();
-  //    }
-  //  });
-  //  highlights.process(new Processor<HighlightInfo>() {
-  //    public boolean process(HighlightInfo info) {
-  //      int startOffset = info.getActualStartOffset();
-  //
-  //      for (HighlightInfo nearestEnd = ends.peek(); nearestEnd != null && nearestEnd.getActualEndOffset() <= startOffset; nearestEnd = ends.peek()) {
-  //        currentErrors.remove(nearestEnd);
-  //        Interval t = ends.poll();
-  //        assert t == nearestEnd;
-  //      }
-  //
-  //      boolean isError = severityRegistrar.compare(HighlightSeverity.ERROR, info.getSeverity()) <= 0;
-  //      if (isError) {
-  //        currentErrors.add(info);
-  //      }
-  //      else {
-  //        if (info.getSeverity().myVal > 0) {
-  //          // warning, check for everlaps
-  //          for (HighlightInfo error : currentErrors) {
-  //            if (isCoveredBy(info, error)) {
-  //              covered.add(info);
-  //            }
-  //          }
-  //        }
-  //      }
-  //      ends.add(info);
-  //
-  //      return true;
-  //    }
-  //  });
-  //
-  //  for (HighlightInfo warning : covered) {
-  //    highlights.remove(warning);
-  //
-  //    RangeHighlighter highlighter = warning.highlighter;
-  //    if (highlighter != null) {
-  //      markup.removeHighlighter(highlighter);
-  //    }
-  //  }
-  //}
-
   static boolean isCoveredBy(HighlightInfo info, HighlightInfo coveredBy) {
     return coveredBy.startOffset <= info.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
   }

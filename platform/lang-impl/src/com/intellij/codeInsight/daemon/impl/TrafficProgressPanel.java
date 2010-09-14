@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
@@ -56,6 +55,7 @@ public class TrafficProgressPanel extends JPanel {
     fakeStatusLargeEnough.errorCount = new int[]{1,1,1,1};
     Project project = trafficLightRenderer.getProject();
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    fakeStatusLargeEnough.passStati = new ArrayList<ProgressableTextEditorHighlightingPass>();
     for (int i=0; i<3;i++) {
       fakeStatusLargeEnough.passStati.add(new ProgressableTextEditorHighlightingPass(project, null, DaemonBundle.message("pass.wolf"), psiFile, false) {
         @Override
@@ -103,6 +103,12 @@ public class TrafficProgressPanel extends JPanel {
     if (status == null) return;
     if (PowerSaveMode.isEnabled()) {
       statusLabel.setText("Code analysis is disabled in power save mode.");
+      passStatuses.setVisible(false);
+      statistics.setText("");
+      return;
+    }
+    if (!status.enabled) {
+      statusLabel.setText("Code analysis has been suspended.");
       passStatuses.setVisible(false);
       statistics.setText("");
       return;

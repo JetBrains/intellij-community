@@ -41,6 +41,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer {
@@ -70,10 +71,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
 
   public static class DaemonCodeAnalyzerStatus {
     public boolean errorAnalyzingFinished; // all passes done
-    public final List<ProgressableTextEditorHighlightingPass> passStati = new ArrayList<ProgressableTextEditorHighlightingPass>();
+    public List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
     public String[/*rootsNumber*/] noHighlightingRoots;
     public String[/*rootsNumber*/] noInspectionRoots;
     public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
+    public boolean enabled = true;
 
     public int rootsNumber;
     public String toString() {
@@ -110,6 +112,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     status.rootsNumber = roots.length;
     fillDaemonCodeAnalyzerErrorsStatus(status, fillErrorsCount, severityRegistrar);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument);
+    status.passStati = passes.isEmpty() ? Collections.<ProgressableTextEditorHighlightingPass>emptyList() :
+                       new ArrayList<ProgressableTextEditorHighlightingPass>(passes.size());
     for (TextEditorHighlightingPass tepass : passes) {
       if (!(tepass instanceof ProgressableTextEditorHighlightingPass)) continue;
       ProgressableTextEditorHighlightingPass pass = (ProgressableTextEditorHighlightingPass)tepass;
@@ -118,6 +122,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
       status.passStati.add(pass);
     }
     status.errorAnalyzingFinished = myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile);
+    status.enabled = myDaemonCodeAnalyzer.isUpdateByTimerEnabled();
 
     return status;
   }
@@ -260,7 +265,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     if (status == null) {
       return NO_ICON;
     }
-    if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
+    if (!status.enabled || status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
       return NO_ANALYSIS_ICON;
     }
 
