@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -395,10 +394,12 @@ public class ResolveImportUtil {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     // look in module sources
     boolean sourceEntriesMissing = true;
+    Set<VirtualFile> contentRoots = new java.util.HashSet<VirtualFile>();
     for (ContentEntry entry : rootManager.getContentEntries()) {
       VirtualFile rootFile = entry.getFile();
 
       if (rootFile != null && !visitor.visitRoot(rootFile)) return;
+      contentRoots.add(rootFile);
       for (VirtualFile folder : entry.getSourceFolderFiles()) {
         sourceEntriesMissing = false;
         if (!visitor.visitRoot(folder)) return;
@@ -407,14 +408,14 @@ public class ResolveImportUtil {
     if (sourceEntriesMissing) {
       // fallback for a case without any source entries: use project root
       VirtualFile projectRoot = module.getProject().getBaseDir();
-      if (projectRoot != null && !visitor.visitRoot(projectRoot)) return;
+      if (projectRoot != null && !contentRoots.contains(projectRoot) && !visitor.visitRoot(projectRoot)) return;
     }
     // else look in SDK roots
     rootManager.orderEntries().process(new SdkRootVisitingPolicy(visitor), null);
   }
 
   private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
-    Set<VirtualFile> allRoots = new java.util.HashSet<VirtualFile>();
+    Set<VirtualFile> allRoots = new LinkedHashSet<VirtualFile>();
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
     for (VirtualFile root : allRoots) {
@@ -563,24 +564,15 @@ public class ResolveImportUtil {
   private static PsiElement resolveInDirectory(final String referencedName, final PsiFile containingFile,
                                                final PsiDirectory dir, boolean isFileOnly) {
     if (referencedName == null) return null;
-    final PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
-    // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
-    if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
-      return file;
-    }
+    final PsiElement module = findModuleInDir(dir, referencedName);
+    if (module != null) return module;
 
-    String binaryExt = SystemInfo.isWindows ? ".pyd" : ".so";
-    final PsiFile binaryModule = dir.findFile(referencedName + binaryExt);
-    if (binaryModule != null && FileUtil.getNameWithoutExtension(binaryModule.getName()).equals(referencedName)) {
-      // find mirror of binary module in skeletons
-      String qName = findShortestImportableName(binaryModule, binaryModule.getVirtualFile());
-      if (qName != null) {
-        VirtualFile root = findSkeletonsRoot(containingFile);
-        if (root != null) {
-          PsiElement skeleton = resolveInRoot(root, PyQualifiedName.fromDottedString(qName), dir.getManager(), containingFile);
-          if (skeleton instanceof PyFile) {
-            return skeleton;
-          }
+    if (isInSdk(dir)) {
+      PsiDirectory skeletonDir = findSkeletonDir(dir);
+      if (skeletonDir != null) {
+        final PsiFile skeletonFile = findModuleInDir(skeletonDir, referencedName);
+        if (skeletonFile != null) {
+          return skeletonFile;
         }
       }
     }
@@ -601,8 +593,42 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static VirtualFile findSkeletonsRoot(PsiFile containingFile) {
-    Sdk sdk = PyBuiltinCache.findSdkForFile(containingFile);
+  private static PsiFile findModuleInDir(PsiDirectory dir, String referencedName) {
+    final PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
+    // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
+    if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
+      return file;
+    }
+    return null;
+  }
+
+  private static boolean isInSdk(PsiDirectory dir) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
+    final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(dir.getVirtualFile());
+    for (OrderEntry entry : entries) {
+      if (entry instanceof JdkOrderEntry) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static PsiDirectory findSkeletonDir(PsiDirectory dir) {
+    final String qName = findShortestImportableName(dir, dir.getVirtualFile());
+    VirtualFile root = findSkeletonsRoot(dir);
+    if (root != null && qName != null) {
+      VirtualFile skeletonsVFile = qName.length() == 0 ? root : root.findFileByRelativePath(qName.replace(".", "/"));
+      if (skeletonsVFile != null) {
+        return dir.getManager().findDirectory(skeletonsVFile);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static VirtualFile findSkeletonsRoot(PsiFileSystemItem fsItem) {
+    Sdk sdk = PyBuiltinCache.findSdkForFile(fsItem);
     if (sdk != null) {
       return PythonSdkType.findSkeletonsDir(sdk);
     }
@@ -621,18 +647,27 @@ public class ResolveImportUtil {
     private PathChoosingVisitor(VirtualFile file) {
       myFname = file.getPath();
       // cut off the ext
-      int pos = myFname.lastIndexOf('.');
-      if (pos > 0) myFname = myFname.substring(0, pos);
-      // cut off the final __init__ if it's there; we want imports directly from a module
-      pos = myFname.lastIndexOf(PyNames.INIT);
-      if (pos > 0) myFname = myFname.substring(0, pos - 1); // pos-1 also cuts the '/' that came before "__init__"
+      if (!file.isDirectory()) {
+        int pos = myFname.lastIndexOf('.');
+        if (pos > 0) myFname = myFname.substring(0, pos);
+        // cut off the final __init__ if it's there; we want imports directly from a module
+        pos = myFname.lastIndexOf(PyNames.INIT);
+        if (pos > 0) myFname = myFname.substring(0, pos - 1); // pos-1 also cuts the '/' that came before "__init__"
+      }
+      else {
+        myFname += "/";
+      }
     }
 
     public boolean visitRoot(VirtualFile root) {
       // does it ever fit?
       String root_name = root.getPath() + "/";
       if (myFname.startsWith(root_name)) {
-        String bet = myFname.substring(root_name.length()).replace('/', '.'); // "/usr/share/python/foo/bar" -> "foo.bar"
+        String suffix = myFname.substring(root_name.length());
+        if (suffix.endsWith("/")) {
+          suffix = suffix.substring(0, suffix.length()-1);
+        }
+        String bet = suffix.replace('/', '.'); // "/usr/share/python/foo/bar" -> "foo.bar"
         // count the dots
         int dots = 0;
         for (int i = 0; i < bet.length(); i += 1) if (bet.charAt(i) == '.') dots += 1;
@@ -642,7 +677,7 @@ public class ResolveImportUtil {
           myResult = bet;
         }
       }
-      return true; // visit all roots
+      return myResult == null || myResult.length() > 0;  // we won't find anything shorter than an empty string
     }
 
     public String getResult() {
