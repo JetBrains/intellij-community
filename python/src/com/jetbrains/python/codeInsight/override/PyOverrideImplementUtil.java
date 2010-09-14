@@ -177,7 +177,7 @@ public class PyOverrideImplementUtil {
       statementBody.append("(");
       final LanguageLevel langLevel = ((PyFile)pyClass.getContainingFile()).getLanguageLevel();
       if (!langLevel.isPy3K()) {
-        statementBody.append(pyClass.getName()).append(", self");
+        statementBody.append(pyClass.getName()).append(", ").append(PyUtil.getFirstParameterName(baseFunction));
       }
       statementBody.append(").").append(baseFunction.getName()).append("(");
       startIndex = 1;
