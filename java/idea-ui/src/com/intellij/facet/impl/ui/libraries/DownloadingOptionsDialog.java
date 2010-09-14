@@ -52,7 +52,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     myFilesList.setModel(new CollectionListModel(ContainerUtil.map2Array(settings.getLibraryInfos(), new Function<LibraryInfo, Object>() {
       @Override
       public Object fun(LibraryInfo libraryInfo) {
-        return new JCheckBox(libraryInfo.getPresentableName(), libraryInfo.isSelected());
+        return new JCheckBox(libraryInfo.getName(), libraryInfo.isSelected());
       }
     })));
     myFilesToDownloadLabel.setLabelFor(myFilesList);

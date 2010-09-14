@@ -73,7 +73,7 @@ public class RequiredLibrariesInfo {
         missedJarsText.append(", ");
       }
 
-      missedJarsText.append(libraryInfos[i].getPresentableName());
+      missedJarsText.append(libraryInfos[i].getName());
     }
     return missedJarsText.toString();
   }

@@ -60,7 +60,7 @@ public class CompilerPerfTestAction extends AnAction {
         }
         final long finish = System.currentTimeMillis();
         //System.out.println("Compiled with " +
-        //                   compiler.getPresentableName() +
+        //                   compiler.getName() +
         //                   " in " +
         //                   TimeUnit.MILLISECONDS.toMinutes(finish - start) + "m" +TimeUnit.MILLISECONDS.toSeconds((finish - start)%60000) + "s" +
         //                   " with " +

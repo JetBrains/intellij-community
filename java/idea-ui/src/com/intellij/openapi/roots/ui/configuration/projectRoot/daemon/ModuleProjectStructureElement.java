@@ -60,10 +60,10 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
       //  final LibraryEx library = (LibraryEx)((LibraryOrderEntry)entry).getLibrary();
       //  if (library != null) {
       //    if (!library.allPathsValid(OrderRootType.CLASSES)) {
-      //      problemsHolder.registerError(ProjectBundle.message("project.roots.tooltip.library.misconfigured", entry.getPresentableName()));
+      //      problemsHolder.registerError(ProjectBundle.message("project.roots.tooltip.library.misconfigured", entry.getName()));
       //    }
       //    else if (!library.allPathsValid(OrderRootType.SOURCES)) {
-      //      problemsHolder.registerWarning(ProjectBundle.message("project.roots.tooltip.library.misconfigured", entry.getPresentableName()));
+      //      problemsHolder.registerWarning(ProjectBundle.message("project.roots.tooltip.library.misconfigured", entry.getName()));
       //    }
       //  }
       //}

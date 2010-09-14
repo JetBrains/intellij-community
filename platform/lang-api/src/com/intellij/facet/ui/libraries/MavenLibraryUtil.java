@@ -20,9 +20,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.ide.IdeBundle;
 
-/**
- * @author nik
- */
+
+@Deprecated
+// see LibrariesDownloadAssistant
 public class MavenLibraryUtil {
   @NonNls private static final String[] MAVEN_MIRRORS = {
     "http://repo1.maven.org/maven2/",
@@ -33,10 +33,12 @@ public class MavenLibraryUtil {
   private MavenLibraryUtil() {
   }
 
+  @Deprecated // see LibrariesDownloadAssistant
   public static LibraryInfo createSubMavenJarInfo(@NonNls String project, @NonNls String jarName, @NonNls String version, @NonNls String... requiredClasses) {
     return createMavenJarInfo(jarName, version, project, requiredClasses);
   }
 
+  @Deprecated // see LibrariesDownloadAssistant
   private static LibraryInfo createMavenJarInfo(final String jarName, final String version, final String downloadingPrefix, 
                                                 final String... requiredClasses) {
     LibraryDownloadInfo downloadInfo = new LibraryDownloadInfo(MAVEN, downloadingPrefix + "/" + jarName + "/" + version + "/" + jarName + "-" + version + ".jar",
@@ -44,6 +46,7 @@ public class MavenLibraryUtil {
     return new LibraryInfo(jarName+ ".jar", downloadInfo, requiredClasses);
   }
 
+  @Deprecated // see LibrariesDownloadAssistant
   public static LibraryInfo createMavenJarInfo(@NonNls String jarName, @NonNls String version, @NotNull @NonNls String... requiredClasses) {
     return createMavenJarInfo(jarName, version, jarName, requiredClasses);
   }
