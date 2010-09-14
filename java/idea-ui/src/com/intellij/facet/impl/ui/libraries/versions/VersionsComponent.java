@@ -15,6 +15,8 @@
  */
 package com.intellij.facet.impl.ui.libraries.versions;
 
+import com.intellij.facet.frameworks.LibrariesDownloadAssistant;
+import com.intellij.facet.frameworks.beans.Version;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
 import com.intellij.facet.ui.libraries.LibraryInfo;
@@ -49,7 +51,7 @@ public abstract class VersionsComponent {
 
   private final Map<String, Pair<JRadioButton, JComboBox>> myButtons = new HashMap<String, Pair<JRadioButton, JComboBox>>();
 
-  private LibraryVersionInfo myCurrentVersion = null;
+  private Version myCurrentVersion = null;
 
   public VersionsComponent(@NotNull final Module module, FacetLibrariesValidator validator) {
     myModule = module;
@@ -64,7 +66,7 @@ public abstract class VersionsComponent {
   }
 
   @Nullable
-  public LibraryVersionInfo getCurrentLibraryVersionInfo() {
+  public Version getCurrentVersion() {
     return myCurrentVersion;
   }
 
@@ -105,20 +107,20 @@ public abstract class VersionsComponent {
   }
 
   @NotNull
-  protected abstract Map<LibraryVersionInfo, List<LibraryInfo>> getLibraries();
+  protected abstract Version[] getLibraries();
 
   @Nullable
-  private LibraryVersionInfo getCurrentVersion(@NotNull String currentRI) {
+  private Version getCurrentVersion(@NotNull String currentRI) {
     String detectionClass = getFacetDetectionClass(currentRI);
     if (detectionClass != null) {
       final String version = JarVersionDetectionUtil.detectJarVersion(detectionClass, myModule);
       if (version != null) {
-        LibraryVersionInfo approximatedVersion = null;
-        for (LibraryVersionInfo info : getLibraries().keySet()) {
-          if (version.equals(info.getVersion())) {
+        Version approximatedVersion = null;
+        for (Version info : getLibraries()) {
+          if (version.equals(info.getId())) {
             return info;
           }
-          if (version.contains(info.getVersion())) {
+          if (version.contains(info.getId())) {
             approximatedVersion = info;
           }
         }
@@ -129,11 +131,11 @@ public abstract class VersionsComponent {
     return null;
   }
 
-  private List<LibraryVersionInfo> getSupportedVersions(@NotNull String ri) {
-    List<LibraryVersionInfo> versions = new ArrayList<LibraryVersionInfo>();
-    for (Map.Entry<LibraryVersionInfo, List<LibraryInfo>> entry : getLibraries().entrySet()) {
-      if (ri.equals(entry.getKey().getRI())) {
-        versions.add(entry.getKey());
+  private List<Version> getSupportedVersions(@NotNull String ri) {
+    List<Version> versions = new ArrayList<Version>();
+    for (Version version : getLibraries()) {
+      if (ri.equals(version.getRI())) {
+        versions.add(version);
       }
     }
 
@@ -143,7 +145,7 @@ public abstract class VersionsComponent {
   private void addSingletonReferenceImplementationUI(@NotNull final String ri) {
     JComboBox comboBox = createComboBox(ri);
     addToPanel(new JLabel(ri), comboBox);
-    LibraryVersionInfo version = getCurrentVersion(ri);
+    Version version = getCurrentVersion(ri);
     if (version != null) {
       comboBox.setSelectedItem(version);
     }
@@ -178,7 +180,7 @@ public abstract class VersionsComponent {
             JComboBox comboBox = pair.second;
             comboBox.setEnabled(true);
 
-            LibraryVersionInfo currentVersion = getCurrentVersion(ri);
+            Version currentVersion = getCurrentVersion(ri);
             if (currentVersion != null) {
               comboBox.setSelectedItem(currentVersion);
             }
@@ -203,7 +205,7 @@ public abstract class VersionsComponent {
   private JComboBox createComboBox(String ri) {
     final JComboBox comboBox = new JComboBox();
 
-    List<LibraryVersionInfo> versions = getSupportedVersions(ri);
+    List<Version> versions = getSupportedVersions(ri);
     comboBox.setModel(new CollectionComboBoxModel(versions, null));
 
     comboBox.addActionListener(new ActionListener() {
@@ -216,7 +218,7 @@ public abstract class VersionsComponent {
   }
 
   private void updateCurrentVersion(JComboBox comboBox) {
-    final LibraryVersionInfo versionInfo = getSelectedVersion(comboBox);
+    final Version versionInfo = getSelectedVersion(comboBox);
 
     if (versionInfo != null) {
       myCurrentVersion = versionInfo;
@@ -225,13 +227,13 @@ public abstract class VersionsComponent {
     }
   }
 
-  protected FacetLibrariesValidatorDescription getFacetLibrariesValidatorDescription(LibraryVersionInfo versionInfo) {
-    return new FacetLibrariesValidatorDescription(versionInfo.getVersion()) {
+  protected FacetLibrariesValidatorDescription getFacetLibrariesValidatorDescription(Version version) {
+    return new FacetLibrariesValidatorDescription(version.getId()) {
       @NonNls
       public String getDefaultLibraryName() {
         if (myCurrentVersion != null) {
           String ri = myCurrentVersion.getRI();
-          String version = myCurrentVersion.getVersion();
+          String version = myCurrentVersion.getId();
 
           return StringUtil.isEmptyOrSpaces(ri) ? version : ri + "." + version;
         }
@@ -242,19 +244,20 @@ public abstract class VersionsComponent {
   }
 
   @Nullable
-  private static LibraryVersionInfo getAppropriateVersion(List<LibraryVersionInfo> versions) {
+  private static Version getAppropriateVersion(List<Version> versions) {
     return versions.size() > 0 ? versions.get(0) : null;
   }
 
-  private LibraryInfo[] getRequiredLibraries(LibraryVersionInfo versionInfo) {
-    List<LibraryInfo> libraryInfos = getLibraries().get(versionInfo);
-    return libraryInfos.toArray(new LibraryInfo[libraryInfos.size()]);
+  private static LibraryInfo[] getRequiredLibraries(Version version) {
+    final LibraryInfo[] infos = LibrariesDownloadAssistant.getLibraryInfos(version);
+
+    return infos == null ? LibraryInfo.EMPTY_ARRAY : infos;
   }
 
   @Nullable
-  private static LibraryVersionInfo getSelectedVersion(@NotNull JComboBox comboBox) {
+  private static Version getSelectedVersion(@NotNull JComboBox comboBox) {
     final Object version = comboBox.getModel().getSelectedItem();
-    return version instanceof LibraryVersionInfo ? (LibraryVersionInfo)version : null;
+    return version instanceof Version ? (Version)version : null;
   }
 
 
@@ -269,8 +272,8 @@ public abstract class VersionsComponent {
 
   public Set<String> getRIs() {
     Set<String> ris = new HashSet<String>();
-    for (LibraryVersionInfo info : getLibraries().keySet()) {
-      String ri = info.getRI();
+    for (Version version : getLibraries()) {
+      String ri = version.getRI();
       if (!StringUtil.isEmptyOrSpaces(ri)) {
         ris.add(ri);
       }
