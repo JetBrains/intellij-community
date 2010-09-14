@@ -4,6 +4,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -16,7 +17,7 @@ public class MacPythonSdkFlavor extends PythonSdkFlavor {
   public static MacPythonSdkFlavor INSTANCE = new MacPythonSdkFlavor();
 
   @Override
-  public List<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths() {
     List<String> candidates = new ArrayList<String>();
     collectPythonInstallations("/Library/Frameworks/Python.framework/Versions", candidates);
     collectPythonInstallations("/System/Library/Frameworks/Python.framework/Versions", candidates);

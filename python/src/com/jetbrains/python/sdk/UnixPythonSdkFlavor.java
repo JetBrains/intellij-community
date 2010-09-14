@@ -4,6 +4,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -16,7 +17,7 @@ public class UnixPythonSdkFlavor extends PythonSdkFlavor {
   public static UnixPythonSdkFlavor INSTANCE = new UnixPythonSdkFlavor();
 
   @Override
-  public List<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths() {
     List<String> candidates = new ArrayList<String>();
     VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/bin");
     if (rootDir != null) {

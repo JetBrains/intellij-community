@@ -1,14 +1,13 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 
 /**
  * @author yole
@@ -22,12 +21,27 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public List<String> suggestHomePaths() {
-    List<String> candidates = new ArrayList<String>();
+  public Collection<String> suggestHomePaths() {
+    Set<String> candidates = new TreeSet<String>();
     findSubdirInstallations(candidates, "C:\\", PYTHON_STR, "python.exe");
     findSubdirInstallations(candidates, "C:\\Program Files\\", PYTHON_STR, "python.exe");
     findSubdirInstallations(candidates, "C:\\", "jython", "jython.bat");
+    findCandidatesFromPath(candidates, "python.exe");
+    findCandidatesFromPath(candidates, "jython.bat");
     return candidates;
+  }
+
+  private static void findCandidatesFromPath(Collection<String> candidates, String exeName) {
+    final String path = System.getenv("PATH");
+    for (String pathEntry : StringUtil.split(path, ";")) {
+      if (pathEntry.startsWith("\"") && pathEntry.endsWith("\"")) {
+        pathEntry = pathEntry.substring(1, pathEntry.length()-2);
+      }
+      File f = new File(pathEntry, exeName);
+      if (f.exists()) {
+        candidates.add(f.getPath());
+      }
+    }
   }
 
   private static void findSubdirInstallations(Collection<String> candidates, String rootDir, String dir_prefix, String exe_name) {
