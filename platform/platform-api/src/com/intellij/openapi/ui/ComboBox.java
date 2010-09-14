@@ -18,12 +18,17 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Field;
 
 /**
  * Due to many bugs and "features" in <code>JComboBox</code> implementation we provide
@@ -61,38 +66,42 @@ public class ComboBox extends ComboBoxWithWidePopup {
     super(model);
     myMinimumAndPreferredWidth = minimumAndPreferredWidth;
     registerCancelOnEscape();
-
-    addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        if (!UIUtil.isUnderNativeMacLookAndFeel()) return;
-
-        if (!isShowing() || !isEditable() || getEditor() == null || !isPopupVisible()) return;
-
-        reconfigureEditor();
-      }
-    });
   }
 
-  public void setPopupVisible(final boolean v) {
-    boolean wasVisible = isPopupVisible();
+  @Override
+  public void setPopupVisible(boolean v) {
+    if (getModel().getSize() == 0 && v) return;
 
+    final boolean wasShown = isPopupVisible();
     super.setPopupVisible(v);
-
-    if (v && !wasVisible && !UIUtil.isUnderNativeMacLookAndFeel()) {
-      reconfigureEditor();
+    if (!wasShown && v && isEditable() && !wasShown && !UIManager.getBoolean("ComboBox.isEnterSelectablePopup")) {
+      final ComboBoxEditor editor = getEditor();
+      final Object item = editor.getItem();
+      final Object selectedItem = getSelectedItem();
+      if (item == null || item != selectedItem) {
+        configureEditor(editor, selectedItem);
+      }
     }
   }
 
-  private void reconfigureEditor() {
-    if (isEditable() && getEditor() != null) {
-
-      final Object editorItem = getEditor().getItem();
-      final Object selection = getSelectedItem();
-
-      if (editorItem == null || !editorItem.equals(selection)) {
-        configureEditor(getEditor(), getSelectedItem());
+  @Nullable
+  public ComboPopup getPopup() {
+    final ComboBoxUI ui = getUI();
+    if (ui instanceof BasicComboBoxUI) {
+      try {
+        final Field popup = BasicComboBoxUI.class.getDeclaredField("popup");
+        popup.setAccessible(true);
+        return (ComboPopup) popup.get(ui);
+      }
+      catch (NoSuchFieldException e) {
+        return null;
+      }
+      catch (IllegalAccessException e) {
+        return null;
       }
     }
+
+    return null;
   }
 
   public ComboBox(final Object[] items, final int preferredWidth) {
