@@ -47,7 +47,7 @@ public interface PyClass extends
    * @return
    */
   @Nullable
-  PyFunction findMethodByName(@NotNull @NonNls final String name, boolean inherited);
+  PyFunction findMethodByName(@Nullable @NonNls final String name, boolean inherited);
 
   /**
    * Finds either __init__ or __new__, whichever is defined for given class.
