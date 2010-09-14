@@ -122,17 +122,21 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   @Override
   public void childRemoved(PsiTreeChangeEvent event) {
-    if (myDeaf) return;
     change(event.getParent());
   }
 
   @Override
   public void childReplaced(PsiTreeChangeEvent event) {
-    if (myDeaf) return;
+    change(event.getChild());
+  }
+
+  @Override
+  public void childAdded(PsiTreeChangeEvent event) {
     change(event.getChild());
   }
 
   private void change(PsiElement child) {
+    if (myDeaf) return;
     if (child == null) return;
     final PsiFile file = child.getContainingFile();
     if (file != null) {
@@ -191,10 +195,6 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
     public void setCurrentInfo(ChangeInfo currentInfo) {
       myCurrentInfo = currentInfo;
-    }
-
-    public void setInitialText(String initialText) {
-      myInitialText = initialText;
     }
 
     public String getInitialText() {
