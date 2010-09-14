@@ -1,12 +1,11 @@
 package org.jetbrains.jps.idea
 
 import org.jetbrains.jps.MacroExpander
-import org.jetbrains.jps.MacroExpansion
 
 /**
  * @author nik
  */
-public class ProjectMacroExpander implements MacroExpander, MacroExpansion {
+public class ProjectMacroExpander implements MacroExpander {
   private Map<String, String> pathVariables
   private String projectBasePath
 
@@ -24,11 +23,4 @@ public class ProjectMacroExpander implements MacroExpander, MacroExpansion {
     }
     return path
   }
-
-  @Override
-  String expandProjectMacro(String path) {
-    return expandMacros(path)
-  }
-
-
 }
