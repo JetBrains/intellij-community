@@ -15,7 +15,10 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 
@@ -54,17 +57,34 @@ public class ChangeSignatureUtil {
 
       Child oldElement = index < elements.size() ? elements.get(index) : null;
       Child newElement = newElements.get(index);
-      if (!newElement.equals(oldElement)) {
-        if (oldElement != null && elementsToRemove.contains(oldElement)) {
-          oldElement.delete();
-          index--;
-        }
-        else {
-          assert list.isWritable() : PsiUtilBase.getVirtualFile(list);
-          list.addBefore(newElement, oldElement);
-          if (list.equals(newElement.getParent())) {
-            newElement.delete();
+      if (newElement != null) {
+        if (!newElement.equals(oldElement)) {
+          if (oldElement != null && elementsToRemove.contains(oldElement)) {
+            oldElement.delete();
+            index--;
           }
+          else {
+            assert list.isWritable() : PsiUtilBase.getVirtualFile(list);
+            list.addBefore(newElement, oldElement);
+            if (list.equals(newElement.getParent())) {
+              newElement.delete();
+            }
+          }
+        }
+      } else {
+        PsiElement anchor = null;
+        if (index == 0) {
+          anchor = list.getFirstChild();
+        } else {
+          anchor = elements.get(index - 1);
+        }
+        final PsiElement psi = Factory
+          .createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, SharedImplUtil.findCharTableByTree(list.getNode()), list.getManager())
+          .getPsi();
+        if (anchor != null) {
+          list.addAfter(psi, anchor);
+        } else {
+          list.add(psi);
         }
       }
       index++;

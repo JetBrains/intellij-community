@@ -44,7 +44,7 @@ public class ChangeSignatureDetectorAction implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    return ChangeSignatureGestureDetector.getInstance(project).containsChangeSignatureChange(file);
   }
 
   @Override

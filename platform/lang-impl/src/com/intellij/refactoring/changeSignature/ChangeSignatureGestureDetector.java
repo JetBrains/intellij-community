@@ -74,8 +74,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       final ChangeInfo currentInfo = changeBean.getCurrentInfo();
       final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
       if (detector.showDialog(currentInfo, changeBean.getInitialText())) {
-        changeBean.setInitialText(null);
-        changeBean.setCurrentInfo(null);
+        changeBean.reinit();
       }
     }
     finally {
@@ -139,10 +138,11 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     if (file != null) {
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
       if (changeBean != null && changeBean.getInitialText() != null) {
-        final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(child, changeBean.getCurrentInfo());
-        changeBean.setCurrentInfo(info);
+        final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(child, changeBean.getInitialChangeInfo());
         if (info == null) {
-          changeBean.setInitialText(null);
+          changeBean.reinit();
+        } else if (!info.equals(changeBean.getInitialChangeInfo())) {
+          changeBean.setCurrentInfo(info);
         }
       }
     }
@@ -179,13 +179,13 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     final MyDocumentChangeAdapter adapter = myListenerMap.get(file);
     if (adapter != null) {
       adapter.setBannedChangeInfo(adapter.getCurrentInfo());
-      adapter.setCurrentInfo(null);
-      adapter.setInitialText(null);
+      adapter.reinit();
     }
   }
 
   private class MyDocumentChangeAdapter extends DocumentAdapter {
     private String myInitialText;
+    private ChangeInfo myInitialChangeInfo;
     private ChangeInfo myCurrentInfo;
     private ChangeInfo myBannedChangeInfo;
 
@@ -229,7 +229,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
               final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(element, myCurrentInfo);
               if (info != null) {
                 myInitialText = document.getText();
-                myCurrentInfo = info;
+                myInitialChangeInfo = info;
               }
             }
           }
@@ -237,8 +237,18 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       }
     }
 
+    public ChangeInfo getInitialChangeInfo() {
+      return myInitialChangeInfo;
+    }
+
     public void setBannedChangeInfo(ChangeInfo bannedChangeInfo) {
       myBannedChangeInfo = bannedChangeInfo;
+    }
+
+    public void reinit() {
+      myInitialText = null;
+      myInitialChangeInfo = null;
+      myCurrentInfo = null;
     }
   }
 
