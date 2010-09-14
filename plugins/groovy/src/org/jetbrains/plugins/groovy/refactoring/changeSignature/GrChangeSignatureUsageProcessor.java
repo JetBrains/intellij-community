@@ -118,7 +118,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   @Override
-  public void setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
+  public boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
+    return true;
   }
 
   private static boolean generateDelegate(GrChangeInfoImpl grInfo) {
