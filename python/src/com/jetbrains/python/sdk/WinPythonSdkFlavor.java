@@ -26,12 +26,12 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
     findSubdirInstallations(candidates, "C:\\", PYTHON_STR, "python.exe");
     findSubdirInstallations(candidates, "C:\\Program Files\\", PYTHON_STR, "python.exe");
     findSubdirInstallations(candidates, "C:\\", "jython", "jython.bat");
-    findCandidatesFromPath(candidates, "python.exe");
-    findCandidatesFromPath(candidates, "jython.bat");
+    findInPath(candidates, "python.exe");
+    findInPath(candidates, "jython.bat");
     return candidates;
   }
 
-  private static void findCandidatesFromPath(Collection<String> candidates, String exeName) {
+  public static void findInPath(Collection<String> candidates, String exeName) {
     final String path = System.getenv("PATH");
     for (String pathEntry : StringUtil.split(path, ";")) {
       if (pathEntry.startsWith("\"") && pathEntry.endsWith("\"")) {
