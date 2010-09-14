@@ -170,9 +170,12 @@ public class PyBlock implements ASTBlock {
   }
 
   private static boolean hasLineBreakBefore(ASTNode child) {
-    ASTNode prevNode = child.getTreePrev();
-    if (prevNode != null && prevNode.getElementType() == TokenType.WHITE_SPACE) {
-      String prevNodeText = prevNode.getText();
+    return isWhitespaceWithLineBreaks(child.getTreePrev()) || isWhitespaceWithLineBreaks(child.getFirstChildNode());
+  }
+
+  private static boolean isWhitespaceWithLineBreaks(ASTNode node) {
+    if (node != null && node.getElementType() == TokenType.WHITE_SPACE) {
+      String prevNodeText = node.getText();
       if (prevNodeText.indexOf('\n') >= 0) {
         return true;
       }

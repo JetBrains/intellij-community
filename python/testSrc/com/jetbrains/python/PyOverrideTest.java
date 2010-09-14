@@ -42,7 +42,11 @@ public class PyOverrideTest extends PyLightFixtureTestCase {
     doTest();
   }
 
-  public void testClassmethodNewStyle() {
+  public void testClassmethodNewStyle() {  // PY-1811
+    doTest();
+  }
+
+  public void testIndent() {  // PY-1796
     doTest();
   }
 
