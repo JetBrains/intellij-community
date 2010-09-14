@@ -4,8 +4,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashSet;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.intentions.*;
 import com.jetbrains.python.psi.*;
@@ -13,12 +11,12 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Alexey.Ivanov
  */
 public class UnsupportedFeatures extends PyAnnotator {
+  /*
   private static final Set<String> REMOVED_METHODS = new HashSet<String>();
 
   static {
@@ -30,6 +28,7 @@ public class UnsupportedFeatures extends PyAnnotator {
     REMOVED_METHODS.add("reduce");
     REMOVED_METHODS.add("reload");
   }
+  */
 
   @NotNull
   private static LanguageLevel getLanguageLevel(PyElement node) {
@@ -142,7 +141,9 @@ public class UnsupportedFeatures extends PyAnnotator {
           }
         }
       }
-    } else {
+    }
+    /* incorrectly working functionality temporarily removed (PY-1424, PY-1820)
+    else {
       final String name = node.getCallee().getName();
       if ("raw_input".equals(name)) {
         getHolder().createWarningAnnotation(node.getCallee(), PyBundle.message("ANN.method.$0.removed.use.$1", name, "input")).
@@ -152,6 +153,7 @@ public class UnsupportedFeatures extends PyAnnotator {
         getHolder().createWarningAnnotation(node.getCallee(), PyBundle.message("ANN.method.$0.removed", name));
       }
     }
+    */
   }
 
   @Override
