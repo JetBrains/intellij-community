@@ -145,6 +145,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
 
   @Nullable
   public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
+    if (defaultValue != null && defaultValue.length() == 0) return null;
     return JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
   }
 

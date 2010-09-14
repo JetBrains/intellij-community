@@ -9,6 +9,6 @@ class Child extends Parent {
   }
 
   void bar() {
-    foo(1,intellijidearulezzz);
+    foo(1,);
   }
 }
