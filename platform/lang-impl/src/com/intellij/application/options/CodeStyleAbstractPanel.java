@@ -16,6 +16,7 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -89,6 +90,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         somethingChanged();
       }
     });
+
+    updatePreview();
   }
 
   public void setModel(final CodeStyleSchemesModel model) {
@@ -107,34 +110,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    myTextToReformat = getPreviewText();
-    Document editorDocument = editorFactory.createDocument(myTextToReformat);
+    Document editorDocument = editorFactory.createDocument("");
     EditorEx editor = (EditorEx)editorFactory.createViewer(editorDocument);
-
+    fillEditorSettings(editor.getSettings());
     myLastDocumentModificationStamp = editor.getDocument().getModificationStamp();
-
-    EditorSettings editorSettings = editor.getSettings();
-    fillEditorSettings(editorSettings);
-
-    updatePreviewHighlighter(editor);
-
     return editor;
   }
-
-  private void updatePreviewHighlighter(final EditorEx editor) {
-    EditorColorsScheme scheme = editor.getColorsScheme();
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-
-    editor.setHighlighter(createHighlighter(scheme));
-  }
-
-  protected void updatePreviewEditor() {
-    myTextToReformat = getPreviewText();
-    updatePreview();
-    updatePreviewHighlighter((EditorEx)myEditor);
-  }
-
-  protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
 
   private void fillEditorSettings(final EditorSettings editorSettings) {
     editorSettings.setWhitespacesShown(true);
@@ -144,21 +125,22 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
-    final int rightMargin = getRightMargin();
-    if (rightMargin > 0) {
-      editorSettings.setRightMargin(rightMargin);
-    }
   }
 
-  protected abstract int getRightMargin();
+  protected void updatePreview() {
+    updateEditor();
+    updatePreviewHighlighter((EditorEx)myEditor);
+  }
 
-  public final void updatePreview() {
+  private void updateEditor() {
     if (!myShouldUpdatePreview || !myEditor.getComponent().isShowing()) {
       return;
     }
 
     if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
       myTextToReformat = myEditor.getDocument().getText();
+    } else {
+      myTextToReformat = getPreviewText();
     }
 
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
@@ -169,10 +151,18 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         replaceText(finalProject);
       }
     }, null, null);
-    myEditor.getSettings().setRightMargin(getRightMargin());
+
+    myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
     myEditor.getScrollingModel().scrollVertically(currOffs);
   }
+
+  private int getAdjustedRightMargin() {
+    int result = getRightMargin();
+    return result > 0 ? result : CodeStyleFacade.getInstance(getCurrentProject()).getRightMargin();
+  }
+
+  protected abstract int getRightMargin();
 
   private void replaceText(final Project project) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -184,9 +174,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
           prepareForReformat(psiFile);
           apply(mySettings);
           CodeStyleSettings clone = mySettings.clone();
-          if (getRightMargin() > 0) {
-            clone.RIGHT_MARGIN = getRightMargin();
-          }
+          clone.RIGHT_MARGIN = getAdjustedRightMargin();
 
 
           CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
@@ -225,6 +213,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     }
     return project;
   }
+
+  private void updatePreviewHighlighter(final EditorEx editor) {
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+    editor.setHighlighter(createHighlighter(scheme));
+  }
+
+  protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
 
   @NotNull
   protected abstract FileType getFileType();
@@ -322,7 +318,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         try {
           myUpdateAlarm.cancelAllRequests();
           if (isSomethingChanged()) {
-            updatePreview();
+            updateEditor();
           }
         }
         finally {

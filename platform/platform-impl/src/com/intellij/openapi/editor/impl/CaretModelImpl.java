@@ -207,7 +207,14 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
 
     if (newColumnNumber < 0) newColumnNumber = 0;
-    if (newLineNumber < 0) newLineNumber = 0;
+
+    // There is a possible case that caret is located at the first line and use presses 'Shift+Up'. We want to select all text
+    // from the document start to the current caret position then. So, we have a dedicated flag for tracking that.
+    boolean selectToDocumentStart = false;
+    if (newLineNumber < 0) {
+      selectToDocumentStart = true;
+      newLineNumber = 0;
+    }
 
     VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
     int lastColumnNumber = newColumnNumber;
@@ -221,7 +228,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
             newColumnNumber = myEditor.offsetToVisualPosition(offset).column;
           }
           else {
-            TextChange softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset + 1);
+            SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset + 1);
             // There is a possible case that tabulation symbol is the last document symbol represented on a visual line before
             // soft wrap. We can't just use column from 'offset + 1' because it would point on a next visual line.
             if (softWrap == null) {
@@ -259,7 +266,14 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         selectionModel.setBlockSelection(blockSelectionStart, getLogicalPosition());
       }
       else {
-        selectionModel.setSelection(selectionStart, getOffset());
+        int endOffsetToUse = getOffset();
+        if (selectToDocumentStart) {
+          endOffsetToUse = 0;
+        }
+        else if (pos.line >= myEditor.getVisibleLineCount()) {
+          endOffsetToUse = myEditor.getDocument().getTextLength();
+        }
+        selectionModel.setSelection(selectionStart, endOffsetToUse);
       }
     }
     else {
@@ -512,7 +526,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   public int getPriority() {
-    return 3;
+    return EditorDocumentPriorities.CARET_MODEL;
   }
 
   private void setCurrentLogicalCaret(LogicalPosition position) {
@@ -533,8 +547,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     int y = myEditor.visualPositionToXY(visualPosition).y;
     int lineHeight = myEditor.getLineHeight();
     int height = lineHeight;
-    List<? extends TextChange> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
-    for (TextChange softWrap : softWraps) {
+    List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
+    for (SoftWrap softWrap : softWraps) {
       height += StringUtil.countNewLines(softWrap.getText()) * lineHeight;
     }
 

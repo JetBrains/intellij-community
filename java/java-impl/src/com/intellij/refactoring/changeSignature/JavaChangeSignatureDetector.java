@@ -16,9 +16,12 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -252,6 +255,52 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   public boolean wasBanned(PsiElement element, @NotNull ChangeInfo bannedInfo) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     return method != null && isInsideMethodSignature(element, method) && Comparing.equal(method, bannedInfo.getMethod());
+  }
+
+  @Override
+  public boolean isMoveParameterAvailable(PsiElement element, boolean left) {
+    if (element instanceof PsiParameter) {
+      final PsiParameter parameter = (PsiParameter)element;
+      final PsiElement declarationScope = parameter.getDeclarationScope();
+      if (declarationScope instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)declarationScope;
+        final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+        if (left) {
+          return parameterIndex > 0;
+        } else {
+          return parameterIndex < method.getParameterList().getParametersCount() - 1;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void moveParameter(final PsiElement element, final Editor editor, final boolean left) {
+    final PsiParameter parameter = (PsiParameter)element;
+    final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+    final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+    new WriteCommandAction(element.getProject(), MOVE_PARAMETER){
+      @Override
+      protected void run(Result result) throws Throwable {
+        final PsiParameterList parameterList = method.getParameterList();
+        final PsiParameter[] parameters = parameterList.getParameters();
+        final int deltaOffset = editor.getCaretModel().getOffset() - parameter.getTextRange().getStartOffset();
+        final PsiParameter frst = left ? parameters[parameterIndex - 1] : parameter;
+        final PsiParameter scnd = left ? parameter : parameters[parameterIndex + 1];
+        final int startOffset = frst.getTextRange().getStartOffset();
+        final int endOffset = scnd.getTextRange().getEndOffset();
+
+        final PsiFile file = method.getContainingFile();
+        final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+        if (document != null) {
+          final String comma_whitespace_between =
+            document.getText().substring(frst.getTextRange().getEndOffset(), scnd.getTextRange().getStartOffset());
+          document.replaceString(startOffset, endOffset, scnd.getText() + comma_whitespace_between + frst.getText());
+          editor.getCaretModel().moveToOffset(document.getText().indexOf(parameter.getText(), startOffset) + deltaOffset);
+        }
+      }
+    }.execute();
   }
 
   private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {

@@ -51,8 +51,8 @@ public class EditorFragmentComponent extends JPanel {
     int y1 = p1.y;
     int y2 = p2.y;
 
-    int savedScrollOfset = editor.getScrollingModel().getHorizontalScrollOffset();
-    if (savedScrollOfset > 0) {
+    int savedScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
+    if (savedScrollOffset > 0) {
       editor.stopOptimizedScrolling();
       editor.getScrollingModel().scrollHorizontally(0);
     }
@@ -90,9 +90,9 @@ public class EditorFragmentComponent extends JPanel {
       foldingModel.setFoldingEnabled(isFoldingEnabled);
     }
 
-    if (savedScrollOfset > 0) {
+    if (savedScrollOffset > 0) {
       editor.stopOptimizedScrolling();
-      editor.getScrollingModel().scrollHorizontally(savedScrollOfset);
+      editor.getScrollingModel().scrollHorizontally(savedScrollOffset);
     }
 
     JComponent component = new JComponent() {
@@ -139,7 +139,8 @@ public class EditorFragmentComponent extends JPanel {
     int startLine = editor.offsetToLogicalPosition(range.getStartOffset()).line;
     int endLine = Math.min(editor.offsetToLogicalPosition(range.getEndOffset()).line + 1, editor.getDocument().getLineCount() - 1);
 
-    if (editor.logicalPositionToXY(new LogicalPosition(startLine, 0)).y >= editor.logicalPositionToXY(new LogicalPosition(endLine, 0)).y) return null;
+    //if (editor.logicalPositionToXY(new LogicalPosition(startLine, 0)).y >= editor.logicalPositionToXY(new LogicalPosition(endLine, 0)).y) return null;
+    if (startLine >= endLine) return null;
 
     EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true);
 

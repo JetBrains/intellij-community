@@ -22,10 +22,11 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
@@ -47,6 +48,11 @@ public class InspectPanel extends DebuggerTreePanel {
     setUpdateEnabled(true);
   }
 
+  protected void changeEvent(DebuggerContextImpl newContext, int event) {
+    if (event != DebuggerSession.EVENT_THREADS_REFRESH) {
+      super.changeEvent(newContext, event);
+    }
+  }
 
   protected DebuggerTree createTreeView() {
     return new InspectDebuggerTree(getProject());

@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.editor.TextChange;
+import com.intellij.openapi.editor.SoftWrap;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 /**
  * Defines a contract for the callbacks for soft wraps management notifications (addition/removal).
@@ -33,7 +31,7 @@ public interface SoftWrapChangeListener {
    *
    * @param softWrap   newly registered soft wrap
    */
-  void softWrapAdded(@NotNull TextChange softWrap);
+  void softWrapAdded(@NotNull SoftWrap softWrap);
 
   /**
    * This method is assumed to be called every time soft wrap(s) is removed.

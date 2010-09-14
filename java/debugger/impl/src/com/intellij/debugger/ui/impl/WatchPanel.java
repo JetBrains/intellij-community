@@ -28,7 +28,6 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -54,6 +53,9 @@ public abstract class WatchPanel extends DebuggerTreePanel {
   }
 
   protected void changeEvent(DebuggerContextImpl newContext, int event) {
+    if (event == DebuggerSession.EVENT_THREADS_REFRESH) {
+      return;
+    }
     if(event == DebuggerSession.EVENT_ATTACHED) {
       DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getWatchTree().getModel().getRoot();
       if(root != null) {

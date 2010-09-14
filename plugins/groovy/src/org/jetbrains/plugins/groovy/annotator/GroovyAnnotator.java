@@ -376,6 +376,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitVariable(GrVariable variable) {
+    checkName(variable);
     if (variable instanceof GrMember) {
       highlightMember(myHolder, ((GrMember)variable));
       checkStaticDeclarationsInInnerClass((GrMember)variable, myHolder);
@@ -406,6 +407,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message(key, variable.getName()));
       }
     }
+  }
+
+  private void checkName(GrVariable variable) {
+    if (!"$".equals(variable.getName())) return;
+    myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message("incorrect.variable.name"));
   }
 
   @Override

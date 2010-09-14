@@ -38,8 +38,12 @@ public class ConvertMethodToClosureTest extends GrIntentionTestCase {
   public void testClosureToMethod() throws Exception {
     doTest(GroovyIntentionsBundle.message("convert.closure.to.method.intention.name"), true);
   }
-  
+
   public void testClosureWithImplicitParameterToMethod() throws Exception {
+    doTest(GroovyIntentionsBundle.message("convert.closure.to.method.intention.name"), true);
+  }
+
+  public void testClosureWithoutModifiersToMethod() {
     doTest(GroovyIntentionsBundle.message("convert.closure.to.method.intention.name"), true);
   }
 }

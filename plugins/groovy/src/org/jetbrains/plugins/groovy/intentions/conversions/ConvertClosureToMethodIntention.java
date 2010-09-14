@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -48,14 +50,21 @@ public class ConvertClosureToMethodIntention extends Intention {
     final GrField field = (GrField)element;
     final GrClosableBlock block = (GrClosableBlock)field.getInitializerGroovy();
 
-    builder.append(field.getModifierList().getText()).append(' ').append(field.getName());
+    final GrModifierList modifierList = field.getModifierList();
+    if (modifierList.getModifiers().length > 0 || modifierList.getAnnotations().length > 0) {
+      builder.append(modifierList.getText());
+    }
+    else {
+      builder.append(GrModifier.DEF);
+    }
+    builder.append(' ').append(field.getName());
 
     builder.append('(');
     if (block.hasParametersSection()) {
       builder.append(block.getParameterList().getText());
     }
     else {
-      builder.append("def it");
+      builder.append("def it = null");
     }
     builder.append(") {");
     block.getParameterList().delete();
