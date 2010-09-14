@@ -37,12 +37,12 @@ public class SkeletonBuilderTest extends TestCase {
     // 4, 4
     final SkeletonBuilder builder = new SkeletonBuilder(2, 2);
     for (CommitHashPlusParents commitHashPlusParents : list) {
-      builder.accept(commitHashPlusParents);
+      builder.consume(commitHashPlusParents);
     }
     builder.finished();
     final TreeSkeleton result = builder.getResult();
     for (int i = 0; i < 5; i++) {
-      final TreeSkeletonImpl.Commit commit = result.getCommitAt(i);
+      final TreeSkeletonImpl.Commit commit = (TreeSkeletonImpl.Commit)result.get(i);
       // just because of the test data order
       Assert.assertEquals("" + (i + 1), new String(commit.getHash()));
       Assert.assertEquals(0, commit.getWireNumber());
@@ -55,6 +55,28 @@ public class SkeletonBuilderTest extends TestCase {
       Assert.assertEquals(true, we.isStart());
       Assert.assertEquals(i, we.getCommitIdx());
     }
+
+    assertWires(result.getUsedWires(0).getUsed());
+    assertWires(result.getUsedWires(1).getUsed());
+    assertWires(result.getUsedWires(2).getUsed());
+    assertWires(result.getUsedWires(3).getUsed());
+    assertWires(result.getUsedWires(4).getUsed());
+
+    final Iterator<TreeSkeletonImpl.WireEvent> iterator2 = result.createWireEventsIterator(4);
+    for (int i = 4; i < 5; i++) {
+      final TreeSkeletonImpl.WireEvent we = iterator2.next();
+      Assert.assertEquals(true, we.isEnd());
+      Assert.assertEquals(true, we.isStart());
+      Assert.assertEquals(i, we.getCommitIdx());
+    }
+
+    final Iterator<TreeSkeletonImpl.WireEvent> iterator3 = result.createWireEventsIterator(2);
+    for (int i = 2; i < 5; i++) {
+      final TreeSkeletonImpl.WireEvent we = iterator3.next();
+      Assert.assertEquals(true, we.isEnd());
+      Assert.assertEquals(true, we.isStart());
+      Assert.assertEquals(i, we.getCommitIdx());
+    }
   }
 
   public void testOneLine() throws Exception {
@@ -62,13 +84,13 @@ public class SkeletonBuilderTest extends TestCase {
     // 4, 4
     final SkeletonBuilder builder = new SkeletonBuilder(2, 2);
     for (CommitHashPlusParents commitHashPlusParents : list) {
-      builder.accept(commitHashPlusParents);
+      builder.consume(commitHashPlusParents);
     }
     builder.finished();
 
     final TreeSkeleton result = builder.getResult();
     for (int i = 0; i < 5; i++) {
-      final TreeSkeletonImpl.Commit commit = result.getCommitAt(i);
+      final TreeSkeletonImpl.Commit commit = (TreeSkeletonImpl.Commit)result.get(i);
       // just because of the test data order
       Assert.assertEquals("" + (i + 1), new String(commit.getHash()));
       Assert.assertEquals(0, commit.getWireNumber());
@@ -82,6 +104,17 @@ public class SkeletonBuilderTest extends TestCase {
     we = iterator.next();
     Assert.assertEquals(true, we.isEnd());
     Assert.assertEquals(4, we.getCommitIdx());
+
+    assertWires(result.getUsedWires(0).getUsed());
+    assertWires(result.getUsedWires(1).getUsed(), 0);
+    assertWires(result.getUsedWires(2).getUsed(), 0);
+    assertWires(result.getUsedWires(3).getUsed(), 0);
+    assertWires(result.getUsedWires(4).getUsed(), 0);
+
+    final Iterator<TreeSkeletonImpl.WireEvent> iterator1 = result.createWireEventsIterator(4);
+    TreeSkeletonImpl.WireEvent we1 = iterator1.next();
+    Assert.assertEquals(true, we1.isEnd());
+    Assert.assertEquals(4, we1.getCommitIdx());
   }
 
   public void testBranchAndMerge() throws Exception {
@@ -89,13 +122,13 @@ public class SkeletonBuilderTest extends TestCase {
     // 4, 4
     final SkeletonBuilder builder = new SkeletonBuilder(2, 2);
     for (CommitHashPlusParents commitHashPlusParents : list) {
-      builder.accept(commitHashPlusParents);
+      builder.consume(commitHashPlusParents);
     }
     builder.finished();
     final TreeSkeleton result = builder.getResult();
     final int[] expectedWireNumbers = {0, 0, 0, 1, 0, 1, 0, 1, 1};
     for (int i = 0; i < 5; i++) {
-      final TreeSkeletonImpl.Commit commit = result.getCommitAt(i);
+      final TreeSkeletonImpl.Commit commit = (TreeSkeletonImpl.Commit)result.get(i);
       // just because of the test data order
       Assert.assertEquals("" + (i + 1), new String(commit.getHash()));
       Assert.assertEquals(expectedWireNumbers[i], commit.getWireNumber());
@@ -125,6 +158,30 @@ public class SkeletonBuilderTest extends TestCase {
     we = iterator.next();
     Assert.assertEquals(true, we.isEnd());
     Assert.assertEquals(8, we.getCommitIdx());
+
+    assertWires(result.getUsedWires(0).getUsed());
+    assertWires(result.getUsedWires(1).getUsed(), 0);
+    assertWires(result.getUsedWires(2).getUsed(), 0, 1);
+    assertWires(result.getUsedWires(3).getUsed(), 0, 1);
+    assertWires(result.getUsedWires(4).getUsed(), 0, 1);
+    assertWires(result.getUsedWires(5).getUsed(), 0, 1);
+    assertWires(result.getUsedWires(6).getUsed(), 0, 1);
+    assertWires(result.getUsedWires(7).getUsed(), 0, 1);  // before wires!
+    assertWires(result.getUsedWires(8).getUsed(), 1);
+
+    final Iterator<TreeSkeletonImpl.WireEvent> iterator1 = result.createWireEventsIterator(5);
+    TreeSkeletonImpl.WireEvent we1 = iterator1.next();
+
+    Assert.assertEquals(6, we1.getWireEnds()[0]);
+    Assert.assertEquals(7, we1.getCommitIdx());
+    final int[] commitsEnds1 = we1.getCommitsEnds();
+    Assert.assertEquals(2, commitsEnds1.length);
+    Assert.assertEquals(5, commitsEnds1[0]);
+    Assert.assertEquals(6, commitsEnds1[1]);
+
+    we1 = iterator1.next();
+    Assert.assertEquals(true, we1.isEnd());
+    Assert.assertEquals(8, we1.getCommitIdx());
   }
 
   public void testBranchIsMerged() throws Exception {
@@ -132,13 +189,13 @@ public class SkeletonBuilderTest extends TestCase {
     // 4, 4
     final SkeletonBuilder builder = new SkeletonBuilder(2, 2);
     for (CommitHashPlusParents commitHashPlusParents : list) {
-      builder.accept(commitHashPlusParents);
+      builder.consume(commitHashPlusParents);
     }
     builder.finished();
     final TreeSkeleton result = builder.getResult();
     final int[] expectedWireNumbers = {0, 0, 0, 1, 1, 2, 1, 0, 2, 1, 1};
     for (int i = 0; i < 5; i++) {
-      final TreeSkeletonImpl.Commit commit = result.getCommitAt(i);
+      final TreeSkeletonImpl.Commit commit = (TreeSkeletonImpl.Commit)result.get(i);
       // just because of the test data order
       Assert.assertEquals("" + (i + 1), new String(commit.getHash()));
       Assert.assertEquals(expectedWireNumbers[i], commit.getWireNumber());
@@ -187,6 +244,37 @@ public class SkeletonBuilderTest extends TestCase {
     Assert.assertEquals(6, commitsEnds[0]);
     Assert.assertEquals(7, commitsEnds[1]);
     Assert.assertEquals(8, commitsEnds[2]);
+
+    assertWires(result.getUsedWires(0).getUsed());
+    assertWires(result.getUsedWires(1).getUsed(), 0, 1);
+    assertWires(result.getUsedWires(2).getUsed(), 0, 1, 2);
+    assertWires(result.getUsedWires(3).getUsed(), 0, 1, 2);
+    assertWires(result.getUsedWires(4).getUsed(), 0, 1, 2);
+    assertWires(result.getUsedWires(5).getUsed(), 0, 1, 2);
+    assertWires(result.getUsedWires(6).getUsed(), 0, 1, 2);
+    assertWires(result.getUsedWires(7).getUsed(), 0, 1, 2);
+    assertWires(result.getUsedWires(8).getUsed(), 0, 1, 2);
+    assertWires(result.getUsedWires(9).getUsed(), 0, 1, 2);
+
+    final Iterator<TreeSkeletonImpl.WireEvent> iterator1 = result.createWireEventsIterator(5);
+    TreeSkeletonImpl.WireEvent we1 = iterator1.next();
+    Assert.assertNull(we1.getWireEnds());
+    Assert.assertEquals(5, we1.getCommitIdx());
+    int[] commitsEnds1 = we1.getCommitsEnds();
+    Assert.assertEquals(2, commitsEnds1.length);
+    Assert.assertEquals(1, commitsEnds1[0]);
+    Assert.assertEquals(3, commitsEnds1[1]);
+
+    we1 = iterator1.next();
+    Assert.assertEquals(7, we1.getWireEnds()[0]);
+    Assert.assertEquals(8, we1.getWireEnds()[1]);
+    Assert.assertEquals(9, we1.getCommitIdx());
+    Assert.assertEquals(true, we1.isEnd());
+    commitsEnds1 = we1.getCommitsEnds();
+    Assert.assertEquals(3, commitsEnds1.length);
+    Assert.assertEquals(6, commitsEnds1[0]);
+    Assert.assertEquals(7, commitsEnds1[1]);
+    Assert.assertEquals(8, commitsEnds1[2]);
   }
 
   private List<CommitHashPlusParents> read(final String data) {
@@ -204,5 +292,13 @@ public class SkeletonBuilderTest extends TestCase {
       }
     }
     return result;
+  }
+
+  private void assertWires(final List<Integer> returned, final Integer... expected) {
+    Assert.assertEquals(expected.length, returned.size());
+    for (int i = 0; i < returned.size(); i++) {
+      final Integer integer = returned.get(i);
+      Assert.assertEquals(expected[i], integer);
+    }
   }
 }

@@ -55,7 +55,7 @@ public class MoveGroovyScriptHandler extends MoveClassesOrPackagesHandlerBase {
     for (PsiElement element : elements) {
       if (!canMove(element)) return false;
     }
-    return super.canMove(elements, targetContainer);
+    return targetContainer == null || isValidTarget(targetContainer, elements);
   }
 
   private static boolean canMove(PsiElement element) {
@@ -68,7 +68,7 @@ public class MoveGroovyScriptHandler extends MoveClassesOrPackagesHandlerBase {
     }
 
     final PsiClass[] classes = file.getClasses();
-    return classes.length == 1 && classes[0] instanceof GroovyScriptClass;
+    return classes.length > 0 && classes[0] instanceof GroovyScriptClass;
   }
 
   @Override
@@ -100,7 +100,7 @@ public class MoveGroovyScriptHandler extends MoveClassesOrPackagesHandlerBase {
       PsiElement psiElement = elements[i];
       searchTextOccurences = TextOccurrencesUtil.isSearchTextOccurencesEnabled(psiElement);
     }
-    final MoveClassesOrPackagesDialog moveDialog =
+    final MoveGroovyScriptDialog moveDialog =
       new MoveGroovyScriptDialog(project, searchTextOccurences, elements, initialTargetElement, moveCallback);
 
     boolean searchInComments = JavaRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;

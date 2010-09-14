@@ -17,7 +17,6 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -26,16 +25,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * User: anna
@@ -49,6 +46,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
                                                  final @Nullable ChangeInfo changeInfo) {
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (method != null && isInsideMethodSignature(element, method)) {
+      if (PsiTreeUtil.hasErrorElements(method.getParameterList())) return changeInfo;
       final String newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
       final PsiType returnType = method.getReturnType();
       final CanonicalTypes.Type newReturnType;
@@ -68,29 +66,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
         if (!info.getMethod().equals(method)) return null;
         if (!info.equals(fromMethod)) {
-          final JavaParameterInfo[] oldParameters = info.getNewParameters();
-          for (int i = 0; i < parameterInfos.length; i++) {
-            ParameterInfoImpl parameterInfo = parameterInfos[i];
-            JavaParameterInfo oldParameter = null;
-            for (JavaParameterInfo parameter : oldParameters) {
-              if (Comparing.strEqual(parameter.getName(), parameterInfo.getName()) &&
-                  Comparing.strEqual(parameter.getTypeText(), parameterInfo.getTypeText())) {
-                oldParameter = parameter;
-                break;
-              }
-            }
-            if (oldParameter == null && oldParameters.length > i && info.getOldParameterNames().length > i) {
-              if (Comparing.strEqual(info.getOldParameterNames()[i], parameterInfo.getName()) ||
-                  Comparing.strEqual(info.getOldParameterTypes()[i], parameterInfo.getTypeText())) {
-                oldParameter = oldParameters[i];
-              }
-            }
-            final int oldParameterIndex = oldParameter != null ? oldParameter.getOldIndex() : -1;
-            parameterInfos[i] = new ParameterInfoImpl(oldParameterIndex,
-                                                      parameterInfo.getName(),
-                                                      parameterInfo.getTypeWrapper().getType(element, element.getManager()),
-                                                      oldParameterIndex == -1 ? "intellijidearulezzz" : "");
-          }
+          createParametersInfo(element, parameterInfos, info);
           if (info.isReturnTypeChanged()) {
             final String visibility = info.getNewVisibility();
             if (Comparing.strEqual(visibility, PsiModifier.PRIVATE) &&
@@ -123,13 +99,64 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
           javaChangeInfo.setSuperMethod(info.getSuperMethod());
           return javaChangeInfo;
         }
+        return changeInfo;
       }
     }
     return null;
   }
 
+  private static void createParametersInfo(PsiElement element,
+                                           ParameterInfoImpl[] parameterInfos,
+                                           MyJavaChangeInfo info) {
+
+    final JavaParameterInfo[] oldParameters = info.getNewParameters();
+    final String[] oldParameterNames = info.getOldParameterNames();
+    final String[] oldParameterTypes =  info.getOldParameterTypes();
+    final Map<JavaParameterInfo, Integer> untouchedParams = new HashMap<JavaParameterInfo, Integer>();
+    for (int i = 0; i < parameterInfos.length; i++) {
+      ParameterInfoImpl parameterInfo = parameterInfos[i];
+      JavaParameterInfo oldParameter = null;
+      for (JavaParameterInfo parameter : oldParameters) {
+        if (Comparing.strEqual(parameter.getName(), parameterInfo.getName()) &&
+            Comparing.strEqual(parameter.getTypeText(), parameterInfo.getTypeText())) {
+          oldParameter = parameter;
+          break;
+        }
+      }
+
+      if (oldParameter != null) {
+        parameterInfos[i] = new ParameterInfoImpl(oldParameter.getOldIndex(),
+                                                  oldParameter.getName(),
+                                                  oldParameter.getTypeWrapper().getType(element, element.getManager()),
+                                                  null);
+        untouchedParams.put(parameterInfos[i], oldParameter.getOldIndex());
+      }
+    }
+
+    for (int i = 0; i < parameterInfos.length; i++) {
+      ParameterInfoImpl parameterInfo = parameterInfos[i];
+      if (!untouchedParams.containsKey(parameterInfo)) {
+        JavaParameterInfo oldParameter = null;
+        if (oldParameters.length > i && oldParameterNames.length > i) {
+          if (Comparing.strEqual(oldParameterNames[i], parameterInfo.getName()) ||
+              Comparing.strEqual(oldParameterTypes[i], parameterInfo.getTypeText())) {
+            if (!untouchedParams.containsValue(oldParameters[i].getOldIndex())) {
+              oldParameter = oldParameters[i];
+            }
+          }
+        }
+        parameterInfos[i] = new ParameterInfoImpl(oldParameter != null ? oldParameter.getOldIndex() : - 1,
+                                                  parameterInfo.getName(),
+                                                  parameterInfo.getTypeWrapper().getType(element, element.getManager()),
+                                                  null);
+      }
+    }
+  }
+
+
   private static class MyJavaChangeInfo extends JavaChangeInfoImpl  {
     private PsiMethod mySuperMethod;
+    private String[] myModifiers;
     private MyJavaChangeInfo(String newVisibility,
                              PsiMethod method,
                              CanonicalTypes.Type newType,
@@ -139,6 +166,16 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       super(newVisibility, method, method.getName(), newType, newParms, newExceptions, false,
             new HashSet<PsiMethod>(),
             new HashSet<PsiMethod>(), oldName);
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      myModifiers = new String[parameters.length];
+      for (int i = 0; i < parameters.length; i++) {
+        PsiParameter parameter = parameters[i];
+        final PsiModifierList modifierList = parameter.getModifierList();
+        if (modifierList != null) {
+          final String text = modifierList.getText();
+          myModifiers[i] = text;
+        }
+      }
     }
 
     @Override
@@ -156,6 +193,10 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     public void setSuperMethod(PsiMethod superMethod) {
       mySuperMethod = superMethod;
     }
+
+    public String[] getModifiers() {
+      return myModifiers;
+    }
   }
 
   @Override
@@ -164,11 +205,11 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
       final PsiMethod method = info.getSuperMethod();
 
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //if (ApplicationManager.getApplication().isUnitTestMode()) {
         temporallyRevertChanges(method, oldText);
         createChangeSignatureProcessor(info, method).run();
         return true;
-      }
+      /*}
       final JavaChangeSignatureDialog dialog =
         new JavaChangeSignatureDialog(method.getProject(), new JavaMethodDescriptor(info.getMethod()) {
           @Override
@@ -196,7 +237,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
           }
         };
       dialog.show();
-      return dialog.isOK();
+      return dialog.isOK();*/
     }
     return false;
 
@@ -229,7 +270,25 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         oldParameterNames = info.getOldParameterNames();
         oldParameterTypes = info.getOldParameterTypes();
       }
-    });
+    }) {
+      @Override
+      protected void performRefactoring(UsageInfo[] usages) {
+        super.performRefactoring(usages);
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        for (int i = 0; i < info.getModifiers().length; i++) {
+          final String modifier = info.getModifiers()[i];
+          final PsiModifierList modifierList = parameters[i].getModifierList();
+          if (modifierList != null && !Comparing.strEqual(modifier, modifierList.getText())) {
+            final PsiModifierList newModifierList =
+              elementFactory.createParameterFromText(modifier + " type name", method).getModifierList();
+            if (newModifierList != null) {
+              modifierList.replace(newModifierList);
+            }
+          }
+        }
+      }
+    };
   }
 
   @Override

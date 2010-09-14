@@ -323,20 +323,22 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       return ((GrFileStub)stub).isScript();
     }
 
-    Boolean isScript = myScript;
-    if (isScript == null) {
+    if (myScript == null) {
       final GrTopStatement[] topStatements = findChildrenByClass(GrTopStatement.class);
-      isScript = topStatements.length == 0;
+      boolean hasClassDefinitions = false;
+      boolean hasTopStatements = false;
       for (GrTopStatement st : topStatements) {
-        if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition)) {
-          isScript = Boolean.TRUE;
+        if (st instanceof GrTypeDefinition) {
+          hasClassDefinitions = true;
+        }
+        else if (!(st instanceof GrImportStatement || st instanceof GrPackageDefinition)) {
+          hasTopStatements = true;
           break;
         }
       }
-      myScript = isScript;
+      myScript = hasTopStatements || !hasClassDefinitions;
     }
-
-    return isScript;
+    return myScript;
   }
 
   @Override

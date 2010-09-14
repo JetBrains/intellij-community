@@ -33,6 +33,7 @@
       <reference id="Vcs.ShowHistoryForBlock"/>
       <!-- <reference id="ChangesView.Browse"/> -->
       <separator/>
+      <!-- <action id="Test" class="git4idea.history.wholeTree.FictiveAction" text="Test git log"/> -->
 
       <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Current Branch..."/>
       <action id="Git.Checkout" class="git4idea.actions.GitCheckout" text="Checkout Branch..."/>

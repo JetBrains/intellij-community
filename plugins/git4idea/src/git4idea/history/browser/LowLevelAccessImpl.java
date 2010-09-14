@@ -74,6 +74,30 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     return GitHistoryUtils.onlyHashesHistory(myProject, new FilePathImpl(myRoot), parameters.toArray(new String[parameters.size()]));
   }
 
+  public void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
+                                    final Consumer<CommitHashPlusParents> consumer) throws VcsException {
+    final List<String> parameters = new LinkedList<String>();
+    for (ChangesFilter.Filter filter : filters) {
+      filter.getCommandParametersFilter().applyToCommandLine(parameters);
+    }
+
+    if (! startingPoints.isEmpty()) {
+      for (String startingPoint : startingPoints) {
+        parameters.add(startingPoint);
+      }
+    } else {
+      parameters.add("--all");
+    }
+
+    GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, parameters.toArray(new String[parameters.size()]));
+  }
+
+  @Override
+  public List<GitCommit> getCommitDetails(final Collection<String> commitIds) throws VcsException {
+    // todo branches
+    return GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(myRoot), Collections.<String>emptySet(), commitIds);
+  }
+
   public void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                              final Collection<ChangesFilter.Filter> filtersIn, final Consumer<GitCommit> consumer,
                              int maxCnt, List<String> branches) throws VcsException {

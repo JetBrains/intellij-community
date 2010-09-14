@@ -39,25 +39,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * //TODO den add doc
- *
- * Default {@link SoftWrapApplianceManager} implementation that is built with the following design guide lines:
- * <pre>
- * <ul>
- *   <li>
- *      perform soft wrap processing per-logical line, i.e. every time current manager is asked to process
- *      particular text range, it calculates logical lines that contain all target symbols, checks if they should
- *      be soft-wrapped and registers corresponding soft wraps if necessary;
- *   </li>
- *   <li>
- *      objects of this class remember processed logical lines and perform new processing for them only if visible
- *      area width is changed;
- *   </li>
- *   <li>
- *      {@link SoftWrapsStorage#removeAll() drops all registered soft wraps} if visible area width is changed;
- *   </li>
- * </ul>
- * </pre>
+ * The general idea of soft wraps processing is to build a cache to use for quick document dimensions mapping
+ * ({@code 'logical position -> visual position'}, {@code 'offset -> logical position'} etc) and update it incrementally
+ * on events like document modification fold region(s) expanding/collapsing etc.
+ * <p/>
+ * This class encapsulates document parsing logic. It notifies {@link SoftWrapAwareDocumentParsingListener registered listeners}
+ * about parsing and they are free to store necessary information for further usage.
  * <p/>
  * Not thread-safe.
  *
@@ -417,7 +404,11 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     return softWrap;
   }
 
-  //TODO den add doc
+  /**
+   * There is a possible case that we need to reparse the whole document (e.g. visible area width is changed or user-defined
+   * soft wrap indent is changed etc). This method encapsulates that logic, i.e. it checks if necessary conditions are satisfied
+   * and updates internal state as necessary.
+   */
   public void dropDataIfNecessary() {
     // Check if we need to recalculate soft wraps due to indent settings change.
     boolean indentChanged = false;
@@ -518,7 +509,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
-    /*
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
     Document document = myEditor.getDocument();
@@ -529,7 +519,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     int endOffset = document.getLineEndOffset(endLine);
 
     myDirtyRegions.add(new DirtyRegion(startOffset, endOffset));
-    */
   }
 
   @Override
@@ -549,7 +538,12 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     recalculateSoftWraps();
   }
 
-  //TODO den add doc
+  /**
+   * The general idea of soft wraps processing is to build a cache during complete document parsing and update it incrementally
+   * on events like document modification, fold region expanding/collapsing etc.
+   * <p/>
+   * This class encapsulates information about document region to be recalculated.
+   */
   private class DirtyRegion {
 
     public TextRange startRange;

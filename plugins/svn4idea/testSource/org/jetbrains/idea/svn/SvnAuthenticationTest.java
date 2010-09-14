@@ -127,7 +127,11 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     });
 
     Assert.assertTrue(result[0]);
-    myTestInteraction.assertNothing();
+    Assert.assertEquals(SystemInfo.isWindows ? 0 : 2, myTestInteraction.getNumPlaintextPrompt());
+    Assert.assertEquals(0, myTestInteraction.getNumAuthWarn());
+    Assert.assertEquals(0, myTestInteraction.getNumPasswordsWarn());
+    Assert.assertEquals(0, myTestInteraction.getNumSSLPlaintextPrompt());
+    Assert.assertEquals(0, myTestInteraction.getNumSSLWarn());
     Assert.assertEquals((SystemInfo.isWindows ? 1 : 3), listener.getCnt());
     listener.assertForAwt();
     savedOnceListener.assertForAwt();

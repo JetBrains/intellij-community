@@ -16,9 +16,12 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.BigArray;
+import com.intellij.openapi.vcs.Ring;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.ReadonlyList;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -27,35 +30,33 @@ import java.util.*;
  * @author irengrig
  */
 public class TreeSkeletonImpl implements TreeSkeleton {
-  private final int myPack;
-  private final int myWireEventsPack;
-
-  private final int mySize2Power;
-  private final int myWireEventsIdxSize2Power;
-
   // just commit hashes
-  private final List<Commit[]> myList;
+  private final BigArray<Commit> myList;
 
   // hierarchy structure events
   private final List<WireEvent> myWireEvents;
 
-  // Pair<WireEvent, WireEvent> -> before event, after event todo build afterwards!!
-  private final List<Pair<Integer, Integer>> myEventsIdx;
-  private int mySize;
+  private final WiresIndex myWiresIndex;
+  private final ReadonlyList<Commit> myAsCommitList;
 
   public TreeSkeletonImpl(final int size2Power, final int wireEventsIdxSize2Power) {
-    mySize2Power = size2Power;
-    myWireEventsIdxSize2Power = wireEventsIdxSize2Power;
-
     // some defense. small values for tests
     assert (size2Power < 16) && (wireEventsIdxSize2Power < 16) && (size2Power > 1) && (wireEventsIdxSize2Power > 1);
 
-    myPack = (int) Math.pow(2, size2Power);
-    myWireEventsPack = (int) Math.pow(2, wireEventsIdxSize2Power);
-
-    myList = new LinkedList<Commit[]>();
+    myList = new BigArray<Commit>(size2Power);
     myWireEvents = new LinkedList<WireEvent>(); // todo can use another structure, a list of arrays?
-    myEventsIdx = new LinkedList<Pair<Integer, Integer>>();
+    myWiresIndex = new WiresIndex(wireEventsIdxSize2Power);
+    myAsCommitList = new ReadonlyList<Commit>() {
+      @Override
+      public Commit get(int idx) {
+        return TreeSkeletonImpl.this.get(idx);
+      }
+
+      @Override
+      public int getSize() {
+        return TreeSkeletonImpl.this.getSize();
+      }
+    };
   }
 
   public void wireStarts(final int row) {
@@ -72,21 +73,17 @@ public class TreeSkeletonImpl implements TreeSkeleton {
     });
   }
 
+  public void refreshIndex() {
+    myWiresIndex.reset();
+    for (int i = 0; i < myWireEvents.size(); i++) {
+      final WireEvent event = myWireEvents.get(i);
+      myWiresIndex.accept(i, event, myAsCommitList);
+    }
+  }
+
   public void addWireEvent(final int row, final int[] branched) {
     final WireEvent wireEvent = new WireEvent(row, branched);
     myWireEvents.add(wireEvent);
-
-    // todo create idx afterwards
-    /*final int idx = wireEvent.getCommitIdx() >> myWireEventsIdxSize2Power;
-    if (idx < myEventsIdx.size()) return;
-
-    // when idx of index is event index, put same objects as previous and next
-    final int currentIdx = myWireEvents.size() - 1;
-    final int previous = (wireEvent.getCommitIdx() ^ (idx << myWireEventsIdxSize2Power)) == 0 ? currentIdx : (currentIdx - 1);
-    final Pair<Integer, Integer> indexEntry = new Pair<Integer, Integer>(previous, currentIdx);
-    while (idx >= myEventsIdx.size()) {
-      myEventsIdx.add(indexEntry);
-    }*/
   }
 
   public void addStartToEvent(final int row, final int parentRow) {
@@ -115,12 +112,13 @@ public class TreeSkeletonImpl implements TreeSkeleton {
       event = myWireEvents.get(foundIdx);
     } else {
       event = new WireEvent(row, null);
-      myWireEvents.add(- foundIdx - 1, event);
+      final int index = - foundIdx - 1;
+      myWireEvents.add(index, event);
     }
     wireEventConsumer.consume(event);
   }
 
-  public void markBreaks(final Collection<Integer> breaks) {
+  /*public void markBreaks(final Collection<Integer> breaks) {
     for (Integer aBreak : breaks) {
       modifyWireEvent(aBreak, new Consumer<WireEvent>() {
         @Override
@@ -129,43 +127,34 @@ public class TreeSkeletonImpl implements TreeSkeleton {
         }
       });
     }
-  }
+  }*/
   
   // todo not very well
   public void commitsAdded(final int rowThatWasLast) {
-    mySize = rowThatWasLast + 1;
-    final int itemNumber = rowThatWasLast >> mySize2Power;
-    final int size = (rowThatWasLast ^ (itemNumber << 10)) + 1;
-    final Commit[] newArr = new Commit[size];
-    System.arraycopy(myList.get(itemNumber), 0, newArr, 0, size);
-    myList.set(itemNumber, newArr);
+    myList.addingFinished();
   }
 
   public void addCommit(final int row, final String hash, final int wireNumber, final long time) {
-    final int itemNumber = row >> mySize2Power;
-
-    final Commit[] commits;
-    if (itemNumber >= myList.size()) {
-      commits = new Commit[myPack];
-      myList.add(itemNumber, commits);
-    } else {
-      commits = myList.get(itemNumber);
-    }
-    commits[row ^ (itemNumber << mySize2Power)] = new Commit(hash.getBytes(), wireNumber, time);
+    myList.put(row, new Commit(hash, wireNumber, time));
   }
 
+  @Nullable
   @Override
-  public short getNumberOfWiresOnEnter(final int row) {
-    if (myWireEvents.isEmpty()) return -1;  // todo think of
+  public Ring<Integer> getUsedWires(final int row) {
+    if (myWireEvents.isEmpty()) return null;  // todo think of
 
-    final Pair<Integer, Boolean> eventFor = getEventFor(row);
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    /*return eventFor.getSecond() ? myWireEvents.get(eventFor.getFirst()).getTotalLinesNumberBefore() :
-           myWireEvents.get(eventFor.getFirst()).getTotalLinesNumberAfter();*/
-    return -1;
+    final WiresIndex.IndexPoint point = myWiresIndex.getPoint(row);
+    final int pointIdx = point.getLessOrEqualWireEvent();
+    final Ring<Integer> ring = point.getUsedInRing();
+
+    for (int i = pointIdx; i < myWireEvents.size(); i++) {
+      final WireEvent event = myWireEvents.get(i);
+      if (event.getCommitIdx() >= row) {
+        return ring;
+      }
+      WiresIndex.performOnRing(ring, event, myAsCommitList);
+    }
+    return ring;
   }
 
   private static class SearchWireEventsComparator implements Comparator<WireEvent> {
@@ -185,19 +174,16 @@ public class TreeSkeletonImpl implements TreeSkeleton {
   private Pair<Integer, Boolean> getEventFor(final int row) {
     assert ! myWireEvents.isEmpty();
 
-    final int idx = row >> myWireEventsIdxSize2Power;
-    int eventsIdx = 0;
-    if (! myEventsIdx.isEmpty()) {
-      final Pair<Integer, Integer> pair = myEventsIdx.get(idx);
-      eventsIdx = pair.getFirst();
-    }
+    final WiresIndex.IndexPoint point = myWiresIndex.getPoint(row);
 
-    final int foundIdx = Collections.binarySearch(myWireEvents, new WireEvent(row, null), SearchWireEventsComparator.getInstance());
+    final int sizeDiff = point.getLessOrEqualWireEvent();
+    final int foundIdx = Collections.binarySearch(myWireEvents.subList(point.getLessOrEqualWireEvent(), myWireEvents.size()),
+                                                  new WireEvent(row, null), SearchWireEventsComparator.getInstance());
     // exact coinsidence
-    if (foundIdx >= 0) return new Pair<Integer, Boolean>(foundIdx, true);
+    if (foundIdx >= 0) return new Pair<Integer, Boolean>(sizeDiff + foundIdx, true);
 
     // todo check
-    final int beforeInsertionIdx = - foundIdx - 2;
+    final int beforeInsertionIdx = (- foundIdx - 1) + sizeDiff;
     // the very first then
     if (beforeInsertionIdx < 0) return new Pair<Integer, Boolean>(0, true);
     return (beforeInsertionIdx == myWireEvents.size()) ? new Pair<Integer, Boolean>(myWireEvents.size() - 1, false) :
@@ -213,25 +199,43 @@ public class TreeSkeletonImpl implements TreeSkeleton {
     return myWireEvents.subList(eventFor.getFirst(), myWireEvents.size()).iterator();
   }
 
-  // todo test
   @Override
-  public Commit getCommitAt(final int row) {
-    final int itemNumber = row >> mySize2Power;
-    return myList.get(itemNumber)[row ^ (itemNumber << mySize2Power)];
+  public Commit get(int idx) {
+    return myList.get(idx);
   }
 
-  public static class Commit {
-    private final byte[] myHash;
+  @Override
+  public int getSize() {
+    return myList.getSize();
+  }
+
+  public static class Commit implements Comparable<Commit>, VisibleLine {
+    private final String myHash;
     private int myWireNumber;
     private final long myTime;
 
-    public Commit(final byte[] hash, final int wireNumber, long time) {
+    public Commit(final String hash, final int wireNumber, long time) {
       myHash = hash;
       myWireNumber = wireNumber;
       myTime = time;
     }
 
-    public byte[] getHash() {
+    @Override
+    public String toString() {
+      return myHash;
+    }
+
+    @Override
+    public Object getData() {
+      return this;
+    }
+
+    @Override
+    public boolean isDecoration() {
+      return false;
+    }
+
+    public String getHash() {
       return myHash;
     }
 
@@ -246,12 +250,17 @@ public class TreeSkeletonImpl implements TreeSkeleton {
     public void setWireNumber(int wireNumber) {
       myWireNumber = wireNumber;
     }
+
+    @Override
+    public int compareTo(Commit o) {
+      final long result = myTime - o.getTime();
+      return result == 0 ? 0 : (result < 0) ? -1 : 1;
+    }
   }
 
   // commits with 1 start and end just belongs to its wire
   public static class WireEvent {
     private final int myCommitIdx;
-    private int myNumWiresBefore;
     // wire # can be taken from commit
     @Nullable
     private final int[] myCommitsEnds;      // branch point   |/.       -1 here -> start of a wire
@@ -280,19 +289,6 @@ public class TreeSkeletonImpl implements TreeSkeleton {
       } else {
         myWireEnds = ArrayUtil.append(myWireEnds, idx);
       }
-    }
-
-    /*public short getTotalLinesNumberAfter() {
-      return (short) (myTotalLinesNumberBefore + (myWiresStarts == null ? 0 : myWiresStarts.length)
-                   - (myWiresEnds == null ? 0 : myWiresEnds.length));
-    }*/
-
-    public int getNumWiresBefore() {
-      return myNumWiresBefore;
-    }
-
-    public void setNumWiresBefore(int numWiresBefore) {
-      myNumWiresBefore = numWiresBefore;
     }
 
     @Nullable

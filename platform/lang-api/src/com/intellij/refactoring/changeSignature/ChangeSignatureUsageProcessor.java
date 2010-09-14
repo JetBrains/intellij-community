@@ -16,6 +16,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
@@ -37,4 +38,6 @@ public interface ChangeSignatureUsageProcessor {
   boolean processPrimaryMethod(ChangeInfo changeInfo);
 
   boolean shouldPreviewUsages(ChangeInfo changeInfo, UsageInfo[] usages);
+
+  boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project);
 }

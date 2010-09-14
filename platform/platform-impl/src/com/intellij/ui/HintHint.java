@@ -84,6 +84,10 @@ public class HintHint {
     return getTooltipManager().getTextBackground(myAwtTooltip);
   }
 
+  public Color getLinkForeground() {
+    return getTooltipManager().getLinkForeground(myAwtTooltip);
+  }
+
   public boolean isOwnBorderAllowed() {
     return getTooltipManager().isOwnBorderAllowed(myAwtTooltip);
   }

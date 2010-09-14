@@ -29,9 +29,11 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextUtil;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.DebuggerComboBoxRenderer;
 import com.intellij.debugger.ui.impl.FramesList;
 import com.intellij.debugger.ui.impl.UpdatableDebuggerView;
@@ -68,7 +70,8 @@ public class FramesPanel extends UpdatableDebuggerView {
   private final ThreadsListener myThreadsListener;
   private final FramesListener myFramesListener;
   private final DebuggerStateManager myStateManager;
-
+  private boolean myShowLibraryFrames = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
+  
   public FramesPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
     myStateManager = stateManager;
@@ -161,11 +164,13 @@ public class FramesPanel extends UpdatableDebuggerView {
   }
 
   /*invoked in swing thread*/
-  protected void rebuild(final boolean updateOnly) {
+  protected void rebuild(int event) {
     final DebuggerContextImpl context = getContext();
     final boolean paused = context.getDebuggerSession().isPaused();
-    
-    if (!paused || !updateOnly) {
+    final boolean isRefresh = event == DebuggerSession.EVENT_REFRESH ||
+                              event == DebuggerSession.EVENT_REFRESH_VIEWS_ONLY ||
+                              event == DebuggerSession.EVENT_THREADS_REFRESH;
+    if (!paused || !isRefresh) {
       myThreadsCombo.removeAllItems();
       synchronized (myFramesList) {
         myFramesList.clear();
@@ -175,9 +180,29 @@ public class FramesPanel extends UpdatableDebuggerView {
     if (paused) {
       final DebugProcessImpl process = context.getDebugProcess();
       if (process != null) {
-        process.getManagerThread().schedule(new RefreshFramePanelCommand(updateOnly && myThreadsCombo.getItemCount() != 0));
+        process.getManagerThread().schedule(new RefreshFramePanelCommand(isRefresh && myThreadsCombo.getItemCount() != 0));
       }
     }
+  }
+
+  public boolean isShowLibraryFrames() {
+    return myShowLibraryFrames;
+  }
+
+  public void setShowLibraryFrames(boolean showLibraryFrames) {
+    if (myShowLibraryFrames != showLibraryFrames) {
+      myShowLibraryFrames = showLibraryFrames;
+      rebuild(DebuggerSession.EVENT_CONTEXT);
+    }
+
+  }
+
+  public long getFramesLastUpdateTime() {
+    return myFramesLastUpdateTime;
+  }
+
+  public void setFramesLastUpdateTime(long framesLastUpdateTime) {
+    myFramesLastUpdateTime = framesLastUpdateTime;
   }
 
   private class RefreshFramePanelCommand extends DebuggerContextCommandImpl {
@@ -425,10 +450,21 @@ public class FramesPanel extends UpdatableDebuggerView {
       final MethodsTracker tracker = new MethodsTracker();
       final int totalFramesCount = frames.size();
       int index = 0;
-      final long timestamp = System.nanoTime();
+      final IndexCounter indexCounter = new IndexCounter(totalFramesCount);
+      final long timestamp = Math.abs(System.nanoTime());
       for (StackFrameProxyImpl stackFrameProxy : frames) {
         managerThread.schedule(
-          new AppendFrameCommand(getSuspendContext(), stackFrameProxy, evaluationContext, tracker, index++, stackFrameProxy.equals(contextFrame), totalFramesCount, timestamp)
+          new AppendFrameCommand(
+            getSuspendContext(), 
+            stackFrameProxy, 
+            evaluationContext, 
+            tracker, 
+            index++, 
+            stackFrameProxy.equals(contextFrame), 
+            totalFramesCount, 
+            timestamp, 
+            indexCounter
+          )
         );
       }
     }
@@ -468,6 +504,28 @@ public class FramesPanel extends UpdatableDebuggerView {
     }
   }
 
+  private static class IndexCounter {
+    private final int[] myData;
+
+    private IndexCounter(int totalSize) {
+      myData = new int[totalSize];
+      for (int idx = 0; idx < totalSize; idx++) {
+        myData[idx] = 1;
+      }
+    }
+    
+    public void markHidden(int idx){
+      myData[idx] = 0;
+    }
+    
+    public int getActualIndex(final int index) {
+      int result = 0;
+      for (int idx = 0; idx < index; idx++) {
+        result += myData[idx];
+      }
+      return result;
+    }
+  }
   
   private volatile long myFramesLastUpdateTime = 0L;
   private class AppendFrameCommand extends SuspendContextCommandImpl {
@@ -478,10 +536,11 @@ public class FramesPanel extends UpdatableDebuggerView {
     private final boolean myIsContextFrame;
     private final int myTotalFramesCount;
     private final long myTimestamp;
+    private final IndexCounter myCounter;
 
     public AppendFrameCommand(SuspendContextImpl suspendContext, StackFrameProxyImpl frame, EvaluationContextImpl evaluationContext,
                               MethodsTracker tracker, int indexToInsert, final boolean isContextFrame, final int totalFramesCount,
-                              final long timestamp) {
+                              final long timestamp, IndexCounter counter) {
       super(suspendContext);
       myFrame = frame;
       myEvaluationContext = evaluationContext;
@@ -490,6 +549,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       myIsContextFrame = isContextFrame;
       myTotalFramesCount = totalFramesCount;
       myTimestamp = timestamp;
+      myCounter = counter;
     }
 
     public void contextAction() throws Exception {
@@ -518,10 +578,17 @@ public class FramesPanel extends UpdatableDebuggerView {
               if (myTimestamp != myFramesLastUpdateTime) {
                 return;  // the command has expired
               }
-              model.removeElementAt(myIndexToInsert); // remove placeholder
-              model.insertElementAt(descriptor, myIndexToInsert);
-              if (myIsContextFrame) {
-                myFramesList.setSelectedIndex(myIndexToInsert);
+              final int actualIndex = myCounter.getActualIndex(myIndexToInsert);
+              model.removeElementAt(actualIndex); // remove placeholder
+              boolean shouldHide = !myShowLibraryFrames && !myIsContextFrame && myIndexToInsert != 0 && (descriptor.isSynthetic() || descriptor.isInLibraryContent());
+              if (shouldHide) {
+                myCounter.markHidden(myIndexToInsert);
+              }
+              else {
+                model.insertElementAt(descriptor, actualIndex);
+                if (myIsContextFrame) {
+                  myFramesList.setSelectedIndex(actualIndex);
+                }
               }
             }
           }

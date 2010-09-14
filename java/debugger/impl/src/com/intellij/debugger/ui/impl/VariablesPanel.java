@@ -17,6 +17,8 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.openapi.Disposable;
@@ -53,6 +55,11 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
     return new FrameDebuggerTree(getProject());
   }
 
+  protected void changeEvent(DebuggerContextImpl newContext, int event) {
+    if (event != DebuggerSession.EVENT_THREADS_REFRESH) {
+      super.changeEvent(newContext, event);
+    }
+  }
 
   protected ActionPopupMenu createPopupMenu() {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(DebuggerActions.FRAME_PANEL_POPUP);
