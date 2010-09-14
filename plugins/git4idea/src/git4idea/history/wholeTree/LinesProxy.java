@@ -34,6 +34,16 @@ public class LinesProxy implements ReadonlyList<Object>, Consumer<GitCommit> {
     myCache = new SLRUMap<String, GitCommit>(ourSize, 50);
   }
 
+  public boolean shouldLoad(int idx) {
+    final VisibleLine visibleLine = myTreeComposite.get(idx);
+    if (visibleLine.isDecoration()) {
+      return false;
+    }
+    final String hash = new String(((TreeSkeletonImpl.Commit) visibleLine.getData()).getHash());
+    final GitCommit gitCommit = myCache.get(hash);
+    return gitCommit == null;
+  }
+
   @Override
   public Object get(int idx) {
     final VisibleLine visibleLine = myTreeComposite.get(idx);

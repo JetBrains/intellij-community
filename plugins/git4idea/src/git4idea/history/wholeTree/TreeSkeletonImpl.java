@@ -135,7 +135,7 @@ public class TreeSkeletonImpl implements TreeSkeleton {
   }
 
   public void addCommit(final int row, final String hash, final int wireNumber, final long time) {
-    myList.put(row, new Commit(hash.getBytes(), wireNumber, time));
+    myList.put(row, new Commit(hash, wireNumber, time));
   }
 
   @Nullable
@@ -210,14 +210,19 @@ public class TreeSkeletonImpl implements TreeSkeleton {
   }
 
   public static class Commit implements Comparable<Commit>, VisibleLine {
-    private final byte[] myHash;
+    private final String myHash;
     private int myWireNumber;
     private final long myTime;
 
-    public Commit(final byte[] hash, final int wireNumber, long time) {
+    public Commit(final String hash, final int wireNumber, long time) {
       myHash = hash;
       myWireNumber = wireNumber;
       myTime = time;
+    }
+
+    @Override
+    public String toString() {
+      return myHash;
     }
 
     @Override
@@ -230,7 +235,7 @@ public class TreeSkeletonImpl implements TreeSkeleton {
       return false;
     }
 
-    public byte[] getHash() {
+    public String getHash() {
       return myHash;
     }
 

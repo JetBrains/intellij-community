@@ -18,7 +18,11 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -27,14 +31,17 @@ import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CompoundNumber;
 import com.intellij.openapi.vcs.StaticReadonlyList;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import git4idea.history.browser.ChangesFilter;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.LowLevelAccess;
 import git4idea.history.browser.LowLevelAccessImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -42,10 +49,12 @@ import java.util.*;
  * @author irengrig
  */
 public class LoaderImpl implements Loader {
-  private static final long ourTestTimeThreshold = 500;
+  private static final Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.LoaderImpl");
+
+  private static final long ourTestTimeThreshold = 100;
   private final static int ourBigArraysSize = 10;
   private final static int ourTestCount = 5;
-  // todo Object +-
+  private final static int ourSlowPreloadCount = 50;
   private final TreeComposite<VisibleLine> myTreeComposite;
   private final Map<VirtualFile, LowLevelAccess> myAccesses;
   private final LinesProxy myLinesCache;
@@ -58,8 +67,11 @@ public class LoaderImpl implements Loader {
   private final Project myProject;
   private ModalityState myModalityState;
 
-  public LoaderImpl(final Project project,
-                    final Collection<VirtualFile> allGitRoots) {
+  private final BackgroundTaskQueue myQueue;
+  private final CommitIdsHolder<Pair<VirtualFile, String>> myCommitIdsHolder;
+  private List<VirtualFile> myRootsList;
+
+  public LoaderImpl(final Project project, final Collection<VirtualFile> allGitRoots) {
     myProject = project;
     myTreeComposite = new TreeComposite<VisibleLine>(ourBigArraysSize, WithoutDecorationComparator.getInstance());
     myLinesCache = new LinesProxy(myTreeComposite);
@@ -67,8 +79,13 @@ public class LoaderImpl implements Loader {
     for (VirtualFile gitRoot : allGitRoots) {
       myAccesses.put(gitRoot, new LowLevelAccessImpl(project, gitRoot));
     }
+    // todo refresh roots
+    myRootsList = new ArrayList<VirtualFile>(myAccesses.keySet());
+    Collections.sort(myRootsList, FilePathComparator.getInstance());
     myLock = new Object();
     myLoadId = 0;
+    myQueue = new BackgroundTaskQueue(project, "Git log");
+    myCommitIdsHolder = new CommitIdsHolder();
   }
 
   public LinesProxy getLinesProxy() {
@@ -128,9 +145,9 @@ public class LoaderImpl implements Loader {
     }
     final boolean drawHierarchy = filters.isEmpty();
 
-    application.executeOnPooledThread(new Runnable() {
+    myQueue.run(new Task.Backgroundable(myProject, "Git log refresh", false, BackgroundFromStartOption.getInstance()) {
       @Override
-      public void run() {
+      public void run(@NotNull ProgressIndicator indicator) {
         try {
           final Join join = new Join(myAccesses.size(), new MyJoin(current));
           final Runnable joinCaller = new Runnable() {
@@ -142,16 +159,14 @@ public class LoaderImpl implements Loader {
 
           myTreeComposite.clearMembers();
 
-          final List<VirtualFile> list = new ArrayList<VirtualFile>(myAccesses.keySet());
-          Collections.sort(list, FilePathComparator.getInstance());
-
-          for (VirtualFile vf : list) {
+          final List<LoaderBase> endOfTheList = new LinkedList<LoaderBase>();
+          for (VirtualFile vf : myRootsList) {
             final LowLevelAccess access = myAccesses.get(vf);
             final Consumer<CommitHashPlusParents> consumer = createCommitsHolderConsumer(drawHierarchy);
             final Consumer<List<CommitHashPlusParents>> listConsumer = new RefreshingCommitsPackConsumer(current, consumer);
 
             final BufferedListConsumer<CommitHashPlusParents> bufferedListConsumer =
-              new BufferedListConsumer<CommitHashPlusParents>(15, listConsumer, 1000);
+              new BufferedListConsumer<CommitHashPlusParents>(15, listConsumer, 400);
             bufferedListConsumer.setFlushListener(joinCaller);
 
             final long start = System.currentTimeMillis();
@@ -159,16 +174,37 @@ public class LoaderImpl implements Loader {
               FullDataLoader.load(myLinesCache, access, startingPoints, filters, bufferedListConsumer.asConsumer(), ourTestCount);
             final long end = System.currentTimeMillis();
 
+            bufferedListConsumer.flushPart();
             if (allDataAlreadyLoaded) {
               bufferedListConsumer.flush();
             } else {
               final boolean loadFull = (end - start) > ourTestTimeThreshold;
-              final LoaderBase loaderBase = new LoaderBase(access, bufferedListConsumer, filters, ourTestCount, loadFull, startingPoints, myLinesCache);
-              loaderBase.execute();
+              if (loadFull) {
+                final LoaderBase loaderBase = new LoaderBase(access, bufferedListConsumer, filters,
+                  ourTestCount, loadFull, startingPoints, myLinesCache, ourSlowPreloadCount);
+                loaderBase.execute();
+                endOfTheList.add(new LoaderBase(access, bufferedListConsumer, filters, ourSlowPreloadCount, false, startingPoints, myLinesCache, -1));
+              } else {
+                final LoaderBase loaderBase = new LoaderBase(access, bufferedListConsumer, filters, ourTestCount, loadFull, startingPoints, myLinesCache, -1);
+                loaderBase.execute();
+              }
             }
           }
+          myQueue.run(new Task.Backgroundable(myProject, "Git log refresh", false, BackgroundFromStartOption.getInstance()) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (LoaderBase loaderBase : endOfTheList) {
+          try {
+            loaderBase.execute();
+          }
+          catch (VcsException e) {
+            myUIRefresh.acceptException(e);
+          }
+        }
+      }});
         } catch (VcsException e) {
           myUIRefresh.acceptException(e);
+        } catch (MyStopListenToOutputException e) {
         } finally {
           //myUIRefresh.skeletonLoadComplete();
         }
@@ -187,7 +223,7 @@ public class LoaderImpl implements Loader {
       consumer = new Consumer<CommitHashPlusParents>() {
         @Override
         public void consume(CommitHashPlusParents commitHashPlusParents) {
-          readonlyList.consume(new TreeSkeletonImpl.Commit(commitHashPlusParents.getHash().getBytes(), 0, commitHashPlusParents.getTime()));
+          readonlyList.consume(new TreeSkeletonImpl.Commit(commitHashPlusParents.getHash(), 0, commitHashPlusParents.getTime()));
         }
       };
       myTreeComposite.addMember(readonlyList);
@@ -211,6 +247,8 @@ public class LoaderImpl implements Loader {
       myRefreshRunnable = new Runnable() {
         @Override
         public void run() {
+          if (myTreeComposite.getAwaitedSize() == myTreeComposite.getSize()) return;
+          LOG.info("Items refresh: (was=" + myTreeComposite.getSize() + " will be=" + myTreeComposite.getAwaitedSize());
           myTreeComposite.repack();
           if (! mySomeDataShown) {
             // todo remove
@@ -250,13 +288,15 @@ public class LoaderImpl implements Loader {
     private final LowLevelAccess myAccess;
     private final Collection<String> myStartingPoints;
     private final Consumer<GitCommit> myLinesCache;
+    private final int myMaxCount;
     private final Collection<ChangesFilter.Filter> myFilters;
     private final int myIgnoreFirst;
 
     public LoaderBase(LowLevelAccess access,
                        BufferedListConsumer<CommitHashPlusParents> consumer,
                        Collection<ChangesFilter.Filter> filters,
-                       int ignoreFirst, boolean loadFullData, Collection<String> startingPoints, final Consumer<GitCommit> linesCache) {
+                       int ignoreFirst, boolean loadFullData, Collection<String> startingPoints, final Consumer<GitCommit> linesCache,
+                       final int maxCount) {
       myAccess = access;
       myConsumer = consumer;
       myFilters = filters;
@@ -264,14 +304,18 @@ public class LoaderImpl implements Loader {
       myLoadFullData = loadFullData;
       myStartingPoints = startingPoints;
       myLinesCache = linesCache;
+      myMaxCount = maxCount;
     }
 
     public void execute() throws VcsException {
-      final MyConsumer consumer = new MyConsumer(myConsumer, myIgnoreFirst);
+      final MyConsumer consumer = new MyConsumer(myConsumer, 0);
 
       if (myLoadFullData) {
-        FullDataLoader.load(myLinesCache, myAccess, myStartingPoints, myFilters, myConsumer.asConsumer(), -1);
+        // todo
+        LOG.info("FULL " + myMaxCount);
+        FullDataLoader.load(myLinesCache, myAccess, myStartingPoints, myFilters, myConsumer.asConsumer(), myMaxCount);
       } else {
+        LOG.info("SKELETON " + myMaxCount);
         myAccess.loadHashesWithParents(myStartingPoints, myFilters, consumer);
       }
       myConsumer.flush();
@@ -374,5 +418,62 @@ public class LoaderImpl implements Loader {
       }
       return Comparing.compare(obj1.toString(), obj2.toString());
     }
+  }
+
+  private final static int ourLoadSize = 30;
+
+  public void loadCommitDetails(final int startIdx, final int endIdx) {
+    final Set<Pair<VirtualFile, String>> newIds = new HashSet<Pair<VirtualFile, String>>();
+    for (int i = startIdx; i <= endIdx; i++) {
+      if (myLinesCache.shouldLoad(i)) {
+        final TreeSkeletonImpl.Commit commit = (TreeSkeletonImpl.Commit) myTreeComposite.get(i).getData();
+        final CompoundNumber memberData = myTreeComposite.getMemberData(i);
+        newIds.add(new Pair<VirtualFile, String>(myRootsList.get(memberData.getMemberNumber()), String.valueOf(commit.getHash())));
+      }
+    }
+
+    myCommitIdsHolder.add(newIds);
+    scheduleDetailsLoad();
+  }
+
+  private void scheduleDetailsLoad() {
+    final Collection<Pair<VirtualFile, String>> toLoad = myCommitIdsHolder.get(ourLoadSize);
+    if (toLoad.isEmpty()) return;
+    myQueue.run(new Task.Backgroundable(myProject, "Load git commits details", false, BackgroundFromStartOption.getInstance()) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final MultiMap<VirtualFile, String> map = new MultiMap<VirtualFile, String>();
+        for (Pair<VirtualFile, String> pair : toLoad) {
+          map.putValue(pair.getFirst(), pair.getSecond());
+        }
+        for (VirtualFile virtualFile : map.keySet()) {
+          try {
+            final Collection<String> values = map.get(virtualFile);
+            final List<GitCommit> commitDetails = myAccesses.get(virtualFile).getCommitDetails(values);
+            for (GitCommit commitDetail : commitDetails) {
+              myLinesCache.consume(commitDetail);
+            }
+            // todo another UI event
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                myUIRefresh.setSomeDataReadyState();
+              }
+            }, myModalityState);
+          }
+          catch (final VcsException e) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                myUIRefresh.acceptException(e);
+              }
+            }, myModalityState);
+          }
+        }
+        if (myCommitIdsHolder.haveData()) {
+          scheduleDetailsLoad();
+        }
+      }
+    });
   }
 }

@@ -92,6 +92,12 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, parameters.toArray(new String[parameters.size()]));
   }
 
+  @Override
+  public List<GitCommit> getCommitDetails(final Collection<String> commitIds) throws VcsException {
+    // todo branches
+    return GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(myRoot), Collections.<String>emptySet(), commitIds);
+  }
+
   public void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                              final Collection<ChangesFilter.Filter> filtersIn, final Consumer<GitCommit> consumer,
                              int maxCnt, List<String> branches) throws VcsException {

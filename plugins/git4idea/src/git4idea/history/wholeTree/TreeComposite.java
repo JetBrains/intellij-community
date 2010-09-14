@@ -83,6 +83,16 @@ public class TreeComposite<T> implements ReadonlyList<T> {
     }
   }
 
+  // todo debug
+  public void visualDump() {
+    System.out.println("======= dump =======");
+    final int size = myCombinedList.getSize();
+    for (int i = 0; i < size; i++) {
+      final CompoundNumber elem = myCombinedList.get(i);
+      System.out.println("i=" + i + " member=" + elem.getMemberNumber() + " hash=" + myMembers.get(elem.getMemberNumber()).get(elem.getIdx()).toString());
+    }
+  }
+
   @Override
   public T get(int idx) {
     synchronized (myLock) {
@@ -98,5 +108,13 @@ public class TreeComposite<T> implements ReadonlyList<T> {
   @Override
   public int getSize() {
     return myCombinedList.getSize();
+  }
+
+  public int getAwaitedSize() {
+    int result = 0;
+    for (ReadonlyList<T> member : myMembers) {
+      result += member.getSize();
+    }
+    return result;
   }
 }
