@@ -180,6 +180,10 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
       }
 
       public void doOKAction() {
+        if (comboBox.isPopupVisible()) {
+          comboBox.selectPopupValue();
+        }
+
         TextWithImports text = comboBox.getText();
         WatchDebuggerTree.setWatchNodeText(node, text);
         comboBox.addRecent(text);
@@ -192,6 +196,8 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
       }
 
       public void cancelEditing() {
+        comboBox.setPopupVisible(false);
+
         try {
           super.cancelEditing();
         }
