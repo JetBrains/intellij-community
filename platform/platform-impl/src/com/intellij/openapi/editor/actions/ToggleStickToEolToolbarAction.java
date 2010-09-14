@@ -33,7 +33,7 @@ public class ToggleStickToEolToolbarAction extends ToggleAction {
     final String message = ActionsBundle.message("action.EditorConsoleToggleStickToEndOfOutput.text");
     getTemplatePresentation().setDescription(message);
     getTemplatePresentation().setText(message);
-    getTemplatePresentation().setIcon(IconLoader.getIcon("/general/autoscrollToSource.png"));
+    getTemplatePresentation().setIcon(IconLoader.getIcon("/runConfigurations/scroll_down.png"));
   }
 
   @Override
