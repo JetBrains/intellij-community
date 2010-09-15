@@ -24,6 +24,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -42,10 +43,12 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
         protected String getElementText(final MavenProject project) {
           final StringBuilder stringBuilder = new StringBuilder();
           stringBuilder.append(project.getMavenId());
-          final String relPath =
-            VfsUtil.getRelativePath(project.getDirectoryFile(), ((MavenProjectBuilder)getBuilder()).getRootDirectory(), File.separatorChar);
-          if (relPath.length() != 0) {
-            stringBuilder.append(" [").append(relPath).append("]");
+          VirtualFile root = ((MavenProjectBuilder)getBuilder()).getRootDirectory();
+          if (root != null) {
+            final String relPath = VfsUtil.getRelativePath(project.getDirectoryFile(), root, File.separatorChar);
+            if (relPath.length() != 0) {
+              stringBuilder.append(" [").append(relPath).append("]");
+            }
           }
           return stringBuilder.toString();
         }
