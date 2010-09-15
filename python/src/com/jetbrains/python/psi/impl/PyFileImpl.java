@@ -41,7 +41,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private ThreadLocal<List<String>> myFindExportedNameStack = new ArrayListThreadLocal();
   private ThreadLocal<List<String>> myGetElementNamedStack = new ArrayListThreadLocal();
 
-  private final CachedValue<List<PyImportElement>> myImportTargetsTransitive; 
+  private final CachedValue<List<PyImportElement>> myImportTargetsTransitive;
+  private volatile Boolean myAbsoluteImportEnabled;
 
   public PyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PythonLanguage.getInstance());
@@ -388,6 +389,36 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return null;
   }
 
+  @Override
+  public boolean isAbsoluteImportEnabled() {
+    final StubElement stub = getStub();
+    if (stub instanceof PyFileStub) {
+      return ((PyFileStub) stub).isAbsoluteImportEnabled();
+    }
+    Boolean enabled = myAbsoluteImportEnabled;
+    if (enabled == null) {
+      enabled = calculateAbsoluteImportEnabled();
+      myAbsoluteImportEnabled = enabled;
+    }
+    return enabled;
+  }
+
+  public boolean calculateAbsoluteImportEnabled() {
+    final List<PyFromImportStatement> fromImports = getFromImports();
+    for (PyFromImportStatement fromImport : fromImports) {
+      if (fromImport.isFromFuture()) {
+        final PyImportElement[] pyImportElements = fromImport.getImportElements();
+        for (PyImportElement element : pyImportElements) {
+          final PyQualifiedName qName = element.getImportedQName();
+          if (qName != null && qName.matches("absolute_import")) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   public PyType getType(@NotNull TypeEvalContext context) {
     if (myType == null) myType = new PyModuleType(this);
     return myType;
@@ -405,6 +436,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (myScopeRef != null){
       myScopeRef.clear();
     }
+    myAbsoluteImportEnabled = null;
   }
 
   private SoftReference<ControlFlow> myControlFlowRef;
@@ -434,21 +466,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   private static<T> T getRefValue(final SoftReference<T> reference){
     return reference != null ? reference.get() : null;
-  }
-
-  @Override
-  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
-    return super.add(PyPsiUtils.removeIndentation(element));
-  }
-
-  @Override
-  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    return super.addBefore(PyPsiUtils.removeIndentation(element), anchor);
-  }
-
-  @Override
-  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    return super.addAfter(PyPsiUtils.removeIndentation(element), anchor);
   }
 
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {

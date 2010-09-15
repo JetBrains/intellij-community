@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public abstract class PythonSdkFlavor {
-  public List<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths() {
     return Collections.emptyList();
   }
 

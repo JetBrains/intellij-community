@@ -1,6 +1,7 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonDocStringFinder;
@@ -114,7 +115,9 @@ public class AddImportHelper {
   public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
     final String path = ResolveImportUtil.findShortestImportableName(element, target.getContainingFile().getVirtualFile());
-    if (useQualified) {
+    if (target instanceof PsiFileSystemItem) {
+      addImportStatement(file, path, null);
+    } else if (useQualified) {
       addImportStatement(file, path, null);
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
       element.replace(elementGenerator.createExpressionFromText(path + "." + target.getName()));

@@ -1,8 +1,11 @@
-import traceback, types, sys, os
+import traceback, sys
 from unittest import TestResult
 import datetime
 
 from pycharm.tcmessages import TeamcityServiceMessages
+
+def strclass(cls):
+    return "%s.%s" % (cls.__module__, cls.__name__)
 
 class TeamcityTestResult(TestResult):
     def __init__(self, stream=sys.stdout):
@@ -10,13 +13,14 @@ class TeamcityTestResult(TestResult):
 
         self.output = stream
         self.messages = TeamcityServiceMessages(self.output)
+        self.current_suite = None
     
     def formatErr(self, err):
         exctype, value, tb = err
         return ''.join(traceback.format_exception(exctype, value, tb))
     
     def getTestName(self, test):
-        return str(test)
+        return test._testMethodName
 
     def getTestId(self, test):
         return test.id
@@ -44,6 +48,12 @@ class TeamcityTestResult(TestResult):
         self.messages.testIgnored(self.getTestName(test), message=reason)
 
     def startTest(self, test):
+        suite = test.__class__
+        if suite != self.current_suite:
+            if self.current_suite:
+                self.messages.testSuiteFinished(strclass(self.current_suite))
+            self.current_suite = suite
+            self.messages.testSuiteStarted(strclass(self.current_suite), location="python_uttestid://" + strclass(self.current_suite))
         setattr(test, "startTime", datetime.datetime.now())
         self.messages.testStarted(self.getTestName(test), location="python_uttestid://" + str(test.id()))
         
@@ -52,6 +62,11 @@ class TeamcityTestResult(TestResult):
         d = datetime.datetime.now() - start
         duration=d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
         self.messages.testFinished(self.getTestName(test), duration=int(duration))
+
+    def endLastSuite(self):
+        if self.current_suite:
+            self.messages.testSuiteFinished(strclass(self.current_suite))
+            self.current_suite = None
 
 class TeamcityTestRunner:
     def __init__(self, stream=sys.stdout):
@@ -63,4 +78,5 @@ class TeamcityTestRunner:
     def run(self, test):
         result = self._makeResult()
         test(result)
+        result.endLastSuite()
         return result

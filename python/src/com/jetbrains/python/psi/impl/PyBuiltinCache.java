@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.psi.PyClass;
@@ -70,7 +71,7 @@ public class PyBuiltinCache {
   }
 
   @Nullable
-  public static Sdk findSdkForFile(PsiFile psifile) {
+  public static Sdk findSdkForFile(PsiFileSystemItem psifile) {
     if (psifile == null) {
       return null;
     }

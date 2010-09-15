@@ -42,6 +42,14 @@ public class PyOverrideTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testClassmethodNewStyle() {  // PY-1811
+    doTest();
+  }
+
+  public void testIndent() {  // PY-1796
+    doTest();
+  }
+
   public void testPy3k() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON31);
     try {

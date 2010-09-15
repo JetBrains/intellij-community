@@ -9,16 +9,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.NameSuggestorUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 
@@ -63,18 +61,19 @@ public class PyExtractSuperclassHelper {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final Set<PyClass> rememberedSet = PyClassRefactoringUtil.rememberClassReferences(methods, extractedClasses);
             final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
-            final String text = PyClassRefactoringUtil.prepareClassText(clazz, elements, true, true, superBaseName) + "\n";
-            final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
+            final String text = "class " + superBaseName + ":\n  pass" + "\n";
+            PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
+            newClass = placeNewClass(project, newClass, clazz, targetFile);
             newClassRef.set(newClass);
+            PyClassRefactoringUtil.moveMethods(methods, newClass);
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, newClass);
             PyClassRefactoringUtil.addSuperclasses(project, clazz, null, Collections.singleton(superBaseName));
+            PyClassRefactoringUtil.insertImport(newClass, extractedClasses);
             if (elements.length > 0) {
               PyPsiUtils.removeElements(elements);
             }
             PyClassRefactoringUtil.insertPassIfNeeded(clazz);
-            placeNewClass(project, newClass, clazz, targetFile, rememberedSet);
           }
         });
       }
@@ -82,12 +81,11 @@ public class PyExtractSuperclassHelper {
     return newClassRef.get();
   }
 
-  private static void placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile, Set<PyClass> rememberedSet) {
+  private static PyClass placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtil.pathToUrl(targetFile));
     // file is the same as the source
     if (file == clazz.getContainingFile().getVirtualFile()) {
-      PyPsiUtils.addBeforeInParent(clazz, newClass, newClass.getNextSibling());
-      return;
+      return (PyClass)clazz.getParent().addBefore(newClass, clazz);
     }
 
     PsiFile psiFile = null;
@@ -104,9 +102,12 @@ public class PyExtractSuperclassHelper {
         filename = constructFilename(newClass);
       }
       try {
+        final boolean shouldCreateInit = VirtualFileManager.getInstance().findFileByUrl(VfsUtil.pathToUrl(path)) == null;
         final VirtualFile dir = VfsUtil.createDirectoryIfMissing(path);
         psiDir = dir != null ? PsiManager.getInstance(project).findDirectory(dir) : null;
         psiFile = psiDir != null ? psiDir.createFile(filename) : null;
+        //noinspection ConstantConditions
+        createInitIfNeeded(psiDir, shouldCreateInit, NameSuggestorUtil.toUnderscoreCase(newClass.getName()));
       } catch (IOException e) {
         LOG.error(e);
       }
@@ -125,12 +126,21 @@ public class PyExtractSuperclassHelper {
 
     LOG.assertTrue(psiFile != null);
     newClass = (PyClass)psiFile.add(newClass);
-    PyClassRefactoringUtil.insertImport(clazz, newClass);
-    PyClassRefactoringUtil.restoreImports(newClass, rememberedSet);
+    PyClassRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
+    return newClass;
+  }
+
+  private static void createInitIfNeeded(PsiDirectory psiDir, boolean shouldCreateInit, String filename) {
+    if (psiDir != null && shouldCreateInit) {
+      final PsiFile psiFile = psiDir.createFile(PyNames.INIT_DOT_PY);
+      final PyElementGenerator gen = PyElementGenerator.getInstance(psiDir.getProject());
+      final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + filename + "\"]");
+      psiFile.add(statement);
+    }
   }
 
   private static String constructFilename(PyClass newClass) {
     //noinspection ConstantConditions
-    return newClass.getName().toLowerCase() + "." + PythonFileType.INSTANCE.getDefaultExtension();
+    return NameSuggestorUtil.toUnderscoreCase(newClass.getName()) + "." + PythonFileType.INSTANCE.getDefaultExtension();
   }
 }

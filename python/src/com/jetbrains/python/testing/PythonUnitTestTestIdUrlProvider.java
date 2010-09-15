@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,57 +35,55 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
     }
     final int listSize = list.size();
 
-    // parse path as [ns.]*fileName.className.methodName
-    if (listSize < 3) {
-      return Collections.emptyList();
+    // parse path as [ns.]*fileName.className[.methodName]
+
+    if (listSize == 2) {
+      return findLocations(project, list.get(0), list.get(1), null);
     }
+    if (listSize > 2) {
+      final String className = list.get(listSize - 2);
+      final String methodName = list.get(listSize - 1);
 
-    final String className = list.get(listSize - 2);
-    final String methodName = list.get(listSize - 1);
+      String fileName = list.get(listSize - 3);
+      final List<Location> locations = findLocations(project, fileName, className, methodName);
+      if (locations.size() > 0) {
+        return locations;
+      }
+      return findLocations(project, list.get(listSize-2), list.get(listSize-1), null);
+    }
+    return Collections.emptyList();
+  }
 
-    String fileName = list.get(listSize - 3);
+
+  private static List<Location> findLocations(Project project,
+                                              String fileName,
+                                              String className,
+                                              @Nullable String methodName) {
     if (fileName.indexOf("%") >= 0) {
       fileName = fileName.substring(0, fileName.lastIndexOf("%"));
     }
 
     final List<Location> locations = new ArrayList<Location>();
-    for (PyClass cls : getClassesByName(project, className)) {
+    for (PyClass cls : PyClassNameIndex.find(className, project, false)) {
       ProgressManager.checkCanceled();
-
-      final PyFunction method = locateMethodInHierarchy(cls, methodName);
-      if (method == null) {
-        continue;
-      }
 
       final String clsFileName = FileUtil.getNameWithoutExtension(cls.getContainingFile().getName());
       if (!clsFileName.equalsIgnoreCase(fileName)) {
         continue;
       }
+      if (methodName == null) {
+        locations.add(new PsiLocation<PyClass>(project, cls));
+      }
+      else {
+        final PyFunction method = cls.findMethodByName(methodName, true);
+        if (method == null) {
+          continue;
+        }
 
-      locations.add(new PsiLocation<PyFunction>(project, method));
-    }
-
-    return locations;
-  }
-
-  @Nullable
-  private static PyFunction locateMethodInHierarchy(final PyClass cls, final String methodName) {
-    PyFunction func = cls.findMethodByName(methodName, false);
-    if (func != null) {
-      return func;
-    }
-
-    for (PyClass ancestors : cls.iterateAncestors()) {
-      func = ancestors.findMethodByName(methodName, false);
-      if (func != null) {
-        return func;
+        locations.add(new PsiLocation<PyFunction>(project, method));
       }
     }
 
-    return null;
-  }
-
-  private static Collection<PyClass> getClassesByName(final Project project, final String name) {
-    return PyClassNameIndex.find(name, project, false); 
+    return locations;
   }
 }

@@ -58,4 +58,9 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    */
   @Nullable
   List<String> getDunderAll();
+
+  /**
+   * Return true if the file contains a 'from __future__ import absolute_import' statement.
+   */
+  boolean isAbsoluteImportEnabled();
 }

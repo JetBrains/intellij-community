@@ -14,6 +14,7 @@ public interface PyCallExpression extends PyExpression {
   /**
    * @return the expression representing the object being called (reference to a function).
    */
+  @Nullable
   PyExpression getCallee();
 
   /**

@@ -5,9 +5,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -45,18 +45,7 @@ public class ResolveImportUtil {
         if (pyFile.getLanguageLevel().isPy3K()) {
           return true;
         }
-        final List<PyFromImportStatement> fromImports = pyFile.getFromImports();
-        for (PyFromImportStatement fromImport : fromImports) {
-          if (fromImport.isFromFuture()) {
-            final PyImportElement[] pyImportElements = fromImport.getImportElements();
-            for (PyImportElement element : pyImportElements) {
-              final PyQualifiedName qName = element.getImportedQName();
-              if (qName != null && qName.matches("absolute_import")) {
-                return true;
-              }
-            }
-          }
-        }
+        return pyFile.isAbsoluteImportEnabled();
       }
     }
     // if the relevant import is below the foothold, it is either legal or we've detected the offending statement already
@@ -131,14 +120,14 @@ public class ResolveImportUtil {
       final int relative_level = from_import_statement.getRelativeLevel();
 
       if (relative_level > 0 && moduleQName == null) { // "from ... import foo"
-        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), qName.getComponents().get(0), file, false);
+        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), qName.getComponents().get(0), file, null, false);
         return element != null ? Collections.singletonList(element) : Collections.<PsiElement>emptyList();
       }
 
       if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
         final List<PsiElement> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
         for (PsiElement candidate : candidates) {
-          PsiElement result = resolveChild(candidate, qName.getComponents().get(0), file, false);
+          PsiElement result = resolveChild(candidate, qName.getComponents().get(0), file, null, false);
           if (result != null) return Collections.singletonList(result);
         }
       }
@@ -256,7 +245,7 @@ public class ResolveImportUtil {
       if (name == null) {
         return null;
       }
-      seeker = resolveChild(seeker, name, sourceFile, true);
+      seeker = resolveChild(seeker, name, sourceFile, null, true);
     }
     return seeker;
   }
@@ -286,6 +275,14 @@ public class ResolveImportUtil {
     final Module module = ModuleUtil.findModuleForPsiElement(foothold);
     if (module != null) {
       cache = PythonPathCache.getInstance(module);
+    }
+    else {
+      final Sdk sdk = PyBuiltinCache.findSdkForFile(footholdFile);
+      if (sdk != null) {
+        cache = PythonPathCache.getInstance(foothold.getProject(), sdk);
+      }
+    }
+    if (cache != null) {
       final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
       if (cachedResults != null) {
         return cachedResults;
@@ -339,11 +336,11 @@ public class ResolveImportUtil {
           if (name == null) {
             return null;
           }
-          last_resolved = resolveChild(last_resolved, name, containing_file, true);
+          last_resolved = resolveChild(last_resolved, name, containing_file, null, true);
           if (last_resolved == null) return null; // anything in the chain unresolved means that the whole chain fails
         }
         if (referencedName != null) {
-          return resolveChild(last_resolved, referencedName, containing_file, false);
+          return resolveChild(last_resolved, referencedName, containing_file, null, false);
         }
         else {
           return last_resolved;
@@ -352,7 +349,7 @@ public class ResolveImportUtil {
 
       // non-qualified name
       if (referencedName != null) {
-        return resolveChild(importRef.getReference().resolve(), referencedName, containing_file, false);
+        return resolveChild(importRef.getReference().resolve(), referencedName, containing_file, null, false);
         // the importRef.resolve() does not recurse infinitely because we're asked to resolve referencedName, not importRef itself
       }
       // unqualified import can be found:
@@ -398,10 +395,12 @@ public class ResolveImportUtil {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     // look in module sources
     boolean sourceEntriesMissing = true;
+    Set<VirtualFile> contentRoots = new java.util.HashSet<VirtualFile>();
     for (ContentEntry entry : rootManager.getContentEntries()) {
       VirtualFile rootFile = entry.getFile();
 
       if (rootFile != null && !visitor.visitRoot(rootFile)) return;
+      contentRoots.add(rootFile);
       for (VirtualFile folder : entry.getSourceFolderFiles()) {
         sourceEntriesMissing = false;
         if (!visitor.visitRoot(folder)) return;
@@ -410,14 +409,14 @@ public class ResolveImportUtil {
     if (sourceEntriesMissing) {
       // fallback for a case without any source entries: use project root
       VirtualFile projectRoot = module.getProject().getBaseDir();
-      if (projectRoot != null && !visitor.visitRoot(projectRoot)) return;
+      if (projectRoot != null && !contentRoots.contains(projectRoot) && !visitor.visitRoot(projectRoot)) return;
     }
     // else look in SDK roots
     rootManager.orderEntries().process(new SdkRootVisitingPolicy(visitor), null);
   }
 
   private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
-    Set<VirtualFile> allRoots = new java.util.HashSet<VirtualFile>();
+    Set<VirtualFile> allRoots = new LinkedHashSet<VirtualFile>();
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
     for (VirtualFile root : allRoots) {
@@ -457,7 +456,7 @@ public class ResolveImportUtil {
     if (pfile != null) {
       PsiDirectory pdir = pfile.getContainingDirectory();
       if (pdir != null) {
-        PsiElement child_elt = resolveChild(pdir, refName, pfile, true);
+        PsiElement child_elt = resolveChild(pdir, refName, pfile, null, true);
         if (child_elt != null) return child_elt;
       }
     }
@@ -507,7 +506,7 @@ public class ResolveImportUtil {
         module = null;
         break;
       }
-      module = resolveChild(module, component, foothold_file, false); // only files, we want a module
+      module = resolveChild(module, component, foothold_file, root, false); // only files, we want a module
     }
     return module;
   }
@@ -520,6 +519,7 @@ public class ResolveImportUtil {
    * @param parent         element under which to look for referenced name; if null, null is returned.
    * @param referencedName which name to look for.
    * @param containingFile where we're in.
+   * @param root           the root from which we started descending the directory tree (if any)
    * @param fileOnly       if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @return the element the referencedName resolves to, or null.
    * @todo: Honor module's __all__ value.
@@ -527,7 +527,7 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
-                                        final PsiFile containingFile, boolean fileOnly) {
+                                        final PsiFile containingFile, @Nullable VirtualFile root, boolean fileOnly) {
     PsiDirectory dir = null;
     PsiElement ret = null;
     if (parent instanceof PyFile) {
@@ -535,7 +535,7 @@ public class ResolveImportUtil {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, fileOnly);
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly);
         if (result != null) {
           return result;
         }
@@ -549,13 +549,13 @@ public class ResolveImportUtil {
     else if (parent instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer container = (PsiDirectoryContainer)parent;
       for (PsiDirectory childDir : container.getDirectories()) {
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, fileOnly);
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, root, fileOnly);
         //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
         if (result != null) return result;
       }
     }
     if (dir != null) {
-      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, fileOnly);
+      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly);
       //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
       return result;
     }
@@ -564,26 +564,17 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiElement resolveInDirectory(final String referencedName, final PsiFile containingFile,
-                                               final PsiDirectory dir, boolean isFileOnly) {
+                                               final PsiDirectory dir, @Nullable VirtualFile root, boolean isFileOnly) {
     if (referencedName == null) return null;
-    final PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
-    // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
-    if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
-      return file;
-    }
+    final PsiElement module = findModuleInDir(dir, referencedName);
+    if (module != null) return module;
 
-    String binaryExt = SystemInfo.isWindows ? ".pyd" : ".so";
-    final PsiFile binaryModule = dir.findFile(referencedName + binaryExt);
-    if (binaryModule != null && FileUtil.getNameWithoutExtension(binaryModule.getName()).equals(referencedName)) {
-      // find mirror of binary module in skeletons
-      String qName = findShortestImportableName(binaryModule, binaryModule.getVirtualFile());
-      if (qName != null) {
-        VirtualFile root = findSkeletonsRoot(containingFile);
-        if (root != null) {
-          PsiElement skeleton = resolveInRoot(root, PyQualifiedName.fromDottedString(qName), dir.getManager(), containingFile);
-          if (skeleton instanceof PyFile) {
-            return skeleton;
-          }
+    if (isInSdk(dir)) {
+      PsiDirectory skeletonDir = findSkeletonDir(dir, root);
+      if (skeletonDir != null) {
+        final PsiFile skeletonFile = findModuleInDir(skeletonDir, referencedName);
+        if (skeletonFile != null) {
+          return skeletonFile;
         }
       }
     }
@@ -604,8 +595,51 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static VirtualFile findSkeletonsRoot(PsiFile containingFile) {
-    Sdk sdk = PyBuiltinCache.findSdkForFile(containingFile);
+  private static PsiFile findModuleInDir(PsiDirectory dir, String referencedName) {
+    final PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
+    // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
+    if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
+      return file;
+    }
+    return null;
+  }
+
+  private static boolean isInSdk(PsiDirectory dir) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
+    final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(dir.getVirtualFile());
+    for (OrderEntry entry : entries) {
+      if (entry instanceof JdkOrderEntry) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static PsiDirectory findSkeletonDir(PsiDirectory dir, @Nullable VirtualFile root) {
+    String relativeName;
+    if (root != null) {
+      relativeName = VfsUtil.getRelativePath(dir.getVirtualFile(), root, '/');
+    }
+    else {
+      relativeName = findShortestImportableName(dir, dir.getVirtualFile());
+      if (relativeName != null) {
+        relativeName = relativeName.replace('.', '/');
+      }
+    }
+    VirtualFile skeletonsRoot = findSkeletonsRoot(dir);
+    if (skeletonsRoot != null && relativeName != null) {
+      VirtualFile skeletonsVFile = relativeName.length() == 0 ? skeletonsRoot : skeletonsRoot.findFileByRelativePath(relativeName.replace(".", "/"));
+      if (skeletonsVFile != null) {
+        return dir.getManager().findDirectory(skeletonsVFile);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static VirtualFile findSkeletonsRoot(PsiFileSystemItem fsItem) {
+    Sdk sdk = PyBuiltinCache.findSdkForFile(fsItem);
     if (sdk != null) {
       return PythonSdkType.findSkeletonsDir(sdk);
     }
@@ -624,18 +658,27 @@ public class ResolveImportUtil {
     private PathChoosingVisitor(VirtualFile file) {
       myFname = file.getPath();
       // cut off the ext
-      int pos = myFname.lastIndexOf('.');
-      if (pos > 0) myFname = myFname.substring(0, pos);
-      // cut off the final __init__ if it's there; we want imports directly from a module
-      pos = myFname.lastIndexOf(PyNames.INIT);
-      if (pos > 0) myFname = myFname.substring(0, pos - 1); // pos-1 also cuts the '/' that came before "__init__"
+      if (!file.isDirectory()) {
+        int pos = myFname.lastIndexOf('.');
+        if (pos > 0) myFname = myFname.substring(0, pos);
+        // cut off the final __init__ if it's there; we want imports directly from a module
+        pos = myFname.lastIndexOf(PyNames.INIT);
+        if (pos > 0) myFname = myFname.substring(0, pos - 1); // pos-1 also cuts the '/' that came before "__init__"
+      }
+      else {
+        myFname += "/";
+      }
     }
 
     public boolean visitRoot(VirtualFile root) {
       // does it ever fit?
       String root_name = root.getPath() + "/";
       if (myFname.startsWith(root_name)) {
-        String bet = myFname.substring(root_name.length()).replace('/', '.'); // "/usr/share/python/foo/bar" -> "foo.bar"
+        String suffix = myFname.substring(root_name.length());
+        if (suffix.endsWith("/")) {
+          suffix = suffix.substring(0, suffix.length()-1);
+        }
+        String bet = suffix.replace('/', '.'); // "/usr/share/python/foo/bar" -> "foo.bar"
         // count the dots
         int dots = 0;
         for (int i = 0; i < bet.length(); i += 1) if (bet.charAt(i) == '.') dots += 1;
@@ -645,7 +688,7 @@ public class ResolveImportUtil {
           myResult = bet;
         }
       }
-      return true; // visit all roots
+      return myResult == null || myResult.length() > 0;  // we won't find anything shorter than an empty string
     }
 
     public String getResult() {

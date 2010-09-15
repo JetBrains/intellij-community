@@ -18,7 +18,7 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   public static IronPythonSdkFlavor INSTANCE = new IronPythonSdkFlavor();
 
   @Override
-  public List<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths() {
     List<String> result = new ArrayList<String>();
     String root = System.getenv("ProgramFiles(x86)");
     if (root == null) {

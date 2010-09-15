@@ -41,7 +41,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
 
   @Override
   public int getStubVersion() {
-    return 28;
+    return 29;
   }
 
   @Override
@@ -82,12 +82,14 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public void serialize(PyFileStub stub, StubOutputStream dataStream) throws IOException {
     writeNullableList(dataStream, stub.getDunderAll());
+    dataStream.writeBoolean(stub.isAbsoluteImportEnabled());
   }
 
   @Override
   public PyFileStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     List<String> all = readNullableList(dataStream);
-    return new PyFileStubImpl(all);
+    boolean isAbsoluteImportEnabled = dataStream.readBoolean();
+    return new PyFileStubImpl(all, isAbsoluteImportEnabled);
   }
 
   public static void writeNullableList(StubOutputStream dataStream, final List<String> names) throws IOException {
