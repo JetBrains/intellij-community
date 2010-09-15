@@ -131,7 +131,7 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only",
-                    "--pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b",
+                    "--pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b%x00%x02%x01",
                     "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
@@ -180,6 +180,9 @@ public class GitHistoryUtils {
         if (result != null) {
           resultAdapter.consume(result);
         }
+        for (VcsException e : accumulator.exceptions) {
+          exceptionConsumer.consume(e);
+        }
         semaphore.up();
       }
     });
@@ -193,16 +196,17 @@ public class GitHistoryUtils {
     private final static String ourCommentStartMark = "\u0000\u0002\u0000";
     private final static String ourCommentEndMark = "\u0000\u0002\u0001";
     private final static String ourLineEndMark = "\u0000\u0001\u0000";
+    private static final String TOKEN_DELIMITER = "\u0000";
+    private static final String LINE_DELIMITER = "\u0002";
 
-    private final StringBuilder myBuffer;
+    private final StringBuilder myBuffer = new StringBuilder();
     private final int myMax;
+    private final Collection<VcsException> exceptions = new ArrayList<VcsException>(1);
 
-    private boolean myNotStarted;
+    private boolean myNotStarted = true;
 
     private MyTokenAccumulator(final int max) {
       myMax = max;
-      myBuffer = new StringBuilder();
-      myNotStarted = true;
     }
 
     @Nullable
@@ -211,13 +215,13 @@ public class GitHistoryUtils {
       if (lineEnd && (!myNotStarted)) {
         final String line = myBuffer.toString();
         myBuffer.setLength(0);
-        myBuffer.append(s.substring(3));
+        myBuffer.append(s.substring(ourLineEndMark.length()));
 
         return processResult(line);
       }
       else {
-        myBuffer.append(lineEnd ? s.substring(3) : s);
-        myBuffer.append('\u0002');
+        myBuffer.append(lineEnd ? s.substring(ourLineEndMark.length()) : s);
+        myBuffer.append(LINE_DELIMITER);
       }
       myNotStarted = false;
 
@@ -228,12 +232,12 @@ public class GitHistoryUtils {
       return processResult(myBuffer.toString());
     }
 
-    private static List<String> processResult(final String line) {
+    private List<String> processResult(final String line) {
       final int commentStartIdx = line.indexOf(ourCommentStartMark);
       if (commentStartIdx == -1) {
         LOG.info("Git history: no comment mark in line: '" + line + "'");
         // todo remove this when clarifyed
-        java.util.StringTokenizer tk = new java.util.StringTokenizer(line, "\u0000", false);
+        java.util.StringTokenizer tk = new java.util.StringTokenizer(line, TOKEN_DELIMITER, false);
         final List<String> result = new ArrayList<String>();
         while (tk.hasMoreElements()) {
           final String token = tk.nextToken();
@@ -243,22 +247,30 @@ public class GitHistoryUtils {
       }
 
       final String start = line.substring(0, commentStartIdx);
-      java.util.StringTokenizer tk = new java.util.StringTokenizer(start, "\u0000", false);
+      java.util.StringTokenizer tk = new java.util.StringTokenizer(start, TOKEN_DELIMITER, false);
       final List<String> result = new ArrayList<String>();
       while (tk.hasMoreElements()) {
         final String token = tk.nextToken();
         result.add(token);
       }
 
-      final String part = line.substring(commentStartIdx + 3).replace('\u0002', '\n').replace('\u0000', '\n').trim();
-      // take last line
-      final int commentEndIdx = part.lastIndexOf('\n');
-      //plus comment
-      result.add(part.substring(0, commentEndIdx));
-      //plus path
-      result.add(part.substring(commentEndIdx).trim());
+      final String commentAndPath = line.substring(commentStartIdx + ourCommentStartMark.length());
+      final int commentEndIdx = commentAndPath.indexOf(ourCommentEndMark);
+      if (commentEndIdx > -1) {
+        result.add(replaceDelimitersByNewlines(commentAndPath.substring(0, commentEndIdx)));      // comment
+        result.add(replaceDelimitersByNewlines(commentAndPath.substring(commentEndIdx + ourCommentEndMark.length())));  // path
+      } else {
+        exceptions.add(new VcsException("git log output is uncomplete"));
+        result.add(replaceDelimitersByNewlines(commentAndPath));
+        result.add("");   // empty path
+      }
       return result;
     }
+
+    private static String replaceDelimitersByNewlines(String s) {
+      return s.replace(TOKEN_DELIMITER, "\n").replace(LINE_DELIMITER, "\n").trim();
+    }
+
   }
 
   /**
