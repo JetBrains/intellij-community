@@ -346,13 +346,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
               addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
             }
             if (method instanceof GrMethod) {
-              Set<String>[] parametersArray = ((GrMethod)method).getNamedParametersArray();
-              for (Set<String> namedParameters : parametersArray) {
-                for (String parameter : namedParameters) {
-                  final LookupElementBuilder lookup =
-                    LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
-                  result.addElement(lookup);
-                }
+              for (String parameter : ((GrMethod)method).getNamedParametersArray()) {
+                final LookupElementBuilder lookup =
+                  LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
+                result.addElement(lookup);
               }
             }
           }

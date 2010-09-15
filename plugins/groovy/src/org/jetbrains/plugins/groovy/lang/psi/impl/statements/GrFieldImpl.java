@@ -24,6 +24,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,7 +282,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @NotNull
-  public Set<String>[] getNamedParametersArray() {
+  public String[] getNamedParametersArray() {
     final GrFieldStub stub = getStub();
     if (stub != null) {
       return stub.getNamedParameters();
@@ -289,25 +290,18 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     final GrExpression initializerGroovy = getInitializerGroovy();
 
     if (!(initializerGroovy instanceof GrClosableBlock)) {
-      return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     final GrClosableBlock closure = (GrClosableBlock)initializerGroovy;
     final PsiParameter[] parameters = closure.getAllParameters();
+    if (parameters.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    Set<String>[] res = new Set[parameters.length];
+    PsiParameter parameter = parameters[0];
 
-    Map<String, Set<String>> map = new HashMap<String, Set<String>>();
-
-    for (int i = 0; i < parameters.length; i++) {
-      final Set<String> set = new HashSet<String>();
-      res[i] = set;
-      map.put(parameters[i].getName(), set);
-    }
-
-    closure.accept(new GrNamedArgumentSearchVisitor(map));
-
-    return res;
+    GrNamedArgumentSearchVisitor visitor = new GrNamedArgumentSearchVisitor(parameter.getName());
+    closure.accept(visitor);
+    return visitor.getResult();
   }
 
   public GrDocComment getDocComment() {

@@ -34,7 +34,7 @@ public interface GrFieldStub extends NamedStub<GrField> {
   boolean isEnumConstant();
 
   @NotNull
-  Set<String>[] getNamedParameters();
+  String[] getNamedParameters();
 
   boolean isProperty();
 

@@ -29,5 +29,5 @@ public interface GrMethodStub extends NamedStub<GrMethod> {
   String[] getAnnotations();
 
   @NotNull
-  Set<String>[] getNamedParameters();
+  String[] getNamedParameters();
 }

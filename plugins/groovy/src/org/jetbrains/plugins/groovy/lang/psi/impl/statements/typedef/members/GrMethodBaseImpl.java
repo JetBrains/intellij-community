@@ -32,6 +32,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
@@ -467,35 +468,26 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   }
 
   @NotNull
-  public Set<String>[] getNamedParametersArray() {
+  public String[] getNamedParametersArray() {
     GrOpenBlock body = getBlock();
-    if (body == null) return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
+    if (body == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     GrParameter[] parameters = getParameters();
+    if (parameters.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    GrParameter firstParameter = parameters[0];
 
-    if (parameters.length == 0) return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
+    PsiType type = firstParameter.getTypeGroovy();
+    GrTypeElement typeElement = firstParameter.getTypeElementGroovy();
+    //equalsToText can't be called here because of stub creating
 
-    Map<String, Set<String>> map = null;
-
-    for (GrParameter parameter : parameters) {
-      PsiType type = parameter.getTypeGroovy();
-      GrTypeElement typeElement = parameter.getTypeElementGroovy();
-      //equalsToText can't be called here because of stub creating
-
-      if (type == null || type.getPresentableText() == null || type.getPresentableText().endsWith("Map") || typeElement == null) {
-        PsiElement expression = parameter.getNameIdentifierGroovy();
-        if (map == null) {
-          map = new LinkedHashMap<String, Set<String>>();
-        }
-
-        map.put(expression.getText(), new HashSet<String>());
-      }
+    if (type != null && typeElement != null && type.getPresentableText() != null && !type.getPresentableText().endsWith("Map")) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    if (map == null) return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
+    GrNamedArgumentSearchVisitor visitor = new GrNamedArgumentSearchVisitor(firstParameter.getNameIdentifierGroovy().getText());
 
-    body.accept(new GrNamedArgumentSearchVisitor(map));
-    return map.values().toArray(new Set[map.values().size()]);
+    body.accept(visitor);
+    return visitor.getResult();
   }
 
   public PsiMethodReceiver getMethodReceiver() {
