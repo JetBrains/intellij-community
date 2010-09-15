@@ -32,10 +32,29 @@ import java.util.List;
  */
 public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
   private @Nullable Project myProject;
+  private boolean myShowCustomLibraryTables;
 
-  public ChooseLibrariesFromTablesDialog(JComponent parentComponent, String title, @Nullable Project project) {
-    super(parentComponent, title);
+  private ChooseLibrariesFromTablesDialog(@NotNull String title, @NotNull Project project, final boolean showCustomLibraryTables) {
+    super(project, title);
+    myShowCustomLibraryTables = showCustomLibraryTables;
     myProject = project;
+  }
+
+  protected ChooseLibrariesFromTablesDialog(@NotNull JComponent parentComponent,
+                                         @NotNull String title,
+                                         @Nullable Project project,
+                                         final boolean showCustomLibraryTables) {
+    super(parentComponent, title);
+    myShowCustomLibraryTables = showCustomLibraryTables;
+    myProject = project;
+  }
+
+  public static ChooseLibrariesFromTablesDialog createDialog(@NotNull String title,
+                                                             @NotNull Project project,
+                                                             final boolean showCustomLibraryTables) {
+    final ChooseLibrariesFromTablesDialog dialog = new ChooseLibrariesFromTablesDialog(title, project, showCustomLibraryTables);
+    dialog.init();
+    return dialog;
   }
 
   @NotNull
@@ -60,8 +79,10 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
         addLibraryTable(result, registrar.getLibraryTable(myProject));
       }
       addLibraryTable(result, registrar.getLibraryTable());
-      for (LibraryTable table : registrar.getCustomLibraryTables()) {
-        addLibraryTable(result, table);
+      if (myShowCustomLibraryTables) {
+        for (LibraryTable table : registrar.getCustomLibraryTables()) {
+          addLibraryTable(result, table);
+        }
       }
     }
     else if (element instanceof LibraryTable) {

@@ -65,8 +65,13 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private List<Library> myResult;
   private final Map<Object, Object> myParentsMap = new THashMap<Object, Object>();
 
-  public ChooseLibrariesDialogBase(final JComponent parentComponent, final String title) {
+  protected ChooseLibrariesDialogBase(final JComponent parentComponent, final String title) {
     super(parentComponent, false);
+    setTitle(title);
+  }
+
+  protected ChooseLibrariesDialogBase(Project project, String title) {
+    super(project, false);
     setTitle(title);
   }
 

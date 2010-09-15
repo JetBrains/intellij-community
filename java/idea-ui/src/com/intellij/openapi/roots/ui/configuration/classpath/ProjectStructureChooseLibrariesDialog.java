@@ -43,7 +43,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
                                                @Nullable Project project,
                                                StructureConfigurableContext context,
                                                Collection<Library> alreadyAddedLibraries) {
-    super(parentComponent, "Choose Libraries", project);
+    super(parentComponent, "Choose Libraries", project, true);
     myContext = context;
     myAlreadyAddedLibraries = alreadyAddedLibraries;
     init();
