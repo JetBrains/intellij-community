@@ -37,7 +37,7 @@ import java.util.Set;
 public abstract class VcsDirtyScope {
   /**
    * @return a set of content roots affected. The content root
-   *         is consdired affected if there is at least one descendant
+   *         is considered affected if there is at least one descendant
    *         dirty file or directory which is under this content root.
    * @see #getRecursivelyDirtyDirectories()
    * @see #getDirtyFiles()
@@ -78,7 +78,7 @@ public abstract class VcsDirtyScope {
   /**
    * Get recursively dirty directories.
    *
-   * @return a directories that are recurisvely dirty.
+   * @return a directories that are recursively dirty.
    */
   public abstract Set<FilePath> getRecursivelyDirtyDirectories();
 
