@@ -28,7 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.net.HttpConfigurable;
@@ -178,7 +178,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
           }
           catch (SVNException e) {
             if (myProject != null) {
-              ApplicationManager.getApplication().invokeLater(new ChangesViewBalloonProblemNotifier(myProject,
+              ApplicationManager.getApplication().invokeLater(new VcsBalloonProblemNotifier(myProject,
                                                                                                     "<b>Problem when storing Subversion credentials:</b>&nbsp;" +
                                                                                                     e.getMessage(), MessageType.ERROR));
             }
@@ -583,17 +583,17 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
     @Override
     public void warnOnAuthStorageDisabled(SVNURL url) {
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
+      VcsBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
     }
 
     @Override
     public void warnOnPasswordStorageDisabled(SVNURL url) {
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store password: forbidden by \"store-passwords=no\"", MessageType.ERROR);
+      VcsBalloonProblemNotifier.showMe(myProject, "Cannot store password: forbidden by \"store-passwords=no\"", MessageType.ERROR);
     }
 
     @Override
     public void warnOnSSLPassphraseStorageDisabled(SVNURL url) {
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp=no\"", MessageType.ERROR);
+      VcsBalloonProblemNotifier.showMe(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp=no\"", MessageType.ERROR);
     }
 
     @Override

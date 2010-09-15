@@ -126,7 +126,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   public void ensureNotify(AuthenticationRequest obj) {
     final SVNURL key = getKey(obj);
     myCopiesPassiveResults.remove(key);
-    /*ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "You are not authenticated to '" + obj.getRealm() + "'." +
+    /*VcsBalloonProblemNotifier.showMe(myVcs.getProject(), "You are not authenticated to '" + obj.getRealm() + "'." +
       "To login, see pending notifications.", MessageType.ERROR);*/
     super.ensureNotify(obj);
   }

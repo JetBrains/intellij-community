@@ -26,10 +26,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -385,7 +385,7 @@ public class NewMappings {
       } else {
         final AbstractVcs vcs = allVcses.getByName(vcsName);
         if (vcs == null) {
-          ChangesViewBalloonProblemNotifier.showMe(myProject, "VCS plugin not found for mapping to : '" + vcsName + "'", MessageType.ERROR);
+          VcsBalloonProblemNotifier.showMe(myProject, "VCS plugin not found for mapping to : '" + vcsName + "'", MessageType.ERROR);
           continue;
         }
         filteredFiles = vcs.filterUniqueRoots(objects, fileConvertor);

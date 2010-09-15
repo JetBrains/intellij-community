@@ -23,8 +23,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.newvfs.RefreshSessionImpl;
 import com.intellij.util.Consumer;
@@ -95,10 +95,10 @@ public class CherryPicker {
 
   private void showResults() {
     if (myExceptions.isEmpty()) {
-      ChangesViewBalloonProblemNotifier
+      VcsBalloonProblemNotifier
         .showMe(myVcs.getProject(), "Successful cherry-pick into working tree, please commit changes", MessageType.INFO);
     } else {
-      ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "Errors in cherry-pick", MessageType.ERROR);
+      VcsBalloonProblemNotifier.showMe(myVcs.getProject(), "Errors in cherry-pick", MessageType.ERROR);
     }
     if ((! myExceptions.isEmpty()) || (! myWarnings.isEmpty())) {
       myExceptions.addAll(myWarnings);

@@ -22,6 +22,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
@@ -29,9 +30,8 @@ import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
 
 public class ToggleOfflineAction extends ToggleAction {
   public boolean isSelected(AnActionEvent e) {
@@ -60,7 +60,7 @@ public class ToggleOfflineAction extends ToggleAction {
       settings = entriesManager.getCvsConnectionSettingsFor(firstDirInChain);
     }
     if ((settings != null) && settings.isValid() && (state != settings.isOffline())) {
-      ChangesViewBalloonProblemNotifier.showMe(cvsContext.getProject(),
+      VcsBalloonProblemNotifier.showMe(cvsContext.getProject(),
                                                state ? CvsBundle.message("set.offline.notification.text") :
                                                        CvsBundle.message("set.online.notification.text"),
                                                state ? MessageType.WARNING : MessageType.INFO);

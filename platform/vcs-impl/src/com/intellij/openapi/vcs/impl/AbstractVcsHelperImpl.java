@@ -55,6 +55,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -187,7 +188,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     public void reportException(VcsException exception) {
-      ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), VcsBundle.message("message.title.could.not.load.file.history") + ": " +
+      VcsBalloonProblemNotifier.showMe(myVcs.getProject(), VcsBundle.message("message.title.could.not.load.file.history") + ": " +
                                                                    exception.getMessage(), MessageType.ERROR);
     }
 

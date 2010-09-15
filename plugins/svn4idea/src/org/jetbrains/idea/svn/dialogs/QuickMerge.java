@@ -30,7 +30,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.RunBackgroundable;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -238,7 +238,7 @@ public class QuickMerge {
     context.next(new TaskDescriptor(message, Where.AWT) {
       @Override
       public void run(ContinuationContext context) {
-        ChangesViewBalloonProblemNotifier.showMe(myProject, message, isError ? MessageType.ERROR : MessageType.WARNING);
+        VcsBalloonProblemNotifier.showMe(myProject, message, isError ? MessageType.ERROR : MessageType.WARNING);
       }
     });
   }

@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,12 +34,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-public class ChangesViewBalloonProblemNotifier implements Runnable {
+public class VcsBalloonProblemNotifier implements Runnable {
   private final Project myProject;
   private final String myMessage;
   private final MessageType myMessageType;
 
-  public ChangesViewBalloonProblemNotifier(final Project project, final String message, final MessageType messageType) {
+  public VcsBalloonProblemNotifier(final Project project, final String message, final MessageType messageType) {
     myProject = project;
     myMessage = message;
     myMessageType = messageType;
@@ -49,7 +50,7 @@ public class ChangesViewBalloonProblemNotifier implements Runnable {
     if (application.isHeadlessEnvironment()) return;
     final Runnable showErrorAction = new Runnable() {
       public void run() {
-        new ChangesViewBalloonProblemNotifier(project, message, type).run();
+        new VcsBalloonProblemNotifier(project, message, type).run();
       }
     };
     if (application.isDispatchThread()) {

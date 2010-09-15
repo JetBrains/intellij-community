@@ -29,8 +29,8 @@ import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entries;
@@ -295,7 +295,7 @@ public class CvsInfo {
         public ThreeState silentLogin(boolean forceCheck) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              new ChangesViewBalloonProblemNotifier(project, CvsBundle.message("message.error.invalid.cvs.root", myStringRepsentation),
+              new VcsBalloonProblemNotifier(project, CvsBundle.message("message.error.invalid.cvs.root", myStringRepsentation),
                                                     MessageType.ERROR).run();
             }
           });
