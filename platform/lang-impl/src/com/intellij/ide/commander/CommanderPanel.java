@@ -91,10 +91,12 @@ public class CommanderPanel extends JPanel {
   private boolean myActive = true;
   private final List<CommanderHistoryListener> myHistoryListeners = ContainerUtil.createEmptyCOWList();
   private boolean myMoveFocus = false;
+  private boolean myEnableSearchHighlighting;
 
-  public CommanderPanel(final Project project, final boolean enablePopupMenu) {
+  public CommanderPanel(final Project project, final boolean enablePopupMenu, final boolean enableSearchHighlighting) {
     super(new BorderLayout());
     myProject = project;
+    myEnableSearchHighlighting = enableSearchHighlighting;
     myModel = new MyModel();
     myList = new JBList(myModel);
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -167,6 +169,14 @@ public class CommanderPanel extends JPanel {
       }
     });
 
+  }
+
+  public boolean isEnableSearchHighlighting() {
+    return myEnableSearchHighlighting;
+  }
+
+  public ListSpeedSearch getListSpeedSearch() {
+    return myListSpeedSearch;
   }
 
   public void addHistoryListener(CommanderHistoryListener listener) {
