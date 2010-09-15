@@ -96,7 +96,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   private LibraryEditor getLibraryEditor() {
-    return ((LibrariesModifiableModel)myModel.getModifiableModel()).getLibraryEditor(myLibrary);
+    return myModel.getModifiableModel().getLibraryEditor(myLibrary);
   }
 
   @Override
@@ -124,7 +124,11 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public String getDisplayName() {
-    return getLibraryEditor().getName();
+    if (myModel.getModifiableModel().hasLibraryEditor(myLibrary)) {
+      return getLibraryEditor().getName();
+    }
+
+    return myLibrary.getName();
   }
 
   public Icon getIcon() {
