@@ -43,6 +43,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -204,7 +205,7 @@ public class CodeFormatterFacade {
    * @param startOffset start offset of the first line to check for wrapping (inclusive)
    * @param endOffset   end offset of the first line to check for wrapping (exclusive)
    */
-  private void wrapLongLinesIfNecessary(@NotNull PsiFile file, @NotNull final Document document, final int startOffset,
+  private void wrapLongLinesIfNecessary(@NotNull PsiFile file, @Nullable final Document document, final int startOffset,
                                         final int endOffset)
   {
     if (!mySettings.WRAP_LONG_LINES || file.getViewProvider().isLockedByPsiOperations()) {
@@ -214,7 +215,7 @@ public class CodeFormatterFacade {
     Editor editor = PsiUtilBase.findEditor(file);
     EditorFactory editorFactory = null;
     if (editor == null) {
-      if (!ApplicationManager.getApplication().isDispatchThread()) {
+      if (document == null || !ApplicationManager.getApplication().isDispatchThread()) {
         return;
       }
       editorFactory = EditorFactory.getInstance();
@@ -225,7 +226,7 @@ public class CodeFormatterFacade {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          doWrapLongLinesIfNecessary(editorToUse, document, startOffset, endOffset);
+          doWrapLongLinesIfNecessary(editorToUse, editorToUse.getDocument(), startOffset, endOffset);
         }
       });
     }
