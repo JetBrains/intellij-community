@@ -49,7 +49,14 @@ public class ModulePathMacroManager extends BasePathMacroManager {
       if (projectDir != null) {
         projectDir = projectDir.replace('/', File.separatorChar);
       }
-      addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, getModuleDir(myModule.getModuleFilePath()), projectDir);
+      String stopAt = projectDir;
+
+      final String userHome = getUserHome();
+      if (stopAt != null && stopAt.startsWith(userHome)) {
+        stopAt = userHome;
+      }
+
+      addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, getModuleDir(myModule.getModuleFilePath()), stopAt);
     }
     return result;
   }
