@@ -99,7 +99,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyUnusedVariableTupleUnpacking() {
-    doHighlightingTest(PyUnusedLocalInspection.class);
+    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON26);
   }
 
   public void testPyUnusedLocalFunctionInspection() {
@@ -108,7 +108,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyDictCreationInspection() {
-    doHighlightingTest(PyDictCreationInspection.class);
+    doHighlightingTest(PyDictCreationInspection.class, LanguageLevel.PYTHON26);
   }
 
   public void testPyDeprecatedModulesInspection() {
@@ -138,15 +138,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyExceptClausesOrderInspection() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
-    try {
-      myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
-      myFixture.enableInspections(PyExceptClausesOrderInspection.class);
-      myFixture.checkHighlighting(true, false, false);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    doHighlightingTest(PyExceptClausesOrderInspection.class, LanguageLevel.PYTHON26);
   }
 
   public void testPyExceptionInheritInspection() {
@@ -180,16 +172,15 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyStatementEffectInspection() {
-    LocalInspectionTool inspection = new PyStatementEffectInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyStatementEffectInspection.class, LanguageLevel.PYTHON26);
   }
 
   public void testPySimplifyBooleanCheckInspection() {
-    doHighlightingTest(PySimplifyBooleanCheckInspection.class);
+    doHighlightingTest(PySimplifyBooleanCheckInspection.class, LanguageLevel.PYTHON26);
   }
 
   public void testPyFromFutureImportInspection() {
-    doHighlightingTest(PyFromFutureImportInspection.class);
+    doHighlightingTest(PyFromFutureImportInspection.class, LanguageLevel.PYTHON26);
   }
 
   public void testPyFromFutureImportInspectionDocString() {
@@ -229,13 +220,23 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyCallingNonCallableInspection() throws Exception {
-    doHighlightingTest(PyCallingNonCallableInspection.class);
+    doHighlightingTest(PyCallingNonCallableInspection.class, LanguageLevel.PYTHON26);
   }
 
   private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) {
     myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, false);
+  }
+
+  private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass, final LanguageLevel languageLevel) {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+    try {
+      doHighlightingTest(inspectionClass);
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
 
   public void testPyPropertyAccessInspection() {
@@ -251,6 +252,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testInconsistentIndentation() {
-    doHighlightingTest(PyInconsistentIndentationInspection.class);
+    doHighlightingTest(PyInconsistentIndentationInspection.class, LanguageLevel.PYTHON26);
   }
 }
