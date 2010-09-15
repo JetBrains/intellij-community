@@ -18,7 +18,6 @@ package com.intellij.ui.components;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.ComponentWithEmptyText;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.util.Collection;
 
 /**
@@ -90,37 +88,6 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   public int getItemsCount() {
     ListModel model = getModel();
     return model == null ? 0 : model.getSize();
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return myEmptyText.getText();
-  }
-
-  @Override
-  public void setEmptyText(String emptyText) {
-    myEmptyText.setEmptyText(emptyText);
-  }
-
-  @Override
-  public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
-    myEmptyText.setEmptyText(emptyText, attrs);
-  }
-
-  @Override
-  public void clearEmptyText() {
-    myEmptyText.clearEmptyText();
-  }
-
-  @Override
-  public void appendEmptyText(String text, SimpleTextAttributes attrs) {
-    myEmptyText.appendEmptyText(text, attrs);
-  }
-
-  @Override
-  public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
-    myEmptyText.appendEmptyText(text, attrs, listener);
   }
 
   @Override
