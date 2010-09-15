@@ -34,6 +34,15 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 @SuppressWarnings({"InstanceVariableOfConcreteClass"})
 public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionContributor {
 
+  private static boolean isEmptyOriginalFile(PsiElement context) {
+    final PsiFile originalFile = context.getContainingFile().getOriginalFile();
+    if (originalFile.getTextLength() == 0) {
+      // completion in empty file (PY-1845)
+      return true;
+    }
+    return false;
+  }
+
 
   /**
    * Matches if element is somewhere inside a loop, but not within a class or function inside that loop.
@@ -82,7 +91,9 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         PsiElement p = (PsiElement)element;
         //int org_offset = p.getUserData(ORG_OFFSET); // saved by fillCompletionVariants()
         p = p.getUserData(ORG_ELT); // saved by fillCompletionVariants().
-        if (p == null) return false; // just in case
+        if (p == null) {
+          return isEmptyOriginalFile(context);
+        }
         int first_offset = p.getTextOffset();
         // we must be a stmt ourselves, not a part of another stmt
         // try to climb to the stmt level with the same offset
@@ -170,7 +181,10 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       if (!(what instanceof PsiElement)) return false;
       PsiElement p = (PsiElement)what;
       p = p.getUserData(ORG_ELT); // saved by fillCompletionVariants().
-      if (p == null || p instanceof PsiComment) return false; // just in case
+      if (p == null) {
+        return isEmptyOriginalFile(context);
+      }
+      else if (p instanceof PsiComment) return false; // just in case
       int point = p.getTextOffset();
       PsiDocumentManager docMgr = PsiDocumentManager.getInstance(p.getProject());
       Document doc = docMgr.getDocument(p.getContainingFile());
