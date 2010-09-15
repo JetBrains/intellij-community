@@ -29,8 +29,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.PopupBorder;
@@ -333,12 +333,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         String text2 = getText2();
 
         myTextLabel.setText(text != null && text.length() > 0 ? text : " ");
-        if (!isIndeterminate() && fraction > 0) {
-          myPercentLabel.setText(getPercentage(fraction) + "%");
-        }
-        else {
-          myPercentLabel.setText(" ");
-        }
 
         if (myProgressBar.isShowing()) {
           final int perc = (int)(fraction * 100);
@@ -375,7 +369,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     private JPanel myPanel;
 
     private JLabel myTextLabel;
-    private JLabel myPercentLabel;
     private JLabel myText2Label;
 
     private JButton myCancelButton;
@@ -513,12 +506,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           }
         }
       );
-
-      // Panel with progress indicator and percents
-
-      int width = myPercentLabel.getFontMetrics(myPercentLabel.getFont()).stringWidth("1000%");
-      myPercentLabel.setPreferredSize(new Dimension(width, myPercentLabel.getPreferredSize().height));
-      myPercentLabel.setHorizontalAlignment(SwingConstants.RIGHT);
     }
 
     private synchronized void update() {
