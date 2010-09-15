@@ -35,7 +35,7 @@ import java.util.List;
 /**
 * @author nik
 */
-class CreateLibraryDialog implements ClasspathElementChooserDialog<Library> {
+class NewLibraryChooser implements ClasspathElementChooser<Library> {
   private boolean myIsOk;
   private final ModifiableRootModel myRootModel;
   private Library myChosenLibrary;
@@ -43,7 +43,7 @@ class CreateLibraryDialog implements ClasspathElementChooserDialog<Library> {
   private final JComponent myParentComponent;
   private final Project myProject;
 
-  public CreateLibraryDialog(final Project project,
+  public NewLibraryChooser(final Project project,
                              final ModifiableRootModel rootModel,
                              StructureConfigurableContext context, final JComponent parentComponent) {
     myRootModel = rootModel;

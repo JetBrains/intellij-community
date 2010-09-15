@@ -35,12 +35,12 @@ import java.util.List;
 /**
 * @author nik
 */
-class CreateSingleEntryModuleLibraryDialog implements ClasspathElementChooserDialog<Library> {
+class CreateSingleEntryModuleLibraryChooser implements ClasspathElementChooser<Library> {
   private ClasspathPanel myClasspathPanel;
   private final LibraryTable.ModifiableModel myModuleLibrariesModel;
   private VirtualFile[] myChosenFiles;
 
-  public CreateSingleEntryModuleLibraryDialog(ClasspathPanel classpathPanel,
+  public CreateSingleEntryModuleLibraryChooser(ClasspathPanel classpathPanel,
                                               final LibraryTable.ModifiableModel moduleLibrariesModel) {
     myClasspathPanel = classpathPanel;
     myModuleLibrariesModel = moduleLibrariesModel;

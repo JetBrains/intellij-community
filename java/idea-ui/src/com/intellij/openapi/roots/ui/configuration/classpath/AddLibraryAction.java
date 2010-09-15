@@ -21,24 +21,52 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.Icons;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author nik
 */
-class ChooseExistingLibraryAction extends AddItemPopupAction<Library> {
+class AddLibraryAction extends AddItemPopupAction<Library> {
   private StructureConfigurableContext myContext;
+  private AddNewLibraryItemAction myNewLibraryAction;
 
-  public ChooseExistingLibraryAction(ClasspathPanel classpathPanel, final int index, final String title,
-                                     final StructureConfigurableContext context) {
+  public AddLibraryAction(ClasspathPanel classpathPanel, final int index, final String title,
+                          final StructureConfigurableContext context) {
     super(classpathPanel, index, title, Icons.LIBRARY_ICON);
     myContext = context;
+    myNewLibraryAction = new AddNewLibraryItemAction(classpathPanel, context);
+  }
+
+  @Override
+  public void run() {
+    if (hasLibraries()) {
+      super.run();
+    }
+    else {
+      myNewLibraryAction.run();
+    }
+  }
+
+  private boolean hasLibraries() {
+    final Condition<Library> condition = getNotAddedLibrariesCondition();
+    for (LibraryTable table : ChooseLibrariesFromTablesDialog.getLibraryTables(myClasspathPanel.getProject(), true)) {
+      for (Library library : table.getLibraries()) {
+        if (condition.value(library)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -62,25 +90,36 @@ class ChooseExistingLibraryAction extends AddItemPopupAction<Library> {
     return ClasspathTableItem.createLibItem(rootModel.addLibraryEntry(item));
   }
 
-  protected ClasspathElementChooserDialog<Library> createChooserDialog() {
-    return new MyChooserDialog();
+  protected ClasspathElementChooser<Library> createChooser() {
+    return new ExistingLibraryChooser();
   }
 
-  private Collection<Library> getAlreadyAddedLibraries() {
+  private Condition<Library> getNotAddedLibrariesCondition() {
     final OrderEntry[] orderEntries = myClasspathPanel.getRootModel().getOrderEntries();
     final Set<Library> result = new HashSet<Library>(orderEntries.length);
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
         final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
         if (library != null) {
-          ContainerUtil.addIfNotNull(result, library.getSource());
+          final Library source = library.getSource();
+          result.add(source != null ? source : library);
         }
       }
     }
-    return result;
+    return new Condition<Library>() {
+      @Override
+      public boolean value(Library library) {
+        if (result.contains(library)) return false;
+        if (library instanceof LibraryImpl) {
+          final Library source = ((LibraryImpl)library).getSource();
+          if (source != null && result.contains(source)) return false;
+        }
+        return true;
+      }
+    };
   }
 
-  class MyChooserDialog implements ClasspathElementChooserDialog<Library> {
+  class ExistingLibraryChooser implements ClasspathElementChooser<Library> {
     private List<Library> mySelectedLibraries;
 
     public List<Library> getChosenElements() {
@@ -89,7 +128,7 @@ class ChooseExistingLibraryAction extends AddItemPopupAction<Library> {
 
     public void doChoose() {
       ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel.getComponent(), myClasspathPanel.getProject(), myContext,
-                                                                                               getAlreadyAddedLibraries());
+                                                                                               getNotAddedLibrariesCondition(), myNewLibraryAction);
       dialog.show();
       mySelectedLibraries = dialog.getSelectedLibraries();
     }

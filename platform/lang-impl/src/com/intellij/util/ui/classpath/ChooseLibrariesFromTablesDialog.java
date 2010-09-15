@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -74,14 +75,9 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
   @Override
   protected void collectChildren(Object element, List<Object> result) {
     if (element instanceof Application) {
-      final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
-      if (myProject != null) {
-        addLibraryTable(result, registrar.getLibraryTable(myProject));
-      }
-      addLibraryTable(result, registrar.getLibraryTable());
-      if (myShowCustomLibraryTables) {
-        for (LibraryTable table : registrar.getCustomLibraryTables()) {
-          addLibraryTable(result, table);
+      for (LibraryTable table : getLibraryTables(myProject, myShowCustomLibraryTables)) {
+        if (hasLibraries(table)) {
+          result.add(table);
         }
       }
     }
@@ -90,10 +86,29 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
     }
   }
 
-  private void addLibraryTable(List<Object> result, LibraryTable table) {
-    if (getLibraries(table).length > 0) {
-      result.add(table);
+  public static List<LibraryTable> getLibraryTables(final Project project, final boolean showCustomLibraryTables) {
+    final List<LibraryTable> tables = new ArrayList<LibraryTable>();
+    final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
+    if (project != null) {
+      tables.add(registrar.getLibraryTable(project));
     }
+    tables.add(registrar.getLibraryTable());
+    if (showCustomLibraryTables) {
+      for (LibraryTable table : registrar.getCustomLibraryTables()) {
+        tables.add(table);
+      }
+    }
+    return tables;
+  }
+
+  private boolean hasLibraries(LibraryTable table) {
+    final Library[] libraries = getLibraries(table);
+    for (Library library : libraries) {
+      if (acceptsElement(library)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

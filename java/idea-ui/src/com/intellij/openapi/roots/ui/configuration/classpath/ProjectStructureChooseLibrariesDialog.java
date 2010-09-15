@@ -18,11 +18,11 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
@@ -30,22 +30,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * @author nik
  */
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
   private StructureConfigurableContext myContext;
-  private Collection<Library> myAlreadyAddedLibraries;
+  private Condition<Library> myAcceptedLibraries;
+  private AddNewLibraryItemAction myNewLibraryAction;
 
   public ProjectStructureChooseLibrariesDialog(JComponent parentComponent,
                                                @Nullable Project project,
                                                StructureConfigurableContext context,
-                                               Collection<Library> alreadyAddedLibraries) {
+                                               Condition<Library> acceptedLibraries, AddNewLibraryItemAction newLibraryAction) {
     super(parentComponent, "Choose Libraries", project, true);
     myContext = context;
-    myAlreadyAddedLibraries = alreadyAddedLibraries;
+    myAcceptedLibraries = acceptedLibraries;
+    myNewLibraryAction = newLibraryAction;
+    setOKButtonText("Add Selected");
     init();
   }
 
@@ -65,11 +69,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   protected boolean acceptsElement(Object element) {
     if (element instanceof Library) {
       final Library library = (Library)element;
-      if (myAlreadyAddedLibraries.contains(library)) return false;
-      if (library instanceof LibraryImpl) {
-        final Library source = ((LibraryImpl)library).getSource();
-        if (source != null && myAlreadyAddedLibraries.contains(source)) return false;
-      }
+      return myAcceptedLibraries.value(library);
     }
     return true;
   }
@@ -83,6 +83,16 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
       }
     }
     return library.getName();
+  }
+
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{getCancelAction()};
+  }
+
+  @Override
+  protected Action[] createLeftSideActions() {
+    return new Action[]{getOKAction(), new CreateNewLibraryAction()};
   }
 
   @Override
@@ -102,4 +112,16 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     }
   }
 
+  private class CreateNewLibraryAction extends DialogWrapperAction {
+    private CreateNewLibraryAction() {
+      super("New Library...");
+      putValue(MNEMONIC_KEY, KeyEvent.VK_N);
+    }
+
+    @Override
+    protected void doAction(ActionEvent e) {
+      close(CANCEL_EXIT_CODE);
+      myNewLibraryAction.execute();
+    }
+  }
 }
