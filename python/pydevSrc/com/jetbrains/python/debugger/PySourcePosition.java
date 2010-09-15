@@ -1,12 +1,14 @@
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 public abstract class PySourcePosition {
 
   private final String file;
   private final int line;
 
   protected PySourcePosition(final String file, final int line) {
-    this.file = file;
+    this.file = FileUtil.toSystemIndependentName(file);
     this.line = line;
   }
 
@@ -38,4 +40,8 @@ public abstract class PySourcePosition {
     return result;
   }
 
+  @Override
+  public String toString() {
+    return "PySourcePosition(" + file + ":" + line + ")";
+  }
 }

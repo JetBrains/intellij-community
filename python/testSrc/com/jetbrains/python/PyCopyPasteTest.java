@@ -19,6 +19,10 @@ public class PyCopyPasteTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testSingleLine() {
+    doTest();
+  }
+
   private void doTest() {
     String name = getTestName(false);
     myFixture.configureByFile("copyPaste/" + name + ".src.py");

@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBinaryExpressionNavigator;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
@@ -99,8 +98,9 @@ public class PyCodeFragmentUtil {
       boolean errorFound = true;
       for (Instruction outerInstruction : outerInstructions) {
         // Here we check control flow when for statement content is beeing extracted
-        if (outerInstruction instanceof ReadWriteInstruction &&
-            PyForStatementNavigator.getPyForStatementByIterable(outerInstruction.getElement())!=null) {
+        final PsiElement element = outerInstruction.getElement();
+        if (element != null && (PyForStatementNavigator.getPyForStatementByIterable(element) != null ||
+                                PyForStatementNavigator.getPyForStatementByBody(element) != null)) {
           // In case when return instruction is inside
           if (!returnInstructionInside){
             errorFound = false;

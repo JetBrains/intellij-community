@@ -58,6 +58,7 @@ public class PythonAllTestsSuite {
     PyStatementMoverTest.class,
     PyIntroduceVariableTest.class,
     PyIntroduceFieldTest.class,
+    PyIntroduceConstantTest.class,
     PyClassNameCompletionTest.class,
     PySuppressInspectionsTest.class,
     PyPropertyTestSuite.PyClassicPropertyTest.class,

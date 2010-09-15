@@ -52,9 +52,8 @@ public class PythonFoldingBuilder implements FoldingBuilder, DumbAware {
       IElementType elType = node.getTreeParent().getElementType();
       if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION) {
         ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
-        if (colon != null && colon.getStartOffset() + 1 < colon.getTextRange().getEndOffset()) {
-          descriptors
-            .add(new FoldingDescriptor(node, new TextRange(colon.getStartOffset() + 1, node.getStartOffset() + node.getTextLength())));
+        if (colon != null && colon.getStartOffset() + 1 < node.getTextRange().getEndOffset() - 1) {
+          descriptors.add(new FoldingDescriptor(node, new TextRange(colon.getStartOffset() + 1, node.getTextRange().getEndOffset())));
         }
         else {
           TextRange range = node.getTextRange();

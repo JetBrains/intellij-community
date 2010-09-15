@@ -245,8 +245,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           name = namedParameter.getName();
           if (PsiTreeUtil.getParentOfType(element, PyClass.class) != null) {
             // When function is inside a class, first parameter may be either self or cls which is always 'used'.
-            PyFunction method = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-            if (method != null && ! PyNames.STATICMETHOD.equals(PyUtil.getClassOrStaticMethodDecorator(method))) {
+            final PyFunction method = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+            if (method != null) {
               final PsiElement parent = namedParameter.getParent();
               if (parent instanceof PyParameterList && ((PyParameterList)parent).getParameters()[0] == namedParameter) {
                 continue;
@@ -260,7 +260,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           PyClass containingClass = null;
           PyParameterList paramList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
           if (paramList != null && paramList.getParent() instanceof PyFunction) {
-            PyFunction func = (PyFunction) paramList.getParent();
+            final PyFunction func = (PyFunction) paramList.getParent();
             containingClass = func.getContainingClass();
             if (PyNames.INIT.equals(func.getName()) && containingClass != null) {
               isInitMethod = true;
@@ -269,7 +269,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               continue;
             }
           }
-          LocalQuickFix[] fixes = isInitMethod
+          final LocalQuickFix[] fixes = isInitMethod
                                   ? new LocalQuickFix[] { new AddFieldQuickFix(name, containingClass, name) }
                                   : LocalQuickFix.EMPTY_ARRAY;
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes);

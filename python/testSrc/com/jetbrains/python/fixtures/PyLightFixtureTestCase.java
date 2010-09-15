@@ -18,6 +18,8 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.jetbrains.python.PythonMockSdk;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -72,6 +74,10 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
 
   protected int findPosBySignature(String signature) {
     return PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(myFixture.getFile()).getText().indexOf(signature);
+  }
+
+  protected void setLanguageLevel(LanguageLevel languageLevel) {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {

@@ -141,4 +141,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("comment2.before.py", "baz", "comment2.after.py");
   }
 
+  public void testElseBody() throws Throwable {
+    doTest("elsebody.before.py", "baz", "elsebody.after.py");
+  }
+
 }

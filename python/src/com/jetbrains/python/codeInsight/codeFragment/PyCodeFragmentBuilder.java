@@ -32,13 +32,29 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+    final PyExpression value = node.getAssignedValue();
+    if (value != null) {
+      value.accept(this);
+    }
+    for (PyExpression expression : node.getTargets()) {
+      expression.accept(this);
+    }
+  }
+
+  @Override
   public void visitPyAugAssignmentStatement(final PyAugAssignmentStatement node) {
+    final PyExpression value = node.getValue();
+    if (value != null) {
+      value.accept(this);
+    }
     final PyExpression target = node.getTarget();
     if (target instanceof PyReferenceExpression){
       visitPyReferenceExpression((PyReferenceExpression) target);
       processDeclaration(target);
     }
   }
+
 
   @Override
   public void visitPyTargetExpression(final PyTargetExpression node) {
@@ -144,6 +160,11 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
     final String name = element.getName();
     // Collect in variables
     if (position == Position.INSIDE) {
+      // support declarations within loops
+      final PyLoopStatement loop = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class);
+      if (inElements.contains(name) && loop != null && CodeFragmentUtil.getPosition(loop, startOffset, endOffset) != Position.INSIDE) {
+        outElements.add(name);
+      }
       // Add modification inside
       List<PyElement> list = modifiedInsideMap.get(name);
       if (list == null) {

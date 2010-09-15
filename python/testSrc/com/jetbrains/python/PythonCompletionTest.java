@@ -5,9 +5,11 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class PythonCompletionTest extends PyLightFixtureTestCase {
 
@@ -191,5 +193,17 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   public void testNonExistingProperty() {  // PY-1748
     doTest();
+  }
+
+  public void testEmptyFile() {  // PY-1845
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myFixture.configureByText(PythonFileType.INSTANCE, "");
+      }
+    });
+    myFixture.completeBasic();
+    final List<String> elements = myFixture.getLookupElementStrings();
+    assertTrue(elements.contains("import"));
   }
 }

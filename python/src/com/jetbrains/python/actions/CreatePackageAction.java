@@ -7,7 +7,6 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -27,20 +26,20 @@ public class CreatePackageAction extends DumbAwareAction {
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
-    new WriteCommandAction.Simple(project, "Create Package") {
+    CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, false, ".") {
       @Override
-      protected void run() throws Throwable {
-        CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, false, ".");
-        Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.package.name"),
-                                          IdeBundle.message("title.new.package"),
-                                          Messages.getQuestionIcon(), "", validator);
-        final PsiDirectory result = validator.getCreatedElement();
-        if (result != null && view != null) {
-          createInitPyInHierarchy(result, directory);
-          view.selectElement(result);
-        }
+      protected void createDirectories(String subDirName) {
+        super.createDirectories(subDirName);
+        createInitPyInHierarchy(getCreatedElement(), directory);
       }
-    }.execute();
+    };
+    Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.package.name"),
+                                      IdeBundle.message("title.new.package"),
+                                      Messages.getQuestionIcon(), "", validator);
+    final PsiDirectory result = validator.getCreatedElement();
+    if (result != null && view != null) {
+      view.selectElement(result);
+    }
   }
 
   private static void createInitPyInHierarchy(PsiDirectory created, PsiDirectory ancestor) {
