@@ -55,7 +55,7 @@ public class BlockDebugUtil {
       out.print(" " + block.getIndent());
     }
     else {
-      out.print(" <NO INDENT>");
+      out.print(" <Indent: -- null -->");
     }
     out.print(" " + block.getTextRange() + " ");
     if (block instanceof ASTBlock) {
