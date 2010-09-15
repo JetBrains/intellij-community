@@ -93,7 +93,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
               actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
               action = LocalHistory.getInstance().startAction(actionName);
 
-              myCreatedElement = DirectoryUtil.createSubdirectories(subDirName, myDirectory, myDelimiters);
+              createDirectories(subDirName);
 
             }
             catch (final IncorrectOperationException ex) {
@@ -117,6 +117,10 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
                                                                       : IdeBundle.message("command.create.package"), null);
 
     return myCreatedElement != null;
+  }
+
+  protected void createDirectories(String subDirName) {
+    myCreatedElement = DirectoryUtil.createSubdirectories(subDirName, myDirectory, myDelimiters);
   }
 
   public PsiDirectory getCreatedElement() {
