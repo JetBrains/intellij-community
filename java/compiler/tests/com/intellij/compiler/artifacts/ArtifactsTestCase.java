@@ -28,10 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -144,8 +141,8 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       return modules;
     }
 
-    public List<Library> chooseLibraries(List<Library> libraries, String title) {
-      return libraries;
+    public List<Library> chooseLibraries(String title) {
+      return Collections.emptyList();
     }
   }
 
