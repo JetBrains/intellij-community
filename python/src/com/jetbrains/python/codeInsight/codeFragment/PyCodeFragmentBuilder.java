@@ -161,7 +161,8 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
     // Collect in variables
     if (position == Position.INSIDE) {
       // support declarations within loops
-      if (inElements.contains(name) && PsiTreeUtil.getParentOfType(element, PyLoopStatement.class) != null){
+      final PyLoopStatement loop = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class);
+      if (inElements.contains(name) && loop != null && CodeFragmentUtil.getPosition(loop, startOffset, endOffset) != Position.INSIDE) {
         outElements.add(name);
       }
       // Add modification inside
