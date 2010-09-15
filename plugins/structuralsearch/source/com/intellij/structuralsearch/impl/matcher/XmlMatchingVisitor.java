@@ -2,11 +2,15 @@ package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author Eugene.Kudelevsky
@@ -66,9 +70,17 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
       final XmlTagChild[] contentChildren = tag.getValue().getChildren();
 
       if (contentChildren.length > 0) {
+        PsiElement[] patternNodes = contentChildren;
+        PsiElement[] matchedNodes = another.getValue().getChildren();
+
+        if (contentChildren.length != 1) {
+          patternNodes = expandXmlTexts(patternNodes);
+          matchedNodes = expandXmlTexts(matchedNodes);
+        }
+
         myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(
-          new ArrayBackedNodeIterator(contentChildren),
-          new ArrayBackedNodeIterator(another.getValue().getChildren())
+          new ArrayBackedNodeIterator(patternNodes),
+          new ArrayBackedNodeIterator(matchedNodes)
         ));
       }
     }
@@ -77,6 +89,20 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
       MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler( tag.getName() );
       myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(another, myMatchingVisitor.getMatchContext()));
     }
+  }
+
+  private static PsiElement[] expandXmlTexts(PsiElement[] children) {
+    List<PsiElement> result = new ArrayList<PsiElement>(children.length);
+    for(PsiElement c:children) {
+      if (c instanceof XmlText) {
+        for(PsiElement p:c.getChildren()) {
+          if (!(p instanceof PsiWhiteSpace)) result.add(p);
+        }
+      } else if (!(c instanceof PsiWhiteSpace)) {
+        result.add(c);
+      }
+    }
+    return result.toArray(new PsiElement[result.size()]);
   }
 
   @Override public void visitXmlText(XmlText text) {

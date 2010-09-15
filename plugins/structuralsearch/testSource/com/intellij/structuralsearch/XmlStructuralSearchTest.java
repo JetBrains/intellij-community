@@ -20,6 +20,16 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Simple html find",1,findMatchesCount(content,pattern,false,StdFileTypes.HTML));
     assertEquals("Simple html find",9,findMatchesCount(content,pattern2,false,StdFileTypes.HTML));
   }
+
+  public void testHtmlSearch2() throws Exception {
+    String content = TestUtils.loadFile("in4.html");
+    String pattern = TestUtils.loadFile("pattern4.html");
+
+    assertEquals("Simple html find",1,findMatchesCount(content,pattern,false,StdFileTypes.HTML));
+
+    pattern = TestUtils.loadFile("pattern4_2.html");
+    assertEquals("Simple html find",1,findMatchesCount(content,pattern,false,StdFileTypes.HTML));
+  }
   
   public void testJspSearch() throws Exception {
     String content = TestUtils.loadFile("in1.html");
