@@ -92,9 +92,9 @@ public class TextWithImportsImpl implements TextWithImports{
   }
 
   public String toString() {
-    return getText();
+    return "".equals(myImports) ? myText : myText + DebuggerEditorImpl.SEPARATOR + myImports;
   }
-
+  
   public int hashCode() {
     return myText.hashCode();
   }
