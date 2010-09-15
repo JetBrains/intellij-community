@@ -1536,6 +1536,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void setBackgroundColor(Color color) {
+    myScrollPane.setBackground(color);
+
     if (getBackgroundIgnoreForced().equals(color)) {
       myForcedBackground = null;
       return;
