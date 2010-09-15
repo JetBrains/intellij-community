@@ -460,8 +460,7 @@ public class FramesPanel extends UpdatableDebuggerView {
             evaluationContext, 
             tracker, 
             index++, 
-            stackFrameProxy.equals(contextFrame), 
-            totalFramesCount, 
+            stackFrameProxy.equals(contextFrame),
             timestamp, 
             indexCounter
           )
@@ -510,12 +509,12 @@ public class FramesPanel extends UpdatableDebuggerView {
     private IndexCounter(int totalSize) {
       myData = new int[totalSize];
       for (int idx = 0; idx < totalSize; idx++) {
-        myData[idx] = 1;
+        myData[idx] = 0;
       }
     }
     
-    public void markHidden(int idx){
-      myData[idx] = 0;
+    public void markCalculated(int idx){
+      myData[idx] = 1;
     }
     
     public int getActualIndex(final int index) {
@@ -534,20 +533,17 @@ public class FramesPanel extends UpdatableDebuggerView {
     private final MethodsTracker myTracker;
     private final int myIndexToInsert;
     private final boolean myIsContextFrame;
-    private final int myTotalFramesCount;
     private final long myTimestamp;
     private final IndexCounter myCounter;
 
     public AppendFrameCommand(SuspendContextImpl suspendContext, StackFrameProxyImpl frame, EvaluationContextImpl evaluationContext,
-                              MethodsTracker tracker, int indexToInsert, final boolean isContextFrame, final int totalFramesCount,
-                              final long timestamp, IndexCounter counter) {
+                              MethodsTracker tracker, int indexToInsert, final boolean isContextFrame, final long timestamp, IndexCounter counter) {
       super(suspendContext);
       myFrame = frame;
       myEvaluationContext = evaluationContext;
       myTracker = tracker;
       myIndexToInsert = indexToInsert;
       myIsContextFrame = isContextFrame;
-      myTotalFramesCount = totalFramesCount;
       myTimestamp = timestamp;
       myCounter = counter;
     }
@@ -566,25 +562,14 @@ public class FramesPanel extends UpdatableDebuggerView {
               if (model.isEmpty() || myFramesLastUpdateTime < myTimestamp) {
                 myFramesLastUpdateTime = myTimestamp;
                 model.clear();
-                for (int idx = 0; idx < myTotalFramesCount; idx++) {
-                  final String label = "<frame " + idx + ">";
-                  model.addElement(new Object() {
-                    public String toString() {
-                      return label;
-                    }
-                  });
-                }
               }
               if (myTimestamp != myFramesLastUpdateTime) {
                 return;  // the command has expired
               }
-              final int actualIndex = myCounter.getActualIndex(myIndexToInsert);
-              model.removeElementAt(actualIndex); // remove placeholder
-              boolean shouldHide = !myShowLibraryFrames && !myIsContextFrame && myIndexToInsert != 0 && (descriptor.isSynthetic() || descriptor.isInLibraryContent());
-              if (shouldHide) {
-                myCounter.markHidden(myIndexToInsert);
-              }
-              else {
+              final boolean shouldHide = !myShowLibraryFrames && !myIsContextFrame && myIndexToInsert != 0 && (descriptor.isSynthetic() || descriptor.isInLibraryContent());
+              if (!shouldHide) {
+                myCounter.markCalculated(myIndexToInsert);
+                final int actualIndex = myCounter.getActualIndex(myIndexToInsert);
                 model.insertElementAt(descriptor, actualIndex);
                 if (myIsContextFrame) {
                   myFramesList.setSelectedIndex(actualIndex);
