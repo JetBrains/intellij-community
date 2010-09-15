@@ -74,9 +74,7 @@ abstract class AddItemPopupAction<ItemType> extends ClasspathPanelAction {
       myClasspathPanel.addItems(toAdd);
     }
     finally {
-      if (dialog instanceof ChooseNamedLibraryAction.MyChooserDialog) {
-        Disposer.dispose(dialog);
-      }
+      Disposer.dispose(dialog);
     }
   }
 

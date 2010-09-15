@@ -21,11 +21,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -33,15 +32,13 @@ import java.util.*;
 /**
 * @author nik
 */
-class ChooseNamedLibraryAction extends AddItemPopupAction<Library> {
-  private final LibraryTableModifiableModelProvider myLibraryTableModelProvider;
+class ChooseExistingLibraryAction extends AddItemPopupAction<Library> {
+  private StructureConfigurableContext myContext;
 
-  public ChooseNamedLibraryAction(ClasspathPanel classpathPanel,
-                                  final int index,
-                                  final String title,
-                                  final LibraryTableModifiableModelProvider libraryTable) {
+  public ChooseExistingLibraryAction(ClasspathPanel classpathPanel, final int index, final String title,
+                                     final StructureConfigurableContext context) {
     super(classpathPanel, index, title, Icons.LIBRARY_ICON);
-    myLibraryTableModelProvider = libraryTable;
+    myContext = context;
   }
 
   @Nullable
@@ -76,7 +73,7 @@ class ChooseNamedLibraryAction extends AddItemPopupAction<Library> {
       if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
         final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
         if (library != null) {
-          result.add(library.getSource());
+          ContainerUtil.addIfNotNull(result, library.getSource());
         }
       }
     }
@@ -84,27 +81,21 @@ class ChooseNamedLibraryAction extends AddItemPopupAction<Library> {
   }
 
   class MyChooserDialog implements ClasspathElementChooserDialog<Library> {
-    private final LibraryTableEditor myEditor;
-    private Library[] myLibraries;
-
-    MyChooserDialog(){
-      myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myClasspathPanel.getProject());
-      Disposer.register(this, myEditor);
-    }
+    private List<Library> mySelectedLibraries;
 
     public List<Library> getChosenElements() {
-      final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myLibraries));
-      chosen.removeAll(getAlreadyAddedLibraries());
-      return chosen;
+      return mySelectedLibraries;
     }
 
     public void doChoose() {
-      final Iterator iter = myLibraryTableModelProvider.getModifiableModel().getLibraryIterator();
-      myLibraries = myEditor.openDialog(myClasspathPanel.getComponent(), iter.hasNext()? Collections.singleton((Library)iter.next()) : Collections.<Library>emptyList(), false);
+      ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel.getComponent(), myClasspathPanel.getProject(), myContext,
+                                                                                               getAlreadyAddedLibraries());
+      dialog.show();
+      mySelectedLibraries = dialog.getSelectedLibraries();
     }
 
     public boolean isOK() {
-      return myLibraries != null;
+      return mySelectedLibraries != null && !mySelectedLibraries.isEmpty();
     }
 
     public void dispose() {

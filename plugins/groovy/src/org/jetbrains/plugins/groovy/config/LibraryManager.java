@@ -31,6 +31,23 @@ import javax.swing.*;
  */
 public abstract class LibraryManager {
 
+  @Nullable
+  public static LibraryManager findManagerFor(@NotNull Library library, final LibraryManager[] managers, final LibrariesContainer container) {
+    for (final LibraryManager manager : managers) {
+      final String name = library.getName();
+      if (name != null && manager.managesName(name) && manager.managesLibrary(library, container)) {
+        return manager;
+      }
+    }
+
+    for (final LibraryManager manager : managers) {
+      if (manager.managesLibrary(library, container)) {
+        return manager;
+      }
+    }
+    return null;
+  }
+
   public abstract boolean managesLibrary(@NotNull Library library, LibrariesContainer container);
 
   @Nullable

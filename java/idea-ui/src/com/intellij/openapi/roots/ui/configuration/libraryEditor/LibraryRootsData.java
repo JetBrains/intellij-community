@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,10 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.roots.OrderRootType;
-import org.jetbrains.annotations.Nullable;
+/**
+ * @author nik
+ */
+public class LibraryRootsData {
 
-public abstract class LibraryTableTreeContentElement {
 
-  public abstract LibraryTableTreeContentElement getParent();
-
-  @Nullable
-  public abstract OrderRootType getOrderRootType();
-
-  public abstract NodeDescriptor createDescriptor(NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor);
 }

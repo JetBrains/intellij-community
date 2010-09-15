@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 
@@ -37,10 +36,9 @@ class LibraryElementDescriptor extends NodeDescriptor<LibraryElement> {
   }
 
   public boolean update() {
-    final Library library = myElement.getLibrary();
     final String name;
     final Icon icon;
-    final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor(library);
+    final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor();
     if (myElement.isAnonymous()) {
       final VirtualFile[] files = libraryEditor.getFiles(OrderRootType.CLASSES);
       if (files.length > 0) {

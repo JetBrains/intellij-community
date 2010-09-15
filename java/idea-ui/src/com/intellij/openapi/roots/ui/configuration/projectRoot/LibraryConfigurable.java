@@ -21,12 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -42,17 +40,17 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   private LibraryTableEditor myLibraryEditor;
   private final Library myLibrary;
-  private final LibraryTableModifiableModelProvider myModel;
+  private final StructureLibraryTableModifiableModelProvider myModel;
   private final Project myProject;
   private final LibraryProjectStructureElement myProjectStructureElement;
   private boolean myUpdatingName;
 
-  protected LibraryConfigurable(final LibraryTableModifiableModelProvider libraryTable,
+  protected LibraryConfigurable(final StructureLibraryTableModifiableModelProvider modelProvider,
                                 final Library library,
                                 final Project project,
                                 final Runnable updateTree) {
     super(true, updateTree);
-    myModel = libraryTable;
+    myModel = modelProvider;
     myProject = project;
     myLibrary = library;
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
@@ -60,9 +58,8 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public JComponent createOptionsPanel() {
-    myLibraryEditor = LibraryTableEditor.editLibrary(myModel, myLibrary, myProject);
+    myLibraryEditor = LibraryTableEditor.editLibrary(myProject, myModel.getModifiableModel().getLibraryEditor(myLibrary));
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
-    myLibraryEditor.addLibraryEditorListener(context);
     myLibraryEditor.addListener(new Runnable() {
       public void run() {
         context.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
@@ -89,11 +86,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public void disposeUIResources() {
-    if (myLibraryEditor != null) {
-      myLibraryEditor.cancelChanges();
-      Disposer.dispose(myLibraryEditor);
-      myLibraryEditor = null;
-    }
+    myLibraryEditor = null;
   }
 
   public void setDisplayName(final String name) {

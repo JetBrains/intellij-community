@@ -27,14 +27,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -65,8 +64,10 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel");
@@ -381,25 +382,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               return moduleLibraryTable.getModifiableModel();
             }
 
-            public String getTableLevel() {
-              return moduleLibraryTable.getTableLevel();
-            }
-
-            public LibraryTablePresentation getLibraryTablePresentation() {
-              return moduleLibraryTable.getPresentation();
-            }
-
-            public boolean isLibraryTableEditable() {
-              return false;
-            }
           };
         }
         else {
-          provider = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext().createModifiableModelProvider(table.getTableLevel(), false);
+          provider = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext().createModifiableModelProvider(table.getTableLevel());
         }
-        final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library, myState.getProject());
-        editor.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, getRootModel().getModule());
-        editor.openDialog(ClasspathPanelImpl.this, Collections.singletonList(library), true);
+        EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject());
+        dialog.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, getRootModel().getModule());
+        dialog.show();
         myEntryTable.repaint();
         ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();
       }
@@ -488,11 +478,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           }
 
           protected ClasspathElementChooserDialog<Library> createChooserDialog() {
-            return new ChooseModuleLibrariesDialog(ClasspathPanelImpl.this, getRootModel().getModuleLibraryTable(), null);
+            final LibraryTable.ModifiableModel moduleLibraryModel = getRootModel().getModuleLibraryTable().getModifiableModel();
+            return new CreateSingleEntryModuleLibraryDialog(ClasspathPanelImpl.this, moduleLibraryModel);
           }
         });
       actions.add(
-        new AddItemPopupAction<Library>(this, actionIndex++, ProjectBundle.message("classpath.add.module.library.action"), Icons.JAR_ICON) {
+        new AddItemPopupAction<Library>(this, actionIndex++, ProjectBundle.message("classpath.add.new.library.action"), Icons.LIBRARY_ICON) {
           protected ClasspathTableItem createTableItem(final Library item) {
             final OrderEntry[] entries = getRootModel().getOrderEntries();
             for (OrderEntry entry : entries) {
@@ -503,22 +494,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
                 }
               }
             }
-            LOG.error("Unknown library " + item);
-            return null;
+            return ClasspathTableItem.createLibItem(getRootModel().addLibraryEntry(item));
           }
 
           protected ClasspathElementChooserDialog<Library> createChooserDialog() {
-            return new CreateModuleLibraryDialog(ClasspathPanelImpl.this, getRootModel().getModuleLibraryTable());
+            return new CreateLibraryDialog(ClasspathPanelImpl.this.getProject(), getRootModel(), context, ClasspathPanelImpl.this.getComponent());
           }
         });
-      actions.add(new ChooseNamedLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.project.library.action"),
-                                               context.getProjectLibrariesProvider(true)));
-      actions.add(new ChooseNamedLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.global.library.action"),
-                                               context.getGlobalLibrariesProvider(true)));
-
-      for (final LibraryTableModifiableModelProvider provider : context.getCustomLibrariesProviders(true)) {
-        actions.add(new ChooseNamedLibraryAction(this, actionIndex++, provider.getLibraryTablePresentation().getDisplayName(false) + "...", provider));
-      }
+      actions.add(new ChooseExistingLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.existing.library.action"), context));
 
       actions.add(new AddItemPopupAction<Module>(this, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
                                                  StdModuleTypes.JAVA.getNodeIcon(false)) {

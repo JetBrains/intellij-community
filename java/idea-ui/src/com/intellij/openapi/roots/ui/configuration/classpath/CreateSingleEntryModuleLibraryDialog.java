@@ -17,34 +17,33 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryFileChooser;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.List;
 import java.util.*;
+import java.util.List;
 
 /**
 * @author nik
 */
-class ChooseModuleLibrariesDialog extends LibraryFileChooser implements ClasspathElementChooserDialog<Library> {
-  private Pair<String, VirtualFile[]> myLastChosen;
-  private final LibraryTable myLibraryTable;
-  @Nullable private final VirtualFile myFileToSelect;
+class CreateSingleEntryModuleLibraryDialog implements ClasspathElementChooserDialog<Library> {
+  private ClasspathPanel myClasspathPanel;
+  private final LibraryTable.ModifiableModel myModuleLibrariesModel;
+  private VirtualFile[] myChosenFiles;
 
-  public ChooseModuleLibrariesDialog(Component parent, final LibraryTable libraryTable, final VirtualFile fileToSelect) {
-    super(createFileChooserDescriptor(parent), parent, false, null);
-    myLibraryTable = libraryTable;
-    myFileToSelect = fileToSelect;
+  public CreateSingleEntryModuleLibraryDialog(ClasspathPanel classpathPanel,
+                                              final LibraryTable.ModifiableModel moduleLibrariesModel) {
+    myClasspathPanel = classpathPanel;
+    myModuleLibrariesModel = moduleLibrariesModel;
   }
 
   private static FileChooserDescriptor createFileChooserDescriptor(Component parent) {
@@ -54,18 +53,17 @@ class ChooseModuleLibrariesDialog extends LibraryFileChooser implements Classpat
     return descriptor;
   }
 
-  public java.util.List<Library> getChosenElements() {
-    if (myLastChosen == null) {
+  public List<Library> getChosenElements() {
+    if (myChosenFiles == null) {
       return Collections.emptyList();
     }
-    final VirtualFile[] files = filterAlreadyAdded(myLastChosen.getSecond());
+    final VirtualFile[] files = filterAlreadyAdded(myChosenFiles);
     if (files.length == 0) {
       return Collections.emptyList();
     }
-    final LibraryTable.ModifiableModel modifiableModel = myLibraryTable.getModifiableModel();
-    final java.util.List<Library> addedLibraries = new ArrayList<Library>(files.length);
+    final List<Library> addedLibraries = new ArrayList<Library>(files.length);
     for (VirtualFile file : files) {
-      final Library library = modifiableModel.createLibrary(null);
+      final Library library = myModuleLibrariesModel.createLibrary(null);
       final Library.ModifiableModel libModel = library.getModifiableModel();
       libModel.addRoot(file, OrderRootType.CLASSES);
       libModel.commit();
@@ -80,7 +78,7 @@ class ChooseModuleLibrariesDialog extends LibraryFileChooser implements Classpat
     }
     final Set<VirtualFile> chosenFilesSet = new HashSet<VirtualFile>(Arrays.asList(files));
     final Set<VirtualFile> alreadyAdded = new HashSet<VirtualFile>();
-    final Library[] libraries = myLibraryTable.getLibraries();
+    final Library[] libraries = myModuleLibrariesModel.getLibraries();
     for (Library library : libraries) {
       ContainerUtil.addAll(alreadyAdded, library.getFiles(OrderRootType.CLASSES));
     }
@@ -89,6 +87,16 @@ class ChooseModuleLibrariesDialog extends LibraryFileChooser implements Classpat
   }
 
   public void doChoose() {
-    myLastChosen = chooseNameAndFiles(myFileToSelect);
+    final JComponent parent = myClasspathPanel.getComponent();
+    myChosenFiles = FileChooser.chooseFiles(parent, createFileChooserDescriptor(parent));
+  }
+
+  @Override
+  public boolean isOK() {
+    return myChosenFiles != null && myChosenFiles.length > 0;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

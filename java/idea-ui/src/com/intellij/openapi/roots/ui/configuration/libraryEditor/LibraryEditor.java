@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,115 +17,29 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 
-public class LibraryEditor implements Disposable {
-  private final Library myLibrary;
-  private final LibraryEditorListener myListener;
-  private String myLibraryName = null;
-  private Library.ModifiableModel myModel = null;
+/**
+ * @author nik
+ */
+public interface LibraryEditor extends Disposable {
+  String getName();
 
-  public LibraryEditor(Library library, @NotNull LibraryEditorListener listener) {
-    myLibrary = library;
-    myListener = listener;
-  }
+  String[] getUrls(OrderRootType rootType);
 
-  public String getName() {
-    if (myLibraryName != null) {
-      return myLibraryName;
-    }
-    return myLibrary.getName();
-  }
+  VirtualFile[] getFiles(OrderRootType rootType);
 
-  public void dispose() {
-    if (myModel != null) {
-      // dispose if wasn't committed
-      Disposer.dispose(myModel);
-    }
-  }
+  void setName(String name);
 
-  public String[] getUrls(OrderRootType rootType) {
-    if (myModel != null) {
-      return myModel.getUrls(rootType);
-    }
-    return myLibrary.getUrls(rootType);
-  }
+  void addRoot(VirtualFile file, OrderRootType rootType);
 
-  public VirtualFile[] getFiles(OrderRootType rootType) {
-    if (myModel != null) {
-      return myModel.getFiles(rootType);
-    }
-    return myLibrary.getFiles(rootType);
-  }
+  void addJarDirectory(VirtualFile file, boolean recursive);
 
-  public void setName(String name) {
-    String oldName = getModel().getName();
-    myLibraryName = name;
-    getModel().setName(name);
-    myListener.libraryRenamed(myLibrary, oldName, name);
-  }
+  void removeRoot(String url, OrderRootType rootType);
 
-  public void addRoot(String url, OrderRootType rootType) {
-    getModel().addRoot(url, rootType);
-  }
+  boolean hasChanges();
 
-  public void addRoot(VirtualFile file, OrderRootType rootType) {
-    getModel().addRoot(file, rootType);
-  }
+  boolean isJarDirectory(String url);
 
-  public void addJarDirectory(String url, boolean recursive) {
-    getModel().addJarDirectory(url, recursive);
-  }
-
-  public void addJarDirectory(VirtualFile file, boolean recursive) {
-    getModel().addJarDirectory(file, recursive);
-  }
-
-  public void removeRoot(String url, OrderRootType rootType) {
-    while (getModel().removeRoot(url, rootType)) ;
-  }
-
-  public void commit() {
-    if (myModel != null) {
-      myModel.commit();
-      myModel = null;
-      myLibraryName = null;
-    }
-  }
-
-  public Library.ModifiableModel getModel() {
-    if (myModel == null) {
-      myModel = myLibrary.getModifiableModel();
-    }
-    return myModel;
-  }
-
-  public boolean hasChanges() {
-    return myModel != null && myModel.isChanged();
-  }
-  
-  public boolean isJarDirectory(String url) {
-    if (myModel != null) {
-      return myModel.isJarDirectory(url);
-    }
-    return myLibrary.isJarDirectory(url); 
-  }
-  
-  public boolean allPathsValid(OrderRootType orderRootType) {
-    if (myModel != null) {
-      return ((LibraryEx.ModifiableModelEx)myModel).allPathsValid(orderRootType);
-    }
-    return ((LibraryEx)myLibrary).allPathsValid(orderRootType); 
-  }
-
-  public boolean isValid(final String url, final OrderRootType orderRootType) {
-    if (myModel != null) {
-      return myModel.isValid(url, orderRootType);
-    }
-    return myLibrary.isValid(url, orderRootType); 
-  }
+  boolean isValid(String url, OrderRootType orderRootType);
 }

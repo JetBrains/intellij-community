@@ -111,7 +111,7 @@ public class GroovyFacetEditor {
     final AbstractGroovyLibraryManager[] managers = AbstractGroovyLibraryManager.EP_NAME.getExtensions();
     Set<Pair<Library, LibraryManager>> libs = new TreeSet<Pair<Library, LibraryManager>>(LIBRARY_COMPARATOR);
     for (Library library : container.getAllLibraries()) {
-      final LibraryManager manager = ManagedLibrariesEditor.findManagerFor(library, managers, container);
+      final LibraryManager manager = LibraryManager.findManagerFor(library, managers, container);
       if (myAcceptableManager.isInstance(manager)) {
         libs.add(Pair.create(library, manager));
       }

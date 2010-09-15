@@ -16,9 +16,7 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -43,28 +41,7 @@ public class EditLibraryDialog extends DialogWrapper {
     mySettings = settings;
     final Library library = settings.getOrCreateLibrary();
 
-    myLibraryTableEditor = LibraryTableEditor.editLibrary(new LibraryTableModifiableModelProvider() {
-
-      @Override
-      public LibraryTable.ModifiableModel getModifiableModel() {
-        return library.getTable().getModifiableModel();
-      }
-
-      @Override
-      public String getTableLevel() {
-        return library.getTable().getTableLevel();
-      }
-
-      @Override
-      public LibraryTablePresentation getLibraryTablePresentation() {
-        return library.getTable().getPresentation();
-      }
-
-      @Override
-      public boolean isLibraryTableEditable() {
-        return false;
-      }
-    }, library);
+    myLibraryTableEditor = LibraryTableEditor.editLibrary(new ExistingLibraryEditor(library, null));
 
     Disposer.register(getDisposable(), myLibraryTableEditor);
 

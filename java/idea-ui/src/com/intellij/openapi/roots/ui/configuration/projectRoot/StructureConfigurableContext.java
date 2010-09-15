@@ -19,9 +19,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
@@ -103,45 +103,35 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     }
   }
 
-  public LibraryTableModifiableModelProvider getGlobalLibrariesProvider(final boolean tableEditable) {
-    return createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL, tableEditable);
+  public StructureLibraryTableModifiableModelProvider getGlobalLibrariesProvider() {
+    return createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
-  public LibraryTableModifiableModelProvider createModifiableModelProvider(final String level, final boolean isTableEditable) {
-    final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, myProject);
-    return new LibraryTableModifiableModelProvider() {
-        public LibraryTable.ModifiableModel getModifiableModel() {
-          return myLevel2Providers.get(level);
-        }
-
-        public String getTableLevel() {
-          return table.getTableLevel();
-        }
-
-        public LibraryTablePresentation getLibraryTablePresentation() {
-          return table.getPresentation();
-        }
-
-        public boolean isLibraryTableEditable() {
-          return isTableEditable && table.isEditable();
-        }
-      };
+  public StructureLibraryTableModifiableModelProvider createModifiableModelProvider(final String level) {
+    return new StructureLibraryTableModifiableModelProvider(level, this);
   }
 
-  public LibraryTableModifiableModelProvider getProjectLibrariesProvider(final boolean tableEditable) {
-    return createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL, tableEditable);
+  public StructureLibraryTableModifiableModelProvider getProjectLibrariesProvider() {
+    return createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
   }
 
 
-  public List<LibraryTableModifiableModelProvider> getCustomLibrariesProviders(final boolean tableEditable) {
+  public List<LibraryTableModifiableModelProvider> getCustomLibrariesProviders() {
     return ContainerUtil.map2List(LibraryTablesRegistrar.getInstance().getCustomLibraryTables(), new NotNullFunction<LibraryTable, LibraryTableModifiableModelProvider>() {
       @NotNull
       public LibraryTableModifiableModelProvider fun(final LibraryTable libraryTable) {
-        return createModifiableModelProvider(libraryTable.getTableLevel(), tableEditable);
+        return createModifiableModelProvider(libraryTable.getTableLevel());
       }
     });
   }
 
+  public LibraryTable.ModifiableModel getModifiableLibraryTable(@NotNull LibraryTable table) {
+    final String tableLevel = table.getTableLevel();
+    if (tableLevel.equals(LibraryTableImplUtil.MODULE_LEVEL)) {
+      return table.getModifiableModel();
+    }
+    return myLevel2Providers.get(tableLevel);
+  }
 
   @Nullable
   public Library getLibrary(final String libraryName, final String libraryLevel) {
@@ -187,4 +177,5 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
   public void clear() {
     myLevel2Providers.clear();
   }
+
 }
