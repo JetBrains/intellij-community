@@ -133,5 +133,6 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("PARAMETER_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.parameters.annotation"), WRAP_OPTIONS, WRAP_VALUES);
     addOption("VARIABLE_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.local.variables.annotation"), WRAP_OPTIONS, WRAP_VALUES);
     addOption("ENUM_CONSTANTS_WRAP", ApplicationBundle.message("wrapping.enum.constants"), WRAP_OPTIONS, WRAP_VALUES);
+    addOption("WRAP_LONG_LINES", ApplicationBundle.message("wrapping.long.lines"), null);
   }
 }

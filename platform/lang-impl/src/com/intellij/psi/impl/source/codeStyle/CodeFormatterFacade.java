@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -203,18 +204,48 @@ public class CodeFormatterFacade {
    * @param startOffset start offset of the first line to check for wrapping (inclusive)
    * @param endOffset   end offset of the first line to check for wrapping (exclusive)
    */
-  private void wrapLongLinesIfNecessary(@NotNull PsiFile file, @NotNull Document document, int startOffset, int endOffset) {
-    Editor editor = PsiUtilBase.findEditor(file);
-    if (editor == null) {
+  private void wrapLongLinesIfNecessary(@NotNull PsiFile file, @NotNull final Document document, final int startOffset,
+                                        final int endOffset)
+  {
+    if (!mySettings.WRAP_LONG_LINES || file.getViewProvider().isLockedByPsiOperations()) {
       return;
     }
 
+    Editor editor = PsiUtilBase.findEditor(file);
+    EditorFactory editorFactory = null;
+    if (editor == null) {
+      if (!ApplicationManager.getApplication().isDispatchThread()) {
+        return;
+      }
+      editorFactory = EditorFactory.getInstance();
+      editor = editorFactory.createEditor(document);
+    }
+    try {
+      final Editor editorToUse = editor;
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          doWrapLongLinesIfNecessary(editorToUse, document, startOffset, endOffset);
+        }
+      });
+    }
+    finally {
+      if (editorFactory != null) {
+        editorFactory.releaseEditor(editor);
+      }
+    }
+  }
+
+  private void doWrapLongLinesIfNecessary(@NotNull Editor editor, @NotNull Document document, int startOffset, int endOffset) {
     LineWrapPositionStrategy strategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(editor);
     CharSequence text = document.getCharsSequence();
     int startLine = document.getLineNumber(startOffset);
     int endLine = document.getLineNumber(Math.min(document.getTextLength(), endOffset) - 1);
     int maxLine = Math.min(document.getLineCount(), endLine + 1);
     int tabSize = EditorUtil.getTabSize(editor);
+    if (tabSize <= 0) {
+      tabSize = 1;
+    }
     int spaceSize = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
 
     for (int line = startLine; line < maxLine; line++) {
@@ -334,7 +365,7 @@ public class CodeFormatterFacade {
       // There is a possible case that particular line is so long, that its part that exceeds right margin and is wrapped
       // still exceeds right margin. Hence, we recursively call 'wrap long lines' sub-routine in order to handle that.
 
-      wrapLongLinesIfNecessary(file, document, document.getLineStartOffset(line + 1), endOffset);
+      doWrapLongLinesIfNecessary(editor, document, document.getLineStartOffset(line + 1), endOffset);
       return;
     }
   }
