@@ -57,6 +57,10 @@ public class BlockDebugUtil {
     else {
       out.print(" <Indent: -- null -->");
     }
+    Alignment alignment = block.getAlignment();
+    if (alignment != null) {
+      out.print(" <Alignment: " + Integer.toHexString(alignment.hashCode()).substring(0,4) + "...>");
+    }
     out.print(" " + block.getTextRange() + " ");
     if (block instanceof ASTBlock) {
       ASTNode node = ((ASTBlock)block).getNode();

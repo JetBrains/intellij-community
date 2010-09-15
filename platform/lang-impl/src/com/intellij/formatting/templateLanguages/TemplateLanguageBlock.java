@@ -36,7 +36,7 @@ import java.util.List;
 public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent {
   private final TemplateLanguageBlockFactory myBlockFactory;
   private final CodeStyleSettings mySettings;
-  private List<DataLanguageBlockWrapper> myForeignChildren;
+  protected List<DataLanguageBlockWrapper> myForeignChildren;
   private boolean myChildrenBuilt = false;
   private BlockWithParent myParent;
 
