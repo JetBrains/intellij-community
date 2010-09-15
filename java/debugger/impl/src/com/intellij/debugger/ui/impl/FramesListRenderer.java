@@ -76,7 +76,7 @@ class FramesListRenderer extends ColoredListCellRenderer {
       }
 
       if (needSeparator) {
-        final MatteBorder border = BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK);
+        final MatteBorder border = BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY);
         setBorder(border);
       }
       else {
