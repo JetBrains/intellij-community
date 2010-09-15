@@ -350,7 +350,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
               for (Set<String> namedParameters : parametersArray) {
                 for (String parameter : namedParameters) {
                   final LookupElementBuilder lookup =
-                    LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(new NamedArgumentInsertHandler());
+                    LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
                   result.addElement(lookup);
                 }
               }
@@ -458,7 +458,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       usedNames.add(name);
       final LookupElementBuilder builder =
         LookupElementBuilder.create(writableProperties.get(name), name).setIcon(GroovyIcons.PROPERTY)
-          .setInsertHandler(new NamedArgumentInsertHandler());
+          .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
       result.addElement(builder);
     }
   }
@@ -477,7 +477,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
             for (PsiMethod listenerMethod : listenerMethods) {
               final String name = listenerMethod.getName();
               usedNames.add(name);
-              result.addElement(LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY).setInsertHandler(new NamedArgumentInsertHandler()));
+              result.addElement(LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY).setInsertHandler(NamedArgumentInsertHandler.INSTANCE));
             }
           }
         }
