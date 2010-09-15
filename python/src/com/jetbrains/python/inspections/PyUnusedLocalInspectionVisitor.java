@@ -196,9 +196,10 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       owner.acceptChildren(new PyRecursiveElementVisitor(){
         @Override
         public void visitPyCallExpression(final PyCallExpression node) {
-          if ("locals".equals(node.getCallee().getText())){
+          if ("locals".equals(node.getCallee().getName())){
             throw new DontPerformException();
           }
+          node.acceptChildren(this); // look at call expr in arguments
         }
 
         @Override
@@ -246,7 +247,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (PsiTreeUtil.getParentOfType(element, PyClass.class) != null) {
             // When function is inside a class, first parameter may be either self or cls which is always 'used'.
             final PyFunction method = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-            if (method != null) {
+            if (method != null && ! PyNames.STATICMETHOD.equals(PyUtil.getClassOrStaticMethodDecorator(method))) {
               final PsiElement parent = namedParameter.getParent();
               if (parent instanceof PyParameterList && ((PyParameterList)parent).getParameters()[0] == namedParameter) {
                 continue;
