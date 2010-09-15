@@ -16,10 +16,15 @@
 package com.intellij.formatting.alignment;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * This class provides helper methods to use for <code>'align in columns'</code> processing.
@@ -51,13 +56,14 @@ public class AlignmentInColumnsHelper {
    * Allows to answer if given node should be aligned to the previous node of the same type according to the given alignment config
    * assuming that given node is a variable declaration.
    *
-   * @param node   target node which alignment strategy is to be defined
-   * @param config alignment config to use for processing
+   * @param node                         target node which alignment strategy is to be defined
+   * @param config                       alignment config to use for processing
+   * @param blankLinesToBeKeptOnReformat corresponding KEEP_LINE_IN_* formatting setting
    * @return <code>true</code> if given node should be aligned to the previous one; <code>false</code> otherwise
    */
   @SuppressWarnings({"MethodMayBeStatic"})
-  public boolean useDifferentVarDeclarationAlignment(ASTNode node, AlignmentInColumnsConfig config) {
-    ASTNode prev = getPreviousAdjacentNodeOfTargetType(node, config);
+  public boolean useDifferentVarDeclarationAlignment(ASTNode node, AlignmentInColumnsConfig config, int blankLinesToBeKeptOnReformat) {
+    ASTNode prev = getPreviousAdjacentNodeOfTargetType(node, config, blankLinesToBeKeptOnReformat);
     if (prev == null) {
       return true;
     }
@@ -121,24 +127,27 @@ public class AlignmentInColumnsHelper {
       }
     }
 
-    boolean prevContainsDefinition = containsSubNodeOfType(prev, config.getDistinguishableTypes());
-    boolean currentContainsDefinition = containsSubNodeOfType(currentFieldToUse, config.getDistinguishableTypes());
+    List<IElementType> prevTypes = findSubNodeTypes(prev, config.getDistinguishableTypes());
+    List<IElementType> currTypes = findSubNodeTypes(currentFieldToUse, config.getDistinguishableTypes());
 
-    return prevContainsDefinition ^ currentContainsDefinition;
+    return !prevTypes.equals(currTypes);
   }
 
   /**
    * Tries to find previous node adjacent to the given node that has the same
    * {@link AlignmentInColumnsConfig#getTargetDeclarationTypes() target type}.
    *
-   * @param baseNode base node to use
-   * @param config   current processing config
+   * @param baseNode                     base node to use
+   * @param config                       current processing config
+   * @param blankLinesToBeKeptOnReformat
    * @return previous node to the given base node that has that same type and is adjacent to it if possible;
    *         <code>null</code> otherwise
    */
   @SuppressWarnings({"StatementWithEmptyBody"})
   @Nullable
-  private static ASTNode getPreviousAdjacentNodeOfTargetType(ASTNode baseNode, AlignmentInColumnsConfig config) {
+  private static ASTNode getPreviousAdjacentNodeOfTargetType(ASTNode baseNode,
+                                                             AlignmentInColumnsConfig config,
+                                                             final double blankLinesToBeKeptOnReformat) {
     ASTNode nodeOfTargetType = deriveNodeOfTargetType(baseNode, config.getTargetDeclarationTypes());
     if (nodeOfTargetType == null) {
       return null;
@@ -154,10 +163,19 @@ public class AlignmentInColumnsHelper {
 
       @Override
       public boolean whitespaceFound(ASTNode node) {
-        return StringUtil.countChars(node.getText(), '\n') > 1;
+        return blankLinesToBeKeptOnReformat > 0 && StringUtil.countChars(node.getText(), '\n') > 1;
       }
     });
     if (prev[0] == null) return null;
+
+    // ensure there are no non-whitespace, non-comment elements on the top level between baseNode and the found one
+    Pair<ASTNode, ASTNode> siblingParents = TreeUtil.findTopmostSiblingParents(prev[0], baseNode);
+    if (siblingParents.first != null && siblingParents.second != null) {
+      for (ASTNode each = siblingParents.second.getTreePrev(); each != null && each != siblingParents.first; each = each.getTreePrev()) {
+        IElementType eachType = each.getElementType();
+        if (!config.getCommentTokenTypes().contains(eachType) && !config.getWhiteSpaceTokenTypes().contains(eachType)) return null;
+      }
+    }
 
     return deriveNodeOfTargetType(prev[0], TokenSet.create(nodeOfTargetType.getElementType()));
   }
@@ -217,26 +235,6 @@ public class AlignmentInColumnsHelper {
    *
    * @return direct or indirect previous node of the given one having target type if possible; <code>null</code> otherwise
    */
-  //@Nullable
-  //private static ASTNode getPreviousNode(ASTNode startNode, IElementType targetType) {
-  //  // Try to find node that is direct previous node of the target node or is parent of the node that is indirect previous node
-  //  // of the target node.
-  //  ASTNode prev = startNode.getTreePrev();
-  //  for (ASTNode node = startNode; prev == null && node != null; node = node.getTreeParent()) {
-  //    prev = node.getTreePrev();
-  //  }
-  //
-  //  ASTNode result = prev;
-  //
-  //  // Find the rightest child of the target previous parent node if necessary.
-  //  if (prev != null) {
-  //    for (; prev != null && prev.getElementType() != targetType; prev = prev.getLastChildNode()) {
-  //      result = prev;
-  //    }
-  //  }
-  //
-  //  return result;
-  //}
   private static boolean findPreviousNode(AlignmentInColumnsConfig config,
                                           ASTNode from,
                                           IElementType targetType,
@@ -246,8 +244,6 @@ public class AlignmentInColumnsHelper {
     if (from == null) return false;
 
     for (ASTNode prev = processFrom ? from : from.getTreePrev(); prev != null; prev = prev.getTreePrev()) {
-      // todo stop processing on exiting from the scope
-
       IElementType prevType = prev.getElementType();
       if (prevType == targetType) {
         if (processor.targetTypeFound(prev)) return true;
@@ -259,7 +255,12 @@ public class AlignmentInColumnsHelper {
       if (findPreviousNode(config, prev.getLastChildNode(), targetType, true, false, processor)) return true;
     }
 
-    return processParent ? findPreviousNode(config, from.getTreeParent(), targetType, false, processParent, processor) : false;
+    if (processParent) {
+      for (ASTNode parent = from.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
+        if (findPreviousNode(config, parent, targetType, false, false, processor)) return true;
+      }
+    }
+    return false;
   }
 
   private static abstract class NodeProcessor {
@@ -326,19 +327,14 @@ public class AlignmentInColumnsHelper {
     return null;
   }
 
-  /**
-   * Allows to check if given node contains direct child (level one depth) of the given type.
-   *
-   * @param node parent node to check
-   * @param type target child node type
-   * @return <code>true</code> if given parent node contains direct child of the given type; <code>false</code> otherwise
-   */
-  private static boolean containsSubNodeOfType(ASTNode node, TokenSet types) {
+  private static List<IElementType> findSubNodeTypes(ASTNode node, TokenSet types) {
+    List<IElementType> foundTypes = new SmartList<IElementType>();
     for (ASTNode child = node.getFirstChildNode(); child != null && child.getTreeParent() == node; child = child.getTreeNext()) {
-      if (types.contains(child.getElementType())) {
-        return true;
+      IElementType type = child.getElementType();
+      if (types.contains(type)) {
+        foundTypes.add(type);
       }
     }
-    return false;
+    return foundTypes;
   }
 }
