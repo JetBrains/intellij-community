@@ -16,16 +16,17 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.formatting.FormatTextRanges;
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.*;
+import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -38,7 +39,11 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 public class CodeFormatterFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
@@ -75,8 +80,11 @@ public class CodeFormatterFacade {
       final FormattingModel model = builder.createModel(elementToFormat, mySettings);
       if (file.getTextLength() > 0) {
         try {
-          FormatterEx.getInstanceEx().format(model, mySettings,
-                                             mySettings.getIndentOptions(fileToFormat.getFileType()), new FormatTextRanges(range, true));
+          FormatterEx.getInstanceEx().format(
+            model, mySettings,mySettings.getIndentOptions(fileToFormat.getFileType()), new FormatTextRanges(range, true)
+          );
+
+          wrapLongLinesIfNecessary(file, document, startOffset, endOffset);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -102,7 +110,7 @@ public class CodeFormatterFacade {
   }
 
   public void processText(PsiFile file, final FormatTextRanges ranges, boolean doPostponedFormatting) {
-    Project project = file.getProject();
+    final Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document instanceof DocumentWindow) {
       file = InjectedLanguageUtil.getTopLevelFile(file);
@@ -150,6 +158,10 @@ public class CodeFormatterFacade {
                                                                          project, mySettings, file.getFileType(), file);
 
           FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
+          for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+            TextRange textRange = range.getTextRange();
+            wrapLongLinesIfNecessary(file, document, textRange.getStartOffset(), textRange.getEndOffset());
+          }
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -164,6 +176,167 @@ public class CodeFormatterFacade {
       result = processor.process(node, result);
     }
     return result;
+  }
+
+  /**
+   * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#RIGHT_MARGIN right margin}.
+   * <p/>
+   * I.e. the algorithm is to do the following for every line:
+   * <p/>
+   * <pre>
+   * <ol>
+   *   <li>
+   *      Check if the line exceeds {@link CodeStyleSettings#RIGHT_MARGIN right margin}. Go to the next line in the case of
+   *      negative answer;
+   *   </li>
+   *   <li>Determine line wrap position; </li>
+   *   <li>
+   *      Perform 'smart wrap', i.e. not only wrap the line but insert additional characters over than line feed if necessary.
+   *      For example consider that we wrap a single-line comment - we need to insert comment symbols on a start of the wrapped
+   *      part as well. Generally, we get the same behavior as during pressing 'Enter' at wrap position during editing document;
+   *   </li>
+   * </ol>
+   </pre>
+   *
+   * @param file        file that holds parsed document tree
+   * @param document    target document
+   * @param startOffset start offset of the first line to check for wrapping (inclusive)
+   * @param endOffset   end offset of the first line to check for wrapping (exclusive)
+   */
+  private void wrapLongLinesIfNecessary(@NotNull PsiFile file, @NotNull Document document, int startOffset, int endOffset) {
+    Editor editor = PsiUtilBase.findEditor(file);
+    if (editor == null) {
+      return;
+    }
+
+    LineWrapPositionStrategy strategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(editor);
+    CharSequence text = document.getCharsSequence();
+    int startLine = document.getLineNumber(startOffset);
+    int endLine = document.getLineNumber(Math.min(document.getTextLength(), endOffset) - 1);
+    int maxLine = Math.min(document.getLineCount(), endLine + 1);
+    int tabSize = EditorUtil.getTabSize(editor);
+    int spaceSize = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
+
+    for (int line = startLine; line < maxLine; line++) {
+      int startLineOffset = document.getLineStartOffset(line);
+      int endLineOffset = document.getLineEndOffset(line);
+
+      boolean hasTabs = false;
+      boolean canOptimize = true;
+      boolean hasNonSpaceSymbols = false;
+      loop:
+      for (int i = startLineOffset; i < Math.min(endLineOffset, endOffset); i++) {
+        char c = text.charAt(i);
+        switch (c) {
+          case '\t': {
+            hasTabs = true;
+            if (hasNonSpaceSymbols) {
+              canOptimize = false;
+              break loop;
+            }
+          }
+          case ' ': break;
+          default: hasNonSpaceSymbols = true;
+        }
+      }
+
+      int preferredWrapPosition = Integer.MAX_VALUE;
+      if (!hasTabs) {
+        if (Math.min(endLineOffset, endOffset) >= mySettings.RIGHT_MARGIN) {
+          preferredWrapPosition = startLineOffset + mySettings.RIGHT_MARGIN - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
+        }
+      }
+      else if (canOptimize) {
+        int width = 0;
+        int symbolWidth;
+        for (int i = startLineOffset; i < Math.min(endLineOffset, endOffset); i++) {
+          char c = text.charAt(i);
+          switch (c) {
+            case '\t': symbolWidth = tabSize - (width % tabSize); break;
+            default: symbolWidth = 1;
+          }
+          if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
+              && (Math.min(endLineOffset, endOffset) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
+          {
+            preferredWrapPosition = i - 1;
+            break;
+          }
+          width += symbolWidth;
+        }
+      }
+      else {
+        int width = 0;
+        int x = 0;
+        int newX;
+        int symbolWidth;
+        for (int i = startLineOffset; i < Math.min(endLineOffset, endOffset); i++) {
+          char c = text.charAt(i);
+          switch (c) {
+            case '\t':
+              newX = EditorUtil.nextTabStop(x, editor);
+              int diffInPixels = newX - x;
+              symbolWidth = diffInPixels / spaceSize;
+              if (diffInPixels % spaceSize > 0) {
+                symbolWidth++;
+              }
+              break;
+            default: newX = x + EditorUtil.charWidth(c, Font.PLAIN, editor); symbolWidth = 1;
+          }
+          if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
+              && (Math.min(endLineOffset, endOffset) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
+          {
+            preferredWrapPosition = i - 1;
+            break;
+          }
+          x = newX;
+          width += symbolWidth;
+        }
+      }
+      if (preferredWrapPosition >= endLineOffset) {
+        continue;
+      }
+      if (preferredWrapPosition >= endOffset) {
+        return;
+      }
+
+      // We know that current line exceeds right margin if control flow reaches this place, so, wrap it.
+      int wrapOffset = strategy.calculateWrapPosition(
+        text, Math.max(startLineOffset, startOffset), Math.min(endLineOffset, endOffset), preferredWrapPosition, false
+      );
+      editor.getCaretModel().moveToOffset(wrapOffset);
+      DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+
+      SelectionModel selectionModel = editor.getSelectionModel();
+      boolean restoreSelection;
+      int startSelectionOffset = 0;
+      int endSelectionOffset = 0;
+      if (restoreSelection = selectionModel.hasSelection()) {
+        startSelectionOffset = selectionModel.getSelectionStart();
+        endSelectionOffset = selectionModel.getSelectionEnd();
+        selectionModel.removeSelection();
+      }
+      int textLengthBeforeWrap = document.getTextLength();
+      EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+      if (restoreSelection) {
+        int symbolsDiff = document.getTextLength() - textLengthBeforeWrap;
+        int newSelectionStart = startSelectionOffset;
+        int newSelectionEnd = endSelectionOffset;
+        if (startSelectionOffset >= wrapOffset) {
+          newSelectionStart += symbolsDiff;
+        }
+        if (endSelectionOffset >= wrapOffset) {
+          newSelectionEnd += symbolsDiff;
+        }
+        selectionModel.setSelection(newSelectionStart, newSelectionEnd);
+      }
+
+
+      // There is a possible case that particular line is so long, that its part that exceeds right margin and is wrapped
+      // still exceeds right margin. Hence, we recursively call 'wrap long lines' sub-routine in order to handle that.
+
+      wrapLongLinesIfNecessary(file, document, document.getLineStartOffset(line + 1), endOffset);
+      return;
+    }
   }
 }
 
