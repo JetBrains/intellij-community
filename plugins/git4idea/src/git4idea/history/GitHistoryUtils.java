@@ -47,17 +47,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * History utilities for Git
+ * A collection of methods for retrieving history information from native Git.
  */
 public class GitHistoryUtils {
-  /**
-   * The logger for the utilities
-   */
   private final static Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
 
-  /**
-   * A private constructor
-   */
   private GitHistoryUtils() {
   }
 
@@ -65,9 +59,9 @@ public class GitHistoryUtils {
    * Get current revision for the file under git
    *
    * @param project  a project
-   * @param filePath a file path
-   * @return a revision number or null if the file is unversioned or new
-   * @throws VcsException if there is problem with running git
+   * @param filePath file path to the file which revision is to be retrieved.
+   * @return revision number or null if the file is unversioned or new.
+   * @throws VcsException if there is a problem with running git.
    */
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath) throws VcsException {
@@ -139,17 +133,26 @@ public class GitHistoryUtils {
     final String prefix = root.getPath() + "/";
     final MyTokenAccumulator accumulator = new MyTokenAccumulator(6);
 
-    final Consumer<List<String>> resultAdapter = new Consumer<List<String>>() {
-      public void consume(List<String> result) {
-        final GitRevisionNumber revision = new GitRevisionNumber(result.get(0), GitUtil.parseTimestamp(result.get(1)));
-        final String author = GitUtil.adjustAuthorName(result.get(2), result.get(3));
-        final String message = result.get(4).trim();
-
-        String path = "";
-        try {
-          path = GitUtil.unescapePath(result.get(5));
+    final Consumer<LowLevelRevisionDetails> resultAdapter = new Consumer<LowLevelRevisionDetails>() {
+      public void consume(LowLevelRevisionDetails revisionDetails) {
+        if (revisionDetails == null) {
+          exceptionConsumer.consume(new VcsException("revision details are null."));
+          return;
         }
-        catch (VcsException e) {
+        if (revisionDetails.missesRequiredFields()) {
+          exceptionConsumer.consume(new VcsException("revision misses hash or timestamp data."));
+          return;
+        }
+        final GitRevisionNumber revision = new GitRevisionNumber(revisionDetails.hash, GitUtil.parseTimestamp(revisionDetails.timestamp));
+        final String author = GitUtil.adjustAuthorName(revisionDetails.getAuthor(), revisionDetails.getCommitter());
+        final String message = revisionDetails.getComment();
+
+        String path = revisionDetails.getPath();
+        try {
+          if (!path.isEmpty()) {
+            path = GitUtil.unescapePath(path);
+          }
+        } catch (VcsException e) {
           exceptionConsumer.consume(e);
         }
         final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + path, false);
@@ -161,7 +164,7 @@ public class GitHistoryUtils {
     h.addLineListener(new GitLineHandlerAdapter() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
-        final List<String> result = accumulator.acceptLine(line);
+        final LowLevelRevisionDetails result = accumulator.acceptLine(line);
         if (result != null) {
           resultAdapter.consume(result);
         }
@@ -176,7 +179,7 @@ public class GitHistoryUtils {
       @Override
       public void processTerminated(int exitCode) {
         super.processTerminated(exitCode);
-        final List<String> result = accumulator.processLast();
+        final LowLevelRevisionDetails result = accumulator.processLast();
         if (result != null) {
           resultAdapter.consume(result);
         }
@@ -189,6 +192,93 @@ public class GitHistoryUtils {
     semaphore.down();
     h.start();
     semaphore.waitFor();
+  }
+
+  /**
+   * Container for revision details retrieved from the git log.
+   */
+  private static class LowLevelRevisionDetails {
+    private String hash;
+    private String timestamp;
+    private String author;
+    private String committer;
+    private String comment;
+    private String path;
+
+    /**
+     * Fills details from the given list of Strings. The order of details is assumed to be the following:
+     * hash, timestamp, author, committer, comment, path.
+     * If less than 6 details are given, the rest instance variables remain null.
+     * If more than 6 details are supplied, the rest are ignored and the message is printed to the LOG.
+     * @param details List of details about revision information.
+     * @return LowLevelRevisionDetails with all or some details filled.
+     */
+    static LowLevelRevisionDetails fillDetails(List<String> details) {
+      final LowLevelRevisionDetails result = new LowLevelRevisionDetails();
+      final int size = details.size();
+      switch (size) {
+        default: LOG.info("Unexpectedly received more than 6 revision details: " + details);
+        case 6: result.path = details.get(5);
+        case 5: result.comment = details.get(4);
+        case 4: result.committer = details.get(3);
+        case 3: result.author = details.get(2);
+        case 2: result.timestamp = details.get(1);
+        case 1: result.hash = details.get(0);
+        case 0: break;
+      }
+      return result;
+    }
+
+    /**
+     * Hash and timestamps are required. Revision is completely invalid if missing those and will be treated respectively.
+     * @return True if hash or timestamp is not set in this details.
+     */
+    public boolean missesRequiredFields() {
+      return hash == null || timestamp == null;
+    }
+
+    /*
+     * Following 4 getter methods return the field value if it not null.
+     * If it is null, an empty String is returned, and a message is printed to the LOG. 
+     */
+
+    public String getAuthor() {
+      if (author != null) {
+        return author;
+      }
+      LOG.info("revision details misses author data, using empty: " + this);
+      return "";
+    }
+
+    public String getCommitter() {
+      if (committer != null) {
+        return committer;
+      }
+      LOG.info("revision details misses committer data, using empty: " + this);
+      return "";
+    }
+
+    public String getComment() {
+      if (comment != null) {
+        return comment;
+      }
+      LOG.info("revision details misses comment message, using empty: " + this);
+      return "";
+    }
+
+    public String getPath() {
+      if (path != null) {
+        return path;
+      }
+      LOG.info("revision details misses path to file, using empty: " + this);
+      return "";
+    }
+
+    @Override
+    public String toString() {
+      return String.format("LowLevelRevisionDetails{path=%s, comment='%s', committer=%s, author=%s, timestamp=%s, hash=%s}", path,
+                comment, committer, author, timestamp, hash);
+    }
   }
 
   private static class MyTokenAccumulator {
@@ -210,7 +300,7 @@ public class GitHistoryUtils {
     }
 
     @Nullable
-    public List<String> acceptLine(String s) {
+    public LowLevelRevisionDetails acceptLine(String s) {
       final boolean lineEnd = s.startsWith(ourLineEndMark);
       if (lineEnd && (!myNotStarted)) {
         final String line = myBuffer.toString();
@@ -228,11 +318,11 @@ public class GitHistoryUtils {
       return null;
     }
 
-    public List<String> processLast() {
+    public LowLevelRevisionDetails processLast() {
       return processResult(myBuffer.toString());
     }
 
-    private List<String> processResult(final String line) {
+    private LowLevelRevisionDetails processResult(final String line) {
       final int commentStartIdx = line.indexOf(ourCommentStartMark);
       if (commentStartIdx == -1) {
         LOG.info("Git history: no comment mark in line: '" + line + "'");
@@ -243,28 +333,29 @@ public class GitHistoryUtils {
           final String token = tk.nextToken();
           result.add(token);
         }
-        return result;
+        return LowLevelRevisionDetails.fillDetails(result);
       }
 
       final String start = line.substring(0, commentStartIdx);
-      java.util.StringTokenizer tk = new java.util.StringTokenizer(start, TOKEN_DELIMITER, false);
+      final java.util.StringTokenizer tk = new java.util.StringTokenizer(start, TOKEN_DELIMITER, false);
       final List<String> result = new ArrayList<String>();
       while (tk.hasMoreElements()) {
         final String token = tk.nextToken();
         result.add(token);
       }
-
+      final LowLevelRevisionDetails revisionDetails = LowLevelRevisionDetails.fillDetails(result);
+      
       final String commentAndPath = line.substring(commentStartIdx + ourCommentStartMark.length());
       final int commentEndIdx = commentAndPath.indexOf(ourCommentEndMark);
       if (commentEndIdx > -1) {
-        result.add(replaceDelimitersByNewlines(commentAndPath.substring(0, commentEndIdx)));      // comment
-        result.add(replaceDelimitersByNewlines(commentAndPath.substring(commentEndIdx + ourCommentEndMark.length())));  // path
+        revisionDetails.comment = replaceDelimitersByNewlines(commentAndPath.substring(0, commentEndIdx));
+        revisionDetails.path = replaceDelimitersByNewlines(commentAndPath.substring(commentEndIdx + ourCommentEndMark.length()));
       } else {
         exceptions.add(new VcsException("git log output is uncomplete"));
-        result.add(replaceDelimitersByNewlines(commentAndPath));
-        result.add("");   // empty path
+        revisionDetails.comment = replaceDelimitersByNewlines(commentAndPath);
+        revisionDetails.path = "";   // empty path
       }
-      return result;
+      return revisionDetails;
     }
 
     private static String replaceDelimitersByNewlines(String s) {
