@@ -1,0 +1,22 @@
+class Index<T>
+{ }
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('Index')
+    Type parameter list
+      PsiElement(<)('<')
+      Type parameter
+        PsiElement(identifier)('T')
+        Type extends bounds list
+          <empty list>
+      PsiElement(>)('>')
+    PsiElement(new line)('\n')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace(' ')
+      PsiElement(})('}')

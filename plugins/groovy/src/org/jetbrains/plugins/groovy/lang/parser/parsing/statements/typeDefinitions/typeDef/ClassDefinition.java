@@ -61,8 +61,9 @@ public class ClassDefinition implements GroovyElementTypes {
 
     if (kIMPLEMENTS.equals(builder.getTokenType())) {
       ImplementsClause.parse(builder);
-      ParserUtils.getToken(builder, mNLS);
     }
+
+    ParserUtils.getToken(builder, mNLS);
 
     if (mLCURLY.equals(builder.getTokenType())) {
       ClassBlock.parse(builder, name, parser);
