@@ -110,6 +110,10 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
     doTest();
   }
 
+  public void testWhile() throws Exception {
+    doTest();
+  }
+
   public void testEmpty() throws Exception {
     doTest();
   }
