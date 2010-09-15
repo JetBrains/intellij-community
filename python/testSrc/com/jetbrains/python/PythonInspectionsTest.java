@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
  * @author yole
@@ -27,12 +26,12 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   private void doTestWithLanguageLevel(String testName,
                                        LocalInspectionTool localInspectionTool,
                                        LanguageLevel languageLevel) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+    setLanguageLevel(languageLevel);
     try {
       doTest(testName, localInspectionTool);
     }
     finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+      setLanguageLevel(null);
     }
   }
 
@@ -112,13 +111,13 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyDeprecatedModulesInspection() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON25);
+    setLanguageLevel(LanguageLevel.PYTHON25);
     try {
       LocalInspectionTool inspection = new PyDeprecatedModulesInspection();
       doTest(getTestName(false), inspection);
     }
     finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+      setLanguageLevel(null);
     }
   }
 
@@ -230,12 +229,12 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass, final LanguageLevel languageLevel) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+    setLanguageLevel(languageLevel);
     try {
       doHighlightingTest(inspectionClass);
     }
     finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+      setLanguageLevel(null);
     }
   }
 

@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.introduce;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
@@ -146,17 +147,15 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
     else {
+      if (smartIntroduce(file, editor, name, replaceAll, hasConstructor, isTestClass)) {
+        return;
+      }
       final CaretModel caretModel = editor.getCaretModel();
       final Document document = editor.getDocument();
       int lineNumber = document.getLineNumber(caretModel.getOffset());
       if ((lineNumber >= 0) && (lineNumber < document.getLineCount())) {
         element1 = file.findElementAt(document.getLineStartOffset(lineNumber));
         element2 = file.findElementAt(document.getLineEndOffset(lineNumber) - 1);
-      }
-      if (element1 == null || element2 == null || PyRefactoringUtil.getSelectedExpression(project, file, element1, element2) == null) {
-        if (smartIntroduce(file, editor, name, replaceAll, hasConstructor, isTestClass)) {
-          return;
-        }
       }
     }
     if (element1 == null || element2 == null) {
@@ -191,7 +190,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
       elementAtCaret = elementAtCaret.getParent();
     }
-    if (expressions.size() == 1) {
+    if (expressions.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       performActionOnElement(editor, expressions.get(0), name, replaceAll, hasConstructor, isTestClass);
       return true;
     }
@@ -286,7 +285,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected abstract String getHelpId();
 
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText, PsiElement anchor) {
-    return PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyAssignmentStatement.class, assignmentText);
+    LanguageLevel langLevel = ((PyFile) anchor.getContainingFile()).getLanguageLevel();
+    return PyElementGenerator.getInstance(project).createFromText(langLevel, PyAssignmentStatement.class, assignmentText);
   }
 
   protected boolean checkEnabled(Project project, Editor editor, PsiElement element1, String dialogTitle) {
