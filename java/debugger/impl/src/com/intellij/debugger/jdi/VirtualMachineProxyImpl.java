@@ -354,6 +354,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myGetOwnedMonitorInfo.isAvailable();
   }
 
+  private final Capability myGetMonitorFrameInfo = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetMonitorFrameInfo();
+    }
+  };
+  public boolean canGetMonitorFrameInfo() {
+      return myGetMonitorFrameInfo.isAvailable();
+  }
+  
   private final Capability myGetCurrentContendedMonitor = new Capability() {
     protected boolean calcValue() {
       return myVirtualMachine.canGetCurrentContendedMonitor();
