@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
@@ -111,4 +112,11 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     }
     return functionNode == null && qualifierNode == null;
  }
+
+  @Override
+  public void indexStub(PyTargetExpressionStub stub, IndexSink sink) {
+    for (CustomTargetExpressionStubType stubType : getCustomStubTypes()) {
+      stubType.indexStub(stub, sink);
+    }
+  }
 }

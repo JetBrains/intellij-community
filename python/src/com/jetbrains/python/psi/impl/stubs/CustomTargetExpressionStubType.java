@@ -1,8 +1,10 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubInputStream;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -18,4 +20,7 @@ public abstract class CustomTargetExpressionStubType<T extends CustomTargetExpre
 
   @Nullable
   public abstract T deserializeStub(StubInputStream stream) throws IOException;
+
+  public void indexStub(PyTargetExpressionStub stub, IndexSink sink) {
+  }
 }

@@ -223,8 +223,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       }
       return null;
     }
-    final PyExpression value = findAssignedValue();
-    return value instanceof PyReferenceExpression ? ((PyReferenceExpression) value).asQualifiedName() : null;
+    return PyQualifiedName.fromExpression(findAssignedValue());
   }
 
   @Override
@@ -239,7 +238,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     final PyExpression value = findAssignedValue();
     if (value instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)value).getCallee();
-      return callee instanceof PyReferenceExpression ? ((PyReferenceExpression) callee).asQualifiedName() : null;
+      return PyQualifiedName.fromExpression(callee);
     }
     return null;
   }

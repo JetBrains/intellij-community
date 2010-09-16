@@ -10,15 +10,15 @@ import java.io.IOException;
 /**
  * @author yole
  */
-public class PropertyStubType extends CustomTargetExpressionStubType {
+public class PropertyStubType extends CustomTargetExpressionStubType<PropertyStubStorage> {
   @Nullable
   @Override
-  public CustomTargetExpressionStub createStub(PyTargetExpression psi) {
+  public PropertyStubStorage createStub(PyTargetExpression psi) {
     return PropertyStubStorage.fromCall(psi.findAssignedValue());
   }
 
   @Override
-  public CustomTargetExpressionStub deserializeStub(StubInputStream stream) throws IOException {
+  public PropertyStubStorage deserializeStub(StubInputStream stream) throws IOException {
     return PropertyStubStorage.deserialize(stream);
   }
 }

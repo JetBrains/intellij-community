@@ -262,6 +262,8 @@
 
     <enterHandlerDelegate implementation="com.jetbrains.django.lang.template.editor.EnterBetweenDjangoTagsHandler"/>
 
+    <stubIndex implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyIndex"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
@@ -325,6 +327,7 @@
     <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoViewReferenceQuickFixProvider"/>
     <runnableUnitTestFilter implementation="com.jetbrains.django.testRunner.DjangoUnitTestFilter"/>
     <unusedLocalFilter implementation="com.jetbrains.django.codeInsight.DjangoUnusedLocalFilter"/>
+    <customTargetExpressionStubType implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyStubType"/>
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>

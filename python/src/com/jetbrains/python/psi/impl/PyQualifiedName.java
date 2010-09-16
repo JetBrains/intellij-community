@@ -4,6 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,6 +134,11 @@ public class PyQualifiedName {
 
   public static PyQualifiedName fromDottedString(String refName) {
     return fromComponents(refName.split("\\."));
+  }
+
+  @Nullable
+  public static PyQualifiedName fromExpression(PyExpression expr) {
+    return expr instanceof PyReferenceExpression ? ((PyReferenceExpression) expr).asQualifiedName() : null;
   }
 
   @Override
