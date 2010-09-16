@@ -70,9 +70,20 @@ public class ConvertClosureToMethodIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    element = element.getParent();
-
-    final GrField field = (GrField)element;
+    final GrField field;
+    if (element.getParent() instanceof GrField) {
+      field = (GrField)element.getParent();
+    }
+    else {
+      final PsiReference ref = element.getReference();
+      LOG.assertTrue(ref != null);
+      PsiElement resolved = ref.resolve();
+      if (resolved instanceof GrAccessorMethod) {
+        resolved = ((GrAccessorMethod)resolved).getProperty();
+      }
+      LOG.assertTrue(resolved instanceof GrField);
+      field = (GrField)resolved;
+    }
 
     final HashSet<PsiReference> usages = new HashSet<PsiReference>();
     usages.addAll(ReferencesSearch.search(field).findAll());
@@ -209,15 +220,28 @@ public class ConvertClosureToMethodIntention extends Intention {
 
   private static class MyPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof GrField)) return false;
-      if (((GrField)parent).getNameIdentifierGroovy() != element) return false;
+      final PsiReference ref = element.getReference();
+      GrField field;
+      if (ref != null) {
+        PsiElement resolved = ref.resolve();
+        if (resolved instanceof GrAccessorMethod) {
+          resolved = ((GrAccessorMethod)resolved).getProperty();
+        }
+        if (!(resolved instanceof GrField)) return false;
+        field = (GrField)resolved;
+      }
+      else {
+        final PsiElement parent = element.getParent();
+        if (!(parent instanceof GrField)) return false;
+        field = (GrField)parent;
+        if (field.getNameIdentifierGroovy() != element) return false;
+      }
 
-      final PsiElement varDeclaration = parent.getParent();
+      final PsiElement varDeclaration = field.getParent();
       if (!(varDeclaration instanceof GrVariableDeclaration)) return false;
       if (((GrVariableDeclaration)varDeclaration).getVariables().length != 1) return false;
 
-      final GrExpression expression = ((GrField)parent).getInitializerGroovy();
+      final GrExpression expression = field.getInitializerGroovy();
       return expression instanceof GrClosableBlock;
     }
   }

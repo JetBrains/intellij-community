@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -50,6 +51,8 @@ import java.util.Collection;
  * @author Maxim.Medvedev
  */
 public class ConvertMethodToClosureIntention extends Intention {
+  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMethodToclosureIntention");
+
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
@@ -59,7 +62,17 @@ public class ConvertMethodToClosureIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final GrMethod method = (GrMethod)element.getParent();
+    final GrMethod method;
+    if (element.getParent() instanceof GrMethod) {
+      method = (GrMethod)element.getParent();
+    }
+    else {
+      final PsiReference ref = element.getReference();
+      LOG.assertTrue(ref != null);
+      final PsiElement resolved = ref.resolve();
+      LOG.assertTrue(resolved instanceof GrMethod);
+      method = (GrMethod)resolved;
+    }
 
     final PsiClass containingClass = method.getContainingClass();
     final String methodName = method.getName();
@@ -75,7 +88,8 @@ public class ConvertMethodToClosureIntention extends Intention {
       final PsiElement psiElement = ref.getElement();
       if (!GroovyFileType.GROOVY_LANGUAGE.equals(psiElement.getLanguage())) {
         conflicts.putValue(psiElement, GroovyIntentionsBundle.message("method.is.used.outside.of.groovy"));
-      } else if (!PsiUtil.isMethodUsage(psiElement)) {
+      }
+      else if (!PsiUtil.isMethodUsage(psiElement)) {
         if (psiElement instanceof GrReferenceExpression) {
           if (((GrReferenceExpression)psiElement).hasMemberPointer()) {
             usagesToConvert.add((GrReferenceExpression)psiElement);
@@ -83,7 +97,7 @@ public class ConvertMethodToClosureIntention extends Intention {
         }
       }
     }
-    if (conflicts.size()>0) {
+    if (conflicts.size() > 0) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
         @Override
         public void run() {
@@ -128,11 +142,19 @@ public class ConvertMethodToClosureIntention extends Intention {
 
   private static class MyPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
-      final PsiElement parent = element.getParent();
-      return parent instanceof GrMethod &&
-             element == ((GrMethod)parent).getNameIdentifierGroovy() &&
-             ((GrMethod)parent).getBlock() != null &&
-             parent.getParent() instanceof GrTypeDefinitionBody;
+      GrMethod method;
+      final PsiReference ref = element.getReference();
+      if (ref != null) {
+        final PsiElement resolved = ref.resolve();
+        if (!(resolved instanceof GrMethod)) return false;
+        method = (GrMethod)resolved;
+      }
+      else {
+        final PsiElement parent = element.getParent();
+        if (!(parent instanceof GrMethod)) return false;
+        method = (GrMethod)parent;
+      }
+      return method.getBlock() != null && method.getParent() instanceof GrTypeDefinitionBody;
 //      return element instanceof GrMethod && ((GrMethod)element).getBlock() != null && element.getParent() instanceof GrTypeDefinitionBody;
     }
   }
