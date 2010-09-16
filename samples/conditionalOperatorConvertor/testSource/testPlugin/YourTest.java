@@ -21,7 +21,7 @@ public class YourTest {
     protected CodeInsightTestFixture myFixture;
     // Specify path to your test data
     // e.g.  final String dataPath = "c:\\users\\john.doe\\idea\\community\\samples\\conditionalOperatorConvertor/testData";
-    final String dataPath = "c:\\users\\FirstName.LastName\\idea\\community\\samples\\conditionalOperatorConvertor/testData";
+    final String dataPath = "c:\\users\\John.Doe\\idea\\community\\samples\\conditionalOperatorConvertor/testData";
 
     @Before
 
