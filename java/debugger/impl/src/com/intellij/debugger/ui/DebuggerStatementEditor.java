@@ -52,9 +52,13 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
     myEditor = new EditorTextField("", project, factory.getFileType()) {
       protected EditorEx createEditor() {
         EditorEx editor = super.createEditor();
-        editor.setOneLineMode(false);
         editor.setVerticalScrollbarVisible(true);
         return editor;
+      }
+
+      @Override
+      protected boolean isOneLineMode() {
+        return false;
       }
     };
     setLayout(new BorderLayout());
