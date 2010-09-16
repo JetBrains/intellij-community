@@ -25,9 +25,9 @@
       <action id="EditorPageDown" class="com.intellij.openapi.editor.actions.PageDownAction"/>
       <action id="EditorPageUpWithSelection" class="com.intellij.openapi.editor.actions.PageUpWithSelectionAction"/>
       <action id="EditorPageDownWithSelection" class="com.intellij.openapi.editor.actions.PageDownWithSelectionAction"/>
-      <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction"/>
-      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction"/>
-      <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction"/>
+      <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction" use-shortcut-of="$Copy"/>
+      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" use-shortcut-of="$Cut"/>
+      <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction" use-shortcut-of="$Paste"/>
       <action id="EditorPasteSimple" class="com.intellij.openapi.editor.actions.SimplePasteAction"/>
       <action id="EditorPasteFromX11" class="com.intellij.openapi.editor.actions.PasteFromX11Action"/>
       <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction"/>
