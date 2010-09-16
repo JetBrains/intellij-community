@@ -56,6 +56,6 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public void addToPythonPath(GeneralCommandLine cmd, String path) {
-    addToEnv(cmd, path, "IRONPYTHONPATH");
+    addToEnv(cmd, "IRONPYTHONPATH", path);
   }
 }

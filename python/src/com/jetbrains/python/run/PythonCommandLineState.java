@@ -146,7 +146,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     commandLine.setPassParentEnvs(myConfig.isPassParentEnvs());
   }
 
-  protected  void addCommonEnvironmentVariables(Map<String, String> envs) {
+  protected static void addCommonEnvironmentVariables(Map<String, String> envs) {
     PythonEnvUtil.setPythonUnbuffered(envs);
   }
 
