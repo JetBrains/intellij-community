@@ -879,41 +879,22 @@ public class PsiUtil {
         PsiSubstitutor substitutor = classResult.getSubstitutor();
         final ResolveState state =
           ResolveState.initial().put(PsiSubstitutor.KEY, substitutor).put(ResolverProcessor.RESOLVE_CONTEXT, context);
-        final boolean toBreak = element.processDeclarations(processor, state, null, place);
+        final PsiMethod[] methods = clazz.getMethods();
+        boolean toBreak = true;
+        for (PsiMethod method : methods) {
+          if (method.isConstructor() && !processor.execute(method, state)) {
+            toBreak = false;
+            break;
+          }
+        }
 
         NonCodeMembersContributor.runContributors(thisType, processor, place, state);
-        final GroovyResolveResult[] applicableCandidates = processor.getApplicableCandidates();
-        final GroovyResolveResult[] inapplicableCandidates = processor.getInapplicableCandidates();
-
-        Collection<GroovyResolveResult> candidates = new ArrayList<GroovyResolveResult>(applicableCandidates.length);
-        addAllCorrectResults(place, clazz, applicableCandidates, candidates);
-        if (candidates.size() == 0) {
-          addAllCorrectResults(place, clazz, inapplicableCandidates, candidates);
-        }
-        ContainerUtil.addAll(constructorResults, candidates.iterator());
+        ContainerUtil.addAll(constructorResults, processor.getCandidates());
         if (!toBreak) break;
       }
     }
 
     return constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
-  }
-
-  private static void addAllCorrectResults(GroovyPsiElement place,
-                                           PsiClass clazz,
-                                           GroovyResolveResult[] applicableCandidates,
-                                           Collection<GroovyResolveResult> candidates) {
-    for (GroovyResolveResult candidate : applicableCandidates) {
-      if (checkMethod(place, clazz, candidate)) candidates.add(candidate);
-    }
-  }
-
-  private static boolean checkMethod(GroovyPsiElement place, PsiClass clazz, GroovyResolveResult candidate) {
-    final PsiElement resolved = candidate.getElement();
-    if (resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor()) {
-      final PsiClass containingClass = ((PsiMethod)resolved).getContainingClass();
-      if (containingClass != null && !place.getManager().areElementsEquivalent(containingClass, clazz)) return false;
-    }
-    return true;
   }
 
   public static boolean isAccessedForReading(GrExpression expr) {
