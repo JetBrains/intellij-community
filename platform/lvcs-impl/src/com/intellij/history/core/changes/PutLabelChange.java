@@ -18,7 +18,7 @@ package com.intellij.history.core.changes;
 
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.StreamUtil;
-import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -31,7 +31,7 @@ public class PutLabelChange extends Change {
   private final String myName;
   private final String myProjectId;
 
-  public PutLabelChange(long id, String name, String projectId) {
+  public PutLabelChange(long id, @NotNull String name, @NotNull String projectId) {
     super(id);
     myName = name;
     myProjectId = projectId;

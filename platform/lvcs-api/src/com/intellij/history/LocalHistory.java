@@ -17,9 +17,10 @@
 package com.intellij.history;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class LocalHistory {
   public static final Object VFS_EVENT_REQUESTOR = new Object();
@@ -28,15 +29,15 @@ public abstract class LocalHistory {
     return ApplicationManager.getApplication().getComponent(LocalHistory.class);
   }
 
-  public abstract LocalHistoryAction startAction(String name);
+  public abstract LocalHistoryAction startAction(@Nullable String name);
 
-  public abstract Label putSystemLabel(Project p, String name, int color);
+  public abstract Label putSystemLabel(Project p, @NotNull String name, int color);
 
-  public Label putSystemLabel(Project p, String name) {
+  public Label putSystemLabel(Project p, @NotNull String name) {
     return putSystemLabel(p, name, -1);
   }
 
-  public abstract Label putUserLabel(Project p, String name);
+  public abstract Label putUserLabel(Project p, @NotNull String name);
 
   public abstract byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
 
