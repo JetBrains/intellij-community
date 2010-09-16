@@ -579,7 +579,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         return;
       }
 
-      cancelMyToolTips(e);
+      cancelMyToolTips(e, false);
 
       if (scrollbar.getCursor().equals(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))) {
         scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -607,9 +607,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
     }
 
-    private void cancelMyToolTips(final MouseEvent e) {
+    private void cancelMyToolTips(final MouseEvent e, boolean checkIfShouldSurvive) {
       final TooltipController tooltipController = TooltipController.getInstance();
-      if (!tooltipController.shouldSurvive(e)) {
+      if (!checkIfShouldSurvive || !tooltipController.shouldSurvive(e)) {
         tooltipController.cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP);
       }
     }
@@ -618,11 +618,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public void mouseExited(MouseEvent e) {
-      cancelMyToolTips(e);
+      cancelMyToolTips(e, true);
     }
 
     public void mouseDragged(MouseEvent e) {
-      cancelMyToolTips(e);
+      cancelMyToolTips(e, true);
     }
 
     public void setPopupHandler(final PopupHandler handler) {
@@ -697,7 +697,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
         if (tooltips.add(text)) {
           if (bigRenderer == null) {
-            bigRenderer = new LineTooltipRenderer(text);
+            bigRenderer = new LineTooltipRenderer(text, new Object[] {highlighters});
           }
           else {
             bigRenderer.addBelow(text);
@@ -709,11 +709,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
-      return new LineTooltipRenderer(text);
+      return new LineTooltipRenderer(text, new Object[] {text});
     }
 
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
-      return new LineTooltipRenderer(text, width);
+      return new LineTooltipRenderer(text, width, new Object[] {text});
     }
 
     @Override

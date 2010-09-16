@@ -30,6 +30,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -45,19 +46,20 @@ import java.awt.event.MouseEvent;
 /**
  * @author cdr
  */
-public class LineTooltipRenderer implements TooltipRenderer {
+public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
   @NonNls protected String myText;
 
   private boolean myActiveLink = false;
   private int myCurrentWidth;
   @NonNls protected static final String BORDER_LINE = "<hr size=1 noshade>";
 
-  public LineTooltipRenderer(String text) {
+  public LineTooltipRenderer(String text, Object[] comparable) {
+    super(comparable);
     myText = text;
   }
 
-  public LineTooltipRenderer(final String text, final int width) {
-    this(text);
+  public LineTooltipRenderer(final String text, final int width, Object[] comparable) {
+    this(text, comparable);
     myCurrentWidth = width;
   }
 
@@ -122,8 +124,8 @@ public class LineTooltipRenderer implements TooltipRenderer {
           if (myCurrentWidth > 0) {
             stripDescription();
           }
-          createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth())
-            .show(editor, new Point(p.x - 3, p.y - 3), false, group, hintHint);
+
+          TooltipController.getInstance().showTooltip(editor, new Point(p.x - 3, p.y - 3), createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()), alignToRight, group, hintHint);
         }
       });
 
@@ -154,7 +156,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
             }
             stripDescription();
             hint.hide();
-            createRenderer(myText, 0).show(editor, new Point(p.x - 3, p.y - 3), false, group, hintHint);
+            TooltipController.getInstance().showTooltip(editor, new Point(p.x - 3, p.y - 3), createRenderer(myText, 0), false, group, hintHint);
           }
         }
       }
@@ -278,7 +280,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
   }
 
   protected LineTooltipRenderer createRenderer(String text, int width) {
-    return new LineTooltipRenderer(text, width);
+    return new LineTooltipRenderer(text, width, getEqualityObjects());
   }
 
   protected boolean dressDescription(Editor editor) {
@@ -405,19 +407,6 @@ public class LineTooltipRenderer implements TooltipRenderer {
     }
 
     return result;
-  }
-
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof LineTooltipRenderer)) return false;
-
-    final LineTooltipRenderer lineTooltipRenderer = (LineTooltipRenderer)o;
-
-    return Comparing.strEqual(myText, lineTooltipRenderer.myText);
-  }
-
-  public int hashCode() {
-    return myText == null ? 0 : myText.hashCode();
   }
 
   public String getText() {
