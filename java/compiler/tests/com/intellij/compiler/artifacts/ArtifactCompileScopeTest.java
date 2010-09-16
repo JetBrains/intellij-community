@@ -1,15 +1,11 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import com.intellij.testFramework.PsiTestUtil;
 
 /**
  * @author nik
@@ -63,4 +59,42 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     assertOutput(artifact, fs().file("A.class").file("B.class"));
   }
 
+  //IDEA-58529
+  public void testDoNotRebuildArtifactOnForceCompileOfSingleFile() throws Exception {
+    final VirtualFile file1 = createFile("src/A.java", "public class A{}");
+    final VirtualFile file2 = createFile("src/B.java", "public class B{}");
+    final Module module = addModule("module", file1.getParent());
+    CompilerTestUtil.scanSourceRootsToRecompile(myProject);
+
+    final Artifact artifact = addArtifact(root().module(module));
+    setBuildOnMake(artifact);
+
+    compile(module);
+    assertOutput(artifact, fs().file("A.class").file("B.class"));
+
+    compile(false, file1).assertUpToDate();
+
+    ensureTimeChanged();
+    final String[] aPath = {"out/production/module/A.class"};
+    //file should be deleted and recompiled by javac and recompiled by artifacts compiler
+    compile(true, file1).assertRecompiledAndDeleted(aPath, aPath);
+
+    ensureTimeChanged();
+    compile(module).assertUpToDate();
+
+    ensureTimeChanged();
+    final String[] bothPaths = {"out/production/module/A.class", "out/production/module/B.class"};
+    compile(true, file1, file2).assertRecompiledAndDeleted(bothPaths,bothPaths);
+  }
+
+  private static void ensureTimeChanged() {
+    //ensure that compiler will threat the file as changed. On Linux system timestamp may be rounded to multiple of 1000
+    if (SystemInfo.isLinux) {
+      try {
+        Thread.sleep(1100);
+      }
+      catch (InterruptedException ignored) {
+      }
+    }
+  }
 }

@@ -56,7 +56,17 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     return compile(CompilerManager.getInstance(myProject).createModuleCompileScope(module, false), CompilerFilter.ALL);
   }
 
+  protected CompilationLog compile(boolean force, VirtualFile... files) throws Exception {
+    return compile(CompilerManager.getInstance(myProject).createFilesCompileScope(files), CompilerFilter.ALL, force);
+  }
+
   protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter) throws Exception {
+    return compile(scope, filter, false);
+  }
+
+  protected CompilationLog compile(final CompileScope scope,
+                                   final CompilerFilter filter,
+                                   final boolean forceCompile) throws Exception {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -64,7 +74,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
         semaphore.down();
 
         CompilerManagerImpl.testSetup();
-        CompilerManager.getInstance(myProject).make(scope, filter, new CompileStatusNotification() {
+        final CompileStatusNotification callback = new CompileStatusNotification() {
           public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
             try {
               if (aborted) {
@@ -79,7 +89,16 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
               semaphore.up();
             }
           }
-        });
+        };
+
+        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+        if (forceCompile) {
+          assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
+          compilerManager.compile(scope, callback, false);
+        }
+        else {
+          compilerManager.make(scope, filter, callback);
+        }
       }
     }, ModalityState.NON_MODAL);
     semaphore.waitFor(60 * 1000);
