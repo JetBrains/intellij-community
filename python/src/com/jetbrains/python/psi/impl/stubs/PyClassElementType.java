@@ -39,12 +39,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final PyExpression[] exprs = psi.getSuperClassExpressions();
     List<PyQualifiedName> superClasses = new ArrayList<PyQualifiedName>();
     for (final PyExpression expression : exprs) {
-      if (expression instanceof PyReferenceExpression) {
-        superClasses.add(((PyReferenceExpression) expression).asQualifiedName());
-      }
-      else {
-        superClasses.add(null);
-      }
+      superClasses.add(PyQualifiedName.fromExpression(expression));
     }
     return new PyClassStubImpl(psi.getName(), parentStub,
                                superClasses.toArray(new PyQualifiedName[superClasses.size()]),

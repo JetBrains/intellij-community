@@ -6,6 +6,9 @@ import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PropertyBunch;
+import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
+import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType;
+import com.jetbrains.python.psi.impl.stubs.PropertyStubType;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +20,7 @@ import java.io.IOException;
  * User: dcheryasov
  * Date: Jun 3, 2010 6:46:01 AM
  */
-public class PropertyStubStorage extends PropertyBunch<String> {
+public class PropertyStubStorage extends PropertyBunch<String> implements CustomTargetExpressionStub {
 
   @Override
   protected String translate(@NotNull PyReferenceExpression ref) {
@@ -55,6 +58,12 @@ public class PropertyStubStorage extends PropertyBunch<String> {
     else stream.writeName(IMPOSSIBLE_NAME);
   }
 
+  @NotNull
+  @Override
+  public Class<? extends CustomTargetExpressionStubType> getTypeClass() {
+    return PropertyStubType.class;
+  }
+
   public void serialize(StubOutputStream stream) throws IOException {
     writeOne(myGetter, stream);
     writeOne(mySetter, stream);
@@ -88,7 +97,7 @@ public class PropertyStubStorage extends PropertyBunch<String> {
   }
 
   @Nullable
-  public static PropertyStubStorage fromCall(PyExpression expr) {
+  public static PropertyStubStorage fromCall(@Nullable PyExpression expr) {
     final PropertyStubStorage prop = new PropertyStubStorage();
     final boolean success = fillFromCall(expr, prop);
     return success? prop : null;

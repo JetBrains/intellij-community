@@ -459,7 +459,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       for (StubElement substub : stub.getChildrenStubs()) {
         if (substub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
           final PyTargetExpressionStub target_stub = (PyTargetExpressionStub)substub;
-          PropertyStubStorage prop = target_stub.getPropertyPack();
+          PropertyStubStorage prop = target_stub.getCustomStub(PropertyStubStorage.class);
           if (prop != null && (name_filter == null || name_filter.process(target_stub.getName()))) {
             getter = fromPacked(prop.getGetter());
             setter = fromPacked(prop.getSetter());
