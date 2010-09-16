@@ -5,7 +5,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,24 +16,24 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
   private final InitializerType myInitializerType;
   private final PyQualifiedName myInitializer;
 
-  private final PropertyStubStorage myPropertyPack;
+  private final CustomTargetExpressionStub myCustomStub;
 
-  public PyTargetExpressionStubImpl(String name, PropertyStubStorage propertyPack, StubElement parent) {
+  public PyTargetExpressionStubImpl(String name, CustomTargetExpressionStub customStub, StubElement parent) {
     super(parent, PyElementTypes.TARGET_EXPRESSION);
     myName = name;
-    myInitializerType = InitializerType.Property;
+    myInitializerType = InitializerType.Custom;
     myInitializer = null;
-    myPropertyPack = propertyPack;
+    myCustomStub = customStub;
   }
   
   public PyTargetExpressionStubImpl(final String name, final InitializerType initializerType,
                                     final PyQualifiedName initializer, final StubElement parentStub) {
     super(parentStub, PyElementTypes.TARGET_EXPRESSION);
     myName = name;
-    assert initializerType != InitializerType.Property;
+    assert initializerType != InitializerType.Custom;
     myInitializerType = initializerType;
     myInitializer = initializer;
-    myPropertyPack = null;
+    myCustomStub = null;
   }
 
   public String getName() {
@@ -50,7 +49,11 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
   }
 
   @Nullable
-  public PropertyStubStorage getPropertyPack() {
-    return myPropertyPack;
+  @Override
+  public <T extends CustomTargetExpressionStub> T getCustomStub(Class<T> stubClass) {
+    if (stubClass.isInstance(myCustomStub)) {
+      return stubClass.cast(myCustomStub);
+    }
+    return null;
   }
 }
