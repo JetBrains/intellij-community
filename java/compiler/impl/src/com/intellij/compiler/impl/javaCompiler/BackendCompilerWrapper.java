@@ -53,6 +53,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Chunk;
 import com.intellij.util.cls.ClsFormatException;
 import gnu.trove.THashMap;
@@ -543,18 +546,20 @@ public class BackendCompilerWrapper {
     myFileNameToSourceMap.clear(); // clear the map before the next use
   }
 
-  private void buildOutputItemsList(final String outputDir, Module module, VirtualFile from,
+  private void buildOutputItemsList(final String outputDir, final Module module, VirtualFile from,
                                     final FileTypeManager typeManager,
                                     final VirtualFile sourceRoot,
                                     final String packagePrefix, final List<File> filesToRefresh, final Map<String, Collection<TranslatingCompiler.OutputItem>> results) throws CacheCorruptedException {
     final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
     final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+    final GlobalSearchScope srcRootScope = GlobalSearchScope.moduleScope(module).intersectWith(GlobalSearchScope.directoryScope(myProject, sourceRoot, true));
+    
     final ContentIterator contentIterator = new ContentIterator() {
       public boolean processFile(final VirtualFile child) {
         try {
           assert child.isValid();
           if (!child.isDirectory() && myCompiler.getCompilableFileTypes().contains(typeManager.getFileTypeByFile(child))) {
-            updateOutputItemsList(outputDir, child, sourceRoot, packagePrefix, filesToRefresh, results);
+            updateOutputItemsList(outputDir, child, sourceRoot, packagePrefix, filesToRefresh, results, srcRootScope);
           }
           return true;
         }
@@ -606,7 +611,8 @@ public class BackendCompilerWrapper {
   private void updateOutputItemsList(final String outputDir, VirtualFile srcFile,
                                      VirtualFile sourceRoot,
                                      final String packagePrefix, final List<File> filesToRefresh,
-                                     Map<String, Collection<TranslatingCompiler.OutputItem>> results) throws CacheCorruptedException {
+                                     Map<String, Collection<TranslatingCompiler.OutputItem>> results,
+                                     GlobalSearchScope srcRootScope) throws CacheCorruptedException {
     final Cache newCache = myCompileContext.getDependencyCache().getNewClassesCache();
     final Set<CompiledClass> paths = myFileNameToSourceMap.get(srcFile.getName());
     if (paths == null || paths.isEmpty()) {
@@ -618,7 +624,28 @@ public class BackendCompilerWrapper {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Checking [pathToClass; relPathToSource] = " + cc);
       }
-      if (FileUtil.pathsEqual(filePath, cc.relativePathToSource)) {
+      
+      boolean pathsEquals = FileUtil.pathsEqual(filePath, cc.relativePathToSource);
+      if (!pathsEquals) {
+        final String qName = myCompileContext.getDependencyCache().resolve(cc.qName);
+        if (qName != null) {
+          final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
+          PsiClass psiClass = facade.findClass(qName, srcRootScope);
+          if (psiClass == null) {
+            final int dollarIndex = qName.indexOf("$");
+            if (dollarIndex >= 0) {
+              final String topLevelClassName = qName.substring(0, dollarIndex);
+              psiClass = facade.findClass(topLevelClassName, srcRootScope);
+            }
+          }
+          if (psiClass != null) {
+            final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
+            pathsEquals = vFile != null && vFile.equals(srcFile);
+          }
+        }
+      }
+      
+      if (pathsEquals) {
         final String outputPath = cc.pathToClass.replace(File.separatorChar, '/');
         final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, srcFile, filesToRefresh);
         if (realLocation != null) {
