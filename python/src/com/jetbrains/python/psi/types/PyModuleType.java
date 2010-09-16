@@ -123,7 +123,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
             names_already.add(s);
           }
         }
-        result.add(LookupElementBuilder.create(pfsi, s).setPresentableText(s));
+        result.add(LookupElementBuilder.create(pfsi, s).setPresentableText(s).setIcon(pfsi.getIcon(0)));
       }
     }
     return result.toArray();
