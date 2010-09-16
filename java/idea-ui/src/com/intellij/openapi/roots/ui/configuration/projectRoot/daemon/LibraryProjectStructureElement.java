@@ -34,8 +34,9 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public void check(ProjectStructureProblemsHolder problemsHolder) {
+    if (((LibraryEx)myLibrary).isDisposed()) return;
     final LibraryEx library = (LibraryEx)myContext.getLibraryModel(myLibrary);
-    if (library == null) return;
+    if (library == null || library.isDisposed()) return;
 
     final String libraryName = library.getName();
     if (!library.allPathsValid(OrderRootType.CLASSES)) {

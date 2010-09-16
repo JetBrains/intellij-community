@@ -196,6 +196,16 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       for (int i = 0; i < len; ++i) {
         translateCharacter(buf, pattern.charAt(i));
       }
+
+      if (buf.length() > 0 && "*^".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
+    }
+
+    public String getRecentSearchText() {
+      return myRecentSearchText;
+    }
+
+    public Matcher getRecentSearchMatcher() {
+      return myRecentSearchMatcher;
     }
 
     public void translateCharacter(final StringBuilder buf, final char ch) {
@@ -206,10 +216,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
         // do not bother with other metachars
         buf.append('\\');
       }
+
       if (Character.isUpperCase(ch)) {
+        if (buf.length() > 0 && "*^".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
         // for camel humps
         buf.append("[A-Za-z_]*");
+        buf.append('(');
+      } else {
+        if (buf.length() > 0 && "*^".indexOf(buf.charAt(buf.length() - 1)) != -1) buf.append('(');
       }
+
+      if (buf.length() == 0 || buf.length() > 0 && "^".indexOf(buf.charAt(buf.length() - 1)) != -1) buf.append('(');
       buf.append(ch);
     }
   }

@@ -17,7 +17,6 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.xml.XmlAttribute;
@@ -74,22 +73,6 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
   };
 
-  private final NullableLazyValue<XmlElementsGroup> myTopGroup = new NullableLazyValue<XmlElementsGroup>() {
-    @Override
-    protected XmlElementsGroup compute() {
-      final Stack<XmlElementsGroup> groups = new Stack<XmlElementsGroup>();
-      new XmlSchemaTagsProcessor(myDocumentDescriptor, "attribute") {
-
-        @Override
-        protected void tagStarted(XmlTag tag, XmlTag context, String tagName) {
-
-        }
-      }.startProcessing(myTag);
-
-      return groups.isEmpty() ? null : groups.get(0);
-    }
-  };
-
   private volatile XmlElementDescriptor[] myElementDescriptors = null;
   private volatile XmlAttributeDescriptor[] myAttributeDescriptors = null;
   @NonNls
@@ -118,7 +101,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   @Nullable
   public XmlElementsGroup getTopGroup() {
-    return myTopGroup.getValue();
+    return XmlElementsGroupProcessor.computeGroups(myDocumentDescriptor, myTag);
   }
 
   public XmlElementDescriptor[] getElements(XmlElement context) {
@@ -398,5 +381,18 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   public boolean hasAnyInContentModel() {
     return myHasAnyInContentModel;
+  }
+
+  public int getContentType() {
+    final XmlElementDescriptor[] elements = getElements(null);
+
+    if (elements.length > 0) return XmlElementDescriptor.CONTENT_TYPE_CHILDREN;
+    for (XmlTag tag : myTag.getSubTags()) {
+      if ("simpleContent".equals(tag.getLocalName())) {
+        return XmlElementDescriptor.CONTENT_TYPE_MIXED;
+      }
+    }
+    return XmlElementDescriptor.CONTENT_TYPE_EMPTY;
+
   }
 }

@@ -1149,10 +1149,19 @@ public class XmlUtil {
     return exaustiveEnum;
   }
 
+  /**
+   *
+   * @param xmlTag
+   * @param localName
+   * @param namespace
+   * @param bodyText pass null to create collapsed tag, empty string means creating expanded one
+   * @param enforceNamespacesDeep
+   * @return
+   */
   public static XmlTag createChildTag(final XmlTag xmlTag,
                                       String localName,
                                       String namespace,
-                                      String bodyText,
+                                      @Nullable String bodyText,
                                       boolean enforceNamespacesDeep) {
     String qname;
     final String prefix = xmlTag.getPrefixByNamespace(namespace);
@@ -1181,7 +1190,7 @@ public class XmlUtil {
       Language language = xmlTag.getLanguage();
       if (!(language instanceof HTMLLanguage)) language = StdFileTypes.XML.getLanguage();
       XmlTag retTag;
-      if (bodyText != null && bodyText.length() > 0) {
+      if (bodyText != null) {
         retTag = XmlElementFactory.getInstance(xmlTag.getProject())
           .createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">", language);
         if (enforceNamespacesDeep) {

@@ -34,7 +34,6 @@ import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
-import org.jetbrains.plugins.groovy.config.ui.ManagedLibrariesEditor;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
@@ -68,7 +67,7 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
         if (library == null) {
           cleanUndefinedGroovyLibrary(rootModel, (LibraryOrderEntry)entry);
         } else {
-          final LibraryManager manager = ManagedLibrariesEditor.findManagerFor(library, managers.toArray(new LibraryManager[managers.size()]), container);
+          final LibraryManager manager = LibraryManager.findManagerFor(library, managers.toArray(new LibraryManager[managers.size()]), container);
           if (manager != null) {
             @SuppressWarnings({"NonConstantStringShouldBeStringBuffer"})
             String message = "There is already a " + manager.getLibraryCategoryName() + " library";

@@ -55,7 +55,7 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
   @NotNull
   public List<? extends LibraryPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                   @NotNull CompositePackagingElement<?> parent) {
-    final List<Library> selected = context.chooseLibraries(getAllLibraries(context), ProjectBundle.message("dialog.title.packaging.choose.library"));
+    final List<Library> selected = context.chooseLibraries(ProjectBundle.message("dialog.title.packaging.choose.library"));
     final List<LibraryPackagingElement> elements = new ArrayList<LibraryPackagingElement>();
     for (Library library : selected) {
       elements.add(new LibraryPackagingElement(library.getTable().getTableLevel(), library.getName(), null));

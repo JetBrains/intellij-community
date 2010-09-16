@@ -15,24 +15,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.event.ActionListener;
-
 public interface ComponentWithEmptyText {
-  @NotNull
-  String getText();
-
-  void setEmptyText(String emptyText);
-
-  void setEmptyText(String emptyText, SimpleTextAttributes attrs);
-
-  void clearEmptyText();
-
-  void appendEmptyText(String text, SimpleTextAttributes attrs);
-
-  void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener);
-
   StatusText getEmptyText();
 }

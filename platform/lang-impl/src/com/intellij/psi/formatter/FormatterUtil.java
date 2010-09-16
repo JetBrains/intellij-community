@@ -280,4 +280,13 @@ public class FormatterUtil {
     if (prevNode == null) return false;
     return tokens.contains(prevNode.getElementType());
   }
+
+  public static boolean isFollowedBy(ASTNode node, IElementType eType) {
+    ASTNode nextNode = node.getTreeNext();
+    while (nextNode != null && nextNode.getPsi() instanceof PsiWhiteSpace) {
+      nextNode = nextNode.getTreeNext();
+    }
+    if (nextNode == null) return false;
+    return nextNode.getElementType() == eType;
+  }
 }

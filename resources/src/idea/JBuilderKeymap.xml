@@ -29,9 +29,6 @@
       <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     </action>
     <action id="CollapseBlock"/>
-    <action id="CollapseRegion">
-      <keyboard-shortcut first-keystroke="control SUBTRACT"/>
-    </action>
     <action id="CopyElement"/>
     <action id="CopyPaths"/>
     <action id="EditSource"/>
@@ -90,8 +87,6 @@
       <keyboard-shortcut first-keystroke="control alt V"/>
       <keyboard-shortcut first-keystroke="shift control V"/>
     </action>
-    <action id="MethodHierarchy.ImplementMethodAction"/>
-    <action id="MethodHierarchy.OverrideMethodAction"/>
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="alt RIGHT"/>
       <keyboard-shortcut first-keystroke="shift control F6"/>

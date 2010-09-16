@@ -70,9 +70,6 @@
     <action id="$Undo">
       <keyboard-shortcut first-keystroke="control Z"/>
     </action>
-    <action id="MethodHierarchy.OverrideMethodAction">
-      <keyboard-shortcut first-keystroke="shift control O"/>
-    </action>
     <action id="$Copy">
       <keyboard-shortcut first-keystroke="control C"/>
     </action>
@@ -111,14 +108,8 @@
       <mouse-shortcut keystroke="ctrl button1"/>
       <mouse-shortcut keystroke="button2"/>
     </action>
-    <action id="NewElement">
-      <keyboard-shortcut first-keystroke="alt INSERT"/>
-    </action>
     <action id="FindPrevious">
       <keyboard-shortcut first-keystroke="shift F3"/>
-    </action>
-    <action id="MethodHierarchy.ImplementMethodAction">
-      <keyboard-shortcut first-keystroke="shift control I"/>
     </action>
     <action id="FindUsagesInFile">
       <keyboard-shortcut first-keystroke="shift control F7"/>

@@ -31,7 +31,7 @@ import java.util.Set;
 public abstract class XmlSchemaTagsProcessor {
 
   private final Set<XmlTag> myVisited = new HashSet<XmlTag>();
-  private final XmlNSDescriptorImpl myNsDescriptor;
+  protected final XmlNSDescriptorImpl myNsDescriptor;
   private final String[] myTagsToIgnore;
 
   public XmlSchemaTagsProcessor(XmlNSDescriptorImpl nsDescriptor, String... tagsToIgnore) {
@@ -39,7 +39,7 @@ public abstract class XmlSchemaTagsProcessor {
     myTagsToIgnore = ArrayUtil.append(tagsToIgnore, "annotation");
   }
 
-  public void startProcessing(XmlTag tag) {
+  public final void startProcessing(XmlTag tag) {
     processTag(tag, null);
   }
 

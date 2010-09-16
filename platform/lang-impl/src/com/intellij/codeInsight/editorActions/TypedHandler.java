@@ -21,6 +21,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
+import com.intellij.formatting.FormatConstants;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -306,9 +307,8 @@ public class TypedHandler implements TypedActionHandler {
     change.update(editor);
 
     // Is assumed to be max possible number of characters inserted on the visual line with caret.
-    int reservedColumns = 3 /* '3' is for breaking string literal: 'quote symbol', 'space' and 'plus' operator */;
     int maxPreferredOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(
-      new VisualPosition(caretModel.getVisualPosition().line, margin - reservedColumns)
+      new VisualPosition(caretModel.getVisualPosition().line, margin - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
     ));
 
     int documentLengthBeforeWrapping = document.getTextLength();

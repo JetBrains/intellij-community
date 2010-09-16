@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,14 +93,16 @@ public class ManualArrayToCollectionCopyInspection
 
         @Nullable
         private static String getCollectionsAddAllText(
-                PsiForeachStatement forStatement)
+                PsiForeachStatement foreachStatement)
                 throws IncorrectOperationException {
-            final PsiExpressionStatement body = getBody(forStatement);
-            if (body == null) {
+            final PsiStatement body = getBody(foreachStatement);
+            if (!(body instanceof PsiExpressionStatement)) {
                 return null;
             }
+            final PsiExpressionStatement expressionStatement =
+                    (PsiExpressionStatement) body;
             final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression)body.getExpression();
+                    (PsiMethodCallExpression)expressionStatement.getExpression();
             final PsiReferenceExpression methodExpression =
                     methodCallExpression.getMethodExpression();
             final PsiElement collection = methodExpression.getQualifier();
@@ -113,7 +111,8 @@ public class ManualArrayToCollectionCopyInspection
                 return null;
             }
             final String collectionText = collection.getText();
-            final PsiExpression iteratedValue = forStatement.getIteratedValue();
+            final PsiExpression iteratedValue =
+                    foreachStatement.getIteratedValue();
             if (iteratedValue == null) {
                 return null;
             }
@@ -132,7 +131,7 @@ public class ManualArrayToCollectionCopyInspection
                 throws IncorrectOperationException {
             final PsiExpression expression = forStatement.getCondition();
             final PsiBinaryExpression condition =
-                    (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(
+                    (PsiBinaryExpression)ParenthesesUtils.stripParentheses(
                             expression);
             if (condition == null) {
                 return null;
@@ -157,59 +156,42 @@ public class ManualArrayToCollectionCopyInspection
                 return null;
             }
             final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
-            final PsiExpressionStatement body = getBody(forStatement);
-            if (body == null) {
-                return null;
-            }
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression)body.getExpression();
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            final PsiElement collection = methodExpression.getQualifier();
-            if (collection == null) {
-                // fixme for when the array is added to 'this'
-                return null;
-            }
-            final String collectionText = collection.getText();
-            final PsiExpressionList argumentList =
-                    methodCallExpression.getArgumentList();
-            final PsiExpression argument = argumentList.getExpressions()[0];
-            final PsiExpression deparenthesizedArgument =
-                    PsiUtil.deparenthesizeExpression(argument);
-            if (!(deparenthesizedArgument instanceof
-                    PsiArrayAccessExpression)) {
-                return null;
-            }
+            final String collectionText = buildCollectionText(forStatement);
             final PsiArrayAccessExpression arrayAccessExpression =
-                    (PsiArrayAccessExpression)
-                            deparenthesizedArgument;
+                    getArrayAccessExpression(forStatement);
+            if (arrayAccessExpression == null) {
+                return null;
+            }
             final PsiExpression arrayExpression =
                     arrayAccessExpression.getArrayExpression();
             final String arrayText = arrayExpression.getText();
             final PsiExpression indexExpression =
                     arrayAccessExpression.getIndexExpression();
             final String fromOffsetText =
-                    getStartOffsetText(indexExpression, variable);
+                    buildFromOffsetText(indexExpression, variable);
             if (fromOffsetText == null) {
                 return null;
             }
-            PsiExpression limit;
-            if (condition.getOperationTokenType() == JavaTokenType.LT)  {
+            final PsiExpression limit;
+            final IElementType tokenType = condition.getOperationTokenType();
+            if (tokenType == JavaTokenType.LT ||
+                    tokenType == JavaTokenType.LE)  {
                 limit = condition.getROperand();
             } else {
                 limit = condition.getLOperand();
             }
-            limit = PsiUtil.deparenthesizeExpression(limit);
-            if (limit == null) {
-                return null;
-            }
-            @NonNls final String toOffsetText = limit.getText();
+            @NonNls final String toOffsetText =
+                    buildToOffsetText(limit, tokenType == JavaTokenType.LE ||
+                            tokenType == JavaTokenType.GE);
             if (toOffsetText == null) {
                 return null;
             }
-            @NonNls final StringBuilder buffer = new StringBuilder(60);
-            buffer.append(collectionText);
-            buffer.append(".addAll(java.util.Arrays.asList(");
+            @NonNls final StringBuilder buffer = new StringBuilder();
+            if (collectionText.length() > 0) {
+                buffer.append(collectionText);
+                buffer.append('.');
+            }
+            buffer.append("addAll(java.util.Arrays.asList(");
             buffer.append(arrayText);
             buffer.append(')');
             if (!fromOffsetText.equals("0") ||
@@ -224,12 +206,94 @@ public class ManualArrayToCollectionCopyInspection
             return buffer.toString();
         }
 
+        private static PsiArrayAccessExpression getArrayAccessExpression(
+                PsiForStatement forStatement) {
+            final PsiStatement body = getBody(forStatement);
+            if (body == null) {
+                return null;
+            }
+            final PsiExpression arrayAccessExpression;
+            if (body instanceof PsiExpressionStatement) {
+                final PsiExpressionStatement expressionStatement =
+                        (PsiExpressionStatement) body;
+                final PsiExpression expression =
+                        expressionStatement.getExpression();
+                if (!(expression instanceof PsiMethodCallExpression)) {
+                    return null;
+                }
+                final PsiMethodCallExpression methodCallExpression =
+                        (PsiMethodCallExpression)expression;
+                final PsiExpressionList argumentList =
+                        methodCallExpression.getArgumentList();
+                arrayAccessExpression = argumentList.getExpressions()[0];
+            } else if (body instanceof PsiDeclarationStatement) {
+                final PsiDeclarationStatement declarationStatement =
+                        (PsiDeclarationStatement) body;
+                final PsiElement[] declaredElements =
+                        declarationStatement.getDeclaredElements();
+                if (declaredElements.length != 1) {
+                    return null;
+                }
+                final PsiElement declaredElement = declaredElements[0];
+                if (!(declaredElement instanceof PsiVariable)) {
+                    return null;
+                }
+                final PsiVariable variable = (PsiVariable) declaredElement;
+                arrayAccessExpression = variable.getInitializer();
+            } else {
+                return null;
+            }
+            final PsiExpression deparenthesizedArgument =
+                    ParenthesesUtils.stripParentheses(arrayAccessExpression);
+            if (!(deparenthesizedArgument instanceof
+                    PsiArrayAccessExpression)) {
+                return null;
+            }
+            return (PsiArrayAccessExpression) deparenthesizedArgument;
+        }
+
+        public static String buildCollectionText(PsiForStatement forStatement) {
+            PsiStatement body = forStatement.getBody();
+            while (body instanceof PsiBlockStatement) {
+                final PsiBlockStatement blockStatement =
+                        (PsiBlockStatement) body;
+                final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+                final PsiStatement[] statements = codeBlock.getStatements();
+                if (statements.length == 2) {
+                    body = statements[1];
+                } else if (statements.length == 1) {
+                    body = statements[0];
+                } else {
+                    return null;
+                }
+            }
+            if (!(body instanceof PsiExpressionStatement)) {
+                return null;
+            }
+            final PsiExpressionStatement expressionStatement =
+                    (PsiExpressionStatement) body;
+            final PsiExpression expression =
+                    expressionStatement.getExpression();
+            if (!(expression instanceof PsiMethodCallExpression)) {
+                return null;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) expression;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final PsiElement qualifier = methodExpression.getQualifier();
+            if (qualifier == null) {
+                // fixme for when the array is added to 'this'
+                return null;
+            }
+            return qualifier.getText();
+        }
+
         @Nullable
-        private static String getStartOffsetText(PsiExpression expression,
+        private static String buildFromOffsetText(PsiExpression expression,
                                                  PsiLocalVariable variable)
                 throws IncorrectOperationException {
-            expression =
-                    PsiUtil.deparenthesizeExpression(expression);
+            expression = ParenthesesUtils.stripParentheses(expression);
             if (expression == null) {
                 return null;
             }
@@ -247,7 +311,7 @@ public class ManualArrayToCollectionCopyInspection
                         (PsiBinaryExpression)expression;
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 final PsiExpression rhs = binaryExpression.getROperand();
-                final String rhsText = getStartOffsetText(rhs, variable);
+                final String rhsText = buildFromOffsetText(rhs, variable);
                 final PsiJavaToken sign = binaryExpression.getOperationSign();
                 final IElementType tokenType = sign.getTokenType();
                 if (ExpressionUtils.isZero(lhs)) {
@@ -256,7 +320,7 @@ public class ManualArrayToCollectionCopyInspection
                     }
                     return rhsText;
                 }
-                final String lhsText = getStartOffsetText(lhs, variable);
+                final String lhsText = buildFromOffsetText(lhs, variable);
                 if (ExpressionUtils.isZero(rhs)) {
                     return lhsText;
                 }
@@ -264,6 +328,36 @@ public class ManualArrayToCollectionCopyInspection
                         variable);
             }
             return collapseConstant(expression.getText(), variable);
+        }
+
+        private static String buildToOffsetText(PsiExpression expression,
+                                                boolean plusOne) {
+            expression = ParenthesesUtils.stripParentheses(expression);
+            if (expression == null) {
+                return null;
+            }
+            if (!plusOne) {
+                return expression.getText();
+            }
+            if (expression instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) expression;
+                final IElementType tokenType =
+                        binaryExpression.getOperationTokenType();
+                if (tokenType == JavaTokenType.MINUS)  {
+                    final PsiExpression rhs =
+                            binaryExpression.getROperand();
+                    if (ExpressionUtils.isOne(rhs)) {
+                        return binaryExpression.getLOperand().getText();
+                    }
+                }
+            }
+            final int precedence = ParenthesesUtils.getPrecedence(expression);
+            if (precedence > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+                return '(' + expression.getText() + ")+1";
+            } else {
+                return expression.getText() + "+1";
+            }
         }
 
         private static String collapseConstant(String expressionText,
@@ -285,8 +379,7 @@ public class ManualArrayToCollectionCopyInspection
         }
 
         @Nullable
-        private static PsiExpressionStatement getBody(
-                PsiLoopStatement forStatement) {
+        private static PsiStatement getBody(PsiLoopStatement forStatement) {
             PsiStatement body = forStatement.getBody();
             while (body instanceof PsiBlockStatement) {
                 final PsiBlockStatement blockStatement =
@@ -295,7 +388,7 @@ public class ManualArrayToCollectionCopyInspection
                 final PsiStatement[] statements = codeBlock.getStatements();
                 body = statements[0];
             }
-            return (PsiExpressionStatement)body;
+            return body;
         }
     }
 
@@ -384,9 +477,36 @@ public class ManualArrayToCollectionCopyInspection
                         (PsiBlockStatement)body;
                 final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
                 final PsiStatement[] statements = codeBlock.getStatements();
-                return statements.length == 1 &&
-                        bodyIsArrayToCollectionCopy(statements[0], variable,
-                                shouldBeOffsetArrayAccess);
+                if (statements.length == 1) {
+                    return bodyIsArrayToCollectionCopy(statements[0], variable,
+                            shouldBeOffsetArrayAccess);
+                } else if (statements.length == 2) {
+                    final PsiStatement statement = statements[0];
+                    if (!(statement instanceof PsiDeclarationStatement)) {
+                        return false;
+                    }
+                    final PsiDeclarationStatement declarationStatement =
+                            (PsiDeclarationStatement) statement;
+                    final PsiElement[] declaredElements =
+                            declarationStatement.getDeclaredElements();
+                    if (declaredElements.length != 1) {
+                        return false;
+                    }
+                    final PsiElement declaredElement = declaredElements[0];
+                    if (!(declaredElement instanceof PsiVariable)) {
+                        return false;
+                    }
+                    final PsiVariable localVariable =
+                            (PsiVariable) declaredElement;
+                    final PsiExpression initializer =
+                            localVariable.getInitializer();
+                    if (!ExpressionUtils.isOffsetArrayAccess(initializer,
+                            variable)) {
+                        return false;
+                    }
+                    return bodyIsArrayToCollectionCopy(statements[1],
+                            localVariable, false);
+                }
             }
             return false;
         }
@@ -394,8 +514,7 @@ public class ManualArrayToCollectionCopyInspection
         private static boolean expressionIsArrayToCollectionCopy(
                 PsiExpression expression, PsiVariable variable,
                 boolean shouldBeOffsetArrayAccess) {
-            expression =
-                    PsiUtil.deparenthesizeExpression(expression);
+            expression = ParenthesesUtils.stripParentheses(expression);
             if (expression == null) {
                 return false;
             }

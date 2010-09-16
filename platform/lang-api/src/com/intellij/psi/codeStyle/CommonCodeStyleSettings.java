@@ -684,6 +684,8 @@ public class CommonCodeStyleSettings {
   public int WHILE_BRACE_FORCE = DO_NOT_FORCE;
   public int FOR_BRACE_FORCE = DO_NOT_FORCE;
 
+  public boolean WRAP_LONG_LINES = false;
+
   //-------------- Annotation formatting settings-------------------------------------------
 
   public int METHOD_ANNOTATION_WRAP = WRAP_ALWAYS;

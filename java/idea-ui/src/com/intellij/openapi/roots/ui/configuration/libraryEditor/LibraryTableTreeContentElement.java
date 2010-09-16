@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LibraryTableTreeContentElement {
-  // empty, just to serve as a base for all tree structure elements
 
   public abstract LibraryTableTreeContentElement getParent();
 

@@ -333,15 +333,15 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
         }
         myCommittedChangeLists = receivedChanges;
         myTreeBrowser.setItems(myCommittedChangeLists, false, CommittedChangesBrowserUseCase.UPDATE);
-        myTreeBrowser.clearEmptyText();
+        myTreeBrowser.getEmptyText().clear();
         if (hasEmptyCaches) {
-          myTreeBrowser.appendEmptyText("Click ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          myTreeBrowser.appendEmptyText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+          myTreeBrowser.getEmptyText().appendText("Click ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          myTreeBrowser.getEmptyText().appendText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
             public void actionPerformed(final ActionEvent e) {
               RefreshIncomingChangesAction.doRefresh(myProject);
             }
           });
-          myTreeBrowser.appendEmptyText(" to initialize repository changes cache", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          myTreeBrowser.getEmptyText().appendText(" to initialize repository changes cache", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     }, myProject.getDisposed());

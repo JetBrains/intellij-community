@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.command;
 
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -36,8 +37,12 @@ public final class HgErrorUtil {
     );
   }
 
+  @Nullable
   private static String getLastErrorLine(HgCommandResult result) {
-    List<String> errorLines = result.getErrorLines();
+    if (result == null) {
+      return null;
+    }
+    final List<String> errorLines = result.getErrorLines();
     if (errorLines.isEmpty()) {
       return null;
     }

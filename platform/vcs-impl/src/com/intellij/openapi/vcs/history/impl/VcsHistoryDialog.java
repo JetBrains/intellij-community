@@ -140,7 +140,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     myList = new TableView(new ListTableModel(createColumns(components.getColumns())));
     ((SortableColumnModel)myList.getModel()).setSortable(false);
 
-    myList.setEmptyText(VcsBundle.message("history.empty"));
+    myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject);
 

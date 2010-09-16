@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class SerializableHasSerialVersionUIDFieldInspection
         extends SerializableInspection {
 
-  @Override
+    @Override
     @NotNull
     public String getID() {
         return "serial";
@@ -64,9 +64,6 @@ public class SerializableHasSerialVersionUIDFieldInspection
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isAnnotationType()||
                     aClass.isEnum()) {
-                return;
-            }
-            if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
             if (aClass instanceof PsiTypeParameter ||

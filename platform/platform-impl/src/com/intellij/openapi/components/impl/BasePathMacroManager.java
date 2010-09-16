@@ -75,9 +75,13 @@ public class BasePathMacroManager extends PathMacroManager {
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
     result.addMacroExpand(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
-    result.addMacroExpand(PathMacrosImpl.USER_HOME_MACRO_NAME, SystemProperties.getUserHome());
+    result.addMacroExpand(PathMacrosImpl.USER_HOME_MACRO_NAME, getUserHome());
     getPathMacros().addMacroExpands(result);
     return result;
+  }
+
+  protected static String getUserHome() {
+    return SystemProperties.getUserHome();
   }
 
 
@@ -85,7 +89,7 @@ public class BasePathMacroManager extends PathMacroManager {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
 
     result.addMacroReplacement(PathManager.getHomePath(), PathMacrosImpl.APPLICATION_HOME_MACRO_NAME);
-    result.addMacroReplacement(SystemProperties.getUserHome(), PathMacrosImpl.USER_HOME_MACRO_NAME);
+    result.addMacroReplacement(getUserHome(), PathMacrosImpl.USER_HOME_MACRO_NAME);
     getPathMacros().addMacroReplacements(result);
     return result;
   }

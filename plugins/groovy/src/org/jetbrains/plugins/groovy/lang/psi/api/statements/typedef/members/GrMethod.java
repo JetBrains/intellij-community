@@ -79,5 +79,5 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   GrModifierList getModifierList();
 
   @NotNull
-  Set<String>[] getNamedParametersArray();
+  String[] getNamedParametersArray();
 }

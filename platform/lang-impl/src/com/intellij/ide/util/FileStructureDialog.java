@@ -298,7 +298,7 @@ public class FileStructureDialog extends DialogWrapper {
     }
 
     public MyCommanderPanel(Project _project) {
-      super(_project, false);
+      super(_project, false, true);
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myListSpeedSearch.addChangeListener(new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
@@ -422,11 +422,14 @@ public class FileStructureDialog extends DialogWrapper {
     return new SpeedSearchBase.SpeedSearchComparator() {
       public void translateCharacter(final StringBuilder buf, final char ch) {
         if (ch == '*') {
+          if (buf.length() > 0 && "^*)(".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
           buf.append(".*"); // overrides '*' handling to skip (,) in parameter lists
         }
         else {
           if (ch == ':') {
+            if (buf.length() > 0 && "^*)(".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
             buf.append(".*"); //    get:int should match any getter returning int
+            buf.append('(');
           }
           super.translateCharacter(buf, ch);
         }

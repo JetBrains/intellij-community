@@ -27,14 +27,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -53,7 +52,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Icons;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,8 +63,10 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel");
@@ -381,25 +381,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               return moduleLibraryTable.getModifiableModel();
             }
 
-            public String getTableLevel() {
-              return moduleLibraryTable.getTableLevel();
-            }
-
-            public LibraryTablePresentation getLibraryTablePresentation() {
-              return moduleLibraryTable.getPresentation();
-            }
-
-            public boolean isLibraryTableEditable() {
-              return false;
-            }
           };
         }
         else {
-          provider = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext().createModifiableModelProvider(table.getTableLevel(), false);
+          provider = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext().createModifiableModelProvider(table.getTableLevel());
         }
-        final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library, myState.getProject());
-        editor.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, getRootModel().getModule());
-        editor.openDialog(ClasspathPanelImpl.this, Collections.singletonList(library), true);
+        EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject());
+        dialog.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, getRootModel().getModule());
+        dialog.show();
         myEntryTable.repaint();
         ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();
       }
@@ -471,67 +460,20 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext();
       int actionIndex = 1;
       final List<AddItemPopupAction<?>> actions = new ArrayList<AddItemPopupAction<?>>();
-      actions.add(
-        new AddItemPopupAction<Library>(this, actionIndex++, ProjectBundle.message("classpath.add.simple.module.library.action"), Icons.JAR_ICON) {
-          protected ClasspathTableItem createTableItem(final Library item) {
-            final OrderEntry[] entries = getRootModel().getOrderEntries();
-            for (OrderEntry entry : entries) {
-              if (entry instanceof LibraryOrderEntry) {
-                final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
-                if (item.equals(libraryOrderEntry.getLibrary())) {
-                  return ClasspathTableItem.createLibItem(libraryOrderEntry);
-                }
-              }
-            }
-            LOG.error("Unknown library " + item);
-            return null;
-          }
-
-          protected ClasspathElementChooserDialog<Library> createChooserDialog() {
-            return new ChooseModuleLibrariesDialog(ClasspathPanelImpl.this, getRootModel().getModuleLibraryTable(), null);
-          }
-        });
-      actions.add(
-        new AddItemPopupAction<Library>(this, actionIndex++, ProjectBundle.message("classpath.add.module.library.action"), Icons.JAR_ICON) {
-          protected ClasspathTableItem createTableItem(final Library item) {
-            final OrderEntry[] entries = getRootModel().getOrderEntries();
-            for (OrderEntry entry : entries) {
-              if (entry instanceof LibraryOrderEntry) {
-                final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
-                if (item.equals(libraryOrderEntry.getLibrary())) {
-                  return ClasspathTableItem.createLibItem(libraryOrderEntry);
-                }
-              }
-            }
-            LOG.error("Unknown library " + item);
-            return null;
-          }
-
-          protected ClasspathElementChooserDialog<Library> createChooserDialog() {
-            return new CreateModuleLibraryDialog(ClasspathPanelImpl.this, getRootModel().getModuleLibraryTable());
-          }
-        });
-      actions.add(new ChooseNamedLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.project.library.action"),
-                                               context.getProjectLibrariesProvider(true)));
-      actions.add(new ChooseNamedLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.global.library.action"),
-                                               context.getGlobalLibrariesProvider(true)));
-
-      for (final LibraryTableModifiableModelProvider provider : context.getCustomLibrariesProviders(true)) {
-        actions.add(new ChooseNamedLibraryAction(this, actionIndex++, provider.getLibraryTablePresentation().getDisplayName(false) + "...", provider));
-      }
-
+      actions.add(new AddSingleEntryModuleLibraryAction(this, actionIndex++));
+      actions.add(new AddLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
       actions.add(new AddItemPopupAction<Module>(this, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
                                                  StdModuleTypes.JAVA.getNodeIcon(false)) {
           protected ClasspathTableItem createTableItem(final Module item) {
             return ClasspathTableItem.createItem(getRootModel().addModuleOrderEntry(item));
           }
-          protected ClasspathElementChooserDialog<Module> createChooserDialog() {
+          protected ClasspathElementChooser<Module> createChooser() {
             final List<Module> chooseItems = getDependencyModules();
             if (chooseItems.isEmpty()) {
               Messages.showMessageDialog(ClasspathPanelImpl.this, ProjectBundle.message("message.no.module.dependency.candidates"), getTitle(), Messages.getInformationIcon());
               return null;
             }
-            return new ChooseModulesToAddDialog(chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"));
+            return new ModuleChooser(chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"));
           }
         }
       );
@@ -694,8 +636,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }
   }
 
-  private class ChooseModulesToAddDialog extends ChooseModulesDialog implements ClasspathElementChooserDialog<Module> {
-    public ChooseModulesToAddDialog(final List<Module> items, final String title) {
+  private class ModuleChooser extends ChooseModulesDialog implements ClasspathElementChooser<Module> {
+    public ModuleChooser(final List<Module> items, final String title) {
       super(ClasspathPanelImpl.this, items, title);
     }
 
@@ -751,4 +693,5 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       return new RelativePoint(myEntryTable, location);
     }
   }
+
 }

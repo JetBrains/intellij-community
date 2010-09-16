@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 @State(
-  name = "hg4idea.settings",
-  storages = @Storage(id = "hg4idea.settings", file = "$OPTIONS$/hg4idea.xml")
+  name = "HgGlobalSettings",
+  storages = @Storage(id = "HgGlobalSettings", file = "$APP_CONFIG$/vcs.xml")
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings> {
 

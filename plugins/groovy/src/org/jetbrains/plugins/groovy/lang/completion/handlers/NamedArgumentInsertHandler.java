@@ -25,6 +25,13 @@ import com.intellij.openapi.editor.ScrollType;
  * @author Maxim.Medvedev
  */
 public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> {
+
+  public static final NamedArgumentInsertHandler INSTANCE = new NamedArgumentInsertHandler();
+
+  private NamedArgumentInsertHandler() {
+
+  }
+
   public void handleInsert(InsertionContext context, LookupElement item) {
     int tailOffset = context.getTailOffset();
     final Editor editor = context.getEditor();

@@ -29,8 +29,8 @@ public class XmlElementsGroupLeaf extends XmlElementsGroupBase {
 
   private final XmlElementDescriptor myDescriptor;
 
-  public XmlElementsGroupLeaf(XmlTag tag, XmlElementDescriptor descriptor) {
-    super(tag);
+  public XmlElementsGroupLeaf(XmlTag tag, XmlElementDescriptor descriptor, XmlElementsGroup parent) {
+    super(tag, parent);
     myDescriptor = descriptor;
   }
 

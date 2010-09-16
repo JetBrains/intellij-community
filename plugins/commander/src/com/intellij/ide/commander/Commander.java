@@ -310,7 +310,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   private CommanderPanel createPanel() {
-    final CommanderPanel panel = new CommanderPanel(myProject, true);
+    final CommanderPanel panel = new CommanderPanel(myProject, true, false);
 
     panel.getList().addKeyListener(new KeyAdapter() {
       public void keyPressed(final KeyEvent e) {

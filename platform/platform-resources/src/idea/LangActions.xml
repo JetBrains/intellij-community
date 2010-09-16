@@ -157,7 +157,7 @@
 
     <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingActionGroup" popup="true">
       <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
-      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
+      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction" use-shortcut-of="CollapseAll"/>
       <separator/>
       <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
       <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
@@ -587,9 +587,10 @@
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>
       <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>
-      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction"/>
+      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction" use-shortcut-of="$Delete"/>
       <separator/>
-      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>
+      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"
+              use-shortcut-of="RecentFiles"/>
     </group>
 
     <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>

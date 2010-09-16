@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
@@ -104,6 +103,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     for (Option each : myOptions) {
       each.setEnabled(true);
     }
+    for (Option each : myCustomOptions) {
+      each.setEnabled(false);
+    }
   }
 
   @Override
@@ -116,6 +118,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
           each.setEnabled(true);
         }
       }
+    }
+    for (Option each : myCustomOptions) {
+      each.setEnabled(false);
     }
   }
 
@@ -138,7 +143,6 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
     else {
       for (Option each : myCustomOptions) {
-        each.setEnabled(false);
         if (each.clazz == settingsClass && each.field.getName().equals(fieldName)) {
           each.setEnabled(true);
         }

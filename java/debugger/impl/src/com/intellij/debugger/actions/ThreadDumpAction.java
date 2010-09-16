@@ -16,7 +16,8 @@
 
 /**
  * class ExportThreadsAction
- * @author Jeka
+ * @author Eugene Zhuravlev
+ * @author Sascha Weinreuter
  */
 package com.intellij.debugger.actions;
 
@@ -38,7 +39,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
+import com.intellij.util.SmartList;
 import com.sun.jdi.*;
+import gnu.trove.TIntObjectHashMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -133,6 +136,9 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
         if (vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
           List<ObjectReference> list = threadReference.ownedMonitors();
           for (ObjectReference reference : list) {
+            if (!vmProxy.canGetMonitorFrameInfo()) { // java 5 and earlier
+              buffer.append("\n\t ").append(renderLockedObject(reference));
+            }
             final List<ThreadReference> waiting = reference.waitingThreads();
             for (ThreadReference thread : waiting) {
               final String waitingThreadName = threadName(thread);
@@ -150,16 +156,37 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
               final String monitorOwningThreadName = threadName(waitedMonitorOwner);
               waitingMap.put(threadName, monitorOwningThreadName);
               buffer.append("\n\t ")
-                .append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", monitorOwningThreadName));
+                .append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", monitorOwningThreadName, renderObject(waitedMonitor)));
             }
           }
         }
 
         final List<StackFrame> frames = threadReference.frames();
         hasEmptyStack = frames.size() == 0;
-        for (StackFrame stackFrame : frames) {
+
+        final TIntObjectHashMap<List<ObjectReference>> lockedAt = new TIntObjectHashMap<List<ObjectReference>>();
+        if (vmProxy.canGetMonitorFrameInfo()) {
+          for (MonitorInfo info : threadReference.ownedMonitorsAndFrames()) {
+            final int stackDepth = info.stackDepth();
+            List<ObjectReference> monitors;
+            if ((monitors = lockedAt.get(stackDepth)) == null) {
+              lockedAt.put(stackDepth, monitors = new SmartList<ObjectReference>());
+            }
+            monitors.add(info.monitor());
+          }
+        }
+
+        for (int i = 0, framesSize = frames.size(); i < framesSize; i++) {
+          final StackFrame stackFrame = frames.get(i);
           final Location location = stackFrame.location();
           buffer.append("\n\t  ").append(renderLocation(location));
+
+          final List<ObjectReference> monitors = lockedAt.get(i);
+          if (monitors != null) {
+            for (ObjectReference monitor : monitors) {
+              buffer.append("\n\t  - ").append(renderLockedObject(monitor));
+            }
+          }
         }
       }
       catch (IncompatibleThreadStateException e) {
@@ -187,6 +214,14 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
 
     ThreadDumpParser.sortThreads(result);
     return result;
+  }
+
+  private static String renderLockedObject(ObjectReference monitor) {
+    return DebuggerBundle.message("threads.export.attribute.label.locked", renderObject(monitor));
+  }
+
+  private static String renderObject(ObjectReference monitor) {
+    return DebuggerBundle.message("threads.export.attribute.label.object-id", Long.toHexString(monitor.uniqueID()), monitor.referenceType().name());
   }
 
   private static String threadStatusToJavaThreadState(int status) {

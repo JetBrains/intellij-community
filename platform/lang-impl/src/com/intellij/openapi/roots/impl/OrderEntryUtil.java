@@ -46,6 +46,29 @@ public class OrderEntryUtil {
   }
 
   @Nullable
+  public static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @NotNull String libraryName) {
+    for (OrderEntry orderEntry : model.getOrderEntries()) {
+      if (orderEntry instanceof LibraryOrderEntry) {
+        final String libName = ((LibraryOrderEntry)orderEntry).getLibraryName();
+        if (libraryName.equals(libName)) {
+          return (LibraryOrderEntry)orderEntry;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static void detachModuleLibrary(@NotNull ModifiableRootModel model, @Nullable OrderEntry entry) {
+    if (entry == null) {
+      model.dispose();
+    }
+    else {
+      model.removeOrderEntry(entry);
+      model.commit();
+    }
+  }
+
+  @Nullable
   public static ModuleOrderEntry findModuleOrderEntry(@NotNull ModuleRootModel model, @Nullable Module module) {
     if (module == null) return null;
 
@@ -73,7 +96,8 @@ public class OrderEntryUtil {
     if (orderEntry1 instanceof JdkOrderEntry && orderEntry2 instanceof JdkOrderEntry) {
       final JdkOrderEntry jdkOrderEntry1 = (JdkOrderEntry)orderEntry1;
       final JdkOrderEntry jdkOrderEntry2 = (JdkOrderEntry)orderEntry2;
-      return Comparing.equal(jdkOrderEntry1.getJdk(), jdkOrderEntry2.getJdk()) && Comparing.strEqual(jdkOrderEntry1.getJdkName(), jdkOrderEntry2.getJdkName());
+      return Comparing.equal(jdkOrderEntry1.getJdk(), jdkOrderEntry2.getJdk()) &&
+             Comparing.strEqual(jdkOrderEntry1.getJdkName(), jdkOrderEntry2.getJdkName());
     }
     if (orderEntry1 instanceof LibraryOrderEntry && orderEntry2 instanceof LibraryOrderEntry) {
       final LibraryOrderEntry jdkOrderEntry1 = (LibraryOrderEntry)orderEntry1;
@@ -123,7 +147,7 @@ public class OrderEntryUtil {
     if (libraryOrderEntry.isModuleLevel()) {
       final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
       final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-      for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
+      for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
         VirtualFile[] files = library.getFiles(orderRootType);
         for (VirtualFile jarFile : files) {
           libraryModel.addRoot(jarFile, orderRootType);

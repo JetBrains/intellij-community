@@ -190,20 +190,8 @@
     <action id="Graph.Print">
       <keyboard-shortcut first-keystroke="shift control alt P" />
     </action>
-    <action id="GuiDesigner.DecreaseIndent">
-      <keyboard-shortcut first-keystroke="shift alt LEFT" />
-    </action>
-    <action id="GuiDesigner.ExpandSelection">
-      <keyboard-shortcut first-keystroke="shift alt PERIOD" />
-    </action>
-    <action id="GuiDesigner.IncreaseIndent">
-      <keyboard-shortcut first-keystroke="shift alt RIGHT" />
-    </action>
     <action id="GuiDesigner.ReloadCustomComponents">
       <keyboard-shortcut first-keystroke="shift control R" />
-    </action>
-    <action id="GuiDesigner.ShrinkSelection">
-      <keyboard-shortcut first-keystroke="shift alt COMMA" />
     </action>
     <action id="HideAllWindows" />
     <action id="HippieBackwardCompletion">
@@ -226,8 +214,6 @@
       <keyboard-shortcut first-keystroke="control alt DOWN" />
     </action>
     <action id="MethodHierarchy" />
-    <action id="MethodHierarchy.ImplementMethodAction" />
-    <action id="MethodHierarchy.OverrideMethodAction" />
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="control alt UP" />
     </action>
@@ -240,7 +226,7 @@
     <action id="MoveStatementUp">
       <keyboard-shortcut first-keystroke="shift alt UP" />
     </action>
-    <action id="NewElement">
+    <action id="Generate">
       <keyboard-shortcut first-keystroke="alt INSERT" />
       <keyboard-shortcut first-keystroke="control N" />
     </action>
@@ -352,15 +338,11 @@
       <keyboard-shortcut first-keystroke="shift control alt P" />
     </action>
     <action id="Unwrap" />
-    <action id="UsageView.ShowRecentFindUsages" />
     <action id="ValidateJsp">
       <keyboard-shortcut first-keystroke="shift alt F9" />
     </action>
     <action id="ValidateXml">
       <keyboard-shortcut first-keystroke="shift alt F9" />
-    </action>
-    <action id="Console.TableResult.DeleteRows">
-      <keyboard-shortcut first-keystroke="control E"/>
     </action>
   </keymap>
 </component>

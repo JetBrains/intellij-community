@@ -1,0 +1,1 @@
+this is a test string that is expected to end just before right margin<caret>
