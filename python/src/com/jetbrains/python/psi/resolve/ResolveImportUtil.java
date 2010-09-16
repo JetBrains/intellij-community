@@ -269,8 +269,6 @@ public class ResolveImportUtil {
     PsiFile footholdFile = foothold.getContainingFile();
     if (footholdFile == null || !footholdFile.isValid()) return Collections.emptyList();
 
-    if (moduleQualifiedName.getComponentCount() < 1) return Collections.emptyList();
-
     PythonPathCache cache = null;
     final Module module = ModuleUtil.findModuleForPsiElement(foothold);
     if (module != null) {
