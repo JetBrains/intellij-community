@@ -414,6 +414,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
     children = dataDir.getChildren();
     for (VirtualFile child : children) {
+
       if (!filter.accept(child)) continue;
       if (child.isDirectory()) { // is a directory
         VirtualFile destChild = destDir.findChild(child.getName());

@@ -12,6 +12,8 @@ public class CommonTest extends CompilerTestCase {
   public void testAnonymous()  throws Exception {doTest();}
 
   public void testDeleteClass()  throws Exception {doTest();}
+  
+  public void testDeleteClassPackageDoesntMatchRoot()  throws Exception {doTest();}
 
   // TODO: SCR 10823
   //public void testDeleteClass1()  throws Exception {doTest();}
