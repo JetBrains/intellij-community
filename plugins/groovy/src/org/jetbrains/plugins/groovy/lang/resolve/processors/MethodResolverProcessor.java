@@ -223,13 +223,21 @@ public class MethodResolverProcessor extends ResolverProcessor {
     }
 
     if (super.hasCandidates()) {
-      return filterCandidates();
+      return getApplicableCandidates();
     }
     if (!myInapplicableCandidates.isEmpty()) {
-      final Set<GroovyResolveResult> resultSet = filterCorrectParameterCount(myInapplicableCandidates);
-      return ResolveUtil.filterSameSignatureCandidates(resultSet, myArgumentTypes != null ? myArgumentTypes.length : -1);
+      return getInapplicableCandidates();
     }
     return GroovyResolveResult.EMPTY_ARRAY;
+  }
+
+  public GroovyResolveResult[] getApplicableCandidates() {
+    return filterCandidates();
+  }
+
+  public GroovyResolveResult[] getInapplicableCandidates() {
+    final Set<GroovyResolveResult> resultSet = filterCorrectParameterCount(myInapplicableCandidates);
+    return ResolveUtil.filterSameSignatureCandidates(resultSet, myArgumentTypes != null ? myArgumentTypes.length : -1);
   }
 
   private Set<GroovyResolveResult> filterCorrectParameterCount(Set<GroovyResolveResult> candidates) {

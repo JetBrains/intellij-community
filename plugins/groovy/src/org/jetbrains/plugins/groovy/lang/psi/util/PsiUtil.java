@@ -51,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -883,12 +882,38 @@ public class PsiUtil {
         final boolean toBreak = element.processDeclarations(processor, state, null, place);
 
         NonCodeMembersContributor.runContributors(thisType, processor, place, state);
-        ContainerUtil.addAll(constructorResults, processor.getCandidates());
+        final GroovyResolveResult[] applicableCandidates = processor.getApplicableCandidates();
+        final GroovyResolveResult[] inapplicableCandidates = processor.getInapplicableCandidates();
+
+        Collection<GroovyResolveResult> candidates = new ArrayList<GroovyResolveResult>(applicableCandidates.length);
+        addAllCorrectResults(place, clazz, applicableCandidates, candidates);
+        if (candidates.size() == 0) {
+          addAllCorrectResults(place, clazz, inapplicableCandidates, candidates);
+        }
+        ContainerUtil.addAll(constructorResults, candidates.iterator());
         if (!toBreak) break;
       }
     }
 
     return constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
+  }
+
+  private static void addAllCorrectResults(GroovyPsiElement place,
+                                           PsiClass clazz,
+                                           GroovyResolveResult[] applicableCandidates,
+                                           Collection<GroovyResolveResult> candidates) {
+    for (GroovyResolveResult candidate : applicableCandidates) {
+      if (checkMethod(place, clazz, candidate)) candidates.add(candidate);
+    }
+  }
+
+  private static boolean checkMethod(GroovyPsiElement place, PsiClass clazz, GroovyResolveResult candidate) {
+    final PsiElement resolved = candidate.getElement();
+    if (resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor()) {
+      final PsiClass containingClass = ((PsiMethod)resolved).getContainingClass();
+      if (containingClass != null && !place.getManager().areElementsEquivalent(containingClass, clazz)) return false;
+    }
+    return true;
   }
 
   public static boolean isAccessedForReading(GrExpression expr) {
@@ -965,13 +990,5 @@ public class PsiUtil {
       }
       return element;
     }
-  }
-
-  public static GrReturnStatement[] collectReturns(GrClosableBlock closure) {
-    return new GrReturnStatement[0];  // TODO Mr. Medvedev
-  }
-
-  public static GrStatement getLastStatement(GrClosableBlock closure) {
-    return null; // TODO Mr. Medvedev
   }
 }
