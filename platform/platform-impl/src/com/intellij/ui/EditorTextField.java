@@ -90,7 +90,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
-    this(document, project, fileType, isViewer, true);
+    this(document,project, fileType, isViewer, true);
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer, boolean oneLineMode) {
