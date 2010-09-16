@@ -1085,24 +1085,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int logicalToVisualLine(int line) {
     assertReadAccess();
-    if (!myFoldingModel.isFoldingEnabled()) return line;
-
-
-    int offset = line >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(line);
-
-    FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
-    if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
-      if (offset < getDocument().getTextLength()) {
-        offset = outermostCollapsed.getStartOffset();
-        return offsetToVisualLine(offset);
-      }
-      else {
-        offset = outermostCollapsed.getEndOffset() + 3;  // WTF?
-      }
-    }
-
-    line -= myFoldingModel.getFoldedLinesCountBefore(offset);
-    return line;
+    return logicalToVisualPosition(new LogicalPosition(line, 0)).line;
+    //if (!myFoldingModel.isFoldingEnabled()) return line;
+    //
+    //
+    //int offset = line >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(line);
+    //
+    //FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
+    //if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
+    //  if (offset < getDocument().getTextLength()) {
+    //    offset = outermostCollapsed.getStartOffset();
+    //    return offsetToVisualLine(offset);
+    //  }
+    //  else {
+    //    offset = outermostCollapsed.getEndOffset() + 3;  // WTF?
+    //  }
+    //}
+    //
+    //line -= myFoldingModel.getFoldedLinesCountBefore(offset);
+    //return line;
   }
 
   @NotNull
