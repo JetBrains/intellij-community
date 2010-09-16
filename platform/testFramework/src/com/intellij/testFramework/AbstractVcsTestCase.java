@@ -155,7 +155,7 @@ public class AbstractVcsTestCase {
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
   }
 
-  protected VirtualFile createFileInCommand(final String name, @Nullable final String content) {
+  public VirtualFile createFileInCommand(final String name, @Nullable final String content) {
     return createFileInCommand(myWorkingCopyDir, name, content);
   }
 

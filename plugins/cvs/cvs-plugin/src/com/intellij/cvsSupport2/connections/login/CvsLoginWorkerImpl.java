@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CalledInBackground;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.ThreeState;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
@@ -66,7 +66,7 @@ public abstract class CvsLoginWorkerImpl<T extends CvsConnectionSettings> implem
 
   public void goOffline() {
     mySettings.setOffline(true);
-    ChangesViewBalloonProblemNotifier.showMe(myProject, CvsBundle.message("set.offline.notification.text"), MessageType.WARNING);
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, CvsBundle.message("set.offline.notification.text"), MessageType.WARNING);
   }
 
   private ThreeState reportException(final AuthenticationException e) {
@@ -95,6 +95,6 @@ public abstract class CvsLoginWorkerImpl<T extends CvsConnectionSettings> implem
   }
 
   public static void showConnectionErrorMessage(final Project project, final String message) {
-    ChangesViewBalloonProblemNotifier.showMe(project, message, MessageType.ERROR);
+    VcsBalloonProblemNotifier.showOverChangesView(project, message, MessageType.ERROR);
   }
 }

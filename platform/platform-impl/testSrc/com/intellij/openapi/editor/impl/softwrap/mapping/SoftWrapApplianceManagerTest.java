@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
@@ -38,9 +39,21 @@ public class SoftWrapApplianceManagerTest extends LightPlatformCodeInsightTestCa
     init(800);
 
     int offset = myEditor.getDocument().getTextLength() + 1;
-    assertNull(myEditor.getSoftWrapModel().getSoftWrap(offset));
+    assertTrue(getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
     type(" thisisalongtokenthatisnotexpectedtobebrokenintopartsduringsoftwrapping");
     assertNotNull(myEditor.getSoftWrapModel().getSoftWrap(offset));
+  }
+
+  public void testLongLineOfIdSymbolsIsNotSoftWrapped() throws Exception {
+    init(100);
+    assertTrue(getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
+    type('1');
+    assertTrue(getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
+
+    int offset = myEditor.getDocument().getText().indexOf("\n");
+    type(" test");
+    assertEquals(1, getSoftWrapModel().getRegisteredSoftWraps().size());
+    assertNotNull(getSoftWrapModel().getSoftWrap(offset));
   }
 
   private void init(final int visibleWidth) throws Exception {
@@ -57,5 +70,9 @@ public class SoftWrapApplianceManagerTest extends LightPlatformCodeInsightTestCa
       }
     });
     applianceManager.registerSoftWrapIfNecessary(new Rectangle(visibleWidth, visibleWidth * 2), 0);
+  }
+
+  private static SoftWrapModelEx getSoftWrapModel() {
+    return (SoftWrapModelEx)myEditor.getSoftWrapModel();
   }
 }

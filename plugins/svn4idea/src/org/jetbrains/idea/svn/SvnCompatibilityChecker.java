@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -68,7 +68,7 @@ public class SvnCompatibilityChecker {
                                      "Some roots are likely to be of unsupported Subversion format";
               application.invokeLater(new Runnable() {
                 public void run() {
-                  new ChangesViewBalloonProblemNotifier(myProject, message, MessageType.WARNING).run();
+                  new VcsBalloonProblemNotifier(myProject, message, MessageType.WARNING).run();
                 }
               }, ModalityState.NON_MODAL);
             }
