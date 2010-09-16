@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper;
 import com.intellij.lang.ASTNode;
 
 import java.io.PrintStream;
@@ -49,6 +50,9 @@ public class BlockDebugUtil {
   }
 
   private static void dumpBlockTree(PrintStream out, Block block, String indent, boolean withChildren) {
+    if (block instanceof DataLanguageBlockWrapper) {
+      dumpBlockTree(out, ((DataLanguageBlockWrapper)block).getOriginal(), indent, withChildren);
+    }
     if (block == null) return;
     out.print(indent + block.getClass().getSimpleName());
     if (block.getIndent() != null) {
@@ -67,9 +71,9 @@ public class BlockDebugUtil {
       if (node != null) {
         out.print(" " + node.getElementType());
         String text = node.getText();
-        int eolPos = text.indexOf('\n');
-        if (eolPos > 0) {
-          text = text.substring(0, eolPos) + "...";
+        text = text.replaceAll("\n", "\u00b6");
+        if (text.length() > 80) {
+          text = text.substring(0, 80) + "...";
         }
         out.print(" \"" + text + "\"");
       }
