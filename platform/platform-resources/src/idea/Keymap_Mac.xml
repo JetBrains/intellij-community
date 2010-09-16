@@ -204,11 +204,6 @@
     <action id="ActivateChangesToolWindow">
       <keyboard-shortcut first-keystroke="meta 9"/>
     </action>
-    <action id="NewElement">
-      <keyboard-shortcut first-keystroke="meta N"/>
-      <keyboard-shortcut first-keystroke="control N"/>
-      <keyboard-shortcut first-keystroke="control ENTER"/>
-    </action>
     <action id="Generate">
       <keyboard-shortcut first-keystroke="meta N"/>
       <keyboard-shortcut first-keystroke="control N"/>
@@ -298,13 +293,6 @@
       <keyboard-shortcut first-keystroke="ctrl V" />
     </action>
 
-
-    <action id="GuiDesigner.ExpandSelection">
-      <keyboard-shortcut first-keystroke="alt UP"/>
-    </action>
-    <action id="GuiDesigner.ShrinkSelection">
-      <keyboard-shortcut first-keystroke="alt DOWN"/>
-    </action>
 
     <action id="EditorSelectWord">
       <keyboard-shortcut first-keystroke="alt UP"/>
