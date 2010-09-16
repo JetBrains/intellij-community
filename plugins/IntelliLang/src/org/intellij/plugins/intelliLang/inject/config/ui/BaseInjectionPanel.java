@@ -67,10 +67,14 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       @Override
       protected EditorEx createEditor() {
         final EditorEx ex = super.createEditor();
-        ex.setOneLineMode(false);
         ex.setVerticalScrollbarVisible(true);
         ex.setHorizontalScrollbarVisible(true);
         return ex;
+      }
+
+      @Override
+      protected boolean isOneLineMode() {
+        return false;
       }
     };
     myCenterPanel.add(myTextArea, BorderLayout.CENTER);

@@ -254,7 +254,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   EditorImpl(@NotNull Document document, boolean viewer, Project project) {
     myProject = project;
     myDocument = (DocumentImpl)document;
-    myScheme = new MyColorSchemeDelegate();
+    myScheme = createBoundColorSchemeDelegate(null);
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this);
@@ -406,6 +406,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
+  }
+
+  public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
+    return new MyColorSchemeDelegate(customGlobalScheme);
   }
 
   private void repaintGuide(IndentGuideDescriptor guide) {
@@ -4586,12 +4590,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyColorSchemeDelegate implements EditorColorsScheme {
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
+    private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap = null;
     private int myFontSize = -1;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
 
-    private MyColorSchemeDelegate() {
+    private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
+      myCustomGlobalScheme = globalScheme;
       updateGlobalScheme();
     }
 
@@ -4720,7 +4726,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public void updateGlobalScheme() {
-      myGlobalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      myGlobalScheme = myCustomGlobalScheme != null ? myCustomGlobalScheme
+                                                    :  EditorColorsManager.getInstance().getGlobalScheme();
     }
   }
 

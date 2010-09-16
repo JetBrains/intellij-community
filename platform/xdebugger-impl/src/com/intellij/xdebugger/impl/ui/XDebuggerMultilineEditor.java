@@ -42,9 +42,13 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
-        editor.setOneLineMode(false);
         editor.setVerticalScrollbarVisible(true);
         return editor;
+      }
+
+      @Override
+      protected boolean isOneLineMode() {
+        return false;
       }
     };
   }

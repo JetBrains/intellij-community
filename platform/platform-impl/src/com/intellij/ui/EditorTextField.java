@@ -72,6 +72,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   private boolean myIsSupplementary;
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor = null;
+  private boolean myOneLineMode; // use getter to access this field! It is allowed to override getter and change initial behaviour
 
   public EditorTextField() {
     this("");
@@ -90,10 +91,11 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
-    this(document, project, fileType, isViewer, true);
+    this(document,project, fileType, isViewer, true);
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer, boolean oneLineMode) {
+    myOneLineMode = oneLineMode;
     myIsViewer = isViewer;
     myOneLineMode = oneLineMode;
     setDocument(document);
@@ -339,6 +341,64 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     }
   }
 
+  /**
+   * This option will be used for embedded editor creation. It's ok to override this method if you don't want to configure
+   * it using class constructor
+   * @return is one line mode or not
+   */
+  protected boolean isOneLineMode() {
+    return myOneLineMode;
+  }
+
+  protected void initOneLineMode(final EditorEx editor) {
+    final boolean isOneLineMode = isOneLineMode();
+
+    // set mode in editor
+    editor.setOneLineMode(isOneLineMode);
+
+    final EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
+    final EditorColorsScheme customGlobalScheme = isOneLineMode ? defaultScheme : null;
+
+    // Probably we need change scheme only for color schemas with white BG, but on the other hand
+    // FindUsages dialog always uses FindUsages color scheme based on a default one and should be also fixed
+    //
+    //final EditorColorsScheme customGlobalScheme;
+    //final EditorColorsScheme currentScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    //if (currentScheme.getDefaultBackground() == Color.WHITE) {
+    //  customGlobalScheme = currentScheme;
+    //} else {
+    //  final EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
+    //  customGlobalScheme = isOneLineMode ? defaultScheme : null;
+    //}
+    editor.setColorsScheme(editor.createBoundColorSchemeDelegate(customGlobalScheme));
+
+    final EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+    if (!isEnabled()) {
+      editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
+        @Override
+        public Color getColor(ColorKey key) {
+          return super.getColor(key);
+        }
+
+        @Override
+        public TextAttributes getAttributes(TextAttributesKey key) {
+          final TextAttributes attributes = super.getAttributes(key);
+          if (!isEnabled()) {
+            return new TextAttributes(UIUtil.getInactiveTextColor(), attributes.getBackgroundColor(), attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
+          }
+
+          return attributes;
+        }
+      });
+    }
+
+    // color scheme settings:
+    setupEditorFont(editor);
+    updateBorder(editor);
+    editor.setBackgroundColor(getBackgroundColor(!myIsViewer, colorsScheme));
+  }
+
   protected EditorEx createEditor() {
     LOG.assertTrue(myDocument != null);
 
@@ -368,8 +428,6 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     editor.setVerticalScrollbarVisible(false);
     editor.setCaretEnabled(!myIsViewer);
     settings.setLineCursorWidth(1);
-
-    setupEditorFont(editor);
 
     if (myProject != null && myIsViewer) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -410,8 +468,6 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
       editor.setBorder(null);
     }
 
-    updateBorder(editor);
-
     if (myIsViewer) {
       editor.getSelectionModel().removeSelection();
     }
@@ -419,10 +475,10 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
       editor.getSelectionModel().setSelection(0, myDocument.getTextLength());
     }
 
-    editor.setBackgroundColor(getBackgroundColor(!myIsViewer));
-
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
     editor.getContentComponent().setFocusCycleRoot(false);
+
+    initOneLineMode(editor);
 
     return editor;
   }
@@ -473,10 +529,10 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     }
   }
 
-  private Color getBackgroundColor(boolean enabled){
+  private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
     return enabled
-           ? EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()
+           ? colorsScheme.getDefaultBackground()
            : UIUtil.getInactiveTextFieldBackgroundColor();
   }
 
