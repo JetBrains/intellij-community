@@ -620,7 +620,7 @@ public class ResolveImportUtil {
       relativeName = VfsUtil.getRelativePath(dir.getVirtualFile(), root, '/');
     }
     else {
-      PyQualifiedName relativeQName = findShortestImportableQName(dir, dir.getVirtualFile());
+      PyQualifiedName relativeQName = findShortestImportableQName(dir);
       if (relativeQName != null) {
         relativeName = relativeQName.join("/");
       }
@@ -692,6 +692,12 @@ public class ResolveImportUtil {
   public static String findShortestImportableName(PsiElement foothold, @NotNull VirtualFile vfile) {
     final PyQualifiedName qName = findShortestImportableQName(foothold, vfile);
     return qName == null ? null : qName.toString();
+  }
+
+  @Nullable
+  public static PyQualifiedName findShortestImportableQName(PsiFileSystemItem fsItem) {
+    VirtualFile vFile = fsItem.getVirtualFile();
+    return vFile != null ? findShortestImportableQName(fsItem, vFile) : null;
   }
 
   @Nullable

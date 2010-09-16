@@ -41,6 +41,7 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
     return true;
   }
 
+  @NotNull
   public PyImportElement[] getImportElements() {
     final PyImportStatementStub stub = getStub();
     if (stub != null) {

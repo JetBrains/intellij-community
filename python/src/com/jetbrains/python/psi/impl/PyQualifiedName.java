@@ -53,10 +53,17 @@ public class PyQualifiedName {
 
   @NotNull
   public PyQualifiedName removeLastComponent() {
+    return removeTail(1);
+  }
+
+  @NotNull
+  public PyQualifiedName removeTail(int count) {
     int size = myComponents.size();
     PyQualifiedName result = new PyQualifiedName(size);
     result.myComponents.addAll(myComponents);
-    result.myComponents.remove(size-1);
+    for (int i = 0; i < count && result.myComponents.size() > 0; i++) {
+      result.myComponents.remove(size-1);
+    }
     return result;
   }
 
