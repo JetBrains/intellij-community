@@ -101,6 +101,8 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
                       Map<MavenProject, String> mavenProjectToModuleName,
                       List<MavenProjectsProcessorTask> postTasks) {
     FACET_TYPE f = findFacet(modifiableModelsProvider.getFacetModel(module));
+    if (f == null) return; // facet may has been removed between preProcess and process calls
+
     reimportFacet(modifiableModelsProvider, module, rootModel, f, mavenModel, mavenProject, changes, mavenProjectToModuleName, postTasks);
   }
 
