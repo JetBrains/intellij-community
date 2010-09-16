@@ -30,7 +30,7 @@ public class ColorUtil {
   }
 
   public static String generatePreviewHtml(@NotNull final Color color) {
-    return String.format("<div style=\"width: 50px; height: 30px; background-color: #%s; border: 1px solid #222;\">&nbsp;</div>", com.intellij.ui.ColorUtil.toHex(color));
+    return String.format("<div style=\"padding: 1px; width: 52px; height: 32px; background-color: #555555;\"><div style=\"width: 50px; height: 30px; background-color: #%s;\">&nbsp;</div></div>", com.intellij.ui.ColorUtil.toHex(color));
   }
 
   public static void appendColorPreview(final PsiVariable variable, final StringBuilder buffer) {
@@ -52,7 +52,7 @@ public class ColorUtil {
               final Object o = helper.computeConstantExpression(each);
               if (o instanceof Integer) {
                 values[i] = ((Integer) o).intValue();
-                values[i] = values[i] > 255 ? 255 : values[i] < 0 ? 0 : values[i];
+                values[i] = values[i] > 255 && expressions.length > 1 ? 255 : values[i] < 0 ? 0 : values[i];
                 i++;
               } else if (o instanceof Float) {
                 values2[j] = ((Float) o).floatValue();
