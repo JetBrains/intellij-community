@@ -327,6 +327,5 @@
     <action id="ViewNavigationBar">
       <keyboard-shortcut first-keystroke="alt HOME" />
     </action>
-    <action id="Console.TableResult.DeleteRows"><keyboard-shortcut first-keystroke="control D"/></action>
   </keymap>
 </component>
