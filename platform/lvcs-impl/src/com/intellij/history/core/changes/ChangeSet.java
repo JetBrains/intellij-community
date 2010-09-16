@@ -102,6 +102,10 @@ public class ChangeSet {
     return myChanges;
   }
 
+  public boolean isEmpty() {
+    return myChanges.isEmpty();
+  }
+
   public boolean affectsPath(String paths) {
     for (Change c : myChanges) {
       if (c.affectsPath(paths)) return true;
