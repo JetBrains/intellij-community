@@ -350,4 +350,31 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testBeforeMethodBodyWithCodeBlockInside() {
+    // Inspired by IDEA-54747
+    getSettings().BLANK_LINES_BEFORE_METHOD_BODY = 3;
+    doTextTest(
+      "public class FormattingTest {\n" +
+      "    public void foo() {\n" +
+      "        System.out.println(\"\");\n" +
+      "        try {\n" +
+      "        } catch (Exception e) {\n" +
+      "        }\n" +
+      "    }\n" +
+      "}",
+
+      "public class FormattingTest {\n" +
+      "    public void foo() {\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "        System.out.println(\"\");\n" +
+      "        try {\n" +
+      "        } catch (Exception e) {\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

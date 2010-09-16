@@ -683,8 +683,18 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.LBRACE) {
       if (!keepInOneLine) {
+        int blankLines = 1;
+        if (myParent != null) {
+          ASTNode parentNode = myParent.getNode();
+          if (parentNode != null) {
+            ASTNode grandPa = parentNode.getTreeParent();
+            if (grandPa != null && grandPa.getElementType() == JavaElementType.METHOD) {
+              blankLines += mySettings.BLANK_LINES_BEFORE_METHOD_BODY;
+            }
+          }
+        }
         myResult = Spacing.createSpacing(
-          0, 0, mySettings.BLANK_LINES_BEFORE_METHOD_BODY + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE
+          0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE
         );
       }
       else {
