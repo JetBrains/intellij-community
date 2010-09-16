@@ -61,7 +61,7 @@ public class RevisionsList {
 
     table.setDefaultRenderer(Object.class, new MyCellRenderer(table));
 
-    table.setEmptyText(VcsBundle.message("history.empty"));
+    table.getEmptyText().setText(VcsBundle.message("history.empty"));
 
     addSelectionListener(l);
   }

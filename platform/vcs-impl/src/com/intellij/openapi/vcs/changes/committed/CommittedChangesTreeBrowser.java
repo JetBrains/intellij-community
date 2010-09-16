@@ -33,6 +33,7 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -193,20 +193,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myHelpId = helpId;
   }
 
-  public void setEmptyText(final String emptyText) {
-    myChangesTree.setEmptyText(emptyText);
-  }
-
-  public void clearEmptyText() {
-    myChangesTree.clearEmptyText();
-  }
-
-  public void appendEmptyText(final String text, final SimpleTextAttributes attrs) {
-    myChangesTree.appendEmptyText(text, attrs);
-  }
-
-  public void appendEmptyText(final String text, final SimpleTextAttributes attrs, ActionListener clickListener) {
-    myChangesTree.appendEmptyText(text, attrs, clickListener);
+  public StatusText getEmptyText() {
+    return myChangesTree.getEmptyText();
   }
 
   public void setToolBar(JComponent toolBar) {

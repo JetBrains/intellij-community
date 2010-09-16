@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -34,18 +37,14 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.XmlBundle;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlExtension;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -116,6 +115,14 @@ public class XmlCompletionContributor extends CompletionContributor {
            });
   }
 
+  public static boolean isXmlNameCompletion(final CompletionParameters parameters) {
+    final ASTNode node = parameters.getPosition().getNode();
+    if (node == null || node.getElementType() != XmlTokenType.XML_NAME) {
+      return false;
+    }
+    return true;
+  }
+
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     super.fillCompletionVariants(parameters, result);
     if (result.isStopped()) {
@@ -176,6 +183,10 @@ public class XmlCompletionContributor extends CompletionContributor {
         }
       }
     }
+
+    else if (parameters.getCompletionType() == CompletionType.SMART) {
+//      new XmlSmartCompletionProvider().complete(parameters, result, element);
+    }
   }
 
   public static LookupElement createLookupElement(final String name,
@@ -187,14 +198,6 @@ public class XmlCompletionContributor extends CompletionContributor {
       builder = builder.setTailText(tailText, true);
     }
     return builder;
-  }
-
-  public static boolean isXmlNameCompletion(final CompletionParameters parameters) {
-    final ASTNode node = parameters.getPosition().getNode();
-    if (node == null || node.getElementType() != XmlTokenType.XML_NAME) {
-      return false;
-    }
-    return true;
   }
 
   @Override
@@ -218,4 +221,5 @@ public class XmlCompletionContributor extends CompletionContributor {
       context.setFileCopyPatcher(new DummyIdentifierPatcher(""));
     }
   }
+
 }

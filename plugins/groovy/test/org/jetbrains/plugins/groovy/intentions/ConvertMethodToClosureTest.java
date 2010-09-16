@@ -27,23 +27,40 @@ public class ConvertMethodToClosureTest extends GrIntentionTestCase {
     return TestUtils.getTestDataPath() + "intentions/convertMethodToClosure/";
   }
 
-  public void testMethodToClosure() throws Exception {
-    doTest(GroovyIntentionsBundle.message("convert.method.to.closure.intention.name"), true);
+  public void testMethodToClosure() {
+    doMethodToClosureTest();
   }
 
-  public void testStaticMethodToClosure() throws Exception {
-    doTest(GroovyIntentionsBundle.message("convert.method.to.closure.intention.name"), true);
+  public void testStaticMethodToClosure()  {
+    doMethodToClosureTest();
   }
 
-  public void testClosureToMethod() throws Exception {
-    doTest(GroovyIntentionsBundle.message("convert.closure.to.method.intention.name"), true);
+  public void testClosureToMethod()  {
+    doClosureToMethodTest();
   }
 
-  public void testClosureWithImplicitParameterToMethod() throws Exception {
-    doTest(GroovyIntentionsBundle.message("convert.closure.to.method.intention.name"), true);
+  public void testClosureWithImplicitParameterToMethod()  {
+    doClosureToMethodTest();
   }
 
   public void testClosureWithoutModifiersToMethod() {
+    doClosureToMethodTest();
+  }
+
+  public void testClosureToMethodWithFieldUsages() {
+    doClosureToMethodTest();
+  }
+
+  public void testMethodToClosureWithMemberPointer() {
+    doMethodToClosureTest();
+  }
+
+  private void doClosureToMethodTest() {
     doTest(GroovyIntentionsBundle.message("convert.closure.to.method.intention.name"), true);
   }
+
+  private void doMethodToClosureTest() {
+    doTest(GroovyIntentionsBundle.message("convert.method.to.closure.intention.name"), true);
+  }
+
 }

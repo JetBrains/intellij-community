@@ -70,6 +70,7 @@ public interface CodeStyleSettingsCustomizable {
     CodeStyleSettings.WRAP_AS_NEEDED |
     CodeStyleSettings.WRAP_ON_EVERY_ITEM,
     CodeStyleSettings.WRAP_ALWAYS};
+
   int[] WRAP_VALUES_FOR_SINGLETON = new int[]{CodeStyleSettings.DO_NOT_WRAP,
     CodeStyleSettings.WRAP_AS_NEEDED,
     CodeStyleSettings.WRAP_ALWAYS};

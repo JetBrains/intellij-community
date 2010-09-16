@@ -733,6 +733,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return findChildByType(GroovyTokenTypes.mAT) != null;
   }
 
+  @Override
+  public boolean hasMemberPointer() {
+    return findChildByType(GroovyTokenTypes.mMEMBER_POINTER) != null;
+  }
+
   public boolean isReferenceTo(PsiElement element) {
     return getManager().areElementsEquivalent(element, GroovyTargetElementEvaluator.correctSearchTargets(resolve()));
   }

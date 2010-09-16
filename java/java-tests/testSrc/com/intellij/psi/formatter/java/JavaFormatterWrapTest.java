@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 /**
@@ -148,5 +149,79 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     
     // Expecting the code to be left as-is
     doClassTest(text, text);
+  }
+
+  public void testWrapLongLine() {
+    // Inspired by IDEA-55782
+    getSettings().RIGHT_MARGIN = 50;
+    getSettings().WRAP_LONG_LINES = true;
+
+    doTextTest(
+      "class TestClass {\n" +
+      "    // Single line comment that exceeds right margin\n" +
+      "    /* Multi line comment that exceeds right margin*/\n" +
+      "    /**\n" +
+      "      Javadoc comment that exceeds right margin" +
+      "     */\n" +
+      "     public String s = \"this is a long string to be wrapped\"\n" +
+      "}",
+      "class TestClass {\n" +
+      "    // Single line comment that exceeds right\n" +
+      "    // margin\n" +
+      "    /* Multi line comment that exceeds right\n" +
+      "    margin*/\n" +
+      "    /**\n" +
+      "     * Javadoc comment that exceeds right\n" +
+      "     * margin\n" +
+      "     */\n" +
+      "    public String s = \"this is a long string to\" +\n" +
+      "            \" be wrapped\"\n" +
+      "}"
+    );
+  }
+
+  public void testWrapLongLineWithTabs() {
+    // Inspired by IDEA-55782
+    getSettings().RIGHT_MARGIN = 20;
+    getSettings().WRAP_LONG_LINES = true;
+    getIndentOptions().USE_TAB_CHARACTER = true;
+    getIndentOptions().TAB_SIZE = 4;
+
+    doTextTest(
+      "class TestClass {\n" +
+      "\t \t   //This is a comment\n" +
+      "}",
+      "class TestClass {\n" +
+      "\t//This is a\n" +
+      "\t// comment\n" +
+      "}"
+    );
+  }
+
+  public void testWrapLongLineWithSelection() {
+    // Inspired by IDEA-55782
+    getSettings().RIGHT_MARGIN = 20;
+    getSettings().WRAP_LONG_LINES = true;
+
+    String initial =
+      "class TestClass {\n" +
+      "    //This is a comment\n" +
+      "    //This is another comment\n" +
+      "}";
+
+    int start = initial.indexOf("//");
+    int end = initial.indexOf("comment");
+    myTextRange = new TextRange(start, end);
+    doTextTest(initial, initial);
+
+    myLineRange = new TextRange(1, 1);
+    doTextTest(
+      initial,
+      "class TestClass {\n" +
+      "    //This is a\n" +
+      "    // comment\n" +
+      "    //This is another comment\n" +
+      "}"
+    );
   }
 }

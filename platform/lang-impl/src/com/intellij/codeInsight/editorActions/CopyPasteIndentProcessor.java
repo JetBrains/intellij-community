@@ -124,6 +124,11 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
+        String pastedText = document.getText(new TextRange(bounds.getStartOffset(), bounds.getEndOffset()));
+        if (pastedText.trim().indexOf("\n") < 0) {
+          // don't indent single-line text
+          return;
+        }
         int startLine = document.getLineNumber(bounds.getStartOffset());
         int endLine = document.getLineNumber(bounds.getEndOffset());
         int startLineStart = document.getLineStartOffset(startLine);

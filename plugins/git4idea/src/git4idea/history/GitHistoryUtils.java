@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.StringTokenizer;
@@ -335,11 +336,34 @@ public class GitHistoryUtils {
     /*h.addParameters("-M", "--follow", "--name-only",
                     "--pretty=format:%x03%H%x00%ct%x00%an%x00%ae%x00%cn%x00%ce%x00[%P]%x00[%d]%x00%s%n%n%b%x00", "--encoding=UTF-8");*/
     h.addParameters("--name-only",
-                    "--pretty=format:%x03%H%x00%ct%x00%an%x00%ae%x00%cn%x00%ce%x00[%P]%x00[%d]%x00%s%n%n%b%x00", "--encoding=UTF-8");
+                    "--pretty=format:%x03%h%x00%H%x00%ct%x00%an%x00%ae%x00%cn%x00%ce%x00[%p]%x00[%d]%x00%s%n%n%b%x00", "--encoding=UTF-8");
 
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
+    return parseCommitsLoadOutput(allBranchesSet, root, output);
+  }
+
+  public static List<GitCommit> commitsDetails(Project project,
+                                                 FilePath path, Set<String> allBranchesSet,
+                                                 final Collection<String> commitsIds) throws VcsException {
+    // adjust path using change manager
+    path = getLastCommitName(project, path);
+    final VirtualFile root = GitUtil.getGitRoot(path);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
+    h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
+    h.addParameters("--name-only",
+                    "--pretty=format:%x03%h%x00%H%x00%ct%x00%an%x00%ae%x00%cn%x00%ce%x00[%p]%x00[%d]%x00%s%n%n%b%x00", "--encoding=UTF-8");
+    h.addParameters(new ArrayList<String>(commitsIds));
+
+    h.endOptions();
+    h.addRelativePaths(path);
+    String output = h.run();
+    return parseCommitsLoadOutput(allBranchesSet, root, output);
+  }
+
+  private static List<GitCommit> parseCommitsLoadOutput(Set<String> allBranchesSet, VirtualFile root, String output) throws VcsException {
     final List<GitCommit> rc = new ArrayList<GitCommit>();
     StringTokenizer tk = new StringTokenizer(output, "\u0003", false);
     final String prefix = root.getPath() + "/";
@@ -348,6 +372,7 @@ public class GitHistoryUtils {
       final String line = tk.nextToken();
       final StringTokenizer tk2 = new StringTokenizer(line, "\u0000\n", false);
       //while (tk2.hasMoreTokens()) {
+      final String shortHash = tk2.nextToken("\u0000");
       final String hash = tk2.nextToken("\u0000\n");
       final String dateString = tk2.nextToken("\u0000");
       final Date date = GitUtil.parseTimestamp(dateString);
@@ -357,12 +382,12 @@ public class GitHistoryUtils {
       final String committerEmail = tk2.nextToken("\u0000");
       // parent hashes
       final String parents = removeSquareBraces(tk2.nextToken("\u0000"));
-      final Set<SHAHash> parentsHashes;
+      final Set<String> parentsHashes;
       if (!StringUtil.isEmptyOrSpaces(parents)) {
         final String[] parentsSplit = parents.split(" "); // todo if parent = 000000
-        parentsHashes = new HashSet<SHAHash>();
+        parentsHashes = new HashSet<String>();
         for (String s : parentsSplit) {
-          parentsHashes.add(new SHAHash(s));
+          parentsHashes.add(s);
         }
       }
       else {
@@ -400,7 +425,7 @@ public class GitHistoryUtils {
         }
       }
       // todo parse revisions... patches?
-      rc.add(new GitCommit(new SHAHash(hash), authorName, committerName, date, message, parentsHashes, pathsList, authorEmail,
+      rc.add(new GitCommit(shortHash, new SHAHash(hash), authorName, committerName, date, message, parentsHashes, pathsList, authorEmail,
                            committerEmail, tags, branches));
       //}
     }
@@ -408,6 +433,12 @@ public class GitHistoryUtils {
   }
 
   public static List<CommitHashPlusParents> hashesWithParents(Project project, FilePath path, final String... parameters) throws VcsException {
+    final CollectConsumer<CommitHashPlusParents> consumer = new CollectConsumer<CommitHashPlusParents>();
+    hashesWithParents(project, path, consumer, parameters);
+    return (List<CommitHashPlusParents>) consumer.getResult();
+  }
+
+  public static void hashesWithParents(Project project, FilePath path, final Consumer<CommitHashPlusParents> consumer, final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
@@ -415,30 +446,35 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters("--name-only", "--pretty=format:%h%x00%ct%x00%p", "--encoding=UTF-8");
+    h.addParameters("--name-only", "--pretty=format:%x01%h%x00%ct%x00%p", "--encoding=UTF-8");
 
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
     final List<CommitHashPlusParents> rc = new ArrayList<CommitHashPlusParents>();
-    StringTokenizer tk = new StringTokenizer(output, "\n", false);
+    StringTokenizer tk = new StringTokenizer(output, "\u0001", false);
 
     while (tk.hasMoreTokens()) {
       final String line = tk.nextToken();
-      final StringTokenizer tk2 = new StringTokenizer(line, "\u0000", false);
+      final String[] subLines = line.split("\n");
+      final StringTokenizer tk2 = new StringTokenizer(subLines[0], "\u0000", false);
 
       final String hash = tk2.nextToken();
-      final String dateString = tk2.nextToken();
-      final long time = Long.parseLong(dateString.trim());
+      final long time;
+      if (tk2.hasMoreTokens()) {
+        final String dateString = tk2.nextToken();
+        time = Long.parseLong(dateString.trim());
+      } else {
+        time = 0;
+      }
       final String[] parents;
       if (tk2.hasMoreTokens()) {
         parents = tk2.nextToken().split(" ");
       } else {
         parents = ArrayUtil.EMPTY_STRING_ARRAY;
       }
-      rc.add(new CommitHashPlusParents(hash, parents, time));
+      consumer.consume(new CommitHashPlusParents(hash, parents, time));
     }
-    return rc;
   }
 
   @Nullable

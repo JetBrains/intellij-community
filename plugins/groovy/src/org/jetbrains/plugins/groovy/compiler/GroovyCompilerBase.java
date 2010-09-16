@@ -121,10 +121,16 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
 
     final List<String> patchers = new SmartList<String>();
-    for (final GroovyCompilerExtension extension : GroovyCompilerExtension.EP_NAME.getExtensions()) {
-      extension.enhanceCompilationClassPath(chunk, classPathBuilder);
-      patchers.addAll(extension.getCompilationUnitPatchers(chunk));
-    }
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        for (final GroovyCompilerExtension extension : GroovyCompilerExtension.EP_NAME.getExtensions()) {
+          extension.enhanceCompilationClassPath(chunk, classPathBuilder);
+          patchers.addAll(extension.getCompilationUnitPatchers(chunk));
+        }
+      }
+    });
 
     final boolean profileGroovyc = "true".equals(System.getProperty("profile.groovy.compiler"));
     if (profileGroovyc) {

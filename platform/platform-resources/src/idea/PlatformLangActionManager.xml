@@ -36,7 +36,7 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction" use-shortcut-of="Generate">
       <add-to-group group-id="PlatformOpenProjectGroup" anchor="after" relative-to-action="NewDirectoryProject"/>
     </action>
 

@@ -27,15 +27,13 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -98,7 +96,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   protected void loadTree() {
-    createLibrariesNode(myContext.createModifiableModelProvider(myLevel, false));
+    createLibrariesNode(myContext.createModifiableModelProvider(myLevel));
   }
 
   @NotNull
@@ -118,7 +116,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return result;
   }
 
-  private void createLibrariesNode(final LibraryTableModifiableModelProvider modelProvider) {
+  private void createLibrariesNode(final StructureLibraryTableModifiableModelProvider modelProvider) {
     final Library[] libraries = modelProvider.getModifiableModel().getLibraries();
     for (Library library : libraries) {
       myRoot.add(new MyNode(new LibraryConfigurable(modelProvider, library, myProject, TREE_UPDATER)));
@@ -149,7 +147,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     if (table != null) {
       final String level = table.getTableLevel();
       final LibraryConfigurable configurable =
-        new LibraryConfigurable(myContext.createModifiableModelProvider(level, false), library, myProject, TREE_UPDATER);
+        new LibraryConfigurable(myContext.createModifiableModelProvider(level), library, myProject, TREE_UPDATER);
       final MyNode node = new MyNode(configurable);
       addNode(node, myRoot);
       myContext.getDaemonAnalyzer().queueUpdate(new LibraryProjectStructureElement(myContext, library));
@@ -175,29 +173,23 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         setPopup(false);
       }
 
+      @NotNull
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-        return new AnAction[]{new AnAction(getAddText()) {
-          public void actionPerformed(AnActionEvent e) {
-            final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getModelProvider(false), myProject);
-            editor.addLibraryEditorListener(myContext);
-            editor.createAddLibraryAction(true).actionPerformed(null);
-            Disposer.dispose(editor);
-          }
-        }};
+        return new AnAction[]{new CreateNewLibraryAction(getAddText(), getModelProvider(), myProject)};
       }
     };
   }
 
   protected abstract String getAddText();
 
-  public abstract LibraryTableModifiableModelProvider getModelProvider(final boolean editable);
+  public abstract StructureLibraryTableModifiableModelProvider getModelProvider();
 
   public abstract BaseLibrariesConfigurable getOppositeGroup();
 
   protected void removeLibrary(final Library library) {
     final LibraryTable table = library.getTable();
     if (table != null) {
-      getModelProvider(true).getModifiableModel().removeLibrary(library);
+      getModelProvider().getModifiableModel().removeLibrary(library);
       myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
       // TODO: myContext.invalidateModules(myContext.myLibraryDependencyCache.get(library.getName()));
     }
@@ -266,7 +258,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
         LOG.assertTrue(library != null);
 
-        final LibraryTable.ModifiableModel libsModel = configurable.getModelProvider(true).getModifiableModel();
+        final LibraryTable.ModifiableModel libsModel = configurable.getModelProvider().getModifiableModel();
         final Library lib = libsModel.createLibrary(myNameTf.getText());
         final Library.ModifiableModel model = ((LibrariesModifiableModel)libsModel).getLibraryEditor(lib).getModel();
         for (OrderRootType type : OrderRootType.getAllTypes()) {

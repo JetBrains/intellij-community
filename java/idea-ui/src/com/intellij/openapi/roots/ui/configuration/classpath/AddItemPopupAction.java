@@ -15,17 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.Nullable;
-
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
 * @author nik
 */
-abstract class AddItemPopupAction<ItemType> extends ClasspathPanelAction {
+abstract class AddItemPopupAction<ItemType> extends ChooseAndAddAction<ItemType> {
   private final String myTitle;
   private final Icon myIcon;
   private final int myIndex;
@@ -49,40 +44,4 @@ abstract class AddItemPopupAction<ItemType> extends ClasspathPanelAction {
     return myIndex;
   }
 
-  @Override
-  public void run() {
-    final ClasspathElementChooserDialog<ItemType> dialog = createChooserDialog();
-    if (dialog == null) {
-      return;
-    }
-    try {
-      dialog.doChoose();
-      if (!dialog.isOK()) {
-        return;
-      }
-      final List<ItemType> chosen = dialog.getChosenElements();
-      if (chosen.isEmpty()) {
-        return;
-      }
-      List<ClasspathTableItem> toAdd = new ArrayList<ClasspathTableItem>();
-      for (ItemType item : chosen) {
-        final ClasspathTableItem tableItem = createTableItem(item);
-        if (tableItem != null) {
-          toAdd.add(tableItem);
-        }
-      }
-      myClasspathPanel.addItems(toAdd);
-    }
-    finally {
-      if (dialog instanceof ChooseNamedLibraryAction.MyChooserDialog) {
-        Disposer.dispose(dialog);
-      }
-    }
-  }
-
-  @Nullable
-  protected abstract ClasspathTableItem createTableItem(final ItemType item);
-
-  @Nullable
-  protected abstract ClasspathElementChooserDialog<ItemType> createChooserDialog();
 }

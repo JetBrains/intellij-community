@@ -28,10 +28,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
@@ -536,13 +533,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   }
 
   @Override
-  public void setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
-    if (!(changeInfo instanceof JavaChangeInfo)) return;
+  public boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
+    if (!(changeInfo instanceof JavaChangeInfo)) return true;
     for (UsageInfo usageInfo : refUsages.get()) {
       if (usageInfo instanceof  MethodCallUsageInfo) {
         MethodCallUsageInfo methodCallUsageInfo = (MethodCallUsageInfo)usageInfo;
         if (methodCallUsageInfo.isToChangeArguments()){
-          final boolean needDefaultValue = needDefaultValue(changeInfo, RefactoringUtil.getEnclosingMethod(methodCallUsageInfo.getElement()));
+          final PsiElement element = methodCallUsageInfo.getElement();
+          if (element == null) continue;
+          final boolean needDefaultValue = needDefaultValue(changeInfo, RefactoringUtil.getEnclosingMethod(element));
           if (needDefaultValue) {
             final ParameterInfo[] parameters = changeInfo.getNewParameters();
             for (ParameterInfo parameter : parameters) {
@@ -550,7 +549,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               if (defaultValue == null && parameter.getOldIndex() == -1) {
                 ((ParameterInfoImpl)parameter).setDefaultValue("");
                 if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                  final DefaultValueChooser chooser = new DefaultValueChooser(project, parameter.getName());
+                  final PsiType type = ((ParameterInfoImpl)parameter).getTypeWrapper().getType(element, element.getManager());
+                  final DefaultValueChooser chooser = new DefaultValueChooser(project, parameter.getName(), PsiTypesUtil.getDefaultValueOfType(type));
                   chooser.show();
                   if (chooser.isOK()) {
                     if (chooser.feelLucky()) {
@@ -558,6 +558,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                     } else {
                       ((ParameterInfoImpl)parameter).setDefaultValue(chooser.getDefaultValue());
                     }
+                  } else {
+                    return false;
                   }
                 }
               }
@@ -566,6 +568,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
     }
+    return true;
   }
 
   private static boolean needDefaultValue(ChangeInfo changeInfo, PsiMethod method) {

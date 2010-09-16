@@ -43,6 +43,8 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement,
 
   boolean hasAt();
 
+  boolean hasMemberPointer();
+
   void replaceDotToken(PsiElement newDotToken);
 
   //not caching!

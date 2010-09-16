@@ -31,7 +31,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
@@ -65,7 +67,10 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
     GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(myFile.getProject());
     myUnusedImports = importsTracker.getUnusedImportStatements(myFile);
     if (!myUnusedImports.isEmpty() && CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
-      myOptimizeRunnable = new GroovyImportOptimizer().processFile(myFile);
+      final VirtualFile vfile = myFile.getVirtualFile();
+      if (vfile != null && ProjectRootManager.getInstance(myFile.getProject()).getFileIndex().isInSource(vfile)) {
+        myOptimizeRunnable = new GroovyImportOptimizer().processFile(myFile);
+      }
     }
   }
 

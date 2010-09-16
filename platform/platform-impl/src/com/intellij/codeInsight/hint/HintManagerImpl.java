@@ -162,6 +162,28 @@ public class HintManagerImpl extends HintManager implements Disposable {
     };
   }
 
+  public boolean performCurrentQuestionAction() {
+    if (myQuestionAction != null && myQuestionHint != null) {
+      if (myQuestionHint.isVisible()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("performing an action:" + myQuestionAction);
+        }
+        if (myQuestionAction.execute()) {
+          if (myQuestionHint != null) {
+            myQuestionHint.hide();
+          }
+        }
+        return true;
+      }
+
+      myQuestionAction = null;
+      myQuestionHint = null;
+    }
+
+    return false;
+  }
+
+
   private void updateScrollableHints(VisibleAreaEvent e) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (HintInfo info : myHintsStack) {
@@ -232,7 +254,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
   /**
    * @param p point in layered pane coordinate system.
    * @param reviveOnEditorChange
-   * @param hintInfo
    */
   public void showEditorHint(@NotNull final LightweightHint hint,
                              @NotNull Editor editor,
@@ -630,30 +651,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
         myLastEditor.getCaretModel().addCaretListener(myCaretMoveListener);
       }
     }
-  }
-
-  public boolean performCurrentQuestionAction() {
-    if (myQuestionAction != null && myQuestionHint != null) {
-      if (myQuestionHint.isVisible()) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("performing an action:" + myQuestionAction);
-        }
-        if (myQuestionAction.execute()) {
-          if (myQuestionHint != null) {
-            myQuestionHint.hide();
-          }
-          return true;
-        }
-        else {
-          return true;
-        }
-      }
-
-      myQuestionAction = null;
-      myQuestionHint = null;
-    }
-
-    return false;
   }
 
   private class MyAnActionListener implements AnActionListener {

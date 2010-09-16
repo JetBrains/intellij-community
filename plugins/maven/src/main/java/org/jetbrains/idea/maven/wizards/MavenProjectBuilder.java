@@ -110,10 +110,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
                                   : new MavenDefaultModifiableModelsProvider(project));
   }
 
-  public VirtualFile getRootDirectory() {
-    return getImportRoot();
-  }
-
   public boolean setRootDirectory(final String root) throws ConfigurationException {
     getParameters().myFiles = null;
     getParameters().myProfiles.clear();
@@ -122,10 +118,14 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().myImportRoot = FileFinder.refreshRecursively(root);
     if (getParameters().myImportRoot == null) return false;
 
+    final VirtualFile file = getRootDirectory();
+    if (file == null) return false;
+
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
         indicator.setText(ProjectBundle.message("maven.locating.files"));
-        getParameters().myFiles = FileFinder.findPomFiles(getImportRoot().getChildren(),
+
+        getParameters().myFiles = FileFinder.findPomFiles(file.getChildren(),
                                                           getImportingSettings().isLookForNested(),
                                                           indicator.getIndicator(),
                                                           new ArrayList<VirtualFile>());
@@ -265,7 +265,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   @Nullable
-  public VirtualFile getImportRoot() {
+  public VirtualFile getRootDirectory() {
     if (getParameters().myImportRoot == null && isUpdate()) {
       final Project project = getProjectToUpdate();
       assert project != null;

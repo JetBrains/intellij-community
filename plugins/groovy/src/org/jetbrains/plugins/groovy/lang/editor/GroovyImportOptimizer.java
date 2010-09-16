@@ -16,9 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.editor;
 
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -42,7 +40,6 @@ import java.util.*;
  * @author ven
  */
 public class GroovyImportOptimizer implements ImportOptimizer {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer");
   private static final Comparator<GrImportStatement> IMPORT_STATEMENT_COMPARATOR = new Comparator<GrImportStatement>() {
     public int compare(GrImportStatement statement1, GrImportStatement statement2) {
       final GrCodeReferenceElement ref1 = statement1.getImportReference();
@@ -58,10 +55,6 @@ public class GroovyImportOptimizer implements ImportOptimizer {
   @NotNull
   public Runnable processFile(PsiFile file) {
     return new MyProcessor((GroovyFile)file, false);
-  }
-
-  public void removeUnusedImports(GroovyFile file) {
-    new MyProcessor(file, true).run();
   }
 
   public List<GrImportStatement> findUnusedImports(GroovyFile file, Set<GrImportStatement> usedImports) {
@@ -82,10 +75,6 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     }
 
     public void run() {
-      if (!ProjectRootManager.getInstance(myFile.getProject()).getFileIndex().isInSource(myFile.getVirtualFile())) {
-        return;
-      }
-
       final Set<String> importedClasses = new LinkedHashSet<String>();
       final Set<String> staticallyImportedMembers = new LinkedHashSet<String>();
       final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();

@@ -41,5 +41,5 @@ public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefin
   GrAccessorMethod[] getGetters();
 
   @NotNull
-  Set<String>[] getNamedParametersArray();
+  String[] getNamedParametersArray();
 }

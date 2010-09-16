@@ -52,6 +52,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   private JPanel myTreePanel;
   private JPanel myPropertiesPanel;
   private JPanel myButtonsPanel;
+  private JPanel myEmptyPanel;
   private final XBreakpointsTree<B> myTree;
   private final XBreakpointPanelAction<B>[] myActions;
   private Map<XBreakpointPanelAction<B>, JButton> myButtons;
@@ -123,6 +124,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
       mySelectedPropertiesPanel = new XBreakpointPropertiesPanel<B>(myProject, getBreakpointManager(), selectedBreakpoint);
       myPropertiesPanel.add(mySelectedPropertiesPanel.getMainPanel(), BorderLayout.CENTER);
       myPropertiesPanelWrapper.revalidate();
+      myEmptyPanel.setPreferredSize(myPropertiesPanel.getPreferredSize());
     }
 
     updatePropertiesWrapper();

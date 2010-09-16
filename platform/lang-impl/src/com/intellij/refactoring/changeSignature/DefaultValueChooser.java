@@ -38,13 +38,17 @@ public class DefaultValueChooser extends DialogWrapper{
   private JPanel myWholePanel;
   private JLabel myBlankDescription;
 
-  public DefaultValueChooser(Project project, String name) {
+  public DefaultValueChooser(Project project, String name, String defaultValue) {
     super(project);
     new RadioUpDownListener(myLeaveBlankRadioButton, myFeelLuckyRadioButton, myUseValueRadioButton);
     final ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         myValueEditor.setEnabled(myUseValueRadioButton.isSelected());
+        if (myUseValueRadioButton.isSelected()) {
+          myValueEditor.selectAll();
+          myValueEditor.requestFocus();
+        }
       }
     };
     myLeaveBlankRadioButton.addActionListener(actionListener);
@@ -58,6 +62,7 @@ public class DefaultValueChooser extends DialogWrapper{
                                    "Blank place would be used otherwise");
     myFeelLuckyDescription.setUI(new MultiLineLabelUI());
     myBlankDescription.setUI(new MultiLineLabelUI());
+    myValueEditor.setText(defaultValue);
     init();
   }
 

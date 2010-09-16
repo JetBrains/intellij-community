@@ -21,12 +21,14 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrFieldStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
@@ -60,7 +62,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
   public GrFieldStub createStub(GrField psi, StubElement parentStub) {
     String[] annNames = GrTypeDefinitionElementType.getAnnotationNames(psi);
 
-    Set<String>[] namedParametersArray = new Set[0];
+    String[] namedParametersArray = ArrayUtil.EMPTY_STRING_ARRAY;
     if (psi instanceof GrFieldImpl){
       namedParametersArray = psi.getNamedParametersArray();
     }
@@ -92,15 +94,9 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
       dataStream.writeName(s);
     }
 
-    final Set<String>[] namedParameters = stub.getNamedParameters();
+    final String[] namedParameters = stub.getNamedParameters();
+    GrStubUtils.writeStringArray(dataStream, namedParameters);
 
-    dataStream.writeByte(namedParameters.length);
-    for (Set<String> namedParameterSet : namedParameters) {
-      dataStream.writeByte(namedParameterSet.size());
-      for (String namepParameter : namedParameterSet) {
-        dataStream.writeUTF(namepParameter);
-      }
-    }
     dataStream.writeByte(stub.getFlags());
   }
 
@@ -112,26 +108,12 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
       annNames[i] = dataStream.readName().toString();
     }
 
-    //named parameters
-    final byte namedParametersSetNumber = dataStream.readByte();
-    final List<Set<String>> namedParametersSets = new ArrayList<Set<String>>();
-
-    for (int i = 0; i < namedParametersSetNumber; i++) {
-      final byte curNamedParameterSetSize = dataStream.readByte();
-      final String[] namedParameterSetArray = new String[curNamedParameterSetSize];
-
-      for (int j = 0; j < curNamedParameterSetSize; j++) {
-        namedParameterSetArray[j] = dataStream.readUTF();
-      }
-      Set<String> curSet = new HashSet<String>();
-      ContainerUtil.addAll(curSet, namedParameterSetArray);
-      namedParametersSets.add(curSet);
-    }
+    final String[] namedParameters = GrStubUtils.readStringArray(dataStream);
 
     byte flags = dataStream.readByte();
 
-    return new GrFieldStubImpl(parentStub, ref, annNames, namedParametersSets.toArray(new HashSet[namedParametersSets.size()]),
-                               GrFieldStubImpl.isEnumConstant(flags) ? ENUM_CONSTANT : FIELD, flags);
+    return new GrFieldStubImpl(parentStub, ref, annNames, namedParameters, GrFieldStubImpl.isEnumConstant(flags) ? ENUM_CONSTANT : FIELD,
+                               flags);
   }
 
   static void indexFieldStub(GrFieldStub stub, IndexSink sink) {

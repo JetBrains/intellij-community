@@ -141,10 +141,14 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   @NotNull
   public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
     assert !isDisposed();
+    return getRootFiles(myRoots.get(rootType), myJarDirectories);
+  }
+
+  public static VirtualFile[] getRootFiles(final VirtualFilePointerContainer container, final Map<String, Boolean> jarDirectories) {
     final List<VirtualFile> expanded = new ArrayList<VirtualFile>();
-    for (VirtualFile file : myRoots.get(rootType).getFiles()) {
+    for (VirtualFile file : container.getFiles()) {
       if (file.isDirectory()) {
-        final Boolean expandRecursively = myJarDirectories.get(file.getUrl());
+        final Boolean expandRecursively = jarDirectories.get(file.getUrl());
         if (expandRecursively != null) {
           addChildren(file, expanded, expandRecursively.booleanValue());
           continue;

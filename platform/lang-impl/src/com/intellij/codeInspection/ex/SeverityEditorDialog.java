@@ -117,26 +117,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     final JButton button = new JButton(InspectionsBundle.message("severities.default.settings.message"));
     button.addActionListener(new ActionListener(){
       public void actionPerformed(final ActionEvent e) {
-        final String toConfigure = getSelectedType().getSeverity(null).myName;
-        doOKAction();
-        myOptionsList.clearSelection();
-        ColorAndFontOptions colorAndFontOptions = ColorAndFontOptions.getColorAndFontsInstance();
-        assert colorAndFontOptions != null;
-        final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
-        LOG.assertTrue(javaPage != null);
-        final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
-        if (optionsEditor != null) {
-          optionsEditor.select(javaPage).doWhenDone(new Runnable(){
-            public void run() {
-              final Runnable runnable = javaPage.enableSearch(toConfigure);
-              if (runnable != null) {
-                SwingUtilities.invokeLater(runnable);
-              }
-            }
-          });
-        } else {
-          ShowSettingsUtil.getInstance().editConfigurable(PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), javaPage);
-        }
+        editColorsAndFonts();
       }
     });
     disabled.add(button, new GridBagConstraints(0,0,1,1,0,0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
@@ -148,6 +129,35 @@ public class SeverityEditorDialog extends DialogWrapper {
     init();
     setTitle(InspectionsBundle.message("severities.editor.dialog.title"));
     reset((SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
+  }
+
+  private void editColorsAndFonts() {
+    final String toConfigure = getSelectedType().getSeverity(null).myName;
+    doOKAction();
+    myOptionsList.clearSelection();
+    final DataContext dataContext = DataManager.getInstance().getDataContext(myPanel);
+    final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(dataContext);
+    if (optionsEditor != null) {
+      final ColorAndFontOptions colorAndFontOptions = optionsEditor.findConfigurable(ColorAndFontOptions.class);
+      assert colorAndFontOptions != null;
+      final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
+      LOG.assertTrue(javaPage != null);
+      optionsEditor.select(javaPage).doWhenDone(new Runnable(){
+        public void run() {
+          final Runnable runnable = javaPage.enableSearch(toConfigure);
+          if (runnable != null) {
+            SwingUtilities.invokeLater(runnable);
+          }
+        }
+      });
+    } else {
+      ColorAndFontOptions colorAndFontOptions = ColorAndFontOptions.getColorAndFontsInstance();
+      assert colorAndFontOptions != null;
+      final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
+      LOG.assertTrue(javaPage != null);
+      ShowSettingsUtil.getInstance().editConfigurable(PlatformDataKeys.PROJECT.getData(dataContext), javaPage);
+      colorAndFontOptions.disposeUIResources();
+    }
   }
 
   private void fillList(final HighlightSeverity severity) {

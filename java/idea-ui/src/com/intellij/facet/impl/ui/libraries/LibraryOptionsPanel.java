@@ -18,7 +18,6 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
@@ -96,16 +95,7 @@ public class LibraryOptionsPanel {
           case PICK_FILES:
             if (mySettings.getLibrary() == null) {
               VirtualFile[] files = showFileChooser();
-              final Library.ModifiableModel modifiableModel = mySettings.getOrCreateLibrary().getModifiableModel();
-              for (VirtualFile file : files) {
-                modifiableModel.addRoot(file, OrderRootType.CLASSES);
-              }
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  modifiableModel.commit();
-                }
-              });
+              mySettings.addFilesToLibrary(files, OrderRootType.CLASSES);
             }
             EditLibraryDialog dialog = new EditLibraryDialog(myConfigureButton, mySettings);
             showDialog(dialog);

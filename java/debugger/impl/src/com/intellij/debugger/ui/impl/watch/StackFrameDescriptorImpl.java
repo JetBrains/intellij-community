@@ -48,6 +48,7 @@ import java.util.Map;
  */
 public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements StackFrameDescriptor{
   private final StackFrameProxyImpl myFrame;
+  private int myUiIndex;
   private String myName = null;
   private Location myLocation;
   private MethodsTracker.MethodOccurrence myMethodOccurrence;
@@ -62,6 +63,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   public StackFrameDescriptorImpl(StackFrameProxyImpl frame, final MethodsTracker tracker) {
     myFrame = frame;
     try {
+      myUiIndex = frame.getFrameIndex();
       myLocation = frame.location();
       myThisObject = frame.thisObject();
       myMethodOccurrence = tracker.getMethodOccurrence(myLocation.method());
@@ -96,6 +98,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myIsSynthetic = false;
       myIsInLibraryContent = false;
     }
+  }
+
+  public int getUiIndex() {
+    return myUiIndex;
   }
 
   public StackFrameProxyImpl getFrameProxy() {

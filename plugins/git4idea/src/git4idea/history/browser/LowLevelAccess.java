@@ -18,6 +18,7 @@ package git4idea.history.browser;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
+import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -46,4 +47,7 @@ public interface LowLevelAccess {
   void loadAllTags(final List<String> sink) throws VcsException;
 
   void cherryPick(SHAHash hash) throws VcsException;
+  void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
+                                    final Consumer<CommitHashPlusParents> consumer) throws VcsException;
+  List<GitCommit> getCommitDetails(final Collection<String> commitIds) throws VcsException;
 }

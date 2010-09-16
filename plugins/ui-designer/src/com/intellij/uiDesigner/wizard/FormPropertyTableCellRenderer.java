@@ -51,12 +51,15 @@ final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
 
   protected void customizeCellRenderer(
     final JTable table,
-    @NotNull final Object value,
+    final Object value,
     final boolean selected,
     final boolean hasFocus,
     final int row,
     final int column
   ) {
+    if (value == null) {
+      return;
+    }
     final FormProperty property = (FormProperty)value;
 
     final LwComponent component = property.getLwComponent();
@@ -84,7 +87,7 @@ final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
       shortClassName = fqClassName.substring(lastDotIndex + 1);
       packageName = fqClassName.substring(0, lastDotIndex);
     }
-    else{ // default package
+    else { // default package
       shortClassName = fqClassName;
       packageName = null;
     }
@@ -94,7 +97,7 @@ final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
     append(" ", myAttrs2); /*small gap between icon and class name*/
     append(shortClassName, myAttrs2);
 
-    if(packageName != null){
+    if (packageName != null) {
       append(" (", myAttrs3);
       append(packageName, myAttrs3);
       append(")", myAttrs3);

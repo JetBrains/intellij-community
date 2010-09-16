@@ -24,9 +24,11 @@ import com.intellij.xml.XmlElementsGroup;
 public abstract class XmlElementsGroupBase implements XmlElementsGroup {
 
   protected final XmlTag myTag;
+  private final XmlElementsGroup myParent;
 
-  public XmlElementsGroupBase(XmlTag tag) {
+  public XmlElementsGroupBase(XmlTag tag, XmlElementsGroup parent) {
     myTag = tag;
+    myParent = parent;
   }
 
   @Override
@@ -51,5 +53,10 @@ public abstract class XmlElementsGroupBase implements XmlElementsGroup {
     catch (NumberFormatException e) {
       return 1;
     }
+  }
+
+  @Override
+  public XmlElementsGroup getParentGroup() {
+    return myParent;
   }
 }

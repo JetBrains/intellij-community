@@ -21,7 +21,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +62,8 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
     return ServiceManager.getService(project, GlobalLibrariesConfigurable.class);
   }
 
-  public LibraryTableModifiableModelProvider getModelProvider(final boolean editable) {
-    return myContext.getGlobalLibrariesProvider(editable);
+  public StructureLibraryTableModifiableModelProvider getModelProvider() {
+    return myContext.getGlobalLibrariesProvider();
   }
 
   public BaseLibrariesConfigurable getOppositeGroup() {

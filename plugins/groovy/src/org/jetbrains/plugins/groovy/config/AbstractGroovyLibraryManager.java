@@ -85,8 +85,8 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
     LibraryTable.ModifiableModel globalModel = null;
     if (inModuleSettings) {
       globalModel = project != null && inProject ?
-                    ProjectLibrariesConfigurable.getInstance(project).getModelProvider(true).getModifiableModel() :
-                    GlobalLibrariesConfigurable.getInstance(project).getModelProvider(true).getModifiableModel();
+                    ProjectLibrariesConfigurable.getInstance(project).getModelProvider().getModifiableModel() :
+                    GlobalLibrariesConfigurable.getInstance(project).getModelProvider().getModifiableModel();
       assert globalModel != null;
       library = globalModel.createLibrary(name);
       model = ((LibrariesModifiableModel)globalModel).getLibraryEditor(library).getModel();

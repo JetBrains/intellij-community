@@ -80,4 +80,14 @@ public class ManualArrayCopy
         for (int i = 0; i < sp; i++)
             varcov[i][i] = eval[i + kp];
     }
+
+    void isntThatCute() {
+        String[] data = new String[100];
+        int index = 10;
+        for (int i = data.length - 1; i >= 0; i--)
+        {
+            data[i] = data[i - 1];
+        }
+
+    }
 }

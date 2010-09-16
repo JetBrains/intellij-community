@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -73,6 +72,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   private final SoftWrapPainter myPainter;
   private final EditorTextRepresentationHelper myRepresentationHelper;
 
+  private VisibleAreaWidthProvider myWidthProvider;
   private LineWrapPositionStrategy myLineWrapPositionStrategy;
   private boolean myCustomIndentUsedLastTime;
   private int myCustomIndentValueUsedLastTime;
@@ -87,6 +87,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     myEditor = editor;
     myPainter = painter;
     myRepresentationHelper = representationHelper;
+    myWidthProvider = new DefaultVisibleAreaWidthProvider(editor);
   }
 
   public void registerSoftWrapIfNecessary(@NotNull Rectangle clip, int startOffset) {
@@ -183,7 +184,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
             revertListeners(softWrap.getStart(), context.visualLine);
             for (int j = currentFold.getStartOffset() - 1; j >= softWrap.getStart(); j--) {
               int pixelsDiff = offset2widthInPixels.get(j);
-              int columnsDiff = calculateWidthInColumns(pixelsDiff, fontType2spaceWidth.get(offset2fontType.get(j)));
+              int columnsDiff = calculateWidthInColumns(text.charAt(j), pixelsDiff, fontType2spaceWidth.get(offset2fontType.get(j)));
               context.offset--;
               context.logicalColumn -= columnsDiff;
               context.visualColumn -= columnsDiff;
@@ -269,7 +270,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
             revertListeners(newI, context.visualLine);
             for (int j = i - 1; j >= newI; j--) {
               int pixelsDiff = offset2widthInPixels.get(j);
-              int columnsDiff = calculateWidthInColumns(pixelsDiff, fontType2spaceWidth.get(offset2fontType.get(j)));
+              int columnsDiff = calculateWidthInColumns(text.charAt(j), pixelsDiff, fontType2spaceWidth.get(offset2fontType.get(j)));
               context.offset--;
               context.logicalColumn -= columnsDiff;
               context.visualColumn -= columnsDiff;
@@ -362,7 +363,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     }
 
     context.symbolWidthInPixels = newX - context.x;
-    context.symbolWidthInColumns = calculateWidthInColumns(context.symbolWidthInPixels, spaceWidth);
+    context.symbolWidthInColumns = calculateWidthInColumns(context.symbol, context.symbolWidthInPixels, spaceWidth);
     notifyListenersOnProcessedSymbol(context);
     context.visualColumn += context.symbolWidthInColumns;
     context.logicalColumn += context.symbolWidthInColumns;
@@ -371,7 +372,10 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     context.offset++;
   }
 
-  private static int calculateWidthInColumns(int widthInPixels, int spaceWithInPixels) {
+  private static int calculateWidthInColumns(char c, int widthInPixels, int spaceWithInPixels) {
+    if (c != '\t') {
+      return 1;
+    }
     int result = widthInPixels / spaceWithInPixels;
     if (widthInPixels % spaceWithInPixels > 0) {
       result++;
@@ -422,7 +426,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     myCustomIndentValueUsedLastTime = currentCustomIndent;
 
     // Check if we need to recalculate soft wraps due to visible area width change.
-    int currentVisibleAreaWidth = myEditor.getScrollingModel().getVisibleArea().width;
+    int currentVisibleAreaWidth = myWidthProvider.getVisibleAreaWidth();
     if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth) {
       return;
     }
@@ -573,7 +577,12 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       Document document = myEditor.getDocument();
       int startLine = document.getLineNumber(endRange.getStartOffset());
       int endLine = document.getLineNumber(endRange.getEndOffset());
-      endRange = new TextRange(document.getLineStartOffset(startLine), document.getLineEndOffset(endLine));
+      int endOffset = document.getLineEndOffset(endLine);
+      int textLength = document.getTextLength();
+      if (textLength > 0 && endOffset >= textLength) {
+        endOffset = textLength - 1;
+      }
+      endRange = new TextRange(document.getLineStartOffset(startLine), endOffset);
     }
   }
 
@@ -598,7 +607,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
           case ' ': indentInColumns += 1; indentInPixels += spaceWidth; break;
           case '\t':
             int x = EditorUtil.nextTabStop(indentInPixels, editor);
-            indentInColumns += calculateWidthInColumns(x - indentInPixels, spaceWidth);
+            indentInColumns += calculateWidthInColumns(c, x - indentInPixels, spaceWidth);
             indentInPixels = x;
             break;
           default: myNonWhiteSpaceSymbolOffset = i; return;
@@ -627,6 +636,32 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         indentInColumns = 0;
         indentInPixels = 0;
       }
+    }
+  }
+
+  public void setWidthProvider(VisibleAreaWidthProvider widthProvider) {
+    myWidthProvider = widthProvider;
+  }
+
+  /**
+   * This interface is introduced mostly for encapsulating GUI-specific values retrieval and make it possible to write
+   * tests for soft wraps processing.
+   */
+  public interface VisibleAreaWidthProvider {
+    int getVisibleAreaWidth();
+  }
+
+  private static class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
+
+    private final Editor myEditor;
+
+    DefaultVisibleAreaWidthProvider(Editor editor) {
+      myEditor = editor;
+    }
+
+    @Override
+    public int getVisibleAreaWidth() {
+      return myEditor.getScrollingModel().getVisibleArea().width;
     }
   }
 }

@@ -15,13 +15,10 @@
  */
 package git4idea.history.wholeTree;
 
-import java.util.Iterator;
+import com.intellij.util.containers.ReadonlyList;
 
 /**
  * @author irengrig
  */
-public interface TreeSkeleton {
-  short getNumberOfWiresOnEnter(int row);
-  Iterator<TreeSkeletonImpl.WireEvent> createWireEventsIterator(int rowInclusive);
-  TreeSkeletonImpl.Commit getCommitAt(final int row);
+public interface TreeSkeleton extends ReadonlyList<VisibleLine>, TreeNavigation {
 }

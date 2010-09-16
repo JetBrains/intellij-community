@@ -26,8 +26,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class SLRUMap<K,V> {
-  private final Map<K,V> myProtectedQueue;
-  private final Map<K,V> myProbationalQueue;
+  protected final Map<K,V> myProtectedQueue;
+  protected final Map<K,V> myProbationalQueue;
 
   private final int myProtectedQueueSize;
   private final int myProbationalQueueSize;

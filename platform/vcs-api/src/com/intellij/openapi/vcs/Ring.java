@@ -34,6 +34,18 @@ public abstract class Ring<T extends Comparable<T>> {
     myFirst = first;
   }
 
+  public Ring(final T first, final List<T> used) {
+    this(first);
+    for (T t : used) {
+      minus(t);
+    }
+  }
+
+  public void reset() {
+    myFreeNumbers.clear();
+    myNextAvailable = myFirst;
+  }
+
   public void back(final T number) {
     final int idx = Collections.binarySearch(myFreeNumbers, number);
     assert idx < 0;
@@ -41,6 +53,10 @@ public abstract class Ring<T extends Comparable<T>> {
   }
 
   public boolean minus(final T t) {
+    while (myNextAvailable.compareTo(t) <= 0) {
+      myFreeNumbers.add(myNextAvailable);
+      myNextAvailable = getNext(myNextAvailable);
+    }
     return myFreeNumbers.remove(t);
   }
 
@@ -66,6 +82,10 @@ public abstract class Ring<T extends Comparable<T>> {
     return result;
   }
 
+  public T getMaxNumber() {
+    return myNextAvailable;
+  }
+
   protected abstract T getNext(final T t);
 
   public T getFree() {
@@ -80,6 +100,10 @@ public abstract class Ring<T extends Comparable<T>> {
   public static class IntegerRing extends Ring<Integer> {
     public IntegerRing() {
       super(0);
+    }
+
+    public IntegerRing(final List<Integer> used) {
+      super(0, used);
     }
 
     @Override

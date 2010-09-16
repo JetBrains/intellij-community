@@ -30,7 +30,6 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
-import com.intellij.openapi.roots.ui.configuration.packaging.ChooseLibrariesDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
@@ -41,6 +40,7 @@ import com.intellij.packaging.impl.ui.ChooseArtifactsDialog;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
+import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -175,10 +175,10 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return dialog.isOK() ? selected : Collections.<Module>emptyList();
   }
 
-  public List<Library> chooseLibraries(final List<Library> libraries, final String title) {
-    ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(getProject(), libraries, title, null);
+  public List<Library> chooseLibraries(final String title) {
+    final ChooseLibrariesFromTablesDialog dialog = ChooseLibrariesFromTablesDialog.createDialog(title, getProject(), false);
     dialog.show();
-    return dialog.isOK() ? dialog.getChosenElements() : Collections.<Library>emptyList();
+    return dialog.isOK() ? dialog.getSelectedLibraries() : Collections.<Library>emptyList();
   }
 
   public Artifact getArtifact() {

@@ -89,7 +89,6 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private final RowIcon myHighlightedIcon;
   private final JLabel myIconLabel;
 
-  private final Icon mySmartTagIcon;
   private final RowIcon myInactiveIcon;
 
   private static final int DELAY = 500;
@@ -114,18 +113,15 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
                                                          final Point position) {
     final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions);
 
+    component.showIntentionHintImpl(!showExpanded, position);
+    Disposer.register(project, component);
     if (showExpanded) {
-      component.showIntentionHintImpl(false, position);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           component.showPopup();
         }
       });
     }
-    else {
-      component.showIntentionHintImpl(true, position);
-    }
-    Disposer.register(project, component);
 
     return component;
   }
@@ -255,14 +251,14 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       }
     }
 
-    mySmartTagIcon = showFix ? ourQuickFixIcon : ourBulbIcon;
+    Icon smartTagIcon = showFix ? ourQuickFixIcon : ourBulbIcon;
 
     myHighlightedIcon = new RowIcon(2);
-    myHighlightedIcon.setIcon(mySmartTagIcon, 0);
+    myHighlightedIcon.setIcon(smartTagIcon, 0);
     myHighlightedIcon.setIcon(ourArrowIcon, 1);
 
     myInactiveIcon = new RowIcon(2);
-    myInactiveIcon.setIcon(mySmartTagIcon, 0);
+    myInactiveIcon.setIcon(smartTagIcon, 0);
     myInactiveIcon.setIcon(ourInactiveArrowIcon, 1);
 
     myIconLabel = new JLabel(myInactiveIcon);
