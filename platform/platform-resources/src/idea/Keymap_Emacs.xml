@@ -182,10 +182,6 @@
       <keyboard-shortcut first-keystroke="LEFT"/>
       <keyboard-shortcut first-keystroke="control B"/>
     </action>
-    <action id="EditorDelete">
-      <keyboard-shortcut first-keystroke="DELETE"/>
-      <keyboard-shortcut first-keystroke="control D"/>
-    </action>
     <action id="CloseAllEditors">
       <keyboard-shortcut first-keystroke="control X" second-keystroke="control C"/>
     </action>

@@ -194,7 +194,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       public void consume(final Boolean notEmpty) {
         if (! notEmpty) {
           if (cacheOnly) {
-            myBrowser.setEmptyText(VcsBundle.message("committed.changes.not.loaded.message"));
+            myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.not.loaded.message"));
             return;
           }
           if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
@@ -246,7 +246,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     if (committedChangeLists == null) {
       return;
     }
-    myBrowser.setEmptyText(VcsBundle.message("committed.changes.empty.message"));
+    myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.empty.message"));
     if (StringUtil.isEmpty(myFilterComponent.getFilter())) {
       myBrowser.setItems(committedChangeLists, keepFilter, CommittedChangesBrowserUseCase.COMMITTED);
     }
