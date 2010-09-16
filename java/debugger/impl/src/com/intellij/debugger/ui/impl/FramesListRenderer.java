@@ -15,16 +15,12 @@
  */
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
-import com.intellij.debugger.ui.tree.StackFrameDescriptor;
 import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
@@ -32,6 +28,7 @@ import com.intellij.xdebugger.ui.DebuggerColors;
 import com.sun.jdi.Method;
 
 import javax.swing.*;
+import javax.swing.border.MatteBorder;
 import java.awt.*;
 
 class FramesListRenderer extends ColoredListCellRenderer {
@@ -57,6 +54,17 @@ class FramesListRenderer extends ColoredListCellRenderer {
         append("["+ markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }
 
+      boolean needSeparator = false;
+      if (index > 0) {
+        final int currentFrameIndex = descriptor.getUiIndex();
+        final Object elementAt = list.getModel().getElementAt(index - 1);
+        if (elementAt instanceof StackFrameDescriptorImpl) {
+          StackFrameDescriptorImpl previousDescriptor = (StackFrameDescriptorImpl)elementAt;
+          final int previousFrameIndex = previousDescriptor.getUiIndex();
+          needSeparator = (currentFrameIndex - previousFrameIndex != 1);
+        }
+      }
+
       if (selected) {
         setBackground(UIUtil.getListSelectionBackground());
       }
@@ -67,6 +75,14 @@ class FramesListRenderer extends ColoredListCellRenderer {
         setBackground(bg);
       }
 
+      if (needSeparator) {
+        final MatteBorder border = BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY);
+        setBorder(border);
+      }
+      else {
+        setBorder(null);
+      }
+      
       final String label = descriptor.getLabel();
       final int openingBrace = label.indexOf("{");
       final int closingBrace = (openingBrace < 0) ? -1 : label.indexOf("}");

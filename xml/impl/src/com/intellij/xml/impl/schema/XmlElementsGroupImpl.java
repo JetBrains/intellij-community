@@ -36,15 +36,20 @@ public class XmlElementsGroupImpl extends XmlElementsGroupBase {
     TYPES.put("all", Type.ALL);
     TYPES.put("group", Type.GROUP);
   }
+
   private final List<XmlElementsGroup> mySubGroups = new ArrayList<XmlElementsGroup>();
 
-  public XmlElementsGroupImpl(XmlTag tag) {
-    super(tag);
+  public XmlElementsGroupImpl(XmlTag tag, XmlElementsGroup parent) {
+    super(tag, parent);
   }
 
   @Override
   public Type getGroupType() {
-    return TYPES.get(myTag.getLocalName());
+    return getTagType(myTag);
+  }
+
+  public static Type getTagType(XmlTag tag) {
+    return TYPES.get(tag.getLocalName());
   }
 
   @Override
@@ -55,5 +60,9 @@ public class XmlElementsGroupImpl extends XmlElementsGroupBase {
   @Override
   public XmlElementDescriptor getLeafDescriptor() {
     throw new RuntimeException("not a leaf group");
+  }
+
+  public void addSubGroup(XmlElementsGroup group) {
+    mySubGroups.add(group);
   }
 }

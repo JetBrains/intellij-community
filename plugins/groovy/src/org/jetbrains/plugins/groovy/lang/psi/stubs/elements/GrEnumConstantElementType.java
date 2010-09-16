@@ -71,7 +71,7 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
         }
       }, ArrayUtil.EMPTY_STRING_ARRAY);
     }
-    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), annNames, new Set[0], GroovyElementTypes.ENUM_CONSTANT, GrFieldStubImpl.buildFlags(psi));
+    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtil.EMPTY_STRING_ARRAY, GroovyElementTypes.ENUM_CONSTANT, GrFieldStubImpl.buildFlags(psi));
   }
 
   public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {

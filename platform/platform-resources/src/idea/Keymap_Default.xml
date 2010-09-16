@@ -635,10 +635,6 @@
   <action id="EditorTab">
     <keyboard-shortcut first-keystroke="TAB"/>
   </action>
-  <action id="EditorPaste">
-    <keyboard-shortcut first-keystroke="control V"/>
-    <keyboard-shortcut first-keystroke="shift INSERT"/>
-  </action>
   <action id="IntroduceParameter">
     <keyboard-shortcut first-keystroke="control alt P"/>
   </action>
@@ -774,10 +770,6 @@
   <action id="EditorSplitLine">
     <keyboard-shortcut first-keystroke="control ENTER"/>
   </action>
-  <action id="EditorCut">
-    <keyboard-shortcut first-keystroke="shift DELETE"/>
-    <keyboard-shortcut first-keystroke="control X"/>
-  </action>
   <action id="FindUsagesInFile">
     <keyboard-shortcut first-keystroke="control F7"/>
   </action>
@@ -820,10 +812,6 @@
   </action>
   <action id="SafeDelete">
     <keyboard-shortcut first-keystroke="alt DELETE"/>
-  </action>
-  <action id="EditorCopy">
-    <keyboard-shortcut first-keystroke="control INSERT"/>
-    <keyboard-shortcut first-keystroke="control C"/>
   </action>
   <action id="NextTemplateVariable">
     <keyboard-shortcut first-keystroke="TAB"/>

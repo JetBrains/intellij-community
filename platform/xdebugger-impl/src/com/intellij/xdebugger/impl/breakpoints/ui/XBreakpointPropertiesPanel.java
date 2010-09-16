@@ -59,6 +59,7 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
   private JRadioButton myLeaveEnabledRadioButton;
   private JPanel myMasterBreakpointComboBoxPanel;
   private JPanel myAfterBreakpointHitPanel;
+  private JPanel myConditionsPanel;
   private final XBreakpointManager myBreakpointManager;
   private final B myBreakpoint;
   private final Map<SuspendPolicy, JRadioButton> mySuspendRadioButtons;
@@ -124,6 +125,10 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
     if (customConditionPanel != null) {
       myCustomConditionsPanelWrapper.add(customConditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customConditionPanel);
+    }
+
+    if (debuggerEditorsProvider == null && customConditionPanel == null) {
+      myConditionsPanel.setVisible(false);
     }
 
     XBreakpointCustomPropertiesPanel<B> customPropertiesPanel = type.createCustomPropertiesPanel();

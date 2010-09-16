@@ -22,7 +22,7 @@ import java.util.List;
 /**
 * @author nik
 */
-interface ClasspathElementChooserDialog<T> extends Disposable {
+interface ClasspathElementChooser<T> extends Disposable {
   List<T> getChosenElements();
   void doChoose();
   boolean isOK();

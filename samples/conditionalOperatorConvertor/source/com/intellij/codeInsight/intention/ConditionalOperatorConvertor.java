@@ -49,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
     PsiConditionalExpression conditionalExpression = PsiTreeUtil.getParentOfType(element,
-                                                                                                            PsiConditionalExpression.class, false);
+                                                                                 PsiConditionalExpression.class, false);
     if (conditionalExpression == null) return;
     if (conditionalExpression.getThenExpression() == null || conditionalExpression.getElseExpression() == null) return;
 

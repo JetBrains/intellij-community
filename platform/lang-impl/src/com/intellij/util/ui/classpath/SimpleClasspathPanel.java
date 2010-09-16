@@ -13,7 +13,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -294,27 +293,7 @@ public class SimpleClasspathPanel extends JPanel {
         @NotNull
         protected List<Library> doChoose() {
           final Set<VirtualFile> existingFiles = getVirtualFiles();
-          final ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(ProjectManager.getInstance().getDefaultProject(), "Choose Existing Libraries") {
-            @Override
-            protected boolean acceptsElement(final Object element) {
-              if (!(element instanceof Library)) return true;
-              final Library library = (Library)element;
-              return !existingFiles.containsAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
-            }
-
-            @Override
-            protected JComponent createCenterPanel() {
-              final JPanel panel = new JPanel(new BorderLayout());
-              panel.add(super.createCenterPanel(), BorderLayout.CENTER);
-              final MultiLineLabel label = new MultiLineLabel("Please note that project-level and module-level libraries will not be\n\n" +
-                                                              "  added as a whole but will be converted to jars and folders instead.");
-              label.setIcon(Messages.getWarningIcon());
-              label.setIcon(Messages.getWarningIcon());
-              panel.add(label, BorderLayout.SOUTH);
-              return panel;
-            }
-
-          };
+          final ChooseLibrariesDialogBase dialog = new SimpleClasspathChooseLibrariesDialog(SimpleClasspathPanel.this, existingFiles);
           dialog.show();
           final List<Library> libraries = dialog.getSelectedLibraries();
           final ArrayList<Library> result = new ArrayList<Library>();
@@ -325,6 +304,36 @@ public class SimpleClasspathPanel extends JPanel {
         }
       });
       return actions.toArray(new PopupAction[actions.size()]);
+    }
+
+  }
+
+  private static class SimpleClasspathChooseLibrariesDialog extends ChooseLibrariesDialogBase {
+    private final Set<VirtualFile> myExistingFiles;
+
+    public SimpleClasspathChooseLibrariesDialog(JComponent parentComponent, Set<VirtualFile> existingFiles) {
+      super(parentComponent, "Choose Existing Libraries");
+      myExistingFiles = existingFiles;
+      init();
+    }
+
+    @Override
+    protected boolean acceptsElement(final Object element) {
+      if (!(element instanceof Library)) return true;
+      final Library library = (Library)element;
+      return !myExistingFiles.containsAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.add(super.createCenterPanel(), BorderLayout.CENTER);
+      final MultiLineLabel label = new MultiLineLabel("Please note that project-level and module-level libraries will not be\n\n" +
+                                                      "  added as a whole but will be converted to jars and folders instead.");
+      label.setIcon(Messages.getWarningIcon());
+      label.setIcon(Messages.getWarningIcon());
+      panel.add(label, BorderLayout.SOUTH);
+      return panel;
     }
   }
 

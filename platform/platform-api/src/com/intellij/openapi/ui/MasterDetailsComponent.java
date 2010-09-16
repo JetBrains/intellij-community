@@ -706,13 +706,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       final Object editableObject = namedConfigurable.getEditableObject();
       parentNode = (MyNode)node.getParent();
       idx = parentNode.getIndex(node);
-      parentNode.remove(node);
+      ((DefaultTreeModel)myTree.getModel()).removeNodeFromParent(node);
       myHasDeletedItems |= wasObjectStored(editableObject);
       fireItemsChangeListener(editableObject);
       onItemDeleted(editableObject);
       namedConfigurable.disposeUIResources();
     }
-    ((DefaultTreeModel)myTree.getModel()).reload();
+
     if (parentNode != null && idx != -1) {
       TreeUtil
         .selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount() ? parentNode.getChildAt(idx) : parentNode), true, myTree);

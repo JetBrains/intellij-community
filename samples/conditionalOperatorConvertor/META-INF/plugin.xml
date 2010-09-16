@@ -1,4 +1,6 @@
+<!--
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+-->
 <idea-plugin version="2">
     <name>Conditional Operator Converter</name>
     <id>ConditionalOperatorConverter</id>
@@ -7,13 +9,19 @@
     </description>
     <version>1.3</version>
     <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+   <!--
     <idea-version since-build="2000"/>
+    -->
+   <!--
     <is-internal/>
+    -->
 
-    <extensions xmlns="com.intellij">
+    <extensions defaultExtensionNs="com.intellij">
       <intentionAction>
         <className>com.intellij.codeInsight.intention.ConditionalOperatorConvertor</className>
         <category>Conditional Operator</category>
+         <descriptionDirectoryName>ConditionalOperatorConvertor</descriptionDirectoryName>
+
       </intentionAction>
     </extensions>
 

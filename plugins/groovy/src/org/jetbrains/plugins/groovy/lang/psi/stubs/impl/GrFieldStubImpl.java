@@ -39,13 +39,12 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
   private final byte myFlags;
   private final StringRef myName;
   private final String[] myAnnotations;
-  @Nullable
-  private final Set<String>[] myNamedParameters;
+  private final String[] myNamedParameters;
 
   public GrFieldStubImpl(StubElement parent,
                          StringRef name,
                          final String[] annotations,
-                         @NotNull Set<String>[] namedParameters,
+                         String[] namedParameters,
                          final IStubElementType elemType,
                          byte flags) {
     super(parent, elemType);
@@ -68,7 +67,7 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
   }
 
   @NotNull
-  public Set<String>[] getNamedParameters() {
+  public String[] getNamedParameters() {
     return myNamedParameters;
   }
 

@@ -51,7 +51,6 @@
     <action id="DelegateMethods">
       <keyboard-shortcut first-keystroke="shift alt E" />
     </action>
-    <action id="DomElementsTreeView.GotoDomElementDeclarationAction" />
     <action id="EditSource">
       <keyboard-shortcut first-keystroke="F12" />
       <keyboard-shortcut first-keystroke="shift control E" />

@@ -280,7 +280,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       if (!CodeInsightUtilBase.prepareFileForWrite(parentTag.getContainingFile())) return;
 
       try {
-        parentTag.add(parentTag.createChildTag(tagName, tagNamespace, "",false));
+        parentTag.add(parentTag.createChildTag(tagName, tagNamespace, null, false));
       }
       catch (IncorrectOperationException e) {
         throw new RuntimeException(e);

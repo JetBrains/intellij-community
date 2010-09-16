@@ -45,7 +45,7 @@ public class GrMethodImpl extends GrMethodBaseImpl<GrMethodStub> implements GrMe
 
   @NotNull
   @Override
-  public Set<String>[] getNamedParametersArray() {
+  public String[] getNamedParametersArray() {
     final GrMethodStub stub = getStub();
     if (stub != null) {
       return stub.getNamedParameters();

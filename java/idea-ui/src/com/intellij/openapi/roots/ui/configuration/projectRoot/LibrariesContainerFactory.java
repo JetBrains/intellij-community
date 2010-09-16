@@ -248,10 +248,10 @@ public class LibrariesContainerFactory {
     @Nullable
     private LibraryTableModifiableModelProvider getProvider(LibraryLevel libraryLevel) {
       if (libraryLevel == LibraryLevel.PROJECT) {
-        return myContext.getProjectLibrariesProvider(false);
+        return myContext.getProjectLibrariesProvider();
       }
       else if (libraryLevel == LibraryLevel.GLOBAL) {
-        return myContext.getGlobalLibrariesProvider(false);
+        return myContext.getGlobalLibrariesProvider();
       }
       else {
         return null;
@@ -264,12 +264,12 @@ public class LibrariesContainerFactory {
 
     @NotNull
     public VirtualFile[] getLibraryFiles(@NotNull final Library library, @NotNull final OrderRootType rootType) {
-      LibrariesModifiableModel projectLibrariesModel = (LibrariesModifiableModel)myContext.getProjectLibrariesProvider(false).getModifiableModel();
+      LibrariesModifiableModel projectLibrariesModel = myContext.getProjectLibrariesProvider().getModifiableModel();
       if (projectLibrariesModel.hasLibraryEditor(library)) {
         LibraryEditor libraryEditor = projectLibrariesModel.getLibraryEditor(library);
         return libraryEditor.getFiles(rootType);
       }
-      LibrariesModifiableModel globalLibraries = (LibrariesModifiableModel)myContext.getGlobalLibrariesProvider(false).getModifiableModel();
+      LibrariesModifiableModel globalLibraries = myContext.getGlobalLibrariesProvider().getModifiableModel();
       if (globalLibraries.hasLibraryEditor(library)) {
         LibraryEditor libraryEditor = globalLibraries.getLibraryEditor(library);
         return libraryEditor.getFiles(rootType);

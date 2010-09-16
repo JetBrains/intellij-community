@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,6 +63,19 @@ public class LibraryCompositionSettings implements Disposable {
     myTitle = title;
     myLibraryName = defaultLibraryName;
     myIcon = icon;
+  }
+
+  public void addFilesToLibrary(VirtualFile[] files, OrderRootType orderRootType) {
+    final Library.ModifiableModel modifiableModel = getOrCreateLibrary().getModifiableModel();
+    for (VirtualFile file : files) {
+      modifiableModel.addRoot(file, orderRootType);
+    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        modifiableModel.commit();
+      }
+    });
   }
 
   @NotNull
@@ -134,16 +146,19 @@ public class LibraryCompositionSettings implements Disposable {
           if (files.length != downloadingInfos.length) {
             return false;
           }
+          addFilesToLibrary(files, OrderRootType.CLASSES);
         }
       }
     }
     return true;
   }
 
+
   @Nullable
   private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
     if (myLibrary != null) {
       VirtualFile[] roots = myLibrary.getFiles(OrderRootType.CLASSES);
+      myLibrary.dispose();
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
                                                      myLibraryName, myLibraryLevel, roots, VirtualFile.EMPTY_ARRAY);
     }
@@ -213,7 +228,6 @@ public class LibraryCompositionSettings implements Disposable {
         @Override
         public void run() {
           myLibrary = new ApplicationLibraryTable().createLibrary();
-          Disposer.register(LibraryCompositionSettings.this, myLibrary);
         }
       });
     }
@@ -222,5 +236,6 @@ public class LibraryCompositionSettings implements Disposable {
 
   @Override
   public void dispose() {
+    System.out.println("I'm disposed!");
   }
 }

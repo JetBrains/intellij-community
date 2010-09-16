@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.util.Disposer;
@@ -34,7 +35,7 @@ import java.util.*;
  */
 
 public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
-  private final Map<Library, LibraryEditor> myLibrary2EditorMap = new HashMap<Library, LibraryEditor>();
+  private final Map<Library, ExistingLibraryEditor> myLibrary2EditorMap = new HashMap<Library, ExistingLibraryEditor>();
   private final Set<Library> myRemovedLibraries = new HashSet<Library>();
 
   private LibraryTable.ModifiableModel myLibrariesModifiableModel;
@@ -96,15 +97,16 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   public void deferredCommit(){
-    for (LibraryEditor libraryEditor : new ArrayList<LibraryEditor>(myLibrary2EditorMap.values())) {
+    final List<ExistingLibraryEditor> libraryEditors = new ArrayList<ExistingLibraryEditor>(myLibrary2EditorMap.values());
+    myLibrary2EditorMap.clear();
+    for (ExistingLibraryEditor libraryEditor : libraryEditors) {
       libraryEditor.commit(); // TODO: is seems like commit will recreate the editor, but it should not
       Disposer.dispose(libraryEditor);
     }
-    if (!(myLibrary2EditorMap.isEmpty() && myRemovedLibraries.isEmpty())) {
+    if (!libraryEditors.isEmpty() || !myRemovedLibraries.isEmpty()) {
       getLibrariesModifiableModel().commit();
       myLibrariesModifiableModel = null;
     }
-    myLibrary2EditorMap.clear();
     myRemovedLibraries.clear();
   }
 
@@ -116,20 +118,20 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
     return myLibrary2EditorMap.containsKey(library);
   }
 
-  public LibraryEditor getLibraryEditor(Library library){
+  public ExistingLibraryEditor getLibraryEditor(Library library){
     final Library source = ((LibraryImpl)library).getSource();
     if (source != null) {
       return getLibraryEditor(source);
     }
-    LibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
+    ExistingLibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
     if (libraryEditor == null){
       libraryEditor = createLibraryEditor(library);
     }
     return libraryEditor;
   }
 
-  private LibraryEditor createLibraryEditor(final Library library) {
-    final LibraryEditor libraryEditor = new LibraryEditor(library, myLibraryEditorListener);
+  private ExistingLibraryEditor createLibraryEditor(final Library library) {
+    final ExistingLibraryEditor libraryEditor = new ExistingLibraryEditor(library, myLibraryEditorListener);
     myLibrary2EditorMap.put(library, libraryEditor);
     return libraryEditor;
   }

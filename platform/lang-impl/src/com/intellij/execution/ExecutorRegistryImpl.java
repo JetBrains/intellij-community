@@ -17,6 +17,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -153,7 +154,8 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   private static Trinity<Project, String, String> createExecutionId(String executorId, ExecutionEnvironment env, Project project) {
-    return new Trinity<Project, String, String>(project, executorId, env.getConfigurationSettings().getRunnerId());
+    final ConfigurationPerRunnerSettings settings = env.getConfigurationSettings();
+    return new Trinity<Project, String, String>(project, executorId, settings != null? settings.getRunnerId() : null);
   }
 
   public boolean isStarting(Project project, final String executorId, final String runnerId) {

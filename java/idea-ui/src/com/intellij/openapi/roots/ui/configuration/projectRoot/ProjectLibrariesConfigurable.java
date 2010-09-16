@@ -59,8 +59,8 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   }
 
 
-  public LibraryTableModifiableModelProvider getModelProvider(final boolean editable) {
-    return myContext.getProjectLibrariesProvider(editable);
+  public StructureLibraryTableModifiableModelProvider getModelProvider() {
+    return myContext.getProjectLibrariesProvider();
   }
 
   public BaseLibrariesConfigurable getOppositeGroup() {
