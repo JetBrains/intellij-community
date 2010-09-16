@@ -10,6 +10,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.text.StringUtil;
@@ -180,34 +181,17 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   private void detachLibrary() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        // remove the library
-        // TODO: refactor, see detachAppEngineModuleLibrary
+        // remove the library                                           
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
         OrderEntry entry = findEggsOrderEntry(model);
-        if (entry == null) {
-          model.dispose();
-        }
-        else {
-          model.removeOrderEntry(entry);
-          model.commit();
-        }
+        OrderEntryUtil.detachModuleLibrary(model, entry);
       }
     });
   }
 
   @Nullable
   private static LibraryOrderEntry findEggsOrderEntry(ModuleRootModel model) {
-    // TODO: refactor, see findAppEngineOrderEntry
-    final OrderEntry[] orderEntries = model.getOrderEntries();
-    for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry loe = (LibraryOrderEntry)orderEntry;
-        if (BUILDOUT_LIB_NAME.equals(loe.getLibraryName())) {
-          return loe;
-        }
-      }
-    }
-    return null;
+    return OrderEntryUtil.findLibraryOrderEntry(model, BUILDOUT_LIB_NAME);
   }
 
   private void addFacet(BuildoutFacetConfiguration config) {

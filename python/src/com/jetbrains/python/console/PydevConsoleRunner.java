@@ -119,7 +119,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   @Override
   protected Process createProcess() throws ExecutionException {
-    final Process server = Runner.createProcess(myWorkingDir, true, myProvider.getAdditionalEnvs(), myProvider.getArguments());
+    final Process server = Runner.createProcess(myWorkingDir, myProvider.getAdditionalEnvs(), myProvider.getArguments());
     try {
       myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
     }
