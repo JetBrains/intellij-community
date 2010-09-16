@@ -165,7 +165,7 @@ public class GitHistoryUtils {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         final LowLevelRevisionDetails result = accumulator.acceptLine(line);
-        if (result != null) {
+        if (result != null && !result.missesRequiredFields()) {
           resultAdapter.consume(result);
         }
       }
@@ -180,7 +180,7 @@ public class GitHistoryUtils {
       public void processTerminated(int exitCode) {
         super.processTerminated(exitCode);
         final LowLevelRevisionDetails result = accumulator.processLast();
-        if (result != null) {
+        if (result != null && !result.missesRequiredFields()) {
           resultAdapter.consume(result);
         }
         for (VcsException e : accumulator.exceptions) {
