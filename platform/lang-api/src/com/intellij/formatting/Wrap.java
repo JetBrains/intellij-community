@@ -32,31 +32,6 @@ public abstract class Wrap {
 
   private static WrapFactory myFactory;
 
-  /**
-   * @deprecated    use {@link WrapType#ALWAYS} instead
-   */
-  @Deprecated
-  public static WrapType ALWAYS = WrapType.ALWAYS;
-
-  /**
-   * @deprecated    use {@link WrapType#NORMAL} instead
-   */
-  @Deprecated
-  public static WrapType NORMAL = WrapType.NORMAL;
-
-  /**
-   * @deprecated    use {@link WrapType#NONE} instead
-   */
-  @Deprecated
-  public static WrapType NONE = WrapType.NONE;
-
-  /**
-   * @deprecated    use {@link WrapType#CHOP_DOWN_IF_LONG} instead
-   */
-  @SuppressWarnings({"UnusedDeclaration"})
-  @Deprecated
-  public static WrapType CHOP_DOWN_IF_LONG = WrapType.CHOP_DOWN_IF_LONG;
-
   static void setFactory(WrapFactory factory) {
     myFactory = factory;
   }
