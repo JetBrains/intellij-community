@@ -38,11 +38,18 @@ public class PyBlock implements ASTBlock {
 
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                       PyElementTypes.LIST_COMP_EXPRESSION,
+                                                                      PyElementTypes.DICT_COMP_EXPRESSION,
+                                                                      PyElementTypes.SET_COMP_EXPRESSION,
                                                                       PyElementTypes.DICT_LITERAL_EXPRESSION,
+                                                                      PyElementTypes.SET_LITERAL_EXPRESSION,
                                                                       PyElementTypes.ARGUMENT_LIST,
                                                                       PyElementTypes.PARAMETER_LIST,
                                                                       PyElementTypes.TUPLE_EXPRESSION,
                                                                       PyElementTypes.PARENTHESIZED_EXPRESSION);
+
+  private static final TokenSet ourBrackets = TokenSet.create(PyTokenTypes.LPAR, PyTokenTypes.RPAR,
+                                                              PyTokenTypes.LBRACE, PyTokenTypes.RBRACE,
+                                                              PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET);
 
   public PyBlock(final ASTNode node,
                  final Alignment alignment,
@@ -105,6 +112,7 @@ public class PyBlock implements ASTBlock {
 
   private PyBlock buildSubBlock(ASTNode child) {
     IElementType parentType = _node.getElementType();
+    IElementType grandparentType = _node.getTreeParent() == null ? null : _node.getTreeParent().getElementType();
     IElementType childType = child.getElementType();
     Wrap wrap = null;
     Indent childIndent = Indent.getNoneIndent();
@@ -115,13 +123,17 @@ public class PyBlock implements ASTBlock {
       }
     }
     if (ourListElementTypes.contains(parentType)) {
-      wrap = Wrap.createWrap(WrapType.NORMAL, true);
+      // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
+      if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
+          !ourBrackets.contains(childType)) {
+        wrap = Wrap.createWrap(WrapType.NORMAL, true);
+      }
       if (needListAlignment(child)) {
         childAlignment = _childListAlignment;
       }
     }
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
-      if (childType == PyTokenTypes.RBRACKET | childType == PyTokenTypes.LBRACKET) {
+      if (childType == PyTokenTypes.RBRACKET || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
       }
       else {
