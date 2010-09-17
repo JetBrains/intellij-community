@@ -185,7 +185,7 @@ public class RunnerMediator {
       }
     }
     catch (Exception e) {
-      //TODO: make proper exception handling
+      C_LIB = null;
     }
   }
 
@@ -207,14 +207,28 @@ public class RunnerMediator {
 
     @Override
     protected void destroyProcessImpl() {
-      if (isWindows()) {
-        sendCtrlBreakThroughStream();
-      }
-      else if (canSendSignals()) {
-        sendSigInt(myProcessUid);
-      }
-      else {
+      if (!doCustomDestroy()) {
         super.destroyProcessImpl();
+      }
+
+    }
+
+    private boolean doCustomDestroy() {
+      try {
+        if (isWindows()) {
+          sendCtrlBreakThroughStream();
+          return true;
+        }
+        else if (canSendSignals()) {
+          sendSigInt(myProcessUid);
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+      catch (Exception e) {
+        return false;
       }
     }
 
