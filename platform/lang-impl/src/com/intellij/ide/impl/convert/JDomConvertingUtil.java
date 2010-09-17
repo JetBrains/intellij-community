@@ -69,7 +69,7 @@ public class JDomConvertingUtil {
 
   @Nullable
   public static Element getSettingsElement(@Nullable Element element, String name) {
-    for (Element child : getChildren(element, "setting")) {
+    for (Element child : JDOMUtil.getChildren(element, "setting")) {
       if (child.getAttributeValue("name").equals(name)) {
         return child;
       }
@@ -214,16 +214,6 @@ public class JDomConvertingUtil {
       }
     }
     root.addContent(component);
-  }
-
-  @NotNull
-  public static List<Element> getChildren(@Nullable Element parent) {
-    return parent != null ? parent.getChildren() : Collections.<Element>emptyList();
-  }
-
-  @NotNull
-  public static List<Element> getChildren(@Nullable Element parent, @NotNull String name) {
-    return parent != null ? parent.getChildren(name) : Collections.<Element>emptyList();
   }
 
   @Nullable
