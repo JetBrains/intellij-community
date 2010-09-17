@@ -94,9 +94,10 @@ public class CollectClassMembersUtil {
       } else if (hasExplicitVisibilityModifiers(field)) {
         final CandidateInfo candidateInfo = allFields.get(name);
         final PsiElement element = candidateInfo.getElement();
-        if (element instanceof GrField &&
-            !(((GrField)element).getModifierList()).hasExplicitVisibilityModifiers() &&
-            aClass == ((GrField)element).getContainingClass()) { //replace property-field with field with explicit visibilityModifier 
+        if (element instanceof GrField && (((GrField)element).getModifierList() == null ||
+                                           !(((GrField)element).getModifierList()).hasExplicitVisibilityModifiers()) &&
+            aClass == ((GrField)element).getContainingClass()) {
+          //replace property-field with field with explicit visibilityModifier
           allFields.put(name, new CandidateInfo(field, substitutor));
         }
       }
