@@ -605,7 +605,7 @@ public class LibraryRootsComponent implements Disposable {
 
     public boolean isMatchingElement(Object element, String pattern) {
       Object userObject = ((DefaultMutableTreeNode)((TreePath)element).getLastPathComponent()).getUserObject();
-      if (userObject instanceof ItemElementDescriptor || userObject instanceof LibraryElementDescriptor) {
+      if (userObject instanceof ItemElementDescriptor) {
         String str = getElementText(element);
         if (str == null) {
           return false;

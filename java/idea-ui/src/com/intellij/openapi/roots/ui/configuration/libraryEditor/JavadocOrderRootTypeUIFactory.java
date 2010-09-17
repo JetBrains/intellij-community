@@ -32,8 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  public LibraryTableTreeContentElement createElement(final LibraryElement parentElement) {
-    return new JavadocElement(parentElement);
+  public LibraryTableTreeContentElement createElement() {
+    return new JavadocElement();
   }
 
   public PathEditor createPathEditor(Sdk sdk) {

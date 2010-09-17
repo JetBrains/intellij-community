@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,31 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
+import org.jetbrains.annotations.NotNull;
 
-class ClassesElement extends OrderRootTypeElement {
-  public ClassesElement() {
-    super(OrderRootType.CLASSES);
+/**
+ * @author nik
+ */
+public abstract class OrderRootTypeElement extends LibraryTableTreeContentElement {
+  private final OrderRootType myRootType;
+
+  public OrderRootTypeElement(@NotNull OrderRootType rootType) {
+    myRootType = rootType;
   }
 
-  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
-    return new ClassesElementDescriptor(parentDescriptor, this);
+  @NotNull
+  public OrderRootType getOrderRootType() {
+    return myRootType;
+  }
+
+  @Override
+  public int hashCode() {
+    return myRootType.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof OrderRootTypeElement && ((OrderRootTypeElement)obj).getOrderRootType().equals(myRootType);
   }
 }
