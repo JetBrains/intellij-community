@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -85,16 +86,18 @@ public class MavenRehighlighter extends SimpleProjectComponent {
     });
   }
 
-  private static MavenRehighlighter getInstance(Project project) {
-    return ServiceManager.getService(project, MavenRehighlighter.class);
-  }
-
   public static void rehighlight(final Project project) {
     rehighlight(project, null);
   }
 
   public static void rehighlight(final Project project, final MavenProject mavenProject) {
-    getInstance(project).myQueue.queue(new MyUpdate(project, mavenProject));
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        if (project.isDisposed()) return;
+        ServiceManager.getService(project, MavenRehighlighter.class).myQueue.queue(new MyUpdate(project, mavenProject));
+      }
+    });
   }
 
   private static class MyUpdate extends Update {

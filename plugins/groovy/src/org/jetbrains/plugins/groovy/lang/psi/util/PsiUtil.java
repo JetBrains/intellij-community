@@ -51,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -880,7 +879,14 @@ public class PsiUtil {
         PsiSubstitutor substitutor = classResult.getSubstitutor();
         final ResolveState state =
           ResolveState.initial().put(PsiSubstitutor.KEY, substitutor).put(ResolverProcessor.RESOLVE_CONTEXT, context);
-        final boolean toBreak = element.processDeclarations(processor, state, null, place);
+        final PsiMethod[] methods = clazz.getMethods();
+        boolean toBreak = true;
+        for (PsiMethod method : methods) {
+          if (method.isConstructor() && !processor.execute(method, state)) {
+            toBreak = false;
+            break;
+          }
+        }
 
         NonCodeMembersContributor.runContributors(thisType, processor, place, state);
         ContainerUtil.addAll(constructorResults, processor.getCandidates());
@@ -965,13 +971,5 @@ public class PsiUtil {
       }
       return element;
     }
-  }
-
-  public static GrReturnStatement[] collectReturns(GrClosableBlock closure) {
-    return new GrReturnStatement[0];  // TODO Mr. Medvedev
-  }
-
-  public static GrStatement getLastStatement(GrClosableBlock closure) {
-    return null; // TODO Mr. Medvedev
   }
 }

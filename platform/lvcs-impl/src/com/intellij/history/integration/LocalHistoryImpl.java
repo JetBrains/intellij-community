@@ -140,7 +140,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   }
 
   @Override
-  public Label putUserLabel(Project p, String name) {
+  public Label putUserLabel(Project p, @NotNull String name) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putUserLabel(name, getProjectId(p)));
@@ -151,7 +151,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   }
 
   @Override
-  public Label putSystemLabel(Project p, String name, int color) {
+  public Label putSystemLabel(Project p, @NotNull String name, int color) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putSystemLabel(name, getProjectId(p), color));

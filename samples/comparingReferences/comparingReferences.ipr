@@ -197,7 +197,10 @@
       <module fileurl="file://$PROJECT_DIR$/comparingReferences.iml" filepath="$PROJECT_DIR$/comparingReferences.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA IC-96.1068" project-jdk-type="IDEA JDK" />
+  <component name="ProjectResources">
+    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA IC-96.1097" project-jdk-type="IDEA JDK" />
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="" />
     <mapping directory="$PROJECT_DIR$/../../.." vcs="Git" />

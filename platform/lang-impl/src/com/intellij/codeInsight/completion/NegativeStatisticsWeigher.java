@@ -16,16 +16,20 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.statistics.StatisticsManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class NegativeStatisticsWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     final StatisticsManager manager = StatisticsManager.getInstance();
     final StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
     if (info == null || info == StatisticsInfo.EMPTY) return 0;

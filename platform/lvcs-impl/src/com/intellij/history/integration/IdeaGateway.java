@@ -64,6 +64,7 @@ public class IdeaGateway {
 
     for (Project each : ProjectManager.getInstance().getOpenProjects()) {
       if (each.isDefault()) continue;
+      if (!each.isInitialized()) continue;
       if (each.getWorkspaceFile() == f) return false;
       if (ProjectRootManager.getInstance(each).getFileIndex().isIgnored(f)) return false;
     }

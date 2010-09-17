@@ -19,13 +19,17 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class PreferEnumConstantsWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     if (item.getObject() instanceof PsiEnumConstant) return 2;
 
     final CompletionParameters parameters = location.getCompletionParameters();

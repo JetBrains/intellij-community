@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class WeighingService {
   }
 
   @NotNull
-  public static <T,Loc> WeighingComparable<T,Loc> weigh(Key<? extends Weigher<T,Loc>> key, T element, Loc location) {
+  public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final T element, @Nullable final Loc location) {
     final List<Weigher> weighers = COLLECTOR.forKey(key);
     return new WeighingComparable<T,Loc>(element, location, ContainerUtil.toArray(weighers, new Weigher[weighers.size()]));
   }

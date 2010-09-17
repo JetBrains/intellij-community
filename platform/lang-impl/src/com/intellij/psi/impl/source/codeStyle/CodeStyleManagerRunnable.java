@@ -55,13 +55,16 @@ abstract class CodeStyleManagerRunnable<T> {
     Document document = documentManager.getDocument(file);
     if (document instanceof DocumentWindow) {
       final DocumentWindow documentWindow = (DocumentWindow)document;
-      if (range != null) {
-        range = documentWindow.injectedToHost(range);
+      final PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
+      if (!file.equals(topLevelFile)) {
+        if (range != null) {
+          range = documentWindow.injectedToHost(range);
+        }
+        if (offset != -1) {
+          offset = documentWindow.injectedToHost(offset);
+        }
+        return adjustResultForInjected(perform(topLevelFile, offset, range, defaultValue), documentWindow);
       }
-      if (offset != -1) {
-        offset = documentWindow.injectedToHost(offset);
-      }
-      return adjustResultForInjected(perform(InjectedLanguageUtil.getTopLevelFile(file), offset, range, defaultValue), documentWindow);
     }
 
     final PsiFile templateFile = PsiUtilBase.getTemplateLanguageFile(file);

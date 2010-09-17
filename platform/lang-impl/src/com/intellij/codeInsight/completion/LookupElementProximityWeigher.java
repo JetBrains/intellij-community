@@ -19,13 +19,17 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class LookupElementProximityWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     final Object o = item.getObject();
     if (o instanceof PsiElement) {
       return PsiProximityComparator.getProximity((PsiElement)o, location.getCompletionParameters().getPosition(), location.getProcessingContext());

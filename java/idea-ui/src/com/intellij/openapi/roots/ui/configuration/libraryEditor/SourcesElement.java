@@ -33,7 +33,7 @@ class SourcesElement extends LibraryTableTreeContentElement {
     return OrderRootType.SOURCES;
   }
 
-  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {
+  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
     return new SourcesElementDescriptor(parentDescriptor, this);
   }
 

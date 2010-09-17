@@ -23,6 +23,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -36,7 +37,10 @@ public class RecursionWeigher extends CompletionWeigher {
     delegation,
   }
 
-  public Result weigh(@NotNull final LookupElement element, final CompletionLocation location) {
+  public Result weigh(@NotNull final LookupElement element, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     if (location.getCompletionType() != CompletionType.BASIC && location.getCompletionType() != CompletionType.SMART) return Result.normal;
 
     final Object object = element.getObject();

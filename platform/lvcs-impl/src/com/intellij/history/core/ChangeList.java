@@ -48,7 +48,8 @@ public class ChangeList {
 
   public synchronized void close() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      LocalHistoryLog.LOG.assertTrue(myCurrentChangeSet == null, "current changes won't be saved: " + myCurrentChangeSet);
+      LocalHistoryLog.LOG.assertTrue(myCurrentChangeSet == null || myCurrentChangeSet.isEmpty(),
+                                     "current changes won't be saved: " + myCurrentChangeSet);
     }
     myStorage.close();
   }
@@ -92,7 +93,7 @@ public class ChangeList {
   }
 
   private boolean doEndChangeSet(String name) {
-    if (myCurrentChangeSet.getChanges().isEmpty()) {
+    if (myCurrentChangeSet.isEmpty()) {
       myCurrentChangeSet = null;
       return false;
     }

@@ -18,13 +18,17 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class PrefixMatchingWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     if (location.getCompletionType() == CompletionType.CLASS_NAME) return 0;
 
     final String lookupString = item.getLookupString();

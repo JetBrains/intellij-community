@@ -74,7 +74,9 @@ public class MavenFacadeManager {
   private MavenFacade myFacade;
 
   private RemoteMavenFacadeLogger myLogger = new RemoteMavenFacadeLogger();
+  private boolean myLoggerExported;
   private RemoteMavenFacadeDownloadListener myDownloadListener = new RemoteMavenFacadeDownloadListener();
+  private boolean myDownloadListenerExported;
 
   public static MavenFacadeManager getInstance() {
     return ServiceManager.getService(MavenFacadeManager.class);
@@ -100,36 +102,57 @@ public class MavenFacadeManager {
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
         mySupport.stopAll();
-        if (myFacade != null) {
-          try {
-            UnicastRemoteObject.unexportObject(myLogger, true);
-            UnicastRemoteObject.unexportObject(myDownloadListener, true);
-          }
-          catch (RemoteException e) {
-            MavenLog.LOG.error(e);
-          }
-        }
+        disposeFacade();
       }
     });
   }
 
-  private synchronized MavenFacade getFacade() {
-    try {
-      myFacade.ping();
+  private void disposeFacade() {
+    if (myFacade != null) {
+      mySupport.release(myFacade, "");
+      myFacade = null;
     }
-    catch (Exception ex) {
+
+    if (myLoggerExported) {
       try {
-        if (myFacade == null) {
-          UnicastRemoteObject.exportObject(myLogger, 0);
-          UnicastRemoteObject.exportObject(myDownloadListener, 0);
-        }
-        else {
-          // todo [anton] if myFacade != null reinit
-        }
+        UnicastRemoteObject.unexportObject(myLogger, true);
+      }
+      catch (RemoteException e) {
+        MavenLog.LOG.error(e);
+      }
+      myLoggerExported = false;
+    }
+    if (myDownloadListenerExported) {
+      try {
+        UnicastRemoteObject.unexportObject(myDownloadListener, true);
+      }
+      catch (RemoteException e) {
+        MavenLog.LOG.error(e);
+      }
+      myDownloadListenerExported = false;
+    }
+  }
+
+  private synchronized MavenFacade getFacade() {
+    if (myFacade != null) {
+      try {
+        myFacade.ping();
+      }
+      catch (Exception ex) {
+        disposeFacade();
+      }
+    }
+    if (myFacade == null) {
+      try {
+        myLoggerExported = UnicastRemoteObject.exportObject(myLogger, 0) != null;
+        myDownloadListenerExported = UnicastRemoteObject.exportObject(myDownloadListener, 0) != null;
+
         myFacade = mySupport.acquire(this, "");
         myFacade.set(myLogger, myDownloadListener);
       }
       catch (Exception e) {
+        disposeFacade();
+
         if (e instanceof RuntimeException) throw (RuntimeException)e;
         throw new RuntimeException(e);
       }

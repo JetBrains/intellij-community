@@ -49,12 +49,6 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
     return GroovyIcons.GROOVY_ICON_16x16;
   }
 
-  @NotNull
-  @Override
-  public String getAddActionText() {
-    return "Create new Groovy SDK...";
-  }
-
   @Override
   public boolean isSDKHome(@NotNull VirtualFile file) {
     return GroovyConfigUtils.getInstance().isSDKHome(file);

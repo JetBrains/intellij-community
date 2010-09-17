@@ -401,28 +401,33 @@ public class GroovyCompletionContributor extends CompletionContributor {
       @NotNull
       @Override
       protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
-        return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
+        return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER,
+                                                 shouldImport);
       }
     };
     final PsiFile file = position.getContainingFile();
-    if (file instanceof GroovyFile) {
-      for (GrImportStatement statement : ((GroovyFile)file).getImportStatements()) {
-        if (statement.isStatic()) {
-          GrCodeReferenceElement importReference = statement.getImportReference();
-          if (importReference != null) {
-            if (!statement.isOnDemand()) {
-              importReference = importReference.getQualifier();
-            }
-            if (importReference != null) {
-              final PsiElement target = importReference.resolve();
-              if (target instanceof PsiClass) {
-                processor.importMembersOf((PsiClass)target);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        if (file instanceof GroovyFile) {
+          for (GrImportStatement statement : ((GroovyFile)file).getImportStatements()) {
+            if (statement.isStatic()) {
+              GrCodeReferenceElement importReference = statement.getImportReference();
+              if (importReference != null) {
+                if (!statement.isOnDemand()) {
+                  importReference = importReference.getQualifier();
+                }
+                if (importReference != null) {
+                  final PsiElement target = importReference.resolve();
+                  if (target instanceof PsiClass) {
+                    processor.importMembersOf((PsiClass)target);
+                  }
+                }
               }
             }
           }
         }
       }
-    }
+    });
     return processor;
   }
 

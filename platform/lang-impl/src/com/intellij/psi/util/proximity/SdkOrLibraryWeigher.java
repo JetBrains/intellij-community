@@ -15,14 +15,15 @@
  */
 package com.intellij.psi.util.proximity;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.JdkOrderEntry;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -31,7 +32,10 @@ import java.util.List;
 */
 public class SdkOrLibraryWeigher extends ProximityWeigher {
 
-  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
+    if (location == null) {
+      return null;
+    }
     final VirtualFile file = PsiUtilBase.getVirtualFile(element);
     if (file != null) {
       List<OrderEntry> orderEntries = ProjectRootManager.getInstance(location.getProject()).getFileIndex().getOrderEntriesForFile(file);

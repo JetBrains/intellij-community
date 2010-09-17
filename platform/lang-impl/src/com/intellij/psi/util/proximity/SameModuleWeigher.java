@@ -15,17 +15,21 @@
  */
 package com.intellij.psi.util.proximity;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
-import com.intellij.openapi.module.ModuleUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class SameModuleWeigher extends ProximityWeigher {
 
-  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
+    if (location == null) {
+      return null;
+    }
     return location.getPositionModule() == ModuleUtil.findModuleForPsiElement(element);
   }
 }

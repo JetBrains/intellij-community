@@ -19,10 +19,10 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 
 public class LibraryElement extends LibraryTableTreeContentElement {
-  private final LibraryTableEditor myParentEditor;
+  private final LibraryRootsComponent myParentEditor;
   private final boolean myHasInvalidPaths;
 
-  public LibraryElement(LibraryTableEditor parentEditor, final boolean hasInvalidPaths) {
+  public LibraryElement(LibraryRootsComponent parentEditor, final boolean hasInvalidPaths) {
     myParentEditor = parentEditor;
     myHasInvalidPaths = hasInvalidPaths;
   }
@@ -53,7 +53,7 @@ public class LibraryElement extends LibraryTableTreeContentElement {
     return null;
   }
 
-  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {
+  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
     return new LibraryElementDescriptor(parentDescriptor, this, parentEditor);
   }
 }

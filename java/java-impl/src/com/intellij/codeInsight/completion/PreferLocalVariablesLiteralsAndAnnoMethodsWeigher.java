@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -32,7 +33,10 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends Completio
     annoMethod,
   }
 
-  public MyResult weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+  public MyResult weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     final Object object = item.getObject();
 
     if (location.getCompletionType() == CompletionType.SMART) {

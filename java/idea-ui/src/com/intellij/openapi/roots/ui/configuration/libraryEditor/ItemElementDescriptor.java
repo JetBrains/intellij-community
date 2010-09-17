@@ -27,8 +27,8 @@ class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
       super(null, parentDescriptor);
       myElement = element;
       final String url = element.getUrl();
-      myName = LibraryTableEditor.getPresentablePath(url).replace('/', File.separatorChar);
-      myOpenIcon = myClosedIcon = LibraryTableEditor.getIconForUrl(url, element.isValid(), element.isJarDirectory());
+      myName = LibraryRootsComponent.getPresentablePath(url).replace('/', File.separatorChar);
+      myOpenIcon = myClosedIcon = LibraryRootsComponent.getIconForUrl(url, element.isValid(), element.isJarDirectory());
     }
 
     public boolean update() {
