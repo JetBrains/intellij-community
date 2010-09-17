@@ -68,7 +68,7 @@ public abstract class PsiClassType extends PsiType {
     if (this == obj) return true;
     if (!(obj instanceof PsiClassType)) return false;
     PsiClassType otherClassType = (PsiClassType) obj;
-    //if (!isValid() || !otherClassType.isValid()) return false;
+    if (!isValid() || !otherClassType.isValid()) return false;
 
     String className = getClassName();
     String otherClassName = otherClassType.getClassName();
