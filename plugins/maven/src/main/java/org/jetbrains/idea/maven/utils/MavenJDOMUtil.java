@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -137,7 +136,7 @@ public class MavenJDOMUtil {
 
   public static String findChildValueByPath(@Nullable Element element, String path, String defaultValue) {
     Element child = findChildByPath(element, path);
-    String childValue = child == null ? null : child.getText();
+    String childValue = child == null ? null : child.getTextTrim();
     return StringUtil.isEmptyOrSpaces(childValue) ? defaultValue : childValue;
   }
 
@@ -156,7 +155,7 @@ public class MavenJDOMUtil {
   public static List<String> findChildrenValuesByPath(@Nullable Element element, String path, String childrenName) {
     List<String> result = new ArrayList<String>();
     for (Element each : findChildrenByPath(element, path, childrenName)) {
-      String value = each.getValue();
+      String value = each.getTextTrim();
       if (!StringUtil.isEmptyOrSpaces(value)) {
         result.add(value);
       }
