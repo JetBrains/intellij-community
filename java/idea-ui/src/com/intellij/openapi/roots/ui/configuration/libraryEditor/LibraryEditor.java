@@ -33,6 +33,8 @@ public interface LibraryEditor extends Disposable {
 
   void addRoot(VirtualFile file, OrderRootType rootType);
 
+  void addRoot(String url, OrderRootType rootType);
+
   void addJarDirectory(VirtualFile file, boolean recursive);
 
   void removeRoot(String url, OrderRootType rootType);

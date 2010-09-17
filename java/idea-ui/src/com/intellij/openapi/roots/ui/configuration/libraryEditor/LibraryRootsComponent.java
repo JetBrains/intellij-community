@@ -166,11 +166,11 @@ public class LibraryRootsComponent implements Disposable {
 
     final LibraryTableAttachHandler[] handlers = LibraryTableAttachHandler.EP_NAME.getExtensions();
     final LibraryEditor libraryEditor = getLibraryEditor();
-    if (handlers.length == 0 || myProject == null || !(libraryEditor instanceof ExistingLibraryEditor)) {
+    if (handlers.length == 0 || myProject == null) {
       myAttachMoreButton.setVisible(false);
     }
     else {
-      myAttachMoreButton.addActionListener(new AttachMoreAction(handlers, (ExistingLibraryEditor)libraryEditor));
+      myAttachMoreButton.addActionListener(new AttachMoreAction(handlers, libraryEditor));
       if (handlers.length == 1) {
         myAttachMoreButton.setText(handlers[0].getLongName());
       }
@@ -642,35 +642,44 @@ public class LibraryRootsComponent implements Disposable {
 
   private class AttachMoreAction implements ActionListener {
     private final LibraryTableAttachHandler[] myHandlers;
-    private final ExistingLibraryEditor myLibraryEditor;
+    private final LibraryEditor myLibraryEditor;
 
-    public AttachMoreAction(LibraryTableAttachHandler[] handlers, final ExistingLibraryEditor libraryEditor) {
+    public AttachMoreAction(LibraryTableAttachHandler[] handlers, final LibraryEditor libraryEditor) {
       myHandlers = handlers;
       myLibraryEditor = libraryEditor;
     }
 
     public void actionPerformed(ActionEvent e) {
       final Ref<Library.ModifiableModel> modelRef = Ref.create(null);
-      final NullableComputable<Library.ModifiableModel> computable = new NullableComputable<Library.ModifiableModel>() {
-        public Library.ModifiableModel compute() {
-          if (myTreeBuilder == null) {
-            // The following lines were born in severe pain & suffering, please respect
-            final Library library = myLibraryEditor.getLibrary();
-            final InvocationHandler invocationHandler = Proxy.isProxyClass(library.getClass())? Proxy.getInvocationHandler(library) : null;
-            final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor? (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler)
-              .getDelegate() : library;
-            final Module module = realLibrary instanceof LibraryImpl && ((LibraryImpl)realLibrary).isDisposed()? ((LibraryImpl)realLibrary).getModule() : null;
-            if (module != null && module.isDisposed()) return null; // no way
-            final Library targetLibrary = module != null? LibraryUtil.findLibrary(module, realLibrary.getName()) : realLibrary;
-            final Library.ModifiableModel model = targetLibrary.getModifiableModel();
-            modelRef.set(model);
-            return model;
+      final NullableComputable<Library.ModifiableModel> computable;
+      if (myLibraryEditor instanceof ExistingLibraryEditor) {
+        final ExistingLibraryEditor libraryEditor = (ExistingLibraryEditor)myLibraryEditor;
+        //todo[nik, greg] actually we cannot reliable find target library if the editor is closed so jars are downloaded under the modal progress dialog now
+        computable = new NullableComputable<Library.ModifiableModel>() {
+          public Library.ModifiableModel compute() {
+            if (myTreeBuilder == null) {
+              // The following lines were born in severe pain & suffering, please respect
+              final Library library = libraryEditor.getLibrary();
+              final InvocationHandler invocationHandler = Proxy.isProxyClass(library.getClass())? Proxy.getInvocationHandler(library) : null;
+              final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor? (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler)
+                .getDelegate() : library;
+              final Module module = realLibrary instanceof LibraryImpl && ((LibraryImpl)realLibrary).isDisposed()? ((LibraryImpl)realLibrary).getModule() : null;
+              if (module != null && module.isDisposed()) return null; // no way
+              final Library targetLibrary = module != null? LibraryUtil.findLibrary(module, realLibrary.getName()) : realLibrary;
+              final Library.ModifiableModel model = targetLibrary.getModifiableModel();
+              modelRef.set(model);
+              return model;
+            }
+            else {
+              return libraryEditor.getModel();
+            }
           }
-          else {
-            return myLibraryEditor.getModel();
-          }
-        }
-      };
+        };
+      }
+      else {
+        computable = null;
+      }
+
       final Runnable successRunnable = new Runnable() {
         public void run() {
           if (modelRef.get() != null) {
@@ -679,8 +688,8 @@ public class LibraryRootsComponent implements Disposable {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (myTreeBuilder != null) myTreeBuilder.queueUpdate();
-              if (myProject != null) {
-                ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(myLibraryEditor.getLibrary());
+              if (myProject != null && myLibraryEditor instanceof ExistingLibraryEditor) {
+                ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(((ExistingLibraryEditor)myLibraryEditor).getLibrary());
               }
             }
           });
@@ -694,7 +703,7 @@ public class LibraryRootsComponent implements Disposable {
         }
       };
       if (myHandlers.length == 1) {
-        myHandlers[0].performAttach(myProject, computable).doWhenDone(successRunnable).doWhenRejected(rejectRunnable);
+        myHandlers[0].performAttach(myProject, myLibraryEditor, computable).doWhenDone(successRunnable).doWhenRejected(rejectRunnable);
       }
       else {
         final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryTableAttachHandler>(null, myHandlers) {
@@ -710,7 +719,7 @@ public class LibraryRootsComponent implements Disposable {
           public PopupStep onChosen(final LibraryTableAttachHandler handler, final boolean finalChoice) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                handler.performAttach(myProject, computable).doWhenProcessed(successRunnable).doWhenRejected(rejectRunnable);
+                handler.performAttach(myProject, myLibraryEditor, computable).doWhenProcessed(successRunnable).doWhenRejected(rejectRunnable);
               }
             });
             return PopupStep.FINAL_CHOICE;
