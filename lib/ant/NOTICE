@@ -1,26 +1,6 @@
-   =========================================================================
-   ==  NOTICE file corresponding to the section 4 d of                    ==
-   ==  the Apache License, Version 2.0,                                   ==
-   ==  in this case for the Apache Ant distribution.                      ==
-   =========================================================================
-
    Apache Ant
-   Copyright 1999-2008 The Apache Software Foundation
-
-   This product includes software developed by
-   The Apache Software Foundation (http://www.apache.org/).
-
-   This product includes also software developed by :
-     - the W3C consortium (http://www.w3c.org) ,
-     - the SAX project (http://www.saxproject.org)
+   Copyright 1999-2010 The Apache Software Foundation
 
    The <sync> task is based on code Copyright (c) 2002, Landmark
    Graphics Corp that has been kindly donated to the Apache Software
    Foundation.
-
-   Portions of this software were originally based on the following:
-     - software copyright (c) 1999, IBM Corporation., http://www.ibm.com.
-     - software copyright (c) 1999, Sun Microsystems., http://www.sun.com.
-     - voluntary contributions made by Paul Eng on behalf of the 
-       Apache Software Foundation that were originally developed at iClick, Inc.,
-       software copyright (c) 1999.

@@ -29,8 +29,8 @@
 
   You can choose three locations, by going -Ddest=LOCATION on the command line
   -Ddest=user     user lib dir  ${user.home}/.ant/lib
-  -Ddest=system   ant lib dir   ${ant.home}/lib --Default--
-  -Ddest=optional optional dir  ${ant.home}/lib/optional  (for Ant developers)
+  -Ddest=system   ant lib dir   ${ant.home}/lib
+  -Ddest=optional optional dir  $${basedir}/lib/optional  (for Ant developers)
 
   You may also need to set proxy settings. On Java1.5, Ant tries to get
   this from the OS, unless you use the -noproxy option.
@@ -63,7 +63,18 @@
   <import file="get-m2.xml" />
 
   <target name="pick-dest">
-    <property name="dest" value="system" />
+    <fail>
+      <condition>
+        <not>
+          <isset property="dest"/>
+        </not>
+      </condition>ERROR
+Set -Ddest=LOCATION on the command line
+  -Ddest=user     user lib dir  ${user.home}/.ant/lib
+  -Ddest=system   ant lib dir   ${ant.home}/lib
+  -Ddest=optional optional dir  $${basedir}/lib/optional  (for Ant developers)
+    </fail>
+
     <condition property="dest.dir"
       value="${lib.dir}">
       <equals arg1="${dest}" arg2="system" />
@@ -104,9 +115,10 @@
         </artifact:dependencies>
         <!-- now we are left with the problem of getting the files
              into our directory -->
-        <copypath destdir="${dest.dir}" pathref="@{archive}.path">
+        <copy todir="${dest.dir}">
+          <path refid="@{archive}.path" />
           <flattenmapper/>
-        </copypath>
+        </copy>
       </sequential>
     </macrodef>
   </target>
@@ -145,13 +157,6 @@
    This is not used as
    we like to get the more recent artifacts than are in the repo at the time of writing (2006-12-21)
    -->
-
-  <target name="xerces"
-      description="load an updated version of Xerces"
-      depends="init">
-    <f2 project="xerces" archive="xercesImpl"/>
-    <f2 project="xerces" archive="xml-apis" />
-  </target>
 
   <target name="networking"
     description="load networking libraries (commons-net; jsch)"
@@ -217,8 +222,8 @@
   </target>
 
   <target name="script"
-          description="load script languages"
-          depends="bsf,jruby,jython,beanshell,rhino"/>
+          description="load script languages (except jython)"
+          depends="bsf,jruby,beanshell,rhino"/>
 
   <target name="debugging"
     description="internal ant debugging"
@@ -226,8 +231,19 @@
     <f2 project="which" />
   </target>
 
+  <target name="javamail" depends="init"
+          description="load javamail">
+    <f2 project="javax.mail" archive="mail"/>
+  </target>
+
+  <target name="jspc" depends="init" description="loads Jasper">
+    <f2 project="tomcat" archive="jasper-compiler"/>
+    <f2 project="tomcat" archive="jasper-runtime"/>
+    <f2 project="javax.servlet" archive="servlet-api"/>
+  </target>
+
   <target name="all"
-    description="load all the libraries"
-    depends="logging,junit,xml,networking,regexp,antlr,bcel,jdepend,bsf,debugging,script" />
+    description="load all the libraries (except jython)"
+    depends="logging,junit,xml,networking,regexp,antlr,bcel,jdepend,bsf,debugging,script,javamail,jspc" />
 
 </project>
