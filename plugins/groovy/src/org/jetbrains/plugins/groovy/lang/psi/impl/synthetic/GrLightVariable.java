@@ -3,32 +3,56 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
 * @author sergey.evdokimov
 */
 public class GrLightVariable extends GrImplicitVariableImpl implements NavigatablePsiElement {
 
-  private final PsiElement myElement;
+  private final List<PsiElement> myDeclarations;
 
   public GrLightVariable(PsiModifierList modifierList,
                        PsiManager manager,
                        @NonNls String name,
                        @NonNls @NotNull String type,
-                       @NotNull PsiElement element) {
-    super(modifierList, manager, name, type, getDeclarationScope(element));
-    this.myElement = element;
+                       @NotNull PsiElement navigationElement) {
+    this(modifierList, manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
+  }
+
+  public GrLightVariable(PsiModifierList modifierList,
+                       PsiManager manager,
+                       @NonNls String name,
+                       @NonNls @NotNull String type,
+                       @NotNull List<PsiElement> declarations,
+                       @NotNull PsiElement scope) {
+    super(modifierList, manager, name, type, scope);
+    assert declarations.size() > 0;
+    this.myDeclarations = declarations;
   }
 
   public GrLightVariable(PsiModifierList modifierList,
                        PsiManager manager,
                        @NonNls String name,
                        @NotNull PsiType type,
-                       @NotNull PsiElement element) {
-    super(modifierList, manager, new GrLightIdentifier(manager, name), type, false, getDeclarationScope(element));
-    this.myElement = element;
+                       @NotNull PsiElement navigationElement) {
+    this(modifierList, manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
+  }
+
+  public GrLightVariable(PsiModifierList modifierList,
+                       PsiManager manager,
+                       @NonNls String name,
+                       @NotNull PsiType type,
+                       @NotNull List<PsiElement> declarations,
+                       @NotNull PsiElement scope) {
+    super(modifierList, manager, new GrLightIdentifier(manager, name), type, false, scope);
+    assert declarations.size() > 0;
+    this.myDeclarations = declarations;
   }
 
   private static PsiElement getDeclarationScope(PsiElement navigationElement) {
@@ -38,18 +62,21 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
-    return myElement;
+    return myDeclarations.get(0);
   }
 
   @Override
   public PsiFile getContainingFile() {
-    return myElement.getContainingFile();
+    return myDeclarations.get(0).getContainingFile();
   }
 
   @Override
   public boolean isValid() {
-    //return super.isValid();
-    return myElement.isValid();
+    for (PsiElement declaration : myDeclarations) {
+      if (!declaration.isValid()) return false;
+    }
+
+    return true;
   }
 
   @NotNull
@@ -60,6 +87,17 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
 
   @Override
   public boolean isEquivalentTo(PsiElement another) {
-    return another == myElement || super.isEquivalentTo(another);
+    return myDeclarations.contains(another) || super.isEquivalentTo(another);
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    for (PsiElement declaration : myDeclarations) {
+      if (declaration instanceof PsiNamedElement) {
+        ((PsiNamedElement)declaration).setName(name);
+      }
+    }
+
+    return super.setName(name);
   }
 }
