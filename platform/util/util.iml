@@ -14,7 +14,6 @@
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="platform-resources-en" />
-    <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="annotations" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module-library">
