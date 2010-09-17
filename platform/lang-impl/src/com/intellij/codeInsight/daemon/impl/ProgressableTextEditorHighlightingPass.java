@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
@@ -108,6 +109,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   }
 
   private void repaintTrafficIcon() {
+    if (ApplicationManager.getApplication().isCommandLine()) return;
+
     if (repaintIconAlarm.getActiveRequestCount() == 0 || getProgressCount() >= getProgressLimit()) {
       repaintIconAlarm.addRequest(new Runnable() {
         public void run() {
