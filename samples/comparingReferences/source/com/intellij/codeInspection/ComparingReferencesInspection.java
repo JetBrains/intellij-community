@@ -31,7 +31,7 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getDisplayName() {
-   // return InspectionsBundle.message("inspection.comparing.references.display.name");
+
       return "'==' or '!=' instead of 'equals()'";
   }
 
@@ -94,8 +94,10 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
   private static class MyQuickFix implements LocalQuickFix {
     @NotNull
     public String getName() {
+        // The test (see the TestThisPlugin class) uses this string to identify the quick fix action.
       return InspectionsBundle.message("inspection.comparing.references.use.quickfix");
     }
+
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       try {
