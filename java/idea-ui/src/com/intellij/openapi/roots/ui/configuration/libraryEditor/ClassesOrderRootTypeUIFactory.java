@@ -28,8 +28,8 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
 
 public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  public LibraryTableTreeContentElement createElement(final LibraryElement parentElement) {
-    return new ClassesElement(parentElement);
+  public LibraryTableTreeContentElement createElement() {
+    return new ClassesElement();
   }
 
   public PathEditor createPathEditor(Sdk sdk) {

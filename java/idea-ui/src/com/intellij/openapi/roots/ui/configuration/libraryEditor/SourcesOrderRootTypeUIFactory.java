@@ -32,8 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.awt.*;
 
 public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  public LibraryTableTreeContentElement createElement(final LibraryElement parentElement) {
-    return new SourcesElement(parentElement);
+  public LibraryTableTreeContentElement createElement() {
+    return new SourcesElement();
   }
 
   public PathEditor createPathEditor(Sdk sdk) {

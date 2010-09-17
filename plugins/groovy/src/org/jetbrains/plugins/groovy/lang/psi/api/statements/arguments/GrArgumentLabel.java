@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author ilyas
  */
-public interface GrArgumentLabel extends GroovyPsiElement, PsiReference {
+public interface GrArgumentLabel extends GroovyPsiElement, PsiReference, PsiNamedElement {
 
   GrArgumentLabel[] EMPTY_ARRAY = new GrArgumentLabel[0];
 

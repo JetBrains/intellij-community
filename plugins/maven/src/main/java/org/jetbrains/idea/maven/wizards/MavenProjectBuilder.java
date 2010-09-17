@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -115,19 +116,19 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().myProfiles.clear();
     getParameters().myMavenProjectTree = null;
 
-    getParameters().myImportRoot = FileFinder.refreshRecursively(root);
-    if (getParameters().myImportRoot == null) return false;
-
-    final VirtualFile file = getRootDirectory();
-    if (file == null) return false;
-
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
         indicator.setText(ProjectBundle.message("maven.locating.files"));
 
+        getParameters().myImportRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+        if (getParameters().myImportRoot == null) throw new MavenProcessCanceledException();
+
+        final VirtualFile file = getRootDirectory();
+        if (file == null) throw new MavenProcessCanceledException();
+
         getParameters().myFiles = FileFinder.findPomFiles(file.getChildren(),
                                                           getImportingSettings().isLookForNested(),
-                                                          indicator.getIndicator(),
+                                                          indicator,
                                                           new ArrayList<VirtualFile>());
 
         collectProfiles(indicator);

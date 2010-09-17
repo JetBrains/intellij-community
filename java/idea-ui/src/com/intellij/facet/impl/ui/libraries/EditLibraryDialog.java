@@ -17,7 +17,7 @@ package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsComponent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 
@@ -34,16 +34,16 @@ public class EditLibraryDialog extends DialogWrapper {
   private JPanel myNameAndLevelPanelWrapper;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private LibraryCompositionSettings mySettings;
-  private LibraryTableEditor myLibraryTableEditor;
+  private LibraryRootsComponent myLibraryRootsComponent;
 
   public EditLibraryDialog(Component parent, LibraryCompositionSettings settings) {
     super(parent, true);
     mySettings = settings;
     final Library library = settings.getOrCreateLibrary();
 
-    myLibraryTableEditor = LibraryTableEditor.editLibrary(new ExistingLibraryEditor(library, null));
+    myLibraryRootsComponent = LibraryRootsComponent.createComponent(new ExistingLibraryEditor(library, null));
 
-    Disposer.register(getDisposable(), myLibraryTableEditor);
+    Disposer.register(getDisposable(), myLibraryRootsComponent);
 
     setTitle("Edit Library");
 
@@ -56,7 +56,7 @@ public class EditLibraryDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
 
-    JComponent editor = myLibraryTableEditor.getComponent();
+    JComponent editor = myLibraryRootsComponent.getComponent();
     myEditorPanel.add(editor);
     myNameAndLevelPanelWrapper.add(myNameAndLevelPanel.getPanel());
     return myPanel;

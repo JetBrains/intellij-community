@@ -139,14 +139,33 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
+    MouseEvent me = e;
+
     Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
 
-    getNearestHighlighters(this, e, width, highlighters);
-    getNearestHighlighters((MarkupModelEx)myEditor.getDocument().getMarkupModel(getEditor().getProject()), e, width, highlighters);
+    getNearestHighlighters(this, me, width, highlighters);
+    getNearestHighlighters((MarkupModelEx)myEditor.getDocument().getMarkupModel(getEditor().getProject()), me, width, highlighters);
+
     if (highlighters.isEmpty()) return false;
+
+    int minDelta = Integer.MAX_VALUE;
+    int y = e.getY();
+
+    for (RangeHighlighter each : highlighters) {
+      int eachStartY = offsetToYPosition(each.getStartOffset());
+      int eachEndY = offsetToYPosition(each.getEndOffset());
+      int eachY = eachStartY + (eachEndY - eachStartY) / 2;
+      if (Math.abs(e.getY() - eachY) < minDelta) {
+        y = eachY;
+      }
+    }
+
+    me = new MouseEvent((Component)e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), y + 1, e.getClickCount(),
+                                   e.isPopupTrigger());
+
     TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
     if (bigRenderer != null) {
-      showTooltip(e, bigRenderer, new HintHint(e).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft));
+      showTooltip(me, bigRenderer, new HintHint(me).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft));
       return true;
     }
     return false;
@@ -579,7 +598,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         return;
       }
 
-      cancelMyToolTips(e);
+      cancelMyToolTips(e, false);
 
       if (scrollbar.getCursor().equals(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))) {
         scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -607,9 +626,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
     }
 
-    private void cancelMyToolTips(final MouseEvent e) {
+    private void cancelMyToolTips(final MouseEvent e, boolean checkIfShouldSurvive) {
       final TooltipController tooltipController = TooltipController.getInstance();
-      if (!tooltipController.shouldSurvive(e)) {
+      if (!checkIfShouldSurvive || !tooltipController.shouldSurvive(e)) {
         tooltipController.cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP);
       }
     }
@@ -618,11 +637,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public void mouseExited(MouseEvent e) {
-      cancelMyToolTips(e);
+      cancelMyToolTips(e, true);
     }
 
     public void mouseDragged(MouseEvent e) {
-      cancelMyToolTips(e);
+      cancelMyToolTips(e, true);
     }
 
     public void setPopupHandler(final PopupHandler handler) {
@@ -697,7 +716,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
         if (tooltips.add(text)) {
           if (bigRenderer == null) {
-            bigRenderer = new LineTooltipRenderer(text);
+            bigRenderer = new LineTooltipRenderer(text, new Object[] {highlighters});
           }
           else {
             bigRenderer.addBelow(text);
@@ -709,11 +728,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
-      return new LineTooltipRenderer(text);
+      return new LineTooltipRenderer(text, new Object[] {text});
     }
 
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
-      return new LineTooltipRenderer(text, width);
+      return new LineTooltipRenderer(text, width, new Object[] {text});
     }
 
     @Override
@@ -744,11 +763,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       recalcEditorDimensions();
     }
     if (myEditorSourceHeight < myEditorTargetHeight) {
-      return myEditorScrollbarTop + lineNumber * myEditor.getLineHeight();
+      return (myEditorScrollbarTop + lineNumber * myEditor.getLineHeight());
     }
     else {
       final int lineCount = myEditorSourceHeight / myEditor.getLineHeight();
-      return myEditorScrollbarTop + (int)((float)lineNumber / lineCount * myEditorTargetHeight);
+      return (myEditorScrollbarTop + (int)((float)lineNumber / lineCount * myEditorTargetHeight));
     }
   }
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,14 +33,12 @@ public class TooltipController {
   private LightweightHint myCurrentTooltip;
   private TooltipRenderer myCurrentTooltipObject;
   private TooltipGroup myCurrentTooltipGroup;
-  private final Alarm myTooltipAlarm = new Alarm();
 
   public static TooltipController getInstance() {
     return ServiceManager.getService(TooltipController.class);
   }
 
   public void cancelTooltips() {
-    myTooltipAlarm.cancelAllRequests();
     hideCurrentTooltip();
   }
 
@@ -56,7 +53,6 @@ public class TooltipController {
                                      final TooltipRenderer tooltipObject,
                                      final boolean alignToRight,
                                      @NotNull final TooltipGroup group, final HintHint hintHint) {
-    myTooltipAlarm.cancelAllRequests();
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
     }
@@ -74,25 +70,19 @@ public class TooltipController {
       );
       p.x += alignToRight ? -10 : 10;
 
-      myTooltipAlarm.addRequest(
-        new Runnable() {
-          public void run() {
-            Project project = editor.getProject();
-            if (project != null && !project.isOpen()) return;
-            if (editor.getContentComponent().isShowing()) {
-              showTooltip(editor, p, tooltipObject, alignToRight, group, hintHint);
-            }
-          }
-        },
-        50
-      );
+      Project project = editor.getProject();
+      if (project != null && !project.isOpen()) return;
+      if (editor.getContentComponent().isShowing()) {
+        showTooltip(editor, p, tooltipObject, alignToRight, group, hintHint);
+      }
     }
   }
 
   private void hideCurrentTooltip() {
     if (myCurrentTooltip != null) {
-      myCurrentTooltip.hide();
+      LightweightHint currentTooltip = myCurrentTooltip;
       myCurrentTooltip = null;
+      currentTooltip.hide();
       myCurrentTooltipGroup = null;
     }
   }
@@ -111,13 +101,19 @@ public class TooltipController {
     showTooltip(editor, p, tooltipRenderer, alignToRight, group, new HintHint(editor, p));
   }
 
-  public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group, HintHint hintInfo) {
-    myTooltipAlarm.cancelAllRequests();
+  public void showTooltip(final Editor editor,
+                          Point p,
+                          TooltipRenderer tooltipRenderer,
+                          boolean alignToRight,
+                          TooltipGroup group,
+                          HintHint hintInfo) {
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
     }
 
-    if (Comparing.equal(tooltipRenderer, myCurrentTooltipObject)) return;
+    if (Comparing.equal(tooltipRenderer, myCurrentTooltipObject)) {
+      return;
+    }
     if (myCurrentTooltipGroup != null && group.compareTo(myCurrentTooltipGroup) < 0) return;
 
     p = new Point(p);
@@ -143,4 +139,10 @@ public class TooltipController {
     }
     return false;
   }
-      }
+
+  public void hide(LightweightHint lightweightHint) {
+    if (myCurrentTooltip != null && myCurrentTooltip.equals(lightweightHint)) {
+      hideCurrentTooltip();
+    }
+  }
+}

@@ -55,7 +55,7 @@ public class CreateNewLibraryAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final LibrariesModifiableModel modifiableModel = myModelProvider.getModifiableModel();
-    final String initial = LibraryTableEditor.suggestNewLibraryName(modifiableModel);
+    final String initial = LibraryRootsComponent.suggestNewLibraryName(modifiableModel);
     final String prompt = ProjectBundle.message("library.name.prompt");
     final String title = ProjectBundle.message("library.create.library.action").replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
     final Icon icon = Messages.getQuestionIcon();
@@ -68,7 +68,7 @@ public class CreateNewLibraryAction extends AnAction {
           Messages.showErrorDialog(ProjectBundle.message("library.name.not.specified.error"), ProjectBundle.message("library.name.not.specified.title"));
           return false;
         }
-        if (LibraryTableEditor.libraryAlreadyExists(modifiableModel, inputString)) {
+        if (LibraryRootsComponent.libraryAlreadyExists(modifiableModel, inputString)) {
           Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", inputString), ProjectBundle.message("library.name.already.exists.title"));
           return false;
         }

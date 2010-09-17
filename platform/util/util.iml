@@ -17,6 +17,15 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="annotations" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../lib/automaton.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="copyright">
     <Base>

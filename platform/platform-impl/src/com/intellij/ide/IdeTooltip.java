@@ -80,5 +80,9 @@ public class IdeTooltip {
   public void hide() {
     IdeTooltipManager.getInstance().hide(this);
   }
+
+  public boolean canBeDismissedOnTimeout() {
+    return true;
+  }
 }
 

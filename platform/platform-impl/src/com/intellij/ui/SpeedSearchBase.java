@@ -21,11 +21,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +49,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public abstract class SpeedSearchBase<Comp extends JComponent> {
+public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SpeedSearchBase");
   private SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
@@ -59,7 +59,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   private String myRecentEnteredPrefix;
   private SpeedSearchComparator myComparator = new SpeedSearchComparator();
 
-  private static final Key SPEED_SEARCH_COMPONENT_MARKER = new Key("SPEED_SEARCH_COMPONENT_MARKER");
   @NonNls protected static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";
 
   public SpeedSearchBase(Comp component) {
@@ -86,6 +85,20 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   public static boolean hasActiveSpeedSearch(JComponent component) {
     SpeedSearchBase speedSearch = (SpeedSearchBase)component.getClientProperty(SPEED_SEARCH_COMPONENT_MARKER);
     return speedSearch != null && speedSearch.mySearchPopup != null && speedSearch.mySearchPopup.isVisible();
+  }
+
+  @Override
+  public boolean isPopupActive() {
+    return mySearchPopup != null && mySearchPopup.isVisible();
+  }
+
+
+  @Override
+  public Matcher compareAndGetMatcher(@NotNull String text) {
+    if (!isPopupActive()) return null;
+    final SpeedSearchComparator comparator = getComparator();
+    final String recentSearchText = comparator.getRecentSearchText();
+    return recentSearchText != null && recentSearchText.length() > 0 && comparator.doCompare(recentSearchText, text) ? comparator.getRecentSearchMatcher() : null;
   }
 
   /**

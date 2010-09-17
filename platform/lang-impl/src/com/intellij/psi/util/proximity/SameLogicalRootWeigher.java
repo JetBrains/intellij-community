@@ -37,7 +37,10 @@ public class SameLogicalRootWeigher extends ProximityWeigher {
     }
   });
 
-  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
+    if (location == null) {
+      return null;
+    }
     final LogicalRoot contextRoot = LOGICAL_ROOT_KEY.getValue(location);
     if (contextRoot == null) {
       return false;

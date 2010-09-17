@@ -55,6 +55,14 @@ public class ConvertMethodToClosureTest extends GrIntentionTestCase {
     doMethodToClosureTest();
   }
 
+  public void testMethodFromReference() {
+    doMethodToClosureTest();
+  }
+
+  public void testClosureFromReference() {
+    doClosureToMethodTest();
+  }
+
   private void doClosureToMethodTest() {
     doTest(GroovyIntentionsBundle.message("convert.closure.to.method.intention.name"), true);
   }

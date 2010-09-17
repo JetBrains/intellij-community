@@ -30,6 +30,7 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -131,7 +132,7 @@ public class ConversionContextImpl implements ConversionContext {
     final ExpandMacroToPathMap macros = createExpandMacroMap();
 
     List<File> files = new ArrayList<File>();
-    for (Element module : JDomConvertingUtil.getChildren(modules, ModuleManagerImpl.ELEMENT_MODULE)) {
+    for (Element module : JDOMUtil.getChildren(modules, ModuleManagerImpl.ELEMENT_MODULE)) {
       String filePath = module.getAttributeValue(ModuleManagerImpl.ATTRIBUTE_FILEPATH);
       filePath = macros.substitute(filePath, true);
       files.add(new File(FileUtil.toSystemDependentName(filePath)));
@@ -198,7 +199,7 @@ public class ConversionContextImpl implements ConversionContext {
     //todo[nik] support jar directories
     final Element classesChild = libraryElement.getChild("CLASSES");
     if (classesChild != null) {
-      final List<Element> roots = JDomConvertingUtil.getChildren(classesChild, "root");
+      final List<Element> roots = JDOMUtil.getChildren(classesChild, "root");
       final ExpandMacroToPathMap pathMap = createExpandMacroMap(moduleSettings);
       for (Element root : roots) {
         final String url = root.getAttributeValue("url");

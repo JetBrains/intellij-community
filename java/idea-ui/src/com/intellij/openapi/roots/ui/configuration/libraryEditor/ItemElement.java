@@ -20,13 +20,13 @@ import com.intellij.openapi.roots.OrderRootType;
 
 
 class ItemElement extends LibraryTableTreeContentElement {
-  private final LibraryTableTreeContentElement myParent;
+  private final OrderRootTypeElement myParent;
   private final String myUrl;
   private final OrderRootType myRootType;
   private final boolean myIsJarDirectory;
   private final boolean myValid;
 
-  public ItemElement(LibraryTableTreeContentElement parent, String url, OrderRootType rootType, final boolean isJarDirectory,
+  public ItemElement(OrderRootTypeElement parent, String url, OrderRootType rootType, final boolean isJarDirectory,
                      boolean isValid) {
     myParent = parent;
     myUrl = url;
@@ -35,15 +35,11 @@ class ItemElement extends LibraryTableTreeContentElement {
     myValid = isValid;
   }
 
-  public LibraryTableTreeContentElement getParent() {
+  public OrderRootTypeElement getParent() {
     return myParent;
   }
 
-  public OrderRootType getOrderRootType() {
-    return null;
-  }
-
-  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {
+  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
     return new ItemElementDescriptor(parentDescriptor, this);
   }
 

@@ -71,7 +71,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         final String text = tooltipObject.toString();
         if (tooltips.add(text)) {
           if (bigRenderer == null) {
-            bigRenderer = new MyRenderer(text);
+            bigRenderer = new MyRenderer(text, new Object[] {highlighters});
           }
           else {
             bigRenderer.addBelow(text);
@@ -90,10 +90,10 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       });
       final HighlightInfoComposite composite = new HighlightInfoComposite(infos);
       if (bigRenderer == null) {
-        bigRenderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.toolTip));
+        bigRenderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.toolTip), new Object[] {highlighters});
       }
       else {
-        final LineTooltipRenderer renderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.toolTip));
+        final LineTooltipRenderer renderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.toolTip), new Object[] {highlighters});
         renderer.addBelow(bigRenderer.getText());
         bigRenderer = renderer;
       }
@@ -102,11 +102,11 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   }
 
   public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
-    return new MyRenderer(text);
+    return new MyRenderer(text, new Object[] {text});
   }
 
   public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
-    return new MyRenderer(text, width);
+    return new MyRenderer(text, width, new Object[] {text});
   }
 
   @Override
@@ -115,12 +115,12 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   }
 
   private static class MyRenderer extends LineTooltipRenderer {
-    public MyRenderer(final String text) {
-      super(text);
+    public MyRenderer(final String text, Object[] comparable) {
+      super(text, comparable);
     }
 
-    public MyRenderer(final String text, final int width) {
-      super(text, width);
+    public MyRenderer(final String text, final int width, Object[] comparable) {
+      super(text, width, comparable);
     }
 
     protected String convertTextOnLinkHandled(final String text) {
@@ -183,7 +183,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     }
 
     protected LineTooltipRenderer createRenderer(final String text, final int width) {
-      return new MyRenderer(text, width);
+      return new MyRenderer(text, width, getEqualityObjects());
     }
   }
 }

@@ -16,16 +16,20 @@
 
 package com.intellij.codeInsight.completion;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class PriorityWeigher extends CompletionWeigher {
   @Override
-  public Double weigh(@NotNull LookupElement element, CompletionLocation location) {
+  public Double weigh(@NotNull LookupElement element, @Nullable CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     final PrioritizedLookupElement prioritized = PrioritizedLookupElement.from(element);
     if (prioritized != null) {
       return -prioritized.getPriority();

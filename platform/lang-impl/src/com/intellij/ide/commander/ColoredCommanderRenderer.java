@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,30 +83,8 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
     if(attributes == null) attributes = new SimpleTextAttributes(Font.PLAIN, color);
     final String text = value.toString();
 
-    if (myCommanderPanel.isEnableSearchHighlighting() && SpeedSearchBase.hasActiveSpeedSearch(list)) {
-      final SpeedSearchBase.SpeedSearchComparator comparator = myCommanderPanel.getListSpeedSearch().getComparator();
-      final String recentSearchText = comparator.getRecentSearchText();
-      if (recentSearchText != null && recentSearchText.length() > 0 && comparator.doCompare(recentSearchText, text)) {
-        final Matcher matcher = comparator.getRecentSearchMatcher();
-        final List<Pair<String, Integer>> searchTerms = new ArrayList<Pair<String, Integer>>();
-        for (int i = 0; i < matcher.groupCount(); i++) {
-          final int start = matcher.start(i + 1);
-          if (searchTerms.size() > 0) {
-            final Pair<String, Integer> recent = searchTerms.get(searchTerms.size() - 1);
-            if (start == recent.second + recent.first.length()) {
-              searchTerms.set(searchTerms.size() - 1, Pair.create(recent.first + matcher.group(i+1), recent.second));
-              continue;
-            }
-          }
-
-          searchTerms.add(Pair.create(matcher.group(i+1), start));
-        }
-
-        SearchUtil.appendFragmentsStrict(text, searchTerms, Font.PLAIN, attributes.getFgColor(),
-                                         selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(), this);
-      } else {
-        append(text != null ? text : "", attributes);
-      }
+    if (myCommanderPanel.isEnableSearchHighlighting()) {
+      SpeedSearchUtil.appendFragmentsForSpeedSearch(myCommanderPanel.getList(), text, attributes, selected, this);
     }
     else {
       append(text != null ? text : "", attributes);

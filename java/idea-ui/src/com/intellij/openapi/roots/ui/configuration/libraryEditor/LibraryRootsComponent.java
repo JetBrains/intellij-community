@@ -77,7 +77,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Jan 11, 2004
  */
-public class LibraryTableEditor implements Disposable {
+public class LibraryRootsComponent implements Disposable {
   static final UrlComparator ourUrlComparator = new UrlComparator();
 
   private JPanel myPanel;
@@ -101,23 +101,23 @@ public class LibraryTableEditor implements Disposable {
   private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
   private final LibraryEditor myLibraryEditor;
 
-  private LibraryTableEditor(Project project,
+  private LibraryRootsComponent(Project project,
                              LibraryEditor libraryEditor){
     myProject = project;
     myLibraryEditor = libraryEditor;
   }
 
-  public static LibraryTableEditor editLibrary(final @Nullable Project project, @NotNull LibraryEditor libraryEditor) {
-    LibraryTableEditor tableEditor = new LibraryTableEditor(project, libraryEditor);
-    tableEditor.init(new LibraryTreeStructure(tableEditor));
+  public static LibraryRootsComponent createComponent(final @Nullable Project project, @NotNull LibraryEditor libraryEditor) {
+    LibraryRootsComponent rootsComponent = new LibraryRootsComponent(project, libraryEditor);
+    rootsComponent.init(new LibraryTreeStructure(rootsComponent));
     if (project != null) {
-      Disposer.register(project, tableEditor);
+      Disposer.register(project, rootsComponent);
     }
-    return tableEditor;
+    return rootsComponent;
   }
 
-  public static LibraryTableEditor editLibrary(@NotNull LibraryEditor libraryEditor) {
-    return editLibrary(null, libraryEditor);
+  public static LibraryRootsComponent createComponent(@NotNull LibraryEditor libraryEditor) {
+    return createComponent(null, libraryEditor);
   }
 
   public static boolean libraryAlreadyExists(LibraryTable.ModifiableModel table, String libraryName) {
@@ -166,11 +166,11 @@ public class LibraryTableEditor implements Disposable {
 
     final LibraryTableAttachHandler[] handlers = LibraryTableAttachHandler.EP_NAME.getExtensions();
     final LibraryEditor libraryEditor = getLibraryEditor();
-    if (handlers.length == 0 || myProject == null || !(libraryEditor instanceof ExistingLibraryEditor)) {
+    if (handlers.length == 0 || myProject == null) {
       myAttachMoreButton.setVisible(false);
     }
     else {
-      myAttachMoreButton.addActionListener(new AttachMoreAction(handlers, (ExistingLibraryEditor)libraryEditor));
+      myAttachMoreButton.addActionListener(new AttachMoreAction(handlers, libraryEditor));
       if (handlers.length == 1) {
         myAttachMoreButton.setText(handlers[0].getLongName());
       }
@@ -605,7 +605,7 @@ public class LibraryTableEditor implements Disposable {
 
     public boolean isMatchingElement(Object element, String pattern) {
       Object userObject = ((DefaultMutableTreeNode)((TreePath)element).getLastPathComponent()).getUserObject();
-      if (userObject instanceof ItemElementDescriptor || userObject instanceof LibraryElementDescriptor) {
+      if (userObject instanceof ItemElementDescriptor) {
         String str = getElementText(element);
         if (str == null) {
           return false;
@@ -642,35 +642,44 @@ public class LibraryTableEditor implements Disposable {
 
   private class AttachMoreAction implements ActionListener {
     private final LibraryTableAttachHandler[] myHandlers;
-    private final ExistingLibraryEditor myLibraryEditor;
+    private final LibraryEditor myLibraryEditor;
 
-    public AttachMoreAction(LibraryTableAttachHandler[] handlers, final ExistingLibraryEditor libraryEditor) {
+    public AttachMoreAction(LibraryTableAttachHandler[] handlers, final LibraryEditor libraryEditor) {
       myHandlers = handlers;
       myLibraryEditor = libraryEditor;
     }
 
     public void actionPerformed(ActionEvent e) {
       final Ref<Library.ModifiableModel> modelRef = Ref.create(null);
-      final NullableComputable<Library.ModifiableModel> computable = new NullableComputable<Library.ModifiableModel>() {
-        public Library.ModifiableModel compute() {
-          if (myTreeBuilder == null) {
-            // The following lines were born in severe pain & suffering, please respect
-            final Library library = myLibraryEditor.getLibrary();
-            final InvocationHandler invocationHandler = Proxy.isProxyClass(library.getClass())? Proxy.getInvocationHandler(library) : null;
-            final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor? (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler)
-              .getDelegate() : library;
-            final Module module = realLibrary instanceof LibraryImpl && ((LibraryImpl)realLibrary).isDisposed()? ((LibraryImpl)realLibrary).getModule() : null;
-            if (module != null && module.isDisposed()) return null; // no way
-            final Library targetLibrary = module != null? LibraryUtil.findLibrary(module, realLibrary.getName()) : realLibrary;
-            final Library.ModifiableModel model = targetLibrary.getModifiableModel();
-            modelRef.set(model);
-            return model;
+      final NullableComputable<Library.ModifiableModel> computable;
+      if (myLibraryEditor instanceof ExistingLibraryEditor) {
+        final ExistingLibraryEditor libraryEditor = (ExistingLibraryEditor)myLibraryEditor;
+        //todo[nik, greg] actually we cannot reliable find target library if the editor is closed so jars are downloaded under the modal progress dialog now
+        computable = new NullableComputable<Library.ModifiableModel>() {
+          public Library.ModifiableModel compute() {
+            if (myTreeBuilder == null) {
+              // The following lines were born in severe pain & suffering, please respect
+              final Library library = libraryEditor.getLibrary();
+              final InvocationHandler invocationHandler = Proxy.isProxyClass(library.getClass())? Proxy.getInvocationHandler(library) : null;
+              final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor? (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler)
+                .getDelegate() : library;
+              final Module module = realLibrary instanceof LibraryImpl && ((LibraryImpl)realLibrary).isDisposed()? ((LibraryImpl)realLibrary).getModule() : null;
+              if (module != null && module.isDisposed()) return null; // no way
+              final Library targetLibrary = module != null? LibraryUtil.findLibrary(module, realLibrary.getName()) : realLibrary;
+              final Library.ModifiableModel model = targetLibrary.getModifiableModel();
+              modelRef.set(model);
+              return model;
+            }
+            else {
+              return libraryEditor.getModel();
+            }
           }
-          else {
-            return myLibraryEditor.getModel();
-          }
-        }
-      };
+        };
+      }
+      else {
+        computable = null;
+      }
+
       final Runnable successRunnable = new Runnable() {
         public void run() {
           if (modelRef.get() != null) {
@@ -679,8 +688,8 @@ public class LibraryTableEditor implements Disposable {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (myTreeBuilder != null) myTreeBuilder.queueUpdate();
-              if (myProject != null) {
-                ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(myLibraryEditor.getLibrary());
+              if (myProject != null && myLibraryEditor instanceof ExistingLibraryEditor) {
+                ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(((ExistingLibraryEditor)myLibraryEditor).getLibrary());
               }
             }
           });
@@ -694,7 +703,7 @@ public class LibraryTableEditor implements Disposable {
         }
       };
       if (myHandlers.length == 1) {
-        myHandlers[0].performAttach(myProject, computable).doWhenDone(successRunnable).doWhenRejected(rejectRunnable);
+        myHandlers[0].performAttach(myProject, myLibraryEditor, computable).doWhenDone(successRunnable).doWhenRejected(rejectRunnable);
       }
       else {
         final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryTableAttachHandler>(null, myHandlers) {
@@ -710,7 +719,7 @@ public class LibraryTableEditor implements Disposable {
           public PopupStep onChosen(final LibraryTableAttachHandler handler, final boolean finalChoice) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                handler.performAttach(myProject, computable).doWhenProcessed(successRunnable).doWhenRejected(rejectRunnable);
+                handler.performAttach(myProject, myLibraryEditor, computable).doWhenProcessed(successRunnable).doWhenRejected(rejectRunnable);
               }
             });
             return PopupStep.FINAL_CHOICE;

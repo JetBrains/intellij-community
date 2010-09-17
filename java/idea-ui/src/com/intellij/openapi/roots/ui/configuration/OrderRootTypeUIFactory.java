@@ -23,7 +23,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryElement;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableTreeContentElement;
 import com.intellij.openapi.util.KeyedExtensionFactory;
 
@@ -34,6 +33,6 @@ public interface OrderRootTypeUIFactory {
     }
   };
 
-  LibraryTableTreeContentElement createElement(final LibraryElement parentElement);
+  LibraryTableTreeContentElement createElement();
   PathEditor createPathEditor(Sdk sdk);
 }

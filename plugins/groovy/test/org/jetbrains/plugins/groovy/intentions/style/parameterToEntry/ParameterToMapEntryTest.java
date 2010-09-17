@@ -92,6 +92,10 @@ public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
     doTestImpl("A.groovy");
   }
 
+  public void testGettersAndCallMethod() {
+    doTestImpl("A.groovy");
+  }
+
   private void doTestImpl(String filePath) {
     myFixture.configureByFile(filePath);
     int offset = myFixture.getEditor().getCaretModel().getOffset();

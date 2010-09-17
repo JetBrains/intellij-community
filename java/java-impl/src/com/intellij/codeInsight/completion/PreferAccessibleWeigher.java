@@ -19,13 +19,17 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocCommentOwner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class PreferAccessibleWeigher extends CompletionWeigher {
 
-  public MyEnum weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+  public MyEnum weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     final Object object = item.getObject();
     if (object instanceof PsiDocCommentOwner) {
       final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
