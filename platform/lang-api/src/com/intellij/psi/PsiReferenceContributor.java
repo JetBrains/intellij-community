@@ -12,6 +12,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  * literal expressions, comments etc. The reference contributors are run once per project and are able to
  * register reference providers for specific locations. See {@link com.intellij.psi.PsiReferenceRegistrar} for more details.
  *
+ * The contributed references may then be obtained via
+ * {@link com.intellij.psi.PsiReferenceService#getReferences(PsiElement, com.intellij.psi.PsiReferenceService.Hints)},
+ * which is the preferred way.
+ * Some elements return them from {@link PsiElement#getReferences()} directly though, but one should not rely on that
+ * behavior since it may be changed in the future.
  *
  * @author peter
  */

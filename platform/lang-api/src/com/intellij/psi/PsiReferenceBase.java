@@ -33,22 +33,40 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   private TextRange myRange;
   protected boolean mySoft;
 
+  /**
+   * @param element PSI element
+   * @param range range relatively to the element's start offset
+   * @param soft soft
+   */
   public PsiReferenceBase(T element, TextRange range, boolean soft) {
     myElement = element;
     myRange = range;
     mySoft = soft;
   }
 
+  /**
+   * @param element PSI element
+   * @param range range relatively to the element's start offset
+   */
   public PsiReferenceBase(T element, TextRange range) {
     this(element);
     myRange = range;
   }
 
+  /**
+   * The range is obtained from {@link ElementManipulators}
+   * @param element PSI element
+   * @param soft soft
+   */
   public PsiReferenceBase(T element, boolean soft) {
     myElement = element;
     mySoft = soft;
   }
 
+  /**
+   * The range is obtained from {@link ElementManipulators}
+   * @param element PSI element
+   */
   public PsiReferenceBase(@NotNull T element) {
     myElement = element;
     mySoft = false;
