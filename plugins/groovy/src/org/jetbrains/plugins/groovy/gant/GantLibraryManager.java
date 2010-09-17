@@ -23,8 +23,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.gant.GantIcons;
-import org.jetbrains.plugins.groovy.gant.GantUtils;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
 
 import javax.swing.*;
@@ -34,13 +32,13 @@ import java.io.File;
  * @author peter
  */
 public class GantLibraryManager extends AbstractGroovyLibraryManager {
-  public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    return GantUtils.isGantLibrary(container.getLibraryFiles(library, OrderRootType.CLASSES));
+  public boolean managesLibrary(final VirtualFile[] libraryFiles) {
+    return GantUtils.isGantLibrary(libraryFiles);
   }
 
   @Nls
-  public String getLibraryVersion(@NotNull Library library, LibrariesContainer librariesContainer) {
-    return GantUtils.getGantVersion(GantUtils.getGantLibraryHome(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
+  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
+    return GantUtils.getGantVersion(GantUtils.getGantLibraryHome(libraryFiles));
   }
 
   @NotNull

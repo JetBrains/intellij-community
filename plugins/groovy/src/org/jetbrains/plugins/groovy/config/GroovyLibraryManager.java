@@ -32,13 +32,13 @@ import java.io.File;
  * @author peter
  */
 public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
-  public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    return LibrariesUtil.getGroovyLibraryHome(container.getLibraryFiles(library, OrderRootType.CLASSES)) != null;
+  public boolean managesLibrary(final VirtualFile[] libraryFiles) {
+    return LibrariesUtil.getGroovyLibraryHome(libraryFiles) != null;
   }
 
   @Nls
-  public String getLibraryVersion(@NotNull Library library, LibrariesContainer librariesContainer) {
-    final String home = LibrariesUtil.getGroovyLibraryHome(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
+  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
+    final String home = LibrariesUtil.getGroovyLibraryHome(libraryFiles);
     if (home == null) return AbstractConfigUtils.UNDEFINED_VERSION;
 
     return GroovyConfigUtils.getInstance().getSDKVersion(home);

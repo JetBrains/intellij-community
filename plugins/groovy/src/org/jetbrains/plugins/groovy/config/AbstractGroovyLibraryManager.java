@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -29,6 +30,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -109,8 +111,9 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
     final Set<String> usedLibraryNames = CollectionFactory.newTroveSet();
     for (Library library : container.getAllLibraries()) {
       usedLibraryNames.add(library.getName());
-      if (managesLibrary(library, container)) {
-        ContainerUtil.addIfNotNull(getLibraryVersion(library, container), versions);
+      final VirtualFile[] libraryFiles = container.getLibraryFiles(library, OrderRootType.CLASSES);
+      if (managesLibrary(libraryFiles)) {
+        ContainerUtil.addIfNotNull(getLibraryVersion(libraryFiles), versions);
       }
     }
 
