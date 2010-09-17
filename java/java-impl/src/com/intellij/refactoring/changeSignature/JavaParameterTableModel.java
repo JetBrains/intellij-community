@@ -74,6 +74,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
     final PsiTypeCodeFragment paramTypeCodeFragment =
       f.createTypeCodeFragment(parameterInfo.getTypeText(), myTypeContext, false, true, true);
+    parameterInfo.getTypeWrapper().addImportsTo(paramTypeCodeFragment);
     PsiExpressionCodeFragment defaultValueCodeFragment =
       f.createExpressionCodeFragment(parameterInfo.getDefaultValue(), myDefaultValueContext, null, true);
     defaultValueCodeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
