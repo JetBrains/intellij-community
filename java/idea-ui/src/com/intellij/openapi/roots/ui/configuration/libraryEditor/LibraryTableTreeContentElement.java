@@ -26,5 +26,5 @@ public abstract class LibraryTableTreeContentElement {
   @Nullable
   public abstract OrderRootType getOrderRootType();
 
-  public abstract NodeDescriptor createDescriptor(NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor);
+  public abstract NodeDescriptor createDescriptor(NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor);
 }

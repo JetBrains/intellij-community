@@ -27,9 +27,9 @@ import java.io.File;
 
 class LibraryElementDescriptor extends NodeDescriptor<LibraryElement> {
   private final LibraryElement myElement;
-  private final LibraryTableEditor myParentEditor;
+  private final LibraryRootsComponent myParentEditor;
 
-  public LibraryElementDescriptor(NodeDescriptor parentDescriptor, LibraryElement element, LibraryTableEditor parentEditor) {
+  public LibraryElementDescriptor(NodeDescriptor parentDescriptor, LibraryElement element, LibraryRootsComponent parentEditor) {
     super(null, parentDescriptor);
     myElement = element;
     myParentEditor = parentEditor;
@@ -44,14 +44,14 @@ class LibraryElementDescriptor extends NodeDescriptor<LibraryElement> {
       if (files.length > 0) {
         name = files[0].getPresentableUrl();
         final String url = files[0].getUrl();
-        icon = LibraryTableEditor.getIconForUrl(url, true, libraryEditor.isJarDirectory(url));
+        icon = LibraryRootsComponent.getIconForUrl(url, true, libraryEditor.isJarDirectory(url));
       }
       else {
         final String[] urls = libraryEditor.getUrls(OrderRootType.CLASSES);
         if (urls.length > 0) {
           final String url = urls[0];
-          name = LibraryTableEditor.getPresentablePath(url).replace('/', File.separatorChar);
-          icon = LibraryTableEditor.getIconForUrl(url, false, libraryEditor.isJarDirectory(url));
+          name = LibraryRootsComponent.getPresentablePath(url).replace('/', File.separatorChar);
+          icon = LibraryRootsComponent.getIconForUrl(url, false, libraryEditor.isJarDirectory(url));
         }
         else {
           name = ProjectBundle.message("library.empty.item"); // the library is anonymous, library.getName() == null

@@ -34,7 +34,7 @@ class AnnotationElement extends LibraryTableTreeContentElement {
     return AnnotationOrderRootType.getInstance();
   }
 
-  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {
+  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
     return new AnnotationsElementDescriptor(parentDescriptor, this);
   }
 

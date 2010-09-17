@@ -29,9 +29,9 @@ import java.util.Arrays;
 public class LibraryTreeStructure extends AbstractTreeStructure {
   private final LibraryElement myRootElement;
   protected NodeDescriptor myRootElementDescriptor;
-  protected final LibraryTableEditor myParentEditor;
+  protected final LibraryRootsComponent myParentEditor;
 
-  public LibraryTreeStructure(LibraryTableEditor parentElement) {
+  public LibraryTreeStructure(LibraryRootsComponent parentElement) {
     myParentEditor = parentElement;
     myRootElement = new LibraryElement(myParentEditor, false);
     myRootElementDescriptor = new NodeDescriptor(null, null) {
@@ -83,7 +83,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
     ArrayList<ItemElement> items = new ArrayList<ItemElement>();
     final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor();
     final String[] urls = libraryEditor.getUrls(orderRootType).clone();
-    Arrays.sort(urls, LibraryTableEditor.ourUrlComparator);
+    Arrays.sort(urls, LibraryRootsComponent.ourUrlComparator);
     for (String url : urls) {
       items.add(new ItemElement(parent, url, orderRootType, libraryEditor.isJarDirectory(url), libraryEditor.isValid(url, orderRootType)));
     }

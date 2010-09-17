@@ -77,7 +77,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Jan 11, 2004
  */
-public class LibraryTableEditor implements Disposable {
+public class LibraryRootsComponent implements Disposable {
   static final UrlComparator ourUrlComparator = new UrlComparator();
 
   private JPanel myPanel;
@@ -101,23 +101,23 @@ public class LibraryTableEditor implements Disposable {
   private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
   private final LibraryEditor myLibraryEditor;
 
-  private LibraryTableEditor(Project project,
+  private LibraryRootsComponent(Project project,
                              LibraryEditor libraryEditor){
     myProject = project;
     myLibraryEditor = libraryEditor;
   }
 
-  public static LibraryTableEditor editLibrary(final @Nullable Project project, @NotNull LibraryEditor libraryEditor) {
-    LibraryTableEditor tableEditor = new LibraryTableEditor(project, libraryEditor);
-    tableEditor.init(new LibraryTreeStructure(tableEditor));
+  public static LibraryRootsComponent createComponent(final @Nullable Project project, @NotNull LibraryEditor libraryEditor) {
+    LibraryRootsComponent rootsComponent = new LibraryRootsComponent(project, libraryEditor);
+    rootsComponent.init(new LibraryTreeStructure(rootsComponent));
     if (project != null) {
-      Disposer.register(project, tableEditor);
+      Disposer.register(project, rootsComponent);
     }
-    return tableEditor;
+    return rootsComponent;
   }
 
-  public static LibraryTableEditor editLibrary(@NotNull LibraryEditor libraryEditor) {
-    return editLibrary(null, libraryEditor);
+  public static LibraryRootsComponent createComponent(@NotNull LibraryEditor libraryEditor) {
+    return createComponent(null, libraryEditor);
   }
 
   public static boolean libraryAlreadyExists(LibraryTable.ModifiableModel table, String libraryName) {

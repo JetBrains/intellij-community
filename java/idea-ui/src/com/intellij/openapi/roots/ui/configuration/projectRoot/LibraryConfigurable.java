@@ -22,7 +22,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsComponent;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.IconLoader;
@@ -38,7 +38,7 @@ import javax.swing.*;
 public class LibraryConfigurable extends ProjectStructureElementConfigurable<Library> {
   private static final Icon ICON = IconLoader.getIcon("/modules/library.png");
 
-  private LibraryTableEditor myLibraryEditor;
+  private LibraryRootsComponent myLibraryEditor;
   private final Library myLibrary;
   private final StructureLibraryTableModifiableModelProvider myModel;
   private final Project myProject;
@@ -58,7 +58,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public JComponent createOptionsPanel() {
-    myLibraryEditor = LibraryTableEditor.editLibrary(myProject, myModel.getModifiableModel().getLibraryEditor(myLibrary));
+    myLibraryEditor = LibraryRootsComponent.createComponent(myProject, myModel.getModifiableModel().getLibraryEditor(myLibrary));
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
     myLibraryEditor.addListener(new Runnable() {
       public void run() {
