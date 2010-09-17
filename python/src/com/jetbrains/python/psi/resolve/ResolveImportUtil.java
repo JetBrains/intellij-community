@@ -675,8 +675,9 @@ public class ResolveImportUtil {
       return myResult == null || myResult.size() > 0;
     }
 
+    @Nullable
     public PyQualifiedName getResult() {
-      return PyQualifiedName.fromComponents(myResult);
+      return myResult != null ? PyQualifiedName.fromComponents(myResult) : null;
     }
   }
 
