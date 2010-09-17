@@ -83,6 +83,11 @@ public class ExistingLibraryEditor implements LibraryEditor {
   }
 
   @Override
+  public void addRoot(String url, OrderRootType rootType) {
+    getModel().addRoot(url, rootType);
+  }
+
+  @Override
   public void addJarDirectory(VirtualFile file, boolean recursive) {
     getModel().addJarDirectory(file, recursive);
   }

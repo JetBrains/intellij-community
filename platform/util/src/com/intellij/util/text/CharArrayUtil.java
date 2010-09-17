@@ -296,7 +296,7 @@ public class CharArrayUtil {
 
   public static int indexOf(char[] buffer, String pattern, int fromIndex) {
     char[] chars = pattern.toCharArray();
-    int limit = buffer.length - chars.length;
+    int limit = buffer.length - chars.length + 1;
     if (fromIndex < 0) {
       fromIndex = 0;
     }
@@ -335,7 +335,7 @@ public class CharArrayUtil {
    */
   public static int indexOf(final CharSequence buffer, final CharSequence pattern, int fromIndex, final int toIndex) {
     final int patternLength = pattern.length();
-    int limit = toIndex - patternLength;
+    int limit = toIndex - patternLength + 1;
     if (fromIndex < 0) {
       fromIndex = 0;
     }

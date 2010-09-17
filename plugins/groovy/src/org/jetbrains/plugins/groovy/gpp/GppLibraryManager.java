@@ -54,14 +54,14 @@ public class GppLibraryManager extends AbstractGroovyLibraryManager {
   }
 
   @Override
-  public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    return getGppVersion(container.getLibraryFiles(library, OrderRootType.CLASSES)) != null;
+  public boolean managesLibrary(final VirtualFile[] libraryFiles) {
+    return getGppVersion(libraryFiles) != null;
   }
 
   @Nls
   @Override
-  public String getLibraryVersion(@NotNull Library library, LibrariesContainer librariesContainer) {
-    return getGppVersion(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
+  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
+    return getGppVersion(libraryFiles);
   }
 
   @Nullable

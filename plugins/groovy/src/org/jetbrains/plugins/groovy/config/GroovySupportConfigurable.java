@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -71,7 +68,7 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
           if (manager != null) {
             @SuppressWarnings({"NonConstantStringShouldBeStringBuffer"})
             String message = "There is already a " + manager.getLibraryCategoryName() + " library";
-            final String version = manager.getLibraryVersion(library, container);
+            final String version = manager.getLibraryVersion(container.getLibraryFiles(library, OrderRootType.CLASSES));
             if (StringUtil.isNotEmpty(version)) {
               message += " of version " + version;
             }
@@ -117,7 +114,7 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
       if (selectedLibrary != null) {
         List<LibraryManager> suitable = CollectionFactory.arrayList();
         for (final LibraryManager manager : AbstractGroovyLibraryManager.EP_NAME.getExtensions()) {
-          if (manager.managesLibrary(selectedLibrary, container)) {
+          if (manager.managesLibrary(container.getLibraryFiles(selectedLibrary, OrderRootType.CLASSES))) {
             suitable.add(manager);
           }
         }

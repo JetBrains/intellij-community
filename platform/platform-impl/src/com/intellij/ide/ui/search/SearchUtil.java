@@ -26,13 +26,11 @@ import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -365,34 +363,6 @@ public class SearchUtil {
     }
     result += textToMarkup.substring(beg);
     return result;
-  }
-
-  public static void appendFragmentsStrict(@NonNls final String text, @NotNull final List<Pair<String, Integer>> toHighlight,
-                                           final int style, final Color foreground,
-                                           final Color background, final SimpleColoredComponent c) {
-    if (text == null) return;
-    final SimpleTextAttributes plainAttributes = new SimpleTextAttributes(style, foreground);
-
-    final int[] lastOffset = {0};
-    ContainerUtil.process(toHighlight, new Processor<Pair<String, Integer>>() {
-      @Override
-      public boolean process(Pair<String, Integer> pair) {
-        if (pair.second > lastOffset[0]) {
-          c.append(text.substring(lastOffset[0], pair.second), new SimpleTextAttributes(style, foreground));
-        }
-
-        c.append(text.substring(pair.second, pair.second + pair.first.length()), new SimpleTextAttributes(background,
-                                                                                                          foreground, null,
-                                                                                                          style |
-                                                                                                          SimpleTextAttributes.STYLE_SEARCH_MATCH));
-        lastOffset[0] = pair.second + pair.first.length();
-        return true;
-      }
-    });
-
-    if (lastOffset[0] < text.length()) {
-      c.append(text.substring(lastOffset[0]), plainAttributes);
-    }
   }
 
   public static void appendFragments(String filter,
