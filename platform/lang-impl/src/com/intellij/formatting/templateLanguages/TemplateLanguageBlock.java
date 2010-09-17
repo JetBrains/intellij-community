@@ -142,5 +142,10 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   public CodeStyleSettings getSettings() {
     return mySettings;
   }
+
+  public List<DataLanguageBlockWrapper> getForeignChildren() {
+    return myForeignChildren;
+  }
+
 }
 

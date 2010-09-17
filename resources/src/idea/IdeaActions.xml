@@ -63,7 +63,7 @@
 
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction" use-shortcut-of="Generate">
       <add-to-group group-id="OpenProjectGroup" anchor="after" relative-to-action="NewModule"/>
     </action>
 
@@ -376,8 +376,7 @@
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </group>
 
-    <action id="PackageFile" class="com.intellij.packaging.impl.ui.actions.PackageFileAction">
-      <keyboard-shortcut first-keystroke="control shift F9" keymap="$default"/>
+    <action id="PackageFile" class="com.intellij.packaging.impl.ui.actions.PackageFileAction" use-shortcut-of="Compile">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Compile"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
       <add-to-group group-id="FavoritesViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
@@ -436,8 +435,8 @@
     </group>
 
     <group id="MethodHierarchyPopupMenu">
-      <action id="MethodHierarchy.ImplementMethodAction" class="com.intellij.ide.hierarchy.method.ImplementMethodAction"/>
-      <action id="MethodHierarchy.OverrideMethodAction" class="com.intellij.ide.hierarchy.method.OverrideMethodAction"/>
+      <action id="MethodHierarchy.ImplementMethodAction" class="com.intellij.ide.hierarchy.method.ImplementMethodAction" use-shortcut-of="ImplementMethods"/>
+      <action id="MethodHierarchy.OverrideMethodAction" class="com.intellij.ide.hierarchy.method.OverrideMethodAction" use-shortcut-of="OverrideMethods"/>
       <separator/>
       <action id="MethodHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction"/>
       <reference ref="EditSource"/>

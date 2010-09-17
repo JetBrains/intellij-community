@@ -6,15 +6,6 @@
   <action id="FileChooser.TogglePathShowing">
     <keyboard-shortcut first-keystroke="control P"/>
   </action>
-  <action id="GuiDesigner.ExpandSelection">
-    <keyboard-shortcut first-keystroke="control W"/>
-  </action>
-  <action id="GuiDesigner.ShrinkSelection">
-    <keyboard-shortcut first-keystroke="control shift W"/>
-  </action>
-  <action id="GuiDesigner.QuickJavadoc">
-    <keyboard-shortcut first-keystroke="control Q"/>
-  </action>
   <action id="ShowSettings">
     <keyboard-shortcut first-keystroke="control alt S"/>
   </action>
@@ -75,12 +66,6 @@
   </action>
   <action id="UsageView.Include">
     <keyboard-shortcut first-keystroke="INSERT"/>
-  </action>
-  <action id="UsageView.Exclude">
-    <keyboard-shortcut first-keystroke="DELETE"/>
-  </action>
-  <action id="UsageView.ShowRecentFindUsages">
-    <keyboard-shortcut first-keystroke="control E"/>
   </action>
   <action id="EditorJoinLines">
     <keyboard-shortcut first-keystroke="control shift J"/>
@@ -253,9 +238,6 @@
   <action id="EditorScrollDown">
     <keyboard-shortcut first-keystroke="control DOWN"/>
   </action>
-  <action id="MethodHierarchy.ImplementMethodAction">
-    <keyboard-shortcut first-keystroke="control I"/>
-  </action>
   <action id="CompileDirty">
     <keyboard-shortcut first-keystroke="control F9"/>
   </action>
@@ -276,9 +258,6 @@
   </action>
   <action id="IntroduceVariable">
     <keyboard-shortcut first-keystroke="control alt V"/>
-  </action>
-  <action id="EditorDelete">
-    <keyboard-shortcut first-keystroke="DELETE"/>
   </action>
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="control E"/>
@@ -497,10 +476,6 @@
     <mouse-shortcut keystroke="button2"/>
   </action>
 
-  <action id="CollapseRegion">
-    <keyboard-shortcut first-keystroke="control SUBTRACT"/>
-    <keyboard-shortcut first-keystroke="control MINUS"/>
-  </action>
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="F2"/>
   </action>
@@ -518,9 +493,6 @@
   </action>
   <action id="EditorPreviousWordWithSelection">
     <keyboard-shortcut first-keystroke="control shift LEFT"/>
-  </action>
-  <action id="MethodHierarchy.OverrideMethodAction">
-    <keyboard-shortcut first-keystroke="control O"/>
   </action>
   <action id="EditorDownWithSelection">
     <keyboard-shortcut first-keystroke="shift DOWN"/>
@@ -634,10 +606,6 @@
   </action>
   <action id="EditorTab">
     <keyboard-shortcut first-keystroke="TAB"/>
-  </action>
-  <action id="EditorPaste">
-    <keyboard-shortcut first-keystroke="control V"/>
-    <keyboard-shortcut first-keystroke="shift INSERT"/>
   </action>
   <action id="IntroduceParameter">
     <keyboard-shortcut first-keystroke="control alt P"/>
@@ -765,18 +733,11 @@
   <action id="ActivateChangesToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
   </action>
-  <action id="NewElement">
-    <keyboard-shortcut first-keystroke="alt INSERT"/>
-  </action>
   <action id="NewElementSamePlace">
     <keyboard-shortcut first-keystroke="control alt INSERT"/>
   </action>
   <action id="EditorSplitLine">
     <keyboard-shortcut first-keystroke="control ENTER"/>
-  </action>
-  <action id="EditorCut">
-    <keyboard-shortcut first-keystroke="shift DELETE"/>
-    <keyboard-shortcut first-keystroke="control X"/>
   </action>
   <action id="FindUsagesInFile">
     <keyboard-shortcut first-keystroke="control F7"/>
@@ -820,10 +781,6 @@
   </action>
   <action id="SafeDelete">
     <keyboard-shortcut first-keystroke="alt DELETE"/>
-  </action>
-  <action id="EditorCopy">
-    <keyboard-shortcut first-keystroke="control INSERT"/>
-    <keyboard-shortcut first-keystroke="control C"/>
   </action>
   <action id="NextTemplateVariable">
     <keyboard-shortcut first-keystroke="TAB"/>
@@ -924,15 +881,12 @@
   <action id="Console.TableResult.NextPage"><keyboard-shortcut first-keystroke="control alt DOWN"/></action>
   <action id="Console.TableResult.Reload"><keyboard-shortcut first-keystroke="control R"/></action>
   <action id="Console.TableResult.CopyQuery"><keyboard-shortcut first-keystroke="control alt shift C"/></action>
-  <action id="Console.TableResult.DeleteRows"><keyboard-shortcut first-keystroke="control Y"/></action>
-  <action id="Console.TableResult.AddRow"><keyboard-shortcut first-keystroke="alt INSERT"/></action>
 
   <action id="Console.History.Next"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="Console.History.Previous"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
   <action id="Console.Jdbc.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
   <action id="Console.Jdbc.Properties"><keyboard-shortcut first-keystroke="control alt ENTER"/></action>
-  <action id="Console.Jdbc.Close"><keyboard-shortcut first-keystroke="control shift F4"/></action>
 
   <action id="Console.Hibernate.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
   <action id="Console.Hibernate.GenerateSql"><keyboard-shortcut first-keystroke="control shift ENTER"/></action>

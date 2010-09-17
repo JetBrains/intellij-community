@@ -27,7 +27,7 @@ import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.RequestsMerger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -373,7 +373,7 @@ class GitTreeController implements ManageGitTreeView {
       hash = GitChangeUtils.commitExistsByComment(myProject, myRoot, reference);
     }
     if (hash == null) {
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Nothing found for: \"" + reference + "\"", MessageType.WARNING);
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Nothing found for: \"" + reference + "\"", MessageType.WARNING);
     } else {
       final SHAHash finalHash = hash;
       myAlarm.addRequest(new Runnable() {

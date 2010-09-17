@@ -31,10 +31,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.NullableFunction;
@@ -208,7 +208,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     if (committedRevisions.length() > 0) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          new ChangesViewBalloonProblemNotifier(mySvnVcs.getProject(),
+          new VcsBalloonProblemNotifier(mySvnVcs.getProject(),
                                                 SvnBundle.message("status.text.comitted.revision", committedRevisions),
                                                 MessageType.INFO).run();
         }

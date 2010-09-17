@@ -31,6 +31,7 @@ public class PutLabelAction extends LocalHistoryActionWithDialog {
   protected void showDialog(Project p, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
     String labelName = Messages.showInputDialog(p, message("put.label.name"), message("put.label.dialog.title"),null,
                                                 "", new NonEmptyInputValidator());
+    if (labelName == null) return;
     LocalHistory.getInstance().putUserLabel(p, labelName);
   }
 }

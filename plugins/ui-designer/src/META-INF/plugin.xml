@@ -161,10 +161,10 @@
       <action id="GuiDesigner.AddTab" class="com.intellij.uiDesigner.actions.AddTabAction"/>
       <separator/>
       <reference ref="EditSource"/>
-      <action id="GuiDesigner.ExpandSelection" class="com.intellij.uiDesigner.actions.ExpandSelectionAction"/>
-      <action id="GuiDesigner.ShrinkSelection" class="com.intellij.uiDesigner.actions.ShrinkSelectionAction"/>
-      <action id="GuiDesigner.IncreaseIndent" class="com.intellij.uiDesigner.actions.IncreaseIndentAction"/>
-      <action id="GuiDesigner.DecreaseIndent" class="com.intellij.uiDesigner.actions.DecreaseIndentAction"/>
+      <action id="GuiDesigner.ExpandSelection" class="com.intellij.uiDesigner.actions.ExpandSelectionAction" use-shortcut-of="EditorSelectWord"/>
+      <action id="GuiDesigner.ShrinkSelection" class="com.intellij.uiDesigner.actions.ShrinkSelectionAction" use-shortcut-of="EditorUnSelectWord"/>
+      <action id="GuiDesigner.IncreaseIndent" class="com.intellij.uiDesigner.actions.IncreaseIndentAction" use-shortcut-of="EditorIndentSelection"/>
+      <action id="GuiDesigner.DecreaseIndent" class="com.intellij.uiDesigner.actions.DecreaseIndentAction" use-shortcut-of="EditorUnindentSelection"/>
       <action id="GuiDesigner.GroupButtons" class="com.intellij.uiDesigner.actions.GroupButtonsAction"/>
       <action id="GuiDesigner.UngroupButtons" class="com.intellij.uiDesigner.actions.UngroupButtonsAction"/>
       <action id="GuiDesigner.Duplicate" class="com.intellij.uiDesigner.actions.DuplicateComponentsAction"
@@ -206,7 +206,7 @@
     </group>
 
     <group id="GuiDesigner.PropertyInspectorPopupMenu">
-      <action id="GuiDesigner.QuickJavadoc" class="com.intellij.uiDesigner.actions.ShowJavadocAction"/>
+      <action id="GuiDesigner.QuickJavadoc" class="com.intellij.uiDesigner.actions.ShowJavadocAction" use-shortcut-of="QuickJavaDoc"/>
       <reference ref="EditSource"/>
       <action id="GuiDesigner.ResetValue" class="com.intellij.uiDesigner.actions.ResetValueAction"/>
     </group>

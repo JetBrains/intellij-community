@@ -61,7 +61,7 @@ public class RevisionsList {
 
     table.setDefaultRenderer(Object.class, new MyCellRenderer(table));
 
-    table.setEmptyText(VcsBundle.message("history.empty"));
+    table.getEmptyText().setText(VcsBundle.message("history.empty"));
 
     addSelectionListener(l);
   }
@@ -339,7 +339,11 @@ public class RevisionsList {
       isToolTipShown = myToolTipHandler.getExpandedItems().contains(new TableCell(row, column));
 
       myWrapperPanel.doLayout();
-      table.setRowHeight(row, myWrapperPanel.getPreferredSize().height);
+      int height = myWrapperPanel.getPreferredSize().height;
+      // table.setRowHeight causes extra repaint of the table, so we try to avoid it.
+      if (table.getRowHeight(row) != height) {
+        table.setRowHeight(row, height);
+      }
 
       return myWrapperPanel;
     }

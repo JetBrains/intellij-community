@@ -30,7 +30,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-public abstract class StatusText implements ComponentWithEmptyText {
+public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
 
   @Nullable
@@ -51,7 +51,7 @@ public abstract class StatusText implements ComponentWithEmptyText {
       @Override
       public void mouseClicked(final MouseEvent e) {
         if (e.getButton() == 1 && e.getClickCount() == 1) {
-          ActionListener actionListener = findEmptyTextActionListenerAt(e.getPoint());
+          ActionListener actionListener = findActionListenerAt(e.getPoint());
           if (actionListener != null) {
             actionListener.actionPerformed(new ActionEvent(this, 0, ""));
           }
@@ -60,7 +60,7 @@ public abstract class StatusText implements ComponentWithEmptyText {
 
       @Override
       public void mouseMoved(final MouseEvent e) {
-        if (findEmptyTextActionListenerAt(e.getPoint()) != null) {
+        if (findActionListenerAt(e.getPoint()) != null) {
           myOwner.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
         else {
@@ -71,7 +71,7 @@ public abstract class StatusText implements ComponentWithEmptyText {
 
     myComponent.setOpaque(false);
     myComponent.setFont(UIUtil.getLabelFont());
-    setEmptyText(UIBundle.message("message.nothingToShow"), DEFAULT_ATTRIBUTES);
+    setText(UIBundle.message("message.nothingToShow"), DEFAULT_ATTRIBUTES);
   }
 
   public void attachTo(@Nullable Component owner) {
@@ -91,7 +91,7 @@ public abstract class StatusText implements ComponentWithEmptyText {
   protected abstract boolean isStatusVisible();
 
   @Nullable
-  private ActionListener findEmptyTextActionListenerAt(final Point point) {
+  private ActionListener findActionListenerAt(final Point point) {
     if (!isStatusVisible()) return null;
 
     Rectangle b = getTextComponentBound();
@@ -118,34 +118,29 @@ public abstract class StatusText implements ComponentWithEmptyText {
     return myText;
   }
 
-  public void setEmptyText(String emptyText) {
-    setEmptyText(emptyText, DEFAULT_ATTRIBUTES);
+  public void setText(String text) {
+    setText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
-    clearEmptyText();
-    appendEmptyText(emptyText, attrs);
+  public void setText(String text, SimpleTextAttributes attrs) {
+    clear();
+    appendText(text, attrs);
   }
 
-  public void clearEmptyText() {
+  public void clear() {
     myText = "";
     myComponent.clear();
     myClickListeners.clear();
   }
 
-  public void appendEmptyText(String text, SimpleTextAttributes attrs) {
-    appendEmptyText(text, attrs, null);
+  public void appendText(String text, SimpleTextAttributes attrs) {
+    appendText(text, attrs, null);
   }
 
-  public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+  public void appendText(String text, SimpleTextAttributes attrs, ActionListener listener) {
     myText += text;
     myComponent.append(text, attrs);
     myClickListeners.add(listener);
-  }
-
-  @Override
-  public StatusText getEmptyText() {
-    return this;
   }
 
   public void paint(Component owner, Graphics g) {

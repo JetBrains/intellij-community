@@ -28,6 +28,8 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="lvcs-api" />
+    <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="library" name="TestNG" level="project" />
   </component>
 </module>
 

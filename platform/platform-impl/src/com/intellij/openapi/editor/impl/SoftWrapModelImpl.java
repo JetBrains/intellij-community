@@ -51,9 +51,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private final List<FoldingListener> myFoldListeners = new ArrayList<FoldingListener>();
 
   private final CachingSoftWrapDataMapper myDataMapper;
-  private final SoftWrapsStorage              myStorage;
-  private final SoftWrapPainter               myPainter;
-  private final SoftWrapApplianceManager      myApplianceManager;
+  private final SoftWrapsStorage          myStorage;
+  private final SoftWrapPainter           myPainter;
+  private final SoftWrapApplianceManager  myApplianceManager;
 
   private final EditorEx myEditor;
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
@@ -459,5 +459,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myDataMapper.release();
     myApplianceManager.release();
     myStorage.removeAll();
+  }
+
+  public void refreshSettings() {
+    myLastSettingsCheckTimeMillis = 0;
+  }
+
+  public SoftWrapApplianceManager getApplianceManager() {
+    return myApplianceManager;
   }
 }

@@ -371,9 +371,10 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     if (!myBeforeChangeState.valid) {
       return;
     }
-    int endIndex = Math.max(0, myCache.size() - 2); // -1 because of zero-based indexing; one more -1 in assumption that
-                                                    // re-parsing always adds number of target cache entries plus one
-                                                    // (because of line feed at the end).
+    int endIndex = Math.max(0, myCache.size() - 1/*because of zero-based indexing*/);
+    if (endOffset < myEditor.getDocument().getTextLength() - 1) {
+      endIndex--; // We assume that non-last document line ends with line feed symbol.
+    }
     myAfterChangeState.updateByCacheIndices(myBeforeChangeState.startCacheEntryIndex, endIndex);
     myCache.subList(myAfterChangeState.endCacheEntryIndex + 1, myCache.size()).clear();
     myCache.addAll(myNotAffectedByUpdateTailCacheEntries);
@@ -393,7 +394,6 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     //System.out.println("text length: " + text.length() + ", soft wraps: " + myStorage.getSoftWraps());
     //for (int i = 0; i < myCache.size(); i++) {
     //  CacheEntry entry = myCache.get(i);
-    //  // TODO den unwrap
     //  try {
     //    System.out.printf("line %d. %d-%d: '%s'%n", i, entry.startOffset, entry.endOffset,
     //                      text.subSequence(entry.startOffset,Math.min(entry.endOffset, text.length())));

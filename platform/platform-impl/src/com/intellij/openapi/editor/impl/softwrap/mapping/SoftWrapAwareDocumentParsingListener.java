@@ -98,10 +98,10 @@ interface SoftWrapAwareDocumentParsingListener {
    * <p/>
    * <b>Note:</b> given offsets may differ from the one given to {@link #onRecalculationStart(int, int)}. E.g. there is a possible
    * case that user removes particular block of text. {@link #onRecalculationStart(int, int)} is called with offsets of logical lines
-   * that hold that block and this method is called with //TODO den add doc
+   * that hold that block and this method is called with offsets of the logical lines that hold changed text region.
    *
-   * @param startOffset   start offset of document range that is recalculated
-   * @param endOffset     end offset of document range that is recalculated
+   * @param startOffset   start offset of document range that is recalculated (inclusive)
+   * @param endOffset     end offset of document range that is recalculated (inclusive)
    */
   void onRecalculationEnd(int startOffset, int endOffset);
 }

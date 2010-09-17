@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
@@ -40,7 +39,10 @@ import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.dnd.Autoscroll;
-import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Map;
@@ -113,37 +115,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   protected boolean isMacWideSelection() {
     return true;
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return myEmptyText.getText();
-  }
-
-  @Override
-  public void setEmptyText(String emptyText) {
-    myEmptyText.setEmptyText(emptyText);
-  }
-
-  @Override
-  public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
-    myEmptyText.setEmptyText(emptyText, attrs);
-  }
-
-  @Override
-  public void clearEmptyText() {
-    myEmptyText.clearEmptyText();
-  }
-
-  @Override
-  public void appendEmptyText(String text, SimpleTextAttributes attrs) {
-    myEmptyText.appendEmptyText(text, attrs);
-  }
-
-  @Override
-  public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
-    myEmptyText.appendEmptyText(text, attrs, listener);
   }
 
   @Override

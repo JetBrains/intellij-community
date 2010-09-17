@@ -49,13 +49,13 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -537,7 +537,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
               targetPath[0] = pair.getSecond() == null ? new FilePathImpl(myFile) : pair.getSecond();
               final CommittedChangeList cl = pair.getFirst();
               if (cl == null) {
-                ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
+                VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
                 return;
               }
               changes.addAll(cl.getChanges());
@@ -551,7 +551,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
           @Override
           public void onSuccess() {
             if (exc[0] != null) {
-              ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "Can not show diff: " + exc[0].getMessage(), MessageType.ERROR);
+              VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not show diff: " + exc[0].getMessage(), MessageType.ERROR);
             } else if (! changes.isEmpty()) {
               int idx = findSelfInList(changes, targetPath[0]);
               final ShowDiffUIContext context = new ShowDiffUIContext(true);

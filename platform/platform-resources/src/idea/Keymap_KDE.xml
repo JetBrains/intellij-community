@@ -59,9 +59,6 @@
     <action id="IDEtalk.SearchUserHistory">
       <keyboard-shortcut first-keystroke="shift alt 7" />
     </action>
-    <action id="Images.Thumbnails.Hide">
-      <keyboard-shortcut first-keystroke="control 4" />
-    </action>
     <action id="IntroduceVariable">
       <keyboard-shortcut first-keystroke="shift alt V" />
     </action>

@@ -29,18 +29,15 @@
 
     <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
             class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
-            text="Goto Element">
-      <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
-    </action>
+            text="Goto Element"
+            use-shortcut-of="EditSource"/>
 
     <action id="DomElementsTreeView.AddElement" class="com.intellij.util.xml.tree.actions.AddElementInCollectionAction"
             text="Insert element">
       <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
     </action>
     <action id="DomElementsTreeView.DeleteElement" class="com.intellij.util.xml.tree.actions.DeleteDomElement"
-            text="Delete element">
-      <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
-    </action>
+            text="Delete element" use-shortcut-of="$Delete"/>
 
     <group id="DomElementsTreeView.AddElementGroup" class="com.intellij.util.xml.tree.actions.AddDomElementActionGroup"/>
 
@@ -56,12 +53,8 @@
       <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction" text="Add">
         <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
       </action>
-      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" text="Edit">
-        <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
-      </action>
-      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" text="Remove">
-        <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
-      </action>
+      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" text="Edit" use-shortcut-of="EditSource"/>
+      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" text="Remove" use-shortcut-of="$Delete"/>
     </group>
 
     <group id="NewXml" text="XML">
