@@ -100,12 +100,6 @@ public class GppLibraryManager extends AbstractGroovyLibraryManager {
     throw new AssertionError(path);
   }
 
-  @NotNull
-  @Override
-  public String getAddActionText() {
-    return "Create new Groovy++ SDK...";
-  }
-
 
   @Nls
   @NotNull
