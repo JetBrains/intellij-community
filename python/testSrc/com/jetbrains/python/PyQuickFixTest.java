@@ -152,6 +152,15 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     doInspectionTest("FieldFromUnusedParameterKeyword.py", PyUnusedLocalInspection.class, "Add field 'foo' to class A", true, true);
   }
 
+  public void testAddFunctionToModule() {  // PY-1602
+    doInspectionTest(
+      "AddFunctionToModule.py",
+      PyUnresolvedReferencesInspection.class,
+      PyBundle.message("QFIX.NAME.add.function.$0.to.module.$1", "frob", "AddFunctionToModule.py"),
+      true, true
+    );
+  }
+
   @NonNls
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/inspections/";

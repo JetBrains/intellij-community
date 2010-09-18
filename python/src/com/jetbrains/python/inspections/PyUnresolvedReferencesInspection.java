@@ -218,6 +218,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
                 marked_qualified = true;
               }
+              else if (qtype instanceof PyModuleType) {
+                PsiFile file = ((PyModuleType)qtype).getModule();
+                if (file instanceof PyFile) {
+                  actions.add(new AddFunctionQuickFix(ref_text, (PyFile)file));
+                }
+              }
               else {
                 description_buf.append(PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, qtype.getName()));
                 marked_qualified = true;
