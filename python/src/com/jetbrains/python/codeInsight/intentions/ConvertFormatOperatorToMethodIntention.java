@@ -4,7 +4,6 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,29 +13,30 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
- * Replaces expressions like <code>"%s" % value</code> with likes of <code>"{0:s}".format(value)</code>.
+ * Replaces expressions like <code>"%s" % values</code> with likes of <code>"{0:s}".format(values)</code>.
  * <br/>
  * Author: Alexey.Ivanov, dcheryasov
  */
 public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction {
 
   private static final Pattern FORMAT_PATTERN =
-    Pattern.compile("%(?:\\((\\w+)\\))?([#0+ ]|-)?((?:\\*|\\d+)?(?:\\.(?:\\*|\\d+)))?[hlL]?([diouxXeEfFgGcrs%])");
-  // groups: %:ignored,     1:key      2:modifier 3:width-and---precision             x:len  4: conversion-type
+    Pattern.compile("%(?:\\((\\w+)\\))?([#0+ ]|-)?((?:\\*|\\d+)?(?:\\.(?:\\*|\\d+))?)?[hlL]?([diouxXeEfFgGcrs%])");
+  // groups: %:ignored,     1:key      2:modifier 3:width-and---preci.sion            x:len  4: conversion-type
 
   private static final Pattern BRACE_PATTERN = Pattern.compile("(\\{|\\})");
 
@@ -55,9 +55,15 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     target.append(source.subSequence(index, source.length()));
   }
 
-  private static StringBuilder convertFormat(PyStringLiteralExpression stringLiteralExpression) {
+  /**
+   * Converts format expressions inside a string
+   * @param stringLiteralExpression
+   * @return a pair of string builder with resulting string expression and a flag which is true if formats inside use mapping by name.
+   */
+  private static Pair<StringBuilder, Boolean> convertFormat(PyStringLiteralExpression stringLiteralExpression) {
     // python string may be made of several literals, all different
     List<StringBuilder> constants = new ArrayList<StringBuilder>();
+    boolean uses_named_format = false;
     final List<ASTNode> text_nodes = stringLiteralExpression.getStringNodes();
     sure(text_nodes);
     sure(text_nodes.size() > 0);
@@ -97,7 +103,10 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
           sure(f_conversion);
           sure(!"%".equals(f_conversion)); // a padded percent literal; can't bother to autoconvert, and in 3k % is different.
           out.append("{");
-          if (f_key != null) out.append(f_key);
+          if (f_key != null) {
+            out.append(f_key);
+            uses_named_format = true;
+          }
           else {
             out.append(position_count);
             position_count += 1;
@@ -140,14 +149,14 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     final int left = prev_range.getEndOffset() - full_start;
     final int right = full_range.getEndOffset() - full_start;
     if (left < right) {
-      // the case of last dangling "\"
+      // the barely possible case of last dangling "\"
       constants.get(constants.size()-1).append(full_text.subSequence(left, right));
     }
 
     // join everything
     StringBuilder result = new StringBuilder();
     for (StringBuilder one : constants) result.append(one);
-    return result;
+    return new Pair<StringBuilder, Boolean>(result, uses_named_format);
   }
 
   @NotNull
@@ -188,7 +197,8 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     while (rhs instanceof PyParenthesizedExpression) rhs = ((PyParenthesizedExpression)rhs).getContainedExpression();
     String param_text = sure(rhs).getText();
     final PyStringLiteralExpression leftExpression = (PyStringLiteralExpression)element.getLeftExpression();
-    StringBuilder target = convertFormat(leftExpression);
+    Pair<StringBuilder, Boolean> converted = convertFormat(leftExpression);
+    StringBuilder target = converted.getFirst();
     String separator = ""; // detect nontrivial whitespace around the "%"
     Pair<String, PsiElement> crop = collectWhitespace(leftExpression);
     String maybe_separator = crop.getFirst();
@@ -198,7 +208,30 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
       maybe_separator = crop.getFirst();
       if (!"".equals(maybe_separator) && !" ".equals(maybe_separator)) separator = maybe_separator;
     }
-    target.append(separator).append(".format(").append(param_text).append(")");
+    target.append(separator).append(".format");
+    if (rhs instanceof PyDictLiteralExpression) target.append("(**").append(param_text).append(")");
+    else if (rhs instanceof PyCallExpression) { // potential dict(foo=1) -> format(foo=1)
+      final PyCallExpression call_expression = (PyCallExpression)rhs;
+      final PyExpression callee = call_expression.getCallee();
+      if (callee instanceof PyReferenceExpression) {
+        PsiElement maybe_dict = ((PyReferenceExpression)callee).getReference().resolve();
+        if (maybe_dict instanceof PyFunction) {
+          PyFunction dict_init = (PyFunction)maybe_dict;
+          if (PyNames.INIT.equals(dict_init.getName())) {
+            final PyClassType dict_type = PyBuiltinCache.getInstance(file).getDictType();
+            if (dict_type != null && dict_type.getPyClass() == dict_init.getContainingClass()) {
+              target.append(sure(sure(call_expression.getArgumentList()).getNode()).getChars());
+            }
+          }
+          else { // just a call, reuse
+            target.append("(");
+            if (converted.getSecond()) target.append("**"); // map-by-name formatting was detected
+            target.append(param_text).append(")");
+          }
+        }
+      }
+    }
+    else target.append("(").append(param_text).append(")"); // tuple is ok as is
     element.replace(elementGenerator.createExpressionFromText(target.toString()));
   }
 
