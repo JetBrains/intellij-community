@@ -98,7 +98,11 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   }
 
   public void testConvertFormatOperatorToMethod() {
-    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
+  }
+
+  public void testConvertFormatOperatorToMethodMulti() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
   }
 
   public void testFlipComparison() {

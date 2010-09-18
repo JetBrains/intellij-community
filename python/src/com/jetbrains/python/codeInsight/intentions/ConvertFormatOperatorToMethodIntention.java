@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,8 +36,8 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction {
 
   private static final Pattern FORMAT_PATTERN =
-    Pattern.compile("%(?:\\((\\w+)\\))?([#0+ ]|-)?((?:\\*|\\d+)?(?:\\.(?:\\*|\\d+))?)?[hlL]?([diouxXeEfFgGcrs%])");
-  // groups: %:ignored,     1:key      2:modifier 3:width-and---preci.sion            x:len  4: conversion-type
+    Pattern.compile("%(?:\\((\\w+)\\))?([-#0+ ]*)((?:\\*|\\d+)?(?:\\.(?:\\*|\\d+))?)?[hlL]?([diouxXeEfFgGcrs%])");
+  // groups: %:ignored,     1:key      2:mods    3:width-and---preci.sion            x:len  4: conversion-type
 
   private static final Pattern BRACE_PATTERN = Pattern.compile("(\\{|\\})");
 
@@ -114,8 +115,22 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
           if ("r".equals(f_conversion)) out.append("!r");
           // don't convert %s -> !s, for %s is the normal way to output the default representation
           out.append(":");
-          if (f_modifier != null) out.append(f_modifier);
-          if (f_width != null) out.append(f_width);
+          if (f_modifier != null) {
+            // in strict order
+            if (has(f_modifier, '-')) out.append("<"); // left align
+            else if ("s".equals(f_conversion) && f_width != null) {
+              // "%20s" aligns right, "{0:20s}" aligns left; to preserve align, make it explicit
+              out.append(">");
+            }
+            if (has(f_modifier, '+')) out.append("+"); // signed
+            else if (has(f_modifier, ' ')) out.append(" "); // default-signed
+            if (has(f_modifier, '#')) out.append("#"); // alt numbers
+            if (has(f_modifier, '0')) out.append("0"); // padding
+            // anything else can't be here
+          }
+          if (f_width != null) {
+            out.append(f_width);
+          }
           if ("i".equals(f_conversion) || "u".equals(f_conversion)) out.append("d");
           else if ("r".equals(f_conversion)) out.append("s"); // we want our raw string as a string
           else out.append(f_conversion);
@@ -157,6 +172,10 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     StringBuilder result = new StringBuilder();
     for (StringBuilder one : constants) result.append(one);
     return new Pair<StringBuilder, Boolean>(result, uses_named_format);
+  }
+
+  private static boolean has(String where, char what) {
+    return where.indexOf(what) >= 0;
   }
 
   @NotNull

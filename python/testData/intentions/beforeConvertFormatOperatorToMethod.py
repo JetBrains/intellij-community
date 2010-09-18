@@ -1,1 +1,1 @@
-print("%20.2sfdfdf% 2.3Fsdf\nsdfsv fgvd" <caret>% ("a", 12))
+print(<caret>"|\077%20sFOO! % 5.3F%%\n|%-15s %-10i-torn-off, %#0+5u" % ("right-->", 12, "<--left", -10, 20))
