@@ -54,7 +54,7 @@ public abstract class PropertyBunch<MType> {
 
 
   @Nullable
-  protected static PyCallExpression findPropertyCallSite(PyExpression source) {
+  protected static PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
     if (source instanceof PyCallExpression) {
       final PyCallExpression call = (PyCallExpression)source;
       PyExpression callee = call.getCallee();

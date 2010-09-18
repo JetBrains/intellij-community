@@ -33,6 +33,7 @@ public class PyPsiUtils {
   private PyPsiUtils() {
   }
 
+  @NotNull
   protected static <T extends PyElement> T[] nodesToPsi(ASTNode[] nodes, T[] array) {
     T[] psiElements = (T[])Array.newInstance(array.getClass().getComponentType(), nodes.length);
     for (int i = 0; i < nodes.length; i++) {

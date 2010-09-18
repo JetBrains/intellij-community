@@ -528,7 +528,7 @@ def executeExternalAnt(Map args, String file) {
     classpath {
       fileset(dir: "$home/build/lib") {
         include (name: "commons-net-1.4.1.jar")
-        include (name: "jsch-0.1.28.jar")
+        include (name: "jsch-0.1.43.jar")
       }
 
       fileset(dir: "$ch/lib/ant/lib") {

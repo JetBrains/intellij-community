@@ -29,7 +29,7 @@
         <fileset dir="${project.home}/build/lib">
           <include name="antlayout.jar"/>
           <include name="commons-net-1.4.1.jar"/>
-          <include name="jsch-0.1.28.jar"/>
+          <include name="jsch-0.1.43.jar"/>
         </fileset>
         <fileset dir="${project.home}/community/lib/ant/lib">
           <include name="*.jar"/>

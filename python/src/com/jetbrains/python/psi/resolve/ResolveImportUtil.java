@@ -269,8 +269,6 @@ public class ResolveImportUtil {
     PsiFile footholdFile = foothold.getContainingFile();
     if (footholdFile == null || !footholdFile.isValid()) return Collections.emptyList();
 
-    if (moduleQualifiedName.getComponentCount() < 1) return Collections.emptyList();
-
     PythonPathCache cache = null;
     final Module module = ModuleUtil.findModuleForPsiElement(foothold);
     if (module != null) {
@@ -617,14 +615,14 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiDirectory findSkeletonDir(PsiDirectory dir, @Nullable VirtualFile root) {
-    String relativeName;
+    String relativeName = null;
     if (root != null) {
       relativeName = VfsUtil.getRelativePath(dir.getVirtualFile(), root, '/');
     }
     else {
-      relativeName = findShortestImportableName(dir, dir.getVirtualFile());
-      if (relativeName != null) {
-        relativeName = relativeName.replace('.', '/');
+      PyQualifiedName relativeQName = findShortestImportableQName(dir);
+      if (relativeQName != null) {
+        relativeName = relativeQName.join("/");
       }
     }
     VirtualFile skeletonsRoot = findSkeletonsRoot(dir);
@@ -651,48 +649,35 @@ public class ResolveImportUtil {
    */
   private static class PathChoosingVisitor implements RootVisitor {
 
-    private String myFname;
-    private String myResult = null;
-    private int myDots = Integer.MAX_VALUE; // how many dots in the path
+    private final VirtualFile myVFile;
+    private List<String> myResult;
 
     private PathChoosingVisitor(VirtualFile file) {
-      myFname = file.getPath();
-      // cut off the ext
-      if (!file.isDirectory()) {
-        int pos = myFname.lastIndexOf('.');
-        if (pos > 0) myFname = myFname.substring(0, pos);
-        // cut off the final __init__ if it's there; we want imports directly from a module
-        pos = myFname.lastIndexOf(PyNames.INIT);
-        if (pos > 0) myFname = myFname.substring(0, pos - 1); // pos-1 also cuts the '/' that came before "__init__"
+      if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {
+        myVFile = file.getParent();
       }
       else {
-        myFname += "/";
+        myVFile = file;
       }
     }
 
     public boolean visitRoot(VirtualFile root) {
-      // does it ever fit?
-      String root_name = root.getPath() + "/";
-      if (myFname.startsWith(root_name)) {
-        String suffix = myFname.substring(root_name.length());
-        if (suffix.endsWith("/")) {
-          suffix = suffix.substring(0, suffix.length()-1);
-        }
-        String bet = suffix.replace('/', '.'); // "/usr/share/python/foo/bar" -> "foo.bar"
-        // count the dots
-        int dots = 0;
-        for (int i = 0; i < bet.length(); i += 1) if (bet.charAt(i) == '.') dots += 1;
-        // a better variant?
-        if (dots < myDots) {
-          myDots = dots;
-          myResult = bet;
+      final String relativePath = VfsUtil.getRelativePath(myVFile, root, '/');
+      if (relativePath != null) {
+        List<String> result = StringUtil.split(relativePath, "/");
+        if (myResult == null || result.size() < myResult.size()) {
+          if (result.size() > 0) {
+            result.set(result.size()-1, FileUtil.getNameWithoutExtension(result.get(result.size()-1)));
+          }
+          myResult = result;
         }
       }
-      return myResult == null || myResult.length() > 0;  // we won't find anything shorter than an empty string
+      return myResult == null || myResult.size() > 0;
     }
 
-    public String getResult() {
-      return myResult;
+    @Nullable
+    public PyQualifiedName getResult() {
+      return myResult != null ? PyQualifiedName.fromComponents(myResult) : null;
     }
   }
 
@@ -706,6 +691,18 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static String findShortestImportableName(PsiElement foothold, @NotNull VirtualFile vfile) {
+    final PyQualifiedName qName = findShortestImportableQName(foothold, vfile);
+    return qName == null ? null : qName.toString();
+  }
+
+  @Nullable
+  public static PyQualifiedName findShortestImportableQName(PsiFileSystemItem fsItem) {
+    VirtualFile vFile = fsItem.getVirtualFile();
+    return vFile != null ? findShortestImportableQName(fsItem, vFile) : null;
+  }
+
+  @Nullable
+  public static PyQualifiedName findShortestImportableQName(PsiElement foothold, @NotNull VirtualFile vfile) {
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     visitRoots(foothold, visitor);
     return visitor.getResult();
@@ -715,7 +712,8 @@ public class ResolveImportUtil {
   public static String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     visitRoots(module, visitor);
-    return visitor.getResult();
+    final PyQualifiedName result = visitor.getResult();
+    return result == null ? null : result.toString();
   }
 
   public static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {

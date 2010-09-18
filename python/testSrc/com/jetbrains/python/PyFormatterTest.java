@@ -68,6 +68,10 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
     }
   }
 
+  public void testWrapTuple() {  // PY-1792
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

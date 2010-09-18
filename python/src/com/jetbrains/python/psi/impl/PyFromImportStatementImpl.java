@@ -66,6 +66,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return importSource.asQualifiedName();
   }
 
+  @NotNull
   public PyImportElement[] getImportElements() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {

@@ -4,12 +4,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,6 +32,12 @@ public class PyQualifiedName {
     }
   }
 
+  public static PyQualifiedName fromComponents(Collection<String> components) {
+    PyQualifiedName qName = new PyQualifiedName(components.size());
+    qName.myComponents.addAll(components);
+    return qName;
+  }
+
   public static PyQualifiedName fromComponents(String... components) {
     PyQualifiedName result = new PyQualifiedName(components.length);
     Collections.addAll(result.myComponents, components);
@@ -45,10 +53,17 @@ public class PyQualifiedName {
 
   @NotNull
   public PyQualifiedName removeLastComponent() {
+    return removeTail(1);
+  }
+
+  @NotNull
+  public PyQualifiedName removeTail(int count) {
     int size = myComponents.size();
     PyQualifiedName result = new PyQualifiedName(size);
     result.myComponents.addAll(myComponents);
-    result.myComponents.remove(size-1);
+    for (int i = 0; i < count && result.myComponents.size() > 0; i++) {
+      result.myComponents.remove(size-1);
+    }
     return result;
   }
 
@@ -128,11 +143,20 @@ public class PyQualifiedName {
 
   @Override
   public String toString() {
-    return StringUtil.join(myComponents, ".");
+    return join(".");
+  }
+
+  public String join(final String separator) {
+    return StringUtil.join(myComponents, separator);
   }
 
   public static PyQualifiedName fromDottedString(String refName) {
     return fromComponents(refName.split("\\."));
+  }
+
+  @Nullable
+  public static PyQualifiedName fromExpression(PyExpression expr) {
+    return expr instanceof PyReferenceExpression ? ((PyReferenceExpression) expr).asQualifiedName() : null;
   }
 
   @Override

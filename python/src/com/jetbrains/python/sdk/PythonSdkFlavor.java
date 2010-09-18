@@ -75,19 +75,27 @@ public abstract class PythonSdkFlavor {
   }
 
   public void addToPythonPath(GeneralCommandLine cmd, String path) {
-    addToEnv(cmd, path, PYTHONPATH);
+    addToEnv(cmd, PYTHONPATH, path);
   }
 
-  protected static void addToEnv(GeneralCommandLine cmd, String path, final String envName) {
+  public static void addToEnv(GeneralCommandLine cmd, final String key, String value) {
     Map<String,String> envs = cmd.getEnvParams();
     if (envs == null) {
       envs = new HashMap<String, String>();
       cmd.setEnvParams(envs);
     }
-    if (envs.containsKey(envName)) {
-      envs.put(envName, path + File.pathSeparatorChar + envs.get(envName));
+    addToEnv(envs, key, value);
+  }
+
+  public static void addToPythonPath(Map<String, String> envs, String value) {
+    addToEnv(envs, PYTHONPATH, value);
+  }
+
+  public static void addToEnv(Map<String, String> envs, String key, String value) {
+    if (envs.containsKey(key)) {
+      envs.put(key, value + File.pathSeparatorChar + envs.get(key));
     } else {
-      envs.put(envName, path);
+      envs.put(key, value);
     }
   }
 
