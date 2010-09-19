@@ -76,7 +76,7 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
     }
 
     public PsiElement copy() {
-      return new LightIdentifier(getManager(), myTextInternal);
+      return new GrLightIdentifier(getManager(), myTextInternal);
     }
   }
 
