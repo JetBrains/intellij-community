@@ -42,8 +42,10 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -997,7 +999,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public void mouseMoved(final MouseEvent e) {
     String toolTip = null;
-    GutterIconRenderer renderer = getGutterRenderer(e);
+    final GutterIconRenderer renderer = getGutterRenderer(e);
     TooltipController controller = TooltipController.getInstance();
     if (renderer != null) {
       toolTip = renderer.getTooltipText();
@@ -1031,8 +1033,33 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     if (toolTip != null && toolTip.length() != 0) {
-      controller.showTooltipByMouseMove(myEditor, e, ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip), false, GUTTER_TOOLTIP_GROUP,
-                                        new HintHint(e));
+      LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(0, (int)e.getY()));
+      int line = pos.line;
+      ArrayList<GutterIconRenderer> lineRenderers = myLineToGutterRenderers.get(line);
+      int row = lineRenderers.indexOf(renderer);
+      Balloon.Position ballPosition = Balloon.Position.atRight;
+      if (lineRenderers.size() > 1) {
+        if (row == lineRenderers.size() - 1) {
+          ballPosition = Balloon.Position.below;
+        }
+      }
+
+
+      final Ref<Point> t = new Ref<Point>(e.getPoint());
+      processIconsRow(pos.line, myLineToGutterRenderers.get(pos.line), new LineGutterIconRendererProcessor() {
+        @Override
+        public void process(int x, int y, GutterIconRenderer r) {
+          if (renderer == r) {
+            Icon icon = r.getIcon();
+            t.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+          }
+        }
+      });
+
+      RelativePoint showPoint = new RelativePoint(this, t.get());
+
+      controller.showTooltipByMouseMove(myEditor, showPoint, ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip), false, GUTTER_TOOLTIP_GROUP,
+                                        new HintHint(this, t.get()).setAwtTooltip(true).setPreferredPosition(ballPosition));
     }
     else {
       controller.cancelTooltip(GUTTER_TOOLTIP_GROUP);

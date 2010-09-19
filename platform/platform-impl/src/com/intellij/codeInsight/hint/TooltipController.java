@@ -49,7 +49,7 @@ public class TooltipController {
   }
 
   public void showTooltipByMouseMove(@NotNull final Editor editor,
-                                     @NotNull final MouseEvent e,
+                                     @NotNull final RelativePoint point,
                                      final TooltipRenderer tooltipObject,
                                      final boolean alignToRight,
                                      @NotNull final TooltipGroup group, final HintHint hintHint) {
@@ -63,12 +63,10 @@ public class TooltipController {
     hideCurrentTooltip();
 
     if (tooltipObject != null) {
-      final Point p = SwingUtilities.convertPoint(
-        (Component)e.getSource(),
-        e.getPoint(),
-        editor.getComponent().getRootPane().getLayeredPane()
-      );
-      p.x += alignToRight ? -10 : 10;
+      final Point p = point.getPointOn(editor.getComponent().getRootPane().getLayeredPane()).getPoint();
+      if (!hintHint.isAwtTooltip()) {
+        p.x += alignToRight ? -10 : 10;
+      }
 
       Project project = editor.getProject();
       if (project != null && !project.isOpen()) return;

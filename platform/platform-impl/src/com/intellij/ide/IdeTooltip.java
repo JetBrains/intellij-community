@@ -31,6 +31,7 @@ public class IdeTooltip {
   private JComponent myTipComponent;
 
   private boolean myToCenter = false;
+  private boolean myToCenterIfSmall = true;
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent) {
     myComponent = component;
@@ -67,6 +68,15 @@ public class IdeTooltip {
 
   public boolean isToCenter() {
     return myToCenter;
+  }
+
+  public boolean isToCenterIfSmall() {
+    return myToCenterIfSmall;
+  }
+
+  public IdeTooltip setToCenterIfSmall(boolean mayCenter) {
+    myToCenterIfSmall = mayCenter;
+    return this;
   }
 
   protected boolean canAutohideOn(MouseEvent me, boolean isInsideBalloon) {
