@@ -1,8 +1,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +105,21 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
       }
       else if (declaration instanceof GrArgumentLabel) {
         ((GrArgumentLabel)declaration).setName(name);
+      }
+      else if (declaration instanceof XmlAttributeValue) {
+        PsiElement leftQuote = declaration.getFirstChild();
+
+        if (!(leftQuote instanceof XmlToken)) continue;
+
+        PsiElement textToken = leftQuote.getNextSibling();
+
+        if (!(textToken instanceof XmlToken)) continue;
+
+        PsiElement rightQuote = textToken.getNextSibling();
+
+        if (!(rightQuote instanceof XmlToken) || rightQuote.getNextSibling() != null) continue;
+
+        ((LeafElement)textToken).replaceWithText(name);
       }
     }
 
