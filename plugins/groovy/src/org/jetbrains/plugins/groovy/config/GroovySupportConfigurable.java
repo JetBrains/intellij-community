@@ -76,8 +76,7 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable {
             final String replace = "&Replace";
             final int result =
               Messages
-                .showDialog(facetEditor.getComponent(), message, "Library already exists", new String[]{replace, "&Add", "&Cancel"}, 0,
-                            null);
+                .showDialog(rootModel.getProject(), message, "Library already exists", new String[]{replace, "&Add", "&Cancel"}, 0, null);
             if (result == 2 || result < 0) {
               return false; //cancel or escape
             }
