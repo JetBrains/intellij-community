@@ -100,35 +100,51 @@ public class VariantsProcessor implements PsiScopeProcessor {
       }
     }
     else if (element instanceof NameDefiner) {
-      final NameDefiner definer = (NameDefiner)element;
-      for (PyElement expr : definer.iterateNames()) {
-        if (expr != null && expr != myContext) { // NOTE: maybe rather have SingleIterables skip nulls outright?
-          String referencedName = expr.getName();
-          Icon icon = expr.getIcon(0);
-          // things like PyTargetExpression cannot have a general icon, but here we only have variables
-          if (icon == null) icon = Icons.VARIABLE_ICON;
-          if (nameIsAcceptable(referencedName)) {
-            LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.create(referencedName).setIcon(icon));
-            if (definer instanceof PyImportElement) { // set notice to imported module name if needed
-              PsiElement maybeFromImport = definer.getParent();
-              if (maybeFromImport instanceof PyFromImportStatement) {
-                final PyFromImportStatement fromImport = (PyFromImportStatement)maybeFromImport;
-                PyReferenceExpression src = fromImport.getImportSource();
-                if (src != null) {
-                  lookupItem = setItemNotice(lookupItem, src.getName());
+      boolean handled_as_imported = false;
+      if (element instanceof PyImportElement) {
+        PyReferenceExpression ref = ((PyImportElement)element).getImportReference();
+        if (ref != null) {
+          final String name = ref.getName();
+          if (nameIsAcceptable(name)) {
+            PsiElement resolved = ref.getReference().resolve();
+            if (resolved instanceof PsiNamedElement) {
+              handled_as_imported = true;
+              myVariants.put(name, setupItem(LookupElementBuilder.create((PsiNamedElement)resolved)));
+            }
+          }
+        }
+      }
+      if (! handled_as_imported) {
+        final NameDefiner definer = (NameDefiner)element;
+        for (PyElement expr : definer.iterateNames()) {
+          if (expr != null && expr != myContext) { // NOTE: maybe rather have SingleIterables skip nulls outright?
+            String referencedName = expr.getName();
+            Icon icon = expr.getIcon(0);
+            // things like PyTargetExpression cannot have a general icon, but here we only have variables
+            if (icon == null) icon = Icons.VARIABLE_ICON;
+            if (referencedName != null && nameIsAcceptable(referencedName)) {
+              LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.create(referencedName).setIcon(icon));
+              if (definer instanceof PyImportElement) { // set notice to imported module name if needed
+                PsiElement maybeFromImport = definer.getParent();
+                if (maybeFromImport instanceof PyFromImportStatement) {
+                  final PyFromImportStatement fromImport = (PyFromImportStatement)maybeFromImport;
+                  PyReferenceExpression src = fromImport.getImportSource();
+                  if (src != null) {
+                    lookupItem = setItemNotice(lookupItem, src.getName());
+                  }
                 }
               }
-            }
-            if (definer instanceof PyAssignmentStatement) {
-              PyExpression value = ((PyAssignmentStatement)definer).getAssignedValue();
-              if (value != null) {
-                PyType type = value.getType(TypeEvalContext.fast());
-                if (type != null) {
-                  lookupItem = lookupItem.setTypeText(type.getName());
+              if (definer instanceof PyAssignmentStatement) {
+                PyExpression value = ((PyAssignmentStatement)definer).getAssignedValue();
+                if (value != null) {
+                  PyType type = value.getType(TypeEvalContext.fast());
+                  if (type != null) {
+                    lookupItem = lookupItem.setTypeText(type.getName());
+                  }
                 }
               }
+              myVariants.put(referencedName, lookupItem);
             }
-            myVariants.put(referencedName, lookupItem);
           }
         }
       }

@@ -5,6 +5,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Simplest PyStarImportElement possible.
@@ -37,7 +39,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
     if (import_from_stmt != null) {
       PyReferenceExpression from_src = import_from_stmt.getImportSource();
       final List<PsiElement> importedFiles = ResolveImportUtil.resolveImportReference(from_src);
-      for (PsiElement importedFile : importedFiles) {
+      for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {
           PyFile sourceFile = (PyFile)source;

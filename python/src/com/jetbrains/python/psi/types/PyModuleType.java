@@ -23,7 +23,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.ROLE_IN_IMPORT.NONE;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.NONE;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_MODULE;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_NAME;
 // .impl looks impure
 
 /**
@@ -92,9 +94,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
     Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
-    ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(expressionHook.getReference());
-    if (role == NONE) { // when not inside import, add regular attributes
+    ResolveImportUtil.PointInImport point = ResolveImportUtil.getPointInImport(expressionHook/*.getReference().getElement()*/);
+    if (point.role == NONE || point.role == AS_NAME) { // when not imported from, add regular attributes
       final VariantsProcessor processor = new VariantsProcessor(expressionHook);
+      processor.setPlainNamesOnly(point.role == AS_NAME); // no parens after imported function names
       myModule.processDeclarations(processor, ResolveState.initial(), null, expressionHook);
       if (names_already != null) {
         for (LookupElement le : processor.getResultList()) {
@@ -109,19 +112,15 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         result.addAll(processor.getResultList());
       }
     }
-    else /*if (role == AS_MODULE)*/ { // when being imported, add submodules
+    if (point.role == AS_MODULE || point.role == AS_NAME) { // when imported from somehow, add submodules
       for (PsiFileSystemItem pfsi : getSubmodulesList()) {
         String s = pfsi.getName();
         int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
         if (pos > 0) s = s.substring(0, pos);
         if (!PyNames.isIdentifier(s)) continue;
         if (names_already != null) {
-          if (names_already.contains(s)) {
-            continue;
-          }
-          else {
-            names_already.add(s);
-          }
+          if (names_already.contains(s)) continue;
+          else names_already.add(s);
         }
         result.add(LookupElementBuilder.create(pfsi, s).setPresentableText(s).setIcon(pfsi.getIcon(0)));
       }

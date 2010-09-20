@@ -182,6 +182,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       for (NameDefiner hit : processor.getDefiners()) {
         ret.poke(hit, getRate(hit));
       }
+      uexpr = PyUtil.turnDirIntoInit(uexpr); // an import statement may have returned a dir
     }
     else if (!processor.getDefiners().isEmpty()) {
       ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW-1, processor.getDefiners()));

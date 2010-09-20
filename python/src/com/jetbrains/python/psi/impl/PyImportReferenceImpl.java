@@ -45,15 +45,24 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   @Override
   protected List<RatedResolveResult> resolveInner() {
     ResultList ret = new ResultList();
-
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
+
+    int default_submodule_rate = RatedResolveResult.RATE_HIGH;
+
+    // names inside module take precedence over submodules
+    final PyImportElement import_elt = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
+    if (import_elt != null) {
+      if (ret.poke(ResolveImportUtil.findImportedNameInsideModule(import_elt, referencedName), RatedResolveResult.RATE_HIGH)) {
+        default_submodule_rate = RatedResolveResult.RATE_NORMAL;
+      }
+    }
 
     List<PsiElement> targets = ResolveImportUtil.resolveImportReference(myElement);
     for (PsiElement target : targets) {
       target = PyUtil.turnDirIntoInit(target);
       if (target != null) {   // ignore dirs without __init__.py, worthless
-        int rate = RatedResolveResult.RATE_HIGH;
+        int rate = default_submodule_rate;
         if (target instanceof PyFile) {
           VirtualFile vFile = ((PyFile)target).getVirtualFile();
           if (vFile != null && vFile.getLength() == 0) {
@@ -107,6 +116,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       Condition<PsiElement> node_filter = new PyResolveUtil.FilterNameNotIn(myNamesAlready);
       InsertHandler<LookupElement> insertHandler = null;
 
+      // NOTE: could use getPointInImport()
       // are we in "import _" or "from foo import _"?
       PyFromImportStatement from_import = PsiTreeUtil.getParentOfType(myElement, PyFromImportStatement.class);
       if (from_import != null && myElement.getParent() != from_import) { // in "from foo import _"
@@ -119,18 +129,14 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
             final VariantsProcessor processor = new VariantsProcessor(myElement, node_filter, myUnderscoreFilter);
             processor.setPlainNamesOnly(true); // we don't want parens after functions, etc
             PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
-            myObjects.addAll(processor.getResultList());
+            final List<LookupElement> names_from_module = processor.getResultList();
+            myObjects.addAll(names_from_module);
+            for (LookupElement le : names_from_module) myNamesAlready.add(le.getLookupString()); // file's definitions shadow submodules
             // try to collect submodules
             PyExpression module = (PyExpression)mod_candidate;
             PyType qualifierType = module.getType(TypeEvalContext.fast());
             if (qualifierType != null) {
               ProcessingContext ctx = new ProcessingContext();
-              for (Object ex : myObjects) { // just in case: file's definitions shadow submodules
-                if (ex instanceof PyReferenceExpression) {
-                  myNamesAlready.add(((PyReferenceExpression)ex).getReferencedName());
-                }
-              }
-              // collect submodules
               ctx.put(PyType.CTX_NAMES, myNamesAlready);
               Collections.addAll(myObjects, qualifierType.getCompletionVariants(myElement.getName(), myElement, ctx));
             }

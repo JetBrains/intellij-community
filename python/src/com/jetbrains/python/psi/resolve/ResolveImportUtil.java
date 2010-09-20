@@ -23,6 +23,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_MODULE;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_NAME;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.NONE;
+
 /**
  * @author dcheryasov
  */
@@ -104,9 +108,10 @@ public class ResolveImportUtil {
 
   @NotNull
   public static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
-    if (qName == null) {
-      return Collections.emptyList();
-    }
+    if (qName == null) return Collections.emptyList();
+
+    // TODO: search for entire names, not for first component only!
+    final String first_component = qName.getComponents().get(0);
 
     final PsiFile file = import_element.getContainingFile().getOriginalFile();
     final PyStatement importStatement = import_element.getContainingImportStatement();
@@ -120,14 +125,14 @@ public class ResolveImportUtil {
       final int relative_level = from_import_statement.getRelativeLevel();
 
       if (relative_level > 0 && moduleQName == null) { // "from ... import foo"
-        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), qName.getComponents().get(0), file, null, false);
+        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), first_component, file, null, false);
         return element != null ? Collections.singletonList(element) : Collections.<PsiElement>emptyList();
       }
 
       if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
         final List<PsiElement> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
         for (PsiElement candidate : candidates) {
-          PsiElement result = resolveChild(candidate, qName.getComponents().get(0), file, null, false);
+          PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), first_component, file, null, false);
           if (result != null) return Collections.singletonList(result);
         }
       }
@@ -528,18 +533,19 @@ public class ResolveImportUtil {
                                         final PsiFile containingFile, @Nullable VirtualFile root, boolean fileOnly) {
     PsiDirectory dir = null;
     PsiElement ret = null;
+    PsiElement possible_ret = null;
     if (parent instanceof PyFile) {
       if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly);
-        if (result != null) {
-          return result;
-        }
+        possible_ret = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly);
       }
+      // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
+      // by a module one level higher (e.g. curses.set_key). Prefer it to submodule if possible.
       ret = ((PyFile)parent).getElementNamed(referencedName);
-      if (ret != null) return ret;
+      if (PyUtil.instanceOf(ret, PyFunction.class, PyClass.class)) return ret;
+      if (possible_ret != null) return possible_ret;
     }
     else if (parent instanceof PsiDirectory) {
       dir = (PsiDirectory)parent;
@@ -739,48 +745,104 @@ public class ResolveImportUtil {
     }
   }
 
-  public static enum ROLE_IN_IMPORT {
-    /**
-     * The reference is not inside an import statement.
-     */
-    NONE,
-
-    /**
-     * The reference is inside import and refers to a module
-     */
-    AS_MODULE,
-
-    /**
-     * The reference is inside import and refers to a name imported from a module
-     */
-    AS_NAME
+  /**
+   * When a name is imported from a module, tries to find the definition of that name inside the module,
+   * as opposed to looking for submodules.
+   * @param where an element related to the name, presumably inside import
+   * @param name the name to find
+   * @return found element, or null.
+   */
+  @Nullable
+  public static PsiElement findImportedNameInsideModule(@NotNull PyImportElement where, String name) {
+    /*
+    PointInImport point = getPointInImport(where);
+    if (point.role == AS_NAME) {
+      final PyReferenceExpression source = point.fromImportStatement.getImportSource();
+      if (source != null) {
+        PsiElement resolved = source.getReference().resolve();
+        if (resolved instanceof PyFile) {
+          return ((PyFile)resolved).findExportedName(name);
+        }
+      }
+    }
+    */
+    PyStatement stmt = where.getContainingImportStatement();
+    if (stmt instanceof PyFromImportStatement) {
+      final PyFromImportStatement from_import = (PyFromImportStatement)stmt;
+      if (from_import.getImportSourceQName() != null) { // have qname -> have source stub and importing a name, not a module
+        final PyReferenceExpression source = from_import.getImportSource();
+        if (source != null) {
+          PsiElement resolved = source.getReference().resolve();
+          if (resolved instanceof PyFile) {
+            return ((PyFile)resolved).findExportedName(name);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /**
-   * @param reference what we test
-   * @return the role of reference in enclosing import statement, if any
+   * Points to an import statement and role as found by {@link #getPointInImport(PsiReference)}.
+   * Immutable.
    */
-  public static ROLE_IN_IMPORT getRoleInImport(@NotNull PsiReference reference) {
-    PsiElement parent = PsiTreeUtil.getParentOfType(
-      reference.getElement(),
+  public static class PointInImport {
+    public final PyFromImportStatement fromImportStatement;
+    public final PyImportStatement importStatement;
+    public final ROLE role;
+
+    PointInImport(PyFromImportStatement fromImportStatement, PyImportStatement importStatement, ROLE role) {
+      this.fromImportStatement = fromImportStatement;
+      this.importStatement = importStatement;
+      this.role = role;
+    }
+
+    public static enum ROLE {
+      /**
+       * The reference is not inside an import statement.
+       */
+      NONE,
+
+      /**
+       * The reference is inside import and refers to a module
+       */
+      AS_MODULE,
+
+      /**
+       * The reference is inside import and refers to a name imported from a module
+       */
+      AS_NAME
+    }
+
+  }
+
+  /**
+   * @param element what we test (identifier, reference, import element, etc)
+   * @return the how the element relates to an enclosing import statement, if any
+   */
+  public static PointInImport getPointInImport(@NotNull PsiElement element) {
+    PsiElement parent = PsiTreeUtil.getNonStrictParentOfType(
+      element,
       PyImportElement.class, PyFromImportStatement.class
     );
-    if (parent instanceof PyFromImportStatement) return ROLE_IN_IMPORT.AS_MODULE; // from foo ...
+    if (parent instanceof PyFromImportStatement) {
+      return new PointInImport((PyFromImportStatement)parent, null, AS_MODULE); // from foo ...
+    }
     if (parent instanceof PyImportElement) {
       PsiElement statement = parent.getParent();
       if (statement instanceof PyImportStatement) {
-        return ROLE_IN_IMPORT.AS_MODULE; // import foo,...
+        return new PointInImport(null, (PyImportStatement)statement, AS_MODULE); // import foo,...
       }
       else if (statement instanceof PyFromImportStatement) {
         PyFromImportStatement importer = (PyFromImportStatement)statement; // from ??? import foo
         if (importer.getImportSource() == null && importer.getRelativeLevel() > 0) {
-          return ROLE_IN_IMPORT.AS_MODULE; // from . import foo,...
+          return new PointInImport(importer, null, AS_MODULE); // from . import foo,...
         }
         else {
-          return ROLE_IN_IMPORT.AS_NAME;
+          return new PointInImport(importer, null, AS_NAME);
         } // from bar import foo,...
       }
     }
-    return ROLE_IN_IMPORT.NONE;
+    return new PointInImport(null, null, NONE);
   }
 }
