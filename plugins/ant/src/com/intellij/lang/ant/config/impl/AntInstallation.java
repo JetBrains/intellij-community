@@ -164,7 +164,7 @@ public class AntInstallation {
     Properties properties = new Properties();
     InputStream stream = null;
     try {
-      stream = new UrlClassLoader(Collections.singletonList(antJar.toURL()), null).getResourceAsStream(VERSION_RESOURCE);
+      stream = new UrlClassLoader(Collections.singletonList(antJar.toURL()), null, false, false, true).getResourceAsStream(VERSION_RESOURCE);
       properties.load(stream);
     }
     catch (MalformedURLException e) {

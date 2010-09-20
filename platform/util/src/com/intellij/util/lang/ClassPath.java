@@ -50,7 +50,7 @@ class ClassPath {
   private static final long NS_THRESHOLD = 10000000L;
 
   private static PrintStream ourOrder;
-  private volatile boolean myAcceptUnescapedUrls;
+  private final boolean myAcceptUnescapedUrls;
 
   @SuppressWarnings({"UnusedDeclaration"})
   private static void printOrder(Loader loader, String resource) {
@@ -79,8 +79,13 @@ class ClassPath {
   }
 
   public ClassPath(URL[] urls, boolean canLockJars, boolean canUseCache) {
+    this(urls, canLockJars, canUseCache, false);
+  }
+
+  public ClassPath(URL[] urls, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls) {
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache;
+    myAcceptUnescapedUrls = acceptUnescapedUrls;
     push(urls);
   }
 
@@ -203,10 +208,6 @@ class ClassPath {
       for (int i = urls.length - 1; i >= 0; i--) myUrls.push(urls[i]);
 
     }
-  }
-
-  public void setAcceptUnescapedUrls(boolean acceptUnescapedUrls) {
-    myAcceptUnescapedUrls = acceptUnescapedUrls;
   }
 
   private class MyEnumeration implements Enumeration<URL> {
