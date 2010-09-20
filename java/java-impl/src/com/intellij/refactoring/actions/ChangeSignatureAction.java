@@ -22,7 +22,9 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +36,7 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && (elements[0] instanceof PsiMethod || elements[0] instanceof PsiClass);
+    return elements.length == 1 && findTargetMember(elements[0]) != null;
   }
 
   protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
@@ -70,7 +72,13 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
-    final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
+    Language language = LangDataKeys.LANGUAGE.getData(dataContext);
+    if (language == null) {
+      PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      if (psiElement != null) {
+        language = psiElement.getLanguage();
+      }
+    }
     if (language != null) {
       return new RefactoringActionHandler() {
         public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
