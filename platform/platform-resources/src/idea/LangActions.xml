@@ -274,6 +274,7 @@
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
       <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
+      <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <separator/>
       <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
       <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
