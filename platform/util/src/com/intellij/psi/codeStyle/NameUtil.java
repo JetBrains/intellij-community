@@ -37,6 +37,7 @@ public class NameUtil {
       return s.toLowerCase();
     }
   };
+  private static final int MAX_LENGTH = 50;
 
   private NameUtil() {}
 
@@ -94,8 +95,8 @@ public class NameUtil {
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
     }
-    if (pattern.length() >= 80) {
-      pattern = pattern.substring(0, 80);
+    if (pattern.length() >= MAX_LENGTH) {
+      pattern = pattern.substring(0, MAX_LENGTH);
     }
 
     @NonNls final StringBuffer buffer = new StringBuffer();
@@ -134,6 +135,7 @@ public class NameUtil {
     }
 
     boolean firstIdentifierLetter = (exactPrefixLen == 0);
+    //System.out.println("pattern = " + pattern);
     for (int i = exactPrefixLen; i < pattern.length(); i++) {
       final char c = pattern.charAt(i);
       lastIsUppercase = false;
@@ -157,11 +159,10 @@ public class NameUtil {
             buffer.append(Character.toLowerCase(c));
           }
           if (!firstIdentifierLetter) {
-            buffer.append("|([A-Za-z\\s0-9\\$]*(_|-)(");
+            buffer.append("|[A-Za-z\\s0-9\\$]*[_-][");
             buffer.append(c);
-            buffer.append("|");
             buffer.append(Character.toLowerCase(c));
-            buffer.append("))");
+            buffer.append("]");
           }
           buffer.append(')');
         }
@@ -220,6 +221,7 @@ public class NameUtil {
       buffer.append("[a-z\\s0-9\\$]*");
     }
 
+    //System.out.println("rx = " + buffer.toString());
     return buffer.toString();
   }
 
@@ -388,9 +390,11 @@ public class NameUtil {
       myPreparedPattern = preparePattern(pattern).toCharArray();
       myEnsureFirstSymbolsMatch = pattern.length() > 0 && Character.isLetterOrDigit(pattern.charAt(0));
 
+      //final long t = System.currentTimeMillis();
       final RegExp regExp = new RegExp(regexp);
       final Automaton automaton = regExp.toAutomaton(new DatatypesAutomatonProvider());
       myRunAutomaton = new RunAutomaton(automaton, true);
+      //System.out.println("t = " + (System.currentTimeMillis() - t));
     }
 
     public boolean matches(String name) {

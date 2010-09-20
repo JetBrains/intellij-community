@@ -145,7 +145,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
   @Test
   public void testDoesNotIncludePreviousLabels() {
-    facade.putUserLabel(null, null);
+    facade.putUserLabel("label", "project");
     add(facade, createFile(r, "file"));
     assertEquals(1, getChangesFor("file").size());
   }

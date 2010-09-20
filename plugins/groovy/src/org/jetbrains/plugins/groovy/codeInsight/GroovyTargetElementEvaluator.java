@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
@@ -39,30 +40,40 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
   public PsiElement getElementByReference(PsiReference ref, int flags) {
     PsiElement sourceElement = ref.getElement();
 
-    if (!(sourceElement instanceof GrCodeReferenceElement)) return null;
+    if (sourceElement instanceof GrCodeReferenceElement) {
+      GrNewExpression newExpr;
 
-    GrNewExpression newExpr;
+      if (sourceElement.getParent() instanceof GrNewExpression) {
+        newExpr = (GrNewExpression)sourceElement.getParent();
+      }
+      else if (sourceElement.getParent().getParent() instanceof GrNewExpression) {//anonymous class declaration
+        newExpr = (GrNewExpression)sourceElement.getParent().getParent();
+      }
+      else {
+        return null;
+      }
 
-    if (sourceElement.getParent() instanceof GrNewExpression) {
-      newExpr = (GrNewExpression)sourceElement.getParent();
-    }
-    else if (sourceElement.getParent().getParent() instanceof GrNewExpression) {//anonymous class declaration
-      newExpr = (GrNewExpression)sourceElement.getParent().getParent();
-    }
-    else {
-      return null;
+      final PsiMethod constructor = newExpr.resolveConstructor();
+      final GrArgumentList argumentList = newExpr.getArgumentList();
+      if (constructor != null &&
+          argumentList != null &&
+          argumentList.getNamedArguments().length != 0 &&
+          argumentList.getExpressionArguments().length == 0) {
+        if (constructor.getParameterList().getParametersCount() == 0) return constructor.getContainingClass();
+      }
+
+      return constructor;
     }
 
-    final PsiMethod constructor = newExpr.resolveConstructor();
-    final GrArgumentList argumentList = newExpr.getArgumentList();
-    if (constructor != null &&
-        argumentList != null &&
-        argumentList.getNamedArguments().length != 0 &&
-        argumentList.getExpressionArguments().length == 0) {
-      if (constructor.getParameterList().getParametersCount() == 0) return constructor.getContainingClass();
+    if (sourceElement instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression)sourceElement).resolve();
+       if (resolved instanceof GrGdkMethod) {
+        return correctSearchTargets(resolved);
+      }
+      return resolved;
     }
 
-    return constructor;
+    return null;
   }
 
   @Nullable

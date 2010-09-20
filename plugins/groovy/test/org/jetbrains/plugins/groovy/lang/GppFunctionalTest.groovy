@@ -443,7 +443,7 @@ foo(<caret>['super':[2, 3]])
   }
 
   public void testGotoClassFromLiteralOnsetsWhenNoConstructorsPresent() throws Exception {
-    PsiClass point = myFixture.addClass(""" class Point { }""") 
+    PsiClass point = myFixture.addClass(""" class Point { }""")
     configureGppScript "Point p = <caret>[super: 2]"
     assertEquals point, resolveReference()
 

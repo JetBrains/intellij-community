@@ -52,6 +52,7 @@ public class BlockDebugUtil {
   private static void dumpBlockTree(PrintStream out, Block block, String indent, boolean withChildren) {
     if (block instanceof DataLanguageBlockWrapper) {
       dumpBlockTree(out, ((DataLanguageBlockWrapper)block).getOriginal(), indent, withChildren);
+      return;
     }
     if (block == null) return;
     out.print(indent + block.getClass().getSimpleName());

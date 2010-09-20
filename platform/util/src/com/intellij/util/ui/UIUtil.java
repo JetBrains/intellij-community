@@ -726,14 +726,22 @@ public class UIUtil {
                                         final int startX,
                                         final int endX,
                                         final int height) {
-    g.setColor(new Color(100, 100, 100, 50));
-    g.fillRoundRect(startX - 2, 2, endX - startX + 4, height - 4, 4, 4);
+    final boolean drawRound = endX - startX > 4;
+
+    if (isUnderAquaLookAndFeel()) {
+      g.setColor(new Color(50, 50, 50, 40));
+      g.drawLine(startX + (drawRound ? 2 : 1), height - 2, endX - (drawRound ? 1 : 0), height - 2);
+      g.fillRect(endX - (drawRound ? 1 : 0), 4, drawRound ? 2 : 1, height - 6);
+    }
+
 
     g.setPaint(new GradientPaint(startX, 2, new Color(255, 234, 162), startX, height - 5, new Color(255, 208, 66)));
-    g.fillRoundRect(startX - 2, 2, endX - startX + 3, height - 5, 6, 6);
+    g.fillRect(startX + (drawRound ? 1 : 0), 3, endX - startX - (drawRound ? 2 : 0), height - 5);
 
-    g.setColor(new Color(170, 170, 170, 200));
-    g.drawRoundRect(startX - 2, 2, endX - startX + 3, height - 5, 4, 4);
+    if (drawRound) {
+      g.drawLine(startX, 4, startX, height - 4);
+      g.drawLine(endX - 1, 4, endX - 1, height - 4);
+    }
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
