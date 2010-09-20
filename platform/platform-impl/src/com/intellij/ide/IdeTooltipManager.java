@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -276,11 +277,11 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public boolean isOwnBorderAllowed(boolean awtTooltip) {
-    return !useGraphite(awtTooltip);
+    return !awtTooltip;
   }
 
   public boolean isOpaqueAllowed(boolean awtTooltip) {
-    return !useGraphite(awtTooltip);
+    return !awtTooltip;
   }
 
   public Font getTextFont(boolean awtTooltip) {
@@ -291,7 +292,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     boolean useSystem;
 
     if ("default".equalsIgnoreCase(myMode.asString())) {
-      useSystem = false;
+      useSystem = !SystemInfo.isMac;
     } else if ("system".equalsIgnoreCase(myMode.asString())) {
       useSystem = true;
     } else if ("graphite".equalsIgnoreCase(myMode.asString())) {
