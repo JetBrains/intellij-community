@@ -137,6 +137,10 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable {
     myRememberProxyPasswordCheckBox.setEnabled(enabled);
   }
 
+  public JComponent getComponent() {
+    return myMainPanel;
+  }
+
   public JComponent createComponent() {
     return myMainPanel;
   }
