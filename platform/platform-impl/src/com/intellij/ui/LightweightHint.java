@@ -143,7 +143,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         }.setToCenterIfSmall(false).setPreferredPosition(hintInfo.getPreferredPosition());
 
         myComponent.validate();
-        myCurrentIdeTooltip = IdeTooltipManager.getInstance().showTipNow(tooltip);
+        myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, false);
       } else {
         final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
         myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
