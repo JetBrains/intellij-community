@@ -68,6 +68,11 @@ public class NewLibraryEditor implements LibraryEditor {
   }
 
   @Override
+  public void addRoot(String url, OrderRootType rootType) {
+    myRoots.get(rootType).add(url);
+  }
+
+  @Override
   public void addJarDirectory(VirtualFile file, boolean recursive) {
     myRoots.get(OrderRootType.CLASSES).add(file);
     myJarDirectories.put(file.getUrl(), recursive);

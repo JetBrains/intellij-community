@@ -34,17 +34,17 @@ import java.awt.*;
 */
 public abstract class LibraryEditorDialogBase extends DialogWrapper {
   private JTextField myNameField;
-  private LibraryTableEditor myLibraryTableEditor;
+  private LibraryRootsComponent myLibraryRootsComponent;
 
-  public LibraryEditorDialogBase(final Component parent, final LibraryTableEditor libraryTableEditor) {
+  public LibraryEditorDialogBase(final Component parent, final LibraryRootsComponent libraryRootsComponent) {
     super(parent, true);
-    myLibraryTableEditor = libraryTableEditor;
+    myLibraryRootsComponent = libraryRootsComponent;
     setTitle(ProjectBundle.message("library.configure.title"));
-    Disposer.register(getDisposable(), myLibraryTableEditor);
+    Disposer.register(getDisposable(), myLibraryRootsComponent);
   }
 
   public <T> void addFileChooserContext(DataKey<T> key, T value) {
-    myLibraryTableEditor.addFileChooserContext(key, value);
+    myLibraryRootsComponent.addFileChooserContext(key, value);
   }
 
   protected String getDimensionServiceKey() {
@@ -63,7 +63,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
   }
 
   protected boolean validateAndApply() {
-    final String currentName = myLibraryTableEditor.getLibraryEditor().getName();
+    final String currentName = myLibraryRootsComponent.getLibraryEditor().getName();
     String newName = myNameField.getText().trim();
     if (newName.length() == 0) {
       newName = null;
@@ -75,12 +75,12 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
           Messages.showErrorDialog(ProjectBundle.message("library.name.not.specified.error", newName), ProjectBundle.message("library.name.not.specified.title"));
           return false;
         }
-        if (LibraryTableEditor.libraryAlreadyExists(tableModifiableModel, newName)) {
+        if (LibraryRootsComponent.libraryAlreadyExists(tableModifiableModel, newName)) {
           Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", newName), ProjectBundle.message("library.name.already.exists.title"));
           return false;
         }
       }
-      myLibraryTableEditor.renameLibrary(newName);
+      myLibraryRootsComponent.renameLibrary(newName);
     }
     return true;
   }
@@ -92,7 +92,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     FormBuilder formBuilder = new FormBuilder();
-    String currentName = myLibraryTableEditor.getLibraryEditor().getName();
+    String currentName = myLibraryRootsComponent.getLibraryEditor().getName();
     myNameField = new JTextField(currentName);
     formBuilder.addLabeledComponent("&Name:", myNameField);
     addNorthComponents(formBuilder);
@@ -107,6 +107,6 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    return myLibraryTableEditor.getComponent();
+    return myLibraryRootsComponent.getComponent();
   }
 }

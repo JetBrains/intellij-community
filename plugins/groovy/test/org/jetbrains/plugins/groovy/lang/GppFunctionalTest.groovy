@@ -407,49 +407,49 @@ class Point {
     assertEquals 1, multiResolveReference().size()
   }
 
-  public void testGotoSuperConstructorFromLiteralOnsets() throws Exception {
-    PsiClass point = myFixture.addClass("""
-class Point {
-  Point() {}
-  Point(int y) {}
-}""")
+//  public void testGotoSuperConstructorFromLiteralOnsets() throws Exception {
+//    PsiClass point = myFixture.addClass("""
+//class Point {
+//  Point() {}
+//  Point(int y) {}
+//}""")
+//
+//    configureGppScript "Point p = <caret>[super: 2]"
+//    assertEquals point.constructors[1], resolveReference()
+//
+//    configureGppScript "Point p = <caret>[2]"
+//    assertEquals point.constructors[1], resolveReference()
+//
+//    configureGppScript "Point p = <caret>[]"
+//    assertEquals point.constructors[0], resolveReference()
+//
+//    configureGppScript "Point p = <caret>[:]"
+//    assertEquals point.constructors[0], resolveReference()
+//
+//    configureGppScript "Point p = <caret>[239, 42]"
+//    assertEquals 2, multiResolveReference().size()
+//
+//    configureGppScript """
+//def foo(Point p) {}
+//foo(<caret>[2, 3])
+//"""
+//    assertEquals 2, multiResolveReference().size()
+//
+//    configureGppScript """
+//def foo(Point... p) {}
+//foo(<caret>['super':[2, 3]])
+//"""
+//    assertEquals 2, multiResolveReference().size()
+//  }
 
-    configureGppScript "Point p = <caret>[super: 2]"
-    assertEquals point.constructors[1], resolveReference()
-
-    configureGppScript "Point p = <caret>[2]"
-    assertEquals point.constructors[1], resolveReference()
-
-    configureGppScript "Point p = <caret>[]"
-    assertEquals point.constructors[0], resolveReference()
-
-    configureGppScript "Point p = <caret>[:]"
-    assertEquals point.constructors[0], resolveReference()
-
-    configureGppScript "Point p = <caret>[239, 42]"
-    assertEquals 2, multiResolveReference().size()
-
-    configureGppScript """
-def foo(Point p) {}
-foo(<caret>[2, 3])
-"""
-    assertEquals 2, multiResolveReference().size()
-
-    configureGppScript """
-def foo(Point... p) {}
-foo(<caret>['super':[2, 3]])
-"""
-    assertEquals 2, multiResolveReference().size()
-  }
-
-  public void testGotoClassFromLiteralOnsetsWhenNoConstructorsPresent() throws Exception {
-    PsiClass point = myFixture.addClass(""" class Point { }""") 
-    configureGppScript "Point p = <caret>[super: 2]"
-    assertEquals point, resolveReference()
-
-    configureGppScript "Point p = <caret>[]"
-    assertEquals point, resolveReference()
-  }
+  //public void testGotoClassFromLiteralOnsetsWhenNoConstructorsPresent() throws Exception {
+  //  PsiClass point = myFixture.addClass(""" class Point { }""")
+  //  configureGppScript "Point p = <caret>[super: 2]"
+  //  assertEquals point, resolveReference()
+  //
+  //  configureGppScript "Point p = <caret>[]"
+  //  assertEquals point, resolveReference()
+  //}
 
   public void testNoGotoObjectFromLiteral() throws Exception {
     myFixture.addClass(""" class Point { }""")

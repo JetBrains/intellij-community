@@ -184,10 +184,10 @@ public class FindUsagesTest extends LightGroovyTestCase {
     assertEquals(expectedUsagesCount, references.size());
   }
 
-  public void testGdkMethod() throws Exception {
-    myFixture.configureByText("a.groovy", "[''].ea<caret>ch {}");
-    assertUsageCount(1);
-  }
+  //public void testGdkMethod() throws Exception {
+  //  myFixture.configureByText("a.groovy", "[''].ea<caret>ch {}");
+  //  assertUsageCount(1);
+  //}
 
   public void testGDKSuperMethodSearch() throws Exception {
     doSuperMethodTest("Object");

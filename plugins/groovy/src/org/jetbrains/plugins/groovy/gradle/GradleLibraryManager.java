@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.gradle;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -54,8 +53,8 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
 
   @Nls
   @Override
-  public String getLibraryVersion(@NotNull Library library, LibrariesContainer container) {
-    return getGradleVersion(container.getLibraryFiles(library, OrderRootType.CLASSES));
+  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
+    return getGradleVersion(libraryFiles);
   }
 
   @Nullable
@@ -123,8 +122,8 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
   }
 
   @Override
-  public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    return isGradleSdk(container.getLibraryFiles(library, OrderRootType.CLASSES));
+  public boolean managesLibrary(final VirtualFile[] libraryFiles) {
+    return isGradleSdk(libraryFiles);
   }
 
   @NotNull

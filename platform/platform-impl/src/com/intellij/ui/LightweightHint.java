@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -133,8 +135,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           protected void onHidden() {
             fireHintHidden();
           }
-        };
-        tooltip.setPreferredPosition(hintInfo.getPreferredPosition());
+
+          @Override
+          public boolean canBeDismissedOnTimeout() {
+            return false;
+          }
+        }.setToCenterIfSmall(false).setPreferredPosition(hintInfo.getPreferredPosition());
+
         myComponent.validate();
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().showTipNow(tooltip);
       } else {
@@ -235,6 +242,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     if (myEscListener != null) {
       myComponent.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
     }
+
+    TooltipController.getInstance().hide(this);
+
     fireHintHidden();
   }
 

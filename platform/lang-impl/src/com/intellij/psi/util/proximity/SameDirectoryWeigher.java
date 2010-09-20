@@ -22,6 +22,7 @@ import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * NOTE: This class is only registered in platform-based IDEs. In IDEA, SamePackageWeigher is used instead.
@@ -37,7 +38,10 @@ public class SameDirectoryWeigher extends ProximityWeigher {
     }
   });
 
-  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
+    if (location == null) {
+      return null;
+    }
     final PsiDirectory placeDirectory = PLACE_DIRECTORY.getValue(location);
     if (placeDirectory == null) {
       return false;

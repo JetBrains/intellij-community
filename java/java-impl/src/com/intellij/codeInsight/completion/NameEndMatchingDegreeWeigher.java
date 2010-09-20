@@ -17,13 +17,17 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class NameEndMatchingDegreeWeigher extends CompletionWeigher {
 
-  public Integer weigh(@NotNull final LookupElement element, final CompletionLocation location) {
+  public Integer weigh(@NotNull final LookupElement element, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     final String name = JavaCompletionUtil.getLookupObjectName(element.getObject());
     return JavaCompletionUtil.getNameEndMatchingDegree(name, JavaCompletionUtil.EXPECTED_TYPES.getValue(location),
                                                        element.getPrefixMatcher().getPrefix());

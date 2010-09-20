@@ -20,13 +20,17 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class PreferFieldsAndGettersWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     if (location.getCompletionType() != CompletionType.SMART) return 0;
 
     final Object object = item.getObject();

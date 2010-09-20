@@ -310,9 +310,7 @@ public class CustomAntElementsRegistry {
     if (urls.size() == 0) {
       return parentLoader;
     }
-    final AntResourcesClassLoader loader = new AntResourcesClassLoader(urls, parentLoader, false, false);
-    loader.setAcceptUnescapedUrls(true);
-    return loader;
+    return new AntResourcesClassLoader(urls, parentLoader, false, false);
   }
 
   public static List<URL> collectUrls(AntDomClasspathElement typedef) {

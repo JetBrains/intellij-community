@@ -184,11 +184,26 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("Unknown", p.getMavenId().getVersion());
   }
 
-  public void testSpacesInTest() throws Exception {
+  public void testSpaces() throws Exception {
     createProjectPom("<name>foo bar</name>");
 
     MavenModel p = readProject(myProjectPom);
     assertEquals("foo bar", p.getName());
+  }
+
+  public void testNewLines() throws Exception {
+    createProjectPom("<groupId>\n" +
+                     "  group\n" +
+                     "</groupId>\n" +
+                     "<artifactId>\n" +
+                     "  artifact\n" +
+                     "</artifactId>\n" +
+                     "<version>\n" +
+                     "  1\n" +
+                     "</version>\n");
+
+    MavenModel p = readProject(myProjectPom);
+    assertEquals(new MavenId("group", "artifact", "1"), p.getMavenId());
   }
 
   public void testTextInContainerTag() throws Exception {

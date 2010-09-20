@@ -38,6 +38,7 @@ import org.xml.sax.InputSource;
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -57,6 +58,16 @@ public class JDOMUtil {
       return saxBuilder;
     }
   };
+
+  @NotNull
+  public static List<Element> getChildren(@Nullable Element parent) {
+    return parent != null ? parent.getChildren() : Collections.<Element>emptyList();
+  }
+
+  @NotNull
+  public static List<Element> getChildren(@Nullable Element parent, @NotNull String name) {
+    return parent != null ? parent.getChildren(name) : Collections.<Element>emptyList();
+  }
 
   private static class LoggerHolder {
     private static final Logger ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");

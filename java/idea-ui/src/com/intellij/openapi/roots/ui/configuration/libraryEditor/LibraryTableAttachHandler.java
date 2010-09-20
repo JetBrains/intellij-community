@@ -33,5 +33,5 @@ public interface LibraryTableAttachHandler {
   String getShortName();
   Icon getIcon();
 
-  ActionCallback performAttach(Project project, NullableComputable<Library.ModifiableModel> modelProvider);
+  ActionCallback performAttach(Project project, LibraryEditor libraryEditor, NullableComputable<Library.ModifiableModel> modelProvider);
 }

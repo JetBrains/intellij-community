@@ -15,16 +15,20 @@
  */
 package com.intellij.codeInsight.completion;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class PreferLessParametersWeigher extends CompletionWeigher {
   @Override
-  public Integer weigh(@NotNull LookupElement element, CompletionLocation location) {
+  public Integer weigh(@NotNull LookupElement element, @Nullable CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     final Object o = element.getObject();
     if (o instanceof PsiMethod) {
       return ((PsiMethod)o).getParameterList().getParametersCount();

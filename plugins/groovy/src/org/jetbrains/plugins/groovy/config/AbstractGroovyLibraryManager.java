@@ -15,12 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.facet.impl.ui.ProjectConfigurableContext;
-import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -31,9 +28,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesCo
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,11 +58,6 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
       index++;
     }
     return newName;
-  }
-
-  @NotNull
-  public String getAddActionText() {
-    return "Create new " + getLibraryCategoryName() + " library...";
   }
 
   public Icon getDialogIcon() {
@@ -113,29 +105,15 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
     return library;
   }
 
-  @Override
-  public Library createLibrary(@NotNull FacetEditorContext context) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
-      public boolean isFileSelectable(VirtualFile file) {
-        return super.isFileSelectable(file) && isSDKHome(file);
-      }
-    };
-    final Project project = context.getModule().getProject();
-    final VirtualFile[] files = FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
-    if (files.length == 1) {
-      return createLibrary(files[0].getPath(), ((ProjectConfigurableContext)context).getContainer(), true);
-    }
-    return null;
-  }
-
   @Nullable
   public Library createLibrary(@NotNull final String path, final LibrariesContainer container, final boolean inModuleSettings) {
     final List<String> versions = CollectionFactory.arrayList();
     final Set<String> usedLibraryNames = CollectionFactory.newTroveSet();
     for (Library library : container.getAllLibraries()) {
       usedLibraryNames.add(library.getName());
-      if (managesLibrary(library, container)) {
-        ContainerUtil.addIfNotNull(getLibraryVersion(library, container), versions);
+      final VirtualFile[] libraryFiles = container.getLibraryFiles(library, OrderRootType.CLASSES);
+      if (managesLibrary(libraryFiles)) {
+        ContainerUtil.addIfNotNull(getLibraryVersion(libraryFiles), versions);
       }
     }
 

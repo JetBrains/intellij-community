@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.facet.ui.FacetEditorContext;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,37 +35,31 @@ public abstract class LibraryManager {
   public static LibraryManager findManagerFor(@NotNull Library library, final LibraryManager[] managers, final LibrariesContainer container) {
     for (final LibraryManager manager : managers) {
       final String name = library.getName();
-      if (name != null && manager.managesName(name) && manager.managesLibrary(library, container)) {
+      if (name != null && manager.managesName(name) && manager.managesLibrary(container.getLibraryFiles(library, OrderRootType.CLASSES))) {
         return manager;
       }
     }
 
     for (final LibraryManager manager : managers) {
-      if (manager.managesLibrary(library, container)) {
+      if (manager.managesLibrary(container.getLibraryFiles(library, OrderRootType.CLASSES))) {
         return manager;
       }
     }
     return null;
   }
 
-  public abstract boolean managesLibrary(@NotNull Library library, LibrariesContainer container);
+  public abstract boolean managesLibrary(final VirtualFile[] libraryFiles);
 
   @Nullable
   @Nls
-  public abstract String getLibraryVersion(@NotNull Library library, LibrariesContainer librariesContainer);
+  public abstract String getLibraryVersion(final VirtualFile[] libraryFiles);
 
   @NotNull
   public abstract Icon getIcon();
 
-  @NotNull
-  public abstract String getAddActionText();
-
   public abstract boolean isSDKHome(@NotNull VirtualFile file);
 
   public abstract @NotNull String getSDKVersion(String path);
-
-  @Nullable
-  public abstract Library createLibrary(@NotNull FacetEditorContext context);
 
   @NotNull @Nls public abstract String getLibraryCategoryName();
 

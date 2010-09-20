@@ -54,6 +54,8 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -295,13 +297,21 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       myTree.setSelectionRow(1);
     }
     TreeUtil.expandAll(myTree);
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       @Nullable
       public String convert(TreePath path) {
         final MemberChooserObject delegate = ((ElementNode)path.getLastPathComponent()).getDelegate();
         return delegate.getText();
       }
     });
+
+    treeSpeedSearch.addChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        myTree.repaint(); // to update match highlighting
+      }
+    });
+
     myTree.addMouseListener(
       new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {

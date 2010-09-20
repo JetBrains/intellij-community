@@ -19,10 +19,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.oro.text.regex.MalformedPatternException;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.Perl5Compiler;
-import org.apache.oro.text.regex.Perl5Matcher;
+import dk.brics.automaton.Automaton;
+import dk.brics.automaton.DatatypesAutomatonProvider;
+import dk.brics.automaton.RegExp;
+import dk.brics.automaton.RunAutomaton;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +37,7 @@ public class NameUtil {
       return s.toLowerCase();
     }
   };
+  private static final int MAX_LENGTH = 50;
 
   private NameUtil() {}
 
@@ -94,8 +95,8 @@ public class NameUtil {
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
     }
-    if (pattern.length() >= 80) {
-      pattern = pattern.substring(0, 80);
+    if (pattern.length() >= MAX_LENGTH) {
+      pattern = pattern.substring(0, MAX_LENGTH);
     }
 
     @NonNls final StringBuffer buffer = new StringBuffer();
@@ -134,6 +135,7 @@ public class NameUtil {
     }
 
     boolean firstIdentifierLetter = (exactPrefixLen == 0);
+    //System.out.println("pattern = " + pattern);
     for (int i = exactPrefixLen; i < pattern.length(); i++) {
       final char c = pattern.charAt(i);
       lastIsUppercase = false;
@@ -157,11 +159,10 @@ public class NameUtil {
             buffer.append(Character.toLowerCase(c));
           }
           if (!firstIdentifierLetter) {
-            buffer.append("|([A-Za-z\\s0-9\\$]*(_|-)(");
+            buffer.append("|[A-Za-z\\s0-9\\$]*[_-][");
             buffer.append(c);
-            buffer.append("|");
             buffer.append(Character.toLowerCase(c));
-            buffer.append("))");
+            buffer.append("]");
           }
           buffer.append(')');
         }
@@ -220,6 +221,7 @@ public class NameUtil {
       buffer.append("[a-z\\s0-9\\$]*");
     }
 
+    //System.out.println("rx = " + buffer.toString());
     return buffer.toString();
   }
 
@@ -382,19 +384,17 @@ public class NameUtil {
   private static class OptimizedMatcher implements Matcher {
     private final char[] myPreparedPattern;
     private final boolean myEnsureFirstSymbolsMatch;
-    private final Perl5Matcher myMatcher;
-    private final Pattern myPattern;
+    private final RunAutomaton myRunAutomaton;
 
     public OptimizedMatcher(String pattern, String regexp) {
       myPreparedPattern = preparePattern(pattern).toCharArray();
       myEnsureFirstSymbolsMatch = pattern.length() > 0 && Character.isLetterOrDigit(pattern.charAt(0));
-      try {
-        myPattern = new Perl5Compiler().compile(regexp);
-      }
-      catch (MalformedPatternException e) {
-        throw new RuntimeException(e);
-      }
-      myMatcher = new Perl5Matcher();
+
+      //final long t = System.currentTimeMillis();
+      final RegExp regExp = new RegExp(regexp);
+      final Automaton automaton = regExp.toAutomaton(new DatatypesAutomatonProvider());
+      myRunAutomaton = new RunAutomaton(automaton, true);
+      //System.out.println("t = " + (System.currentTimeMillis() - t));
     }
 
     public boolean matches(String name) {
@@ -402,7 +402,7 @@ public class NameUtil {
         return false;
       }
 
-      return myMatcher.matches(name, myPattern);
+      return myRunAutomaton.run(name);
     }
 
     private static String preparePattern(String pattern) {

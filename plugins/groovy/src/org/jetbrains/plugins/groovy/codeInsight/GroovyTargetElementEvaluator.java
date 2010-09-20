@@ -38,39 +38,31 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
 
   public PsiElement getElementByReference(PsiReference ref, int flags) {
     PsiElement sourceElement = ref.getElement();
-    if (sourceElement == null) return null;
 
+    if (!(sourceElement instanceof GrCodeReferenceElement)) return null;
 
-    if (sourceElement instanceof GrCodeReferenceElement) {
-      GrNewExpression newExpr;
+    GrNewExpression newExpr;
 
-      if (sourceElement.getParent() instanceof GrNewExpression) {
-        newExpr = (GrNewExpression)sourceElement.getParent();
-      }
-      else if (sourceElement.getParent().getParent() instanceof GrNewExpression) {//anonymous class declaration
-        newExpr = (GrNewExpression)sourceElement.getParent().getParent();
-      }
-      else {
-        return null;
-      }
-
-      final PsiMethod constructor = newExpr.resolveConstructor();
-      final GrArgumentList argumentList = newExpr.getArgumentList();
-      if (constructor != null &&
-          argumentList != null &&
-          argumentList.getNamedArguments().length != 0 &&
-          argumentList.getExpressionArguments().length == 0) {
-        if (constructor.getParameterList().getParametersCount() == 0) return constructor.getContainingClass();
-      }
-
-      return constructor;
+    if (sourceElement.getParent() instanceof GrNewExpression) {
+      newExpr = (GrNewExpression)sourceElement.getParent();
+    }
+    else if (sourceElement.getParent().getParent() instanceof GrNewExpression) {//anonymous class declaration
+      newExpr = (GrNewExpression)sourceElement.getParent().getParent();
+    }
+    else {
+      return null;
     }
 
-    if (sourceElement instanceof GrReferenceExpression) { // For Grails tags in GSP pager (e.g. <%  g.link()  %>)
-      return correctSearchTargets(((GrReferenceExpression)sourceElement).resolve());
+    final PsiMethod constructor = newExpr.resolveConstructor();
+    final GrArgumentList argumentList = newExpr.getArgumentList();
+    if (constructor != null &&
+        argumentList != null &&
+        argumentList.getNamedArguments().length != 0 &&
+        argumentList.getExpressionArguments().length == 0) {
+      if (constructor.getParameterList().getParametersCount() == 0) return constructor.getContainingClass();
     }
-    
-    return null;
+
+    return constructor;
   }
 
   @Nullable

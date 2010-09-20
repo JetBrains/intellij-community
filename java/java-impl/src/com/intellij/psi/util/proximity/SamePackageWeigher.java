@@ -24,6 +24,7 @@ import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -36,7 +37,10 @@ public class SamePackageWeigher extends ProximityWeigher {
     }
   });
 
-  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
+    if (location == null) {
+      return null;
+    }
     final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
     if (placePackage == null) {
       return false;

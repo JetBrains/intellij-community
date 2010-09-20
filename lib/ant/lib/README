@@ -1,16 +1,3 @@
 Please refer to the Ant manual under Installing Ant / Library
 Dependencies for a list of the jar requirements for various optional
 tasks and features.
-
-This directory contains xercesImpl.jar from the 2.9.0 release of
-Apache Xerces.  For more information or newer releases see
-<http://xerces.apache.org/xerces2-j/>.  Xerces is provided under the
-same license as Apache Ant itself, see the file LICENSE.txt.  For
-additional Xerces specific notes see the file NOTICE.xerces.
-
-It also contains xml-apis.jar, an Apache-controlled collection of
-standard classes from the 1.3.04 release of the Apache XML-Commons
-release.  For more information or newer releases see
-<http://xml.apache.org/commons/>.  See the files LICENSE.dom and
-LICENSE.sax for the terms of distribution.
-

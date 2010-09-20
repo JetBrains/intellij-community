@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -46,6 +47,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   private long myLastTotal = -1;
   private long myLastUsed = -1;
   private ScheduledFuture<?> myFuture;
+  private BufferedImage myBufferedImage;
+  private boolean myWasPressed;
 
   public MemoryUsagePanel() {
     setOpaque(false);
@@ -103,54 +106,71 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   public void paintComponent(final Graphics g) {
     final Dimension size = getSize();
 
-    final Runtime runtime = Runtime.getRuntime();
-    final long maxMemory = runtime.maxMemory();
-    final long freeMemory = maxMemory - runtime.totalMemory() + runtime.freeMemory();
-
-    final Insets insets = SystemInfo.isMac ? getInsets() : new Insets(0, 0, 0, 0);
-
-    final int totalBarLength = size.width - insets.left - insets.right - (SystemInfo.isMac ? 0 : 0);
-    final int usedBarLength = totalBarLength - (int)(totalBarLength * freeMemory / maxMemory);
-    final int barHeight = SystemInfo.isMac ? HEIGHT : size.height - insets.top - insets.bottom;
-    final Graphics2D g2 = (Graphics2D)g;
-
-    final int yOffset = (size.height - barHeight) / 2;
-    final int xOffset = insets.left + (SystemInfo.isMac ? 0 : 0);
-
     final boolean pressed = getModel().isPressed();
+    final boolean forced = myWasPressed && !pressed || !myWasPressed && pressed;
+    myWasPressed = pressed;
 
-    g2.setPaint(new GradientPaint(0, 0, new Color(190, 190, 190), 0, size.height - 1, new Color(230, 230, 230)));
-    g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
+    if (myBufferedImage == null || forced) {
+      myBufferedImage = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+      final Graphics bg = myBufferedImage.getGraphics().create();
 
-    if (pressed) {
-      g2.setPaint(new GradientPaint(1, 1, new Color(101, 111, 135), 0, size.height - 2, new Color(175, 185, 202)));
-      g2.fillRect(xOffset + 1, yOffset, usedBarLength, barHeight);
-    } else {
-      g2.setPaint(new GradientPaint(1, 1, new Color(175, 185, 202), 0, size.height - 2, new Color(126, 138, 168)));
-      g2.fillRect(xOffset + 1, yOffset, usedBarLength, barHeight);
+      final Runtime runtime = Runtime.getRuntime();
+      final long maxMemory = runtime.maxMemory();
+      final long freeMemory = maxMemory - runtime.totalMemory() + runtime.freeMemory();
+
+      final Insets insets = SystemInfo.isMac ? getInsets() : new Insets(0, 0, 0, 0);
+
+      final int totalBarLength = size.width - insets.left - insets.right - (SystemInfo.isMac ? 0 : 0);
+      final int usedBarLength = totalBarLength - (int)(totalBarLength * freeMemory / maxMemory);
+      final int allocatedBarWidth = totalBarLength - (int)(totalBarLength * (freeMemory - runtime.freeMemory()) / maxMemory);
+      final int barHeight = SystemInfo.isMac ? HEIGHT : size.height - insets.top - insets.bottom;
+      final Graphics2D g2 = (Graphics2D)bg;
+
+      final int yOffset = (size.height - barHeight) / 2;
+      final int xOffset = insets.left + (SystemInfo.isMac ? 0 : 0);
+
+      g2.setPaint(new GradientPaint(0, 0, new Color(190, 190, 190), 0, size.height - 1, new Color(230, 230, 230)));
+      g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
+
+      g2.setPaint(new GradientPaint(0, 0, new Color(200, 200, 200, 100), 0, size.height - 1, new Color(150, 150, 150, 130)));
+      g2.fillRect(xOffset + 1, yOffset, allocatedBarWidth, barHeight);
+
+      g2.setColor(new Color(175, 175, 175));
+      g2.drawLine(xOffset + allocatedBarWidth, yOffset + 1, xOffset + allocatedBarWidth, yOffset + barHeight - 1);
+
+      if (pressed) {
+        g2.setPaint(new GradientPaint(1, 1, new Color(101, 111, 135), 0, size.height - 2, new Color(175, 185, 202)));
+        g2.fillRect(xOffset + 1, yOffset, usedBarLength, barHeight);
+      } else {
+        g2.setPaint(new GradientPaint(1, 1, new Color(175, 185, 202), 0, size.height - 2, new Color(126, 138, 168)));
+        g2.fillRect(xOffset + 1, yOffset, usedBarLength, barHeight);
+
+        if (SystemInfo.isMac) {
+          g2.setColor(new Color(194, 197, 203));
+          g2.drawLine(xOffset + 1, yOffset+1, allocatedBarWidth, yOffset+1);
+        }
+      }
 
       if (SystemInfo.isMac) {
-        g2.setColor(new Color(194, 197, 203));
-        g2.drawLine(xOffset + 1, yOffset+1, xOffset + usedBarLength, yOffset+1);
+        g2.setColor(new Color(110, 110, 110));
+        g2.drawRect(xOffset, yOffset, totalBarLength, barHeight - 1);
       }
+
+      g2.setFont(getFont());
+      final long used = (maxMemory - freeMemory) / MEGABYTE;
+      final long total = maxMemory / MEGABYTE;
+      final String info = UIBundle.message("memory.usage.panel.message.text", Long.toString(used), Long.toString(total));
+      final FontMetrics fontMetrics = g.getFontMetrics();
+      final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
+      final int infoHeight = fontMetrics.getHeight() - fontMetrics.getDescent();
+      UIUtil.applyRenderingHints(g);
+
+      g2.setColor(Color.black);
+      g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + (barHeight + infoHeight) / 2 - 1);
+      bg.dispose();
     }
 
-    if (SystemInfo.isMac) {
-      g2.setColor(new Color(110, 110, 110));
-      g2.drawRect(xOffset, yOffset, totalBarLength, barHeight - 1);
-    }
-
-    g.setFont(getFont());
-    final long used = (maxMemory - freeMemory) / MEGABYTE;
-    final long total = maxMemory / MEGABYTE;
-    final String info = UIBundle.message("memory.usage.panel.message.text", Long.toString(used), Long.toString(total));
-    final FontMetrics fontMetrics = g.getFontMetrics();
-    final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
-    final int infoHeight = fontMetrics.getHeight() - fontMetrics.getDescent();
-    UIUtil.applyRenderingHints(g);
-
-    g.setColor(Color.black);
-    g.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + (barHeight + infoHeight) / 2 - 1);
+    g.drawImage(myBufferedImage, 0, 0, null);
   }
 
   public final int getPreferredWidth() {
@@ -181,7 +201,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
           }
         });
       }
-    }, 1, 1, TimeUnit.SECONDS);
+    }, 1, 5, TimeUnit.SECONDS);
     super.addNotify();
   }
 
@@ -199,6 +219,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          myBufferedImage = null;
           repaint();
         }
       });

@@ -342,6 +342,7 @@
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorProvider" />
 
   <programRunner implementation="com.intellij.tools.ToolProgramRunner"/>
+  <programRunner implementation="com.intellij.execution.runners.BasicProgramRunner" order="last"/>
 
   <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
   <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension"/>
