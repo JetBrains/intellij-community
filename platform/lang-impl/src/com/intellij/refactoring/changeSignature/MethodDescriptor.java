@@ -35,4 +35,8 @@ public interface MethodDescriptor<P extends ParameterInfo> {
   PsiElement getMethod();
 
   boolean canChangeVisibility();
+
+  boolean canChangeParameters();
+
+  boolean canChangeReturnType();
 }

@@ -82,4 +82,14 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl>
     PsiClass containingClass = myMethod.getContainingClass();
     return containingClass != null && !containingClass.isInterface();
   }
+
+  @Override
+  public boolean canChangeParameters() {
+    return true;
+  }
+
+  @Override
+  public boolean canChangeReturnType() {
+    return true;
+  }
 }
