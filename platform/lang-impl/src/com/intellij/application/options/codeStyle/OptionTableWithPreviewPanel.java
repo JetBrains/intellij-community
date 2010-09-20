@@ -325,7 +325,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     //
   }
 
-  private static abstract class Option {
+  private abstract class Option {
     @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
     @NotNull final Field field;
     @NotNull final String title;
@@ -362,11 +362,12 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     public abstract void setValue(Object value, CodeStyleSettings settings);
 
     protected Object getSettings(CodeStyleSettings settings) {
-      return clazz == null ? settings : settings.getCustomSettings(clazz);
+      if (clazz != null) return settings.getCustomSettings(clazz);
+      return settings.getCommonSettings(getSelectedLanguage());
     }
   }
 
-  private static class BooleanOption extends Option {
+  private class BooleanOption extends Option {
     private BooleanOption(Class<? extends CustomCodeStyleSettings> clazz,
                           @NotNull String fieldName,
                           @NotNull String title,
@@ -393,7 +394,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
   }
 
-  private static class SelectionOption extends Option {
+  private class SelectionOption extends Option {
     @NotNull final String[] options;
     @NotNull final int[] values;
 
