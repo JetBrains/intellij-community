@@ -140,8 +140,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           public boolean canBeDismissedOnTimeout() {
             return false;
           }
-        };
-        tooltip.setPreferredPosition(hintInfo.getPreferredPosition());
+        }.setToCenterIfSmall(false).setPreferredPosition(hintInfo.getPreferredPosition());
+
         myComponent.validate();
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().showTipNow(tooltip);
       } else {

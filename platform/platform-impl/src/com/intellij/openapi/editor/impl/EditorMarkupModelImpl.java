@@ -45,6 +45,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
@@ -658,7 +659,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject, HintHint hintHint) {
     TooltipController tooltipController = TooltipController.getInstance();
-    tooltipController.showTooltipByMouseMove(myEditor, e, tooltipObject,
+    tooltipController.showTooltipByMouseMove(myEditor, new RelativePoint(e), tooltipObject,
                                              myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
                                              ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
   }

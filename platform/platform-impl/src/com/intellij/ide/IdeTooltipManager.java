@@ -194,7 +194,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     boolean toCenterY;
 
     boolean toCenter = tooltip.isToCenter();
-    if (!toCenter) {
+    if (!toCenter && tooltip.isToCenterIfSmall()) {
       Dimension size = tooltip.getComponent().getSize();
       toCenterX = size.width < 64;
       toCenterY = size.height < 64;

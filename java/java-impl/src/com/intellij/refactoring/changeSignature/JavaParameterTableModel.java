@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.StringTableCellEditor;
+import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +75,10 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
     final PsiTypeCodeFragment paramTypeCodeFragment =
       f.createTypeCodeFragment(parameterInfo.getTypeText(), myTypeContext, false, true, true);
-    parameterInfo.getTypeWrapper().addImportsTo(paramTypeCodeFragment);
+    final CanonicalTypes.Type paramType = parameterInfo.getTypeWrapper();
+    if (paramType != null) {
+      paramType.addImportsTo(paramTypeCodeFragment);
+    }
     PsiExpressionCodeFragment defaultValueCodeFragment =
       f.createExpressionCodeFragment(parameterInfo.getDefaultValue(), myDefaultValueContext, null, true);
     defaultValueCodeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);

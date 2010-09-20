@@ -31,7 +31,7 @@ public class AntResourcesClassLoader extends UrlClassLoader {
   private final Set<String> myMisses = new HashSet<String>();
 
   public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
-    super(urls, parentLoader, canLockJars, canUseCache);
+    super(urls, parentLoader, canLockJars, canUseCache, true);
   }
 
   protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
