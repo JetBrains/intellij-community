@@ -39,7 +39,7 @@ public class PyImportedModuleType implements PyType {
     }
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
     List<LookupElement> result = new ArrayList<LookupElement>();
     final List<PyImportElement> importTargets = ((PyFileImpl)myImportedModule.getContainingFile()).getImportTargets();
     final int imported = myImportedModule.getImportedPrefix().getComponentCount();

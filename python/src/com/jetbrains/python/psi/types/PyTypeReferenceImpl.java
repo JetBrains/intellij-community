@@ -20,7 +20,7 @@ public abstract class PyTypeReferenceImpl implements PyTypeReference {
     return Collections.emptyList();
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

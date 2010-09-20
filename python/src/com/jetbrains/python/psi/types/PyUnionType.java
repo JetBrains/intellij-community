@@ -38,11 +38,11 @@ public class PyUnionType implements PyType {
     return all_nulls ? null : ret;
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
     Set<Object> variants = new HashSet<Object>();
     for (PyType member : myMembers) {
       if (member != null) {
-        Collections.addAll(variants, member.getCompletionVariants(completionPrefix, expressionHook, context));
+        Collections.addAll(variants, member.getCompletionVariants(completionPrefix, location, context));
       }
     }
     return variants.toArray(new Object[variants.size()]);

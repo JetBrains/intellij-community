@@ -24,7 +24,7 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
     return null;
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 

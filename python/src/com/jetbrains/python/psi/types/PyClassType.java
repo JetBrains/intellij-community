@@ -135,7 +135,7 @@ public class PyClassType implements PyType {
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
 
-  public Object[] getCompletionVariants(String prefix, PyExpression expressionHook, ProcessingContext context) {
+  public Object[] getCompletionVariants(String prefix, PyExpression location, ProcessingContext context) {
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
       visited = new HashSet<PyClassType>();
@@ -161,9 +161,9 @@ public class PyClassType implements PyType {
       }
     }
 
-    addOwnClassMembers(expressionHook, namesAlready, ret, underscoreFilter);
+    addOwnClassMembers(location, namesAlready, ret, underscoreFilter);
 
-    addInheritedMembers(prefix, expressionHook, context, ret);
+    addInheritedMembers(prefix, location, context, ret);
 
     return ret.toArray();
   }

@@ -206,4 +206,11 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     final List<String> elements = myFixture.getLookupElementStrings();
     assertTrue(elements.contains("import"));
   }
+
+  public void testImportItself() {  // PY-1895
+    myFixture.copyDirectoryToProject("completion/importItself/package1", "package1");
+    myFixture.configureFromTempProjectFile("package1/submodule1.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/importItself.after.py");
+  }
 }

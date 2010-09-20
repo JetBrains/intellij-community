@@ -89,13 +89,13 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
     Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
-    ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(expressionHook.getReference());
+    ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(location.getReference());
     if (role == NONE) { // when not inside import, add regular attributes
-      final VariantsProcessor processor = new VariantsProcessor(expressionHook);
-      myModule.processDeclarations(processor, ResolveState.initial(), null, expressionHook);
+      final VariantsProcessor processor = new VariantsProcessor(location);
+      myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (names_already != null) {
         for (LookupElement le : processor.getResultList()) {
           String name = le.getLookupString();
@@ -111,6 +111,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
     else /*if (role == AS_MODULE)*/ { // when being imported, add submodules
       for (PsiFileSystemItem pfsi : getSubmodulesList()) {
+        if (pfsi == location.getContainingFile().getOriginalFile()) continue;
         String s = pfsi.getName();
         int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
         if (pos > 0) s = s.substring(0, pos);

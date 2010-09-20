@@ -38,7 +38,7 @@ public interface PyType {
    * @param context             to share state between nested invocations
    * @return completion variants good for {@link com.intellij.psi.PsiReference#getVariants} return value.
    */
-  Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context);
+  Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context);
 
   /**
    * Context key for access to a set of names already found by variant search.
