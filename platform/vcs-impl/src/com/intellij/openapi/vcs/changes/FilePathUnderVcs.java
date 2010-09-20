@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsRoot;
 public class FilePathUnderVcs {
   private final FilePath myPath;
   private final AbstractVcs myVcs;
+  private int hashcode;
 
   public FilePathUnderVcs(final FilePath path, final AbstractVcs vcs) {
     myPath = path;
@@ -58,8 +59,10 @@ public class FilePathUnderVcs {
 
   @Override
   public int hashCode() {
-    int result = myPath != null ? myPath.hashCode() : 0;
-    result = 31 * result + (myVcs != null ? myVcs.getName().hashCode() : 0);
-    return result;
+    if (hashcode == 0) {
+      hashcode = myPath != null ? myPath.hashCode() : 0;
+      hashcode = 31 * hashcode + (myVcs != null ? myVcs.getName().hashCode() : 0);
+    }
+    return hashcode;
   }
 }
