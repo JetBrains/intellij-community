@@ -130,7 +130,7 @@ public class IncomingChangesIndicator implements ProjectComponent {
     private void update(@NotNull final Icon icon, @Nullable final String toolTipText) {
       myCurrentIcon = icon;
       myToolTipText = toolTipText;
-      myStatusBar.updateWidget(ID());
+      if (myStatusBar != null) myStatusBar.updateWidget(ID());
     }
 
     @NotNull
@@ -145,6 +145,7 @@ public class IncomingChangesIndicator implements ProjectComponent {
     public Consumer<MouseEvent> getClickConsumer() {
       return new Consumer<MouseEvent>() {
         public void consume(final MouseEvent mouseEvent) {
+          if (myStatusBar != null) {
           DataContext dataContext = DataManager.getInstance().getDataContext((Component) myStatusBar);
           final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
           if (project != null) {
@@ -154,6 +155,7 @@ public class IncomingChangesIndicator implements ProjectComponent {
                 ChangesViewContentManager.getInstance(project).selectContent("Incoming");
               }
             });
+          }
           }
         }
       };
