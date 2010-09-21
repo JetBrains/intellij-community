@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsComponent;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
@@ -41,19 +42,20 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   private LibraryRootsComponent myLibraryEditor;
   private final Library myLibrary;
   private final StructureLibraryTableModifiableModelProvider myModel;
+  private final StructureConfigurableContext myContext;
   private final Project myProject;
   private final LibraryProjectStructureElement myProjectStructureElement;
   private boolean myUpdatingName;
 
   protected LibraryConfigurable(final StructureLibraryTableModifiableModelProvider modelProvider,
                                 final Library library,
-                                final Project project,
+                                final StructureConfigurableContext context,
                                 final Runnable updateTree) {
     super(true, updateTree);
     myModel = modelProvider;
-    myProject = project;
+    myContext = context;
+    myProject = context.getProject();
     myLibrary = library;
-    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
     myProjectStructureElement = new LibraryProjectStructureElement(context, myLibrary);
   }
 
@@ -132,6 +134,10 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public Icon getIcon() {
+    final Icon icon = LibraryPresentationManager.getInstance().getCustomIcon(myLibrary, myContext);
+    if (icon != null) {
+      return icon;
+    }
     return ICON;
   }
 

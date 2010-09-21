@@ -36,8 +36,10 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -90,6 +92,7 @@ public class LibraryRootsComponent implements Disposable {
   private JPanel myTreePanel;
   private JButton myAttachAnnotationsButton;
   private JButton myAttachMoreButton;
+  private MultiLineLabel myPropertiesLabel;
   private Tree myTree;
   private LibraryTableTreeBuilder myTreeBuilder;
   private static final Icon INVALID_ITEM_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
@@ -101,10 +104,21 @@ public class LibraryRootsComponent implements Disposable {
   private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
   private final LibraryEditor myLibraryEditor;
 
-  private LibraryRootsComponent(Project project,
-                             LibraryEditor libraryEditor){
+  private LibraryRootsComponent(Project project, LibraryEditor libraryEditor) {
     myProject = project;
     myLibraryEditor = libraryEditor;
+    updateProperties();
+  }
+
+  private void updateProperties() {
+    StringBuilder text = new StringBuilder();
+    for (String description : LibraryPresentationManager.getInstance().getDescriptions(myLibraryEditor.getFiles(OrderRootType.CLASSES))) {
+      if (text.length() > 0) {
+        text.append("\n");
+      }
+      text.append(description);
+    }
+    myPropertiesLabel.setText(text.toString());
   }
 
   public static LibraryRootsComponent createComponent(final @Nullable Project project, @NotNull LibraryEditor libraryEditor) {
@@ -337,6 +351,7 @@ public class LibraryRootsComponent implements Disposable {
           }
         }
       });
+      updateProperties();
       myTreeBuilder.updateFromRoot();
     }
     return filesToAttach;
@@ -491,6 +506,7 @@ public class LibraryRootsComponent implements Disposable {
   }
 
   protected void librariesChanged(boolean putFocusIntoTree) {
+    updateProperties();
     myTreeBuilder.updateFromRoot();
     if (putFocusIntoTree) {
       myTree.requestFocus();

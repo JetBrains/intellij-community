@@ -276,6 +276,8 @@
 
   <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType"/>
 
+  <extensionPoint name="library.detector" interface="com.intellij.openapi.roots.libraries.LibraryDetector"/>
+
   <extensionPoint name="lang.implementationTextSelectioner"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.lineWrapStrategy"

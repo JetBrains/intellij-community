@@ -13,12 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.libraryEditor;
+package com.intellij.openapi.roots.libraries;
+
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class LibraryRootsData {
+public class LibraryKind<P extends LibraryProperties> {
+  private String myKindId;
 
+  public LibraryKind(@NotNull @NonNls String kindId) {
+    myKindId = kindId;
+  }
 
+  public String getKindId() {
+    return myKindId;
+  }
+
+  @Override
+  public String toString() {
+    return "LibraryKind:" + myKindId;
+  }
 }

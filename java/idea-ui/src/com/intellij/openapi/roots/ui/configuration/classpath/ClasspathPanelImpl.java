@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
@@ -27,10 +26,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
-import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
@@ -69,8 +65,6 @@ import java.util.List;
 import java.util.Set;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel");
-
   private final Table myEntryTable;
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
@@ -90,7 +84,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.setShowVerticalLines(false);
     myEntryTable.setIntercellSpacing(new Dimension(0, 0));
 
-    myEntryTable.setDefaultRenderer(ClasspathTableItem.class, new TableItemRenderer());
+    myEntryTable.setDefaultRenderer(ClasspathTableItem.class, new TableItemRenderer(getStructureConfigurableContext()));
     myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer(myEntryTable.getDefaultRenderer(Boolean.class)));
 
     JComboBox scopeEditor = new JComboBox(new EnumComboBoxModel<DependencyScope>(DependencyScope.class));
@@ -117,7 +111,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
 
       public String getElementText(Object element) {
-        return getCellAppearance((ClasspathTableItem)element, false).getText();
+        return getCellAppearance((ClasspathTableItem)element, getStructureConfigurableContext(), false).getText();
       }
 
       public void selectElement(Object element, String selectedText) {
@@ -384,7 +378,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           };
         }
         else {
-          provider = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext().createModifiableModelProvider(table.getTableLevel());
+          provider = getStructureConfigurableContext().createModifiableModelProvider(table.getTableLevel());
         }
         EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject());
         dialog.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, getRootModel().getModule());
@@ -457,11 +451,10 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   private void initPopupActions() {
     if (myPopupActions == null) {
-      final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext();
       int actionIndex = 1;
       final List<AddItemPopupAction<?>> actions = new ArrayList<AddItemPopupAction<?>>();
       actions.add(new AddSingleEntryModuleLibraryAction(this, actionIndex++));
-      actions.add(new AddLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
+      actions.add(new AddLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), getStructureConfigurableContext()));
       actions.add(new AddItemPopupAction<Module>(this, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
                                                  StdModuleTypes.JAVA.getNodeIcon(false)) {
           protected ClasspathTableItem createTableItem(final Module item) {
@@ -480,6 +473,10 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
       myPopupActions = actions;
     }
+  }
+
+  private StructureConfigurableContext getStructureConfigurableContext() {
+    return ProjectStructureConfigurable.getInstance(myState.getProject()).getContext();
   }
 
 
@@ -596,24 +593,31 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
 
-  private static CellAppearance getCellAppearance(final ClasspathTableItem item, final boolean selected) {
+  private static CellAppearance getCellAppearance(final ClasspathTableItem item,
+                                                  StructureConfigurableContext context,
+                                                  final boolean selected) {
     if (item instanceof InvalidJdkItem) {
       return OrderEntryCellAppearanceUtils.forJdk(null, false, selected);
     }
     else {
-      return OrderEntryCellAppearanceUtils.forOrderEntry(item.getEntry(), selected);
+      return ProjectStructureDialogCellAppearanceUtils.forOrderEntry(item.getEntry(), context, selected);
     }
   }
 
   private static class TableItemRenderer extends ColoredTableCellRenderer {
     private final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
+    private StructureConfigurableContext myContext;
+
+    public TableItemRenderer(StructureConfigurableContext context) {
+      myContext = context;
+    }
 
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
       setBorder(NO_FOCUS_BORDER);
       if (value instanceof ClasspathTableItem) {
-        getCellAppearance((ClasspathTableItem)value, selected).customize(this);
+        getCellAppearance((ClasspathTableItem)value, myContext, selected).customize(this);
       }
     }
   }
