@@ -8,6 +8,8 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+
 /**
  * @author yole
  */
@@ -19,7 +21,7 @@ public class PyImportOptimizer implements ImportOptimizer {
   @NotNull
   public Runnable processFile(PsiFile file) {
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
-    final PyUnresolvedReferencesInspection.Visitor visitor = new PyUnresolvedReferencesInspection.Visitor(null, session);
+    final PyUnresolvedReferencesInspection.Visitor visitor = new PyUnresolvedReferencesInspection.Visitor(null, session, Collections.<String>emptyList());
     file.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyElement(PyElement node) {

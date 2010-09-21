@@ -1,9 +1,14 @@
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -23,6 +28,7 @@ import com.jetbrains.python.validation.PythonReferenceImporter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -33,6 +39,15 @@ import java.util.*;
 public class PyUnresolvedReferencesInspection extends PyInspection {
   private static Key<Visitor> KEY = Key.create("PyUnresolvedReferencesInspection.Visitor");
 
+  public JDOMExternalizableStringList ignoredIdentifiers = new JDOMExternalizableStringList();
+
+  public static PyUnresolvedReferencesInspection getInstance(PsiElement element) {
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+    final LocalInspectionToolWrapper profileEntry =
+      (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(PyUnresolvedReferencesInspection.class.getSimpleName(), element);
+    return (PyUnresolvedReferencesInspection)profileEntry.getTool();
+  }
+
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -42,7 +57,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, final LocalInspectionToolSession session) {
-    final Visitor visitor = new Visitor(holder, session);
+    final Visitor visitor = new Visitor(holder, session, ignoredIdentifiers);
     session.putUserData(KEY, visitor);
     return visitor;
   }
@@ -57,12 +72,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     session.putUserData(KEY, null);
   }
 
+  @Override
+  public JComponent createOptionsPanel() {
+    ListEditForm form = new ListEditForm("Ignore identifiers", ignoredIdentifiers);
+    return form.getContentPanel();
+  }
+
   public static class Visitor extends PyInspectionVisitor {
     private Set<NameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
     private Set<NameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
+    private final ImmutableSet<String> myIgnoredIdentifiers;
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
+    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
       super(holder, session);
+      myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
     }
 
     @Override
@@ -153,6 +176,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (reference.getElement() instanceof PyReferenceExpression) {
         PyReferenceExpression refex = (PyReferenceExpression)reference.getElement();
         String refname = refex.getReferencedName();
+        if (myIgnoredIdentifiers.contains(refname)) {
+          return;
+        }
         if (refex.getQualifier() != null) {
           final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
           if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) return;
@@ -258,6 +284,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (GenerateBinaryStubsFix.isApplicable(reference)) {
         actions.add(new GenerateBinaryStubsFix(reference));
       }
+      actions.add(new AddIgnoredIdentifierFix(ref_text));
       addPluginQuickFixes(reference, actions);
 
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
