@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.siyeh.ig.errorhandling.BadExceptionCaughtInspection.Form">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.codeInspection.ui.ListEditForm">
   <grid id="33211" binding="contentPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="4" vgap="4">
     <margin top="4" left="4" bottom="4" right="4"/>
     <constraints>

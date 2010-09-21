@@ -15,9 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.RemoveAction;
+import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiParameter;
@@ -27,7 +25,6 @@ import com.intellij.psi.PsiTypeElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.intellij.codeInspection.ui.AddAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +66,8 @@ public class BadExceptionCaughtInspection extends BaseInspection {
     }
 
     public JComponent createOptionsPanel() {
-        final Form form = new Form();
+        final ListEditForm form = new ListEditForm(InspectionGadgetsBundle.message("exception.class.column.name"),
+                                                   exceptionList);
         return form.getContentPanel();
     }
 
@@ -89,7 +87,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
 
     private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
 
-        private final Set<String> exceptionSet = new HashSet(exceptionList);
+        private final Set<String> exceptionSet = new HashSet<String>(exceptionList);
 
         @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
@@ -113,27 +111,4 @@ public class BadExceptionCaughtInspection extends BaseInspection {
         }
     }
 
-    private class Form {
-
-        JPanel contentPanel;
-        JButton addButton;
-        JButton removeButton;
-        ListTable table;
-
-        Form() {
-            super();
-            removeButton.setAction(new RemoveAction(table));
-            addButton.setAction(new AddAction(table));
-        }
-
-        private void createUIComponents() {
-            table = new ListTable(new ListWrappingTableModel(exceptionList,
-                    InspectionGadgetsBundle.message(
-                            "exception.class.column.name")));
-        }
-
-        public JComponent getContentPanel() {
-            return contentPanel;
-        }
-    }
 }
