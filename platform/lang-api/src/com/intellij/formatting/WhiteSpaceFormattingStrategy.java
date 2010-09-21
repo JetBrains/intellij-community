@@ -41,4 +41,12 @@ public interface WhiteSpaceFormattingStrategy {
    *                  can be treated as white spaces
    */
   int check(@NotNull CharSequence text, int start, int end);
+
+  /**
+   * @return    <code>true</code> if default white space strategy used by formatter should be replaced by the current one;
+   *            <code>false</code> to indicate that current strategy should be used in composition with default strategy
+   *            if any, i.e. particular symbols sequence should be considered as white spaces if any of composed
+   *            strategies defines so
+   */
+  boolean replaceDefaultStrategy();
 }

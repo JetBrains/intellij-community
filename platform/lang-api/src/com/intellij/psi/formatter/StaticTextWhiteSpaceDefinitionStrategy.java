@@ -45,4 +45,9 @@ public class StaticTextWhiteSpaceDefinitionStrategy implements WhiteSpaceFormatt
 
     return start;
   }
+
+  @Override
+  public boolean replaceDefaultStrategy() {
+    return false;
+  }
 }

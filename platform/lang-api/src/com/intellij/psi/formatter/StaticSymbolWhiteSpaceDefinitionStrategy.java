@@ -56,4 +56,9 @@ public class StaticSymbolWhiteSpaceDefinitionStrategy implements WhiteSpaceForma
     }
     return end;
   }
+
+  @Override
+  public boolean replaceDefaultStrategy() {
+    return false;
+  }
 }
