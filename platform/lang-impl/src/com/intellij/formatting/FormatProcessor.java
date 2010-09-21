@@ -240,9 +240,18 @@ class FormatProcessor {
     final TextRange textRange = whiteSpace.getTextRange();
     final TextRange wsRange = shiftRange(textRange, shift);
     final String newWhiteSpace = _newWhiteSpace.toString();
-    TextRange newWhiteSpaceRange = model.replaceWhiteSpace(wsRange, newWhiteSpace);
 
-    shift += newWhiteSpaceRange.getLength() - textRange.getLength();
+    Document document = model.getDocumentModel().getDocument();
+    int documentLengthBefore = document == null ? -1 : document.getTextLength();
+    TextRange newWhiteSpaceRange = model.replaceWhiteSpace(wsRange, newWhiteSpace);
+    if (document == null) {
+      shift += newWhiteSpaceRange.getLength() - textRange.getLength();
+    }
+    else {
+      // We consider that the most precise way to calculate the shift is to compare document lengths. There is at least one
+      // use-case when comparing ranges length may be not enough (range to replace consists of two adjacent white space elements).
+      shift += document.getTextLength() - documentLengthBefore;
+    }
 
     if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
       final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
