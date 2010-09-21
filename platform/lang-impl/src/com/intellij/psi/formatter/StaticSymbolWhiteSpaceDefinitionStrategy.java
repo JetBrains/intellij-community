@@ -23,12 +23,15 @@ import org.jetbrains.annotations.NotNull;
  * {@link WhiteSpaceFormattingStrategy} implementation that is pre-configured with the set of symbols that may
  * be treated as white spaces.
  * <p/>
+ * Please note that this class exists just for performance reasons (functionally we can use
+ * {@link StaticTextWhiteSpaceDefinitionStrategy} with strings consisting from single symbol all the time).
+ * <p/>
  * Thread-safe.
  *
  * @author Denis Zhdanov
  * @since Sep 20, 2010 5:11:49 PM
  */
-public class StaticWhiteSpaceDefinitionStrategy implements WhiteSpaceFormattingStrategy {
+public class StaticSymbolWhiteSpaceDefinitionStrategy implements WhiteSpaceFormattingStrategy {
 
   private final TIntHashSet myWhiteSpaceSymbols = new TIntHashSet();
 
@@ -37,7 +40,7 @@ public class StaticWhiteSpaceDefinitionStrategy implements WhiteSpaceFormattingS
    *
    * @param whiteSpaceSymbols   symbols that should be treated as white spaces by the current strategy
    */
-  public StaticWhiteSpaceDefinitionStrategy(char ... whiteSpaceSymbols) {
+  public StaticSymbolWhiteSpaceDefinitionStrategy(char ... whiteSpaceSymbols) {
     for (char symbol : whiteSpaceSymbols) {
       myWhiteSpaceSymbols.add(symbol);
     }

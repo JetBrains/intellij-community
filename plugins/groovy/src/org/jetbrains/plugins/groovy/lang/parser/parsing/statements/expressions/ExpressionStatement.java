@@ -16,11 +16,17 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 
+import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.CommandArguments;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 
 /**
  * Main classdef for any general expression parsing
@@ -29,26 +35,19 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
  */
 public class ExpressionStatement implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
-
+  @Nullable
+  private static IElementType parseExpressionStatement(PsiBuilder builder, GroovyParser parser) {
+    final LighterASTNode firstDoneMarker = builder.getLatestDoneMarker();
     PsiBuilder.Marker marker = builder.mark();
-
-    if (AssignmentExpression.parse(builder, parser)) {
-      if (!TokenSets.SEPARATORS.contains(builder.getTokenType())) {
-        if (CommandArguments.parse(builder, parser)) {
-          marker.done(CALL_EXPRESSION);
-        } else {
-          marker.drop();
-        }
-      } else {
-        marker.drop();
-      }
-
-      return true;
-    } else {
-      marker.drop();
-      return false;
+    if (AssignmentExpression.parse(builder, parser) &&
+        !TokenSets.SEPARATORS.contains(builder.getTokenType()) &&
+        CommandArguments.parse(builder, parser)) {
+      marker.done(CALL_EXPRESSION);
+      return CALL_EXPRESSION;
     }
+    marker.drop();
+    final LighterASTNode latestDoneMarker = builder.getLatestDoneMarker();
+    return latestDoneMarker != null && firstDoneMarker != latestDoneMarker ? latestDoneMarker.getTokenType() : WRONGWAY;
   }
 
   /**
@@ -61,5 +60,40 @@ public class ExpressionStatement implements GroovyElementTypes {
     return AssignmentExpression.parse(builder, parser);
   }
 
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+    builder.setDebugMode(true);
+    PsiBuilder.Marker marker = builder.mark();
 
+    final IElementType result = parseExpressionStatement(builder, parser);
+    if (result != CALL_EXPRESSION) {
+      marker.drop();
+      return result != null;
+    }
+
+    while (true) {
+      if (PathExpression.namePartParse(builder, parser) != REFERENCE_EXPRESSION) {
+        marker.drop();
+        break;
+      }
+      final PsiBuilder.Marker exprStatement = marker.precede();
+      marker.done(REFERENCE_EXPRESSION);
+
+      if (builder.getTokenType() == mLPAREN) {
+        PrimaryExpression.methodCallArgsParse(builder, parser);
+        exprStatement.done(PATH_METHOD_CALL);
+      }
+      else if (CommandArguments.parse(builder, parser)) {
+        exprStatement.done(CALL_EXPRESSION);
+      }
+      else {
+        exprStatement.drop();
+        builder.error(GroovyBundle.message("expression.expected"));
+        break;
+      }
+
+      marker = exprStatement.precede();
+    }
+
+    return true;
+  }
 }
