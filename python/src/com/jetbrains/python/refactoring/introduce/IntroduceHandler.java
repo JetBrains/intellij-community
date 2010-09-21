@@ -24,6 +24,7 @@ import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.NameSuggestorUtil;
@@ -91,11 +92,17 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {
     Collection<String> candidates = new HashSet<String>();
     String text = expression.getText();
+    if (expression instanceof PyCallExpression) {
+      final PyExpression callee = ((PyCallExpression)expression).getCallee();
+      if (callee != null) {
+        text = callee.getText();
+      }
+    }
     if (text != null) {
       candidates.addAll(NameSuggestorUtil.generateNames(text));
     }
     PyType type = expression.getType(TypeEvalContext.slow());
-    if (type != null) {
+    if (type != null && type != PyNoneType.INSTANCE) {
       final String typeName = type.getName();
       if (typeName != null) {
         candidates.addAll(NameSuggestorUtil.generateNamesByType(typeName));

@@ -16,9 +16,9 @@ public class NameSuggestorUtil {
   }
 
   private static String deleteNonLetterFromString(@NotNull final String string) {
-    Pattern pattern = Pattern.compile("[^a-zA-Z_]");
+    Pattern pattern = Pattern.compile("[^a-zA-Z_]+");
     Matcher matcher = pattern.matcher(string);
-    return matcher.replaceAll("");
+    return matcher.replaceAll("_");
   }
 
   @NotNull
@@ -37,9 +37,11 @@ public class NameSuggestorUtil {
     final Collection<String> possibleNames = new HashSet<String>();
     for (int i = 0; i < length; i++) {
       if (Character.isLetter(name.charAt(i)) &&
-          (i == 0 || name.charAt(i - 1) == '_' || Character.isLowerCase(name.charAt(i - 1)) && Character.isUpperCase(name.charAt(i)))) {
+          (i == 0 || name.charAt(i - 1) == '_' || (Character.isLowerCase(name.charAt(i - 1)) && Character.isUpperCase(name.charAt(i))))) {
         final String candidate = StringUtil.decapitalize(toUnderscoreCase(name.substring(i)));
-        possibleNames.add(candidate);
+        if (candidate.length() < 25) {
+          possibleNames.add(candidate);
+        }
       }
     }
     return possibleNames;
@@ -52,30 +54,6 @@ public class NameSuggestorUtil {
     possibleNames.add(name);
     possibleNames.add(name.substring(0, 1));
     return possibleNames;
-  }
-
-  @NotNull
-  public static String toCamelCase(@NotNull final String name) {
-    final StringBuilder buffer = new StringBuilder();
-    boolean isUpperCase = true;
-    final int length = name.length();
-    for (int i = 0; i < length; i++) {
-      final char ch = name.charAt(i);
-      if (ch == '_' && (i + 1 < length && name.charAt(i + 1) == '_')) {
-        continue;
-      }
-      if (i + 1 < length
-          && (i > 0) && (ch == '_' && name.charAt(i - 1) != '_')) {
-        isUpperCase = true;
-        continue;
-      }
-      if (Character.isUpperCase(ch)) {
-        isUpperCase = true;
-      }
-      buffer.append(isUpperCase ? Character.toUpperCase(ch) : Character.toLowerCase(ch));
-      isUpperCase = false;
-    }
-    return buffer.toString();
   }
 
   @NotNull
