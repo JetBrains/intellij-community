@@ -37,7 +37,7 @@ import java.util.*;
 public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.asList(
-    new StaticWhiteSpaceDefinitionStrategy(' ', '\t'), new CdataWhiteSpaceDefinitionStrategy()
+    new StaticWhiteSpaceDefinitionStrategy(' ', '\t', '\n'), new CdataWhiteSpaceDefinitionStrategy()
   );
 
   private final Set<WhiteSpaceFormattingStrategy> myWhiteSpaceStrategies = new HashSet<WhiteSpaceFormattingStrategy>(SHARED_STRATEGIES);
