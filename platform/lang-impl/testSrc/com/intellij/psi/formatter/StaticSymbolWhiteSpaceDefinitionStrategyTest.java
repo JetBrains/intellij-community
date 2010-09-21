@@ -9,13 +9,13 @@ import static org.junit.Assert.assertSame;
  * @author Denis Zhdanov
  * @since 09/20/2010
  */
-public class StaticWhiteSpaceDefinitionStrategyTest {
+public class StaticSymbolWhiteSpaceDefinitionStrategyTest {
 
-  private StaticWhiteSpaceDefinitionStrategy myStrategy;
+  private StaticSymbolWhiteSpaceDefinitionStrategy myStrategy;
 
   @Before
   public void setUp() {
-    myStrategy = new StaticWhiteSpaceDefinitionStrategy('a', 'b', 'c');
+    myStrategy = new StaticSymbolWhiteSpaceDefinitionStrategy('a', 'b', 'c');
   }
 
   @Test
