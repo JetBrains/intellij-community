@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -22,10 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.AddAction;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.ListWrappingTableModel;
-import com.siyeh.ig.ui.RemoveAction;
+import com.intellij.codeInspection.ui.AddAction;
 import org.jdom.Element;
 
 import javax.swing.JButton;
@@ -74,7 +74,7 @@ public abstract class SerializableInspection extends BaseInspection {
     private class Form {
 
         private JPanel contentPanel;
-        private IGTable table;
+        private ListTable table;
         private JButton addButton;
         private JButton removeButton;
 
@@ -84,7 +84,7 @@ public abstract class SerializableInspection extends BaseInspection {
         }
 
         private void createUIComponents() {
-            table = new IGTable(new ListWrappingTableModel(superClassList,
+            table = new ListTable(new ListWrappingTableModel(superClassList,
                     InspectionGadgetsBundle.message(
                             "ignore.classes.in.hierarchy.column.name")));
         }

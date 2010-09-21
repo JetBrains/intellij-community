@@ -15,6 +15,10 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.ui.AddAction;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
@@ -82,8 +86,8 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
     @Override
     public JComponent createOptionsPanel(){
         final JPanel panel = new JPanel(new GridBagLayout());
-        final IGTable table =
-                new IGTable(new ListWrappingTableModel(questionList,
+        final ListTable table =
+                new ListTable(new ListWrappingTableModel(questionList,
                         InspectionGadgetsBundle.message(
                                 "boolean.method.name.must.start.with.question.table.column.name")));
       final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
