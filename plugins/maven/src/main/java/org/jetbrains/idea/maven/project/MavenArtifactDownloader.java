@@ -127,8 +127,10 @@ public class MavenArtifactDownloader {
         }
         data.repositories.addAll(repositories);
         for (MavenExtraArtifactType eachType : types) {
-          data.classifiersWithExtensions.add(new DownloadElement(eachProject.getClassifierAndExtension(eachDependency, eachType),
-                                                                 eachType));
+          Pair<String, String> classifierAndExtension = eachProject.getClassifierAndExtension(eachDependency, eachType);
+          String classifier = eachDependency.getFullClassifier(classifierAndExtension.first);
+          String extension = classifierAndExtension.second;
+          data.classifiersWithExtensions.add(new DownloadElement(classifier, extension, eachType));
         }
       }
     }
@@ -215,9 +217,9 @@ public class MavenArtifactDownloader {
     public final String extension;
     public final MavenExtraArtifactType type;
 
-    public DownloadElement(Pair<String, String> classifierAndExtension, MavenExtraArtifactType type) {
-      this.classifier = classifierAndExtension.first;
-      this.extension = classifierAndExtension.second;
+    public DownloadElement(String classifier, String extension, MavenExtraArtifactType type) {
+      this.classifier = classifier;
+      this.extension = extension;
       this.type = type;
     }
 
