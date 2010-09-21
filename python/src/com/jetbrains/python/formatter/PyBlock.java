@@ -98,9 +98,11 @@ public class PyBlock implements ASTBlock {
         // whitespace between sub-blocks would include \ characters,
         // because the IDEA 5.0/5.1 formatter core requires that whitespace
         // between blocks must include whitespace-only characters
+        /*
         if (child.getText().indexOf('\\') >= 0) {
           return Collections.emptyList();
         }
+        */
 
         continue;
       }

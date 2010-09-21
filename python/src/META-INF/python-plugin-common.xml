@@ -12,6 +12,7 @@
     <lang.foldingBuilder language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.PythonFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
     <lang.surroundDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
     <lang.surroundDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
@@ -176,6 +177,7 @@
                    serviceImplementation="com.jetbrains.python.psi.resolve.PythonPathCache"/>
 
     <preserveIndentOnPaste fileType="Python"/>
+    <lang.whiteSpaceFormattingStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
