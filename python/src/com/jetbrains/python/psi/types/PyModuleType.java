@@ -91,14 +91,14 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
     Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
-    ResolveImportUtil.PointInImport point = ResolveImportUtil.getPointInImport(expressionHook/*.getReference().getElement()*/);
+    ResolveImportUtil.PointInImport point = ResolveImportUtil.getPointInImport(location);
     if (point.role == NONE || point.role == AS_NAME) { // when not imported from, add regular attributes
-      final VariantsProcessor processor = new VariantsProcessor(expressionHook);
+      final VariantsProcessor processor = new VariantsProcessor(location);
       processor.setPlainNamesOnly(point.role == AS_NAME); // no parens after imported function names
-      myModule.processDeclarations(processor, ResolveState.initial(), null, expressionHook);
+      myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (names_already != null) {
         for (LookupElement le : processor.getResultList()) {
           String name = le.getLookupString();
@@ -114,6 +114,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
     if (point.role == AS_MODULE || point.role == AS_NAME) { // when imported from somehow, add submodules
       for (PsiFileSystemItem pfsi : getSubmodulesList()) {
+        if (pfsi == location.getContainingFile().getOriginalFile()) continue;
         String s = pfsi.getName();
         int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
         if (pos > 0) s = s.substring(0, pos);

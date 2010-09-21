@@ -34,9 +34,9 @@ public class PyJavaClassType implements PyType {
     return null;
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression expressionHook, ProcessingContext context) {
-    final VariantsProcessor processor = new VariantsProcessor(expressionHook);
-    myClass.processDeclarations(processor, ResolveState.initial(), null, expressionHook);
+  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
+    final VariantsProcessor processor = new VariantsProcessor(location);
+    myClass.processDeclarations(processor, ResolveState.initial(), null, location);
     return processor.getResult();
   }
 
