@@ -20,7 +20,7 @@ all this too.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2010, 8, 9, 19, 2, 45) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 9, 21, 17, 53, 8) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -555,6 +555,7 @@ class ModuleRedeclarator(object):
         (None, "range"): "(start=None, stop=None, step=None)", # suboptimal: allows empty arglist
         (None, "filter"): "(function_or_none, sequence)",
         (None, "iter"): "(source, sentinel=None)",
+        ('frozenset', "__init__"): "(seq=())",
     }
 
     if version[0] < 3:
