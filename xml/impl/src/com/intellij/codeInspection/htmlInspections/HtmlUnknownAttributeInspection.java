@@ -98,10 +98,11 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
           assert node != null;
           final PsiElement nameElement = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node).getPsi();
 
-          LocalQuickFix[] quickfixes = new LocalQuickFix[HtmlUtil.isCustomHtml5Attribute(name) ? 3 : 2];
+          boolean maySwitchToHtml5 = HtmlUtil.isCustomHtml5Attribute(name) && !HtmlUtil.hasNonHtml5Doctype(tag);
+          LocalQuickFix[] quickfixes = new LocalQuickFix[maySwitchToHtml5 ? 3 : 2];
           quickfixes[0] = new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
           quickfixes[1] = new RemoveAttributeIntentionAction(name, attribute);
-          if (HtmlUtil.isCustomHtml5Attribute(name)) {
+          if (maySwitchToHtml5) {
             quickfixes[2] = new SwitchToHtml5Action();
           }
 
