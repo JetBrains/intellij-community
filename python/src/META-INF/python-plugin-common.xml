@@ -176,6 +176,7 @@
                    serviceImplementation="com.jetbrains.python.psi.resolve.PythonPathCache"/>
 
     <preserveIndentOnPaste fileType="Python"/>
+    <lang.whiteSpaceFormattingStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
