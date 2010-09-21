@@ -49,10 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -198,6 +194,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   private boolean hasContradictingMethods(GrAccessorMethod proto, PsiClass clazz) {
+    if (clazz == null) return false;
     PsiMethod[] methods = clazz instanceof GrTypeDefinition
                           ? ((GrTypeDefinition)clazz).findCodeMethodsBySignature(proto, true)
                           : clazz.findMethodsBySignature(proto, true);

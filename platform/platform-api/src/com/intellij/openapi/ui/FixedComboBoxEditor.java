@@ -186,6 +186,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     private void repaintCombobox() {
       final Container parent = getParent();
       if (parent == null) return;
+      if (parent instanceof JComponent && Boolean.TRUE == ((JComponent)parent).getClientProperty("JComboBox.isTableCellEditor")) return;
       final Container grandParent = parent.getParent();
       if (grandParent != null) {
         myRepaintingParent = true;

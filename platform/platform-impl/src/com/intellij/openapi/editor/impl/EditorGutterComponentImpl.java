@@ -1039,7 +1039,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       ArrayList<GutterIconRenderer> lineRenderers = myLineToGutterRenderers.get(line);
       if (lineRenderers != null && lineRenderers.size() > 1) {
         int row = lineRenderers.indexOf(renderer);
-        if (row == lineRenderers.size() - 1) {
+        if (row == 0) {
           ballPosition = Balloon.Position.below;
         }
       }

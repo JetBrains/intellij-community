@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.ui;
 
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -33,11 +35,11 @@ import java.awt.event.ActionEvent;
 
 public class TreeClassChooserAction extends AbstractAction {
 
-    private final IGTable table;
+    private final ListTable table;
     private final String chooserTitle;
     private final String[] ancestorClasses;
 
-    public TreeClassChooserAction(IGTable table, String chooserTitle,
+    public TreeClassChooserAction(ListTable table, String chooserTitle,
                                   @NonNls String... ancestorClasses) {
         this.table = table;
         this.chooserTitle = chooserTitle;

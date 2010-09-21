@@ -143,22 +143,30 @@ public class MavenArtifact implements Serializable {
     result.append('-');
     result.append(myVersion);
 
-    if (!StringUtil.isEmptyOrSpaces(extraArtifactClassifier)) {
-      if (MavenConstants.TYPE_TEST_JAR.equals(myType)) {
-        result.append("-test");
-      }
-      result.append('-');
-      result.append(extraArtifactClassifier);
+    String fullClassifier = getFullClassifier(extraArtifactClassifier);
+    if (fullClassifier != null) {
+      result.append("-").append(fullClassifier);
     }
-    else {
-      if (!StringUtil.isEmptyOrSpaces(myClassifier)) {
-        result.append('-');
-        result.append(myClassifier);
-      }
-    }
+
     result.append(".");
     result.append(customExtension == null ? myExtension : customExtension);
     return result.toString();
+  }
+
+  @Nullable
+  public String getFullClassifier(@Nullable String extraClassifier) {
+    if (StringUtil.isEmptyOrSpaces(extraClassifier)) {
+      return myClassifier;
+    }
+
+    String result = "";
+    if (MavenConstants.TYPE_TEST_JAR.equals(myType) || "tests".equals(myClassifier)) {
+      result += "test";
+    }
+    if (!StringUtil.isEmptyOrSpaces(extraClassifier)) {
+      result += (!result.isEmpty() ? "-" + extraClassifier : extraClassifier);
+    }
+    return StringUtil.isEmptyOrSpaces(result) ? null : result;
   }
 
   public String getPathForExtraArtifact(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {

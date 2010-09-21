@@ -108,7 +108,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
       final GrReferenceExpression ref = PsiTreeUtil
         .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GrReferenceExpression.class, false);
-      if (ref != null) {
+      if (ref != null && ref.getQualifier() == null) {
         ref.bindToElementViaStaticImport(containingClass);
       }
 

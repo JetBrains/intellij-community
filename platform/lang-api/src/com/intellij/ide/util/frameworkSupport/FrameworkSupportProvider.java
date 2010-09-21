@@ -28,6 +28,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
+ * Extend {@link FrameworkSupportProviderBase} for general and {@link com.intellij.facet.ui.FacetBasedFrameworkSupportProvider} for
+ * {@link com.intellij.facet.Facet}-based framework support in your plugin.
+ *
  * @author nik
  */
 public abstract class FrameworkSupportProvider {
@@ -40,6 +43,12 @@ public abstract class FrameworkSupportProvider {
     myTitle = title;
   }
 
+  /**
+   * Creates configurable for user settings (e.g. choosing version, features, ...).
+   *
+   * @param model Model.
+   * @return Configurable.
+   */
   @NotNull
   public abstract FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model);
 

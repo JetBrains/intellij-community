@@ -60,7 +60,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private int myActive;
   /** Holds timestamp of the last editor settings check. */
   private long myLastSettingsCheckTimeMillis;
-  private boolean myLastUseSoftWraps;
+  private Boolean myLastUseSoftWraps;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
     this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
@@ -92,6 +92,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myFoldListeners.add(myApplianceManager);
   }
 
+  /**
+   * Called on editor settings change. Current model is expected to drop all cached information about the settings if any.
+   */
+  public void reinitSettings() {
+    myLastUseSoftWraps = null;
+  }
+
   public boolean isSoftWrappingEnabled() {
     if (myEditor.isOneLineMode()) {
       return false;
@@ -99,8 +106,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
     // Profiling shows that editor settings lookup have impact at overall performance if called often.
     // Hence, we cache value used last time.
-    if (System.currentTimeMillis() - myLastSettingsCheckTimeMillis <= EDITOR_SETTINGS_CHECK_PERIOD_MILLIS) {
-      return myLastUseSoftWraps;
+    if (myLastUseSoftWraps != null && System.currentTimeMillis() - myLastSettingsCheckTimeMillis <= EDITOR_SETTINGS_CHECK_PERIOD_MILLIS) {
+      return myLastUseSoftWraps == Boolean.TRUE;
     }
     myLastSettingsCheckTimeMillis = System.currentTimeMillis();
     return myLastUseSoftWraps = myEditor.getSettings().isUseSoftWraps();
@@ -180,7 +187,14 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     return result;
   }
 
-  //TODO den add doc
+  /**
+   * Callback method that is expected to be invoked before editor painting.
+   * <p/>
+   * It's primary purpose is to recalculate soft wraps at least for the painted area if necessary.
+   *
+   * @param clip            clip that is being painted
+   * @param startOffset     start offset of the editor's document from which repainting starts
+   */
   public void registerSoftWrapsIfNecessary(@NotNull Rectangle clip, int startOffset) {
     if (!isSoftWrappingEnabled()) {
       return;

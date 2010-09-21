@@ -63,9 +63,10 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
 
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, XmlTag context) {
-    if (context != null && HtmlUtil.isHtml5Context(context) && attributeName.startsWith(HtmlUtil.HTML5_DATA_ATTR_PREFIX)) {
+    if (context != null && HtmlUtil.isHtml5Context(context) && HtmlUtil.isCustomHtml5Attribute(attributeName)) {
       return new AnyXmlAttributeDescriptor(attributeName);
     }
     return null;
   }
+
 }

@@ -44,11 +44,13 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
+    writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
     super.readExternal(element);
+    readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
@@ -76,7 +78,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<RemoteConfiguration>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable());
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable(getProject()));
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<RemoteConfiguration>());
     return group;
   }

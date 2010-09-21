@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.ui.AddAction;
+import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -22,10 +24,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ui.AddAction;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.ListWrappingTableModel;
-import com.siyeh.ig.ui.RemoveAction;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -148,7 +148,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
 
     private class Form {
 
-        private IGTable table;
+        private ListTable table;
         private JButton addButton;
         private JButton removeButton;
         private JPanel contentPanel;
@@ -160,7 +160,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
         }
 
         private void createUIComponents() {
-            table = new IGTable(
+            table = new ListTable(
                     new ListWrappingTableModel(nonThreadSafeTypeList,
                             InspectionGadgetsBundle.message(
                                     "non.thread.safe.types.column.name")));

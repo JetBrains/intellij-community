@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -414,7 +415,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     TextBlock textBlock = getTextBlock(document, file);
     if (textBlock.isEmpty()) return false;
-
+    ((DocumentImpl)document).normalizeRangeMarkers();
     myIsCommitInProgress = true;
     try{
       if (mySmartPointerManager != null) { // mock tests

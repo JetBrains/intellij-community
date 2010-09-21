@@ -25,7 +25,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -88,11 +88,8 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     final Comparator<PsiMethod> comparator = new Comparator<PsiMethod>() {
       public int compare(PsiMethod o1, PsiMethod o2) { //compare by first parameter type
-        o1 = getRealMethod(o1);
-        o2 = getRealMethod(o2);
-
-        final PsiType type1 = TypeConversionUtil.erasure(o1.getParameterList().getParameters()[0].getType());
-        final PsiType type2 = TypeConversionUtil.erasure(o2.getParameterList().getParameters()[0].getType());
+        final PsiType type1 = getRealType(o1);
+        final PsiType type2 = getRealType(o2);
         if (TypesUtil.isAssignable(type1, type2, psiManager, searchScope)) {
           return -1;
         }
@@ -127,11 +124,26 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
   private static PsiMethod getRealMethod(PsiMethod method) {
     final PsiElement element = method.getNavigationElement();
-    if (element instanceof PsiMethod) {
+    if (element instanceof PsiMethod && ((PsiMethod)element).getParameterList().getParametersCount() > 0) {
       return (PsiMethod)element;
     }
     else {
       return method;
     }
   }
+
+  @Nullable
+  private static PsiType getRealType(PsiMethod method) {
+    final PsiElement navigationElement = method.getNavigationElement();
+    if (navigationElement instanceof PsiMethod) {
+      final PsiParameter[] parameters = ((PsiMethod)navigationElement).getParameterList().getParameters();
+      if (parameters.length != 0) {
+        return TypeConversionUtil.erasure(parameters[0].getType());
+      }
+    }
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return null;
+    return JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass);
+  }
+
 }
