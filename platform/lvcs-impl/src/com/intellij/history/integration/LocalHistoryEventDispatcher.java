@@ -122,7 +122,9 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
       VirtualFile f = e.getFile();
 
       boolean isVersioned = myGateway.isVersioned(f);
-      boolean wasVersioned = f.getUserData(WAS_VERSIONED_KEY);
+      Boolean wasVersioned = f.getUserData(WAS_VERSIONED_KEY);
+      if (wasVersioned == null) return;
+      f.putUserData(WAS_VERSIONED_KEY, null);
 
       if (!wasVersioned && !isVersioned) return;
 
@@ -149,7 +151,9 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
     VirtualFile f = e.getFile();
 
     boolean isVersioned = myGateway.isVersioned(f);
-    boolean wasVersioned = f.getUserData(WAS_VERSIONED_KEY);
+    Boolean wasVersioned = f.getUserData(WAS_VERSIONED_KEY);
+    if (wasVersioned == null) return;
+    f.putUserData(WAS_VERSIONED_KEY, null);
 
     if (!wasVersioned && !isVersioned) return;
 
