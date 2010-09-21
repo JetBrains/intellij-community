@@ -85,7 +85,7 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
         ex.setHorizontalScrollbarVisible(true);
         EditorSettings settings = ex.getSettings();
         settings.setAdditionalColumnsCount(3);
-        settings.setVirtualSpace(true);
+        settings.setVirtualSpace(false);
         EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, project);
         for (EditorCustomization.Feature feature : features) {
           for (EditorCustomization customization : customizations) {
