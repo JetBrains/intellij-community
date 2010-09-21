@@ -31,10 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.HashMap;
@@ -59,10 +57,10 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   private static void checkMavenProjectModel(@NotNull MavenDomProjectModel projectModel,
                                              @NotNull XmlFile xmlFile,
                                              @NotNull DomElementAnnotationHolder holder) {
-    final Map<MavenId, Set<MavenDomDependency>> allDuplicates = getDuplicateDependenciesMap(projectModel);
+    final Map<String, Set<MavenDomDependency>> allDuplicates = getDuplicateDependenciesMap(projectModel);
 
     for (MavenDomDependency dependency : projectModel.getDependencies().getDependencies()) {
-      MavenId id = createId(dependency);
+      String id = createId(dependency);
       if (id != null) {
         Set<MavenDomDependency> dependencies = allDuplicates.get(id);
         if (dependencies != null && dependencies.size() > 1) {
@@ -126,13 +124,13 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   }
 
   @NotNull
-  private static Map<MavenId, Set<MavenDomDependency>> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
-    final Map<MavenId, Set<MavenDomDependency>> allDependencies = new HashMap<MavenId, Set<MavenDomDependency>>();
+  private static Map<String, Set<MavenDomDependency>> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
+    final Map<String, Set<MavenDomDependency>> allDependencies = new HashMap<String, Set<MavenDomDependency>>();
 
     Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
       public boolean process(MavenDomProjectModel model) {
         for (MavenDomDependency dependency : model.getDependencies().getDependencies()) {
-          MavenId mavenId = createId(dependency);
+          String mavenId = createId(dependency);
           if (mavenId != null) {
             if (allDependencies.containsKey(mavenId)) {
               allDependencies.get(mavenId).add(dependency);
@@ -155,14 +153,17 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   }
 
   @Nullable
-  private static MavenId createId(MavenDomArtifactCoordinates coordinates) {
+  private static String createId(MavenDomDependency coordinates) {
     String groupId = coordinates.getGroupId().getStringValue();
     String artifactId = coordinates.getArtifactId().getStringValue();
-    String version = coordinates.getVersion().getStringValue();
 
     if (StringUtil.isEmptyOrSpaces(groupId) || StringUtil.isEmptyOrSpaces(artifactId)) return null;
 
-    return new MavenId(groupId, artifactId, version);
+    String version = coordinates.getVersion().getStringValue();
+    String type = coordinates.getType().getStringValue();
+    String classifier = coordinates.getClassifier().getStringValue();
+
+    return groupId +":" + artifactId + ":" + version + ":" + type + ":" + classifier;
 
   }
 
