@@ -23,8 +23,11 @@ package com.intellij.execution.remote;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationArgumentsHelpArea;
+import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
@@ -48,11 +51,14 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private JPanel mySocketPanel;
   private ConfigurationArgumentsHelpArea myHelpArea;
   @NonNls private ConfigurationArgumentsHelpArea myJDK13HelpArea;
+  private LabeledComponent<JComboBox> myModule;
   private String myHostName = "";
   @NonNls
   protected static final String LOCALHOST = "localhost";
+  private final ConfigurationModuleSelector myModuleSelector;
 
-  public RemoteConfigurable() {
+
+  public RemoteConfigurable(final Project project) {
     myJDK13HelpArea.setLabelText(ExecutionBundle.message("environment.variables.helper.use.arguments.jdk13.label"));
     
     final ButtonGroup transportGroup = new ButtonGroup();
@@ -115,6 +121,8 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     };
     myAddressField.addFocusListener(fieldFocusListener);
     myPortField.addFocusListener(fieldFocusListener);
+
+    myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
   }
 
   public void applyEditorTo(@NotNull final RemoteConfiguration configuration) throws ConfigurationException {
@@ -132,6 +140,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     }
     configuration.USE_SOCKET_TRANSPORT = myRbSocket.isSelected();
     configuration.SERVER_MODE = myRbListen.isSelected();
+    myModuleSelector.applyTo(configuration);
   }
 
   public void resetEditorFrom(final RemoteConfiguration configuration) {
@@ -157,6 +166,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       myRbAttach.doClick();
     }
     myRbShmem.setEnabled(SystemInfo.isWindows);
+    myModuleSelector.reset(configuration);
   }
 
   @NotNull
