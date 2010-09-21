@@ -425,14 +425,16 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       return null;
     }
 
-    int indent = 0;
+    int indentInColumns = 0;
+    int indentInPixels = myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
     if (myCustomIndentUsedLastTime) {
-      indent = myCustomIndentValueUsedLastTime;
+      indentInColumns = myCustomIndentValueUsedLastTime + lineData.indentInColumns;
+      indentInPixels += lineData.indentInPixels + (myCustomIndentValueUsedLastTime * spaceSize);
     }
     SoftWrapImpl softWrap = new SoftWrapImpl(
-      new TextChangeImpl("\n" + StringUtil.repeatSymbol(' ', lineData.indentInColumns + indent), softWrapOffset, softWrapOffset),
-      lineData.indentInColumns + indent + 1/* for 'after soft wrap' drawing */,
-      lineData.indentInPixels + (indent * spaceSize) + myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP)
+      new TextChangeImpl("\n" + StringUtil.repeatSymbol(' ', indentInColumns), softWrapOffset, softWrapOffset),
+      indentInColumns + 1/* for 'after soft wrap' drawing */,
+      indentInPixels
     );
     myStorage.storeOrReplace(softWrap, true);
     return softWrap;
