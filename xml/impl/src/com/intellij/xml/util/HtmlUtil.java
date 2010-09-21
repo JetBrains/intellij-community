@@ -65,7 +65,7 @@ import java.util.StringTokenizer;
 public class HtmlUtil {
   @NonNls private static final String JSFC = "jsfc";
   @NonNls private static final String CHARSET_PREFIX = "charset=";
-  public static final String HTML5_DATA_ATTR_PREFIX = "data-";
+  @NonNls private static final String HTML5_DATA_ATTR_PREFIX = "data-";
 
   private HtmlUtil() {}
   @NonNls private static final String[] EMPTY_TAGS = {
@@ -333,6 +333,10 @@ public class HtmlUtil {
   public static boolean isHtml5Context(XmlElement context) {
     XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
     return isHtml5Document(doc);
+  }
+
+  public static boolean isCustomHtml5Attribute(String attributeName) {
+    return attributeName.startsWith(HTML5_DATA_ATTR_PREFIX);
   }
 
   private static class TerminateException extends RuntimeException {
