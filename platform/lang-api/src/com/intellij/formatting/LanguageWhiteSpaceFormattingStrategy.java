@@ -25,9 +25,9 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since Sep 20, 2010 7:41:55 PM
  */
-public class LanguageWhiteSpaceFormattingStrategy extends LanguageExtension<Collection<WhiteSpaceFormattingStrategy>> {
+public class LanguageWhiteSpaceFormattingStrategy extends LanguageExtension<WhiteSpaceFormattingStrategy> {
 
-  public static final String EP_NAME = "lang.whiteSpaceFormattingStrategy";
+  public static final String EP_NAME = "com.intellij.lang.whiteSpaceFormattingStrategy";
   public static final LanguageWhiteSpaceFormattingStrategy INSTANCE = new LanguageWhiteSpaceFormattingStrategy();
 
   private LanguageWhiteSpaceFormattingStrategy() {

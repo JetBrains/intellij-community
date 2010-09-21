@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.CharBuffer;
 import java.util.*;
@@ -40,7 +41,8 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
     new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n'), new CdataWhiteSpaceDefinitionStrategy()
   );
 
-  private final Set<WhiteSpaceFormattingStrategy> myWhiteSpaceStrategies = new HashSet<WhiteSpaceFormattingStrategy>(SHARED_STRATEGIES);
+  private final CompositeWhiteSpaceFormattingStrategy myWhiteSpaceStrategy = new CompositeWhiteSpaceFormattingStrategy(SHARED_STRATEGIES);
+  private final CharBuffer myBuffer = CharBuffer.allocate(1);
   private final Document myDocument;
   private final PsiFile myFile;
 
@@ -51,9 +53,9 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
     myFile = file;
     if (file != null) {
       Language language = file.getLanguage();
-      Collection<WhiteSpaceFormattingStrategy> strategies = LanguageWhiteSpaceFormattingStrategy.INSTANCE.forLanguage(language);
-      if (strategies != null) {
-        myWhiteSpaceStrategies.addAll(strategies);
+      WhiteSpaceFormattingStrategy strategy = LanguageWhiteSpaceFormattingStrategy.INSTANCE.forLanguage(language);
+      if (strategy != null) {
+        myWhiteSpaceStrategy.addStrategy(strategy);
       }
     }
   }
@@ -76,6 +78,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   }
 
+  @Nullable
   public static Document getDocumentToBeUsedFor(final PsiFile file) {
     final Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -119,29 +122,13 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   @Override
   public boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset) {
-    return containsWhiteSpaceSymbolsOnly(myDocument.getCharsSequence(), startOffset, endOffset);
+    return myWhiteSpaceStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
   }
 
   @Override
   public boolean isWhiteSpaceSymbol(char symbol) {
-    return containsWhiteSpaceSymbolsOnly(CharBuffer.wrap(new char[] {symbol}), 0, 1);
-  }
-
-  private boolean containsWhiteSpaceSymbolsOnly(CharSequence text, int startOffset, int endOffset) {
-    int offset = startOffset;
-    while (offset < endOffset) {
-      int oldOffset = offset;
-      for (WhiteSpaceFormattingStrategy strategy : myWhiteSpaceStrategies) {
-        offset = strategy.check(text, offset, endOffset);
-        if (offset > oldOffset) {
-          break;
-        }
-      }
-      if (offset == oldOffset) {
-        return false;
-      }
-    }
-    return offset >= endOffset;
+    myBuffer.put(0, symbol);
+    return myWhiteSpaceStrategy.check(myBuffer, 0, 1) > 0;
   }
 
   public static boolean canUseDocumentModel(@NotNull Document document,@NotNull PsiFile file) {
