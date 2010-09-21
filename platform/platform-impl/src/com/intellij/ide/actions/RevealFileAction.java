@@ -31,9 +31,9 @@ public class RevealFileAction extends AnAction {
 
     if (file != null && file.isInLocalFileSystem()) {
       if (SystemInfo.isMac) {
-        e.getPresentation().setText("Reveal In Finder");
+        e.getPresentation().setText("Reveal in Finder");
       } else {
-        e.getPresentation().setText("Show In Explorer");
+        e.getPresentation().setText("Show in Explorer");
       }
     } else {
       e.getPresentation().setEnabled(false);

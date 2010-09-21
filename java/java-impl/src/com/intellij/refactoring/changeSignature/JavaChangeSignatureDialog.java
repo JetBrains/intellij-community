@@ -348,11 +348,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected boolean isResolvableType(ParameterInfoImpl info, MethodDescriptor<ParameterInfoImpl> method) {
-    return RefactoringUtil.isResolvableType(info.createType(myMethod.getMethod(), PsiManager.getInstance(myProject)));
-  }
-
-  @Override
   protected String calculateSignature() {
     return doCalculateSignature(myMethod.getMethod());
   }

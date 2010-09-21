@@ -87,6 +87,10 @@ public class IdeTooltip {
 
   }
 
+  protected boolean beforeShow() {
+    return true;
+  }
+
   public void hide() {
     IdeTooltipManager.getInstance().hide(this);
   }

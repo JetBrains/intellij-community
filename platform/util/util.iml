@@ -22,7 +22,9 @@
           <root url="jar://$MODULE_DIR$/../../lib/automaton.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../../lib/src/automaton-1.11.zip!/src" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>

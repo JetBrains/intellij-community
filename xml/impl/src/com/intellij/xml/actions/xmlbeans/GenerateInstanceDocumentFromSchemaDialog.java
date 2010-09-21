@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -65,7 +66,8 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
 
-    UIUtils.configureBrowseButton(project, generateFromUrl, new String[] {"xsd"}, XmlBundle.message("select.xsd.schema.dialog.title"), false);
+    UIUtils
+      .configureBrowseButton(project, generateFromUrl, new String[]{"xsd"}, XmlBundle.message("select.xsd.schema.dialog.title"), false);
 
     doInitFor(rootElementChooserText, rootElementChooser);
     doInitFor(generateFromUrlText, generateFromUrl.getTextField());
@@ -77,7 +79,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
 
     init();
 
-    outputFileName.setText(file.getName()+ ".xml");
+    outputFileName.setText(file.getName() + ".xml");
   }
 
   public void doInitFor(JLabel textComponent, JComponent component) {
@@ -97,8 +99,9 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
           validateData();
         }
       });
-    } else if (component instanceof JComboBox) {
-      JComboBox jComboBox = ((JComboBox) component);
+    }
+    else if (component instanceof JComboBox) {
+      JComboBox jComboBox = ((JComboBox)component);
 
       jComboBox.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -140,7 +143,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     status.setForeground(Color.RED);
   }
 
-  public void configureComboBox(JComboBox combo, List<String> lastValues) {  // without -editor.selectAll- no focus
+  public static void configureComboBox(JComboBox combo, List<String> lastValues) {  // without -editor.selectAll- no focus
     combo.setModel(new DefaultComboBoxModel(ArrayUtil.toStringArray(lastValues)));
   }
 
@@ -171,19 +174,39 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
 
     if (hasPrevious) {
       rootElementChooser.setSelectedItem(selectedItem);
-    } else {
-      rootElementChooser.setSelectedIndex(myRootValues.size() > 0 ? 0:-1);
+    }
+    else {
+      rootElementChooser.setSelectedIndex(myRootValues.size() > 0 ? 0 : -1);
     }
     previousUri = uri;
   }
 
-  private XmlTag getRootTag(PsiFile psifile) {
-    return ((XmlFile) psifile).getDocument().getRootTag();
+  @Nullable
+  private static XmlTag getRootTag(PsiFile psifile) {
+    XmlFile xmlFile = null;
+    if (psifile instanceof XmlFile) {
+      xmlFile = (XmlFile)psifile;
+    }
+    else if (psifile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
+      TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)psifile.getViewProvider();
+      if (viewProvider.getPsi(viewProvider.getTemplateDataLanguage()) instanceof XmlFile) {
+        xmlFile = (XmlFile)viewProvider.getPsi(viewProvider.getTemplateDataLanguage());
+      }
+    }
+
+    if (xmlFile != null) {
+      return xmlFile.getDocument().getRootTag();
+    }
+    else {
+      return null;
+    }
   }
 
+  @Nullable
   private PsiFile findFile(String uri) {
-    final VirtualFile file = uri != null ? VfsUtil.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(uri), null):null;
-    return file != null ? PsiManager.getInstance(myProject).findFile(file):null;
+    final VirtualFile file =
+      uri != null ? VfsUtil.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(uri), null) : null;
+    return file != null ? PsiManager.getInstance(myProject).findFile(file) : null;
   }
 
   public String getOutputFileName() {
@@ -222,7 +245,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
 
   }
 
-  protected boolean isAcceptableFile(VirtualFile virtualFile) {
+  protected static boolean isAcceptableFile(VirtualFile virtualFile) {
     return GenerateInstanceDocumentFromSchemaAction.isAcceptableFileForGenerateSchemaFromInstanceDocument(virtualFile);
   }
 

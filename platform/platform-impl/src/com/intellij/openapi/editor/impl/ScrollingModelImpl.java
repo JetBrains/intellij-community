@@ -142,8 +142,6 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   private Point calcOffsetsToScroll(LogicalPosition pos, ScrollType scrollType, Rectangle viewRect) {
-    LogicalPosition firstVisibleLineStart = myEditor.xyToLogicalPosition(viewRect.getLocation());
-
     Point targetLocation = myEditor.logicalPositionToXY(pos);
 
     if (myEditor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
