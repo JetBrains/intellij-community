@@ -54,4 +54,23 @@ public interface FormattingDocumentModel {
   int getTextLength();
 
   Document getDocument();
+
+  /**
+   * Allows to answer if all document symbols from <code>[startOffset; endOffset)</code> region are treated as white spaces by formatter.
+   *
+   * @param startOffset     target start document offset (inclusive)
+   * @param endOffset       target end document offset (exclusive)
+   * @return                <code>true</code> if all document symbols from <code>[startOffset; endOffset)</code> region are treated
+   *                        as white spaces by formatter; <code>false</code> otherwise
+   */
+  boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset);
+
+  /**
+   * Allows to answer if given symbol is treated by the current model as white space symbol during formatting.
+   *
+   * @param symbol    symbols to check
+   * @return          <code>true</code> if given symbol is treated by the current model as white space symbol during formatting;
+   *                  <code>false</code> otherwise
+   */
+  boolean isWhiteSpaceSymbol(char symbol);
 }

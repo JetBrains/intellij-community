@@ -52,6 +52,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     public MyNode getParent() {
       return (MyNode)super.getParent();
     }
+
+    @Override
+    protected int computeDeltaUpToRoot() {
+      if (normalized) return 0;
+      return super.computeDeltaUpToRoot();
+    }
   }
 
   private void pushDeltaFromRoot(MyNode node) {
@@ -65,8 +71,20 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     protected int maxEnd; // max of all intervalEnd()s among all children.
     protected int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
     public DeltaNode(T key) {
-      // maxEnd == 0 so to not dusrupt existing maxes
+      // maxEnd == 0 so to not disrupt existing maxes
       super(key);
+    }
+
+    protected int computeDeltaUpToRoot() {
+      int delta = 0;
+      DeltaNode<T> node = this;
+      while (node != null) {
+        if (key.isValid()) {
+          delta += node.delta;
+        }
+        node = (DeltaNode<T>)node.getParent();
+      }
+      return delta;
     }
   }
 
@@ -79,7 +97,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   @Override
   protected Node<T> lookupNode(T key, Node<T> root) {
     int delta = 0;
-    int delta1 = computeDeltaUpToRoot(((RangeMarkerImpl)key).myNode);
+    int delta1 = ((RangeMarkerImpl)key).myNode == null ? 0 : ((RangeMarkerImpl)key).myNode.computeDeltaUpToRoot();
     while (root != null) {
       delta += ((MyNode)root).delta;
       int compResult = compare(key, delta1, root.key, delta);
@@ -362,7 +380,10 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   private void incDelta(MyNode root, int delta) {
     if (root == null) return;
     if (root.key.isValid()) {
-      root.delta += delta;
+      int newDelta = root.delta += delta;
+      if (newDelta != 0) {
+        normalized = false;
+      }
     }
     else {
       incDelta(root.getLeft(), delta);
@@ -448,8 +469,8 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     node.maxEnd = realMax - deltaUpToRoot;
   }
 
-  protected void correctMaxUp(MyNode node) {
-    int delta = computeDeltaUpToRoot(node);
+  private void correctMaxUp(MyNode node) {
+    int delta = node == null ? 0 : node.computeDeltaUpToRoot();
     while (node != null) {
       if (node.key.isValid()) {
         int d = node.delta;
@@ -461,17 +482,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     assert delta == 0 : delta;
   }
 
-  protected static <T extends MutableInterval> int computeDeltaUpToRoot(DeltaNode<T> node) {
-    int delta = 0;
-    while (node != null) {
-      if (node.key.isValid()) {
-        delta += node.delta;
-      }
-      node = (DeltaNode<T>)node.getParent();
-    }
-    return delta;
-  }
-
   @Override
   protected void rotateRight(Node<T> n) {
     checkMax(false);
@@ -479,7 +489,8 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     MyNode node2 = node1.getLeft();
     MyNode node3 = node1.getRight();
 
-    int deltaUp = computeDeltaUpToRoot(node1.getParent());
+    MyNode parent = node1.getParent();
+    int deltaUp = parent == null ? 0 : parent.computeDeltaUpToRoot();
     pushDelta(node1);
     pushDelta(node2);
     pushDelta(node3);
@@ -501,7 +512,8 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     MyNode node2 = node1.getLeft();
     MyNode node3 = node1.getRight();
 
-    int deltaUp = computeDeltaUpToRoot(node1.getParent());
+    MyNode parent = node1.getParent();
+    int deltaUp = parent == null ? 0 : parent.computeDeltaUpToRoot();
     pushDelta(node1);
     pushDelta(node2);
     pushDelta(node3);
@@ -608,5 +620,18 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
         throw new IncorrectOperationException();
       }
     };
+  }
+
+  private boolean normalized = true;
+  public void normalize() {
+    normalize(getRoot());
+    normalized = true;
+  }
+
+  private void normalize(MyNode root) {
+    if (root == null) return;
+    pushDelta(root);
+    normalize(root.getLeft());
+    normalize(root.getRight());
   }
 }

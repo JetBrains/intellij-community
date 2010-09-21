@@ -32,6 +32,8 @@ import javax.swing.*;
 import java.util.List;
 
 /**
+ * Provides facet-based framework support.
+ *
  * @author nik
  */
 public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extends FrameworkSupportProviderBase {
@@ -44,10 +46,24 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
     myFacetType = facetType;
   }
 
+  /**
+   * Returns internal ID.
+   *
+   * @param facetType Facet type.
+   * @return ID.
+   * @see #getPrecedingFrameworkProviderIds()
+   */
   public static String getProviderId(final FacetType facetType) {
     return FACET_SUPPORT_PREFIX + facetType.getStringId();
   }
 
+  /**
+   * Returns internal ID.
+   *
+   * @param typeId Facet type ID.
+   * @return ID.
+   * @see #getPrecedingFrameworkProviderIds()
+   */
   public static String getProviderId(final FacetTypeId<?> typeId) {
     FacetType<?,?> type = FacetTypeRegistry.getInstance().findFacetType(typeId);
     LOG.assertTrue(type != null, typeId);
@@ -95,14 +111,34 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
     onFacetCreated(facet, rootModel, version);
   }
 
+  /**
+   * Called last after facet and library have been setup.
+   *
+   * @param facet     Created facet.
+   * @param rootModel Model.
+   * @param version   Framework version.
+   */
   protected void onFacetCreated(final F facet, final ModifiableRootModel rootModel, final FrameworkVersion version) {
   }
 
   protected void onLibraryAdded(final F facet, final @NotNull Library library) {
   }
 
+  /**
+   * Tune facet before it is added.
+   *
+   * @param facet     Facet to be created.
+   * @param rootModel Model.
+   * @param version   Framework version.
+   */
   protected abstract void setupConfiguration(final F facet, final ModifiableRootModel rootModel, final FrameworkVersion version);
 
+  /**
+   * Override to e.g. add libraries to artifacts.
+   *
+   * @param module         Module.
+   * @param addedLibraries Framework libraries.
+   */
   public void processAddedLibraries(final Module module, final List<Library> addedLibraries) {
   }
 }

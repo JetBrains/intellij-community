@@ -1035,11 +1035,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (toolTip != null && toolTip.length() != 0) {
       LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(0, (int)e.getY()));
       int line = pos.line;
-      ArrayList<GutterIconRenderer> lineRenderers = myLineToGutterRenderers.get(line);
-      int row = lineRenderers.indexOf(renderer);
       Balloon.Position ballPosition = Balloon.Position.atRight;
-      if (lineRenderers.size() > 1) {
-        if (row == lineRenderers.size() - 1) {
+      ArrayList<GutterIconRenderer> lineRenderers = myLineToGutterRenderers.get(line);
+      if (lineRenderers != null && lineRenderers.size() > 1) {
+        int row = lineRenderers.indexOf(renderer);
+        if (row == 0) {
           ballPosition = Balloon.Position.below;
         }
       }

@@ -110,6 +110,9 @@
   <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryDetectionManager"
+                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryDetectionManagerImpl"/>
+
   <applicationService serviceInterface="com.intellij.usageView.UsageTreeColorsScheme"
                       serviceImplementation="com.intellij.usageView.UsageTreeColorsScheme"/>
 

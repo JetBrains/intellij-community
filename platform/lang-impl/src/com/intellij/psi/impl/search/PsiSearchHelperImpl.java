@@ -89,21 +89,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   public TodoItem[] findTodoItems(@NotNull PsiFile file) {
-    return doFindTodoItems(file, new TextRange(0, file.getTextLength()));
+    return findTodoItems(file, 0, file.getTextLength());
   }
 
   @NotNull
   public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
-    return doFindTodoItems(file, new TextRange(startOffset, endOffset));
-  }
-
-  private static TodoItem[] doFindTodoItems(final PsiFile file, final TextRange textRange) {
     final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance()).findAll();
     if (occurrences.isEmpty()) {
       return EMPTY_TODO_ITEMS;
     }
 
     List<TodoItem> items = new ArrayList<TodoItem>(occurrences.size());
+    TextRange textRange = new TextRange(startOffset, endOffset);
     for(IndexPatternOccurrence occurrence: occurrences) {
       TextRange occurrenceRange = occurrence.getTextRange();
       if (textRange.contains(occurrenceRange)) {

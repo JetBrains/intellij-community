@@ -28,6 +28,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -125,7 +126,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     if (annotators.isEmpty()) return;
     final boolean dumb = myDumbService.isDumb();
 
-    JobUtil.invokeConcurrentlyUnderMyProgress(annotators, new Processor<Annotator>() {
+    if (!JobUtil.invokeConcurrentlyUnderMyProgress(annotators, new Processor<Annotator>() {
       public boolean process(Annotator annotator) {
         if (dumb && !DumbService.isDumbAware(annotator)) {
           return true;
@@ -134,7 +135,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         annotator.annotate(element, annotationHolder);
         return true;
       }
-    }, true);
+    }, true)) throw new ProcessCanceledException();
 
     synchronized (annotationHolder) {
       if (annotationHolder.hasAnnotations()) {

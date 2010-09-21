@@ -52,6 +52,7 @@ import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IndentedIcon;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1030,6 +1031,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           else {
             component.setFont(table.getFont());
           }
+
+          if (component instanceof JCheckBox) {
+            component.putClientProperty( "JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
+          }
+
           return component;
         }
         catch(Exception ex) {
@@ -1124,7 +1130,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final Property property=(Property)value;
       try {
         //noinspection unchecked
-        return myEditor.getComponent(mySelection.get(0), getSelectionValue(property), null);
+        final JComponent c = myEditor.getComponent(mySelection.get(0), getSelectionValue(property), null);
+        if (c instanceof JComboBox) {
+          c.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        } else if (c instanceof JCheckBox) {
+          c.putClientProperty( "JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
+        }
+
+        return c;
       }
       catch(Exception ex) {
         LOG.debug(ex);

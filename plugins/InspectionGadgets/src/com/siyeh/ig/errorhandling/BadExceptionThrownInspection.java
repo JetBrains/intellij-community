@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
@@ -23,10 +25,8 @@ import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ui.AddAction;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.ListWrappingTableModel;
-import com.siyeh.ig.ui.RemoveAction;
+import com.intellij.codeInspection.ui.AddAction;
+import com.intellij.codeInspection.ui.RemoveAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,7 +117,7 @@ public class BadExceptionThrownInspection extends BaseInspection {
         JPanel contentPanel;
         JButton addButton;
         JButton removeButton;
-        IGTable table;
+        ListTable table;
 
         Form(){
             super();
@@ -126,7 +126,7 @@ public class BadExceptionThrownInspection extends BaseInspection {
         }
 
         private void createUIComponents() {
-            table = new IGTable(new ListWrappingTableModel(exceptionList,
+            table = new ListTable(new ListWrappingTableModel(exceptionList,
                     InspectionGadgetsBundle.message(
                             "exception.class.column.name")));
         }

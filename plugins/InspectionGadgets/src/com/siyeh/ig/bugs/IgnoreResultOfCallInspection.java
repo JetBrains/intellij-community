@@ -15,6 +15,10 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.ui.AddAction;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -190,7 +194,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         JPanel contentPanel;
         JButton addButton;
         JButton removeButton;
-        IGTable table;
+        ListTable table;
         JCheckBox nonLibraryCheckbox;
 
         Form(){
@@ -206,7 +210,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         }
 
         private void createUIComponents() {
-            table = new IGTable(new ListWrappingTableModel(
+            table = new ListTable(new ListWrappingTableModel(
                     Arrays.asList(classNames, methodNamePatterns),
                     InspectionGadgetsBundle.message(
                             "result.of.method.call.ignored.class.column.title"),

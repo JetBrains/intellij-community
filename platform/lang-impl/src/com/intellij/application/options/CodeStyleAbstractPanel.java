@@ -207,7 +207,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   protected Project getCurrentProject() {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    Project project = null;
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (openProjects.length > 0) project = openProjects[0];
+    if (project == null) {
+      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this.getPanel()));
+    }
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }

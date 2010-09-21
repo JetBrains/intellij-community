@@ -167,6 +167,7 @@ final class BindToExistingBeanStep extends StepAdapter{
       myCbx.setEditable(true);
       myCbx.setRenderer(new BeanPropertyListCellRenderer());
       myCbx.putClientProperty("tableCellEditor", this);
+      myCbx.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
 
       final JComponent editorComponent = (JComponent)myCbx.getEditor().getEditorComponent();
       editorComponent.setBorder(null);

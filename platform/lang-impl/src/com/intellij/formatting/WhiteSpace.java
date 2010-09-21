@@ -23,7 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
@@ -66,8 +65,6 @@ class WhiteSpace {
   private static final byte CONTAINS_SPACES_INITIALLY = 0x40;
   private static final int LF_COUNT_SHIFT = 7;
   private static final int MAX_LF_COUNT = 1 << 24;
-  @NonNls private static final String CDATA_START = "<![CDATA[";
-  @NonNls private static final String CDATA_END = "]]>";
 
   /**
    * Creates new <code>WhiteSpace</code> object with the given start offset and a flag that shows if current white space is
@@ -120,6 +117,8 @@ class WhiteSpace {
     myInitial = model.getText(range);
 
     if (!coveredByBlock(model)) {
+      //TODO den remove
+      coveredByBlock(model);
       InitialInfoBuilder.assertInvalidRanges(myStart,
         myEnd,
         model,
@@ -158,19 +157,13 @@ class WhiteSpace {
    */
   private boolean coveredByBlock(final FormattingDocumentModel model) {
     if (myInitial == null) return true;
-    String s = myInitial.toString().trim();
-    if (s.length() == 0) return true;
+    if (model.containsWhiteSpaceSymbolsOnly(myStart, myEnd)) return true;
+
     if (!(model instanceof FormattingDocumentModelImpl)) return false;
     PsiFile psiFile = ((FormattingDocumentModelImpl)model).getFile();
     if (psiFile == null) return false;
     PsiElement start = psiFile.findElementAt(myStart);
     PsiElement end = psiFile.findElementAt(myEnd-1);
-
-    // CDATA usage at common white space stuff smells because it makes no sense in context, for example, white space for pure java block.
-    if (s.startsWith(CDATA_START)) s = s.substring(CDATA_START.length());
-    if (s.endsWith(CDATA_END)) s = s.substring(0, s.length() - CDATA_END.length());
-    s = s.trim();
-    if (s.length() == 0) return true;
     return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded injected elements
   }
 
@@ -183,12 +176,10 @@ class WhiteSpace {
           mySpaces = 0;
           myIndentSpaces = 0;
           break;
-        case ' ':
-          mySpaces++;
-          break;
         case '\t':
           myIndentSpaces += tabSize;
           break;
+        default: mySpaces++;
       }
     }
   }

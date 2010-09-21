@@ -132,12 +132,8 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   @Nullable
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this.getPanel()));
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
     if (getFileType() instanceof LanguageFileType) {
-      return ((LanguageFileType)getFileType()).getEditorHighlighter(project, null, scheme);
+      return ((LanguageFileType)getFileType()).getEditorHighlighter(getCurrentProject(), null, scheme);
     }
     return null;
   }
