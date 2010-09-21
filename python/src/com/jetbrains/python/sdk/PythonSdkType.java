@@ -493,6 +493,10 @@ public class PythonSdkType extends SdkType {
 
     // regenerate stubs, existing or not
     generateBinarySkeletons(homePath, skeletonsPath, indicator);
+
+    VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
+    assert skeletonsVFile != null;
+    skeletonsVFile.refresh(true, true);
   }
 
   private static String getSkeletonsPath(String bin_path) {
@@ -566,8 +570,8 @@ public class PythonSdkType extends SdkType {
   private final static String GENERATOR3 = "generator3.py";
   private final static String FIND_BINARIES = "find_binaries.py";
 
-  public static void generateBuiltinSkeletons(String binary_path, final String stubsRoot) {
-    new File(stubsRoot).mkdirs();
+  public static void generateBuiltinSkeletons(String binary_path, final String skeletonsRoot) {
+    new File(skeletonsRoot).mkdirs();
 
 
     final ProcessOutput run_result = SdkUtil.getProcessOutput(
@@ -575,7 +579,7 @@ public class PythonSdkType extends SdkType {
       new String[]{
         binary_path,
         PythonHelpersLocator.getHelperPath(GENERATOR3),
-        "-d", stubsRoot, // output dir
+        "-d", skeletonsRoot, // output dir
         "-b", // for builtins
         "-u", // for update-only mode
       },
@@ -589,10 +593,10 @@ public class PythonSdkType extends SdkType {
    * Does one module at a time: slower, but avoids certain conflicts.
    *
    * @param binaryPath   where to find interpreter.
-   * @param stubsRoot where to put results (expected to exist).
+   * @param skeletonsRoot where to put results (expected to exist).
    * @param indicator ProgressIndicator to update, or null.
    */
-  public static void generateBinarySkeletons(final String binaryPath, final String stubsRoot, ProgressIndicator indicator) {
+  public static void generateBinarySkeletons(final String binaryPath, final String skeletonsRoot, ProgressIndicator indicator) {
     if (indicator != null) {
       indicator.setText("Generating skeletons of binary libs for interpreter " + binaryPath);
     }
@@ -617,7 +621,7 @@ public class PythonSdkType extends SdkType {
           indicator.setText2(modname);
         }
         LOG.info("Skeleton for " + modname);
-        generateSkeleton(binaryPath, stubsRoot, modname, Collections.<String>emptyList());
+        generateSkeleton(binaryPath, skeletonsRoot, modname, Collections.<String>emptyList());
       }
     }
     catch (InvalidSdkException e) {

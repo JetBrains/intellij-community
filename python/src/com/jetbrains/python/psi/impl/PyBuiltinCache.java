@@ -117,7 +117,7 @@ public class PyBuiltinCache {
           final String builtins_url = url + "/" + PythonSdkType.getBuiltinsFileName(sdk);
           File builtins = new File(VfsUtil.urlToPath(builtins_url));
           if (builtins.isFile() && builtins.canRead()) {
-            VirtualFile builtins_vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(builtins);
+            VirtualFile builtins_vfile = LocalFileSystem.getInstance().findFileByIoFile(builtins);
             if (builtins_vfile != null) {
               PsiFile builtins_psifile = PsiManager.getInstance(project).findFile(builtins_vfile);
               if (builtins_psifile instanceof PyFile) {
