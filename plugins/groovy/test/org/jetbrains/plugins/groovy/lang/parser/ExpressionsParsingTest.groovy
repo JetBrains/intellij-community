@@ -218,4 +218,21 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
       PsiElement(Integer)('3')
 """
   }
+
+  public void testcommandExpr$closureArg() {doTest()}
+  public void testcommandExpr$simple() {doTest()}
+  public void testcommandExpr$callArg1() {doTest()}
+  public void testcommandExpr$callArg2() {doTest()}
+  public void testcommandExpr$threeArgs1() {doTest()}
+  public void testcommandExpr$threeArgs2() {doTest()}
+  public void testcommandExpr$threeArgs3() {doTest()}
+  public void testcommandExpr$fourArgs() {doTest()}
+  public void testcommandExpr$fiveArgs() {doTest()}
+  public void testcommandExpr$multiArgs() {doTest()}
+  /*def testCommandExpr$() {doTest()}
+  def testCommandExpr$() {doTest()}
+  def testCommandExpr$() {doTest()}
+  def testCommandExpr$() {doTest()}
+  def testCommandExpr$() {doTest()}*/
+
 }
