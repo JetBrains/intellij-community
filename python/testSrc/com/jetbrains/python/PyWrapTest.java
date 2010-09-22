@@ -37,9 +37,13 @@ public class PyWrapTest extends PyLightFixtureTestCase {
     doTest("Aquitani");
   }
 
+  public void testWrapInDocstring() {
+    doTest("Aquitani");
+  }
+
   private void doTest(final String textToType) {
     myFixture.configureByFile("wrap/" + getTestName(false) + ".py");
     myFixture.type(textToType);
-    myFixture.checkResultByFile("wrap/" + getTestName(false) + ".after.py");
+    myFixture.checkResultByFile("wrap/" + getTestName(false) + ".after.py", true);
   }
 }
