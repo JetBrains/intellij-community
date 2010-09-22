@@ -298,10 +298,10 @@ public class ExpressionUtils {
                 !JavaTokenType.MINUS.equals(tokenType);
     }
 
-    public static boolean isComparison(@Nullable PsiExpression expression,
-                                       @NotNull PsiLocalVariable variable) {
-        expression =
-                ParenthesesUtils.stripParentheses(expression);
+    public static boolean isVariableLessThanComparison(
+            @Nullable PsiExpression expression,
+            @NotNull PsiVariable variable) {
+        expression = ParenthesesUtils.stripParentheses(expression);
         if (!(expression instanceof PsiBinaryExpression)) {
             return false;
         }
@@ -316,6 +316,31 @@ public class ExpressionUtils {
             return VariableAccessUtils.evaluatesToVariable(lhs, variable);
         } else if (tokenType.equals(JavaTokenType.GT) ||
                 tokenType.equals(JavaTokenType.GE)) {
+            PsiExpression rhs = binaryExpression.getROperand();
+            rhs = ParenthesesUtils.stripParentheses(rhs);
+            return VariableAccessUtils.evaluatesToVariable(rhs, variable);
+        }
+        return false;
+    }
+
+    public static boolean isVariableGreaterThanComparison(
+            @Nullable PsiExpression expression,
+            @NotNull PsiVariable variable) {
+        expression = ParenthesesUtils.stripParentheses(expression);
+        if (!(expression instanceof PsiBinaryExpression)) {
+            return false;
+        }
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression)expression;
+        final PsiJavaToken sign = binaryExpression.getOperationSign();
+        final IElementType tokenType = sign.getTokenType();
+        if (tokenType.equals(JavaTokenType.GT) ||
+                tokenType.equals(JavaTokenType.GE)) {
+            PsiExpression lhs = binaryExpression.getLOperand();
+            lhs = ParenthesesUtils.stripParentheses(lhs);
+            return VariableAccessUtils.evaluatesToVariable(lhs, variable);
+        } else if (tokenType.equals(JavaTokenType.LT) ||
+                tokenType.equals(JavaTokenType.LE)) {
             PsiExpression rhs = binaryExpression.getROperand();
             rhs = ParenthesesUtils.stripParentheses(rhs);
             return VariableAccessUtils.evaluatesToVariable(rhs, variable);
