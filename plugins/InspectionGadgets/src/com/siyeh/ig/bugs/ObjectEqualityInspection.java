@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,18 +48,21 @@ public class ObjectEqualityInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignorePrivateConstructors = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "object.comparison.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "object.comparison.problem.description");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -74,10 +77,12 @@ public class ObjectEqualityInspection extends BaseInspection {
         return optionsPanel;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ObjectEqualityVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new EqualityToEqualsFix();
     }
@@ -134,13 +139,13 @@ public class ObjectEqualityInspection extends BaseInspection {
             final PsiClassType classType = (PsiClassType)type;
             final PsiClass aClass = classType.resolve();
             if (aClass != null && aClass.isInterface()) {
-                return implementorsHaveOnlyPrivateConstructors(aClass);
+                return implementersHaveOnlyPrivateConstructors(aClass);
             } else {
                 return hasOnlyPrivateConstructors(aClass);
             }
         }
 
-        private boolean implementorsHaveOnlyPrivateConstructors(
+        private boolean implementersHaveOnlyPrivateConstructors(
                 final PsiClass aClass) {
             final GlobalSearchScope scope =
                     GlobalSearchScope.allScope(aClass.getProject());
@@ -150,18 +155,19 @@ public class ObjectEqualityInspection extends BaseInspection {
             final ProgressManager progressManager = ProgressManager.getInstance();
             progressManager.runProcess(new Runnable() {
                 public void run() {
-                  ClassInheritorsSearch.search(aClass, scope, true, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+                    ClassInheritorsSearch.search(aClass, scope, true, true).forEach(
+                            new PsiElementProcessorAdapter<PsiClass>(processor));
                 }
             }, null);
             if (processor.isOverflow()) {
                 return false;
             }
-            final Collection<PsiClass> implementors = processor.getCollection();
-            for (PsiClass implementor : implementors) {
-                if (!implementor.isInterface() &&
-                        !implementor.hasModifierProperty(
+            final Collection<PsiClass> implementers = processor.getCollection();
+            for (PsiClass implementer : implementers) {
+                if (!implementer.isInterface() &&
+                        !implementer.hasModifierProperty(
                                 PsiModifier.ABSTRACT)) {
-                    if (!hasOnlyPrivateConstructors(implementor)) {
+                    if (!hasOnlyPrivateConstructors(implementer)) {
                         return false;
                     }
                 }
@@ -198,26 +204,13 @@ public class ObjectEqualityInspection extends BaseInspection {
             }
             final PsiClassType classType = (PsiClassType) type;
             final PsiClassType rawType = classType.rawType();
-            final String className = rawType.getCanonicalText();
-            return "java.lang.Class".equals(className);
+            return rawType.equalsToText("java.lang.Class");
         }
 
         private boolean isEnumType(@Nullable PsiExpression expression) {
-            if (expression == null) {
-                return false;
-            }
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return false;
-            }
-            if(!(type instanceof PsiClassType)) {
-                return false;
-            }
-            final PsiClass aClass = ((PsiClassType)type).resolve();
-            if(aClass == null) {
-                return false;
-            }
-            return aClass.isEnum();
+            return expression != null &&
+                    TypeUtils.expressionHasTypeOrSubtype(expression,
+                            "java.lang.Enum");
         }
 
         private  boolean isObjectType(PsiExpression expression) {
@@ -225,16 +218,12 @@ public class ObjectEqualityInspection extends BaseInspection {
                 return false;
             }
             final PsiType type = expression.getType();
-            if (type == null) {
-                return false;
-            }
-            if (type instanceof PsiArrayType) {
-                return false;
-            }
-            return !(type instanceof PsiPrimitiveType)
-                    && !TypeUtils.isJavaLangString(type)
-                    && !TypeUtils.expressionHasTypeOrSubtype(expression,
-		            "java.lang.Number");
+            return type != null &&
+                    !(type instanceof PsiArrayType) &&
+                    !(type instanceof PsiPrimitiveType) &&
+                    !TypeUtils.isJavaLangString(type) &&
+                    !TypeUtils.expressionHasTypeOrSubtype(expression,
+                            "java.lang.Number");
         }
     }
 }
