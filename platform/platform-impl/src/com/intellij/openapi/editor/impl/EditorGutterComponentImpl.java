@@ -63,10 +63,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
@@ -1032,31 +1030,34 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
 
+    Balloon.Position ballPosition = Balloon.Position.atRight;
     if (toolTip != null && toolTip.length() != 0) {
       LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(0, (int)e.getY()));
       int line = pos.line;
-      Balloon.Position ballPosition = Balloon.Position.atRight;
-      ArrayList<GutterIconRenderer> lineRenderers = myLineToGutterRenderers.get(line);
-      if (lineRenderers != null && lineRenderers.size() > 1) {
-        int row = lineRenderers.indexOf(renderer);
-        if (row == 0) {
-          ballPosition = Balloon.Position.below;
-        }
-      }
-
 
       final Ref<Point> t = new Ref<Point>(e.getPoint());
       ArrayList<GutterIconRenderer> row = myLineToGutterRenderers.get(pos.line);
       if (row != null) {
+        final TreeMap<Integer, GutterIconRenderer> xPos = new TreeMap<Integer, GutterIconRenderer>();
+        final int[] currentPos = new int[] {0};
         processIconsRow(pos.line, row, new LineGutterIconRendererProcessor() {
           @Override
           public void process(int x, int y, GutterIconRenderer r) {
+            xPos.put(x, r);
             if (renderer == r) {
+              currentPos[0] = x;
               Icon icon = r.getIcon();
               t.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
             }
           }
         });
+
+        ArrayList xx = new ArrayList();
+        xx.addAll(xPos.keySet());
+        int posIndex = xx.indexOf(currentPos[0]);
+        if (xPos.size() > 1 && posIndex == 0) {
+          ballPosition = Balloon.Position.below;
+        }
       }
 
       RelativePoint showPoint = new RelativePoint(this, t.get());
