@@ -1046,15 +1046,18 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
 
       final Ref<Point> t = new Ref<Point>(e.getPoint());
-      processIconsRow(pos.line, myLineToGutterRenderers.get(pos.line), new LineGutterIconRendererProcessor() {
-        @Override
-        public void process(int x, int y, GutterIconRenderer r) {
-          if (renderer == r) {
-            Icon icon = r.getIcon();
-            t.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+      final ArrayList<GutterIconRenderer> row = myLineToGutterRenderers.get(pos.line);
+      if (row != null) {
+        processIconsRow(pos.line, row, new LineGutterIconRendererProcessor() {
+          @Override
+          public void process(int x, int y, GutterIconRenderer r) {
+            if (renderer == r) {
+              Icon icon = r.getIcon();
+              t.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+            }
           }
-        }
-      });
+        });
+      }
 
       RelativePoint showPoint = new RelativePoint(this, t.get());
 
