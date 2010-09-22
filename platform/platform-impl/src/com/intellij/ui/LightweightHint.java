@@ -306,6 +306,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   public boolean canControlAutoHide() {
-    return myCurrentIdeTooltip != null;
+    return myCurrentIdeTooltip != null && myCurrentIdeTooltip.getTipComponent().isShowing() ;
   }
 }

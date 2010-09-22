@@ -61,6 +61,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private RegistryValue myMode;
 
   private IdeTooltip myCurrentTooltip;
+  private Runnable myShowRequest;
 
   @NotNull
   @Override
@@ -166,9 +167,11 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     myQueuedComponent = tooltip.getComponent();
 
-    Runnable request = new Runnable() {
+    myShowRequest = new Runnable() {
       @Override
       public void run() {
+        if (myShowRequest == null) return;
+
         if (myQueuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
           hideCurrent(null);
           return;
@@ -184,9 +187,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     };
 
     if (now) {
-      request.run();
+      myShowRequest.run();
     } else {
-      myAlarm.addRequest(request, myShowDelay ? Registry.intValue("ide.tooltip.initialDelay") : Registry.intValue("ide.tooltip.initialReshowDelay"));
+      myAlarm.addRequest(myShowRequest, myShowDelay ? Registry.intValue("ide.tooltip.initialDelay") : Registry.intValue("ide.tooltip.initialReshowDelay"));
     }
 
     return tooltip;
@@ -245,6 +248,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myY = effectivePoint.y;
     myCurrentTipIsCentered = toCenter;
     myCurrentTooltip = tooltip;
+    myShowRequest = null;
 
     myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
     myAlarm.addRequest(new Runnable() {
@@ -343,6 +347,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         }
       }, Registry.intValue("ide.tooltip.reshowDelay"));
     }
+
+    myShowRequest = null;
     myCurrentTooltip = null;
     myCurrentTipUi = null;
     myCurrentComponent = null;
@@ -374,7 +380,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public void hide(IdeTooltip tooltip) {
-    if (myCurrentTooltip == tooltip) {
+    if (myCurrentTooltip == tooltip || tooltip == null) {
       hideCurrent(null);
     }
   }
