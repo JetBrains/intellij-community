@@ -13,11 +13,11 @@ import java.util.Map;
  * @author Dennis.Ushakov
  */
 public class PyInlineLocalTest extends LightMarkedTestCase {
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(null);
   }
 
-  private void doTest(String expectedError) throws Exception {
+  private void doTest(String expectedError) {
     final String name = getTestName(true);
     final Map<String,PsiElement> map = configureByFile("/refactoring/inlinelocal/" + name + ".before.py");
     try {
@@ -44,27 +44,27 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
     myFixture.checkResultByFile("/refactoring/inlinelocal/" + name + ".after.py");
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest();
   }
 
-  public void testPriority() throws Exception {
+  public void testPriority() {
     doTest();
   }
 
-  public void testNoDominator() throws Exception {
+  public void testNoDominator() {
     doTest("Cannot perform refactoring.\nCannot find a single definition to inline.");
   }
 
-  public void testDoubleDefinition() throws Exception {
+  public void testDoubleDefinition() {
     doTest("Cannot perform refactoring.\nAnother variable 'foo' definition is used together with inlined one.");
   }
 
-  public void testMultiple() throws Exception {
+  public void testMultiple() {
     doTest();
   }
 
-  public void testPy994() throws Exception {
+  public void testPy994() {
     doTest();
   }
 }

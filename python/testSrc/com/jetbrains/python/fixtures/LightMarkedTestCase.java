@@ -28,7 +28,7 @@ public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
   /**
    * Marker "as expected", any alphanumeric sting in angle brackets.
    */
-  public final @NonNls String MARKER = "<[a-zA-Z0-9_]+>";
+  public static final @NonNls String MARKER = "<[a-zA-Z0-9_]+>";
 
   /**
    * Uses MARKER as regexp.
@@ -37,7 +37,7 @@ public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
    * @return a mapping of markers to PSI elements
    * @throws Exception
    */
-  protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
+  protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath) {
     return configureByFile(filePath, MARKER);
   }
 
@@ -48,14 +48,19 @@ public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
    * @return a mapping of markers to PSI elements
    * @throws Exception
    */
-  protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath, @NonNls String markerRegexp)
-  throws Exception
-  {
+  protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath, @NonNls String markerRegexp) {
     final String fullPath = getTestDataPath() + filePath;
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + fullPath + " not found", vFile);
 
-    String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
+    final String text;
+    try {
+      text = VfsUtil.loadText(vFile);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    String fileText = StringUtil.convertLineSeparators(text, "\n");
 
     final String fileName = vFile.getName();
 
@@ -71,9 +76,7 @@ public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
    * @return mapping of markers to the PSI elements
    * @throws Exception
    */
-  protected Map<String, PsiElement> configureByFileText(String fileText, final String fileName, @NonNls String markerRegexp)
-  throws Exception
-  {
+  protected Map<String, PsiElement> configureByFileText(String fileText, final String fileName, @NonNls String markerRegexp) {
     // build a map of marks to positions, and the text with marks stripped
     Pattern pat = Pattern.compile(markerRegexp);
     Matcher mat = pat.matcher(fileText);
