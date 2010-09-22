@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,10 +107,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
                                       String libraryName, StructureConfigurableContext context) {
       super(project, parentDescriptor, element);
       final PresentationData templatePresentation = getTemplatePresentation();
-      Icon icon = LibraryPresentationManager.getInstance().getCustomIcon(element, context);
-      if (icon == null) {
-        icon = Icons.LIBRARY_ICON;
-      }
+      Icon icon = LibraryPresentationManager.getInstance().getNamedLibraryIcon(element, context);
       templatePresentation.setIcons(icon);
       templatePresentation.addText(libraryName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }

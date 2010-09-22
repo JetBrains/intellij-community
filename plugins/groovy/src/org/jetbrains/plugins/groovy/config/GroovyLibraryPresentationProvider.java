@@ -13,31 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.libraries;
+package org.jetbrains.plugins.groovy.config;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationProvider;
+
+import javax.swing.*;
 
 /**
  * @author nik
  */
-public class LibraryKind<P extends LibraryProperties> {
-  private String myKindId;
-
-  public LibraryKind(@NotNull @NonNls String kindId) {
-    myKindId = kindId;
-  }
-
-  public String getKindId() {
-    return myKindId;
+public class GroovyLibraryPresentationProvider extends LibraryPresentationProvider<GroovyLibraryProperties> {
+  public GroovyLibraryPresentationProvider() {
+    super(GroovyLibraryDetector.GROOVY_KIND);
   }
 
   @Override
-  public String toString() {
-    return "LibraryKind:" + myKindId;
-  }
-
-  public static <P extends LibraryProperties> LibraryKind<P> create(@NotNull @NonNls String kindId) {
-    return new LibraryKind<P>(kindId);
+  public Icon getIcon(GroovyLibraryProperties properties) {
+    return properties.getManager().getIcon();
   }
 }

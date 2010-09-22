@@ -39,7 +39,7 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
   }
 
   @Nullable
-  public abstract Icon getIcon();
+  public abstract Icon getIcon(P properties);
 
   @Nullable
   public String getDescription(@NotNull P properties) {

@@ -40,8 +40,13 @@ public abstract class LibraryManager {
       }
     }
 
+    return findManagerFor(managers, container.getLibraryFiles(library, OrderRootType.CLASSES));
+  }
+
+  @Nullable
+  public static LibraryManager findManagerFor(LibraryManager[] managers, final VirtualFile[] libraryFiles) {
     for (final LibraryManager manager : managers) {
-      if (manager.managesLibrary(container.getLibraryFiles(library, OrderRootType.CLASSES))) {
+      if (manager.managesLibrary(libraryFiles)) {
         return manager;
       }
     }

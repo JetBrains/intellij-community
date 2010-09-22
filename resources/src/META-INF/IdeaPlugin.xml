@@ -91,6 +91,7 @@
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
 
     <extensionPoint name="library.presentationProvider" interface="com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationProvider"/>
+    <extensionPoint name="library.creator" interface="com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryCreator"/>
 
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
