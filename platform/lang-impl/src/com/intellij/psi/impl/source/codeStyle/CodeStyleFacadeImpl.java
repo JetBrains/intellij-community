@@ -68,7 +68,7 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
 
   @Override
   public boolean isWrapWhenTypingReachesRightMargin() {
-    return CodeStyleSettingsManager.getSettings(myProject).WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN;
+    return CodeStyleSettingsManager.getSettings(myProject).WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 
   public int getTabSize(final FileType fileType) {

@@ -46,6 +46,7 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.libraries.CreateCustomLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
@@ -650,9 +651,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         final AnAction[] facets = addFacetGroup.getChildren(e);
         if (facets.length > 0) {
           result.add(new Separator(ProjectBundle.message("add.group.facet.separator")));
+          ContainerUtil.addAll(result, facets);
         }
 
-        ContainerUtil.addAll(result, facets);
+        final List<AnAction> libraryActions = CreateCustomLibraryAction.getActions(myContext, ModuleStructureConfigurable.this);
+        if (!libraryActions.isEmpty()) {
+          result.add(new Separator("Library"));
+          result.addAll(libraryActions);
+        }
 
         return result.toArray(new AnAction[result.size()]);
       }

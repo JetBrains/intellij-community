@@ -19,6 +19,7 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,11 +65,7 @@ public class CommandLineApplication {
   public static class MyDataManagerImpl extends DataManagerImpl {
     
     public DataContext getDataContext() {
-      return new DataContext() {
-        public Object getData(String dataId) {
-          return ourInstance.getData(dataId);
-        }
-      };
+      return new CommandLineDataContext();
     }
 
     public DataContext getDataContext(Component component) {
@@ -77,6 +74,12 @@ public class CommandLineApplication {
 
     public DataContext getDataContext(@NotNull Component component, int x, int y) {
       return getDataContext();
+    }
+
+    private static class CommandLineDataContext extends UserDataHolderBase implements DataContext {
+      public Object getData(String dataId) {
+        return ourInstance.getData(dataId);
+      }
     }
   }
 }

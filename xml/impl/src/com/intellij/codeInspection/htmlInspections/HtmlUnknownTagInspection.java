@@ -18,6 +18,7 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +31,7 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -43,6 +45,8 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 /**
@@ -202,15 +206,21 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
           final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
           final PsiElement endTagName = XmlTagUtil.getEndTagNameElement(tag);
 
-          final CreateNSDeclarationIntentionFix declarationIntentionFix = 
-            isOnTheFly ? new CreateNSDeclarationIntentionFix(startTagName, ""):null;
+          List<LocalQuickFix> quickfixes = new ArrayList<LocalQuickFix>();
+          quickfixes.add(action);
+          if (isOnTheFly) {
+            quickfixes.add(new CreateNSDeclarationIntentionFix(startTagName, ""));
+          }
+          if (HtmlUtil.isHtml5Tag(name) && !HtmlUtil.hasNonHtml5Doctype(tag)) {
+            quickfixes.add(new SwitchToHtml5Action());
+          }
           ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ? 
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING : 
                                                ProblemHighlightType.INFORMATION;
-          holder.registerProblem(startTagName, message, highlightType, action, declarationIntentionFix);
+          holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(new LocalQuickFix[quickfixes.size()]));
 
           if (endTagName != null) {
-            holder.registerProblem(endTagName, message, highlightType, action, declarationIntentionFix);
+            holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(new LocalQuickFix[quickfixes.size()]));
           }
         }
       }

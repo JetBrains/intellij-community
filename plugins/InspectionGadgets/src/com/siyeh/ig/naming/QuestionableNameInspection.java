@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -25,10 +26,9 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.ig.ui.AddAction;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.ListWrappingTableModel;
-import com.siyeh.ig.ui.RemoveAction;
+import com.intellij.codeInspection.ui.AddAction;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +124,7 @@ public class QuestionableNameInspection extends BaseInspection {
         JPanel contentPanel;
         JButton addButton;
         JButton removeButton;
-        IGTable table;
+        ListTable table;
 
         Form(){
             super();
@@ -133,7 +133,7 @@ public class QuestionableNameInspection extends BaseInspection {
         }
 
         private void createUIComponents() {
-            table = new IGTable(new ListWrappingTableModel(
+            table = new ListTable(new ListWrappingTableModel(
                     nameList, InspectionGadgetsBundle.message(
                     "questionable.name.column.title")));
         }

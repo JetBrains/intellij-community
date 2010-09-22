@@ -84,6 +84,15 @@ public class ComboBox extends ComboBoxWithWidePopup {
     }
   }
 
+  @Override
+  public void addNotify() {
+    super.addNotify();
+
+    if (SwingUtilities.getAncestorOfClass(JTable.class, this) != null) {
+      putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+    }
+  }
+
   @Nullable
   public ComboPopup getPopup() {
     final ComboBoxUI ui = getUI();
@@ -179,7 +188,7 @@ public class ComboBox extends ComboBoxWithWidePopup {
   @Override
   public void paint(Graphics g) {
     super.paint(g);
-    MacUIUtil.drawComboboxFocusRing(this, g);
+    if (Boolean.TRUE != getClientProperty("JComboBox.isTableCellEditor")) MacUIUtil.drawComboboxFocusRing(this, g);
   }
 
   private static final class MyEditor implements ComboBoxEditor {

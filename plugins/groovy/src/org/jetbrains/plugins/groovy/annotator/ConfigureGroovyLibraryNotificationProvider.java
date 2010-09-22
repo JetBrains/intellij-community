@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,10 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -34,6 +39,8 @@ public class ConfigureGroovyLibraryNotificationProvider implements EditorNotific
   private static final Key<EditorNotificationPanel> KEY = Key.create("configure.groovy.library");
 
   private final Project myProject;
+
+  private final Set<FileType> supportedFileTypes;
 
   public ConfigureGroovyLibraryNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
@@ -46,6 +53,13 @@ public class ConfigureGroovyLibraryNotificationProvider implements EditorNotific
         notifications.updateAllNotifications();
       }
     });
+
+    supportedFileTypes = new HashSet<FileType>();
+    supportedFileTypes.add(GroovyFileType.GROOVY_FILE_TYPE);
+
+    for (GroovyFrameworkConfigNotification configNotification : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
+      Collections.addAll(supportedFileTypes, configNotification.getFrameworkFileTypes());
+    }
   }
 
   @Override
@@ -55,14 +69,12 @@ public class ConfigureGroovyLibraryNotificationProvider implements EditorNotific
 
   @Override
   public EditorNotificationPanel createNotificationPanel(VirtualFile file) {
-    if (file.getFileType() != GroovyFileType.GROOVY_FILE_TYPE) return null;
+    if (!supportedFileTypes.contains(file.getFileType())) return null;
 
     final Module module = ModuleUtil.findModuleForFile(file, myProject);
     if (module == null) return null;
 
-    GroovyFrameworkConfigNotification[] configNotifications = GroovyFrameworkConfigNotification.EP_NAME.getExtensions();
-
-    for (GroovyFrameworkConfigNotification configNotification : configNotifications) {
+    for (GroovyFrameworkConfigNotification configNotification : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
       if (configNotification.hasFrameworkStructure(module)) {
         if (!configNotification.hasFrameworkLibrary(module)) {
           return configNotification.createConfigureNotificationPanel(module);

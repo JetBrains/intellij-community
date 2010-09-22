@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -69,6 +70,8 @@ import java.util.List;
  * @author ven
  */
 public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl");
+
   Project myProject;
 
   public GroovyPsiElementFactoryImpl(Project project) {
@@ -272,6 +275,9 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   public GrCodeReferenceElement createTypeOrPackageReference(String qName) {
     final GroovyFileBase file = createDummyFile("def " + qName + " i");
+    LOG
+      .assertTrue(file.getTopStatements().length == 1 && (GrVariableDeclaration)file.getTopStatements()[0] instanceof GrVariableDeclaration,
+                  qName);
     GrVariableDeclaration varDecl = (GrVariableDeclaration) file.getTopStatements()[0];
     final GrClassTypeElement typeElement = (GrClassTypeElement) varDecl.getTypeElementGroovy();
     assert typeElement != null;

@@ -32,7 +32,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="edd6c" class="com.siyeh.ig.ui.IGTable" binding="table" custom-create="true">
+          <component id="edd6c" class="com.intellij.codeInspection.ui.ListTable" binding="table" custom-create="true">
             <constraints/>
             <properties/>
           </component>

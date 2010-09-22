@@ -96,6 +96,10 @@ public class FormattingModelDumper {
     if (indent != null) {
       blockData.append(" ").append(indent);
     }
+    final Alignment alignment = block.getAlignment();
+    if (alignment != null) {
+      blockData.append(" ").append(alignment);
+    }
   }
 
   private static void dumpSpacing(final Spacing spacing, final int indent, final StringBuilder out) {

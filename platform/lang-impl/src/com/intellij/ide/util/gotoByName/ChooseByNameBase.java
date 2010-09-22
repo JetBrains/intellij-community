@@ -1194,7 +1194,8 @@ public abstract class ChooseByNameBase {
       if (myCancelled) {
         throw new ProcessCanceledException();
       }
-      Collections.sort(namesList, new MatchesComparator(pattern));
+      // Here we sort using namePattern to have similar logic with empty qualified patten case
+      Collections.sort(namesList, new MatchesComparator(namePattern));
 
       boolean overflow = false;
       List<Object> sameNameElements = new SmartList<Object>();

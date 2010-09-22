@@ -20,6 +20,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,9 +52,10 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   }
 
-  public TextRange replaceWhiteSpace(TextRange textRange,
-                                String whiteSpace) {
-    final String wsReplaced = replaceWithPSI(textRange, whiteSpace);
+  public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
+    String whiteSpaceToUse
+      = myDocumentModel.adjustWhiteSpaceIfNecessary(whiteSpace, textRange.getStartOffset(), textRange.getEndOffset()).toString();
+    final String wsReplaced = replaceWithPSI(textRange, whiteSpaceToUse);
     
     if (wsReplaced != null){
       return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + wsReplaced.length());

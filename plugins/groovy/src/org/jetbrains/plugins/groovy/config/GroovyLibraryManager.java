@@ -16,8 +16,7 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
@@ -55,10 +54,10 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
   }
 
   @Override
-  protected void fillLibrary(String path, Library.ModifiableModel model) {
+  protected void fillLibrary(String path, LibraryEditor libraryEditor) {
     File srcRoot = new File(path + "/src/main");
       if (srcRoot.exists()) {
-        model.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
+        libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
       }
 
       File[] jars;
@@ -71,7 +70,7 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
       if (jars != null) {
         for (File file : jars) {
           if (file.getName().endsWith(".jar")) {
-            model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+            libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
           }
         }
       }

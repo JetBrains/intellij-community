@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class LanguageLineWrapPositionStrategy extends LanguageExtension<LineWrapPositionStrategy> {
 
-  public static final String EP_NAME = "lang.lineWrapStrategy";
+  public static final String EP_NAME = "com.intellij.lang.lineWrapStrategy";
   public static final LanguageLineWrapPositionStrategy INSTANCE = new LanguageLineWrapPositionStrategy();
 
   private LanguageLineWrapPositionStrategy() {

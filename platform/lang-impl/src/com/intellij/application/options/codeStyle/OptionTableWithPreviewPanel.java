@@ -623,6 +623,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       myCheckBox.addActionListener(synchronizer);
 
       myComboBox.putClientProperty("JComponent.sizeVariant", "small");
+      myComboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
       myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
     }
 

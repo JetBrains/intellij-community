@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
@@ -32,4 +33,8 @@ public abstract class GroovyFrameworkConfigNotification {
   public abstract boolean hasFrameworkLibrary(@NotNull Module module);
 
   public abstract EditorNotificationPanel createConfigureNotificationPanel(@NotNull Module module);
+
+  public FileType[] getFrameworkFileTypes() {
+    return FileType.EMPTY_ARRAY;
+  }
 }

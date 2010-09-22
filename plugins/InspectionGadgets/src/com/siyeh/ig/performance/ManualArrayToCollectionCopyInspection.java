@@ -29,8 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ManualArrayToCollectionCopyInspection
-        extends BaseInspection {
+public class ManualArrayToCollectionCopyInspection extends BaseInspection {
 
     @Override @NotNull
     public String getDisplayName() {
@@ -424,7 +423,8 @@ public class ManualArrayToCollectionCopyInspection
                 return;
             }
             final PsiExpression condition = statement.getCondition();
-            if (!ExpressionUtils.isComparison(condition, variable)) {
+            if (!ExpressionUtils.isVariableLessThanComparison(condition,
+                    variable)) {
                 return;
             }
             final PsiStatement update = statement.getUpdate();

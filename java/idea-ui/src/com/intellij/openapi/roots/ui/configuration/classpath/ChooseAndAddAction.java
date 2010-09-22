@@ -44,9 +44,9 @@ public abstract class ChooseAndAddAction<ItemType> extends ClasspathPanelAction 
       if (chosen.isEmpty()) {
         return;
       }
-      List<ClasspathTableItem> toAdd = new ArrayList<ClasspathTableItem>();
+      List<ClasspathTableItem<?>> toAdd = new ArrayList<ClasspathTableItem<?>>();
       for (ItemType item : chosen) {
-        final ClasspathTableItem tableItem = createTableItem(item);
+        final ClasspathTableItem<?> tableItem = createTableItem(item);
         if (tableItem != null) {
           toAdd.add(tableItem);
         }
@@ -59,7 +59,7 @@ public abstract class ChooseAndAddAction<ItemType> extends ClasspathPanelAction 
   }
 
   @Nullable
-  protected abstract ClasspathTableItem createTableItem(final ItemType item);
+  protected abstract ClasspathTableItem<?> createTableItem(final ItemType item);
 
   @Nullable
   protected abstract ClasspathElementChooser<ItemType> createChooser();

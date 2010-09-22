@@ -15,21 +15,24 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,13 +51,11 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
   public static final ExtensionPointName<AbstractGroovyLibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
 
   @NotNull
-  private static String generatePointerName(String version, final String libPrefix, final LibrariesContainer container,
-                                            final Set<String> usedLibraryNames) {
-    String originalName = libPrefix + version;
-    String newName = originalName;
+  private static String generatePointerName(final String defaultName, final Set<String> usedLibraryNames) {
+    String newName = defaultName;
     int index = 1;
     while (usedLibraryNames.contains(newName)) {
-      newName = originalName + " (" + index + ")";
+      newName = defaultName + " (" + index + ")";
       index++;
     }
     return newName;
@@ -64,10 +65,18 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
     return getIcon();
   }
 
-  protected abstract void fillLibrary(final String path, final Library.ModifiableModel model);
+  private void fillLibrary(String path, Library.ModifiableModel model) {
+    NewLibraryEditor editor = new NewLibraryEditor();
+    editor.setName(model.getName());
+    fillLibrary(path, editor);
+    editor.apply(model);
+    Disposer.dispose(editor);
+  }
+
+  protected abstract void fillLibrary(String path, LibraryEditor libraryEditor);
 
   @Nullable
-  public final Library createSDKLibrary(final String path,
+  private Library createSDKLibrary(final String path,
                                   final String name,
                                   final Project project,
                                   final boolean inModuleSettings,
@@ -126,7 +135,7 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
 
     if (addVersion && !AbstractConfigUtils.UNDEFINED_VERSION.equals(newVersion)) {
       final Project project = container.getProject();
-      final String name = generatePointerName(newVersion, getLibraryPrefix() + "-", container, usedLibraryNames);
+      final String name = generatePointerName(getLibraryPrefix() + "-" + newVersion, usedLibraryNames);
       final CreateLibraryDialog dialog = new CreateLibraryDialog(project, "Create " + libraryKind + " library",
                                                                  "Create Project " + libraryKind + " library '" + name + "'",
                                                                  "Create Global " + libraryKind + " library '" + name + "'");

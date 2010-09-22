@@ -93,6 +93,11 @@ public class ExistingLibraryEditor implements LibraryEditor {
   }
 
   @Override
+  public void addJarDirectory(String url, boolean recursive) {
+    getModel().addJarDirectory(url, recursive);
+  }
+
+  @Override
   public void removeRoot(String url, OrderRootType rootType) {
     while (getModel().removeRoot(url, rootType)) ;
   }

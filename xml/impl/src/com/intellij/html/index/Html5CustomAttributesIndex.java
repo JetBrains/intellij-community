@@ -58,7 +58,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
         while (tokenType != null) {
           if (tokenType == XmlTokenType.XML_NAME) {
             String xmlName = input.subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
-            if (xmlName.startsWith(HtmlUtil.HTML5_DATA_ATTR_PREFIX)) {
+            if (HtmlUtil.isCustomHtml5Attribute(xmlName)) {
               result.put(xmlName, null);
             }
           }

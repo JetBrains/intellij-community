@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.util.Icons;
 
 /**
@@ -28,18 +29,22 @@ import com.intellij.util.Icons;
 */
 class AddSingleEntryModuleLibraryAction extends AddItemPopupAction<Library> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.AddSingleEntryModuleLibraryAction");
+  private StructureConfigurableContext myContext;
 
-  public AddSingleEntryModuleLibraryAction(final ClasspathPanel classpathPanel, int actionIndex) {
+  public AddSingleEntryModuleLibraryAction(final ClasspathPanel classpathPanel,
+                                           int actionIndex,
+                                           StructureConfigurableContext context) {
     super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.simple.module.library.action"), Icons.JAR_ICON);
+    myContext = context;
   }
 
-  protected ClasspathTableItem createTableItem(final Library item) {
+  protected ClasspathTableItem<?> createTableItem(final Library item) {
     final OrderEntry[] entries = myClasspathPanel.getRootModel().getOrderEntries();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
         if (item.equals(libraryOrderEntry.getLibrary())) {
-          return ClasspathTableItem.createLibItem(libraryOrderEntry);
+          return ClasspathTableItem.createLibItem(libraryOrderEntry, myContext);
         }
       }
     }

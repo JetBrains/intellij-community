@@ -16,41 +16,38 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
 * @author nik
 */
-class ClasspathTableItem {
-  @Nullable protected final OrderEntry myEntry;
+class ClasspathTableItem<T extends OrderEntry> {
+  @Nullable protected final T myEntry;
   private final boolean myRemovable;
 
   @Nullable
-  public static ClasspathTableItem createItem(OrderEntry orderEntry) {
+  public static ClasspathTableItem<?> createItem(OrderEntry orderEntry, StructureConfigurableContext context) {
     if (orderEntry instanceof JdkOrderEntry) {
-      return new ClasspathTableItem(orderEntry, false);
+      return new ClasspathTableItem<OrderEntry>(orderEntry, false);
     }
     else if (orderEntry instanceof LibraryOrderEntry) {
-      return createLibItem((LibraryOrderEntry)orderEntry);
+      return createLibItem((LibraryOrderEntry)orderEntry, context);
     }
     else if (orderEntry instanceof ModuleOrderEntry) {
-      return new ClasspathTableItem(orderEntry, true);
+      return new ClasspathTableItem<OrderEntry>(orderEntry, true);
     }
     else if (orderEntry instanceof ModuleSourceOrderEntry) {
-      return new ClasspathTableItem(orderEntry, false);
+      return new ClasspathTableItem<OrderEntry>(orderEntry, false);
     }
     return null;
   }
 
-  public static ClasspathTableItem createLibItem(LibraryOrderEntry orderEntry) {
-    return new ClasspathTableItem(orderEntry, true) {
-      public boolean isEditable() {
-        return myEntry != null && myEntry.isValid();
-      }
-    };
+  public static ClasspathTableItem<LibraryOrderEntry> createLibItem(final LibraryOrderEntry orderEntry, final StructureConfigurableContext context) {
+    return new LibraryItem(orderEntry, context);
   }
 
-  protected ClasspathTableItem(@Nullable OrderEntry entry, boolean removable) {
+  protected ClasspathTableItem(@Nullable T entry, boolean removable) {
     myEntry = entry;
     myRemovable = removable;
   }
@@ -81,7 +78,7 @@ class ClasspathTableItem {
   }
 
   @Nullable
-  public final OrderEntry getEntry() {
+  public final T getEntry() {
     return myEntry;
   }
 
@@ -92,4 +89,10 @@ class ClasspathTableItem {
   public boolean isEditable() {
     return false;
   }
+
+  @Nullable
+  public String getTooltipText() {
+    return null;
+  }
+
 }

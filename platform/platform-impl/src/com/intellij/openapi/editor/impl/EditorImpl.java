@@ -483,6 +483,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDescent = -1;
     myPlainFontMetrics = null;
 
+    mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
     mySettings.reinitSettings();
@@ -1309,10 +1310,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStartLine = logicalLineToY(startLine);
-    int yEndLine = logicalPositionToXY(new LogicalPosition(endLine + 1, 0)).y + WAVE_HEIGHT;
+    int endVisLine;
+    if (myDocument.getTextLength() <= 0) {
+      endVisLine = 0;
+    }
+    else {
+      endVisLine = offsetToVisualPosition(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine))).line;
+    }
+    int height = endVisLine * getLineHeight() - yStartLine + getLineHeight() + WAVE_HEIGHT;
 
-    myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, yEndLine - yStartLine);
-    myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
+    myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, height);
+    myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), height);
   }
 
   private void beforeChangedUpdate(DocumentEvent e) {
@@ -1671,7 +1679,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @SuppressWarnings({"StatementWithEmptyBody"})
   private void paintBackgrounds(Graphics g, Rectangle clip) {
-    boolean locateBeforeSoftWrap = !SoftWrapHelper.isCaretAfterSoftWrap(this);
     Color defaultBackground = getBackgroundColor();
     g.setColor(defaultBackground);
     g.fillRect(clip.x, clip.y, clip.width, clip.height);

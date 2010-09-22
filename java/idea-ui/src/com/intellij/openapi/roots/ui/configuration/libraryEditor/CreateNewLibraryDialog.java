@@ -46,7 +46,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
     return new CreateNewLibraryDialog(parent, project, libraryEditor, libraryTables, selectedTable);
   }
 
-  private CreateNewLibraryDialog(@NotNull JComponent parent, @Nullable Project project, @NotNull NewLibraryEditor libraryEditor,
+  public CreateNewLibraryDialog(@NotNull JComponent parent, @Nullable Project project, @NotNull NewLibraryEditor libraryEditor,
                                  @NotNull List<LibraryTable> libraryTables, int selectedTable) {
     super(parent, LibraryRootsComponent.createComponent(project, libraryEditor));
     myLibraryEditor = libraryEditor;

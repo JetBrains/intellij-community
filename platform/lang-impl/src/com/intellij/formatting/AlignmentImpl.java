@@ -182,4 +182,9 @@ class AlignmentImpl extends Alignment {
     }
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "Align: " + System.identityHashCode(this);
+  }
 }

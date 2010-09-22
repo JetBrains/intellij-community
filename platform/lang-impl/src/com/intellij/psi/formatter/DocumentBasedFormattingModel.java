@@ -112,11 +112,15 @@ public class DocumentBasedFormattingModel implements FormattingModel {
       whiteSpace = newWs;
     }
 
+    CharSequence whiteSpaceToUse = getDocumentModel().adjustWhiteSpaceIfNecessary(
+      whiteSpace, textRange.getStartOffset(), textRange.getEndOffset()
+    );
+
     myDocument.replaceString(textRange.getStartOffset(),
                            textRange.getEndOffset(),
-                           whiteSpace);
+                           whiteSpaceToUse);
 
-    return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + whiteSpace.length());
+    return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + whiteSpaceToUse.length());
   }
 
   private boolean removesPattern(final TextRange textRange, final String whiteSpace, final String pattern) {
