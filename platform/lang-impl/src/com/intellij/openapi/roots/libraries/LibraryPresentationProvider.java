@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.libraries;
+package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.roots.libraries.LibraryKind;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author nik
@@ -39,10 +39,13 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
   }
 
   @Nullable
-  public abstract Icon getIcon();
+  public abstract Icon getIcon(P properties);
 
   @Nullable
   public String getDescription(@NotNull P properties) {
     return null;
   }
+
+  @Nullable
+  public abstract P detect(@NotNull List<VirtualFile> classesRoots);
 }

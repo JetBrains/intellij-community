@@ -211,7 +211,7 @@ public class GroovyFacetEditor {
   }
 
   @Nullable
-  private static AbstractGroovyLibraryManager findManager(VirtualFile dir) {
+  public static AbstractGroovyLibraryManager findManager(VirtualFile dir) {
     if (GroovyUtils.getFilesInDirectoryByPattern(dir.getPath() + "/lib", "groovy.*\\.jar").length == 0) {
       return null;
     }

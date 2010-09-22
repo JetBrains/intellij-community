@@ -15,20 +15,20 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Icons;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -46,6 +46,13 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
     }
     //noinspection unchecked
     return (LibraryPresentationProvider<P>)myPresentationProviders.get(kind);
+  }
+
+  @NotNull
+  @Override
+  public Icon getNamedLibraryIcon(@NotNull Library library, @Nullable StructureConfigurableContext context) {
+    final Icon icon = getCustomIcon(library, context);
+    return icon != null ? icon : Icons.LIBRARY_ICON;
   }
 
   @Override
@@ -67,12 +74,25 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
       public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> kind, @NotNull P properties) {
         final LibraryPresentationProvider<P> provider = getPresentationProvider(kind);
         if (provider != null) {
-          ContainerUtil.addIfNotNull(icons, provider.getIcon());
+          ContainerUtil.addIfNotNull(icons, provider.getIcon(properties));
         }
         return true;
       }
     });
     return icons;
+  }
+
+  public static List<LibraryKind<?>> getLibraryKinds(@NotNull Library library, StructureConfigurableContext context) {
+    final List<LibraryKind<?>> result = new SmartList<LibraryKind<?>>();
+    final VirtualFile[] files = getLibraryFiles(library, context);
+    LibraryDetectionManager.getInstance().processProperties(Arrays.asList(files), new LibraryDetectionManager.LibraryPropertiesProcessor() {
+      @Override
+      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> kind, @NotNull P properties) {
+        result.add(kind);
+        return true;
+      }
+    });
+    return result;
   }
 
   private static VirtualFile[] getLibraryFiles(Library library, StructureConfigurableContext context) {
@@ -113,5 +133,29 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
       }
     });
     return result;
+  }
+
+  @Override
+  public List<Library> getLibraries(@NotNull Set<LibraryKind<?>> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context) {
+    List<Library> libraries = new ArrayList<Library>();
+    if (context != null) {
+      Collections.addAll(libraries, context.getProjectLibrariesProvider().getModifiableModel().getLibraries());
+      Collections.addAll(libraries, context.getGlobalLibrariesProvider().getModifiableModel().getLibraries());
+    }
+    else {
+      final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
+      Collections.addAll(libraries, registrar.getLibraryTable(project).getLibraries());
+      Collections.addAll(libraries, registrar.getLibraryTable().getLibraries());
+    }
+
+    final Iterator<Library> iterator = libraries.iterator();
+    while (iterator.hasNext()) {
+      Library library = iterator.next();
+      final List<LibraryKind<?>> libraryKinds = getLibraryKinds(library, context);
+      if (!ContainerUtil.intersects(libraryKinds, kinds)) {
+        iterator.remove();
+      }
+    }
+    return libraries;
   }
 }

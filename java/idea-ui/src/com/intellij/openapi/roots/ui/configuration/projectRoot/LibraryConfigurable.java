@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsComponent;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +36,6 @@ import javax.swing.*;
  * Date: 02-Jun-2006
  */
 public class LibraryConfigurable extends ProjectStructureElementConfigurable<Library> {
-  private static final Icon ICON = IconLoader.getIcon("/modules/library.png");
-
   private LibraryRootsComponent myLibraryEditor;
   private final Library myLibrary;
   private final StructureLibraryTableModifiableModelProvider myModel;
@@ -134,11 +131,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public Icon getIcon() {
-    final Icon icon = LibraryPresentationManager.getInstance().getCustomIcon(myLibrary, myContext);
-    if (icon != null) {
-      return icon;
-    }
-    return ICON;
+    return LibraryPresentationManager.getInstance().getNamedLibraryIcon(myLibrary, myContext);
   }
 
   @Nullable
