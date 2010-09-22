@@ -16,19 +16,27 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.libraries.LibraryProperties;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public class GroovyLibraryProperties extends LibraryProperties<GroovyLibraryProperties> {
   private LibraryManager myManager;
+  private String myVersion;
 
-  public GroovyLibraryProperties(LibraryManager manager) {
+  public GroovyLibraryProperties(LibraryManager manager, String version) {
     myManager = manager;
+    myVersion = version;
   }
 
   public LibraryManager getManager() {
     return myManager;
+  }
+
+  @Nullable
+  public String getVersion() {
+    return myVersion;
   }
 
   @Override

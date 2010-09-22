@@ -32,12 +32,10 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -132,30 +130,6 @@ public class LibraryRootsComponent implements Disposable {
 
   public static LibraryRootsComponent createComponent(@NotNull LibraryEditor libraryEditor) {
     return createComponent(null, libraryEditor);
-  }
-
-  public static boolean libraryAlreadyExists(LibraryTable.ModifiableModel table, String libraryName) {
-    for (Iterator<Library> it = table.getLibraryIterator(); it.hasNext(); ) {
-      final Library library = it.next();
-      final String libName;
-      if (table instanceof LibrariesModifiableModel){
-        libName = ((LibrariesModifiableModel)table).getLibraryEditor(library).getName();
-      }
-      else {
-        libName = library.getName();
-      }
-      if (libraryName.equals(libName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-    
-  public static String suggestNewLibraryName(LibraryTable.ModifiableModel table) {
-    final String name = "Unnamed";
-    String candidataName = name;
-    for (int idx = 1; libraryAlreadyExists(table, candidataName); candidataName = name + (idx++));
-    return candidataName;
   }
 
   private void init(AbstractTreeStructure treeStructure) {

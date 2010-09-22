@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.impl.ModuleLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -75,7 +76,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
           Messages.showErrorDialog(ProjectBundle.message("library.name.not.specified.error", newName), ProjectBundle.message("library.name.not.specified.title"));
           return false;
         }
-        if (LibraryRootsComponent.libraryAlreadyExists(tableModifiableModel, newName)) {
+        if (LibraryEditingUtil.libraryAlreadyExists(tableModifiableModel, newName)) {
           Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", newName), ProjectBundle.message("library.name.already.exists.title"));
           return false;
         }

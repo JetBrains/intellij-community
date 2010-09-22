@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.formatter;
 
-import com.intellij.formatting.WhiteSpaceFormattingStrategy;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +26,7 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since Sep 21, 2010 2:49:43 PM
  */
-public class StaticTextWhiteSpaceDefinitionStrategy implements WhiteSpaceFormattingStrategy {
+public class StaticTextWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
 
   private final Set<CharSequence> myWhiteSpaces = new HashSet<CharSequence>();
 

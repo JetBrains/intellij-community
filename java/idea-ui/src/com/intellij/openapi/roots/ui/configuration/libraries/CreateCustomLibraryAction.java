@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -90,14 +92,16 @@ public class CreateCustomLibraryAction extends DumbAwareAction {
     for (CustomLibraryCreator creator : CustomLibraryCreator.EP_NAME.getExtensions()) {
       final HashSet<LibraryKind<?>> kinds = new HashSet<LibraryKind<?>>(creator.getSuitableKinds());
       List<Library> suitableLibraries = LibraryPresentationManager.getInstance().getLibraries(kinds, context.getProject(), context);
-      if (suitableLibraries.isEmpty()) {
+      final Predicate<Library> notAddedLibrariesCondition = LibraryEditingUtil.getNotAddedLibrariesCondition(context.getModulesConfigurator().getRootModel(module));
+      final Collection<Library> librariesToAdd = Collections2.filter(suitableLibraries, notAddedLibrariesCondition);
+      if (librariesToAdd.isEmpty()) {
         actions.add(new CreateCustomLibraryAction(creator.getDisplayName(), creator, context, moduleStructureConfigurable, module));
       }
       else {
         final DefaultActionGroup group = new DefaultActionGroup(creator.getDisplayName(), true);
         group.getTemplatePresentation().setIcon(creator.getIcon());
         group.add(new CreateCustomLibraryAction("New...", creator, context, moduleStructureConfigurable, module));
-        for (Library library : suitableLibraries) {
+        for (Library library : librariesToAdd) {
           Icon icon = LibraryPresentationManager.getInstance().getNamedLibraryIcon(library, context);
           group.add(new AddExistingCustomLibraryAction(library, icon, context, moduleStructureConfigurable, module));
         }
