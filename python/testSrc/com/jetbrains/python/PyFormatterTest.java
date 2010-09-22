@@ -72,7 +72,7 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
     doTest();
   }
 
-  public void _testSpaceAfterCommaWrappedLine() {  // PY-1065
+  public void testSpaceAfterCommaWrappedLine() {  // PY-1065
     doTest();
   }
 
