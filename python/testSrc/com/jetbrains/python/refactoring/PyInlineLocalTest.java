@@ -1,37 +1,27 @@
 package com.jetbrains.python.refactoring;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
-
-import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
  */
-public class PyInlineLocalTest extends LightMarkedTestCase {
+public class PyInlineLocalTest extends PyLightFixtureTestCase {
   private void doTest() {
     doTest(null);
   }
 
   private void doTest(String expectedError) {
     final String name = getTestName(true);
-    final Map<String,PsiElement> map = configureByFile("/refactoring/inlinelocal/" + name + ".before.py");
+    myFixture.configureByFile("/refactoring/inlinelocal/" + name + ".before.py");
     try {
-      PsiElement element = map.values().iterator().next().getParent();
-      PyReferenceExpression ref = null;
-      while (element instanceof PyReferenceExpression) {
-        ref = (PyReferenceExpression)element;
-        PsiElement newElement = ((PyReferenceExpression)element).getReference().resolve();
-        if (element == newElement) {
-          break;
-        }
-        element = newElement;
-      }
-      PyInlineLocalHandler.invoke(myFixture.getProject(), myFixture.getEditor(), (PyTargetExpression)element, ref);
+      PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(),
+                                                                   TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+      PyInlineLocalHandler handler = PyInlineLocalHandler.getInstance();
+      handler.inlineElement(myFixture.getProject(), myFixture.getEditor(), element);
       if (expectedError != null) fail("expected error: '" + expectedError + "', got none");
     }
     catch (Exception e) {
@@ -65,6 +55,10 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
   }
 
   public void testPy994() {
+    doTest();
+  }
+
+  public void testPy1585() {
     doTest();
   }
 }
