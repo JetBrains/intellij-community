@@ -37,7 +37,7 @@ public class NameUtil {
       return s.toLowerCase();
     }
   };
-  private static final int MAX_LENGTH = 50;
+  private static final int MAX_LENGTH = 40;
 
   private NameUtil() {}
 
