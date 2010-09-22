@@ -218,6 +218,10 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
+  public void testPyCallByClassInspection() throws Exception {
+    doTest(getTestName(false), new PyCallByClassInspection());
+  }
+
   public void testPyCallingNonCallableInspection() throws Exception {
     doHighlightingTest(PyCallingNonCallableInspection.class, LanguageLevel.PYTHON26);
   }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>badarglist.py</file>
+    <line>7</line>
+    <description>Passing src.badarglist.A instead of src.badarglist.Z. Is this intentional?</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>8</line>
+    <description>An instance of src.badarglist.Z is expected, not the class itself</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>9</line>
+    <description>An instance of src.badarglist.Z is expected, not the class itself</description>
+    <description>Passing src.badarglist.A instead of src.badarglist.Z. Is this intentional?</description>
+  </problem>
+</problems>
