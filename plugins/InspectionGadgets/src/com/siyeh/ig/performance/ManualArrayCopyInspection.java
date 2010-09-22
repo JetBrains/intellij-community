@@ -72,7 +72,6 @@ public class ManualArrayCopyInspection extends BaseInspection {
             this.decrement = decrement;
         }
 
-        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
