@@ -39,11 +39,18 @@ public class GroovyLibraryPresentationProvider extends LibraryPresentationProvid
   }
 
   @Override
+  public String getDescription(@NotNull GroovyLibraryProperties properties) {
+    final String version = properties.getVersion();
+    return properties.getManager().getLibraryCategoryName() + " library" + (version != null ? " of version " + version : ":");
+  }
+
+  @Override
   public GroovyLibraryProperties detect(@NotNull List<VirtualFile> classesRoots) {
     final VirtualFile[] libraryFiles = classesRoots.toArray(new VirtualFile[classesRoots.size()]);
     final LibraryManager manager = LibraryManager.findManagerFor(AbstractGroovyLibraryManager.EP_NAME.getExtensions(), libraryFiles);
     if (manager != null) {
-      return new GroovyLibraryProperties(manager);
+      final String version = manager.getLibraryVersion(libraryFiles);
+      return new GroovyLibraryProperties(manager, version);
     }
     return null;
   }

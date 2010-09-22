@@ -68,7 +68,7 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
   }
 
   @Nullable
-  protected ClasspathTableItem createTableItem(final Library item) {
+  protected ClasspathTableItem<?> createTableItem(final Library item) {
     // clear invalid order entry corresponding to added library if any
     final ModifiableRootModel rootModel = myClasspathPanel.getRootModel();
     final OrderEntry[] orderEntries = rootModel.getOrderEntries();
@@ -85,7 +85,7 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
         }
       }
     }
-    return ClasspathTableItem.createLibItem(rootModel.addLibraryEntry(item));
+    return ClasspathTableItem.createLibItem(rootModel.addLibraryEntry(item), myContext);
   }
 
   protected ClasspathElementChooser<Library> createChooser() {

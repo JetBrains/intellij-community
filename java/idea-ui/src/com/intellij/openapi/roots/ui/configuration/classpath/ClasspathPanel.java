@@ -27,7 +27,7 @@ import java.util.List;
 public interface ClasspathPanel {
   void runClasspathPanelAction(Runnable action);
 
-  void addItems(List<ClasspathTableItem> toAdd);
+  void addItems(List<ClasspathTableItem<?>> toAdd);
 
   ModifiableRootModel getRootModel();
 

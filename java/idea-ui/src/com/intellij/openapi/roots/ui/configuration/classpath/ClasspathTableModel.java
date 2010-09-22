@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.util.ui.ItemRemovable;
 
 import javax.swing.table.AbstractTableModel;
@@ -35,11 +36,13 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
   public static final int EXPORT_COLUMN = 0;
   public static final int ITEM_COLUMN = 1;
   public static final int SCOPE_COLUMN = 2;
-  private final List<ClasspathTableItem> myItems = new ArrayList<ClasspathTableItem>();
+  private final List<ClasspathTableItem<?>> myItems = new ArrayList<ClasspathTableItem<?>>();
   private final ModuleConfigurationState myState;
+  private StructureConfigurableContext myContext;
 
-  public ClasspathTableModel(final ModuleConfigurationState state) {
+  public ClasspathTableModel(final ModuleConfigurationState state, StructureConfigurableContext context) {
     myState = state;
+    myContext = context;
     init();
   }
 
@@ -54,26 +57,26 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
       if (orderEntry instanceof JdkOrderEntry) {
         hasJdkOrderEntry = true;
       }
-      addItem(ClasspathTableItem.createItem(orderEntry));
+      addItem(ClasspathTableItem.createItem(orderEntry, myContext));
     }
     if (!hasJdkOrderEntry) {
       addItemAt(new InvalidJdkItem(), 0);
     }
   }
 
-  public ClasspathTableItem getItemAt(int row) {
+  public ClasspathTableItem<?> getItemAt(int row) {
     return myItems.get(row);
   }
 
-  public void addItem(ClasspathTableItem item) {
+  public void addItem(ClasspathTableItem<?> item) {
     myItems.add(item);
   }
 
-  public void addItemAt(ClasspathTableItem item, int row) {
+  public void addItemAt(ClasspathTableItem<?> item, int row) {
     myItems.add(row, item);
   }
 
-  public ClasspathTableItem removeDataRow(int row) {
+  public ClasspathTableItem<?> removeDataRow(int row) {
     return myItems.remove(row);
   }
 
@@ -90,7 +93,7 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
   }
 
   public Object getValueAt(int rowIndex, int columnIndex) {
-    final ClasspathTableItem item = myItems.get(rowIndex);
+    final ClasspathTableItem<?> item = myItems.get(rowIndex);
     if (columnIndex == EXPORT_COLUMN) {
       return item.isExported();
     }
@@ -105,7 +108,7 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
   }
 
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-    final ClasspathTableItem item = myItems.get(rowIndex);
+    final ClasspathTableItem<?> item = myItems.get(rowIndex);
     if (columnIndex == EXPORT_COLUMN) {
       item.setExported(((Boolean)aValue).booleanValue());
     }
@@ -143,7 +146,7 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
 
   public boolean isCellEditable(int row, int column) {
     if (column == EXPORT_COLUMN || column == SCOPE_COLUMN) {
-      final ClasspathTableItem item = myItems.get(row);
+      final ClasspathTableItem<?> item = myItems.get(row);
       return item != null && item.isExportable();
     }
     return false;

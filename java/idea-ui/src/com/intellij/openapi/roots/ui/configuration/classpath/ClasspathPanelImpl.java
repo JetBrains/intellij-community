@@ -76,7 +76,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     super(new BorderLayout());
 
     myState = state;
-    myModel = new ClasspathTableModel(state);
+    myModel = new ClasspathTableModel(state, getStructureConfigurableContext());
     myEntryTable = new Table(myModel);
     myEntryTable.setShowGrid(false);
     myEntryTable.setDragEnabled(false);
@@ -111,7 +111,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
 
       public String getElementText(Object element) {
-        return getCellAppearance((ClasspathTableItem)element, getStructureConfigurableContext(), false).getText();
+        return getCellAppearance((ClasspathTableItem<?>)element, getStructureConfigurableContext(), false).getText();
       }
 
       public void selectElement(Object element, String selectedText) {
@@ -137,7 +137,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           final int[] selectedRows = myEntryTable.getSelectedRows();
           boolean currentlyMarked = true;
           for (final int selectedRow : selectedRows) {
-            final ClasspathTableItem item = myModel.getItemAt(myEntryTable.convertRowIndexToModel(selectedRow));
+            final ClasspathTableItem<?> item = myModel.getItemAt(myEntryTable.convertRowIndexToModel(selectedRow));
             if (selectedRow < 0 || !item.isExportable()) {
               return;
             }
@@ -262,7 +262,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         for (final int selectedRow : selectedRows) {
           minRow = Math.min(minRow, selectedRow);
           maxRow = Math.max(maxRow, selectedRow);
-          final ClasspathTableItem item = myModel.getItemAt(selectedRow);
+          final ClasspathTableItem<?> item = myModel.getItemAt(selectedRow);
           if (!item.isRemovable()) {
             removeButtonEnabled = false;
           }
@@ -270,7 +270,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         upButton.setEnabled(minRow > 0 && minRow < myEntryTable.getRowCount());
         downButton.setEnabled(maxRow >= 0 && maxRow < myEntryTable.getRowCount() - 1);
         removeButton.setEnabled(removeButtonEnabled);
-        ClasspathTableItem selectedItem = selectedRows.length == 1 ? myModel.getItemAt(selectedRows[0]) : null;
+        ClasspathTableItem<?> selectedItem = selectedRows.length == 1 ? myModel.getItemAt(selectedRows[0]) : null;
         myEditButton.setEnabled(selectedItem != null && selectedItem.isEditable());
       }
     });
@@ -339,7 +339,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           return;
         }
         for (final Object removedRow : removedRows) {
-          final ClasspathTableItem item = (ClasspathTableItem)((Object[])removedRow)[ClasspathTableModel.ITEM_COLUMN];
+          final ClasspathTableItem<?> item = (ClasspathTableItem<?>)((Object[])removedRow)[ClasspathTableModel.ITEM_COLUMN];
           final OrderEntry orderEntry = item.getEntry();
           if (orderEntry == null) {
             continue;
@@ -358,7 +358,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final int row = myEntryTable.getSelectedRow();
-        final ClasspathTableItem item = myModel.getItemAt(row);
+        final ClasspathTableItem<?> item = myModel.getItemAt(row);
         final OrderEntry entry = item.getEntry();
         if (!(entry instanceof LibraryOrderEntry)) return;
 
@@ -417,8 +417,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   @Override
-  public void addItems(List<ClasspathTableItem> toAdd) {
-    for (ClasspathTableItem item : toAdd) {
+  public void addItems(List<ClasspathTableItem<?>> toAdd) {
+    for (ClasspathTableItem<?> item : toAdd) {
       myModel.addItem(item);
     }
     myModel.fireTableDataChanged();
@@ -453,12 +453,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     if (myPopupActions == null) {
       int actionIndex = 1;
       final List<AddItemPopupAction<?>> actions = new ArrayList<AddItemPopupAction<?>>();
-      actions.add(new AddSingleEntryModuleLibraryAction(this, actionIndex++));
-      actions.add(new AddLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), getStructureConfigurableContext()));
+      final StructureConfigurableContext context = getStructureConfigurableContext();
+      actions.add(new AddSingleEntryModuleLibraryAction(this, actionIndex++, context));
+      actions.add(new AddLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
       actions.add(new AddItemPopupAction<Module>(this, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
                                                  StdModuleTypes.JAVA.getNodeIcon(false)) {
-          protected ClasspathTableItem createTableItem(final Module item) {
-            return ClasspathTableItem.createItem(getRootModel().addModuleOrderEntry(item));
+          protected ClasspathTableItem<?> createTableItem(final Module item) {
+            return ClasspathTableItem.createItem(getRootModel().addModuleOrderEntry(item), context);
           }
           protected ClasspathElementChooser<Module> createChooser() {
             final List<Module> chooseItems = getDependencyModules();
@@ -533,7 +534,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   private int moveRow(final int row, final int increment) {
     int newIndex = Math.abs(row + increment) % myModel.getRowCount();
-    final ClasspathTableItem item = myModel.removeDataRow(row);
+    final ClasspathTableItem<?> item = myModel.removeDataRow(row);
     myModel.addItemAt(item, newIndex);
     return newIndex;
   }
@@ -593,7 +594,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
 
-  private static CellAppearance getCellAppearance(final ClasspathTableItem item,
+  private static CellAppearance getCellAppearance(final ClasspathTableItem<?> item,
                                                   StructureConfigurableContext context,
                                                   final boolean selected) {
     if (item instanceof InvalidJdkItem) {
@@ -616,8 +617,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
       setBorder(NO_FOCUS_BORDER);
-      if (value instanceof ClasspathTableItem) {
-        getCellAppearance((ClasspathTableItem)value, myContext, selected).customize(this);
+      if (value instanceof ClasspathTableItem<?>) {
+        final ClasspathTableItem<?> tableItem = (ClasspathTableItem<?>)value;
+        getCellAppearance(tableItem, myContext, selected).customize(this);
+        String tooltip = tableItem.getTooltipText();
+        if (tooltip != null) {
+          setToolTipText(tooltip);
+        }
       }
     }
   }
@@ -666,7 +672,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     protected ProjectStructureElement getSelectedElement() {
       int row = myEntryTable.getSelectedRow();
       if (0 <= row && row < myModel.getRowCount()) {
-        ClasspathTableItem item = myModel.getItemAt(row);
+        ClasspathTableItem<?> item = myModel.getItemAt(row);
         final OrderEntry entry = item.getEntry();
         if (entry instanceof LibraryOrderEntry) {
           final Library library = ((LibraryOrderEntry)entry).getLibrary();
