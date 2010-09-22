@@ -164,7 +164,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
       final PsiReference reference = SharedPsiElementImplUtil.findReferenceAt(psiRoot, offset, language);
       if (reference == null) continue;
       final TextRange textRange = reference.getRangeInElement().shiftRight(reference.getElement().getTextRange().getStartOffset());
-      if (minRange.contains(textRange)) {
+      if (minRange.contains(textRange) && !textRange.contains(minRange)) {
         minRange = textRange;
         ret = reference;
       }

@@ -392,8 +392,12 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * multiple possible targets, {@link PsiPolyVariantReference} should be used instead
    * of returning multiple references.
    *
+   * Actually, it's preferable to call {@link com.intellij.psi.PsiReferenceService#getReferences} instead
+   * as it allows adding references by plugins when the element implements {@link com.intellij.psi.ContributedReferenceHost}.
+   *
    * @return the array of references, or an empty array if the element has no associated
    * references.
+   * @see com.intellij.psi.PsiReferenceService#getReferences
    */
   @NotNull PsiReference[] getReferences();
 

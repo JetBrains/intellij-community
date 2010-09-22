@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public class SharedPsiElementImplUtil {
     if (thisElement == null) return null;
     PsiElement element = lang != null ? thisElement.getContainingFile().getViewProvider().findElementAt(offset, lang) :
                          thisElement.findElementAt(offset);
-    if (element == null) return null;
+    if (element == null || element instanceof OuterLanguageElement) return null;
     offset = thisElement.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
     List<PsiReference> referencesList = new ArrayList<PsiReference>();
