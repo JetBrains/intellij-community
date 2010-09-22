@@ -15,11 +15,13 @@
  */
 package com.intellij.platform;
 
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -33,4 +35,7 @@ public interface DirectoryProjectGenerator<T> {
   T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException;
 
   void generateProject(final Project project, final VirtualFile baseDir, final T settings);
+
+  @NotNull
+  ValidationResult validate(@NotNull String baseDirPath);
 }
