@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
@@ -30,6 +31,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -96,10 +98,16 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
           assert node != null;
           final PsiElement nameElement = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node).getPsi();
 
+          boolean maySwitchToHtml5 = HtmlUtil.isCustomHtml5Attribute(name) && !HtmlUtil.hasNonHtml5Doctype(tag);
+          LocalQuickFix[] quickfixes = new LocalQuickFix[maySwitchToHtml5 ? 3 : 2];
+          quickfixes[0] = new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
+          quickfixes[1] = new RemoveAttributeIntentionAction(name, attribute);
+          if (maySwitchToHtml5) {
+            quickfixes[2] = new SwitchToHtml5Action();
+          }
+
           holder.registerProblem(nameElement, XmlErrorMessages.message("attribute.is.not.allowed.here", name),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
-                                 new RemoveAttributeIntentionAction(name, attribute));
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickfixes);
         }
       }
     }

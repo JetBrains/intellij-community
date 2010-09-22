@@ -45,7 +45,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="fe372" class="com.siyeh.ig.ui.IGTable" binding="table" custom-create="true">
+          <component id="fe372" class="com.intellij.codeInspection.ui.ListTable" binding="table" custom-create="true">
             <constraints/>
             <properties/>
           </component>

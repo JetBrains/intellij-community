@@ -88,9 +88,13 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
   protected void runTest() throws Throwable {
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {
-        LightPlatformCodeInsightFixtureTestCase.super.runTest();
+        doRunTests();
       }
     }.execute();
+  }
+
+  protected void doRunTests() throws Throwable {
+    LightPlatformCodeInsightFixtureTestCase.super.runTest();
   }
 
   protected Project getProject() {

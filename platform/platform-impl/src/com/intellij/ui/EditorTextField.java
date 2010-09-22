@@ -422,7 +422,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   protected void updateBorder(@NotNull final EditorEx editor) {
-    if (UIUtil.isUnderAquaLookAndFeel() && editor.isOneLineMode()) {
+    if (UIUtil.isUnderAquaLookAndFeel() && editor.isOneLineMode() && (!Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor")) && SwingUtilities.getAncestorOfClass(JTable.class, this) == null)) {
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
 

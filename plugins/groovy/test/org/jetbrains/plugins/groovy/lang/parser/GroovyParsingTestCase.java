@@ -9,7 +9,6 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -22,11 +21,11 @@ public abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestC
     return TestUtils.getTestDataPath() + "parsing/groovy/";
   }
 
-  public void doTest() throws IOException {
+  public void doTest() {
     doTest(getTestName(true).replace('$', '/') + ".test");
   }
 
-  protected void doTest(String fileName) throws IOException {
+  protected void doTest(String fileName) {
     final List<String> list = TestUtils.readInput(getTestDataPath() + "/" + fileName);
 
     final String input = list.get(0);

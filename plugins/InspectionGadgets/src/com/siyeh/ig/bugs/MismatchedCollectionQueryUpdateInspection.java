@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -27,8 +29,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.ListWrappingTableModel;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -82,14 +82,14 @@ public class MismatchedCollectionQueryUpdateInspection
     @Override
     public JComponent createOptionsPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
-        final IGTable table1 = new IGTable(new ListWrappingTableModel(
+        final ListTable table1 = new ListTable(new ListWrappingTableModel(
                 queryNames,
                 InspectionGadgetsBundle.message("query.column.name")));
         final JScrollPane scrollPane1 =
                 ScrollPaneFactory.createScrollPane(table1);
         final ActionToolbar toolbar1 = UiUtils.createAddRemoveToolbar(table1);
 
-        final IGTable table2 = new IGTable(new ListWrappingTableModel(
+        final ListTable table2 = new ListTable(new ListWrappingTableModel(
                 updateNames,
                 InspectionGadgetsBundle.message("update.column.name")));
         final JScrollPane scrollPane2 =

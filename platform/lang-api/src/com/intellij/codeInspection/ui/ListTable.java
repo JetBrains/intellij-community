@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.ui;
+package com.intellij.codeInspection.ui;
 
-import com.intellij.util.ui.Table;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.ui.table.JBTable;
 
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
-import java.awt.Component;
+import java.awt.*;
 
-public class IGTable extends Table {
+public class ListTable extends JBTable {
 
-    public IGTable(ListWrappingTableModel tableModel) {
+    public ListTable(ListWrappingTableModel tableModel) {
         super(tableModel);
         setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
         setRowSelectionAllowed(true);

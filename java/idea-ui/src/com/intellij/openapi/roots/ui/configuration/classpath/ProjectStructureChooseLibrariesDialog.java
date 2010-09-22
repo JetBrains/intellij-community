@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Condition;
@@ -99,15 +100,19 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   protected LibrariesTreeNodeBase<Library> createLibraryDescriptor(NodeDescriptor parentDescriptor,
                                                                    Library library) {
     final String libraryName = getLibraryName(library);
-    return new LibraryEditorDescriptor(getProject(), parentDescriptor, library, libraryName);
+    return new LibraryEditorDescriptor(getProject(), parentDescriptor, library, libraryName, myContext);
   }
 
   private static class LibraryEditorDescriptor extends LibrariesTreeNodeBase<Library> {
     protected LibraryEditorDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Library element,
-                                      String libraryName) {
+                                      String libraryName, StructureConfigurableContext context) {
       super(project, parentDescriptor, element);
       final PresentationData templatePresentation = getTemplatePresentation();
-      templatePresentation.setIcons(Icons.LIBRARY_ICON);
+      Icon icon = LibraryPresentationManager.getInstance().getCustomIcon(element, context);
+      if (icon == null) {
+        icon = Icons.LIBRARY_ICON;
+      }
+      templatePresentation.setIcons(icon);
       templatePresentation.addText(libraryName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }

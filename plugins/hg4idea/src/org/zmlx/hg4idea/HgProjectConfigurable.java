@@ -38,7 +38,7 @@ public class HgProjectConfigurable implements SearchableConfigurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "project.propVCSSupport.VCSs.Mercurial";
   }
 
   public JComponent createComponent() {

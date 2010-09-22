@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -23,9 +24,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.ListWrappingTableModel;
-import com.siyeh.ig.ui.RemoveAction;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.siyeh.ig.ui.TreeClassChooserAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -88,8 +88,8 @@ public class IOResourceInspection extends ResourceInspection {
         constraints.weightx = 1.0;
         constraints.weighty = 1.0;
         constraints.fill = GridBagConstraints.BOTH;
-        final IGTable table =
-                new IGTable(new ListWrappingTableModel(ignoredTypes,
+        final ListTable table =
+                new ListTable(new ListWrappingTableModel(ignoredTypes,
                         InspectionGadgetsBundle.message(
                                 "ignored.io.resource.types")));
       final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);

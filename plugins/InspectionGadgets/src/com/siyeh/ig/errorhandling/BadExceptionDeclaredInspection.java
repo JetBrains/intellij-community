@@ -15,13 +15,16 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.ui.AddAction;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.*;
 import org.jdom.Element;
@@ -124,7 +127,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
         JButton addButton;
         JButton removeButton;
         JCheckBox ignoreTestCasesCheckBox;
-        IGTable table;
+        ListTable table;
 
         Form(){
             super();
@@ -138,7 +141,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
         }
 
         private void createUIComponents() {
-            table = new IGTable(new ListWrappingTableModel(exceptionList,
+            table = new ListTable(new ListWrappingTableModel(exceptionList,
                     InspectionGadgetsBundle.message(
                             "exception.class.column.name")));
         }

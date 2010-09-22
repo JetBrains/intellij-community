@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -269,7 +268,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public RangeMarker getRangeGuard(int start, int end) {
     for (RangeMarker block : myGuardedBlocks) {
-      if (rangeIntersect(new int[]{start, block.getStartOffset()}, new int[]{end, block.getEndOffset()}, new boolean[]{true, block.isGreedyToLeft()}, new boolean[]{true, block.isGreedyToRight()})) {
+      if (rangesIntersect(start, block.getStartOffset(), end, block.getEndOffset(), true, block.isGreedyToLeft(), true, block.isGreedyToRight())) {
         return block;
       }
     }
@@ -290,17 +289,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return start <= offset && offset < end;
   }
 
-  private static boolean rangeIntersect(int[] start, int[] end, boolean[] leftInclusive, boolean[] rightInclusive) {
-    if (start[0] > start[1] || start[0] == start[1] && !leftInclusive[0]) {
-      ArrayUtil.swap(start, 0, 1);
-      ArrayUtil.swap(end, 0, 1);
-      ArrayUtil.swap(leftInclusive, 0, 1);
-      ArrayUtil.swap(rightInclusive, 0, 1);
+  private static boolean rangesIntersect(int start0, int start1, int end0, int end1, boolean leftInclusive0, boolean leftInclusive1, boolean rightInclusive0, boolean rightInclusive1) {
+    if (start0 > start1 || start0 == start1 && !leftInclusive0) {
+      return rangesIntersect(start1, start0, end1, end0, leftInclusive1, leftInclusive0, rightInclusive1, rightInclusive0);
     }
-    if (end[0] < start[1]) return false;
-    if (end[0] > start[1]) return true;
+    if (end0 < start1) return false;
+    if (end0 > start1) return true;
 
-    return leftInclusive[1] && rightInclusive[0];
+    return leftInclusive1 && rightInclusive0;
   }
 
   @NotNull
@@ -498,8 +494,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       myLineSet.changedUpdate(event);
       setModificationStamp(newModificationStamp);
 
-      updateRangeMarkers(event);
-
       DocumentListener[] listeners = getCachedListeners();
       for (DocumentListener listener : listeners) {
         try {
@@ -513,40 +507,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     finally{
       myEventsHandling = false;
     }
-  }
-
-  private void updateRangeMarkers(final DocumentEvent event) {
-    /*
-    synchronized (myRangeMarkers) {
-      myRangeMarkers.updateMarkersOnChange(event);
-    */
-
-      //for (Iterator<RangeMarkerEx> rangeMarkerIterator = myRangeMarkers.keySet().iterator(); rangeMarkerIterator.hasNext();) {
-      //  try {
-      //    final RangeMarkerEx rangeMarker = rangeMarkerIterator.next();
-      //
-      //    if (rangeMarker != null && rangeMarker.isValid()) {
-      //      if (event.getOffset() <= rangeMarker.getEndOffset()) {
-      //        rangeMarker.documentChanged(event);
-      //        if (!rangeMarker.isValid()) {
-      //          rangeMarkerIterator.remove();
-      //          if (myGuardedBlocks.remove(rangeMarker)) {
-      //            LOG.error("Guarded blocks should stay valid: " + rangeMarker);
-      //          }
-      //        }
-      //      }
-      //    }
-      //    else {
-      //      rangeMarkerIterator.remove();
-      //    }
-      //  }
-      //  catch (Exception e) {
-      //    LOG.error(e);
-      //  }
-      //}
-    /*
-    }
-    */
   }
 
   public String getText() {
@@ -775,6 +735,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     else {
       myDoingBulkUpdate = false;
       getPublisher().updateFinished(this);
+      normalizeRangeMarkers();
     }
   }
 
@@ -812,6 +773,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor) {
     return myRangeMarkers.processOverlappingWith(offset, processor);
+  }
+
+  public void normalizeRangeMarkers() {
+    myRangeMarkers.normalize();
   }
 }
 

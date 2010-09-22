@@ -119,7 +119,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   private void createLibrariesNode(final StructureLibraryTableModifiableModelProvider modelProvider) {
     final Library[] libraries = modelProvider.getModifiableModel().getLibraries();
     for (Library library : libraries) {
-      myRoot.add(new MyNode(new LibraryConfigurable(modelProvider, library, myProject, TREE_UPDATER)));
+      myRoot.add(new MyNode(new LibraryConfigurable(modelProvider, library, myContext, TREE_UPDATER)));
     }
     TreeUtil.sort(myRoot, new Comparator() {
       public int compare(final Object o1, final Object o2) {
@@ -147,7 +147,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     if (table != null) {
       final String level = table.getTableLevel();
       final LibraryConfigurable configurable =
-        new LibraryConfigurable(myContext.createModifiableModelProvider(level), library, myProject, TREE_UPDATER);
+        new LibraryConfigurable(myContext.createModifiableModelProvider(level), library, myContext, TREE_UPDATER);
       final MyNode node = new MyNode(configurable);
       addNode(node, myRoot);
       myContext.getDaemonAnalyzer().queueUpdate(new LibraryProjectStructureElement(myContext, library));

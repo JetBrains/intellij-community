@@ -87,6 +87,11 @@ public class GrClosureSignatureUtil {
       public PsiType getReturnType() {
         return block.getReturnType();
       }
+
+      @Override
+      public boolean isValid() {
+        return block.isValid();
+      }
     };
   }
 
@@ -95,6 +100,11 @@ public class GrClosureSignatureUtil {
       @Override
       public PsiType getReturnType() {
         return PsiUtil.getSmartReturnType(method);
+      }
+
+      @Override
+      public boolean isValid() {
+        return method.isValid();
       }
     };
   }
@@ -112,6 +122,11 @@ public class GrClosureSignatureUtil {
       @Override
       public PsiType getReturnType() {
         return PsiUtil.getSmartReturnType(method);
+      }
+
+      @Override
+      public boolean isValid() {
+        return method.isValid();
       }
     };
   }
