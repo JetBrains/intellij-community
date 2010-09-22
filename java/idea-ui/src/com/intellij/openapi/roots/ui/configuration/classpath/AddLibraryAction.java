@@ -15,23 +15,21 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.google.common.base.Predicate;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
 * @author nik
@@ -58,10 +56,10 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
   }
 
   private boolean hasLibraries() {
-    final Condition<Library> condition = getNotAddedLibrariesCondition();
+    final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
     for (LibraryTable table : ChooseLibrariesFromTablesDialog.getLibraryTables(myClasspathPanel.getProject(), true)) {
       for (Library library : table.getLibraries()) {
-        if (condition.value(library)) {
+        if (condition.apply(library)) {
           return true;
         }
       }
@@ -94,31 +92,6 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
     return new ExistingLibraryChooser();
   }
 
-  private Condition<Library> getNotAddedLibrariesCondition() {
-    final OrderEntry[] orderEntries = myClasspathPanel.getRootModel().getOrderEntries();
-    final Set<Library> result = new HashSet<Library>(orderEntries.length);
-    for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
-        final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
-        if (library != null) {
-          final Library source = library.getSource();
-          result.add(source != null ? source : library);
-        }
-      }
-    }
-    return new Condition<Library>() {
-      @Override
-      public boolean value(Library library) {
-        if (result.contains(library)) return false;
-        if (library instanceof LibraryImpl) {
-          final Library source = ((LibraryImpl)library).getSource();
-          if (source != null && result.contains(source)) return false;
-        }
-        return true;
-      }
-    };
-  }
-
   class ExistingLibraryChooser implements ClasspathElementChooser<Library> {
     private List<Library> mySelectedLibraries;
 
@@ -127,8 +100,9 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
     }
 
     public void doChoose() {
+      final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
       ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel.getComponent(), myClasspathPanel.getProject(), myContext,
-                                                                                               getNotAddedLibrariesCondition(), myNewLibraryAction);
+                                                                                               condition, myNewLibraryAction);
       dialog.show();
       mySelectedLibraries = dialog.getSelectedLibraries();
     }
