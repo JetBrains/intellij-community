@@ -22,6 +22,7 @@ import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
 import com.intellij.formatting.FormatConstants;
+import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -45,10 +46,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
@@ -64,6 +67,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TypedHandler implements TypedActionHandler {
+
+  /**
+   * This key is used as a flag that indicates if <code>'auto wrap line on typing'</code> activity is performed now.
+   *
+   * @see CodeStyleSettings#WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN
+   */
+  public static final Key<Boolean> AUTO_WRAP_LINE_IN_PROGRESS_KEY = new Key<Boolean>("AUTO_WRAP_LINE_IN_PROGRESS");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
   /**
@@ -314,6 +325,7 @@ public class TypedHandler implements TypedActionHandler {
     int documentLengthBeforeWrapping = document.getTextLength();
     int wrapOffset = strategy.calculateWrapPosition(document.getCharsSequence(), startOffset, endOffset, maxPreferredOffset, false);
     caretModel.moveToOffset(wrapOffset);
+    DataManager.getInstance().saveInDataContext(dataContext, AUTO_WRAP_LINE_IN_PROGRESS_KEY, true);
     EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
 
     int wrapIntroducedSymbolsNumber = document.getTextLength() - documentLengthBeforeWrapping;
