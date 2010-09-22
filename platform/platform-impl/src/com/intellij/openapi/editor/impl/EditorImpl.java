@@ -1310,8 +1310,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStartLine = logicalLineToY(startLine);
-    int yEndLine = logicalLineToY(endLine);
-    int height = Math.max(getLineHeight(), yEndLine - yStartLine) + WAVE_HEIGHT;
+    int yEndLine;
+    if (myDocument.getTextLength() <= 0) {
+      yEndLine = 0;
+    }
+    else {
+      yEndLine = offsetToVisualPosition(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine))).line;
+    }
+    int height = (yEndLine - yStartLine + 1) * getLineHeight() + WAVE_HEIGHT;
 
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), height);
