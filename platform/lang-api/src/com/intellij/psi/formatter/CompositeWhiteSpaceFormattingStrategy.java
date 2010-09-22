@@ -72,4 +72,18 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
     myStrategies.add(strategy);
     myReplaceDefaultStrategy |= strategy.replaceDefaultStrategy();
   }
+
+  @NotNull
+  @Override
+  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
+                                                  @NotNull CharSequence text,
+                                                  int startOffset,
+                                                  int endOffset)
+  {
+    CharSequence result = whiteSpaceText;
+    for (WhiteSpaceFormattingStrategy strategy : myStrategies) {
+      result = strategy.adjustWhiteSpaceIfNecessary(result, text, startOffset, endOffset);
+    }
+    return result;
+  }
 }

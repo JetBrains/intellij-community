@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since Sep 20, 2010 5:11:49 PM
  */
-public class StaticSymbolWhiteSpaceDefinitionStrategy implements WhiteSpaceFormattingStrategy {
+public class StaticSymbolWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
 
   private final TIntHashSet myWhiteSpaceSymbols = new TIntHashSet();
 
@@ -55,10 +55,5 @@ public class StaticSymbolWhiteSpaceDefinitionStrategy implements WhiteSpaceForma
       }
     }
     return end;
-  }
-
-  @Override
-  public boolean replaceDefaultStrategy() {
-    return false;
   }
 }

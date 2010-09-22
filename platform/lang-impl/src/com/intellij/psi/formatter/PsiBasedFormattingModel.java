@@ -29,6 +29,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,9 +51,19 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   }
 
-  public TextRange replaceWhiteSpace(TextRange textRange,
-                                String whiteSpace) {
-    final String wsReplaced = replaceWithPSI(textRange, whiteSpace);
+  public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
+    String whiteSpaceToUse
+      = myDocumentModel.adjustWhiteSpaceIfNecessary(whiteSpace, textRange.getStartOffset(), textRange.getEndOffset()).toString();
+    boolean sameText = CharArrayUtil.regionMatches(
+      myDocumentModel.getDocument().getCharsSequence(), textRange.getStartOffset(), textRange.getEndOffset(), whiteSpaceToUse
+    );
+    if (whiteSpaceToUse.isEmpty() && textRange.getLength() > 0) {
+      sameText = false;
+    }
+    if (sameText) {
+      return textRange;
+    }
+    final String wsReplaced = replaceWithPSI(textRange, whiteSpaceToUse);
     
     if (wsReplaced != null){
       return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + wsReplaced.length());
