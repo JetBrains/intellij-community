@@ -47,14 +47,14 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private MouseEvent myCurrentEvent;
   private boolean myCurrentTipIsCentered;
 
+  private Runnable myHideRunnable;
+
   private JBPopupFactory myPopupFactory;
   private JLabel myTipLabel;
 
   private boolean myShowDelay = true;
 
-  private Alarm myInitialDelay = new Alarm();
-  private Alarm myReshowDelay = new Alarm();
-  private Alarm myDismissAlarm = new Alarm();
+  private Alarm myAlarm = new Alarm();
 
   private int myX;
   private int myY;
@@ -160,9 +160,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public IdeTooltip show(final IdeTooltip tooltip, boolean now) {
-    myInitialDelay.cancelAllRequests();
-    myDismissAlarm.cancelAllRequests();
-    myReshowDelay.cancelAllRequests();
+    myAlarm.cancelAllRequests();
 
     hideCurrent(null);
 
@@ -188,7 +186,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     if (now) {
       request.run();
     } else {
-      myInitialDelay.addRequest(request, myShowDelay ? Registry.intValue("ide.tooltip.initialDelay") : Registry.intValue("ide.tooltip.initialReshowDelay"));
+      myAlarm.addRequest(request, myShowDelay ? Registry.intValue("ide.tooltip.initialDelay") : Registry.intValue("ide.tooltip.initialReshowDelay"));
     }
 
     return tooltip;
@@ -249,7 +247,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myCurrentTooltip = tooltip;
 
     myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
-    myDismissAlarm.addRequest(new Runnable() {
+    myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
         if (myCurrentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
@@ -305,14 +303,40 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   private boolean hideCurrent(@Nullable MouseEvent me) {
     if (me != null && myCurrentTooltip != null && myCurrentTipUi != null) {
-      if (!myCurrentTooltip.canAutohideOn(me, myCurrentTipUi.isInsideBalloon(me))) return false;
+      if (!myCurrentTooltip.canAutohideOn(new TooltipEvent(me, myCurrentTipUi.isInsideBalloon(me)))) {
+        if (myHideRunnable != null) {
+          myHideRunnable = null;
+        }
+        return false;
+      }
     }
 
+    myHideRunnable = new Runnable() {
+      @Override
+      public void run() {
+        if (myHideRunnable != null) {
+          hideCurrentNow();
+          myHideRunnable = null;
+        }
+      }
+    };
+
+    if (me != null) {
+      myAlarm.addRequest(myHideRunnable, Registry.intValue("ide.tooltip.autoDismissDeadZone"));
+    } else {
+      myHideRunnable.run();
+      myHideRunnable = null;
+    }
+
+    return true;
+  }
+
+  private void hideCurrentNow() {
     if (myCurrentTipUi != null) {
       myCurrentTipUi.hide();
       myCurrentTooltip.onHidden();
       myShowDelay = false;
-      myReshowDelay.addRequest(new Runnable() {
+      myAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
           myShowDelay = true;
@@ -327,8 +351,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myCurrentTipIsCentered = false;
     myX = -1;
     myY = -1;
-
-    return true;
   }
 
   private void processEnabled() {

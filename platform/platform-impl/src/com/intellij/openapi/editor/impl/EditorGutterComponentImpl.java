@@ -1019,7 +1019,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           final int line = getLineNumAtPoint(e.getPoint());
           toolTip = provider.getToolTip(line, myEditor);
           if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
-            controller.cancelTooltip(GUTTER_TOOLTIP_GROUP);
+            controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
             myLastGutterToolTip = toolTip;
           }
           if (myProviderToListener.containsKey(provider)) {
@@ -1046,15 +1046,18 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
 
       final Ref<Point> t = new Ref<Point>(e.getPoint());
-      processIconsRow(pos.line, myLineToGutterRenderers.get(pos.line), new LineGutterIconRendererProcessor() {
-        @Override
-        public void process(int x, int y, GutterIconRenderer r) {
-          if (renderer == r) {
-            Icon icon = r.getIcon();
-            t.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+      ArrayList<GutterIconRenderer> row = myLineToGutterRenderers.get(pos.line);
+      if (row != null) {
+        processIconsRow(pos.line, row, new LineGutterIconRendererProcessor() {
+          @Override
+          public void process(int x, int y, GutterIconRenderer r) {
+            if (renderer == r) {
+              Icon icon = r.getIcon();
+              t.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+            }
           }
-        }
-      });
+        });
+      }
 
       RelativePoint showPoint = new RelativePoint(this, t.get());
 
@@ -1062,7 +1065,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                         new HintHint(this, t.get()).setAwtTooltip(true).setPreferredPosition(ballPosition));
     }
     else {
-      controller.cancelTooltip(GUTTER_TOOLTIP_GROUP);
+      controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
     }
   }
 
@@ -1264,7 +1267,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void mouseExited(MouseEvent e) {
-    TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP);
+    TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
   }
 
   @Nullable

@@ -4286,7 +4286,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myGutterComponent.mouseExited(e);
       }
 
-      TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP);
+      TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
     }
     private void runMousePressedCommand(final MouseEvent e) {
       myMousePressedEvent = e;
@@ -4521,7 +4521,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           controller.showTooltip(EditorImpl.this, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
         }
         else {
-          controller.cancelTooltip(FOLDING_TOOLTIP_GROUP);
+          controller.cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
         }
       }
 

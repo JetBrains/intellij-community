@@ -35,7 +35,7 @@ public class DaemonTooltipUtil {
   }
 
   public static void cancelTooltips() {
-    TooltipController.getInstance().cancelTooltip(DAEMON_INFO_GROUP);
+    TooltipController.getInstance().cancelTooltip(DAEMON_INFO_GROUP, null, true);
   }
 
   public static void showInfoTooltip(@NotNull final HighlightInfo info, final Editor editor, final int defaultOffset, final int currentWidth) {

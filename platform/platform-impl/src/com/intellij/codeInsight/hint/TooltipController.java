@@ -42,8 +42,10 @@ public class TooltipController {
     hideCurrentTooltip();
   }
 
-  public void cancelTooltip(@NotNull TooltipGroup groupId) {
+  public void cancelTooltip(@NotNull TooltipGroup groupId, MouseEvent mouseEvent, boolean forced) {
     if (groupId.equals(myCurrentTooltipGroup)) {
+      if (!forced && myCurrentTooltip != null && myCurrentTooltip.canControlAutoHide()) return;
+
       cancelTooltips();
     }
   }
