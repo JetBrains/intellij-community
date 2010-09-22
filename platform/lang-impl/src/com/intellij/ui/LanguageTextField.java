@@ -35,16 +35,28 @@ public class LanguageTextField extends EditorTextField {
   private final Project myProject;
 
   public LanguageTextField(Language language, @NotNull Project project, @NotNull String value) {
-    this(language, project, value, new SimpleDocumentCreator());
+    this(language, project, value, true);
+  }
+
+  public LanguageTextField(Language language, @NotNull Project project, @NotNull String value, boolean oneLineMode) {
+    this(language, project, value, new SimpleDocumentCreator(), oneLineMode);
   }
 
   public LanguageTextField(@Nullable Language language,
                            @NotNull Project project,
                            @NotNull String value,
-                           @NotNull DocumentCreator documentCreator
-                           ) {
+                           @NotNull DocumentCreator documentCreator)
+  {
+    this(language, project, value, documentCreator, true);
+  }
+
+  public LanguageTextField(@Nullable Language language,
+                           @NotNull Project project,
+                           @NotNull String value,
+                           @NotNull DocumentCreator documentCreator,
+                           boolean oneLineMode) {
     super(documentCreator.createDocument(value, language, project), project,
-          language != null ? language.getAssociatedFileType() : StdFileTypes.PLAIN_TEXT, language == null);
+          language != null ? language.getAssociatedFileType() : StdFileTypes.PLAIN_TEXT, language == null, oneLineMode);
 
     myLanguage = language;
     myProject = project;
