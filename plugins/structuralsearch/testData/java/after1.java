@@ -7,8 +7,8 @@ package somepackage;
 /**
  * Title: ForecastSummaryReportTest
  */
-public  class ForecastSummaryReportTest extends SOTestCase {
-    
+public class ForecastSummaryReportTest extends SOTestCase {
+
     ForecastSummaryReport oReport = null;
     ScheduleGroupData oSkdgrp = null;
     SODate oStart = null;
@@ -37,7 +37,7 @@ public  class ForecastSummaryReportTest extends SOTestCase {
         try {
             oSkdgrp = ScheduleGroupData.getScheduleGroupData(new Integer(1001));
             oDateRange = new SODateInterval(new SODate("01/23/2004"), new SODate("01/30/2004"));
-            oReport = new ForecastSummaryReport(oSkdgrp.getCorporateEntity() ,oDateRange);
+            oReport = new ForecastSummaryReport(oSkdgrp.getCorporateEntity(), oDateRange);
         } catch (Exception e) {
             System.out.println("Unhandled exception in Setup:" + e);
             fail();
@@ -52,9 +52,10 @@ public  class ForecastSummaryReportTest extends SOTestCase {
         super.tearDown();
         oReport = null;
     }
-public void testForecastSummaryReport() {
+
+    public void testForecastSummaryReport() {
         try {
-            ForecastSummaryReport testReport = new ForecastSummaryReport(oSkdgrp.getCorporateEntity() ,oDateRange);
+            ForecastSummaryReport testReport = new ForecastSummaryReport(oSkdgrp.getCorporateEntity(), oDateRange);
             assertNotNull(testReport);
         } catch (RetailException e) {
             e.printStackTrace();
