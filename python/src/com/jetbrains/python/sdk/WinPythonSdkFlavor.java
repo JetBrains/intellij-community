@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -7,7 +8,10 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author yole
@@ -39,7 +43,7 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
       }
       File f = new File(pathEntry, exeName);
       if (f.exists()) {
-        candidates.add(f.getPath());
+        candidates.add(FileUtil.toSystemIndependentName(f.getPath()));
       }
     }
   }
@@ -51,7 +55,7 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
       for (VirtualFile dir : rootVDir.getChildren()) {
         if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
           VirtualFile python_exe = dir.findChild(exe_name);
-          if (python_exe != null) candidates.add(python_exe.getPath());
+          if (python_exe != null) candidates.add(FileUtil.toSystemIndependentName(python_exe.getPath()));
         }
       }
     }
