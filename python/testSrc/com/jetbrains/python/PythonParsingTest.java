@@ -214,6 +214,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testMissingListSeparators() {  // PY-1933
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }
