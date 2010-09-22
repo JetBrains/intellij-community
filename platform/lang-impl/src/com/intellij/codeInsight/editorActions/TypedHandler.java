@@ -71,7 +71,7 @@ public class TypedHandler implements TypedActionHandler {
   /**
    * This key is used as a flag that indicates if <code>'auto wrap line on typing'</code> activity is performed now.
    *
-   * @see CodeStyleSettings#WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN
+   * @see CodeStyleSettings#WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN
    */
   public static final Key<Boolean> AUTO_WRAP_LINE_IN_PROGRESS_KEY = new Key<Boolean>("AUTO_WRAP_LINE_IN_PROGRESS");
 
