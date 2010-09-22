@@ -20,6 +20,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,15 +55,6 @@ public class PsiBasedFormattingModel implements FormattingModel {
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
     String whiteSpaceToUse
       = myDocumentModel.adjustWhiteSpaceIfNecessary(whiteSpace, textRange.getStartOffset(), textRange.getEndOffset()).toString();
-    boolean sameText = CharArrayUtil.regionMatches(
-      myDocumentModel.getDocument().getCharsSequence(), textRange.getStartOffset(), textRange.getEndOffset(), whiteSpaceToUse
-    );
-    if (whiteSpaceToUse.isEmpty() && textRange.getLength() > 0) {
-      sameText = false;
-    }
-    if (sameText) {
-      return textRange;
-    }
     final String wsReplaced = replaceWithPSI(textRange, whiteSpaceToUse);
     
     if (wsReplaced != null){
