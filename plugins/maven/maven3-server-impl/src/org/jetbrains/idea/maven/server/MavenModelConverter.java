@@ -200,7 +200,8 @@ public class MavenModelConverter {
   }
 
   public static MavenArtifact convertArtifact(Artifact artifact, File localRepository) {
-    return new MavenArtifact(artifact.getGroupId(), artifact.getArtifactId(),
+    return new MavenArtifact(artifact.getGroupId(),
+                             artifact.getArtifactId(),
                              artifact.getVersion(),
                              artifact.getBaseVersion(),
                              artifact.getType(),
