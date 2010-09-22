@@ -326,7 +326,12 @@ public class TypedHandler implements TypedActionHandler {
     int wrapOffset = strategy.calculateWrapPosition(document.getCharsSequence(), startOffset, endOffset, maxPreferredOffset, false);
     caretModel.moveToOffset(wrapOffset);
     DataManager.getInstance().saveInDataContext(dataContext, AUTO_WRAP_LINE_IN_PROGRESS_KEY, true);
-    EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+    try {
+      EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+    }
+    finally {
+      DataManager.getInstance().saveInDataContext(dataContext, AUTO_WRAP_LINE_IN_PROGRESS_KEY, null);
+    }
 
     int wrapIntroducedSymbolsNumber = document.getTextLength() - documentLengthBeforeWrapping;
     change.modificationStamp = document.getModificationStamp();
