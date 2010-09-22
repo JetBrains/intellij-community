@@ -97,7 +97,33 @@ public class PyEditingTest extends PyLightFixtureTestCase {
   }
 
   public void testEnterInLineComment() {  // PY-1739
-    assertEquals("# foo\n# bar", doTestTyping("# foo bar", 5, '\n'));
+    doTestEnter("# foo <caret>bar", "# foo \n# bar");
+  }
+
+  public void testEnterInStatement() {
+    doTestEnter("if a <caret>and b: pass", "if a \\\nand b: pass");
+  }
+
+  public void testEnterBeforeStatement() {
+    doTestEnter("def foo(): <caret>pass", "def foo(): \n    pass");
+  }
+
+  public void testEnterInParameterList() {
+    doTestEnter("def foo(a,<caret>b): pass", "def foo(a,\n        b): pass");
+  }
+
+  public void testEnterInTuple() {
+    doTestEnter("for x in 'a', <caret>'b': pass", "for x in 'a', \\\n         'b': pass");
+  }
+
+  public void testEnterInCodeWithErrorElements() {
+    doTestEnter("z=1 <caret>2", "z=1 \n2");
+  }
+
+  private void doTestEnter(String before, final String after) {
+    int pos = before.indexOf("<caret>");
+    before = before.replace("<caret>", "");
+    assertEquals(after, doTestTyping(before, pos, '\n'));
   }
 
   private String doTestTyping(final String text, final int offset, final char character) {
