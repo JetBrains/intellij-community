@@ -259,7 +259,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                     (PyExpression)element;
 
     final List<PsiElement> occurrences;
-    if (expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null && !(expression instanceof PyCallExpression)) {
+    if (expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null) {
       occurrences = getOccurrences(expression);
     }
     else {
