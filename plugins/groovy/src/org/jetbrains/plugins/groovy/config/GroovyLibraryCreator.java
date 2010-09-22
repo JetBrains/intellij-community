@@ -46,7 +46,7 @@ public class GroovyLibraryCreator extends CustomLibraryCreator {
   @NotNull
   @Override
   public List<? extends LibraryKind<?>> getSuitableKinds() {
-    return Collections.singletonList(GroovyLibraryDetector.GROOVY_KIND);
+    return Collections.singletonList(GroovyLibraryPresentationProvider.GROOVY_KIND);
   }
 
   @Override

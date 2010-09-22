@@ -15,20 +15,36 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationProvider;
+import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author nik
  */
 public class GroovyLibraryPresentationProvider extends LibraryPresentationProvider<GroovyLibraryProperties> {
+  public static final LibraryKind<GroovyLibraryProperties> GROOVY_KIND = LibraryKind.create("groovy");
+
   public GroovyLibraryPresentationProvider() {
-    super(GroovyLibraryDetector.GROOVY_KIND);
+    super(GROOVY_KIND);
   }
 
   @Override
   public Icon getIcon(GroovyLibraryProperties properties) {
     return properties.getManager().getIcon();
+  }
+
+  @Override
+  public GroovyLibraryProperties detect(@NotNull List<VirtualFile> classesRoots) {
+    final VirtualFile[] libraryFiles = classesRoots.toArray(new VirtualFile[classesRoots.size()]);
+    final LibraryManager manager = LibraryManager.findManagerFor(AbstractGroovyLibraryManager.EP_NAME.getExtensions(), libraryFiles);
+    if (manager != null) {
+      return new GroovyLibraryProperties(manager);
+    }
+    return null;
   }
 }
