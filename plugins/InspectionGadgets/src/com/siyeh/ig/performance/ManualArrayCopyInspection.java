@@ -519,7 +519,6 @@ public class ManualArrayCopyInspection extends BaseInspection {
                 } else if (statements.length == 2) {
                     final PsiStatement statement = statements[0];
                     if (!(statement instanceof PsiDeclarationStatement)) {
-                        System.out.println(1);
                         return false;
                     }
                     final PsiDeclarationStatement declarationStatement =
@@ -527,12 +526,10 @@ public class ManualArrayCopyInspection extends BaseInspection {
                     final PsiElement[] declaredElements =
                             declarationStatement.getDeclaredElements();
                     if (declaredElements.length != 1) {
-                        System.out.println(2);
                         return false;
                     }
                     final PsiElement declaredElement = declaredElements[0];
                     if (!(declaredElement instanceof PsiVariable)) {
-                        System.out.println(3);
                         return false;
                     }
                     final PsiVariable localVariable =
@@ -541,7 +538,6 @@ public class ManualArrayCopyInspection extends BaseInspection {
                             localVariable.getInitializer();
                     if (!ExpressionUtils.isOffsetArrayAccess(initializer,
                             variable)) {
-                        System.out.println(4);
                         return false;
                     }
                     return bodyIsArrayCopy(statements[1], variable,
