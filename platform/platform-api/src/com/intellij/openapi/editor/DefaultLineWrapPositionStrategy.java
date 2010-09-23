@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.editor;
 
-import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Default {@link LineWrapPositionStrategy} implementation. Is assumed to provide language-agnostic algorithm that may
  * be used with almost any kind of text.
@@ -25,116 +22,22 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since Aug 25, 2010 11:33:00 AM
  */
-public class DefaultLineWrapPositionStrategy implements LineWrapPositionStrategy {
+public class DefaultLineWrapPositionStrategy extends GenericLineWrapPositionStrategy {
 
-  /** Contains white space characters (has special treatment during soft wrap position calculation). */
-  private static final TIntHashSet WHITE_SPACES = new TIntHashSet();
-  static {
-    WHITE_SPACES.add(' ');
-    WHITE_SPACES.add('\t');
-  }
+  public DefaultLineWrapPositionStrategy() {
+    // Commas.
+    addRule(new Rule(',', WrapCondition.AFTER, Rule.DEFAULT_WEIGHT * 2));
 
-  /**
-   * Contains symbols that are special in that soft wrap is allowed to be performed only
-   * after them (not before).
-   */
-  private static final TIntHashSet SPECIAL_SYMBOLS_TO_WRAP_AFTER = new TIntHashSet();
-  static {
-    SPECIAL_SYMBOLS_TO_WRAP_AFTER.add(',');
-    SPECIAL_SYMBOLS_TO_WRAP_AFTER.add(';');
-    SPECIAL_SYMBOLS_TO_WRAP_AFTER.add(')');
-  }
+    // Symbols to wrap either before or after.
+    addRule(new Rule(' '));
+    addRule(new Rule('\t'));
 
-  /**
-   * Contains symbols that are special in that soft wrap is allowed to be performed only
-   * before them (not after).
-   */
-  private static final TIntHashSet SPECIAL_SYMBOLS_TO_WRAP_BEFORE = new TIntHashSet();
-  static {
-    SPECIAL_SYMBOLS_TO_WRAP_BEFORE.add('(');
-    SPECIAL_SYMBOLS_TO_WRAP_BEFORE.add('.');
-  }
+    // Symbols to wrap after.
+    addRule(new Rule(';', WrapCondition.AFTER));
+    addRule(new Rule(')', WrapCondition.AFTER));
 
-  @Override
-  public int calculateWrapPosition(@NotNull CharSequence text,
-                                   int startOffset,
-                                   int endOffset,
-                                   final int maxPreferredOffset,
-                                   boolean allowToBeyondMaxPreferredOffset)
-  {
-    if (endOffset <= startOffset) {
-      return endOffset;
-    }
-
-    // Normalization.
-    int maxPreferredOffsetToUse = maxPreferredOffset >= endOffset ? endOffset - 1 : maxPreferredOffset;
-    maxPreferredOffsetToUse = maxPreferredOffsetToUse < startOffset ? startOffset : maxPreferredOffsetToUse;
-
-    // Try to find target offset that is not greater than preferred position.
-    for (int i = maxPreferredOffsetToUse; i > startOffset; i--) {
-      char c = text.charAt(i);
-      if (c == '\n') {
-        return i + 1;
-      }
-
-      if (WHITE_SPACES.contains(c)) {
-        return i < maxPreferredOffsetToUse ? i + 1 : i;
-      }
-
-      // Don't wrap on the non-id symbol preceded by another non-id symbol. E.g. consider that we have a statement
-      // like 'foo(int... args)'. We don't want to wrap on the second or third dots then.
-      if (i > startOffset + 1 && !isIdSymbol(c) && !isIdSymbol(text.charAt(i - 1))) {
-        continue;
-      }
-      if (SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c)) {
-        if (i < maxPreferredOffsetToUse) {
-          return i + 1;
-        }
-        continue;
-      }
-      if (SPECIAL_SYMBOLS_TO_WRAP_BEFORE.contains(c) || WHITE_SPACES.contains(c)) {
-        return i;
-      }
-
-      // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++.
-      // Also don't wrap before non-id symbol preceded by a space - wrap on space instead;
-      if (!isIdSymbol(c) && (i < startOffset + 2 || (isIdSymbol(text.charAt(i - 1)) && !WHITE_SPACES.contains(text.charAt(i - 1))))) {
-        return i;
-      }
-    }
-
-    // Try to find target offset that is greater than preferred position.
-    for (int i = maxPreferredOffsetToUse + 1; i < endOffset; i++) {
-      char c = text.charAt(i);
-      if (c == '\n') {
-        return i + 1;
-      }
-
-      if (WHITE_SPACES.contains(c)) {
-        return i;
-      }
-      // Don't wrap on the non-id symbol preceded by another non-id symbol. E.g. consider that we have a statement
-      // like 'foo(int... args)'. We don't want to wrap on the second or third dots then.
-      if (i < endOffset - 1 && !isIdSymbol(c) && !isIdSymbol(text.charAt(i + 1)) && !isIdSymbol(text.charAt(i - 1))) {
-        continue;
-      }
-      if (SPECIAL_SYMBOLS_TO_WRAP_BEFORE.contains(c)) {
-        return i;
-      }
-      if (SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c) && i < endOffset - 1) {
-        return i + 1;
-      }
-
-      // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++;
-      if (!isIdSymbol(c) && (i >= endOffset - 1 || isIdSymbol(text.charAt(i + 1)))) {
-        return i;
-      }
-    }
-
-    return allowToBeyondMaxPreferredOffset ? endOffset : maxPreferredOffset;
-  }
-
-  private static boolean isIdSymbol(char c) {
-    return c == '_' || c == '$' || (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    // Symbols to wrap before
+    addRule(new Rule('(', WrapCondition.BEFORE));
+    addRule(new Rule('.', WrapCondition.BEFORE));
   }
 }

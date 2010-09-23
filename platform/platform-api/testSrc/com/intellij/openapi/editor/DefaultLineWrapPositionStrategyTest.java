@@ -18,13 +18,15 @@ package com.intellij.openapi.editor;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertSame;
+
 /**
  * @author Denis Zhdanov
  * @since Aug 25, 2010 3:20:41 PM
  */
 public class DefaultLineWrapPositionStrategyTest {
 
-  private static final String MAX_PREFERRED_MARKER = "<PREFERRED>";
+  private static final String EDGE_MARKER = "<EDGE>";
   private static final String WRAP_MARKER          = "<WRAP>";
 
   private DefaultLineWrapPositionStrategy myStrategy;
@@ -37,14 +39,21 @@ public class DefaultLineWrapPositionStrategyTest {
   @Test
   public void commaNotSeparated() {
     String document =
-      "void method(String <WRAP>p1, String p2) {}";
-    doTest(document);
+      "void method(String<WRAP> p1<EDGE>, String p2) {}";
+    doTest(document, false);
   }
 
   @Test
   public void wrapOnExceedingWhiteSpace() {
     String document =
-      "void method(String p1,<WRAP> String p2) {}";
+      "void method(String p1,<WRAP><EDGE> String p2) {}";
+    doTest(document);
+  }
+
+  @Test
+  public void preferWrapOnComma() {
+    String document =
+      "int variable = testMethod(var1 + var2,<WRAP> var3 + va<EDGE>r4);";
     doTest(document);
   }
 
@@ -55,9 +64,10 @@ public class DefaultLineWrapPositionStrategyTest {
   private void doTest(final String document, boolean allowToBeyondMaxPreferredOffset) {
     final Context context = new Context(document);
     context.init();
-    myStrategy.calculateWrapPosition(
-      context.document, 0, context.document.length(), context.preferredIndex, allowToBeyondMaxPreferredOffset
+    int actual = myStrategy.calculateWrapPosition(
+      context.document, 0, context.document.length(), context.edgeIndex, allowToBeyondMaxPreferredOffset
     );
+    assertSame(context.wrapIndex, actual);
   }
 
   /**
@@ -73,7 +83,9 @@ public class DefaultLineWrapPositionStrategyTest {
     private String document;
     private int    index;
     private int    wrapIndex;
-    private int    preferredIndex;
+    private int    tmpWrapIndex;
+    private int    edgeIndex;
+    private int    tmpEdgeIndex;
 
     Context(String rawDocument) {
       if (rawDocument.contains("\n")) {
@@ -85,10 +97,10 @@ public class DefaultLineWrapPositionStrategyTest {
     }
 
     public void init() {
-      wrapIndex = rawDocument.indexOf(WRAP_MARKER);
-      preferredIndex = rawDocument.indexOf(MAX_PREFERRED_MARKER);
-      if (wrapIndex >= 0 && preferredIndex >= 0) {
-        if (wrapIndex < preferredIndex) {
+      tmpWrapIndex = rawDocument.indexOf(WRAP_MARKER);
+      tmpEdgeIndex = rawDocument.indexOf(EDGE_MARKER);
+      if (tmpWrapIndex >= 0 && tmpEdgeIndex >= 0) {
+        if (tmpWrapIndex < tmpEdgeIndex) {
           processWrap();
           processMaxPreferredIndex();
         }
@@ -98,33 +110,35 @@ public class DefaultLineWrapPositionStrategyTest {
         }
       }
       else {
-        if (wrapIndex >= 0) {
+        if (tmpWrapIndex >= 0) {
           processWrap();
         }
-        if (preferredIndex >= 0) {
+        if (tmpEdgeIndex >= 0) {
           processMaxPreferredIndex();
         }
       }
       
       buffer.append(rawDocument.substring(index));
       document = buffer.toString();
-      if (preferredIndex <= 0) {
-        preferredIndex = document.length();
+      if (edgeIndex <= 0) {
+        edgeIndex = document.length();
       }
     }
 
     private void processWrap() {
-      buffer.append(rawDocument.substring(index, wrapIndex));
-      index = wrapIndex + WRAP_MARKER.length();
+      buffer.append(rawDocument.substring(index, tmpWrapIndex));
+      index = tmpWrapIndex + WRAP_MARKER.length();
+      wrapIndex = buffer.length();
       if (rawDocument.indexOf(WRAP_MARKER, index) >= 0) {
         throw new IllegalArgumentException(String.format("More than one wrap indicator is found at the document '%s'", rawDocument));
       }
     }
 
     private void processMaxPreferredIndex() {
-      buffer.append(rawDocument.substring(index, preferredIndex));
-      index = preferredIndex + MAX_PREFERRED_MARKER.length();
-      if (rawDocument.indexOf(MAX_PREFERRED_MARKER, index) >= 0) {
+      buffer.append(rawDocument.substring(index, tmpEdgeIndex));
+      index = tmpEdgeIndex + EDGE_MARKER.length();
+      edgeIndex = buffer.length();
+      if (rawDocument.indexOf(EDGE_MARKER, index) >= 0) {
         throw new IllegalArgumentException(String.format("More than one max preferred offset is found at the document '%s'", rawDocument));
       }
     }
