@@ -81,6 +81,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     final JEditorPane pane = initPane(myText, hintHint, layeredPane);
+    hintHint.setContentActive(isActiveHtml(myText));
     if (!hintHint.isAwtTooltip()) {
       correctLocation(editor, pane, p, alignToRight, expanded, myCurrentWidth);
     }
@@ -288,6 +289,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   protected void stripDescription() {
+  }
+
+  static boolean isActiveHtml(String html) {
+    return html.indexOf("</a>") >= 0;
   }
 
   static JEditorPane initPane(@NonNls String text, final HintHint hintHint, JLayeredPane layeredPane) {
