@@ -309,7 +309,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * @return      <code>true</code> if soft wraps-aware processing should be used; <code>false</code> otherwise
    */
   private boolean prepareToMapping() {
-    boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && !myStorage.isEmpty() && myEditor.getDocument().getTextLength() > 0;
+    boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && myEditor.getDocument().getTextLength() > 0;
     if (!useSoftWraps) {
       return useSoftWraps;
     }
