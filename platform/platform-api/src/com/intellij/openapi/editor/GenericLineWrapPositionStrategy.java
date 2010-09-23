@@ -78,8 +78,14 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       Rule rule = myRules.get(c);
       if (rule != null) {
         if (rule.condition == WrapCondition.BOTH || rule.condition == WrapCondition.AFTER) {
-          if (i < maxPreferredOffsetToUse) {
-            offset2Weight.put(i + 1, rule.weight);
+          int target = i+1;
+          if (rule.symbol != ' ') {
+            while(i < maxPreferredOffsetToUse && text.charAt(target) == ' ') {
+              target++;
+            }
+          }
+          if (target <= maxPreferredOffsetToUse) {
+            offset2Weight.put(target, rule.weight);
           }
         }
 
