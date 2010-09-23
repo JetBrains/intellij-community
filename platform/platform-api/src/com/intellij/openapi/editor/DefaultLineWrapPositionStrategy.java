@@ -26,7 +26,7 @@ public class DefaultLineWrapPositionStrategy extends GenericLineWrapPositionStra
 
   public DefaultLineWrapPositionStrategy() {
     // Commas.
-    addRule(new Rule(',', WrapCondition.AFTER, Rule.DEFAULT_WEIGHT * 2));
+    addRule(new Rule(',', WrapCondition.AFTER, Rule.DEFAULT_WEIGHT * 1.4));
 
     // Symbols to wrap either before or after.
     addRule(new Rule(' '));

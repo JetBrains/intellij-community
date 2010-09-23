@@ -39,7 +39,7 @@ public class DefaultLineWrapPositionStrategyTest {
   @Test
   public void commaNotSeparated() {
     String document =
-      "void method(String<WRAP> p1<EDGE>, String p2) {}";
+      "void method(String <WRAP>p1<EDGE>, String p2) {}";
     doTest(document, false);
   }
 

@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntIntProcedure;
-import gnu.trove.TIntObjectHashMap;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -68,7 +66,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
     int maxPreferredOffsetToUse = maxPreferredOffset >= endOffset ? endOffset - 1 : maxPreferredOffset;
     maxPreferredOffsetToUse = maxPreferredOffsetToUse < startOffset ? startOffset : maxPreferredOffsetToUse;
 
-    TIntIntHashMap offset2Weight = new TIntIntHashMap();
+    TIntDoubleHashMap offset2Weight = new TIntDoubleHashMap();
 
     // Try to find out wrap position before preferred offset.
     for (int i = maxPreferredOffsetToUse; i > startOffset; i--) {
@@ -79,10 +77,14 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
 
       Rule rule = myRules.get(c);
       if (rule != null) {
-        switch (rule.condition) {
-          case BOTH:
-          case BEFORE: offset2Weight.put(i, rule.weight); break;
-          case AFTER: if (i < maxPreferredOffsetToUse) offset2Weight.put(i + 1, rule.weight);
+        if (rule.condition == WrapCondition.BOTH || rule.condition == WrapCondition.AFTER) {
+          if (i < maxPreferredOffsetToUse) {
+            offset2Weight.put(i + 1, rule.weight);
+          }
+        }
+
+        if (rule.condition == WrapCondition.BOTH || rule.condition == WrapCondition.BEFORE) {
+          offset2Weight.put(i, rule.weight);
         }
         continue;
       }
@@ -94,7 +96,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       }
     }
 
-    int result = chooseOffset(offset2Weight, GT_COMPARATOR);
+    int result = chooseOffset(offset2Weight, GT_COMPARATOR, startOffset);
     if (result > 0) {
       return result;
     }
@@ -156,25 +158,40 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
    * @param offset2Weight     map that holds '{@code offset -> weight}' entries (is allows to be empty)
    * @param comparator        strategy interface that is expected to return <code>'true'</code> if the first parameter
    *                          given to it is more preferred than the second
+   * @param startOffset       start offset of the line that is being wrapped
    * @return                  one of the keys of the given map to use; negative value if no appropriate key is found or the map is empty
    */
-  private static int chooseOffset(@NotNull TIntIntHashMap offset2Weight, @NotNull final TIntIntProcedure comparator) {
+  private static int chooseOffset(@NotNull TIntDoubleHashMap offset2Weight, @NotNull final TIntIntProcedure comparator,
+                                  final int startOffset)
+  {
     if (offset2Weight.isEmpty()) {
       return -1;
     }
 
-    final int[] resultingWeight = new int[1];
+    final double[] resultingWeight = new double[1];
     final int[] resultingOffset = new int[1];
-    offset2Weight.forEachEntry(new TIntIntProcedure() {
+    offset2Weight.forEachEntry(new TIntDoubleProcedure() {
       @Override
-      public boolean execute(int offset, int weight) {
-        if (weight > resultingWeight[0]) {
+      public boolean execute(int offset, double weight) {
+        boolean change = false;
+
+        // Check if current candidate is certainly better than the current result.
+        if (comparator.execute(offset, resultingOffset[0])) {
+          if (weight >= resultingWeight[0]) {
+            change = true;
+          }
+        }
+
+        // Check if it's worth to use current mapping because of it's weight.
+        if (!change && weight > resultingWeight[0]) {
+          change = (offset - startOffset) * weight > (resultingOffset[0] - startOffset) * resultingWeight[0];
+        }
+
+        if (change) {
           resultingWeight[0] = weight;
           resultingOffset[0] = offset;
         }
-        else if (weight == resultingWeight[0] && comparator.execute(offset, resultingOffset[0])) {
-          resultingOffset[0] = offset;
-        }
+
         return true;
       }
     });
@@ -187,7 +204,14 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
    * @see Rule
    */
   public enum WrapCondition {
-    AFTER, BEFORE, BOTH
+    /** Means that wrap is allowed only after particular symbol. */
+    AFTER,
+
+    /** Means that wrap is allowed only before particular symbol. */
+    BEFORE,
+
+    /** Means that wrap is allowed before and after particular symbol. */
+    BOTH
   }
 
   /**
@@ -199,7 +223,30 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
 
     public final char symbol;
     public final WrapCondition condition;
-    public final int weight;
+
+    /**
+     * There is a possible case that there are more than one appropriate wrap positions on a line and we need to choose between them.
+     * Here 'weight' characteristics comes into play.
+     * <p/>
+     * The general idea is that it's possible to prefer position with lower offset if it's weight is more than the one from
+     * position with higher offset and distance between them is not too big.
+     * <p/>
+     * Current algorithm uses the <code>'weight'</code> in a following manner:
+     * <p/>
+     * <pre>
+     * <ol>
+     *   <li>Calculate product of line length on first wrap location and its weight;</li>
+     *   <li>Calculate product of line length on second wrap location and its weight;</li>
+     *   <li>Compare those products;</li>
+     * </ol>
+     * </pre>
+     * <p/>
+     * <b>Example</b>
+     * Suppose we have two positions that define lines of length 30 and 10 symbols. Suppose that the weights are <code>'1'</code>
+     * and <code>'4'</code> correspondingly.Position with greater weight is preferred because it's product is higher
+     * ({@code 10 * 4 > 30 * 1})
+     */
+    public final double weight;
 
     public Rule(char symbol) {
       this(symbol, WrapCondition.BOTH, DEFAULT_WEIGHT);
@@ -209,11 +256,11 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       this(symbol, condition, DEFAULT_WEIGHT);
     }
 
-    public Rule(char symbol, int weight) {
+    public Rule(char symbol, double weight) {
       this(symbol, WrapCondition.BOTH, weight);
     }
 
-    public Rule(char symbol, WrapCondition condition, int weight) {
+    public Rule(char symbol, WrapCondition condition, double weight) {
       this.symbol = symbol;
       this.condition = condition;
       this.weight = weight;
