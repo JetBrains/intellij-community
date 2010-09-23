@@ -419,7 +419,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
     }
     int softWrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(
-      document.getCharsSequence(), minOffset, maxOffset, preferredOffset, minOffset != preferredOffset
+      document.getCharsSequence(), minOffset, maxOffset, preferredOffset, true
     );
     if (softWrapOffset >= lineData.endLineOffset) {
       return null;
@@ -625,7 +625,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       int endLine = document.getLineNumber(endRange.getEndOffset());
       int endOffset = document.getLineEndOffset(endLine);
       int textLength = document.getTextLength();
-      if (textLength > 0 && endOffset >= textLength) {
+      if (textLength > 0 && endOffset > textLength) {
         endOffset = textLength - 1;
       }
       endRange = new TextRange(document.getLineStartOffset(startLine), endOffset);

@@ -127,7 +127,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       }
     }
 
-    return maxPreferredOffsetToUse;
+    return endOffset;
   }
 
   /**
