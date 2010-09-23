@@ -105,7 +105,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
                    final int x,
                    final int y,
                    final JComponent focusBackComponent,
-                   @NotNull final HintHint hintInfo) {
+                   @NotNull final HintHint hintHint) {
     myParentComponent = parentComponent;
 
     myFocusBackComponent = focusBackComponent;
@@ -124,12 +124,12 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       final Dimension preferredSize = myComponent.getPreferredSize();
 
 
-      if (hintInfo.isAwtTooltip()) {
-        IdeTooltip tooltip = new IdeTooltip(hintInfo.getOriginalComponent(), hintInfo.getOriginalPoint(), myComponent) {
+      if (hintHint.isAwtTooltip()) {
+        IdeTooltip tooltip = new IdeTooltip(hintHint.getOriginalComponent(), hintHint.getOriginalPoint(), myComponent) {
           @Override
           protected boolean canAutohideOn(TooltipEvent event) {
             if (event.getInputEvent() instanceof MouseEvent) {
-              return !(hintInfo.isContentActive() && event.isIsEventInsideBalloon());
+              return !(hintHint.isContentActive() && event.isIsEventInsideBalloon());
             } else {
               return true;
             }
@@ -144,7 +144,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           public boolean canBeDismissedOnTimeout() {
             return false;
           }
-        }.setToCenterIfSmall(false).setPreferredPosition(hintInfo.getPreferredPosition());
+        }.setToCenterIfSmall(false).setPreferredPosition(hintHint.getPreferredPosition()).setHighlighterType(hintHint.isHightlighterType());
 
         myComponent.validate();
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, false);

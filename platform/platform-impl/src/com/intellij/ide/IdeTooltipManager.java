@@ -189,7 +189,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     if (now) {
       myShowRequest.run();
     } else {
-      myAlarm.addRequest(myShowRequest, myShowDelay ? Registry.intValue("ide.tooltip.initialDelay") : Registry.intValue("ide.tooltip.initialReshowDelay"));
+      myAlarm.addRequest(myShowRequest, myShowDelay ? tooltip.getShowDelay() : tooltip.getInitialReshowDelay());
     }
 
     return tooltip;
@@ -258,7 +258,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           hideCurrent(null);
         }
       }
-    }, Registry.intValue("ide.tooltip.dismissDelay"));
+    }, tooltip.getDismissDelay());
   }
 
 
